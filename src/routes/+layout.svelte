@@ -422,6 +422,20 @@
                     <div class="text-[10px] text-slate-500 dark:text-slate-400">Mô hình Co-Teaching &amp; Học liệu nội bộ</div>
                   </div>
                 </a>
+
+                <a
+                  href="/second-brain"
+                  onclick={closeAllDropdowns}
+                  class="flex items-center gap-3 p-2.5 rounded-xl hover:bg-emerald-50/70 dark:hover:bg-slate-800 transition-colors group"
+                >
+                  <div class="w-8 h-8 rounded-lg bg-teal-100 dark:bg-teal-900/50 text-teal-700 dark:text-teal-300 flex items-center justify-center text-sm font-bold">
+                    🧠
+                  </div>
+                  <div>
+                    <div class="font-bold text-xs text-slate-900 dark:text-white group-hover:text-teal-600 dark:group-hover:text-teal-400">Obsidian Second Brain</div>
+                    <div class="text-[10px] text-slate-500 dark:text-slate-400">Kho tri thức liên kết WikiLinks [[...]] 12 lớp</div>
+                  </div>
+                </a>
               </div>
             {/if}
           </div>
@@ -434,6 +448,16 @@
           >
             <span>📅</span>
             <span>Thời Khóa Biểu</span>
+          </a>
+
+          <!-- Item 4b: Obsidian Second Brain (Direct Link) -->
+          <a
+            href="/second-brain"
+            onclick={closeAllDropdowns}
+            class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold tracking-wide transition-all {$page.url.pathname === '/second-brain' ? 'bg-teal-600 text-white shadow-sm' : 'text-teal-700 dark:text-teal-400 hover:text-teal-800 dark:hover:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-950/40'}"
+          >
+            <span>🧠</span>
+            <span>Second Brain</span>
           </a>
 
           <!-- Item 5: Sổ Liên Lạc Phụ Huynh (Direct Link) -->
@@ -755,6 +779,13 @@
               class="flex items-center gap-2 p-2.5 rounded-xl bg-indigo-100 dark:bg-indigo-950/60 text-indigo-800 dark:text-indigo-300 text-xs font-bold"
             >
               <span>📅</span> <span>Thời Khóa Biểu</span>
+            </a>
+            <a
+              href="/second-brain"
+              onclick={() => mobileMenuOpen = false}
+              class="flex items-center gap-2 p-2.5 rounded-xl bg-teal-100 dark:bg-teal-950/60 text-teal-800 dark:text-teal-300 text-xs font-bold"
+            >
+              <span>🧠</span> <span>Obsidian Second Brain</span>
             </a>
             <a
               href="/?tab=parent"

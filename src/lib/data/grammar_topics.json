@@ -717,5 +717,258 @@
         "vi": "Bố tôi từng đạp xe đạp đi làm khi chưa có xe máy."
       }
     ]
+  },
+  {
+    "id": "gram_inversion",
+    "topic": "Cấu Trúc Đảo Ngữ Nâng Cao (Grammatical Inversion)",
+    "grade_level": "Lớp 11, Lớp 12, HSG & THPT QG",
+    "curriculum_unit": "Chuyên đề Học sinh giỏi THPT",
+    "category": "advanced_structures",
+    "cefr_level": "B2 - C1",
+    "summary": "Đưa phó từ phủ định hoặc bán phủ định lên đầu câu nhằm mục đích nhấn mạnh mạnh mẽ hành động.",
+    "formula": {
+      "affirmative": "Negative Adverbial + Auxiliary Verb + S + Main Verb",
+      "negative": "Not until / Only when + Clause + Auxiliary + S + V",
+      "interrogative": "Hardly/Scarcely + had + S + V3/ed + when + S + V2/ed"
+    },
+    "usage": [
+      "Đảo ngữ với phó từ phủ định: Never, Rarely, Seldom, Little, Hardly ever.",
+      "Đảo ngữ với No: Under no circumstances, At no time, On no account, Nowhere.",
+      "Đảo ngữ cấu trúc 'Vừa mới... thì...': Hardly/Scarcely... when, No sooner... than.",
+      "Đảo ngữ với Only: Only by, Only when, Only after, Only then."
+    ],
+    "signal_words": [
+      "Never",
+      "Rarely",
+      "Seldom",
+      "Hardly",
+      "Scarcely",
+      "No sooner",
+      "Under no circumstances",
+      "Only when",
+      "Not until"
+    ],
+    "phonics_rules": "Ngữ điệu rơi mạnh ở từ phủ định đầu câu để biểu đạt kịch tính (emphatic intonation).",
+    "common_mistakes": "Quên mượn trợ động từ (Did/Had/Do/Can) hoặc vẫn đảo ngữ ở mệnh đề thời gian thay vì mệnh đề chính.",
+    "examples": [
+      {
+        "en": "Hardly had the teacher entered the classroom when all students stood up.",
+        "vi": "Thầy giáo vừa bước vào lớp thì tất cả học sinh đã đứng dậy chào."
+      },
+      {
+        "en": "Under no circumstances should personal passwords be disclosed.",
+        "vi": "Trong bất kỳ hoàn cảnh nào cũng không được tiết lộ mật khẩu cá nhân."
+      }
+    ],
+    "practice_questions": [
+      {
+        "id": "gq_inv_1",
+        "prompt": "Only in the right ecological conditions ______ these rare plants be able to thrive.",
+        "options": [
+          "A. will",
+          "B. they will",
+          "C. that will",
+          "D. are"
+        ],
+        "correct": "A",
+        "explanation": "Đảo ngữ với cụm 'Only in...': Trợ động từ 'will' đứng trước chủ ngữ 'these rare plants'."
+      }
+    ]
+  },
+  {
+    "id": "gram_cleft_sentences",
+    "topic": "Câu Chẻ Nhấn Mạnh (Cleft Sentences: It is/was... that)",
+    "grade_level": "Lớp 11 - Lớp 12, Thi THPT QG",
+    "curriculum_unit": "Unit 12: Career Paths",
+    "category": "emphasis",
+    "cefr_level": "B2",
+    "summary": "Tách một câu đơn thành hai mệnh đề để làm nổi bật chủ ngữ, tân ngữ hoặc trạng ngữ được nhấn mạnh.",
+    "formula": {
+      "affirmative": "It + is/was + Focus Element (S / O / Adv) + that/who + Rest of sentence",
+      "negative": "It + is/was not + Focus Element + that...",
+      "interrogative": "Is/Was it + Focus Element + that...?"
+    },
+    "usage": [
+      "Nhấn mạnh chủ ngữ chỉ người (dùng who/that) hoặc chỉ vật (dùng that).",
+      "Nhấn mạnh tân ngữ trực tiếp hoặc gián tiếp.",
+      "Nhấn mạnh trạng ngữ chỉ nơi chốn, thời gian, phương tiện."
+    ],
+    "signal_words": [
+      "It is... that",
+      "It was... that",
+      "It is... who"
+    ],
+    "phonics_rules": "Nhấn trọng âm câu (sentence stress) vào phần tử nằm giữa 'It is/was' và 'that'.",
+    "common_mistakes": "Dùng 'which' hoặc 'where' thay vì 'that' khi nhấn mạnh trạng từ nơi chốn (Sai: It was in Hanoi where -> Đúng: It was in Hanoi that).",
+    "examples": [
+      {
+        "en": "It was my dedicated mother who inspired my passion for English.",
+        "vi": "Chính người mẹ tận tụy của tôi là người đã truyền cảm hứng đam mê tiếng Anh cho tôi."
+      }
+    ],
+    "practice_questions": [
+      {
+        "id": "gq_cleft_1",
+        "prompt": "It was in the tranquil coastal town ______ the poet composed his masterpiece.",
+        "options": [
+          "A. that",
+          "B. where",
+          "C. which",
+          "D. when"
+        ],
+        "correct": "A",
+        "explanation": "Câu chẻ nhấn mạnh trạng ngữ nơi chốn luôn dùng 'that' trong cấu trúc chuẩn ngữ pháp."
+      }
+    ]
+  },
+  {
+    "id": "gram_subjunctive",
+    "topic": "Thể Giả Định (Subjunctive Mood with Demand / Insist / Suggest)",
+    "grade_level": "Lớp 12 & Luyện Thi Đại Học / HSG",
+    "curriculum_unit": "Chuyên đề Ngữ pháp Bồi dưỡng HSG",
+    "category": "advanced_structures",
+    "cefr_level": "C1",
+    "summary": "Diễn tả đề nghị, mệnh lệnh, yêu cầu khẩn thiết. Động từ trong mệnh đề that luôn ở dạng nguyên thể không 'to' (V_bare).",
+    "formula": {
+      "affirmative": "S1 + insist/demand/suggest/recommend + that + S2 + (should) + V_inf",
+      "negative": "S1 + require + that + S2 + (should) not + V_inf",
+      "interrogative": "It is essential/vital/imperative + that + S + V_inf"
+    },
+    "usage": [
+      "Đi sau động từ chỉ yêu cầu: demand, insist, require, recommend, suggest, propose.",
+      "Đi sau tính từ chỉ tính cấp thiết: vital, imperative, essential, crucial, necessary."
+    ],
+    "signal_words": [
+      "insist that",
+      "demand that",
+      "suggest that",
+      "essential that",
+      "vital that",
+      "imperative that"
+    ],
+    "phonics_rules": "Không chia đuôi -s/-es hay quá khứ cho động từ trong mệnh đề that.",
+    "common_mistakes": "Tự ý chia thì quá khứ hoặc thêm 's' ở ngôi thứ 3 số ít (Sai: insists that he goes -> Đúng: insists that he go).",
+    "examples": [
+      {
+        "en": "The senior physician insisted that the patient take complete rest.",
+        "vi": "Bác sĩ trưởng khoa khăng khăng yêu cầu bệnh nhân phải nghỉ ngơi tuyệt đối."
+      }
+    ],
+    "practice_questions": [
+      {
+        "id": "gq_sub_1",
+        "prompt": "The headmaster recommended that every student ______ present at the assembly by 7:00 AM.",
+        "options": [
+          "A. be",
+          "B. is",
+          "C. was",
+          "D. are"
+        ],
+        "correct": "A",
+        "explanation": "Cấu trúc giả định với 'recommend that': động từ To Be luôn ở dạng nguyên thể 'be' cho mọi ngôi."
+      }
+    ]
+  },
+  {
+    "id": "gram_phrasal_verbs_mastery",
+    "topic": "Cụm Động Từ Chuyên Sâu (Phrasal Verbs Mastery)",
+    "grade_level": "Lớp 7 đến Lớp 12, KET, PET, IELTS",
+    "curriculum_unit": "Chuyên Đề Cụm Động Từ Thi Vào 10 & THPT",
+    "category": "lexico_grammar",
+    "cefr_level": "A2 - C1",
+    "summary": "Sự kết hợp giữa động từ và tiểu từ (giới từ/phó từ) tạo thành một nghĩa hoàn toàn mới.",
+    "formula": {
+      "affirmative": "S + Verb + Particle + Object (hoặc S + Verb + Object + Particle nếu tách rời)",
+      "negative": "S + Auxiliary not + Verb + Particle",
+      "interrogative": "Auxiliary + S + Verb + Particle?"
+    },
+    "usage": [
+      "Cụm động từ không thể tách rời (Inseparable): look after, run into, cope with, hold up.",
+      "Cụm động từ có thể tách rời (Separable): turn off/turn on, call off, put away.",
+      "Cụm động từ có 2 tiểu từ (Three-part): look forward to, catch up with, put up with."
+    ],
+    "signal_words": [
+      "look after",
+      "give up",
+      "call off",
+      "put off",
+      "bring about",
+      "hold up",
+      "look forward to",
+      "run out of"
+    ],
+    "phonics_rules": "Nối âm liền mạch giữa phụ âm cuối của động từ với nguyên âm đầu của tiểu từ (turn off -> /tɜː.nɒf/).",
+    "common_mistakes": "Nhầm lẫn giữa put off (hoãn) và call off (hủy); turn off (tắt) và take off (cất cánh/cởi áo).",
+    "examples": [
+      {
+        "en": "We had to put off the camping trip until the stormy weather cleared.",
+        "vi": "Chúng tôi đã phải hoãn chuyến cắm trại cho đến khi thời tiết bão tan."
+      }
+    ],
+    "practice_questions": [
+      {
+        "id": "gq_pv_1",
+        "prompt": "Because of sudden heavy snowfall, the flight authorities decided to ______ all departures.",
+        "options": [
+          "A. call off",
+          "B. hold on",
+          "C. give in",
+          "D. take over"
+        ],
+        "correct": "A",
+        "explanation": "'call off' = hủy bỏ chuyến bay do bão tuyết."
+      }
+    ]
+  },
+  {
+    "id": "gram_sentence_transformation",
+    "topic": "Kỹ Năng Biến Đổi Viết Lại Câu Tương Đương (Sentence Rewriting)",
+    "grade_level": "Lớp 7, 8, 9, 10, 11, 12 & Tuyển Sinh Vào 10",
+    "curriculum_unit": "700 Câu Bài Tập Viết Lại Câu Tuyển Chọn",
+    "category": "syntax_transformation",
+    "cefr_level": "A2 - B2",
+    "summary": "Chuyển đổi câu gốc sang một cấu trúc mới sử dụng từ cho trước sao cho ý nghĩa giữ nguyên 100%.",
+    "formula": {
+      "affirmative": "S + started/began V-ing ... ago <=> S + have/has V3/ed for ...",
+      "negative": "Although + Clause <=> In spite of / Despite + Noun/V-ing",
+      "interrogative": "Because + Clause <=> Because of + Noun Phrase"
+    },
+    "usage": [
+      "Chuyển đổi thì: Quá khứ đơn (started/last) <=> Hiện tại hoàn thành (have/has + for/since).",
+      "Chuyển đổi nguyên nhân - nhượng bộ: Although <=> Despite; Because <=> Because of.",
+      "Chuyển đổi điều kiện: If you don't... <=> Unless you...",
+      "Chuyển đổi so sánh: S1 is taller than S2 <=> S2 is not as tall as S1."
+    ],
+    "signal_words": [
+      "Although",
+      "Despite",
+      "Because of",
+      "Unless",
+      "It takes",
+      "Used to",
+      "Prefer... to..."
+    ],
+    "phonics_rules": "Giữ đúng thì động từ và bảo toàn đại từ nhân xưng phù hợp.",
+    "common_mistakes": "Dùng 'Despite of' (Sai hoàn toàn -> chỉ dùng 'Despite' hoặc 'In spite of').",
+    "examples": [
+      {
+        "en": "Despite the torrential rain, they walked to school on time.",
+        "vi": "Mặc dù trời mưa xối xả, họ vẫn đi bộ đến trường đúng giờ."
+      }
+    ],
+    "practice_questions": [
+      {
+        "id": "gq_rew_1",
+        "prompt": "Rewrite: 'Although she was ill, Lan completed her homework.' -> 'In spite of ______'",
+        "options": [
+          "A. her illness, Lan completed her homework.",
+          "B. she was ill, Lan completed her homework.",
+          "C. Lan was illness, she completed her homework.",
+          "D. being ill, Lan wasn't complete her homework."
+        ],
+        "correct": "A",
+        "explanation": "'In spite of + her illness' (danh từ) thay thế cho mệnh đề 'Although she was ill'."
+      }
+    ]
   }
 ]

@@ -1,0 +1,48 @@
+{
+  "collapse-filter": false,
+  "search": "",
+  "colorGroups": [
+    {
+      "query": "tag:#moc",
+      "color": {
+        "a": 1,
+        "rgb": 16753920
+      }
+    },
+    {
+      "query": "tag:#grammar",
+      "color": {
+        "a": 1,
+        "rgb": 3394815
+      }
+    },
+    {
+      "query": "tag:#vocab",
+      "color": {
+        "a": 1,
+        "rgb": 65451
+      }
+    },
+    {
+      "query": "tag:#exam",
+      "color": {
+        "a": 1,
+        "rgb": 16724630
+      }
+    },
+    {
+      "query": "tag:#curriculum",
+      "color": {
+        "a": 1,
+        "rgb": 11342591
+      }
+    },
+    {
+      "query": "tag:#pedagogy",
+      "color": {
+        "a": 1,
+        "rgb": 16766720
+      }
+    }
+  ]
+}

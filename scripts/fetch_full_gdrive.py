@@ -5,8 +5,12 @@ import io
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
-ACCESS_TOKEN = "ya29.a0AX07CmvARPoFKRkiMTjG_AOCKUzv4wfw23Eb0HJFyJNdpBPw3aLJyz_4iqsmpElSaZpKNU_dXvVCVGiNImM1xBwZvyvsAON404ahL4LYZA4BICN6rNblb3sQoUAAgELCrnEeCLW_Tbcb60dfTPihBqsVbUVy_45p9iGr4kUIIb11XXffhedU0qT436TR_o8XI8BYuM8aCgYKAUQSARUSFQHGX2MipM65m4SEVJIISeVOP9m-Bg0206"
+with open('scripts/gdrive_token.json', 'r', encoding='utf-8') as tf:
+    token_cfg = json.load(tf)
+
+ACCESS_TOKEN = token_cfg['access_token']
 headers = {"Authorization": f"Bearer {ACCESS_TOKEN}"}
+
 
 all_files = []
 page_token = None

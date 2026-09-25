@@ -798,5 +798,181 @@
     "cambridge_level": "CAE_C1",
     "skill": "collocation",
     "grade": 12
+  },
+  {
+    "id": "q_hsg1000_01",
+    "exam_id": "ex_hsg_thpt_1000_syntax",
+    "prompt": "The attending physician insisted that his patient ______ complete bed rest for at least two weeks.",
+    "options": [
+      "A. take",
+      "B. takes",
+      "C. to take",
+      "D. took"
+    ],
+    "correct_answer": "A",
+    "explanation": "Đáp án A: Cấu trúc thể giả định (subjunctive mood) với động từ 'insist that + S + (should) + V_nguyên thể' không chia.",
+    "cambridge_level": "CAE_C1",
+    "skill": "grammar",
+    "grade": 12
+  },
+  {
+    "id": "q_hsg1000_02",
+    "exam_id": "ex_hsg_thpt_1000_syntax",
+    "prompt": "Only in the most pristine and protected rainforest environments ______ these endangered orchid species flourish.",
+    "options": [
+      "A. can",
+      "B. they can",
+      "C. which can",
+      "D. are"
+    ],
+    "correct_answer": "A",
+    "explanation": "Đáp án A: Đảo ngữ với cụm từ mở đầu 'Only in...': Trợ động từ 'can' đứng ngay trước chủ ngữ 'these endangered orchid species'.",
+    "cambridge_level": "CAE_C1",
+    "skill": "inversion",
+    "grade": 12
+  },
+  {
+    "id": "q_hsg1000_03",
+    "exam_id": "ex_hsg_thpt_1000_syntax",
+    "prompt": "Hardly ______ the final whistle blown when celebratory fireworks erupted throughout the stadium.",
+    "options": [
+      "A. had",
+      "B. was",
+      "C. did",
+      "D. has"
+    ],
+    "correct_answer": "A",
+    "explanation": "Đáp án A: Cấu trúc đảo ngữ 'Hardly had + S + V3/ed + when + S + V2/ed' diễn tả hành động vừa xảy ra thì hành động khác ập tới.",
+    "cambridge_level": "CAE_C1",
+    "skill": "inversion",
+    "grade": 12
+  },
+  {
+    "id": "q_pv_01",
+    "exam_id": "ex_phrasal_verbs_olympic",
+    "prompt": "It was the third time in six months that the neighborhood jewelry store had been ______ by masked burglars.",
+    "options": [
+      "A. held up",
+      "B. held down",
+      "C. held over",
+      "D. held on"
+    ],
+    "correct_answer": "A",
+    "explanation": "Đáp án A: 'hold up' mang nghĩa cướp có vũ trang (to rob someone or a bank/store using weapons).",
+    "cambridge_level": "FCE_B2",
+    "skill": "phrasal_verbs",
+    "grade": 11
+  },
+  {
+    "id": "q_pv_02",
+    "exam_id": "ex_phrasal_verbs_olympic",
+    "prompt": "The environmental summit organizers decided to ______ the outdoor opening ceremony due to gale-force winds.",
+    "options": [
+      "A. call off",
+      "B. call on",
+      "C. call up",
+      "D. call for"
+    ],
+    "correct_answer": "A",
+    "explanation": "Đáp án A: 'call off' = hủy bỏ sự kiện (cancel).",
+    "cambridge_level": "PET_B1",
+    "skill": "phrasal_verbs",
+    "grade": 11
+  },
+  {
+    "id": "q_pv_03",
+    "exam_id": "ex_phrasal_verbs_olympic",
+    "prompt": "We are sincerely looking forward to ______ from the scholarship admission board soon.",
+    "options": [
+      "A. hearing",
+      "B. hear",
+      "C. heard",
+      "D. be hearing"
+    ],
+    "correct_answer": "A",
+    "explanation": "Đáp án A: Sau cấu trúc 'look forward to' là danh động từ V-ing ('hearing').",
+    "cambridge_level": "KET_A2",
+    "skill": "phrasal_verbs",
+    "grade": 7
+  },
+  {
+    "id": "q_rw_01",
+    "exam_id": "ex_rewriting_700_mastery",
+    "prompt": "Rewrite: 'If the project is finished by lunchtime, you can leave early.' -> 'Provided ______'",
+    "options": [
+      "A. that the project is finished by lunchtime, you can leave early.",
+      "B. the project finished by lunchtime, you can leave early.",
+      "C. if the project is finished by lunchtime, you can leave early.",
+      "D. that you finish the project, so you leave early."
+    ],
+    "correct_answer": "A",
+    "explanation": "Đáp án A: 'Provided (that) + clause' thay thế hoàn hảo cho liên từ điều kiện 'If + clause'.",
+    "cambridge_level": "FCE_B2",
+    "skill": "sentence_transformation",
+    "grade": 9
+  },
+  {
+    "id": "q_rw_02",
+    "exam_id": "ex_rewriting_700_mastery",
+    "prompt": "Rewrite: 'They last renovated their ancestral home five years ago.' -> 'They haven't ______'",
+    "options": [
+      "A. renovated their ancestral home for five years.",
+      "B. renovated their ancestral home since five years.",
+      "C. renovate their ancestral home five years ago.",
+      "D. been renovating their ancestral home in five years."
+    ],
+    "correct_answer": "A",
+    "explanation": "Đáp án A: Chuyển đổi từ 'last V2/ed ... ago' sang 'haven't/hasn't V3/ed for ...'.",
+    "cambridge_level": "PET_B1",
+    "skill": "sentence_transformation",
+    "grade": 9
+  },
+  {
+    "id": "q_cu_01",
+    "exam_id": "ex_g12_cities_urbanisation",
+    "prompt": "The metropolitan city's _______ suffered heavy collapse during the historic flooding.",
+    "options": [
+      "A. infrastructure",
+      "B. congestion",
+      "C. inhabitant",
+      "D. neighbourhood"
+    ],
+    "correct_answer": "A",
+    "explanation": "Đáp án A: 'infrastructure' = cơ sở hạ tầng (cầu cống, đường sá, lưới điện).",
+    "cambridge_level": "CAE_C1",
+    "skill": "vocabulary",
+    "grade": 12
+  },
+  {
+    "id": "q_cu_02",
+    "exam_id": "ex_g12_cities_urbanisation",
+    "prompt": "More green corridors and rooftop gardens must be planted to guarantee _______ urban expansion.",
+    "options": [
+      "A. sustainable",
+      "B. sustaining",
+      "C. sustained",
+      "D. sustain"
+    ],
+    "correct_answer": "A",
+    "explanation": "Đáp án A: 'sustainable urban expansion' = sự phát triển/mở rộng đô thị bền vững.",
+    "cambridge_level": "CAE_C1",
+    "skill": "collocation",
+    "grade": 12
+  },
+  {
+    "id": "q_oh_01",
+    "exam_id": "ex_g12_our_heritage",
+    "prompt": "The ancient _______ of Thang Long preserves multi-layered relics from the Ly, Tran, and Le dynasties.",
+    "options": [
+      "A. citadel",
+      "B. souvenir",
+      "C. landscape",
+      "D. dynasty"
+    ],
+    "correct_answer": "A",
+    "explanation": "Đáp án A: 'citadel' = thành lũy, hoàng thành cổ kính (Imperial Citadel of Thang Long).",
+    "cambridge_level": "FCE_B2",
+    "skill": "vocabulary",
+    "grade": 12
   }
 ]
