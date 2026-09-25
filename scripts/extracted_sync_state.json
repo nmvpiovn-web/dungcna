@@ -19339,6 +19339,31 @@
     "30 CHỦ ĐỀ THUYẾT TRÌNH TIẾNG ANH TIỂU HỌC - CÓ FILE NGHE": "File not found: 1b2NH0x95VZuQHNLB_Vpk5Su8dkWsoBR3.",
     "20 ĐỀ LUYỆN THI VÀO LỚP 10 CÓ FILE NGHE - ĐÁP ÁN": "File not found: 1yGklViLgK9xydRr_5NwyJuLbe2wAQ5Ut.",
     "VỞ TẬP VIẾT _ TỔNG ÔN TỪ VỰNG NGỮ PHÁP STARTERS - MOVERS - FLYERS": "File not found: 1FYrI2c7LEHFdRrEJETs6j_5lMzcfIqm3.",
-    "CÁC CHỦ ĐỀ NGHE - NÓI TIẾNG ANH TIỂU HỌC | CÓ VIDEO + AUDIO | FILE WORD ": "File not found: 1F2fs2o_ffjnAw61O4EEC-Lu2aRh_IOW-."
+    "CÁC CHỦ ĐỀ NGHE - NÓI TIẾNG ANH TIỂU HỌC | CÓ VIDEO + AUDIO | FILE WORD ": "File not found: 1F2fs2o_ffjnAw61O4EEC-Lu2aRh_IOW-.",
+    "EM HỌC GIỎI TIẾNG ANH 3-4-5 | FILE WORD + CÓ FILE NGHE": "The operation was aborted due to timeout",
+    "ĐỀ THI THỬ TIẾNG ANH 9 HỌC KỲ 1 CÓ FILE NGHE - ĐÁP ÁN": "File not found: 1aaOFYLq9YdmwlsPc4w0sfAiKxsKW68h-.",
+    "BEGINNER GRAMMAR AND VOCAB TESTS ": "File not found: 1oy3ghukHDcVqKanLmeNR3BqQTTb-Gvj8.",
+    "ĐỀ CƯƠNG ÔN THI HỌC KỲ 1 TIẾNG ANH 3-4-5 ": "File not found: 1x2PdMyXS3ut8GHFAn_2QiKwdpWSToJtL.",
+    "POWERPOINT VÒNG QUAY NGẪU NHIÊN": "No Google Drive link found",
+    "ĐỀ CƯƠNG ÔN THI HỌC KỲ 1 TIẾNG ANH 6 THẦY VINH CÓ ĐÁP ÁN": "File not found: 11ZtbnHAVMbGiHW75ZaUtMDsAL4DI2AI3.",
+    "TÀI LIỆU DẠY VIẾT TIẾNG ANH THPT": "File not found: 1wAF0wU92nJUaW49JQz_yiSHuQsOQEIeZ.",
+    "BẢNG TỔNG HỢP TỪ VỰNG TIẾNG ANH 6 GLOBAL SUCCESS": "File not found: 1Uqdqq4NAfjGUZFMFKQeD8EASjLl8EEso.",
+    "BÀI TẬP CHUYÊN SÂU TIẾNG ANH 6 GLOBAL SUCCESS HỌC KỲ 2 CO FILE NGHE - ĐÁP ÁN": "Google Drive folder (cannot copy directly)",
+    "BỘ 15 WORKSHEET LUYỆN TẬP : HAVE / HAS và I/ THEY/ WE/ YOU/ IT ": "File not found: 1Sk2p3nVnx7hPVsk0x4sqU-szL1vmQmGz.",
+    "BỘ ĐỀ ÔN THI HỌC KỲ 1 TIẾNG ANH 6-7-8-9 THẦY BÙI VĂN VINH": "File not found: 1vh8vedT6QyQT4ltCFmtfykvnR6eAhe8g.",
+    "BỘ ĐỀ KIỂM TRA THAM KHẢO HỌC KỲ 1 TIẾNG ANH 6-7-8-9 CÓ FILE NGHE": "File not found: 1w4qUCjBnmGh44k7A81IxErd-E3frUVbV.",
+    "BÀI TẬP LÀM THÊM TIẾNG ANH 9 CŨ THEO ĐƠN VỊ BÀI HỌC": {
+      "error": {
+        "code": 403,
+        "message": "This file cannot be copied by the user.",
+        "errors": [
+          {
+            "message": "This file cannot be copied by the user.",
+            "domain": "global",
+            "reason": "cannotCopyFile"
+          }
+        ]
+      }
+    }
   }
 }
