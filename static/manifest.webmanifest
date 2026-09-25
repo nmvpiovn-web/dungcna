@@ -1,10 +1,11 @@
 {
   "name": "Tiếng Anh Cô Dung - Hệ Thống Đào Tạo K12 & Quốc Tế 2026",
   "short_name": "Tiếng Anh Cô Dung",
-  "description": "Hệ thống đào tạo và khảo thí Tiếng Anh Cô Dung: K12 (Lớp 1-12), Ôn thi Đại Học, IELTS, TOEIC, TOEFL, B1/B2 VSTEP, báo học phí đổi sao thưởng và kết nối bot Zalo phụ huynh",
+  "description": "Hệ thống đào tạo và khảo thí Tiếng Anh Cô Dung: K12 (Lớp 1-12), Ôn thi Đại Học, IELTS, TOEIC, TOEFL, B1/B2 VSTEP, báo học phí đổi sao thưởng, trung tâm thông báo Leader và kết nối bot Zalo phụ huynh",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
   "background_color": "#0f172a",
   "theme_color": "#059669",
   "orientation": "any",
@@ -14,6 +15,36 @@
       "sizes": "192x192 512x512",
       "type": "image/svg+xml",
       "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Báo Cáo & Cảnh Báo Leader",
+      "short_name": "Leader Hub",
+      "description": "Trung tâm thông báo sự kiện, điểm danh & học phí dành cho Cô Dung",
+      "url": "/admin?tab=leader_notifications",
+      "icons": [{ "src": "/icon.svg", "sizes": "192x192" }]
+    },
+    {
+      "name": "Thời Khóa Biểu & Điểm Danh",
+      "short_name": "Lịch Học",
+      "description": "Xem lịch học, chuông báo trước 1h/10p và điểm danh sổ đầu bài",
+      "url": "/schedule",
+      "icons": [{ "src": "/icon.svg", "sizes": "192x192" }]
+    },
+    {
+      "name": "Phòng Khảo Thí & Test",
+      "short_name": "Khảo Thí",
+      "description": "Kiểm tra 15 phút, 1 tiết, đề thi học kỳ và IELTS",
+      "url": "/exam",
+      "icons": [{ "src": "/icon.svg", "sizes": "192x192" }]
+    },
+    {
+      "name": "Sổ Học Phí & Đổi Sao",
+      "short_name": "Học Phí",
+      "description": "Theo dõi học phí, hạn nộp và giảm trừ sao thưởng",
+      "url": "/admin?tab=tuition",
+      "icons": [{ "src": "/icon.svg", "sizes": "192x192" }]
     }
   ],
   "categories": ["education", "productivity"],

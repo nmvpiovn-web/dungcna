@@ -277,6 +277,16 @@ export function registerUser({ usernameOrPhone, name, password, role = 'student'
     linked_student: linkedStudent?.name || 'Chưa liên kết'
   });
 
+  addLeaderNotification({
+    type: 'new_registration',
+    priority: 'high',
+    title: `🔔 Đăng ký mới: ${newUser.name}`,
+    message: `Thành viên "${newUser.name}" (@${newUser.username}, SĐT: ${newUser.phone || 'Chưa có'}) vừa đăng ký tài khoản [${newUser.role.toUpperCase()}] (${grade || 'Chưa phân lớp'}). Đang ở trạng thái Dùng thử (Trial) - Chờ Cô Dung duyệt lên chính thức!`,
+    link_url: '/admin?tab=students',
+    action_type: 'approve_user',
+    meta: { userId: newUser.id, username: newUser.username, role: newUser.role, grade }
+  });
+
   setCurrentUser(newUser);
   return { success: true, user: newUser, linked_student: linkedStudent };
 }
@@ -514,6 +524,123 @@ export async function requestUnlockClass(studentId, gradeTitle) {
   });
 
   return { success: true };
+}
+
+// -------------------------------------------------------------
+// GAME ARENA GATEKEEPER & RBAC (Controlled by Teacher / Admin)
+// -------------------------------------------------------------
+export const DEFAULT_GAME_SETTINGS = {
+  is_portal_open: false, // Default: LOCKED for students
+  allowed_grades: ['all'],
+  reward_stars_per_game: 20,
+  opened_by: '',
+  opened_at: null,
+  active_games: {
+    speed_match: false,      // Từ vựng: Ghép đôi
+    word_scramble: false,    // Từ vựng: Xếp chữ
+    meteor_rush: false,      // Từ vựng: Bắn thiên thạch
+    sentence_builder: false, // Ngữ pháp: Xây dựng câu
+    grammar_tense: false,    // Ngữ pháp: Thách thức thì động từ
+    memory_flip: false,      // Cards: Lật thẻ trí nhớ 3D
+    card_duel: false         // Cards: Đấu thẻ bài Flashcards
+  },
+  lock_message: '🔒 Đấu trường trò chơi hiện đang đóng. Chỉ được mở theo hiệu lệnh của Cô Dung / Giáo viên trong giờ học!'
+};
+
+const STORAGE_KEY_GAME_SETTINGS = 'tienganh_game_arena_settings_v2';
+
+export function getGameArenaSettings() {
+  if (typeof window === 'undefined') return { ...DEFAULT_GAME_SETTINGS };
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_GAME_SETTINGS);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return {
+        ...DEFAULT_GAME_SETTINGS,
+        ...parsed,
+        active_games: {
+          ...DEFAULT_GAME_SETTINGS.active_games,
+          ...(parsed.active_games || {})
+        }
+      };
+    }
+  } catch {}
+  return { ...DEFAULT_GAME_SETTINGS };
+}
+
+export function saveGameArenaSettings(newSettings, operator = null) {
+  const current = getGameArenaSettings();
+  const merged = {
+    ...current,
+    ...newSettings,
+    active_games: {
+      ...current.active_games,
+      ...(newSettings.active_games || {})
+    },
+    updated_at: new Date().toISOString()
+  };
+
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(STORAGE_KEY_GAME_SETTINGS, JSON.stringify(merged));
+    window.dispatchEvent(new CustomEvent('tienganh:game-settings-change', { detail: merged }));
+  }
+
+  const currentUser = getCurrentUser();
+  const op = operator || currentUser;
+  logSnapshot('UPDATE_GAME_SETTINGS', 'game_arena', op?.id || 'teacher', current, merged);
+
+  dispatchBotReport('GAME_ARENA_UPDATED', {
+    is_portal_open: merged.is_portal_open ? '🟢 ĐANG MỞ' : '🔴 ĐANG ĐÓNG',
+    active_games: Object.entries(merged.active_games).filter(([_, v]) => v).map(([k]) => k).join(', ') || 'Không có game nào mở',
+    updated_by: op?.name || 'Giáo viên',
+    time: new Date().toLocaleTimeString('vi-VN')
+  });
+
+  return merged;
+}
+
+export function toggleMasterGamePortal(isOpen, operator = null) {
+  const settings = getGameArenaSettings();
+  settings.is_portal_open = isOpen;
+  if (isOpen) {
+    settings.opened_at = new Date().toISOString();
+    settings.opened_by = operator?.name || 'Giáo viên';
+    const hasAnyActive = Object.values(settings.active_games).some(Boolean);
+    if (!hasAnyActive) {
+      settings.active_games.speed_match = true;
+      settings.active_games.sentence_builder = true;
+      settings.active_games.memory_flip = true;
+    }
+  }
+  return saveGameArenaSettings(settings, operator);
+}
+
+export function toggleIndividualGame(gameKey, isOpen, operator = null) {
+  const settings = getGameArenaSettings();
+  if (settings.active_games) {
+    settings.active_games[gameKey] = isOpen;
+  }
+  return saveGameArenaSettings(settings, operator);
+}
+
+export function isGameAccessibleForUser(user, gameKey) {
+  if (!user) return false;
+  // Teachers and Admins have unrestricted access anytime to preview and playtest
+  if (user.role === 'teacher' || isSuperAdmin(user)) return true;
+
+  // For students and parents: strictly gatekept by teacher's switch
+  const settings = getGameArenaSettings();
+  if (!settings.is_portal_open) return false;
+  if (!settings.active_games[gameKey]) return false;
+
+  // Grade check if not 'all'
+  if (settings.allowed_grades && !settings.allowed_grades.includes('all')) {
+    const userGrades = getUserEnrolledGrades(user);
+    const matches = userGrades.some(g => settings.allowed_grades.includes(g));
+    if (!matches) return false;
+  }
+
+  return true;
 }
 
 export function updateUserStarAdjustment(studentId, deltaStars, reason = 'Thưởng/phạt điểm rèn luyện', operator = null) {
@@ -1106,6 +1233,23 @@ export function saveExamAttempt(attempt) {
   }
 
   logSnapshot('SUBMIT_EXAM_ATTEMPT', 'exam_attempt', newAttempt.id, null, newAttempt);
+
+  addLeaderNotification({
+    type: 'test_completed',
+    priority: newAttempt.score >= 8.0 ? 'normal' : (newAttempt.score < 5.0 ? 'high' : 'normal'),
+    title: `📝 Bài thi hoàn thành: ${newAttempt.user_name || 'Học sinh'}`,
+    message: `Học sinh ${newAttempt.user_name} vừa nộp bài "${newAttempt.exam_title || 'Bài kiểm tra'}" - Đạt ${newAttempt.score}/${newAttempt.max_score} điểm (${newAttempt.percentage}%).`,
+    link_url: '/evaluations',
+    action_type: 'view_test',
+    meta: {
+      studentId: newAttempt.user_id,
+      studentName: newAttempt.user_name,
+      score: newAttempt.score,
+      maxScore: newAttempt.max_score,
+      examTitle: newAttempt.exam_title
+    }
+  });
+
   return newAttempt;
 }
 
@@ -1997,12 +2141,38 @@ export function saveSessionAttendanceBatch(sessionId, sessionDate, studentAttend
 
   // Dispatch bot alert on attendance completed
   const presentCount = studentAttendanceList.filter(s => s.status === 'present').length;
+  const absentRecords = studentAttendanceList.filter(s => s.status === 'absent');
+  const session = getAllClassSessions().find(s => s.id === sessionId);
+  const className = session?.class_name || 'Lớp học';
+  const absentNames = absentRecords.map(r => r.student_name).join(', ');
+
   dispatchBotReport('ATTENDANCE_ROLL_CALL_COMPLETED', {
     session_id: sessionId,
     session_date: sessionDate,
     total_students: studentAttendanceList.length,
     present_count: presentCount,
+    absent_count: absentRecords.length,
+    absent_names: absentNames,
     teacher: teacherUser?.name
+  });
+
+  addLeaderNotification({
+    type: 'attendance_summary',
+    priority: absentRecords.length > 0 ? 'high' : 'normal',
+    title: `📋 Báo cáo Điểm Danh: ${className} (${sessionDate})`,
+    message: absentRecords.length === 0
+      ? `Lớp "${className}" đã điểm danh ĐỦ: ${presentCount}/${studentAttendanceList.length} học viên có mặt đầy đủ.`
+      : `Lớp "${className}" có ${presentCount}/${studentAttendanceList.length} có mặt. THIẾU/VẮNG ${absentRecords.length} em: ${absentNames}.`,
+    link_url: '/schedule?tab=attendance',
+    action_type: 'view_attendance',
+    meta: {
+      sessionId,
+      sessionDate,
+      presentCount,
+      totalCount: studentAttendanceList.length,
+      absentNames,
+      className
+    }
   });
 
   return savedRecords;
@@ -2271,6 +2441,493 @@ export function acknowledgeTeacherReminder(teacherId, reminderId) {
   }
   return false;
 }
+
+// =========================================================================
+// 17. TRUNG TÂM BÁO CÁO & THÔNG BÁO PWA CHO LEADER (CÔ DUNG)
+// =========================================================================
+export const STORAGE_KEY_LEADER_NOTIFICATIONS = 'tienganh_leader_notifications_v2';
+
+export const DEFAULT_LEADER_NOTIFICATIONS = [
+  {
+    id: 'notif_seed_att_1',
+    dedup_key: 'miss_att_sess_mon_l7_1_seed',
+    type: 'teacher_missing_attendance',
+    priority: 'urgent',
+    title: '⚠️ Cảnh báo: Giáo viên chưa điểm danh!',
+    message: 'Buổi học "Lớp 7 - Tiếng Anh Căn Bản & Giao Tiếp" (18:00 - 19:30) đã bắt đầu hơn 15 phút nhưng Mr. Johnathan Miller CHƯA nộp danh sách điểm danh!',
+    timestamp: new Date(Date.now() - 18 * 60 * 1000).toISOString(),
+    is_read: false,
+    link_url: '/schedule',
+    action_type: 'remind_teacher',
+    meta: {
+      sessionId: 'sess_mon_l7_1',
+      className: 'Lớp 7 - Tiếng Anh Căn Bản & Giao Tiếp',
+      teacherName: 'Mr. Johnathan Miller',
+      teacherId: 'usr_teach_1'
+    }
+  },
+  {
+    id: 'notif_seed_sched_10m',
+    dedup_key: 'sched_10m_sess_mon_l7_1_seed',
+    type: 'schedule_reminder_10m',
+    priority: 'high',
+    title: '🚨 Lịch học gấp (Còn 10 phút): Lớp Chuyên Anh K12',
+    message: 'Lớp học sắp bắt đầu lúc 18:00 tại Phòng học Cô Dung (123 Phố Vọng). Nhắc phụ huynh đưa đón học sinh!',
+    timestamp: new Date(Date.now() - 45 * 60 * 1000).toISOString(),
+    is_read: false,
+    link_url: '/schedule',
+    action_type: 'view_schedule',
+    meta: {
+      sessionId: 'sess_mon_l7_1',
+      className: 'Lớp Chuyên Anh K12'
+    }
+  },
+  {
+    id: 'notif_seed_sched_1h',
+    dedup_key: 'sched_1h_sess_mon_l7_1_seed',
+    type: 'schedule_reminder_1h',
+    priority: 'normal',
+    title: '⏰ Lịch học sắp tới (Còn 1h): Lớp 7 Chuyên Anh',
+    message: 'Lớp "Lớp 7 Chuyên Anh Cô Dung" bắt đầu lúc 18:00 tại Phòng 201. Giáo viên phụ trách: Ms. Dung.',
+    timestamp: new Date(Date.now() - 85 * 60 * 1000).toISOString(),
+    is_read: true,
+    link_url: '/schedule',
+    action_type: 'view_schedule',
+    meta: {
+      sessionId: 'sess_mon_l7_1',
+      className: 'Lớp 7 Chuyên Anh Cô Dung'
+    }
+  },
+  {
+    id: 'notif_seed_rollcall_1',
+    dedup_key: 'att_summary_sess_wed_l9_1_seed',
+    type: 'attendance_summary',
+    priority: 'high',
+    title: '📋 Báo cáo Điểm Danh: Lớp 9 - Ôn Thi Vào 10',
+    message: 'Sĩ số: 15/16 có mặt. THIẾU 1 học viên: Trần Minh Anh (Nghỉ ốm có phép). Giáo viên đã cập nhật sổ đầu bài.',
+    timestamp: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
+    is_read: false,
+    link_url: '/schedule?tab=attendance',
+    action_type: 'view_attendance',
+    meta: {
+      sessionId: 'sess_wed_l9_1',
+      presentCount: 15,
+      totalCount: 16,
+      absentNames: 'Trần Minh Anh (Nghỉ ốm)'
+    }
+  },
+  {
+    id: 'notif_seed_reg_1',
+    dedup_key: 'new_reg_baokhiem_seed',
+    type: 'new_registration',
+    priority: 'high',
+    title: '🔔 Đăng ký mới: Nguyễn Bảo Khiêm (Lớp 7)',
+    message: 'Học sinh Nguyễn Bảo Khiêm (@baokhiem, SĐT: 0912345678) vừa đăng ký tài khoản Lớp 7. Trạng thái: Dùng thử (Trial) - Chờ Cô Dung duyệt!',
+    timestamp: new Date(Date.now() - 3 * 3600 * 1000).toISOString(),
+    is_read: false,
+    link_url: '/admin?tab=students',
+    action_type: 'approve_user',
+    meta: {
+      userId: 'usr_student_baokhiem',
+      username: 'baokhiem',
+      role: 'student',
+      grade: 'Lớp 7'
+    }
+  },
+  {
+    id: 'notif_seed_test_1',
+    dedup_key: 'test_comp_hoangnam_seed',
+    type: 'test_completed',
+    priority: 'normal',
+    title: '📝 Bài thi hoàn thành: Lê Hoàng Nam (Lớp 7)',
+    message: 'Học sinh Lê Hoàng Nam vừa hoàn thành bài "Kiểm Tra 15 Phút Unit 7: Traffic" đạt 9.5/10 điểm (+20 ⭐ Sao thưởng).',
+    timestamp: new Date(Date.now() - 4 * 3600 * 1000).toISOString(),
+    is_read: true,
+    link_url: '/evaluations',
+    action_type: 'view_test',
+    meta: {
+      studentId: 'usr_student_hoangnam',
+      score: 9.5,
+      examTitle: 'Kiểm Tra 15 Phút Unit 7: Traffic'
+    }
+  },
+  {
+    id: 'notif_seed_tui_1',
+    dedup_key: 'tuition_due_bill_2_seed',
+    type: 'tuition_due',
+    priority: 'urgent',
+    title: '💰 Đến hạn học phí: Phạm Thảo My (Lớp 8)',
+    message: 'Học phí kỳ Tháng 10/2026 số tiền 1.800.000 VNĐ đến hạn ngày 28/09/2026 (còn 3 ngày). Học sinh có 5,000 ⭐ tích lũy.',
+    timestamp: new Date(Date.now() - 5 * 3600 * 1000).toISOString(),
+    is_read: false,
+    link_url: '/admin?tab=tuition',
+    action_type: 'view_tuition',
+    meta: {
+      billId: 'bill_2',
+      studentName: 'Phạm Thảo My',
+      dueDate: '2026-09-28'
+    }
+  }
+];
+
+export function playNotificationChime(priority = 'normal') {
+  if (typeof window === 'undefined') return;
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return;
+    const ctx = new AudioContext();
+    const now = ctx.currentTime;
+
+    const tones = priority === 'urgent'
+      ? [{ f: 880, t: 0, d: 0.15 }, { f: 659, t: 0.16, d: 0.15 }, { f: 1046, t: 0.32, d: 0.25 }]
+      : [{ f: 587.33, t: 0, d: 0.2 }, { f: 880, t: 0.18, d: 0.35 }];
+
+    for (const tone of tones) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(tone.f, now + tone.t);
+      gain.gain.setValueAtTime(0.25, now + tone.t);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + tone.t + tone.d);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now + tone.t);
+      osc.stop(now + tone.t + tone.d);
+    }
+  } catch {}
+}
+
+export async function requestPwaNotificationPermission() {
+  if (typeof window === 'undefined' || !('Notification' in window)) {
+    return { supported: false, granted: false, status: 'unsupported' };
+  }
+  if (Notification.permission === 'granted') {
+    return { supported: true, granted: true, status: 'granted' };
+  }
+  try {
+    const permission = await Notification.requestPermission();
+    return { supported: true, granted: permission === 'granted', status: permission };
+  } catch (err) {
+    return { supported: true, granted: false, status: 'denied', error: err.message };
+  }
+}
+
+export function getAllLeaderNotifications() {
+  if (typeof window === 'undefined') return [...DEFAULT_LEADER_NOTIFICATIONS];
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_LEADER_NOTIFICATIONS);
+    if (raw) {
+      const list = JSON.parse(raw);
+      if (Array.isArray(list) && list.length > 0) return list;
+    }
+  } catch {}
+  return [...DEFAULT_LEADER_NOTIFICATIONS];
+}
+
+export function saveAllLeaderNotifications(notifications) {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(STORAGE_KEY_LEADER_NOTIFICATIONS, JSON.stringify(notifications));
+    window.dispatchEvent(new CustomEvent('tienganh:leader-notifications-change', { detail: notifications }));
+  }
+}
+
+export function addLeaderNotification(notif) {
+  const notifications = getAllLeaderNotifications();
+
+  // Deduplication check
+  if (notif.dedup_key) {
+    const existing = notifications.find(n => n.dedup_key === notif.dedup_key);
+    if (existing) {
+      return null;
+    }
+  }
+
+  const newNotif = {
+    id: notif.id || `notif_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+    dedup_key: notif.dedup_key || null,
+    type: notif.type || 'system',
+    priority: notif.priority || 'normal', // 'normal' | 'high' | 'urgent'
+    title: notif.title || 'Thông Báo Mới',
+    message: notif.message || '',
+    timestamp: notif.timestamp || new Date().toISOString(),
+    is_read: false,
+    link_url: notif.link_url || '/admin?tab=leader_notifications',
+    action_type: notif.action_type || '',
+    meta: notif.meta || {}
+  };
+
+  notifications.unshift(newNotif);
+  saveAllLeaderNotifications(notifications.slice(0, 100));
+
+  // Audio Chime
+  playNotificationChime(newNotif.priority);
+
+  // Dispatch PWA Event & Browser / SW Notification
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('tienganh:leader-notification-new', { detail: newNotif }));
+
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({
+        type: 'SHOW_LEADER_NOTIFICATION',
+        title: newNotif.title,
+        body: newNotif.message,
+        tag: newNotif.dedup_key || newNotif.id,
+        url: newNotif.link_url,
+        priority: newNotif.priority
+      });
+    } else if ('Notification' in window && Notification.permission === 'granted') {
+      try {
+        new Notification(newNotif.title, {
+          body: newNotif.message,
+          icon: '/icon.svg',
+          badge: '/icon.svg',
+          tag: newNotif.dedup_key || newNotif.id
+        });
+      } catch {}
+    }
+  }
+
+  return newNotif;
+}
+
+export function markNotificationAsRead(notifId) {
+  const list = getAllLeaderNotifications();
+  const idx = list.findIndex(n => n.id === notifId);
+  if (idx >= 0) {
+    list[idx].is_read = true;
+    saveAllLeaderNotifications(list);
+    return true;
+  }
+  return false;
+}
+
+export function markAllNotificationsAsRead() {
+  const list = getAllLeaderNotifications().map(n => ({ ...n, is_read: true }));
+  saveAllLeaderNotifications(list);
+  return list;
+}
+
+export function deleteLeaderNotification(notifId) {
+  const list = getAllLeaderNotifications().filter(n => n.id !== notifId);
+  saveAllLeaderNotifications(list);
+  return true;
+}
+
+export function clearAllLeaderNotifications() {
+  saveAllLeaderNotifications([]);
+  return true;
+}
+
+export function getUnreadLeaderNotificationCount() {
+  const list = getAllLeaderNotifications();
+  return list.filter(n => !n.is_read).length;
+}
+
+export function scanScheduleAndAttendanceForLeader(overrideDate = null) {
+  const now = overrideDate instanceof Date ? overrideDate : new Date();
+  const currentDayOfWeek = now.getDay();
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+  const todayStr = now.toISOString().slice(0, 10);
+
+  const sessions = getAllClassSessions().filter(s => Number(s.day_of_week) === currentDayOfWeek && s.status !== 'inactive');
+  const attendanceRecords = getAllAttendanceRecords();
+  const generatedNotifs = [];
+
+  for (const sess of sessions) {
+    if (!sess.start_time) continue;
+    const [startH, startM] = sess.start_time.split(':').map(Number);
+    const startMinutes = startH * 60 + startM;
+    const diff = startMinutes - currentMinutes;
+
+    // 1. Remind 1 hour before (between 60 and 45 mins before class)
+    if (diff <= 60 && diff >= 45) {
+      const dedupKey = `sched_1h_${sess.id}_${todayStr}`;
+      const notif = addLeaderNotification({
+        dedup_key: dedupKey,
+        type: 'schedule_reminder_1h',
+        priority: 'normal',
+        title: `⏰ Lịch học sắp tới (Còn 1h): ${sess.class_name}`,
+        message: `Lớp "${sess.class_name}" bắt đầu lúc ${sess.start_time} tại ${sess.location || 'Nhà Cô Dung'}. Giáo viên phụ trách: ${sess.teacher_name}.`,
+        link_url: '/schedule',
+        action_type: 'view_schedule',
+        meta: { sessionId: sess.id, startTime: sess.start_time, teacherName: sess.teacher_name }
+      });
+      if (notif) generatedNotifs.push(notif);
+    }
+
+    // 2. Remind 10 minutes before (between 15 and 0 mins before class)
+    if (diff <= 15 && diff >= 0) {
+      const dedupKey = `sched_10m_${sess.id}_${todayStr}`;
+      const notif = addLeaderNotification({
+        dedup_key: dedupKey,
+        type: 'schedule_reminder_10m',
+        priority: 'high',
+        title: `🚨 Lịch học gấp (Còn 10 phút): ${sess.class_name}`,
+        message: `Lớp "${sess.class_name}" bắt đầu lúc ${sess.start_time}! Nhắc nhở phụ huynh đưa đón học sinh, phòng học đã sẵn sàng.`,
+        link_url: '/schedule',
+        action_type: 'view_schedule',
+        meta: { sessionId: sess.id, startTime: sess.start_time }
+      });
+      if (notif) generatedNotifs.push(notif);
+    }
+
+    // 3. Teacher missing attendance (class started >= 15 mins ago, but within 2 hours of start)
+    if (diff <= -15 && diff >= -120) {
+      const attended = attendanceRecords.filter(r => r.session_id === sess.id && r.session_date === todayStr);
+      if (attended.length === 0) {
+        const dedupKey = `miss_att_${sess.id}_${todayStr}`;
+        const notif = addLeaderNotification({
+          dedup_key: dedupKey,
+          type: 'teacher_missing_attendance',
+          priority: 'urgent',
+          title: `⚠️ Cảnh báo: Giáo viên chưa điểm danh!`,
+          message: `Lớp "${sess.class_name}" đã bắt đầu lúc ${sess.start_time} (đã qua hơn 15 phút) nhưng Giáo viên ${sess.teacher_name} CHƯA nộp sổ điểm danh!`,
+          link_url: '/schedule',
+          action_type: 'remind_teacher',
+          meta: { sessionId: sess.id, teacherName: sess.teacher_name, teacherId: sess.teacher_id, startTime: sess.start_time }
+        });
+        if (notif) generatedNotifs.push(notif);
+      }
+    }
+  }
+
+  return generatedNotifs;
+}
+
+export function scanTuitionDueAlerts(overrideDate = null) {
+  const now = overrideDate instanceof Date ? overrideDate : new Date();
+  const bills = getAllTuitionBills().filter(b => b.status !== 'paid');
+  const generatedNotifs = [];
+
+  for (const bill of bills) {
+    const dueDateStr = bill.due_date || (bill.billing_period?.includes('10/2026') ? '2026-09-28' : '2026-09-30');
+    const dueDate = new Date(dueDateStr);
+    const diffDays = Math.ceil((dueDate - now) / (1000 * 60 * 60 * 24));
+    const amount = Number(bill.final_amount_vnd || bill.final_fee_vnd || 1800000);
+    const period = bill.billing_period || bill.billing_cycle || 'Tháng 10/2026';
+    const grade = bill.grade_level || bill.grade || 'K12';
+
+    if (diffDays <= 5 && diffDays >= 0) {
+      const dedupKey = `tuition_due_${bill.id}_${dueDateStr}`;
+      const notif = addLeaderNotification({
+        dedup_key: dedupKey,
+        type: 'tuition_due',
+        priority: 'high',
+        title: `💰 Tới hạn học phí: ${bill.student_name} (${grade})`,
+        message: `Học phí kỳ ${period} số tiền ${amount.toLocaleString('vi-VN')}đ của em ${bill.student_name} đến hạn ngày ${dueDateStr} (còn ${diffDays} ngày). Chưa thanh toán!`,
+        link_url: '/admin?tab=tuition',
+        action_type: 'view_tuition',
+        meta: { billId: bill.id, studentId: bill.student_id, dueDate: dueDateStr }
+      });
+      if (notif) generatedNotifs.push(notif);
+    } else if (diffDays < 0) {
+      const dedupKey = `tuition_overdue_${bill.id}_${dueDateStr}`;
+      const notif = addLeaderNotification({
+        dedup_key: dedupKey,
+        type: 'tuition_due',
+        priority: 'urgent',
+        title: `🚨 Quá hạn học phí: ${bill.student_name} (${grade})`,
+        message: `Học phí kỳ ${period} số tiền ${amount.toLocaleString('vi-VN')}đ đã QUÁ HẠN ${Math.abs(diffDays)} ngày (Hạn: ${dueDateStr})! Cần liên hệ phụ huynh.`,
+        link_url: '/admin?tab=tuition',
+        action_type: 'view_tuition',
+        meta: { billId: bill.id, studentId: bill.student_id, dueDate: dueDateStr }
+      });
+      if (notif) generatedNotifs.push(notif);
+    }
+  }
+
+  return generatedNotifs;
+}
+
+export function simulateLeaderNotification(eventType) {
+  const now = new Date();
+  switch (eventType) {
+    case 'new_registration':
+      return addLeaderNotification({
+        type: 'new_registration',
+        priority: 'high',
+        title: '🔔 Đăng ký mới: Trần Hải Đăng (Lớp 8)',
+        message: 'Học sinh Trần Hải Đăng (@haidang_k8, SĐT: 0987654321) vừa đăng ký tài khoản Lớp 8. Cần Cô Dung duyệt chính thức!',
+        link_url: '/admin?tab=students',
+        action_type: 'approve_user',
+        meta: { username: 'haidang_k8', role: 'student', grade: 'Lớp 8' }
+      });
+
+    case 'schedule_reminder_1h':
+      return addLeaderNotification({
+        type: 'schedule_reminder_1h',
+        priority: 'normal',
+        title: '⏰ Lịch học sắp tới (Còn 1h): Lớp 7 Chuyên Anh',
+        message: 'Lớp "Lớp 7 Chuyên Anh Cô Dung" bắt đầu lúc 18:00 tại Phòng 201 - Nhà Cô Dung. Giáo viên: Ms. Dung.',
+        link_url: '/schedule',
+        action_type: 'view_schedule'
+      });
+
+    case 'schedule_reminder_10m':
+      return addLeaderNotification({
+        type: 'schedule_reminder_10m',
+        priority: 'high',
+        title: '🚨 Lịch học gấp (Còn 10 phút): Lớp 7 Chuyên Anh',
+        message: 'Lớp học sắp bắt đầu lúc 18:00! Nhắc phụ huynh đưa đón học sinh kịp giờ.',
+        link_url: '/schedule',
+        action_type: 'view_schedule'
+      });
+
+    case 'attendance_summary_full':
+      return addLeaderNotification({
+        type: 'attendance_summary',
+        priority: 'normal',
+        title: '📋 Báo cáo Điểm Danh: Lớp 7 - Tiếng Anh Căn Bản',
+        message: 'Sĩ số: 18/18 học viên CÓ MẶT ĐẦY ĐỦ. Tinh thần học tập sôi nổi, đạt 100% sao rèn luyện!',
+        link_url: '/schedule?tab=attendance',
+        action_type: 'view_attendance'
+      });
+
+    case 'attendance_summary_absent':
+      return addLeaderNotification({
+        type: 'attendance_summary',
+        priority: 'high',
+        title: '📋 Báo cáo Điểm Danh: Lớp 8 - Bứt Phá Ngữ Pháp',
+        message: 'Sĩ số 16/18 có mặt. THIẾU 2 học viên: Vũ Minh Châu (Có phép), Đỗ Bảo Nam (Không phép).',
+        link_url: '/schedule?tab=attendance',
+        action_type: 'view_attendance'
+      });
+
+    case 'teacher_missing_attendance':
+      return addLeaderNotification({
+        type: 'teacher_missing_attendance',
+        priority: 'urgent',
+        title: '⚠️ Cảnh báo: Giáo viên chưa điểm danh!',
+        message: 'Buổi học "Lớp 9 - Ôn Thi Chuyên" đã diễn ra hơn 15 phút nhưng Giáo viên Trợ giảng CHƯA nộp sổ điểm danh!',
+        link_url: '/schedule',
+        action_type: 'remind_teacher'
+      });
+
+    case 'test_completed':
+      return addLeaderNotification({
+        type: 'test_completed',
+        priority: 'normal',
+        title: '📝 Bài thi hoàn thành: Nguyễn Bảo Khiêm',
+        message: 'Học sinh Nguyễn Bảo Khiêm vừa nộp bài "Đề Thi Khảo Sát Giữa Kỳ I" đạt 10/10 điểm (+25 ⭐ Sao thưởng)!',
+        link_url: '/evaluations',
+        action_type: 'view_test'
+      });
+
+    case 'tuition_due':
+      return addLeaderNotification({
+        type: 'tuition_due',
+        priority: 'urgent',
+        title: '💰 Đến hạn học phí: Hoàng Tuấn Kiệt (Lớp 10)',
+        message: 'Học phí kỳ Tháng 10/2026 số tiền 2.200.000 VNĐ đến hạn ngày mai. Chưa thanh toán!',
+        link_url: '/admin?tab=tuition',
+        action_type: 'view_tuition'
+      });
+
+    default:
+      return null;
+  }
+}
+
 
 
 

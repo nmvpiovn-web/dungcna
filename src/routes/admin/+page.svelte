@@ -1,5 +1,6 @@
 <script>
   import { onMount } from 'svelte';
+  import { page } from '$app/stores';
   import { 
     getAllUsers, 
     getCurrentUser, 
@@ -38,6 +39,19 @@
     TUITION_TEMPLATES,
     exportTuitionToCSV,
     getStudentStars,
+    getGameArenaSettings,
+    saveGameArenaSettings,
+    toggleMasterGamePortal,
+    toggleIndividualGame,
+    getAllLeaderNotifications,
+    markNotificationAsRead,
+    markAllNotificationsAsRead,
+    deleteLeaderNotification,
+    clearAllLeaderNotifications,
+    scanScheduleAndAttendanceForLeader,
+    scanTuitionDueAlerts,
+    simulateLeaderNotification,
+    requestPwaNotificationPermission,
     SUPERADMIN_EMAILS 
   } from '$lib/unifiedStore';
   import { playAudioFeedback } from '$lib/speech.js';
@@ -53,9 +67,27 @@
   let tuitionBills = $state([]);
   let classSessions = $state([]);
   let teacherProfiles = $state([]);
+  let gameSettings = $state(getGameArenaSettings());
   
-  // Navigation Tabs: 'students' | 'teachers' | 'schedule' | 'tuition' | 'teacher_cp' | 'webhooks' | 'snapshots'
+  // Navigation Tabs: 'leader_notifications' | 'students' | 'teachers' | 'schedule' | 'tuition' | 'teacher_cp' | 'games' | 'webhooks' | 'snapshots'
   let activeTab = $state('students');
+
+  // Leader Notifications State
+  let leaderNotifications = $state([]);
+  let notifFilter = $state('all');
+  let adminScanMsg = $state('');
+  let pwaStatus = $state('default');
+  let teacherReminderToast = $state('');
+
+  let unreadLeaderCount = $derived(leaderNotifications.filter(n => !n.is_read).length);
+
+  let filteredLeaderNotifs = $derived.by(() => {
+    if (notifFilter === 'all') return leaderNotifications;
+    if (notifFilter === 'schedule') {
+      return leaderNotifications.filter(n => n.type === 'schedule_reminder_1h' || n.type === 'schedule_reminder_10m');
+    }
+    return leaderNotifications.filter(n => n.type === notifFilter);
+  });
 
   // Filter States
   let studentSearchTerm = $state('');
@@ -168,6 +200,27 @@
 
   onMount(() => {
     loadData();
+
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      pwaStatus = Notification.permission;
+    }
+
+    const queryTab = $page.url.searchParams.get('tab');
+    if (queryTab && ['leader_notifications', 'students', 'teachers', 'schedule', 'tuition', 'teacher_cp', 'games', 'webhooks', 'snapshots'].includes(queryTab)) {
+      activeTab = queryTab;
+    }
+
+    const handleLeaderEvent = (e) => {
+      leaderNotifications = e.detail || getAllLeaderNotifications();
+    };
+
+    window.addEventListener('tienganh:leader-notifications-change', handleLeaderEvent);
+    window.addEventListener('tienganh:leader-notification-new', handleLeaderEvent);
+
+    return () => {
+      window.removeEventListener('tienganh:leader-notifications-change', handleLeaderEvent);
+      window.removeEventListener('tienganh:leader-notification-new', handleLeaderEvent);
+    };
   });
 
   function loadData() {
@@ -178,9 +231,74 @@
     tuitionBills = getAllTuitionBills();
     classSessions = getAllClassSessions();
     teacherProfiles = getAllTeacherProfiles();
+    gameSettings = getGameArenaSettings();
+    leaderNotifications = getAllLeaderNotifications();
     if (webhooks.length > 0) {
       webhookForm = { ...webhooks[0] };
     }
+  }
+
+  async function handleAdminRequestPwa() {
+    const res = await requestPwaNotificationPermission();
+    pwaStatus = res.status;
+    if (res.granted) {
+      showToast('✅ Đã kích hoạt quyền nhận thông báo PWA trên thiết bị của Cô Dung!');
+    } else {
+      showToast('⚠️ Quyền thông báo trình duyệt chưa được cấp hoặc bị chặn.');
+    }
+  }
+
+  function handleAdminScanNow() {
+    adminScanMsg = '🔍 Đang kiểm tra lịch học, điểm danh và hạn học phí...';
+    setTimeout(() => {
+      const sched = scanScheduleAndAttendanceForLeader();
+      const tui = scanTuitionDueAlerts();
+      leaderNotifications = getAllLeaderNotifications();
+      const total = (sched?.length || 0) + (tui?.length || 0);
+      adminScanMsg = total > 0 
+        ? `🔔 Đã phát hiện ${total} cảnh báo mới cho Leader!`
+        : '✨ Toàn bộ lịch học, điểm danh và học phí đã được đồng bộ chuẩn xác.';
+      showToast(adminScanMsg);
+      setTimeout(() => { adminScanMsg = ''; }, 4000);
+    }, 500);
+  }
+
+  function handleAdminSimulate(type) {
+    simulateLeaderNotification(type);
+    leaderNotifications = getAllLeaderNotifications();
+    showToast('🧪 Đã phát sinh sự kiện mô phỏng thành công!');
+  }
+
+  function handleRemindTeacherDirectly(notif) {
+    const teacherId = notif.meta?.teacherId || 'usr_teach_1';
+    const teacherName = notif.meta?.teacherName || 'Giáo viên phụ trách';
+    const content = `[Khẩn từ Leader Cô Dung] ${notif.title}: Vui lòng kiểm tra và hoàn thành sổ điểm danh cho lớp "${notif.meta?.className || ''}" ngay!`;
+
+    addTeacherPrivateReminder(teacherId, {
+      content,
+      urgency: 'high'
+    });
+
+    markNotificationAsRead(notif.id);
+    leaderNotifications = getAllLeaderNotifications();
+    showToast(`Đã gửi lời nhắc khẩn cấp trực tiếp tới ${teacherName}!`);
+  }
+
+  function handleAdminToggleMasterGames(isOpen) {
+    gameSettings = toggleMasterGamePortal(isOpen, currentUser);
+    playAudioFeedback(isOpen);
+    showToast(isOpen ? '🟢 Đã mở cổng đấu trường game cho học sinh!' : '🔒 Đã khóa cổng đấu trường game đối với học sinh!');
+  }
+
+  function handleAdminToggleGame(gameKey) {
+    const next = !gameSettings.active_games[gameKey];
+    gameSettings = toggleIndividualGame(gameKey, next, currentUser);
+    showToast(`Đã ${next ? 'bật' : 'tắt'} trò chơi: ${gameKey}`);
+  }
+
+  function handleAdminSaveRewardStars(stars) {
+    gameSettings = saveGameArenaSettings({ reward_stars_per_game: parseInt(stars) || 20 }, currentUser);
+    showToast(`Đã cập nhật mức thưởng: ${stars} ⭐ / trận thắng`);
   }
 
   function showToast(msg) {
@@ -705,6 +823,18 @@
     <!-- Navigation Tabs Ribbon -->
     <div class="mt-6 pt-4 border-t border-slate-800/80 flex items-center gap-1.5 overflow-x-auto pb-1 text-xs font-bold">
       <button
+        onclick={() => activeTab = 'leader_notifications'}
+        class="px-3.5 py-2 rounded-xl transition-all whitespace-nowrap flex items-center gap-2 {activeTab === 'leader_notifications' ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-600/30' : 'bg-slate-950 text-slate-400 hover:text-white hover:bg-slate-800'}"
+      >
+        <span>🔔 Cảnh Báo Leader</span>
+        {#if unreadLeaderCount > 0}
+          <span class="px-1.5 py-0.5 rounded-full bg-rose-500 text-white text-[10px] animate-pulse">
+            {unreadLeaderCount} mới
+          </span>
+        {/if}
+      </button>
+
+      <button
         onclick={() => activeTab = 'students'}
         class="px-3.5 py-2 rounded-xl transition-all whitespace-nowrap flex items-center gap-2 {activeTab === 'students' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30' : 'bg-slate-950 text-slate-400 hover:text-white hover:bg-slate-800'}"
       >
@@ -745,6 +875,16 @@
       </button>
 
       <button
+        onclick={() => activeTab = 'games'}
+        class="px-3.5 py-2 rounded-xl transition-all whitespace-nowrap flex items-center gap-1.5 {activeTab === 'games' ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30' : 'bg-slate-950 text-slate-400 hover:text-white hover:bg-slate-800'}"
+      >
+        <span>🎮 Đấu Trường Game</span>
+        <span class="px-1.5 py-0.5 rounded text-[9px] font-black {gameSettings.is_portal_open ? 'bg-emerald-500 text-slate-950' : 'bg-rose-500 text-white'}">
+          {gameSettings.is_portal_open ? 'MỞ' : 'KHÓA'}
+        </span>
+      </button>
+
+      <button
         onclick={() => activeTab = 'webhooks'}
         class="px-3.5 py-2 rounded-xl transition-all whitespace-nowrap flex items-center gap-1.5 {activeTab === 'webhooks' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30' : 'bg-slate-950 text-slate-400 hover:text-white hover:bg-slate-800'}"
       >
@@ -759,6 +899,376 @@
       </button>
     </div>
   </div>
+
+  <!-- ================= TAB 0: TRUNG TÂM BÁO CÁO & CẢNH BÁO LEADER (CÔ DUNG) ================= -->
+  {#if activeTab === 'leader_notifications'}
+    <div class="space-y-6 animate-in fade-in duration-200">
+      <!-- Header Banner & Action Deck -->
+      <div class="p-6 rounded-3xl bg-gradient-to-r from-slate-900 via-emerald-950/40 to-slate-900 border border-emerald-500/30 shadow-2xl flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div class="space-y-1.5">
+          <div class="flex items-center gap-2">
+            <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span>CƠ CHẾ GIÁM SÁT SỰ KIỆN THỜI GIAN THỰC (REAL-TIME EVENT HUB)</span>
+            </span>
+            {#if pwaStatus === 'granted'}
+              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-teal-500/20 text-teal-300 border border-teal-500/30">
+                📲 PWA Push: Sẵn Sàng
+              </span>
+            {/if}
+          </div>
+          <h2 class="text-xl md:text-2xl font-black text-white flex items-center gap-2.5">
+            <span>🔔</span>
+            <span>Trung Tâm Báo Cáo &amp; Cảnh Báo Cho Leader Cô Dung</span>
+            {#if unreadLeaderCount > 0}
+              <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-600 text-white animate-pulse">
+                {unreadLeaderCount} chưa đọc
+              </span>
+            {/if}
+          </h2>
+          <p class="text-xs text-slate-300 max-w-2xl leading-relaxed">
+            Hệ thống tự động thông báo trước lịch học 1h &amp; 10p, cảnh báo khi giáo viên chưa điểm danh quá 15 phút, tổng hợp học sinh vắng, bài thi hoàn thành và học phí đến hạn.
+          </p>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex flex-wrap items-center gap-2">
+          <button
+            onclick={handleAdminScanNow}
+            class="px-4 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-lg shadow-emerald-600/30 flex items-center gap-2 transition-all hover:scale-105"
+          >
+            <span>⚡</span>
+            <span>Quét Lập Tức Toàn Bộ</span>
+          </button>
+
+          {#if pwaStatus !== 'granted'}
+            <button
+              onclick={handleAdminRequestPwa}
+              class="px-3.5 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/30 flex items-center gap-1.5 transition-all"
+            >
+              <span>📲</span>
+              <span>Bật PWA Push</span>
+            </button>
+          {/if}
+
+          <button
+            onclick={() => { markAllNotificationsAsRead(); leaderNotifications = getAllLeaderNotifications(); showToast('Đã đánh dấu tất cả thông báo là đã đọc!'); }}
+            disabled={unreadLeaderCount === 0}
+            class="px-3.5 py-2.5 rounded-2xl bg-slate-800 hover:bg-slate-700 disabled:opacity-40 text-slate-300 font-bold text-xs border border-slate-700 transition-colors"
+          >
+            ✓ Đọc Tất Cả
+          </button>
+
+          <button
+            onclick={() => {
+              if (confirm('Cô Dung có chắc chắn muốn xóa toàn bộ lịch sử thông báo?')) {
+                clearAllLeaderNotifications();
+                leaderNotifications = [];
+                showToast('Đã xóa toàn bộ lịch sử thông báo!');
+              }
+            }}
+            disabled={leaderNotifications.length === 0}
+            class="px-3.5 py-2.5 rounded-2xl bg-slate-800 hover:bg-rose-900/50 hover:border-rose-700 disabled:opacity-40 text-rose-400 font-bold text-xs border border-slate-700 transition-colors"
+          >
+            🗑️ Xóa Hết
+          </button>
+        </div>
+      </div>
+
+      <!-- Live Stat Cards Deck -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 text-xs">
+        <div class="p-4 rounded-2xl bg-slate-900 border border-rose-500/40 shadow-xl">
+          <div class="flex items-center justify-between text-slate-400 font-bold text-[11px] mb-1">
+            <span>GV CHƯA ĐIỂM DANH</span>
+            <span>⚠️</span>
+          </div>
+          <div class="text-2xl font-black text-rose-400">
+            {leaderNotifications.filter(n => n.type === 'teacher_missing_attendance' && !n.is_read).length}
+          </div>
+          <div class="text-[10px] text-slate-400 mt-1">Cảnh báo khẩn sau 15p</div>
+        </div>
+
+        <div class="p-4 rounded-2xl bg-slate-900 border border-emerald-500/40 shadow-xl">
+          <div class="flex items-center justify-between text-slate-400 font-bold text-[11px] mb-1">
+            <span>ĐĂNG KÝ MỚI (TRIAL)</span>
+            <span>🔔</span>
+          </div>
+          <div class="text-2xl font-black text-emerald-400">
+            {leaderNotifications.filter(n => n.type === 'new_registration' && !n.is_read).length}
+          </div>
+          <div class="text-[10px] text-slate-400 mt-1">Chờ Cô Dung duyệt</div>
+        </div>
+
+        <div class="p-4 rounded-2xl bg-slate-900 border border-blue-500/40 shadow-xl">
+          <div class="flex items-center justify-between text-slate-400 font-bold text-[11px] mb-1">
+            <span>BÁO CÁO ĐIỂM DANH</span>
+            <span>📋</span>
+          </div>
+          <div class="text-2xl font-black text-blue-400">
+            {leaderNotifications.filter(n => n.type === 'attendance_summary').length}
+          </div>
+          <div class="text-[10px] text-slate-400 mt-1">Đủ &amp; vắng học sinh</div>
+        </div>
+
+        <div class="p-4 rounded-2xl bg-slate-900 border border-amber-500/40 shadow-xl">
+          <div class="flex items-center justify-between text-slate-400 font-bold text-[11px] mb-1">
+            <span>LỊCH HỌC 1H &amp; 10P</span>
+            <span>⏰</span>
+          </div>
+          <div class="text-2xl font-black text-amber-400">
+            {leaderNotifications.filter(n => n.type === 'schedule_reminder_1h' || n.type === 'schedule_reminder_10m').length}
+          </div>
+          <div class="text-[10px] text-slate-400 mt-1">Chuông đón học sinh</div>
+        </div>
+
+        <div class="p-4 rounded-2xl bg-slate-900 border border-teal-500/40 shadow-xl">
+          <div class="flex items-center justify-between text-slate-400 font-bold text-[11px] mb-1">
+            <span>HẠN HỌC PHÍ</span>
+            <span>💰</span>
+          </div>
+          <div class="text-2xl font-black text-teal-400">
+            {leaderNotifications.filter(n => n.type === 'tuition_due').length}
+          </div>
+          <div class="text-[10px] text-slate-400 mt-1">Đến hạn &amp; quá hạn</div>
+        </div>
+      </div>
+
+      <!-- Test Deck / Simulation Controls -->
+      <div class="p-4 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-xl space-y-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="text-sm">🧪</span>
+            <span class="font-bold text-xs text-white">Khung Giả Lập Tình Huống Cảnh Báo Cho Leader (Simulation Deck)</span>
+          </div>
+          <span class="text-[10px] text-slate-400 font-normal">Nhấn để phát sinh sự kiện thử nghiệm</span>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 text-xs">
+          <button
+            onclick={() => handleAdminSimulate('teacher_missing_attendance')}
+            class="p-2.5 rounded-xl bg-slate-950 border border-rose-500/40 text-rose-400 hover:bg-rose-950/40 font-bold text-left transition-all truncate"
+            title="Mô phỏng: Buổi học diễn ra hơn 15 phút nhưng giáo viên chưa điểm danh"
+          >
+            ⚠️ GV Quên Điểm Danh
+          </button>
+          <button
+            onclick={() => handleAdminSimulate('attendance_summary_absent')}
+            class="p-2.5 rounded-xl bg-slate-950 border border-blue-500/40 text-blue-400 hover:bg-blue-950/40 font-bold text-left transition-all truncate"
+            title="Mô phỏng: Điểm danh lớp thiếu học sinh"
+          >
+            📋 Điểm Danh Thiếu 2 Em
+          </button>
+          <button
+            onclick={() => handleAdminSimulate('schedule_reminder_10m')}
+            class="p-2.5 rounded-xl bg-slate-950 border border-amber-500/40 text-amber-400 hover:bg-amber-950/40 font-bold text-left transition-all truncate"
+            title="Mô phỏng: Nhắc nhở lịch học trước 10 phút"
+          >
+            🚨 Nhắc Lịch Học 10 Phút
+          </button>
+          <button
+            onclick={() => handleAdminSimulate('new_registration')}
+            class="p-2.5 rounded-xl bg-slate-950 border border-emerald-500/40 text-emerald-400 hover:bg-emerald-950/40 font-bold text-left transition-all truncate"
+            title="Mô phỏng: Học sinh mới đăng ký tài khoản"
+          >
+            🔔 Đăng Ký Mới (Trial)
+          </button>
+          <button
+            onclick={() => handleAdminSimulate('test_completed')}
+            class="p-2.5 rounded-xl bg-slate-950 border border-purple-500/40 text-purple-400 hover:bg-purple-950/40 font-bold text-left transition-all truncate"
+            title="Mô phỏng: Học sinh vừa hoàn thành bài test"
+          >
+            📝 Học Sinh Nộp Bài Test
+          </button>
+          <button
+            onclick={() => handleAdminSimulate('tuition_due')}
+            class="p-2.5 rounded-xl bg-slate-950 border border-teal-500/40 text-teal-400 hover:bg-teal-950/40 font-bold text-left transition-all truncate"
+            title="Mô phỏng: Học phí đến hạn nộp"
+          >
+            💰 Tới Hạn Học Phí
+          </button>
+        </div>
+      </div>
+
+      <!-- Filter Chips -->
+      <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+        <button
+          onclick={() => notifFilter = 'all'}
+          class="px-3 py-1.5 rounded-xl font-bold shrink-0 transition-colors {notifFilter === 'all' ? 'bg-white text-slate-900 font-black' : 'bg-slate-900 text-slate-400 hover:text-white'}"
+        >
+          Tất cả ({leaderNotifications.length})
+        </button>
+        <button
+          onclick={() => notifFilter = 'teacher_missing_attendance'}
+          class="px-3 py-1.5 rounded-xl font-bold shrink-0 transition-colors {notifFilter === 'teacher_missing_attendance' ? 'bg-rose-600 text-white' : 'bg-slate-900 text-rose-400 hover:bg-rose-950/40'}"
+        >
+          ⚠️ GV Chưa Điểm Danh
+        </button>
+        <button
+          onclick={() => notifFilter = 'attendance_summary'}
+          class="px-3 py-1.5 rounded-xl font-bold shrink-0 transition-colors {notifFilter === 'attendance_summary' ? 'bg-blue-600 text-white' : 'bg-slate-900 text-blue-400 hover:bg-blue-950/40'}"
+        >
+          📋 Điểm Danh &amp; Vắng
+        </button>
+        <button
+          onclick={() => notifFilter = 'schedule'}
+          class="px-3 py-1.5 rounded-xl font-bold shrink-0 transition-colors {notifFilter === 'schedule' ? 'bg-amber-600 text-white' : 'bg-slate-900 text-amber-400 hover:bg-amber-950/40'}"
+        >
+          ⏰ Lịch Học 1h / 10p
+        </button>
+        <button
+          onclick={() => notifFilter = 'new_registration'}
+          class="px-3 py-1.5 rounded-xl font-bold shrink-0 transition-colors {notifFilter === 'new_registration' ? 'bg-emerald-600 text-white' : 'bg-slate-900 text-emerald-400 hover:bg-emerald-950/40'}"
+        >
+          🔔 Đăng Ký Mới
+        </button>
+        <button
+          onclick={() => notifFilter = 'test_completed'}
+          class="px-3 py-1.5 rounded-xl font-bold shrink-0 transition-colors {notifFilter === 'test_completed' ? 'bg-purple-600 text-white' : 'bg-slate-900 text-purple-400 hover:bg-purple-950/40'}"
+        >
+          📝 Bài Thi Xong
+        </button>
+        <button
+          onclick={() => notifFilter = 'tuition_due'}
+          class="px-3 py-1.5 rounded-xl font-bold shrink-0 transition-colors {notifFilter === 'tuition_due' ? 'bg-teal-600 text-white' : 'bg-slate-900 text-teal-400 hover:bg-teal-950/40'}"
+        >
+          💰 Hạn Học Phí
+        </button>
+      </div>
+
+      <!-- Notification Feed List -->
+      <div class="space-y-3">
+        {#if filteredLeaderNotifs.length === 0}
+          <div class="p-12 rounded-3xl bg-slate-900 border border-slate-800 text-center space-y-3">
+            <div class="text-5xl">✨</div>
+            <div class="text-base font-bold text-white">Không có thông báo nào trong bộ lọc này</div>
+            <p class="text-xs text-slate-400 max-w-sm mx-auto">
+              Mọi lịch học, sổ điểm danh và học phí thuộc danh mục này đều đang ở trạng thái chuẩn xác.
+            </p>
+          </div>
+        {:else}
+          {#each filteredLeaderNotifs as notif (notif.id)}
+            <div class="p-4 sm:p-5 rounded-3xl border transition-all duration-200 {notif.is_read ? 'bg-slate-900/60 border-slate-800 opacity-75' : 'bg-slate-900 border-emerald-500/50 shadow-xl shadow-emerald-950/20 ring-1 ring-emerald-500/20'}">
+              <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-2">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border {notif.priority === 'urgent' ? 'bg-rose-950/80 text-rose-300 border-rose-700' : notif.priority === 'high' ? 'bg-amber-950/80 text-amber-300 border-amber-700' : 'bg-emerald-950/80 text-emerald-300 border-emerald-700'}">
+                    {#if notif.priority === 'urgent'}
+                      🚨 KHẨN CẤP
+                    {:else if notif.type === 'teacher_missing_attendance'}
+                      ⚠️ GV CHƯA ĐIỂM DANH
+                    {:else if notif.type === 'attendance_summary'}
+                      📋 ĐIỂM DANH LỚP
+                    {:else if notif.type === 'schedule_reminder_10m'}
+                      ⏰ SẮP VÀO HỌC (10P)
+                    {:else if notif.type === 'schedule_reminder_1h'}
+                      ⏰ LỊCH HỌC (1H)
+                    {:else if notif.type === 'new_registration'}
+                      🔔 ĐĂNG KÝ MỚI
+                    {:else if notif.type === 'test_completed'}
+                      📝 BÀI TEST XONG
+                    {:else if notif.type === 'tuition_due'}
+                      💰 HẠN HỌC PHÍ
+                    {:else}
+                      📢 HỆ THỐNG
+                    {/if}
+                  </span>
+
+                  {#if !notif.is_read}
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" title="Thông báo mới chưa đọc"></span>
+                  {/if}
+
+                  <h3 class="text-sm font-bold text-white">
+                    {notif.title}
+                  </h3>
+                </div>
+
+                <div class="flex items-center gap-3 text-xs text-slate-400 self-end sm:self-auto">
+                  <span>{new Date(notif.timestamp).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} • {new Date(notif.timestamp).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })}</span>
+                  <button
+                    onclick={() => { deleteLeaderNotification(notif.id); leaderNotifications = getAllLeaderNotifications(); }}
+                    class="text-slate-500 hover:text-rose-400 p-1 transition-colors"
+                    title="Xóa thông báo"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+
+              <p class="text-xs text-slate-300 leading-relaxed whitespace-pre-line mb-3">
+                {notif.message}
+              </p>
+
+              <!-- Action Bar -->
+              <div class="flex flex-wrap items-center gap-2 pt-3 border-t border-slate-800/80 text-xs">
+                {#if notif.type === 'teacher_missing_attendance'}
+                  <button
+                    onclick={() => handleRemindTeacherDirectly(notif)}
+                    class="px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold flex items-center gap-1.5 shadow-md shadow-rose-600/30 transition-all hover:scale-105"
+                  >
+                    <span>📨</span>
+                    <span>Gửi Nhắc Nhở Riêng Giáo Viên</span>
+                  </button>
+                  <button
+                    onclick={() => activeTab = 'schedule'}
+                    class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold transition-colors"
+                  >
+                    Xem Ca Học &amp; Điểm Danh
+                  </button>
+                {:else if notif.type === 'new_registration'}
+                  <button
+                    onclick={() => activeTab = 'students'}
+                    class="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold flex items-center gap-1.5 shadow-md shadow-emerald-600/30 transition-all hover:scale-105"
+                  >
+                    <span>✓</span>
+                    <span>Chuyển Sang Duyệt Học Viên Này</span>
+                  </button>
+                {:else if notif.type === 'attendance_summary'}
+                  <a
+                    href="/schedule?tab=attendance"
+                    class="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold flex items-center gap-1.5 shadow-md shadow-blue-600/30 transition-all hover:scale-105"
+                  >
+                    <span>👁️</span>
+                    <span>Mở Sổ Điểm Danh Lớp</span>
+                  </a>
+                {:else if notif.type === 'test_completed'}
+                  <a
+                    href="/evaluations"
+                    class="px-3.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold flex items-center gap-1.5 shadow-md shadow-purple-600/30 transition-all hover:scale-105"
+                  >
+                    <span>📊</span>
+                    <span>Xem Đánh Giá &amp; Điểm Số</span>
+                  </a>
+                {:else if notif.type === 'tuition_due'}
+                  <button
+                    onclick={() => activeTab = 'tuition'}
+                    class="px-3.5 py-1.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold flex items-center gap-1.5 shadow-md shadow-teal-600/30 transition-all hover:scale-105"
+                  >
+                    <span>💳</span>
+                    <span>Mở Bảng Thu Học Phí (VietQR)</span>
+                  </button>
+                {:else if notif.type.startsWith('schedule_reminder')}
+                  <button
+                    onclick={() => activeTab = 'schedule'}
+                    class="px-3.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold flex items-center gap-1.5 shadow-md shadow-amber-600/30 transition-all hover:scale-105"
+                  >
+                    <span>📅</span>
+                    <span>Mở Lịch Học Hôm Nay</span>
+                  </button>
+                {/if}
+
+                {#if !notif.is_read}
+                  <button
+                    onclick={() => { markNotificationAsRead(notif.id); leaderNotifications = getAllLeaderNotifications(); }}
+                    class="px-3 py-1.5 rounded-xl text-slate-400 hover:text-white font-medium ml-auto transition-colors"
+                  >
+                    Đánh dấu đã đọc
+                  </button>
+                {/if}
+              </div>
+            </div>
+          {/each}
+        {/if}
+      </div>
+    </div>
+  {/if}
 
   <!-- ================= TAB 1: QUẢN LÝ HỌC SINH & DUYỆT TRIAL ================= -->
   {#if activeTab === 'students'}
@@ -1363,6 +1873,204 @@
           {#if recentTeacherActions.length === 0}
             <div class="text-slate-500 italic text-center py-4">Chưa có thao tác nào từ giáo viên được ghi nhận.</div>
           {/if}
+        </div>
+      </div>
+    </div>
+
+  <!-- ================= TAB: QUẢN LÝ ĐẤU TRƯỜNG TRÒ CHƠI (GAMES GATEKEEPER) ================= -->
+  {:else if activeTab === 'games'}
+    <div class="space-y-6 max-w-4xl">
+      <!-- Master Switch Control Card -->
+      <div class="p-6 rounded-3xl bg-slate-900 border-2 {gameSettings.is_portal_open ? 'border-emerald-500/50' : 'border-rose-500/50'} shadow-xl space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-2xl {gameSettings.is_portal_open ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'} flex items-center justify-center text-3xl font-bold">
+              {gameSettings.is_portal_open ? '🟢' : '🔒'}
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">CÔNG TẮC TỔNG (MASTER GATEKEEPER)</span>
+                <span class="px-2 py-0.5 rounded text-[10px] font-black {gameSettings.is_portal_open ? 'bg-emerald-500/20 text-emerald-300' : 'bg-rose-500/20 text-rose-300'}">
+                  {gameSettings.is_portal_open ? 'HỌC SINH ĐƯỢC CHƠI' : 'HỌC SINH BỊ KHÓA'}
+                </span>
+              </div>
+              <h2 class="text-xl font-black text-white mt-0.5">
+                Quyền Truy Cập Đấu Trường Game Của Học Sinh
+              </h2>
+            </div>
+          </div>
+
+          <div>
+            {#if gameSettings.is_portal_open}
+              <button
+                onclick={() => handleAdminToggleMasterGames(false)}
+                class="px-5 py-2.5 rounded-2xl bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-xs shadow-lg shadow-rose-600/30 transition-all flex items-center gap-2"
+              >
+                <span>🔒 Khóa Cổng Game Học Sinh</span>
+              </button>
+            {:else}
+              <button
+                onclick={() => handleAdminToggleMasterGames(true)}
+                class="px-5 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs shadow-lg shadow-emerald-600/30 transition-all flex items-center gap-2"
+              >
+                <span>🚀 Mở Cổng Game Cho Học Sinh</span>
+              </button>
+            {/if}
+          </div>
+        </div>
+
+        <p class="text-xs text-slate-300 leading-relaxed">
+          Khi <strong>Khóa</strong>: Học sinh khi vào mục trò chơi sẽ thấy thông báo chờ lệnh và yêu cầu tập trung làm bài chính khóa. 
+          Giáo viên luôn có quyền vào chơi thử nghiệm bất cứ lúc nào để kiểm tra học liệu trước giờ dạy.
+        </p>
+
+        <!-- Direct Test Launcher Link -->
+        <div class="pt-2 flex items-center gap-3">
+          <a
+            href="/games"
+            class="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs shadow-md transition-all flex items-center gap-2"
+          >
+            <span>🎮 Mở Đấu Trường Trò Chơi (Kiểm Tra Thực Tế)</span>
+            <span>➔</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Granular Games List -->
+      <div class="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl space-y-4">
+        <div class="border-b border-slate-800 pb-3">
+          <h3 class="text-base font-extrabold text-white">Quản Lý Từng Trò Chơi Giáo Dục (Bật / Tắt Linh Hoạt)</h3>
+          <p class="text-xs text-slate-400 mt-0.5">Giáo viên có thể mở riêng lẻ từng trò chơi theo đúng chủ điểm bài học trong ngày.</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs">
+          <!-- Game 1 -->
+          <div class="p-4 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-between">
+            <div>
+              <div class="font-bold text-white flex items-center gap-1.5">
+                <span>⚡ Speed Match</span>
+              </div>
+              <div class="text-[11px] text-slate-400">Từ vựng phản xạ (12 thẻ)</div>
+            </div>
+            <button
+              onclick={() => handleAdminToggleGame('speed_match')}
+              class="px-3 py-1.5 rounded-xl font-bold text-[11px] transition-all {gameSettings.active_games.speed_match ? 'bg-emerald-500 text-slate-950' : 'bg-slate-800 text-slate-400'}"
+            >
+              {gameSettings.active_games.speed_match ? 'Đang Bật' : 'Đã Tắt'}
+            </button>
+          </div>
+
+          <!-- Game 2 -->
+          <div class="p-4 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-between">
+            <div>
+              <div class="font-bold text-white flex items-center gap-1.5">
+                <span>🔤 Word Scramble</span>
+              </div>
+              <div class="text-[11px] text-slate-400">Từ vựng ghép chữ Duolingo</div>
+            </div>
+            <button
+              onclick={() => handleAdminToggleGame('word_scramble')}
+              class="px-3 py-1.5 rounded-xl font-bold text-[11px] transition-all {gameSettings.active_games.word_scramble ? 'bg-emerald-500 text-slate-950' : 'bg-slate-800 text-slate-400'}"
+            >
+              {gameSettings.active_games.word_scramble ? 'Đang Bật' : 'Đã Tắt'}
+            </button>
+          </div>
+
+          <!-- Game 3 -->
+          <div class="p-4 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-between">
+            <div>
+              <div class="font-bold text-white flex items-center gap-1.5">
+                <span>☄️ Meteor Rush</span>
+              </div>
+              <div class="text-[11px] text-slate-400">Bắn thiên thạch 10 giây</div>
+            </div>
+            <button
+              onclick={() => handleAdminToggleGame('meteor_rush')}
+              class="px-3 py-1.5 rounded-xl font-bold text-[11px] transition-all {gameSettings.active_games.meteor_rush ? 'bg-emerald-500 text-slate-950' : 'bg-slate-800 text-slate-400'}"
+            >
+              {gameSettings.active_games.meteor_rush ? 'Đang Bật' : 'Đã Tắt'}
+            </button>
+          </div>
+
+          <!-- Game 4 -->
+          <div class="p-4 rounded-2xl bg-slate-950 border border-indigo-500/30 flex items-center justify-between">
+            <div>
+              <div class="font-bold text-indigo-300 flex items-center gap-1.5">
+                <span>🧩 Sentence Builder</span>
+              </div>
+              <div class="text-[11px] text-slate-400">Ngữ pháp cấu trúc câu K12</div>
+            </div>
+            <button
+              onclick={() => handleAdminToggleGame('sentence_builder')}
+              class="px-3 py-1.5 rounded-xl font-bold text-[11px] transition-all {gameSettings.active_games.sentence_builder ? 'bg-indigo-500 text-white' : 'bg-slate-800 text-slate-400'}"
+            >
+              {gameSettings.active_games.sentence_builder ? 'Đang Bật' : 'Đã Tắt'}
+            </button>
+          </div>
+
+          <!-- Game 5 -->
+          <div class="p-4 rounded-2xl bg-slate-950 border border-indigo-500/30 flex items-center justify-between">
+            <div>
+              <div class="font-bold text-indigo-300 flex items-center gap-1.5">
+                <span>⏱️ Grammar Tense</span>
+              </div>
+              <div class="text-[11px] text-slate-400">Thì động từ &amp; bẫy ngữ pháp</div>
+            </div>
+            <button
+              onclick={() => handleAdminToggleGame('grammar_tense')}
+              class="px-3 py-1.5 rounded-xl font-bold text-[11px] transition-all {gameSettings.active_games.grammar_tense ? 'bg-indigo-500 text-white' : 'bg-slate-800 text-slate-400'}"
+            >
+              {gameSettings.active_games.grammar_tense ? 'Đang Bật' : 'Đã Tắt'}
+            </button>
+          </div>
+
+          <!-- Game 6 -->
+          <div class="p-4 rounded-2xl bg-slate-950 border border-purple-500/30 flex items-center justify-between">
+            <div>
+              <div class="font-bold text-purple-300 flex items-center gap-1.5">
+                <span>🎴 Memory Flip 3D</span>
+              </div>
+              <div class="text-[11px] text-slate-400">Lật thẻ bài trí nhớ đa giác quan</div>
+            </div>
+            <button
+              onclick={() => handleAdminToggleGame('memory_flip')}
+              class="px-3 py-1.5 rounded-xl font-bold text-[11px] transition-all {gameSettings.active_games.memory_flip ? 'bg-purple-500 text-white' : 'bg-slate-800 text-slate-400'}"
+            >
+              {gameSettings.active_games.memory_flip ? 'Đang Bật' : 'Đã Tắt'}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Settings & Star Reward Configuration -->
+      <div class="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl space-y-4">
+        <h3 class="text-base font-extrabold text-white">Cấu Hình Thưởng Sao &amp; Thông Điệp Khóa</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+          <div>
+            <label class="block font-bold text-slate-300 mb-1" for="game-reward">Mức Thưởng Sao (⭐) Mỗi Trận Thắng:</label>
+            <select
+              id="game-reward"
+              value={gameSettings.reward_stars_per_game || 20}
+              onchange={(e) => handleAdminSaveRewardStars(e.currentTarget.value)}
+              class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-bold focus:outline-none focus:border-emerald-500"
+            >
+              <option value="10">+10 ⭐ (100đ trừ học phí)</option>
+              <option value="20">+20 ⭐ (200đ trừ học phí)</option>
+              <option value="50">+50 ⭐ (500đ trừ học phí)</option>
+              <option value="100">+100 ⭐ (1.000đ trừ học phí)</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block font-bold text-slate-300 mb-1" for="game-lock-msg">Thông Điệp Khóa Cho Học Sinh:</label>
+            <input
+              id="game-lock-msg"
+              type="text"
+              bind:value={gameSettings.lock_message}
+              onblur={() => saveGameArenaSettings({ lock_message: gameSettings.lock_message }, currentUser)}
+              class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-emerald-500"
+            />
+          </div>
         </div>
       </div>
     </div>

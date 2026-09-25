@@ -13,12 +13,19 @@
     getTheme,
     toggleTheme,
     getStudentStars,
+    getUnreadLeaderNotificationCount,
+    scanScheduleAndAttendanceForLeader,
+    scanTuitionDueAlerts,
     SUPERADMIN_EMAILS 
   } from '$lib/unifiedStore';
   import AuthModal from '$lib/components/AuthModal.svelte';
   import ProfileEditModal from '$lib/components/ProfileEditModal.svelte';
+  import ApkOtaUpdater from '$lib/components/ApkOtaUpdater.svelte';
+  import LeaderNotificationDrawer from '$lib/components/LeaderNotificationDrawer.svelte';
 
   let { children } = $props();
+
+  let apkUpdaterRef = $state(null);
 
   let currentUser = $state(null);
   let allUsers = $state([]);
@@ -28,6 +35,8 @@
   let mobileMenuOpen = $state(false);
   let showAuthModal = $state(false);
   let showProfileModal = $state(false);
+  let showLeaderDrawer = $state(false);
+  let leaderUnreadCount = $state(0);
   let canDismiss = $state(false);
   let studentStars = $state(null);
 
@@ -60,6 +69,23 @@
       studentStars = getStudentStars(currentUser.id);
     }
 
+    // Initialize Leader unread notifications count
+    leaderUnreadCount = getUnreadLeaderNotificationCount();
+
+    // Background scanner every 60s for schedule 1h/10m, teacher missing attendance, and tuition dues
+    const scanTimer = setInterval(() => {
+      scanScheduleAndAttendanceForLeader();
+      scanTuitionDueAlerts();
+      leaderUnreadCount = getUnreadLeaderNotificationCount();
+    }, 60000);
+
+    // Initial background scan on mount
+    setTimeout(() => {
+      scanScheduleAndAttendanceForLeader();
+      scanTuitionDueAlerts();
+      leaderUnreadCount = getUnreadLeaderNotificationCount();
+    }, 2000);
+
     // Enforce login on every fresh launch / unauthenticated session
     if (!isLoggedIn()) {
       showAuthModal = true;
@@ -75,17 +101,28 @@
       } else if (currentUser.role === 'student') {
         studentStars = getStudentStars(currentUser.id);
       }
+      leaderUnreadCount = getUnreadLeaderNotificationCount();
     };
 
     const handleThemeEvent = (e) => {
       currentTheme = e.detail;
     };
 
+    const handleLeaderNotifEvent = () => {
+      leaderUnreadCount = getUnreadLeaderNotificationCount();
+    };
+
     window.addEventListener('tienganh:auth-change', handleAuthEvent);
     window.addEventListener('tienganh:theme-change', handleThemeEvent);
+    window.addEventListener('tienganh:leader-notifications-change', handleLeaderNotifEvent);
+    window.addEventListener('tienganh:leader-notification-new', handleLeaderNotifEvent);
+
     return () => {
+      clearInterval(scanTimer);
       window.removeEventListener('tienganh:auth-change', handleAuthEvent);
       window.removeEventListener('tienganh:theme-change', handleThemeEvent);
+      window.removeEventListener('tienganh:leader-notifications-change', handleLeaderNotifEvent);
+      window.removeEventListener('tienganh:leader-notification-new', handleLeaderNotifEvent);
     };
   });
 
@@ -472,6 +509,23 @@
             {/if}
           </button>
 
+          <!-- Leader PWA Notification Bell (Cô Dung & Ban Quản Lý) -->
+          {#if isTeacherOrAdmin(currentUser)}
+            <button
+              onclick={() => showLeaderDrawer = true}
+              class="relative w-9 h-9 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 flex items-center justify-center text-sm transition-all hover:scale-105"
+              title="Trung Tâm Báo Cáo Leader (Cô Dung)"
+              aria-label="Thông Báo Leader"
+            >
+              <span>🔔</span>
+              {#if leaderUnreadCount > 0}
+                <span class="absolute -top-1 -right-1 px-1.5 py-0.2 rounded-full bg-rose-600 text-[10px] font-black text-white shadow-sm ring-2 ring-white dark:ring-slate-900 animate-pulse">
+                  {leaderUnreadCount > 9 ? '9+' : leaderUnreadCount}
+                </span>
+              {/if}
+            </button>
+          {/if}
+
           <!-- Student Star Badge (If Student Logged In) -->
           {#if currentUser?.role === 'student'}
             <div class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 text-amber-800 dark:text-amber-300 text-xs font-bold shadow-sm">
@@ -691,7 +745,22 @@
           </div>
 
           {#if isTeacherOrAdmin(currentUser)}
-            <div class="pt-2 border-t border-slate-200 dark:border-slate-800">
+            <div class="pt-2 border-t border-slate-200 dark:border-slate-800 space-y-1.5">
+              <button
+                onclick={() => { mobileMenuOpen = false; showLeaderDrawer = true; }}
+                class="w-full flex items-center justify-between p-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-xs font-bold shadow-md"
+              >
+                <div class="flex items-center gap-2">
+                  <span>🔔</span>
+                  <span>Báo Cáo Leader (Cô Dung)</span>
+                </div>
+                {#if leaderUnreadCount > 0}
+                  <span class="px-2 py-0.5 rounded-full bg-rose-600 text-[10px] font-black animate-pulse">
+                    {leaderUnreadCount} mới
+                  </span>
+                {/if}
+              </button>
+
               <a
                 href="/admin"
                 onclick={() => mobileMenuOpen = false}
@@ -765,7 +834,13 @@
         <span class="text-slate-300 dark:text-slate-700">•</span>
         <a href="/pedagogy" class="hover:text-emerald-600 dark:hover:text-emerald-400">Giáo án 5512</a>
         <span class="text-slate-300 dark:text-slate-700">•</span>
-        <a href="/admin" class="hover:text-emerald-600 dark:hover:text-emerald-400">Admin CP (Học Phí &amp; Đổi Sao)</a>
+        <button
+          onclick={() => apkUpdaterRef?.checkForUpdate(true)}
+          class="hover:text-emerald-600 dark:hover:text-emerald-400 flex items-center gap-1 font-bold text-emerald-700 dark:text-emerald-300"
+          title="Kiểm tra bản cập nhật APK mới qua Wi-Fi"
+        >
+          <span>📶</span> <span>Cập Nhật APK (Wi-Fi)</span>
+        </button>
       </div>
     </div>
   </footer>
@@ -775,6 +850,12 @@
 
   <!-- User Profile Edit Modal -->
   <ProfileEditModal bind:isOpen={showProfileModal} />
+
+  <!-- Direct In-App WiFi OTA APK Updater -->
+  <ApkOtaUpdater bind:this={apkUpdaterRef} />
+
+  <!-- Leader Notification Drawer (Cô Dung) -->
+  <LeaderNotificationDrawer bind:isOpen={showLeaderDrawer} onClose={() => showLeaderDrawer = false} />
 </div>
 
 
