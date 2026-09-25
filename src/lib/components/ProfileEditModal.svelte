@@ -1,6 +1,6 @@
 <script>
   import { onMount } from 'svelte';
-  import { getCurrentUser, updateUserProfile, POPULAR_SCHOOLS } from '$lib/unifiedStore';
+  import { getCurrentUser, updateUserProfile, POPULAR_SCHOOLS, isTeacherOrAdmin, requestUnlockClass } from '$lib/unifiedStore';
   import { playAudioFeedback } from '$lib/speech.js';
 
   let { isOpen = $bindable(false) } = $props();
@@ -16,6 +16,12 @@
   let target = $state('');
   let statusMessage = $state('');
   let isSaving = $state(false);
+
+  let showTransferModal = $state(false);
+  let requestedTargetGrade = $state('Lớp 8');
+  let transferReason = $state('');
+  let isSendingTransfer = $state(false);
+  let isAdminOrTeacher = $derived(currentUser ? isTeacherOrAdmin(currentUser) : false);
 
   const presetAvatars = [
     { label: '👦 Bé trai', url: 'https://api.dicebear.com/7.x/bottts/svg?seed=Felix' },
@@ -58,9 +64,30 @@
 
     zaloId = meta.zalo_id || meta.zalo_phone || phone;
     grade = meta.grade || 'Lớp 7';
+    requestedTargetGrade = grade || 'Lớp 8';
     school = meta.school || '';
     target = meta.target || `Chương trình ${grade}`;
     statusMessage = '';
+  }
+
+  async function handleSendClassTransferRequest() {
+    if (!currentUser) return;
+    isSendingTransfer = true;
+    try {
+      const res = await requestUnlockClass(currentUser.id, requestedTargetGrade, transferReason);
+      if (res.success) {
+        statusMessage = `✅ Đã gửi yêu cầu chuyển sang ${requestedTargetGrade} tới Cô Dung thành công!`;
+        playAudioFeedback('correct');
+        showTransferModal = false;
+        transferReason = '';
+      } else {
+        statusMessage = res.error || 'Có lỗi xảy ra khi gửi yêu cầu!';
+      }
+    } catch (err) {
+      statusMessage = err.message || 'Lỗi kết nối';
+    } finally {
+      isSendingTransfer = false;
+    }
   }
 
   function handleFileUpload(e) {
@@ -246,21 +273,104 @@
           </div>
         </div>
 
-        <!-- Grade & School (with Datalist Recommendations) -->
+        <!-- Grade & School (with Role-based Security & Transfer Request) -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label for="prof-grade" class="block font-bold text-slate-700 dark:text-slate-300 mb-1">
-              Khối Lớp Hiện Tại:
-            </label>
-            <select
-              id="prof-grade"
-              bind:value={grade}
-              class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
-            >
-              {#each gradeOptions as g}
-                <option value={g}>{g}</option>
-              {/each}
-            </select>
+            <div class="flex items-center justify-between mb-1">
+              <label for="prof-grade" class="block font-bold text-slate-700 dark:text-slate-300">
+                Khối Lớp Học Tập:
+              </label>
+              {#if !isAdminOrTeacher}
+                <span class="inline-flex items-center gap-1 text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
+                  🔒 Cố định
+                </span>
+              {/if}
+            </div>
+
+            {#if isAdminOrTeacher}
+              <select
+                id="prof-grade"
+                bind:value={grade}
+                class="w-full bg-slate-50 dark:bg-slate-950 border border-emerald-400 dark:border-emerald-600 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 font-semibold"
+              >
+                {#each gradeOptions as g}
+                  <option value={g}>{g}</option>
+                {/each}
+              </select>
+              <span class="text-[10px] text-emerald-600 dark:text-emerald-400 block mt-1">
+                ⭐ Bạn là Giáo viên/Admin: Có toàn quyền đổi khối lớp trực tiếp.
+              </span>
+            {:else}
+              <div class="relative">
+                <input
+                  id="prof-grade"
+                  type="text"
+                  value={grade}
+                  disabled
+                  class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-600 dark:text-slate-400 font-bold cursor-not-allowed select-none"
+                />
+              </div>
+              <div class="mt-1.5 flex items-center justify-between text-[11px]">
+                <span class="text-slate-500 dark:text-slate-400">Chỉ Cô Dung mới có quyền đổi lớp.</span>
+                <button
+                  type="button"
+                  onclick={() => showTransferModal = !showTransferModal}
+                  class="text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 font-bold underline cursor-pointer flex items-center gap-1"
+                >
+                  <span>📩</span> {showTransferModal ? 'Đóng form' : 'Yêu cầu chuyển lớp'}
+                </button>
+              </div>
+
+              {#if showTransferModal}
+                <div class="p-3 mt-2 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-200 space-y-2 animate-in fade-in duration-200">
+                  <div class="font-bold flex items-center gap-1.5 text-xs text-amber-700 dark:text-amber-300">
+                    <span>📩</span> Gửi Yêu Cầu Chuyển Khối Lớp Tới Cô Dung
+                  </div>
+                  <p class="text-[11px] text-slate-600 dark:text-slate-300">
+                    Chọn khối lớp bạn mong muốn chuyển sang. Cô Dung sẽ xét duyệt và cập nhật trong AdminCP.
+                  </p>
+                  <div>
+                    <label for="req-target-grade" class="block font-semibold text-[11px] mb-1">Khối lớp mong muốn:</label>
+                    <select
+                      id="req-target-grade"
+                      bind:value={requestedTargetGrade}
+                      class="w-full bg-white dark:bg-slate-900 border border-amber-300 dark:border-amber-700 rounded-xl px-2.5 py-1.5 text-xs text-slate-900 dark:text-white"
+                    >
+                      {#each gradeOptions as g}
+                        <option value={g}>{g}</option>
+                      {/each}
+                    </select>
+                  </div>
+                  <div>
+                    <label for="req-transfer-reason" class="block font-semibold text-[11px] mb-1">Lý do / Nguyện vọng:</label>
+                    <input
+                      id="req-transfer-reason"
+                      type="text"
+                      bind:value={transferReason}
+                      placeholder="VD: Em muốn học thêm IELTS / Em lên lớp mới..."
+                      class="w-full bg-white dark:bg-slate-900 border border-amber-300 dark:border-amber-700 rounded-xl px-2.5 py-1.5 text-xs text-slate-900 dark:text-white"
+                    />
+                  </div>
+                  <div class="flex items-center gap-2 pt-1">
+                    <button
+                      type="button"
+                      disabled={isSendingTransfer}
+                      onclick={handleSendClassTransferRequest}
+                      class="flex-1 py-1.5 px-3 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs transition-all shadow-sm flex items-center justify-center gap-1.5"
+                    >
+                      {isSendingTransfer ? '⏳ Đang gửi...' : '🚀 Gửi Yêu Cầu Ngay'}
+                    </button>
+                    <button
+                      type="button"
+                      onclick={() => showTransferModal = false}
+                      class="py-1.5 px-3 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 text-slate-700 dark:text-slate-200 font-semibold text-xs"
+                    >
+                      Hủy
+                    </button>
+                  </div>
+                </div>
+              {/if}
+            {/if}
           </div>
 
           <div>

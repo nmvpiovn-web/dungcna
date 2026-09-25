@@ -1,88 +1,262 @@
 [
   {
     "grade_id": "g1_5",
-    "level_name": "Khối Tiểu Học (Tiếng Anh 1 - 5)",
-    "target_audience": "Học sinh 6 - 10 tuổi",
-    "cefr_benchmark": "Pre-A1 Starters / A1 Movers / A2 Flyers",
-    "core_books": [
-      "Global Success 1-5",
-      "Family and Friends",
-      "Phonics Smart"
-    ],
+    "stage": "Tiểu Học (Lớp 1 - 5)",
     "grades": [
+      "Lớp 1",
+      "Lớp 2",
+      "Lớp 3",
+      "Lớp 4",
+      "Lớp 5"
+    ],
+    "cefr_standard": "Pre-A1 -> A1 (Cambridge Starters, Movers, Flyers)",
+    "core_method": "Phonics tự nhiên, TPR (Total Physical Response), trực quan hóa hình ảnh sinh động và phản xạ đàm thoại.",
+    "total_units_per_year": 12,
+    "units": [
       {
-        "grade": "Lớp 1",
-        "key_focus": "Làm quen ngữ âm Phonics A-Z, bảng chữ cái, chào hỏi, đồ vật quen thuộc."
+        "unit": 1,
+        "title": "Hello & My New Friends",
+        "phonics": "Initial sounds /p/, /b/, /m/",
+        "grammar": "Personal pronouns, Verb To Be (am/is/are)"
       },
       {
-        "grade": "Lớp 2",
-        "key_focus": "Từ vựng gia đình, màu sắc, số đếm 1-20, câu mệnh lệnh ngắn."
+        "unit": 2,
+        "title": "My Classroom & School Things",
+        "phonics": "Consonant blends /pl/, /kl/",
+        "grammar": "Demonstrative pronouns (This/That/These/Those)"
       },
       {
-        "grade": "Lớp 3",
-        "key_focus": "Học kỳ 1 & 2 Global Success: Trường lớp, bạn bè, đồ dùng học tập, cơ thể."
+        "unit": 3,
+        "title": "My Family & Relatives",
+        "phonics": "Short vowels /æ/, /e/, /ɪ/",
+        "grammar": "Possessive adjectives (my, your, his, her)"
       },
       {
-        "grade": "Lớp 4",
-        "key_focus": "Thời gian, nghề nghiệp, động vật, hoạt động hàng ngày, ma trận đề thi chuẩn Bộ."
+        "unit": 4,
+        "title": "My Body & Five Senses",
+        "phonics": "Plural endings /s/, /z/",
+        "grammar": "Have / Has got for physical descriptions"
       },
       {
-        "grade": "Lớp 5",
-        "key_focus": "Thói quen, quê hương, địa điểm du lịch, thì quá khứ đơn cơ bản, chuẩn bị chuyển cấp."
+        "unit": 5,
+        "title": "Colors & Favorite Toys",
+        "phonics": "Vowel diphthongs /aɪ/, /eɪ/",
+        "grammar": "Adjectives of color and size before nouns"
+      },
+      {
+        "unit": 6,
+        "title": "My Lovely Pets & Animals",
+        "phonics": "Voiced vs voiceless /f/, /v/",
+        "grammar": "Can / Can't for animal abilities"
+      },
+      {
+        "unit": 7,
+        "title": "Food, Drinks & Healthy Snacks",
+        "phonics": "Consonant digraph /tʃ/, /ʃ/",
+        "grammar": "Countable vs Uncountable, Would you like...?"
+      },
+      {
+        "unit": 8,
+        "title": "Daily Routines & Telling Time",
+        "phonics": "Word stress in numbers: -teen vs -ty",
+        "grammar": "Present Simple for habits and schedules"
+      },
+      {
+        "unit": 9,
+        "title": "My School Subjects & Timetable",
+        "phonics": "Sound /dʒ/ in 'subject', 'gym'",
+        "grammar": "Questions with When, Why, What time"
+      },
+      {
+        "unit": 10,
+        "title": "Our Village & City Homes",
+        "phonics": "Prepositions of place sounds",
+        "grammar": "There is / There are, Prepositions in/on/at"
+      },
+      {
+        "unit": 11,
+        "title": "Outdoor Activities & Weather",
+        "phonics": "Sound /w/ in weather, wind, winter",
+        "grammar": "Present Continuous for ongoing actions"
+      },
+      {
+        "unit": 12,
+        "title": "Summer Holidays & Famous Places",
+        "phonics": "Past tense -ed pronunciation",
+        "grammar": "Past Simple with regular and irregular verbs"
       }
     ]
   },
   {
     "grade_id": "g6_9",
-    "level_name": "Khối Trung Học Cơ Sở (Tiếng Anh 6 - 9)",
-    "target_audience": "Học sinh 11 - 15 tuổi",
-    "cefr_benchmark": "A2 KET / B1 PET",
-    "core_books": [
-      "Global Success 6-9",
-      "Friends Plus",
-      "Cambridge KET/PET"
-    ],
+    "stage": "THCS (Lớp 6 - 9)",
     "grades": [
+      "Lớp 6",
+      "Lớp 7",
+      "Lớp 8",
+      "Lớp 9"
+    ],
+    "cefr_standard": "A2 -> B1 (Cambridge KET, PET, Tuyển sinh Vào 10)",
+    "core_method": "Chuyên đề ngữ pháp chuyên sâu, tư duy phản biện, kỹ năng đọc hiểu văn bản dài, viết đoạn văn học thuật.",
+    "total_units_per_year": 12,
+    "units": [
       {
-        "grade": "Lớp 6",
-        "key_focus": "Ngôi trường mới, gia đình, kỳ quan thiên nhiên, thì Hiện tại đơn & Hiện tại tiếp diễn."
+        "unit": 1,
+        "title": "Hobbies & Healthy Living",
+        "phonics": "Sounds /ə/ and /ɜː/",
+        "grammar": "Present Simple, Verbs of liking + V-ing"
       },
       {
-        "grade": "Lớp 7",
-        "key_focus": "Hobbies, Healthy Living, Community Service, Music & Arts, Food & Drink, Traffic."
+        "unit": 2,
+        "title": "Community Services & Volunteering",
+        "phonics": "Past simple -ed: /t/, /d/, /ɪd/",
+        "grammar": "Past Simple vs Present Perfect intro"
       },
       {
-        "grade": "Lớp 8",
-        "key_focus": "Lối sống nông thôn/thành thị, công nghệ, thảm họa thiên nhiên, câu so sánh, câu điều kiện."
+        "unit": 3,
+        "title": "Music & Arts in Vietnam",
+        "phonics": "Sounds /ʃ/ and /ʒ/",
+        "grammar": "Comparison: (not) as ... as, like, different from"
       },
       {
-        "grade": "Lớp 9",
-        "key_focus": "Ngoại khóa bồi dưỡng HSG, luyện thi vào lớp 10 THPT công lập & trường chuyên (Bắc Giang, Nam Định, Hà Nội, TP.HCM)."
+        "unit": 4,
+        "title": "Customs & Traditions of Ethnic Groups",
+        "phonics": "Stress in 2-syllable nouns and adjectives",
+        "grammar": "Articles: a, an, the, zero article"
+      },
+      {
+        "unit": 5,
+        "title": "Our Local Environment & Green Living",
+        "phonics": "Sounds /br/ and /pr/",
+        "grammar": "First Conditional (If + Present Simple, Will + V)"
+      },
+      {
+        "unit": 6,
+        "title": "A Visit to a School & Education",
+        "phonics": "Sounds /tʃ/ and /dʒ/",
+        "grammar": "Prepositions of time and place, Passive Voice"
+      },
+      {
+        "unit": 7,
+        "title": "Traffic Safety & Road Regulations",
+        "phonics": "Sound /e/ and /eɪ/",
+        "grammar": "Used to for past habits, Distance: It is ... from ... to"
+      },
+      {
+        "unit": 8,
+        "title": "Films & Cinema Entertainment",
+        "phonics": "Stress in compound nouns",
+        "grammar": "Connectors: although, though, despite, in spite of"
+      },
+      {
+        "unit": 9,
+        "title": "Festivals Around the World",
+        "phonics": "Stress in words ending in -ion, -ian",
+        "grammar": "Adverbial clauses of reason and result"
+      },
+      {
+        "unit": 10,
+        "title": "Sources of Energy & Sustainability",
+        "phonics": "Stress in 3-syllable words",
+        "grammar": "Future Continuous, Present Continuous for future"
+      },
+      {
+        "unit": 11,
+        "title": "Travelling in the Future",
+        "phonics": "Intonation in choice questions",
+        "grammar": "Will be able to, Possessive pronouns"
+      },
+      {
+        "unit": 12,
+        "title": "English Speaking Countries & Cultures",
+        "phonics": "Rhythm in connected speech",
+        "grammar": "Relative clauses (who, which, that, where)"
       }
     ]
   },
   {
     "grade_id": "g10_12",
-    "level_name": "Khối Trung Học Phổ Thông & Luyện Thi (Tiếng Anh 10 - 12)",
-    "target_audience": "Học sinh 16 - 18 tuổi",
-    "cefr_benchmark": "B1+ / B2 / C1 / IELTS 6.5 - 7.5+",
-    "core_books": [
-      "Global Success 10-12",
-      "Đề Thi Đổi Mới GDPT 2026",
-      "Cambridge IELTS"
-    ],
+    "stage": "THPT (Lớp 10 - 12)",
     "grades": [
+      "Lớp 10",
+      "Lớp 11",
+      "Lớp 12"
+    ],
+    "cefr_standard": "B1 -> B2 / C1 (Tốt Nghiệp THPT QG 2026, IELTS 6.5 - 7.5+)",
+    "core_method": "Phân tích diễn ngôn học thuật, cấu trúc nâng cao (đảo ngữ, câu chẻ, mệnh đề phân từ), bám sát đề thi chuẩn hóa quốc gia.",
+    "total_units_per_year": 12,
+    "units": [
       {
-        "grade": "Lớp 10",
-        "key_focus": "Gia đình, môi trường, âm nhạc, bình đẳng giới, ma trận đề thi 40 câu trắc nghiệm."
+        "unit": 1,
+        "title": "Family Life & Changing Roles",
+        "phonics": "Clusters /tr/, /br/, /kr/",
+        "grammar": "Present Simple vs Present Continuous for dynamic trends"
       },
       {
-        "grade": "Lớp 11",
-        "key_focus": "Thành phố tương lai (Cities of the future), lối sống lành mạnh, di sản văn hóa, ASEAN."
+        "unit": 2,
+        "title": "Humans & the Global Environment",
+        "phonics": "Clusters /kl/, /pl/, /ɡl/",
+        "grammar": "Future with will, be going to, passive forms"
       },
       {
-        "grade": "Lớp 12",
-        "key_focus": "Ôn thi tốt nghiệp THPT Quốc Gia theo format đổi mới 2026, đọc hiểu chuyên sâu, tư duy phản biện."
+        "unit": 3,
+        "title": "Cities of the Future & Smart Infrastructure",
+        "phonics": "Stress in words with suffixes -ic, -ical",
+        "grammar": "Stative verbs in continuous tenses"
+      },
+      {
+        "unit": 4,
+        "title": "For a Better Community & Global Youth",
+        "phonics": "Stress in words with suffixes -tion, -sion",
+        "grammar": "Past Simple vs Past Continuous with when/while"
+      },
+      {
+        "unit": 5,
+        "title": "Inventions, Robotics & Artificial Intelligence",
+        "phonics": "Stress in 3-syllable compound nouns",
+        "grammar": "Gerunds vs Infinitives as subject and object"
+      },
+      {
+        "unit": 6,
+        "title": "Gender Equality in the Modern Workforce",
+        "phonics": "Stress in 2-syllable words with same spelling",
+        "grammar": "Passive voice with modal verbs (can/must/should)"
+      },
+      {
+        "unit": 7,
+        "title": "Vietnamese Cultural Heritage & Preservation",
+        "phonics": "Intonation in tag questions",
+        "grammar": "Participle clauses (Present and Past participles)"
+      },
+      {
+        "unit": 8,
+        "title": "New Ways to Learn & Digital Classrooms",
+        "phonics": "Rhythm in connected speech",
+        "grammar": "Defining vs Non-defining relative clauses"
+      },
+      {
+        "unit": 9,
+        "title": "Protecting Endangered Species & Ecology",
+        "phonics": "Stress in 3-syllable verbs",
+        "grammar": "Reported speech with statements and requests"
+      },
+      {
+        "unit": 10,
+        "title": "Ecotourism, Climate Action & Green Economy",
+        "phonics": "Stress in compound adjectives",
+        "grammar": "Conditional Sentences Type 2 & Type 3"
+      },
+      {
+        "unit": 11,
+        "title": "Higher Education, Degrees & Global Universities",
+        "phonics": "Stress in words ending in -ity, -ive",
+        "grammar": "Phrasal verbs with in, out, up, down"
+      },
+      {
+        "unit": 12,
+        "title": "Career Paths, Lifelong Learning & Success",
+        "phonics": "Intonation in complex sentences",
+        "grammar": "Inversion and Cleft sentences (It is ... that ...)"
       }
     ]
   }

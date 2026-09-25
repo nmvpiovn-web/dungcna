@@ -414,5 +414,389 @@
     "explanation": "Đáp án C: 'water' phát âm là /ɔː/ (/ˈwɔːtər/), trong khi 'pan', 'bag', 'add' đều phát âm là nguyên âm bẹt /æ/.",
     "cambridge_level": "KET_A2",
     "id": 32
+  },
+  {
+    "id": "q_g3_01",
+    "exam_id": "ex_g3_ck1_long_giang",
+    "prompt": "Look and choose the correct word: This is my _______. I carry my books in it.",
+    "options": [
+      "A. school bag",
+      "B. ruler",
+      "C. rubber",
+      "D. pencil"
+    ],
+    "correct_answer": "A",
+    "explanation": "Đáp án A: 'school bag' (cặp sách) dùng để đựng sách vở đến trường.",
+    "cambridge_level": "Starters",
+    "skill": "vocabulary",
+    "grade": 3
+  },
+  {
+    "id": "q_g3_02",
+    "exam_id": "ex_g3_ck1_long_giang",
+    "prompt": "Choose the word whose underlined part is pronounced differently: b<u>a</u>g, h<u>a</u>t, c<u>a</u>t, f<u>a</u>ther",
+    "options": [
+      "A. bag",
+      "B. hat",
+      "C. cat",
+      "D. father"
+    ],
+    "correct_answer": "D",
+    "explanation": "Đáp án D: 'father' phát âm âm /ɑː/ dài, trong khi 'bag', 'hat', 'cat' đều phát âm âm /æ/ ngắn.",
+    "cambridge_level": "Starters",
+    "skill": "phonics",
+    "grade": 3
+  },
+  {
+    "id": "q_g3_03",
+    "exam_id": "ex_g3_ck1_long_giang",
+    "prompt": "Odd one out: Which word is NOT a school supply?",
+    "options": [
+      "A. notebook",
+      "B. pencil sharpener",
+      "C. bedroom",
+      "D. eraser"
+    ],
+    "correct_answer": "C",
+    "explanation": "Đáp án C: 'bedroom' (phòng ngủ) là phòng trong nhà, các từ còn lại là đồ dùng học tập.",
+    "cambridge_level": "Starters",
+    "skill": "vocabulary",
+    "grade": 3
+  },
+  {
+    "id": "q_g4_01",
+    "exam_id": "ex_g4_ck1_long_giang",
+    "prompt": "What time is it? - It is seven _______ (7:15).",
+    "options": [
+      "A. fifteen",
+      "B. fifty",
+      "C. five",
+      "D. fifth"
+    ],
+    "correct_answer": "A",
+    "explanation": "Đáp án A: 7:15 đọc là 'seven fifteen' hoặc 'a quarter past seven'.",
+    "cambridge_level": "Movers",
+    "skill": "vocabulary",
+    "grade": 4
+  },
+  {
+    "id": "q_g4_02",
+    "exam_id": "ex_g4_ck1_long_giang",
+    "prompt": "My father is a doctor. He works in a _______.",
+    "options": [
+      "A. factory",
+      "B. hospital",
+      "C. field",
+      "D. post office"
+    ],
+    "correct_answer": "B",
+    "explanation": "Đáp án B: Bác sĩ (doctor) làm việc ở bệnh viện (hospital).",
+    "cambridge_level": "Movers",
+    "skill": "vocabulary",
+    "grade": 4
+  },
+  {
+    "id": "q_g4_03",
+    "exam_id": "ex_g4_ck1_long_giang",
+    "prompt": "Choose the correct question: - _______ do you have English? - I have it on Mondays and Wednesdays.",
+    "options": [
+      "A. What",
+      "B. Where",
+      "C. When",
+      "D. Why"
+    ],
+    "correct_answer": "C",
+    "explanation": "Đáp án C: Hỏi về thời gian học (on Mondays and Wednesdays) dùng từ để hỏi 'When'.",
+    "cambridge_level": "Movers",
+    "skill": "grammar",
+    "grade": 4
+  },
+  {
+    "id": "q_g5_01",
+    "exam_id": "ex_g5_ck1_long_giang",
+    "prompt": "Where did you go last summer holiday? - I went to Ha Long Bay _______ train.",
+    "options": [
+      "A. on",
+      "B. by",
+      "C. in",
+      "D. with"
+    ],
+    "correct_answer": "B",
+    "explanation": "Đáp án B: Cụm từ chỉ phương tiện giao thông dùng giới từ 'by' (by train, by car, by plane).",
+    "cambridge_level": "Flyers",
+    "skill": "grammar",
+    "grade": 5
+  },
+  {
+    "id": "q_g5_02",
+    "exam_id": "ex_g5_ck1_long_giang",
+    "prompt": "How often do you do morning exercise? - I do it _______ a week, on Tuesdays and Thursdays.",
+    "options": [
+      "A. once",
+      "B. twice",
+      "C. three times",
+      "D. two time"
+    ],
+    "correct_answer": "B",
+    "explanation": "Đáp án B: Hai lần một tuần dùng trạng từ 'twice a week'.",
+    "cambridge_level": "Flyers",
+    "skill": "grammar",
+    "grade": 5
+  },
+  {
+    "id": "q_g7_yl_01",
+    "exam_id": "ex_g7_hsg_yen_lap",
+    "prompt": "Choose the word whose underlined part is pronounced differently: c<u>oa</u>ch, c<u>a</u>re, d<u>e</u>cide, sc<u>a</u>red",
+    "options": [
+      "A. coach",
+      "B. care",
+      "C. decide",
+      "D. scared"
+    ],
+    "correct_answer": "C",
+    "explanation": "Đáp án C: chữ 'c' trong 'decide' phát âm là /s/, còn trong 'coach', 'care', 'scared' phát âm là /k/.",
+    "cambridge_level": "KET_A2",
+    "skill": "phonics",
+    "grade": 7
+  },
+  {
+    "id": "q_g7_yl_02",
+    "exam_id": "ex_g7_hsg_yen_lap",
+    "prompt": "Choose the word with stress placed differently from the others: perform, gather, review, attract",
+    "options": [
+      "A. perform",
+      "B. gather",
+      "C. review",
+      "D. attract"
+    ],
+    "correct_answer": "B",
+    "explanation": "Đáp án B: 'gather' /ˈɡæðər/ có trọng âm rơi vào âm tiết 1; các từ còn lại đều có trọng âm rơi vào âm tiết 2 (/pəˈfɔːm/, /rɪˈvjuː/, /əˈtrækt/).",
+    "cambridge_level": "KET_A2",
+    "skill": "phonics",
+    "grade": 7
+  },
+  {
+    "id": "q_g7_yl_03",
+    "exam_id": "ex_g7_hsg_yen_lap",
+    "prompt": "The government is trying to encourage people to use _______ sources of energy such as wind and solar.",
+    "options": [
+      "A. renewable",
+      "B. non-renewable",
+      "C. exhausted",
+      "D. harmful"
+    ],
+    "correct_answer": "A",
+    "explanation": "Đáp án A: 'renewable energy' (năng lượng tái tạo) gồm năng lượng gió (wind) và mặt trời (solar).",
+    "cambridge_level": "KET_A2",
+    "skill": "vocabulary",
+    "grade": 7
+  },
+  {
+    "id": "q_g7_yl_04",
+    "exam_id": "ex_g7_hsg_yen_lap",
+    "prompt": "My mother used to _______ a small red bicycle when she was a student.",
+    "options": [
+      "A. riding",
+      "B. ride",
+      "C. rode",
+      "D. rides"
+    ],
+    "correct_answer": "B",
+    "explanation": "Đáp án B: Cấu trúc thói quen quá khứ: used to + V_nguyên thể (ride).",
+    "cambridge_level": "KET_A2",
+    "skill": "grammar",
+    "grade": 7
+  },
+  {
+    "id": "q_g7_yl_05",
+    "exam_id": "ex_g7_hsg_yen_lap",
+    "prompt": "Choose the correct sentence transformation: 'She started learning English 5 years ago.'",
+    "options": [
+      "A. She has learned English for 5 years.",
+      "B. She learns English since 5 years.",
+      "C. She is learning English 5 years ago.",
+      "D. She had learned English 5 years ago."
+    ],
+    "correct_answer": "A",
+    "explanation": "Đáp án A: Chuyển đổi thì Quá khứ đơn 'started V-ing ... ago' sang Hiện tại hoàn thành 'have/has V3/ed for ...'.",
+    "cambridge_level": "KET_A2",
+    "skill": "sentence_transformation",
+    "grade": 7
+  },
+  {
+    "id": "q_wf_01",
+    "exam_id": "ex_g12_hsg_quang_nam",
+    "prompt": "It is amazing how _______ she looks at her age! (YOUTH)",
+    "options": [
+      "A. youthful",
+      "B. youthfully",
+      "C. youngster",
+      "D. youthfulness"
+    ],
+    "correct_answer": "A",
+    "explanation": "Đáp án A: Sau liên từ/động từ nối 'looks' cần một tính từ miêu tả ngoại hình. 'youthful' = trẻ trung, đầy sức sống.",
+    "cambridge_level": "CAE_C1",
+    "skill": "word_formation",
+    "grade": 12
+  },
+  {
+    "id": "q_wf_02",
+    "exam_id": "ex_g12_hsg_quang_nam",
+    "prompt": "We had an exceedingly _______ day boating on the lake. (ENJOY)",
+    "options": [
+      "A. enjoyable",
+      "B. enjoyably",
+      "C. enjoyment",
+      "D. enjoyed"
+    ],
+    "correct_answer": "A",
+    "explanation": "Đáp án A: Trước danh từ 'day' và sau phó từ 'exceedingly' cần một tính từ mang nghĩa tích cực: 'enjoyable' = thú vị, tràn ngập niềm vui.",
+    "cambridge_level": "CAE_C1",
+    "skill": "word_formation",
+    "grade": 12
+  },
+  {
+    "id": "q_wf_03",
+    "exam_id": "ex_g12_hsg_quang_nam",
+    "prompt": "Snow lasts considerably longer in _______ regions. (MOUNTAIN)",
+    "options": [
+      "A. mountainous",
+      "B. mount",
+      "C. mountainously",
+      "D. mountained"
+    ],
+    "correct_answer": "A",
+    "explanation": "Đáp án A: 'mountainous regions' = các vùng đồi núi hiểm trở.",
+    "cambridge_level": "CAE_C1",
+    "skill": "word_formation",
+    "grade": 12
+  },
+  {
+    "id": "q_wf_04",
+    "exam_id": "ex_g12_hsg_quang_nam",
+    "prompt": "He proved so stubborn that it seemed completely _______ to insist. (POINT)",
+    "options": [
+      "A. pointless",
+      "B. pointer",
+      "C. pointlessly",
+      "D. pointed"
+    ],
+    "correct_answer": "A",
+    "explanation": "Đáp án A: 'pointless' = vô ích, vô nghĩa. Sau linking verb 'seemed' cần tính từ mang nghĩa nản lòng khi ai đó bướng bỉnh.",
+    "cambridge_level": "CAE_C1",
+    "skill": "word_formation",
+    "grade": 12
+  },
+  {
+    "id": "q_wf_05",
+    "exam_id": "ex_g12_hsg_quang_nam",
+    "prompt": "Do you happen to know the exact _______ of Ben Nevis? (HIGH)",
+    "options": [
+      "A. height",
+      "B. higher",
+      "C. highly",
+      "D. heighten"
+    ],
+    "correct_answer": "A",
+    "explanation": "Đáp án A: Sau mạo từ 'the exact' cần danh từ chỉ độ cao: 'height' (từ gốc tính từ 'high').",
+    "cambridge_level": "CAE_C1",
+    "skill": "word_formation",
+    "grade": 12
+  },
+  {
+    "id": "q_g11_01",
+    "exam_id": "ex_g11_hsg_tinh",
+    "prompt": "Scientists firmly _______ that green hydrogen will be the primary fuel of tomorrow.",
+    "options": [
+      "A. believe",
+      "B. are believing",
+      "C. have been believing",
+      "D. were believing"
+    ],
+    "correct_answer": "A",
+    "explanation": "Đáp án A: 'believe' là động từ trạng thái (stative verb), không chia ở thì tiếp diễn.",
+    "cambridge_level": "FCE_B2",
+    "skill": "grammar",
+    "grade": 11
+  },
+  {
+    "id": "q_g11_02",
+    "exam_id": "ex_g11_hsg_tinh",
+    "prompt": "Not until the late 20th century _______ the urgent need for eco-friendly urban zoning.",
+    "options": [
+      "A. did city planners realize",
+      "B. city planners realized",
+      "C. had city planners realized",
+      "D. city planners had realized"
+    ],
+    "correct_answer": "A",
+    "explanation": "Đáp án A: Cấu trúc đảo ngữ với 'Not until + time/clause + trợ động từ (did) + S + V_inf'.",
+    "cambridge_level": "CAE_C1",
+    "skill": "inversion",
+    "grade": 11
+  },
+  {
+    "id": "q_thpt_01",
+    "exam_id": "ex_thpt_qg_2026",
+    "prompt": "Mark the letter A, B, C, or D to indicate the best response to complete the dialogue:\n- Nam: 'Would you mind turning down the radio? I am preparing for my graduation test.'\n- Lan: '_______'",
+    "options": [
+      "A. Not at all. I will do it immediately.",
+      "B. Yes, I would love to.",
+      "C. Never mind, you can study later.",
+      "D. That is very kind of you."
+    ],
+    "correct_answer": "A",
+    "explanation": "Đáp án A: Khi được hỏi lịch sự 'Would you mind...?' (Bạn có phiền không?), câu trả lời đồng ý giúp đỡ là 'Not at all' (Không hề phiền).",
+    "cambridge_level": "FCE_B2",
+    "skill": "communication",
+    "grade": 12
+  },
+  {
+    "id": "q_thpt_02",
+    "exam_id": "ex_thpt_qg_2026",
+    "prompt": "The rapid expansion of artificial intelligence in healthcare has yielded _______ advancements in early tumor detection.",
+    "options": [
+      "A. unprecedented",
+      "B. precedented",
+      "C. precedent",
+      "D. unprecedent"
+    ],
+    "correct_answer": "A",
+    "explanation": "Đáp án A: 'unprecedented advancements' = những tiến bộ chưa từng có tiền lệ.",
+    "cambridge_level": "CAE_C1",
+    "skill": "vocabulary",
+    "grade": 12
+  },
+  {
+    "id": "q_ielts_01",
+    "exam_id": "ex_ielts_academic_mock",
+    "prompt": "In academic writing, which cohesive device is best suited to introduce an opposing perspective?",
+    "options": [
+      "A. Conversely",
+      "B. Furthermore",
+      "C. Consequently",
+      "D. For instance"
+    ],
+    "correct_answer": "A",
+    "explanation": "Đáp án A: 'Conversely' (ngược lại) dùng để đối chiếu một góc nhìn trái ngược hoàn toàn.",
+    "cambridge_level": "CAE_C1",
+    "skill": "academic_writing",
+    "grade": 12
+  },
+  {
+    "id": "q_ielts_02",
+    "exam_id": "ex_ielts_academic_mock",
+    "prompt": "The proposed carbon tax policy was heavily criticized for imposing a _______ financial burden on marginalized households.",
+    "options": [
+      "A. disproportionate",
+      "B. disproportionality",
+      "C. proportionate",
+      "D. proportion"
+    ],
+    "correct_answer": "A",
+    "explanation": "Đáp án A: 'disproportionate burden' = gánh nặng mất cân đối, quá mức.",
+    "cambridge_level": "CAE_C1",
+    "skill": "collocation",
+    "grade": 12
   }
 ]

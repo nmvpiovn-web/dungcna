@@ -1,18 +1,19 @@
-import usersData from '$lib/data/users.json';
-import curriculaData from '$lib/data/curricula.json';
-import examsData from '$lib/data/exams.json';
-import questionsData from '$lib/data/questions.json';
-import evaluationsData from '$lib/data/student_evaluations.json';
-import cambridgeVocabData from '$lib/data/cambridge_vocabulary.json';
-import pedagogyData from '$lib/data/teaching_resources.json';
-import snapshotsData from '$lib/data/snapshots.json';
-import webhooksData from '$lib/data/webhooks.json';
-import tuitionBillsData from '$lib/data/tuition_bills.json';
-import studentStarsData from '$lib/data/student_stars.json';
-import classSessionsData from '$lib/data/class_sessions.json';
-import attendanceRecordsData from '$lib/data/attendance_records.json';
-import evaluationDiscussionsData from '$lib/data/evaluation_discussions.json';
-import teacherProfilesData from '$lib/data/teacher_profiles.json';
+import usersData from './data/users.json';
+import curriculaData from './data/curricula.json';
+import examsData from './data/exams.json';
+import questionsData from './data/questions.json';
+import evaluationsData from './data/student_evaluations.json';
+import cambridgeVocabData from './data/cambridge_vocabulary.json';
+import pedagogyData from './data/teaching_resources.json';
+import snapshotsData from './data/snapshots.json';
+import webhooksData from './data/webhooks.json';
+import tuitionBillsData from './data/tuition_bills.json';
+import studentStarsData from './data/student_stars.json';
+import classSessionsData from './data/class_sessions.json';
+import attendanceRecordsData from './data/attendance_records.json';
+import evaluationDiscussionsData from './data/evaluation_discussions.json';
+import teacherProfilesData from './data/teacher_profiles.json';
+
 
 const STORAGE_KEY_USER = 'tienganh_active_user';
 const STORAGE_KEY_SESSION = 'tienganh_session_auth_v2';
@@ -350,7 +351,16 @@ export function updateUserGradeAndClass(userId, grade, classId = '', operator = 
   
   meta.grade = grade;
   if (classId) meta.class_id = classId;
+  
+  // Sync enrolled_grades array
+  if (!Array.isArray(meta.enrolled_grades) || meta.enrolled_grades.length <= 1) {
+    meta.enrolled_grades = [grade];
+  } else if (!meta.enrolled_grades.includes(grade)) {
+    meta.enrolled_grades.push(grade);
+  }
+
   user.metadata = JSON.stringify(meta);
+  user.grade = grade;
   user.updated_at = new Date().toISOString();
 
   // If student, link into session if classId matches
@@ -380,11 +390,22 @@ export function updateUserGradeAndClass(userId, grade, classId = '', operator = 
     username: user.username,
     grade,
     class_id: classId,
-    updated_by: operator?.name || currentUser?.name || 'Học viên'
+    updated_by: operator?.name || currentUser?.name || 'Hệ thống Quản Trị Cô Dung'
   });
 
-  return { success: true, user };
+  addLeaderNotification({
+    type: 'class_transfer_executed',
+    title: `🔄 Chuyển lớp thành công: ${user.name}`,
+    body: `Học sinh ${user.name} (${user.username}) đã được chuyển sang ${grade} (Mã lớp: ${classId || 'Mặc định'}). Thực hiện bởi: ${operator?.name || 'Admin / Leader Cô Dung'}.`,
+    target_role: 'admin',
+    priority: 'medium',
+    action_url: '/admin#students',
+    metadata: { student_id: user.id, username: user.username, new_grade: grade, class_id: classId }
+  });
+
+  return { success: true, user, grade };
 }
+
 
 export function getUserEnrolledGrades(user) {
   if (!user) return [];
@@ -502,15 +523,27 @@ export function removeStudentEnrolledGrade(studentId, gradeToRemove, operator = 
   return { success: true, user, enrolled_grades: currentEnrolled };
 }
 
-export async function requestUnlockClass(studentId, gradeTitle) {
-  const user = getAllUsers().find(u => u.id === studentId) || getCurrentUser();
+export async function requestUnlockClass(studentId, gradeTitle, note = '') {
+  const users = getAllUsers();
+  const user = users.find(u => u.id === studentId || u.username === studentId) || getCurrentUser();
   if (!user) return { success: false, error: 'Chưa đăng nhập!' };
 
-  logSnapshot('REQUEST_CLASS_UNLOCK', 'class_request', studentId, null, {
+  addLeaderNotification({
+    type: 'class_transfer_request',
+    title: `📩 Yêu cầu chuyển/mở lớp: ${user.name}`,
+    body: `Học sinh ${user.name} (${user.username}, SĐT: ${user.phone || 'Chưa có'}) gửi yêu cầu chuyển sang / mở thêm lớp: ${gradeTitle}.${note ? ' Lý do: ' + note : ''}`,
+    target_role: 'admin',
+    priority: 'high',
+    action_url: '/admin#students',
+    metadata: { student_id: user.id, username: user.username, target_grade: gradeTitle, note }
+  });
+
+  logSnapshot('REQUEST_CLASS_UNLOCK', 'class_request', user.id, null, {
     student_name: user.name,
     username: user.username,
     phone: user.phone,
     requested_grade: gradeTitle,
+    note,
     time: new Date().toISOString()
   });
 
@@ -519,11 +552,12 @@ export async function requestUnlockClass(studentId, gradeTitle) {
     username: user.username,
     phone: user.phone || 'Chưa cung cấp',
     requested_grade: gradeTitle,
+    note: note || 'Không có',
     request_time: new Date().toLocaleString('vi-VN'),
     notice: 'Học sinh gửi yêu cầu mở thêm lớp từ ứng dụng. Leader/Admin vui lòng vào AdminCP để phê duyệt.'
   });
 
-  return { success: true };
+  return { success: true, message: `Đã gửi yêu cầu chuyển sang ${gradeTitle} tới Cô Dung!` };
 }
 
 // -------------------------------------------------------------
@@ -1633,7 +1667,7 @@ export const POPULAR_SCHOOLS = [
   { name: 'Đại Học Quốc Gia (Hà Nội / TP.HCM)', gradeLevel: 'Đại Học' }
 ];
 
-export function updateUserProfile(userId, updates) {
+export function updateUserProfile(userId, updates, operator = null) {
   const users = getAllUsers();
   const idx = users.findIndex(u => u.id === userId || u.username === userId);
   if (idx < 0) return { success: false, error: 'Không tìm thấy người dùng!' };
@@ -1644,9 +1678,30 @@ export function updateUserProfile(userId, updates) {
     meta = typeof current.metadata === 'string' ? JSON.parse(current.metadata) : (current.metadata || {});
   } catch {}
 
+  // RBAC check on grade modification:
+  // Only admin, leader, or teacher can change student's grade directly.
+  // Regular students/parents cannot alter their assigned grade via profile edit.
+  const activeUser = operator || getCurrentUser();
+  const isAuthorizedAdmin = activeUser && (
+    activeUser.role === 'admin' || 
+    activeUser.role === 'teacher' || 
+    activeUser.role === 'leader' || 
+    isTeacherOrAdmin(activeUser)
+  );
+
+  let newGrade = meta.grade || current.grade || 'Lớp 7';
+  if (updates.grade !== undefined) {
+    if (isAuthorizedAdmin || (current.role !== 'student' && current.role !== 'parent')) {
+      newGrade = updates.grade;
+    } else if (updates.grade !== (meta.grade || current.grade)) {
+      // Student requested grade change from profile: automatically dispatch class transfer request
+      requestUnlockClass(current.id, updates.grade, 'Học sinh gửi yêu cầu chuyển lớp từ hồ sơ cá nhân');
+    }
+  }
+
   const newMeta = {
     ...meta,
-    grade: updates.grade !== undefined ? updates.grade : meta.grade,
+    grade: newGrade,
     school: updates.school !== undefined ? updates.school : meta.school,
     target: updates.target !== undefined ? updates.target : meta.target,
     zalo_id: updates.zalo_id !== undefined ? updates.zalo_id : meta.zalo_id,
@@ -1663,6 +1718,7 @@ export function updateUserProfile(userId, updates) {
     phone: updates.phone ? updates.phone.trim() : current.phone,
     email: updates.email ? updates.email.trim() : current.email,
     avatar: updates.avatar || current.avatar,
+    grade: newGrade,
     metadata: JSON.stringify(newMeta),
     updated_at: new Date().toISOString()
   };
