@@ -162,77 +162,88 @@
 
         <!-- Desktop Navigation with Flyout Submenus -->
         <nav class="hidden lg:flex items-center gap-1 relative z-40">
-          <!-- Item 1: Lộ Trình Đào Tạo Dropdown -->
-          <div class="relative">
-            <button
-              onclick={() => toggleSubmenu('courses')}
-              class="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold tracking-wide transition-all {activeDropdown === 'courses' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300' : 'text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'}"
+          <!-- Item 1: Lộ Trình Đào Tạo Dropdown (Or Direct Student Course) -->
+          {#if currentUser?.role === 'student'}
+            <a
+              href="/"
+              onclick={closeAllDropdowns}
+              class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold tracking-wide transition-all bg-emerald-50 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300 border border-emerald-300/40"
             >
-              <span>📚</span>
-              <span>Lộ Trình Đào Tạo</span>
-              <span class="text-[10px] transition-transform duration-200 {activeDropdown === 'courses' ? 'rotate-180' : ''}">▾</span>
-            </button>
+              <span>🎓</span>
+              <span>Lớp Của Tôi: {currentUserGrade || 'Lớp 7'}</span>
+            </a>
+          {:else}
+            <div class="relative">
+              <button
+                onclick={() => toggleSubmenu('courses')}
+                class="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold tracking-wide transition-all {activeDropdown === 'courses' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300' : 'text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'}"
+              >
+                <span>📚</span>
+                <span>Lộ Trình Đào Tạo</span>
+                <span class="text-[10px] transition-transform duration-200 {activeDropdown === 'courses' ? 'rotate-180' : ''}">▾</span>
+              </button>
 
-            {#if activeDropdown === 'courses'}
-              <div class="absolute left-0 mt-2 w-72 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl p-2 z-50 animate-in fade-in zoom-in-95 duration-150">
-                <a
-                  href="/?tab=primary"
-                  onclick={closeAllDropdowns}
-                  class="flex items-center gap-3 p-2.5 rounded-xl hover:bg-emerald-50/70 dark:hover:bg-slate-800 transition-colors group"
-                >
-                  <div class="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 flex items-center justify-center text-sm font-bold">
-                    🎒
-                  </div>
-                  <div>
-                    <div class="font-bold text-xs text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400">Tiểu Học (Lớp 1 - 5)</div>
-                    <div class="text-[10px] text-slate-500 dark:text-slate-400">Global Success, Phonics &amp; Âm Nhạc</div>
-                  </div>
-                </a>
+              {#if activeDropdown === 'courses'}
+                <div class="absolute left-0 mt-2 w-72 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl p-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+                  <a
+                    href="/?tab=primary"
+                    onclick={closeAllDropdowns}
+                    class="flex items-center gap-3 p-2.5 rounded-xl hover:bg-emerald-50/70 dark:hover:bg-slate-800 transition-colors group"
+                  >
+                    <div class="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 flex items-center justify-center text-sm font-bold">
+                      🎒
+                    </div>
+                    <div>
+                      <div class="font-bold text-xs text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400">Tiểu Học (Lớp 1 - 5)</div>
+                      <div class="text-[10px] text-slate-500 dark:text-slate-400">Global Success, Phonics &amp; Âm Nhạc</div>
+                    </div>
+                  </a>
 
-                <a
-                  href="/?tab=secondary"
-                  onclick={closeAllDropdowns}
-                  class="flex items-center gap-3 p-2.5 rounded-xl hover:bg-emerald-50/70 dark:hover:bg-slate-800 transition-colors group"
-                >
-                  <div class="w-8 h-8 rounded-lg bg-teal-100 dark:bg-teal-900/50 text-teal-700 dark:text-teal-300 flex items-center justify-center text-sm font-bold">
-                    🌱
-                  </div>
-                  <div>
-                    <div class="font-bold text-xs text-slate-900 dark:text-white group-hover:text-teal-600 dark:group-hover:text-teal-400">THCS (Lớp 6 - 9)</div>
-                    <div class="text-[10px] text-slate-500 dark:text-slate-400">Ngữ pháp cốt lõi, Cambridge KET/PET</div>
-                  </div>
-                </a>
+                  <a
+                    href="/?tab=secondary"
+                    onclick={closeAllDropdowns}
+                    class="flex items-center gap-3 p-2.5 rounded-xl hover:bg-emerald-50/70 dark:hover:bg-slate-800 transition-colors group"
+                  >
+                    <div class="w-8 h-8 rounded-lg bg-teal-100 dark:bg-teal-900/50 text-teal-700 dark:text-teal-300 flex items-center justify-center text-sm font-bold">
+                      🌱
+                    </div>
+                    <div>
+                      <div class="font-bold text-xs text-slate-900 dark:text-white group-hover:text-teal-600 dark:group-hover:text-teal-400">THCS (Lớp 6 - 9)</div>
+                      <div class="text-[10px] text-slate-500 dark:text-slate-400">Ngữ pháp cốt lõi, Cambridge KET/PET</div>
+                    </div>
+                  </a>
 
-                <a
-                  href="/?tab=high_school"
-                  onclick={closeAllDropdowns}
-                  class="flex items-center gap-3 p-2.5 rounded-xl hover:bg-emerald-50/70 dark:hover:bg-slate-800 transition-colors group"
-                >
-                  <div class="w-8 h-8 rounded-lg bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 flex items-center justify-center text-sm font-bold">
-                    🏢
-                  </div>
-                  <div>
-                    <div class="font-bold text-xs text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400">THPT &amp; Ôn Thi ĐH (Lớp 10 - 12)</div>
-                    <div class="text-[10px] text-slate-500 dark:text-slate-400">Bám sát cấu trúc đề thi 2026</div>
-                  </div>
-                </a>
+                  <a
+                    href="/?tab=high_school"
+                    onclick={closeAllDropdowns}
+                    class="flex items-center gap-3 p-2.5 rounded-xl hover:bg-emerald-50/70 dark:hover:bg-slate-800 transition-colors group"
+                  >
+                    <div class="w-8 h-8 rounded-lg bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 flex items-center justify-center text-sm font-bold">
+                      🏢
+                    </div>
+                    <div>
+                      <div class="font-bold text-xs text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400">THPT &amp; Ôn Thi ĐH (Lớp 10 - 12)</div>
+                      <div class="text-[10px] text-slate-500 dark:text-slate-400">Bám sát cấu trúc đề thi 2026</div>
+                    </div>
+                  </a>
 
-                <a
-                  href="/?tab=certificate"
-                  onclick={closeAllDropdowns}
-                  class="flex items-center gap-3 p-2.5 rounded-xl hover:bg-emerald-50/70 dark:hover:bg-slate-800 transition-colors group"
-                >
-                  <div class="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 flex items-center justify-center text-sm font-bold">
-                    🌍
-                  </div>
-                  <div>
-                    <div class="font-bold text-xs text-slate-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400">IELTS • TOEIC • VSTEP</div>
-                    <div class="text-[10px] text-slate-500 dark:text-slate-400">Khảo thí chuẩn Cambridge quốc tế</div>
-                  </div>
-                </a>
-              </div>
-            {/if}
-          </div>
+                  <a
+                    href="/?tab=certificate"
+                    onclick={closeAllDropdowns}
+                    class="flex items-center gap-3 p-2.5 rounded-xl hover:bg-emerald-50/70 dark:hover:bg-slate-800 transition-colors group"
+                  >
+                    <div class="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 flex items-center justify-center text-sm font-bold">
+                      🌍
+                    </div>
+                    <div>
+                      <div class="font-bold text-xs text-slate-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400">IELTS • TOEIC • VSTEP</div>
+                      <div class="text-[10px] text-slate-500 dark:text-slate-400">Khảo thí chuẩn Cambridge quốc tế</div>
+                    </div>
+                  </a>
+                </div>
+              {/if}
+            </div>
+          {/if}
 
           <!-- Item 2: Khảo Thí & Luyện Thi Dropdown -->
           <div class="relative">
@@ -600,27 +611,41 @@
       {#if mobileMenuOpen}
         <div class="lg:hidden py-4 border-t border-slate-200 dark:border-slate-800 space-y-3 animate-in slide-in-from-top-2 duration-150">
           <div class="grid grid-cols-2 gap-2">
-            <a
-              href="/?tab=primary"
-              onclick={() => mobileMenuOpen = false}
-              class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold"
-            >
-              <span>🎒</span> <span>Tiểu Học (L1-5)</span>
-            </a>
-            <a
-              href="/?tab=secondary"
-              onclick={() => mobileMenuOpen = false}
-              class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold"
-            >
-              <span>🌱</span> <span>THCS (L6-9)</span>
-            </a>
-            <a
-              href="/?tab=high_school"
-              onclick={() => mobileMenuOpen = false}
-              class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold"
-            >
-              <span>🏢</span> <span>THPT &amp; Ôn Thi ĐH</span>
-            </a>
+            {#if currentUser?.role === 'student'}
+              <a
+                href="/"
+                onclick={() => mobileMenuOpen = false}
+                class="col-span-2 flex items-center justify-between p-3 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 text-xs font-bold border border-emerald-300/40"
+              >
+                <div class="flex items-center gap-2">
+                  <span class="text-base">🎓</span>
+                  <span>Khóa Học Của Tôi: {currentUserGrade || 'Lớp 7'}</span>
+                </div>
+                <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-200 dark:bg-emerald-900/60 uppercase">Đang Học</span>
+              </a>
+            {:else}
+              <a
+                href="/?tab=primary"
+                onclick={() => mobileMenuOpen = false}
+                class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold"
+              >
+                <span>🎒</span> <span>Tiểu Học (L1-5)</span>
+              </a>
+              <a
+                href="/?tab=secondary"
+                onclick={() => mobileMenuOpen = false}
+                class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold"
+              >
+                <span>🌱</span> <span>THCS (L6-9)</span>
+              </a>
+              <a
+                href="/?tab=high_school"
+                onclick={() => mobileMenuOpen = false}
+                class="col-span-2 flex items-center gap-2 p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold"
+              >
+                <span>🏢</span> <span>THPT &amp; Ôn Thi ĐH</span>
+              </a>
+            {/if}
             <a
               href="/exam"
               onclick={() => mobileMenuOpen = false}

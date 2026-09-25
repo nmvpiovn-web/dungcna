@@ -49,6 +49,7 @@ export function getAllUsers() {
             phone: u.phone || seed.phone,
             password: u.password || seed.password,
             role: u.role || seed.role,
+            grade: u.grade || seed.grade,
             status: u.status || seed.status,
             approval_status: u.approval_status || seed.approval_status
           };
@@ -373,6 +374,146 @@ export function updateUserGradeAndClass(userId, grade, classId = '', operator = 
   });
 
   return { success: true, user };
+}
+
+export function getUserEnrolledGrades(user) {
+  if (!user) return [];
+  let meta = {};
+  try {
+    meta = typeof user.metadata === 'string' ? JSON.parse(user.metadata) : (user.metadata || {});
+  } catch {}
+
+  const list = [];
+  const baseGrade = user.grade || meta.grade;
+  if (baseGrade) list.push(baseGrade);
+
+  if (Array.isArray(meta.enrolled_grades)) {
+    for (const g of meta.enrolled_grades) {
+      if (g && !list.includes(g)) {
+        list.push(g);
+      }
+    }
+  }
+
+  if (list.length === 0 && user.role === 'student') {
+    list.push('Lớp 7');
+  }
+  return list;
+}
+
+export function isCurriculumEnrolled(user, curriculum) {
+  if (!user || user.role !== 'student') return true; // Non-students or admins have full view
+  const enrolled = getUserEnrolledGrades(user);
+  const code = (curriculum.code || '').toLowerCase();
+  const title = (curriculum.title || '').toLowerCase();
+
+  return enrolled.some(enr => {
+    const clean = enr.toLowerCase().trim();
+    // Match grade number (e.g., 'lớp 7' -> 'grade-7', 'lớp 7')
+    const match = clean.match(/lớp\s*([0-9]+)/i) || clean.match(/grade-?([0-9]+)/i);
+    if (match) {
+      const gNum = match[1];
+      if (code === `grade-${gNum}` || title.includes(`lớp ${gNum}`)) return true;
+    }
+    if (clean.includes('ielts') && (code.includes('ielts') || title.includes('ielts'))) return true;
+    if (clean.includes('toeic') && (code.includes('toeic') || title.includes('toeic'))) return true;
+    if (clean.includes('toefl') && (code.includes('toefl') || title.includes('toefl'))) return true;
+    if (clean.includes('vstep') && (code.includes('vstep') || title.includes('vstep'))) return true;
+    if (clean.includes('đại học') || clean.includes('thptqg')) {
+      if (code.includes('thpt_qg') || title.includes('thpt qg') || title.includes('đại học')) return true;
+    }
+    return title.includes(clean) || code === clean;
+  });
+}
+
+export function enrollStudentAdditionalGrade(studentId, newGrade, operator = null) {
+  const users = getAllUsers();
+  const idx = users.findIndex(u => u.id === studentId);
+  if (idx < 0) return { success: false, error: 'Không tìm thấy học sinh!' };
+
+  const user = users[idx];
+  const before = { ...user };
+  let meta = {};
+  try { meta = typeof user.metadata === 'string' ? JSON.parse(user.metadata) : (user.metadata || {}); } catch {}
+
+  const currentEnrolled = Array.isArray(meta.enrolled_grades) ? [...meta.enrolled_grades] : [user.grade || 'Lớp 7'];
+  if (!currentEnrolled.includes(newGrade)) {
+    currentEnrolled.push(newGrade);
+  }
+  meta.enrolled_grades = currentEnrolled;
+  user.metadata = JSON.stringify(meta);
+  user.updated_at = new Date().toISOString();
+
+  saveAllUsers(users);
+
+  const currentUser = getCurrentUser();
+  if (currentUser && currentUser.id === studentId) {
+    setCurrentUser(user);
+  }
+
+  logSnapshot('ENROLL_ADDITIONAL_GRADE', 'user', studentId, before, user);
+  dispatchBotReport('STUDENT_ENROLLED_ADDITIONAL_GRADE', {
+    student_name: user.name,
+    username: user.username,
+    new_grade: newGrade,
+    all_enrolled: currentEnrolled.join(', '),
+    assigned_by: operator?.name || currentUser?.name || 'Leader Cô Dung'
+  });
+
+  return { success: true, user, enrolled_grades: currentEnrolled };
+}
+
+export function removeStudentEnrolledGrade(studentId, gradeToRemove, operator = null) {
+  const users = getAllUsers();
+  const idx = users.findIndex(u => u.id === studentId);
+  if (idx < 0) return { success: false, error: 'Không tìm thấy học sinh!' };
+
+  const user = users[idx];
+  const before = { ...user };
+  let meta = {};
+  try { meta = typeof user.metadata === 'string' ? JSON.parse(user.metadata) : (user.metadata || {}); } catch {}
+
+  let currentEnrolled = Array.isArray(meta.enrolled_grades) ? [...meta.enrolled_grades] : [user.grade || 'Lớp 7'];
+  currentEnrolled = currentEnrolled.filter(g => g !== gradeToRemove);
+  if (currentEnrolled.length === 0) currentEnrolled = [user.grade || 'Lớp 7'];
+
+  meta.enrolled_grades = currentEnrolled;
+  user.metadata = JSON.stringify(meta);
+  user.updated_at = new Date().toISOString();
+
+  saveAllUsers(users);
+
+  const currentUser = getCurrentUser();
+  if (currentUser && currentUser.id === studentId) {
+    setCurrentUser(user);
+  }
+
+  logSnapshot('REMOVE_ENROLLED_GRADE', 'user', studentId, before, user);
+  return { success: true, user, enrolled_grades: currentEnrolled };
+}
+
+export async function requestUnlockClass(studentId, gradeTitle) {
+  const user = getAllUsers().find(u => u.id === studentId) || getCurrentUser();
+  if (!user) return { success: false, error: 'Chưa đăng nhập!' };
+
+  logSnapshot('REQUEST_CLASS_UNLOCK', 'class_request', studentId, null, {
+    student_name: user.name,
+    username: user.username,
+    phone: user.phone,
+    requested_grade: gradeTitle,
+    time: new Date().toISOString()
+  });
+
+  await dispatchBotReport('CLASS_UNLOCK_REQUESTED', {
+    student_name: user.name,
+    username: user.username,
+    phone: user.phone || 'Chưa cung cấp',
+    requested_grade: gradeTitle,
+    request_time: new Date().toLocaleString('vi-VN'),
+    notice: 'Học sinh gửi yêu cầu mở thêm lớp từ ứng dụng. Leader/Admin vui lòng vào AdminCP để phê duyệt.'
+  });
+
+  return { success: true };
 }
 
 export function updateUserStarAdjustment(studentId, deltaStars, reason = 'Thưởng/phạt điểm rèn luyện', operator = null) {

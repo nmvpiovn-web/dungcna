@@ -12,6 +12,9 @@
     approveUserToOfficial,
     rejectOrBlockUser,
     updateUserGradeAndClass,
+    getUserEnrolledGrades,
+    enrollStudentAdditionalGrade,
+    removeStudentEnrolledGrade,
     updateUserStarAdjustment,
     logTeacherAction,
     getAllClassSessions,
@@ -97,6 +100,8 @@
   let selectedStudentForClass = $state(null);
   let targetGrade = $state('Lớp 7');
   let targetClassId = $state('L7_GLOBAL_SUCCESS_A1');
+  let additionalGradeToEnroll = $state('Luyện Thi IELTS');
+  let currentStudentEnrolledList = $state([]);
 
   // Timetable Modals State
   let showSessionEditModal = $state(false);
@@ -294,8 +299,10 @@
     selectedStudentForClass = student;
     let meta = {};
     try { meta = typeof student.metadata === 'string' ? JSON.parse(student.metadata) : (student.metadata || {}); } catch {}
-    targetGrade = meta.grade || 'Lớp 7';
+    targetGrade = meta.grade || student.grade || 'Lớp 7';
     targetClassId = meta.class_id || 'L7_GLOBAL_SUCCESS_A1';
+    currentStudentEnrolledList = getUserEnrolledGrades(student);
+    additionalGradeToEnroll = 'Luyện Thi IELTS';
     showClassModal = true;
   }
 
@@ -305,8 +312,31 @@
     if (res.success) {
       loadData();
       playAudioFeedback(true);
-      showToast(`✅ Đã chuyển học sinh ${selectedStudentForClass.name} sang ${targetGrade}!`);
+      showToast(`✅ Đã chuyển khối lớp chính của ${selectedStudentForClass.name} sang ${targetGrade}!`);
       showClassModal = false;
+    }
+  }
+
+  function handleAddAdditionalGrade() {
+    if (!selectedStudentForClass || !additionalGradeToEnroll) return;
+    const res = enrollStudentAdditionalGrade(selectedStudentForClass.id, additionalGradeToEnroll, currentUser);
+    if (res.success) {
+      loadData();
+      selectedStudentForClass = res.user;
+      currentStudentEnrolledList = res.enrolled_grades;
+      playAudioFeedback(true);
+      showToast(`✅ Đã set thêm lớp "${additionalGradeToEnroll}" cho ${selectedStudentForClass.name}!`);
+    }
+  }
+
+  function handleRemoveAdditionalGrade(grade) {
+    if (!selectedStudentForClass) return;
+    const res = removeStudentEnrolledGrade(selectedStudentForClass.id, grade, currentUser);
+    if (res.success) {
+      loadData();
+      selectedStudentForClass = res.user;
+      currentStudentEnrolledList = res.enrolled_grades;
+      showToast(`Đã gỡ lớp "${grade}" khỏi tài khoản ${selectedStudentForClass.name}.`);
     }
   }
 
@@ -834,16 +864,18 @@
 
                   <!-- Grade -->
                   <td class="p-4">
-                    <div class="flex items-center gap-1.5">
-                      <span class="px-2.5 py-1 rounded-xl bg-indigo-500/10 text-indigo-300 font-bold border border-indigo-500/20 text-xs">
-                        {meta.grade || st.grade || 'Chưa chọn'}
-                      </span>
+                    <div class="flex flex-wrap items-center gap-1.5">
+                      {#each getUserEnrolledGrades(st) as g}
+                        <span class="px-2 py-0.5 rounded-lg bg-indigo-500/10 text-indigo-300 font-bold border border-indigo-500/20 text-xs">
+                          {g}
+                        </span>
+                      {/each}
                       <button
                         onclick={() => openClassModal(st)}
-                        class="text-[10px] text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800"
-                        title="Đổi khối lớp"
+                        class="text-[10px] text-emerald-400 hover:text-emerald-300 px-1.5 py-0.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 font-bold transition-all"
+                        title="Đổi hoặc gán thêm khối lớp"
                       >
-                        ✏️
+                        ✏️ Set Lớp
                       </button>
                     </div>
                     {#if meta.school}
@@ -1526,53 +1558,117 @@
           <button onclick={() => showClassModal = false} class="text-slate-400 hover:text-white">✕</button>
         </div>
 
-        <div class="space-y-3 text-xs">
+        <div class="space-y-4 text-xs">
+          <!-- Active Enrolled Classes Tag List -->
           <div>
-            <label class="block font-bold text-slate-300 mb-1" for="target-grade">Khối Lớp Đào Tạo Mới:</label>
-            <select
-              id="target-grade"
-              bind:value={targetGrade}
-              class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-white font-bold focus:outline-none focus:border-indigo-400"
-            >
-              <option value="Lớp 1">Lớp 1 (Phonics &amp; Global Success)</option>
-              <option value="Lớp 2">Lớp 2 (Global Success)</option>
-              <option value="Lớp 3">Lớp 3 (Global Success)</option>
-              <option value="Lớp 4">Lớp 4 (Global Success)</option>
-              <option value="Lớp 5">Lớp 5 (Ôn Thi Chuyển Cấp)</option>
-              <option value="Lớp 6">Lớp 6 (THCS Global Success)</option>
-              <option value="Lớp 7">Lớp 7 (THCS Global Success A1)</option>
-              <option value="Lớp 8">Lớp 8 (THCS Global Success)</option>
-              <option value="Lớp 9">Lớp 9 (Luyện Thi Vào 10 &amp; Chuyên Anh)</option>
-              <option value="Lớp 10">Lớp 10 (THPT Mới)</option>
-              <option value="Lớp 11">Lớp 11 (THPT Mới)</option>
-              <option value="Lớp 12">Lớp 12 (Ôn Thi THPTQG 2026)</option>
-              <option value="Luyện Thi IELTS">Luyện Thi IELTS Academic</option>
-              <option value="Luyện Thi TOEIC / TOEFL">Luyện Thi TOEIC / TOEFL</option>
-            </select>
+            <div class="flex items-center justify-between mb-1.5">
+              <label class="font-bold text-slate-300">Khóa Học Đang Mở Cho Học Sinh Này:</label>
+              <span class="text-[10px] text-emerald-400 font-bold">{currentStudentEnrolledList.length} lớp kích hoạt</span>
+            </div>
+            <div class="flex flex-wrap gap-1.5 p-2.5 rounded-xl bg-slate-950 border border-slate-800 min-h-[42px] items-center">
+              {#each currentStudentEnrolledList as g}
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 text-xs font-bold border border-emerald-500/30">
+                  <span>✓ {g}</span>
+                  {#if currentStudentEnrolledList.length > 1}
+                    <button
+                      type="button"
+                      onclick={() => handleRemoveAdditionalGrade(g)}
+                      class="text-rose-400 hover:text-rose-300 text-xs font-black ml-1 p-0.5 rounded hover:bg-rose-900/30"
+                      title="Gỡ quyền lớp này"
+                    >
+                      ✕
+                    </button>
+                  {/if}
+                </span>
+              {/each}
+            </div>
+            <p class="text-[10px] text-slate-400 mt-1">Học sinh chỉ nhìn thấy bài học và phòng thi của các lớp được liệt kê ở đây.</p>
           </div>
 
-          <div>
-            <label class="block font-bold text-slate-300 mb-1" for="target-class">Gán Vào Buổi Học / Lớp:</label>
-            <select
-              id="target-class"
-              bind:value={targetClassId}
-              class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-white font-medium focus:outline-none focus:border-indigo-400"
-            >
-              {#each classSessions as s}
-                <option value={s.id}>
-                  {s.class_name} ({s.day_name} {s.start_time})
-                </option>
-              {/each}
-            </select>
+          <!-- Add Additional Grade Section -->
+          <div class="p-3 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-2">
+            <label class="block font-bold text-slate-200">➕ Set / Cấp Quyền Thêm Lớp Mới:</label>
+            <div class="flex gap-2">
+              <select
+                bind:value={additionalGradeToEnroll}
+                class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white font-bold focus:outline-none focus:border-emerald-400 text-xs"
+              >
+                <option value="Lớp 1">Lớp 1 (Phonics &amp; Global Success)</option>
+                <option value="Lớp 2">Lớp 2 (Global Success)</option>
+                <option value="Lớp 3">Lớp 3 (Global Success)</option>
+                <option value="Lớp 4">Lớp 4 (Global Success)</option>
+                <option value="Lớp 5">Lớp 5 (Ôn Thi Chuyển Cấp)</option>
+                <option value="Lớp 6">Lớp 6 (THCS Global Success)</option>
+                <option value="Lớp 7">Lớp 7 (THCS Global Success A1)</option>
+                <option value="Lớp 8">Lớp 8 (THCS Global Success)</option>
+                <option value="Lớp 9">Lớp 9 (Luyện Thi Vào 10)</option>
+                <option value="Lớp 10">Lớp 10 (THPT Mới)</option>
+                <option value="Lớp 11">Lớp 11 (THPT Mới)</option>
+                <option value="Lớp 12">Lớp 12 (Ôn Thi THPTQG 2026)</option>
+                <option value="Luyện Thi IELTS">Luyện Thi IELTS Academic</option>
+                <option value="Luyện Thi TOEIC">Luyện Thi TOEIC</option>
+                <option value="Luyện Thi TOEFL">Luyện Thi TOEFL iBT</option>
+                <option value="Luyện Thi VSTEP">Luyện Thi VSTEP B1-B2</option>
+              </select>
+              <button
+                type="button"
+                onclick={handleAddAdditionalGrade}
+                class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition-all flex items-center gap-1 flex-shrink-0"
+              >
+                <span>➕ Thêm Lớp</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Primary Grade & Timetable Section -->
+          <div class="space-y-3 pt-2 border-t border-slate-800">
+            <div>
+              <label class="block font-bold text-slate-300 mb-1" for="target-grade">Khối Lớp Chính Khóa Mặc Định:</label>
+              <select
+                id="target-grade"
+                bind:value={targetGrade}
+                class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-white font-bold focus:outline-none focus:border-indigo-400"
+              >
+                <option value="Lớp 1">Lớp 1 (Phonics &amp; Global Success)</option>
+                <option value="Lớp 2">Lớp 2 (Global Success)</option>
+                <option value="Lớp 3">Lớp 3 (Global Success)</option>
+                <option value="Lớp 4">Lớp 4 (Global Success)</option>
+                <option value="Lớp 5">Lớp 5 (Ôn Thi Chuyển Cấp)</option>
+                <option value="Lớp 6">Lớp 6 (THCS Global Success)</option>
+                <option value="Lớp 7">Lớp 7 (THCS Global Success A1)</option>
+                <option value="Lớp 8">Lớp 8 (THCS Global Success)</option>
+                <option value="Lớp 9">Lớp 9 (Luyện Thi Vào 10 &amp; Chuyên Anh)</option>
+                <option value="Lớp 10">Lớp 10 (THPT Mới)</option>
+                <option value="Lớp 11">Lớp 11 (THPT Mới)</option>
+                <option value="Lớp 12">Lớp 12 (Ôn Thi THPTQG 2026)</option>
+                <option value="Luyện Thi IELTS">Luyện Thi IELTS Academic</option>
+                <option value="Luyện Thi TOEIC / TOEFL">Luyện Thi TOEIC / TOEFL</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block font-bold text-slate-300 mb-1" for="target-class">Gán Vào Buổi Học / Lịch Học:</label>
+              <select
+                id="target-class"
+                bind:value={targetClassId}
+                class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-white font-medium focus:outline-none focus:border-indigo-400"
+              >
+                {#each classSessions as s}
+                  <option value={s.id}>
+                    {s.class_name} ({s.day_name} {s.start_time})
+                  </option>
+                {/each}
+              </select>
+            </div>
           </div>
         </div>
 
         <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-800">
           <button onclick={() => showClassModal = false} class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold">
-            Hủy Bỏ
+            Đóng
           </button>
           <button onclick={handleSaveClassChange} class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs">
-            Lưu &amp; Cập Nhật Lớp
+            Lưu Khối Lớp Chính
           </button>
         </div>
       </div>

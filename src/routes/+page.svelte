@@ -10,7 +10,10 @@
     isSuperAdmin,
     isTeacherOrAdmin,
     getParentTestRecords,
-    deleteParentTestRecord
+    deleteParentTestRecord,
+    getUserEnrolledGrades,
+    isCurriculumEnrolled,
+    requestUnlockClass
   } from '$lib/unifiedStore';
   import ParentTestOcrModal from '$lib/components/ParentTestOcrModal.svelte';
 
@@ -25,6 +28,9 @@
   let starRewardNotice = $state(false);
   let showOcrModal = $state(false);
   let parentTestRecords = $state([]);
+  let unlockNotice = $state('');
+  let isRequestingUnlock = $state(false);
+  let showLockedCurricula = $state(false);
 
   // Phonics card sample for primary kids
   const primaryPhonics = [
@@ -112,6 +118,40 @@
   let filteredCurricula = $derived(
     data.curricula.filter(c => activeCurriculumTab === 'all' || c.category === activeCurriculumTab)
   );
+
+  let targetStudentUser = $derived(
+    currentUser?.role === 'parent' ? linkedChild : (currentUser?.role === 'student' ? currentUser : null)
+  );
+
+  let enrolledGrades = $derived(
+    targetStudentUser ? getUserEnrolledGrades(targetStudentUser) : []
+  );
+
+  let studentEnrolledCurricula = $derived.by(() => {
+    if (!targetStudentUser) return [];
+    return data.curricula.filter(c => isCurriculumEnrolled(targetStudentUser, c));
+  });
+
+  let studentLockedCurricula = $derived.by(() => {
+    if (!targetStudentUser) return [];
+    return data.curricula.filter(c => !isCurriculumEnrolled(targetStudentUser, c));
+  });
+
+  async function handleRequestUnlock(curr) {
+    if (!targetStudentUser) return;
+    isRequestingUnlock = true;
+    try {
+      await requestUnlockClass(targetStudentUser.id, curr.title);
+      playAudioFeedback('success');
+      unlockNotice = `✅ Đã gửi yêu cầu đăng ký thêm "${curr.title}" đến Cô Dung! Cô giáo sẽ xem xét và mở khóa vào tài khoản của em.`;
+      setTimeout(() => unlockNotice = '', 7000);
+    } catch {
+      unlockNotice = '⚠️ Có lỗi khi gửi yêu cầu. Vui lòng liên hệ trực tiếp Cô Dung qua Zalo.';
+      setTimeout(() => unlockNotice = '', 5000);
+    } finally {
+      isRequestingUnlock = false;
+    }
+  }
 
   let userGrade = $derived.by(() => {
     if (!currentUser) return '';
@@ -870,66 +910,253 @@
     </div>
   </div>
 
-  <!-- CURRICULUM ROADMAP EXPLORER (CLEAN FIGMA CARDS) -->
-  <div class="space-y-6">
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-      <div>
-        <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">HỆ THỐNG PHÂN CẤP ĐÀO TẠO</span>
-        <h2 class="text-2xl font-heading font-black text-slate-900 dark:text-white mt-0.5">Khung Chương Trình Toàn Cấp K12 &amp; Khảo Thí 2026</h2>
+  <!-- NOTIFICATION BANNER FOR CLASS UNLOCK REQUEST -->
+  {#if unlockNotice}
+    <div class="p-4 rounded-2xl bg-emerald-600 text-white font-bold text-xs shadow-xl animate-in slide-in-from-top-2 flex items-center justify-between gap-3">
+      <div class="flex items-center gap-2">
+        <span class="text-xl">🔔</span>
+        <span>{unlockNotice}</span>
       </div>
-
-      <!-- Category Filter Tabs -->
-      <div class="flex items-center gap-1.5 overflow-x-auto pb-1">
-        {#each categoryLabels as tab}
-          <button
-            onclick={() => activeCurriculumTab = tab.key}
-            class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap {activeCurriculumTab === tab.key ? 'bg-emerald-600 text-white shadow-md' : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-800'}"
-          >
-            <span>{tab.icon}</span>
-            <span class="ml-1">{tab.label}</span>
-          </button>
-        {/each}
-      </div>
+      <button onclick={() => unlockNotice = ''} class="text-white hover:opacity-80 text-sm">✕</button>
     </div>
+  {/if}
 
-    <!-- Curricula Cards Grid -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      {#each filteredCurricula as curr}
-        <div class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-5 hover:border-emerald-500/60 dark:hover:border-emerald-500/50 hover:shadow-lg transition-all flex flex-col justify-between shadow-sm group">
-          <div class="space-y-3">
-            <div class="flex items-center justify-between">
-              <span class="text-2xl p-2.5 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 group-hover:scale-110 transition-transform">
-                {curr.icon || '📖'}
-              </span>
-              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase {curr.category === 'primary' ? 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-300/40' : curr.category === 'secondary' ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-300/40' : curr.category === 'high_school' ? 'bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-300/40' : 'bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-300/40'}">
-                {curr.category}
-              </span>
+  <!-- CURRICULUM SECTION: ROLE ISOLATED -->
+  {#if targetStudentUser}
+    <!-- ================= STUDENT / PARENT VIEW: ONLY ENROLLED CLASSES SHOWN ================= -->
+    <div class="space-y-6">
+      <!-- Section 1: Active Enrolled Curriculum -->
+      <div class="rounded-3xl bg-gradient-to-br from-emerald-50 via-white to-teal-50 dark:from-slate-900 dark:via-emerald-950/20 dark:to-slate-950 border-2 border-emerald-500/50 p-6 sm:p-8 shadow-xl">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-emerald-200/60 dark:border-emerald-900/40">
+          <div>
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-black bg-emerald-600 text-white tracking-wider shadow-sm">
+              <span>📚 LỚP HỌC CHÍNH KHÓA ĐÃ GHI DANH</span>
             </div>
+            <h2 class="text-2xl sm:text-3xl font-heading font-black text-slate-900 dark:text-white mt-2">
+              Khóa Học Của Em: {enrolledGrades.join(' • ') || 'Lớp 7'} 🎓
+            </h2>
+            <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-1">
+              Học viên: <strong class="text-emerald-700 dark:text-emerald-400">{targetStudentUser.name}</strong> • 
+              Hệ thống được thiết kế độc quyền riêng cho khối lớp của em. Hoàn thành đề thi và từ vựng mỗi ngày để nhận Sao!
+            </p>
+          </div>
 
+          <div class="px-4 py-2.5 rounded-2xl bg-white dark:bg-slate-800 border border-emerald-200 dark:border-emerald-700/60 shadow-sm flex items-center gap-3 flex-shrink-0">
+            <span class="text-2xl">🛡️</span>
             <div>
-              <h3 class="font-heading font-extrabold text-base text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
-                {curr.title}
-              </h3>
-              <p class="text-xs text-slate-600 dark:text-slate-400 mt-1 leading-relaxed line-clamp-3">
-                {curr.description}
+              <div class="text-[10px] font-bold text-slate-400 uppercase">Quyền Truy Cập</div>
+              <div class="text-xs font-extrabold text-emerald-600 dark:text-emerald-400">Đã Khóa Các Khối Khác</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Enrolled Curricula Cards Grid (Only enrolled classes appear here!) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-6">
+          {#each studentEnrolledCurricula as curr}
+            <div class="rounded-2xl bg-white dark:bg-slate-800 border-2 border-emerald-500 p-6 shadow-md flex flex-col justify-between group hover:shadow-xl transition-all">
+              <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-3">
+                    <span class="text-3xl p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800">
+                      {curr.icon || '🚀'}
+                    </span>
+                    <div>
+                      <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300 border border-emerald-300/40 uppercase">
+                        <span>✓</span> <span>Đang Theo Học</span>
+                      </span>
+                      <h3 class="font-heading font-black text-xl text-slate-900 dark:text-white mt-1">
+                        {curr.title}
+                      </h3>
+                    </div>
+                  </div>
+                  <span class="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                    GDPT 2026
+                  </span>
+                </div>
+
+                <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                  {curr.description}
+                </p>
+
+                <div class="flex flex-wrap items-center gap-2 pt-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                  <span class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-700/60 text-slate-700 dark:text-slate-300">
+                    📖 12 Units Chuẩn Bộ
+                  </span>
+                  <span class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-700/60 text-slate-700 dark:text-slate-300">
+                    ⚡ Đề 15p &amp; 45p
+                  </span>
+                  <span class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-700/60 text-slate-700 dark:text-slate-300">
+                    🎙️ Luyện Phát Âm
+                  </span>
+                </div>
+              </div>
+
+              <!-- Quick Learning Actions for Enrolled Grade -->
+              <div class="mt-6 pt-4 border-t border-slate-100 dark:border-slate-700/60 flex flex-wrap items-center gap-2">
+                <a
+                  href="/exam"
+                  class="flex-1 min-w-[140px] px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs text-center shadow-md shadow-emerald-600/20 transition-all flex items-center justify-center gap-1.5"
+                >
+                  <span>🚀 Vào Học Ngay</span>
+                  <span>➔</span>
+                </a>
+                <a
+                  href="/exam"
+                  class="px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 font-bold text-xs text-center transition-all flex items-center gap-1"
+                >
+                  <span>⏱️ Làm Test 15p</span>
+                </a>
+                <a
+                  href="/dictionary"
+                  class="px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 font-bold text-xs text-center transition-all flex items-center gap-1"
+                >
+                  <span>📖 Từ Điển</span>
+                </a>
+              </div>
+            </div>
+          {/each}
+        </div>
+      </div>
+
+      <!-- Section 2: Other Locked Classes (Chỉ Được Set Thêm Sau) -->
+      <div class="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 sm:p-8 shadow-sm space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div class="flex items-start gap-3">
+            <div class="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center text-xl flex-shrink-0">
+              🔒
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="font-heading font-black text-base sm:text-lg text-slate-900 dark:text-white">
+                  Các Khối Lớp &amp; Chương Trình Khác ({studentLockedCurricula.length} Môn)
+                </h3>
+                <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-300/40 uppercase">
+                  Chỉ Được Set Thêm Sau
+                </span>
+              </div>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
+                Học sinh chỉ được học đúng lớp đã đăng ký. Bạn chưa được phân bổ vào các lớp này.
+                Nếu muốn học vượt cấp (Lớp 8, 9...), luyện thi chứng chỉ (IELTS, TOEIC...) hoặc chuyển lớp, hãy gửi yêu cầu để Leader Cô Dung duyệt và set thêm vào tài khoản của bạn.
               </p>
             </div>
           </div>
 
-          <div class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-            <a
-              href="/exam"
-              class="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 flex items-center gap-1"
-            >
-              <span>Vào Làm Bài Test</span>
-              <span>➔</span>
-            </a>
-            <span class="text-[10px] text-slate-400 dark:text-slate-500 font-mono">Mã: {curr.code}</span>
-          </div>
+          <button
+            onclick={() => showLockedCurricula = !showLockedCurricula}
+            class="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs flex items-center justify-center gap-2 transition-all flex-shrink-0"
+          >
+            <span>{showLockedCurricula ? '▲ Thu Gọn' : '▼ Xem Các Lớp Khác & Yêu Cầu Mở'}</span>
+          </button>
         </div>
-      {/each}
+
+        {#if showLockedCurricula}
+          <div class="pt-4 border-t border-slate-100 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 animate-in fade-in duration-200">
+            {#each studentLockedCurricula as curr}
+              <div class="rounded-2xl bg-slate-50/80 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 p-5 flex flex-col justify-between opacity-80 hover:opacity-100 transition-all">
+                <div class="space-y-2">
+                  <div class="flex items-center justify-between">
+                    <span class="text-2xl p-2 rounded-xl bg-slate-200/60 dark:bg-slate-800 text-slate-500">
+                      🔒 {curr.icon || '📖'}
+                    </span>
+                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-400 uppercase">
+                      Chưa Mở Khóa
+                    </span>
+                  </div>
+
+                  <div>
+                    <h4 class="font-heading font-black text-sm text-slate-800 dark:text-slate-200">
+                      {curr.title}
+                    </h4>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
+                      {curr.description}
+                    </p>
+                  </div>
+                </div>
+
+                <div class="mt-4 pt-3 border-t border-slate-200/60 dark:border-slate-800/80 flex items-center justify-between">
+                  <button
+                    onclick={() => handleRequestUnlock(curr)}
+                    disabled={isRequestingUnlock}
+                    class="w-full py-2 px-3 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 font-bold text-xs border border-amber-300/40 transition-all flex items-center justify-center gap-1.5"
+                  >
+                    <span>➕ Báo Cô Dung Mở Thêm Lớp Này</span>
+                  </button>
+                </div>
+              </div>
+            {/each}
+          </div>
+        {/if}
+      </div>
     </div>
-  </div>
+  {:else}
+    <!-- ================= TEACHER / ADMIN / GUEST VIEW: FULL CATALOG EXPLORER ================= -->
+    <div class="space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">HỆ THỐNG PHÂN CẤP ĐÀO TẠO</span>
+            {#if isTeacherOrAdmin(currentUser)}
+              <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/30">
+                👨‍🏫 Toàn Quyền Quản Lý 19 Khối Lớp
+              </span>
+            {/if}
+          </div>
+          <h2 class="text-2xl font-heading font-black text-slate-900 dark:text-white mt-0.5">Khung Chương Trình Toàn Cấp K12 &amp; Khảo Thí 2026</h2>
+        </div>
+
+        <!-- Category Filter Tabs -->
+        <div class="flex items-center gap-1.5 overflow-x-auto pb-1">
+          {#each categoryLabels as tab}
+            <button
+              onclick={() => activeCurriculumTab = tab.key}
+              class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap {activeCurriculumTab === tab.key ? 'bg-emerald-600 text-white shadow-md' : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-800'}"
+            >
+              <span>{tab.icon}</span>
+              <span class="ml-1">{tab.label}</span>
+            </button>
+          {/each}
+        </div>
+      </div>
+
+      <!-- Curricula Cards Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {#each filteredCurricula as curr}
+          <div class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-5 hover:border-emerald-500/60 dark:hover:border-emerald-500/50 hover:shadow-lg transition-all flex flex-col justify-between shadow-sm group">
+            <div class="space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="text-2xl p-2.5 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 group-hover:scale-110 transition-transform">
+                  {curr.icon || '📖'}
+                </span>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase {curr.category === 'primary' ? 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-300/40' : curr.category === 'secondary' ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-300/40' : curr.category === 'high_school' ? 'bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-300/40' : 'bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-300/40'}">
+                  {curr.category}
+                </span>
+              </div>
+
+              <div>
+                <h3 class="font-heading font-extrabold text-base text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                  {curr.title}
+                </h3>
+                <p class="text-xs text-slate-600 dark:text-slate-400 mt-1 leading-relaxed line-clamp-3">
+                  {curr.description}
+                </p>
+              </div>
+            </div>
+
+            <div class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <a
+                href="/exam"
+                class="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 flex items-center gap-1"
+              >
+                <span>Vào Làm Bài Test</span>
+                <span>➔</span>
+              </a>
+              <span class="text-[10px] text-slate-400 dark:text-slate-500 font-mono">Mã: {curr.code}</span>
+            </div>
+          </div>
+        {/each}
+      </div>
+    </div>
+  {/if}
 
   <!-- MULTIDIMENSIONAL STUDENT EVALUATION HIGHLIGHT -->
   <div class="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-8 shadow-sm">
