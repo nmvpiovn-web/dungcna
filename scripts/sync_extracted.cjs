@@ -136,7 +136,8 @@ async function uploadFileToDrive(filePath, fileName, folderId) {
           Authorization: `Bearer ${token}`,
           'Content-Type': `multipart/related; boundary=${boundary}`
         },
-        body: body
+        body: body,
+        signal: AbortSignal.timeout(60000)
       });
       if (res.status === 401) {
         console.error('[Upload] Token 401 Unauthorized!');
@@ -161,7 +162,8 @@ async function copyFileToDrive(fileId, folderId) {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify({ parents: [folderId] })
+    body: JSON.stringify({ parents: [folderId] }),
+    signal: AbortSignal.timeout(20000)
   });
   return await res.json();
 }
@@ -183,10 +185,13 @@ function getAllFilesRecursively(dir, fileList = []) {
 async function extractDriveFileId(targetUrl) {
   if (!targetUrl) return null;
   try {
-    const res = await fetch(targetUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+    const res = await fetch(targetUrl, {
+      headers: { 'User-Agent': 'Mozilla/5.0' },
+      signal: AbortSignal.timeout(12000)
+    });
     if (!res.ok) return null;
     const html = await res.text();
-    const m = html.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
+    const m = html.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|drive\/folders\/)([a-zA-Z0-9_-]+)/);
     return m ? m[1] : null;
   } catch (e) {
     return null;
@@ -280,13 +285,12 @@ async function uploadFilesConcurrently(filePaths, folderId, concurrency = 5) {
 }
 
 async function processPost(post, index, total, state) {
-  // FAST SKIP if already processed (synced or permanently failed)
-  if (state.synced[post.title]) {
-    return;
+  // FAST SKIP if already processed (synced or failed)
+  if (state.synced[post.title] || state.failed[post.title]) {
+    return false;
   }
-  if (state.failed[post.title] && state.failed[post.title] === 'No Google Drive link found') {
-    return;
-  }
+
+  console.log(`[${index}/${total}] Scanning: ${post.title.substring(0, 50)}...`);
 
   let fileId = post.directFileId;
   if (!fileId && post.targetUrl) {
@@ -294,9 +298,10 @@ async function processPost(post, index, total, state) {
   }
 
   if (!fileId) {
+    console.log(`[${index}/${total}] -> No Google Drive link found`);
     state.failed[post.title] = 'No Google Drive link found';
     saveState(state);
-    return;
+    return true;
   }
 
   const catName = determineCategory(post.title, post.categories);
@@ -323,7 +328,14 @@ async function processPost(post, index, total, state) {
   if (!meta || !meta.name) {
     state.failed[post.title] = meta ? (meta.error?.message || 'Empty metadata') : 'Fetch error';
     saveState(state);
-    return;
+    return true;
+  }
+
+  if (meta.mimeType === 'application/vnd.google-apps.folder') {
+    console.log(`[${index}/${total}] [${catName}] Item is a Google Drive folder (skip direct copy): ${meta.name}`);
+    state.failed[post.title] = 'Google Drive folder (cannot copy directly)';
+    saveState(state);
+    return true;
   }
 
   const fileName = meta.name;
@@ -340,7 +352,7 @@ async function processPost(post, index, total, state) {
       state.failed[post.title] = copyRes;
     }
     saveState(state);
-    return;
+    return true;
   }
 
   // It is an archive -> Download, extract, upload extracted files
@@ -365,7 +377,8 @@ async function processPost(post, index, total, state) {
 
     // Download
     const downRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
-      headers: { Authorization: `Bearer ${token}` }
+      headers: { Authorization: `Bearer ${token}` },
+      signal: AbortSignal.timeout(60000)
     });
     const buffer = Buffer.from(await downRes.arrayBuffer());
     fs.writeFileSync(archivePath, buffer);
@@ -431,14 +444,16 @@ async function main() {
 
   for (let i = 0; i < posts.length; i++) {
     try {
-      await processPost(posts[i], i + 1, posts.length, state);
+      const processed = await processPost(posts[i], i + 1, posts.length, state);
+      if (processed) {
+        await new Promise(r => setTimeout(r, 100));
+      }
     } catch (err) {
       if (err.message === 'NO_TOKEN') {
         console.error('Pipeline stopped: Waiting for valid Google Drive OAuth token.');
         process.exit(2);
       }
     }
-    await new Promise(r => setTimeout(r, 100));
   }
 
   console.log("\n=== PIPELINE 100% FINISHED ===");

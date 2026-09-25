@@ -1171,5 +1171,544 @@
         "exp": "Cấu trúc: The harder + S + V, the better + S + V."
       }
     ]
+  },
+  {
+    "id": "gram_past_perfect_continuous",
+    "topic": "Quá Khứ Hoàn Thành Tiếp Diễn (Past Perfect Continuous)",
+    "grade_level": "Lớp 10, 11, 12",
+    "curriculum_unit": "Chuyên đề Thì Hoàn Thành",
+    "category": "tenses",
+    "cefr_level": "B2 - C1",
+    "summary": "Nhấn mạnh tính liên tục của một hành động đã diễn ra trong một khoảng thời gian trước khi một hành động khác trong quá khứ xảy ra.",
+    "formula": {
+      "affirmative": "S + had + been + V-ing + O",
+      "negative": "S + had + not + been + V-ing + O",
+      "interrogative": "Had + S + been + V-ing + O?"
+    },
+    "usage": [
+      "Hành động diễn ra liên tục trước một thời điểm hoặc hành động trong quá khứ.",
+      "Nêu nguyên nhân của một kết quả rõ rệt trong quá khứ (e.g. The ground was wet because it had been raining)."
+    ],
+    "signal_words": [
+      "for + duration",
+      "since + point of time",
+      "until then",
+      "by the time"
+    ],
+    "phonics_rules": "Âm /biːn/ hoặc /bɪn/ trong văn phong giao tiếp lướt âm.",
+    "common_mistakes": "Dùng thì tiếp diễn với động từ trạng thái (Stative verbs).",
+    "examples": [
+      {
+        "en": "He was exhausted because he had been driving non-stop for eight hours.",
+        "vi": "Anh ấy kiệt sức vì đã lái xe liên tục suốt tám tiếng đồng hồ."
+      }
+    ],
+    "practice_questions": [
+      {
+        "q": "Her eyes were red because she ______.",
+        "options": [
+          "A. had been crying",
+          "B. cried",
+          "C. has cried",
+          "D. was crying"
+        ],
+        "ans": "A",
+        "exp": "Nhấn mạnh hành động vừa kéo dài gây ra hậu quả trong quá khứ."
+      }
+    ]
+  },
+  {
+    "id": "gram_future_perfect_continuous",
+    "topic": "Tương Lai Hoàn Thành Tiếp Diễn (Future Perfect Continuous)",
+    "grade_level": "Lớp 11, 12",
+    "curriculum_unit": "Chuyên đề Thì Tương Lai",
+    "category": "tenses",
+    "cefr_level": "B2 - C1",
+    "summary": "Diễn tả một hành động sẽ diễn ra liên tục và kéo dài tới một mốc thời điểm cụ thể trong tương lai.",
+    "formula": {
+      "affirmative": "S + will + have + been + V-ing",
+      "negative": "S + will not + have + been + V-ing",
+      "interrogative": "Will + S + have + been + V-ing?"
+    },
+    "usage": [
+      "Nhấn mạnh thời lượng của hành động tính đến một thời điểm trong tương lai.",
+      "Đi liền với cụm từ: By the time + hiện tại đơn, By next year for 10 years."
+    ],
+    "signal_words": [
+      "by next...",
+      "by the time",
+      "for + duration"
+    ],
+    "phonics_rules": "Nối âm lướt will have been /wɪləv biːn/.",
+    "common_mistakes": "Nhầm lẫn với tương lai hoàn thành đơn thuần.",
+    "examples": [
+      {
+        "en": "By next November, Professor Smith will have been teaching at this university for thirty years.",
+        "vi": "Tính đến tháng 11 tới, Giáo sư Smith sẽ dạy học tại trường đại học này tròn 30 năm."
+      }
+    ],
+    "practice_questions": [
+      {
+        "q": "By 2030, they ______ in this eco-friendly city for two decades.",
+        "options": [
+          "A. will have been living",
+          "B. will live",
+          "C. are living",
+          "D. have lived"
+        ],
+        "ans": "A",
+        "exp": "Cấu trúc tương lai hoàn thành tiếp diễn nhấn mạnh thời lượng kéo dài."
+      }
+    ]
+  },
+  {
+    "id": "gram_participle_clauses",
+    "topic": "Mệnh Đề Phân Từ & Rút Gọn Mệnh Đề Trạng Ngữ (Participle Clauses)",
+    "grade_level": "Lớp 11, 12",
+    "curriculum_unit": "Chuyên đề Cú Pháp Cao Cấp",
+    "category": "syntax",
+    "cefr_level": "B2 - C1",
+    "summary": "Rút gọn mệnh đề chỉ nguyên nhân, thời gian hoặc kết quả bằng cách sử dụng V-ing (chủ động), P.P (bị động) hoặc Having + P.P (hoàn tất trước).",
+    "formula": {
+      "affirmative": "Present Participle: V-ing..., S + V",
+      "past_participle": "Past Participle: P.P..., S + V",
+      "perfect_participle": "Perfect Participle: Having + P.P..., S + V"
+    },
+    "usage": [
+      "Hai mệnh đề phải CÙNG CHỦ NGỮ.",
+      "Having + P.P nhấn mạnh một hành động hoàn thành trước khi hành động chính xảy ra."
+    ],
+    "signal_words": [
+      "Having finished",
+      "Seen from",
+      "Knowing that",
+      "Frightened by"
+    ],
+    "phonics_rules": "Hạ giọng nhẹ ở cuối mệnh đề phân từ trước dấu phẩy.",
+    "common_mistakes": "Lỗi phân từ lơ lửng (Dangling participle) khi hai mệnh đề khác chủ ngữ.",
+    "examples": [
+      {
+        "en": "Having passed the entrance examination with honors, she was awarded a full scholarship.",
+        "vi": "Nhờ đỗ kỳ thi tuyển sinh loại xuất sắc, cô ấy đã được trao học bổng toàn phần."
+      }
+    ],
+    "practice_questions": [
+      {
+        "q": "______ all the instructions carefully, he began assembling the model robot.",
+        "options": [
+          "A. Having read",
+          "B. Read",
+          "C. Reading",
+          "D. To read"
+        ],
+        "ans": "A",
+        "exp": "Hành động đọc kỹ hướng dẫn diễn ra trước hành động lắp ráp, cùng chủ ngữ."
+      }
+    ]
+  },
+  {
+    "id": "gram_ellipsis_substitution",
+    "topic": "Lược Bỏ & Thay Thế Cú Pháp (Ellipsis and Substitution)",
+    "grade_level": "Lớp 9, 10, 11, 12",
+    "curriculum_unit": "Chuyên đề Ngữ Pháp Nâng Cao",
+    "category": "syntax",
+    "cefr_level": "B1 - B2",
+    "summary": "Biện pháp tránh lặp từ trong câu văn học thuật và giao tiếp thông qua so do I, neither do I, to do so, one/ones.",
+    "formula": {
+      "so_do_i": "So + Auxiliary + Subject (Đồng tình khẳng định)",
+      "neither_do_i": "Neither / Nor + Auxiliary + Subject (Đồng tình phủ định)",
+      "to_do_so": "Verb phrase replaced by 'to do so'"
+    },
+    "usage": [
+      "Rút gọn câu để tạo văn phong súc tích, lưu loát.",
+      "Tránh nhắc lại cụm danh từ hoặc vị ngữ đã nói ở vế trước."
+    ],
+    "signal_words": [
+      "So do I",
+      "Neither did he",
+      "I hope so",
+      "I'm afraid not",
+      "To do so"
+    ],
+    "phonics_rules": "Trọng âm rơi vào từ mang thông tin mới ở vị trí chủ ngữ.",
+    "common_mistakes": "Dùng 'So' cho vế phủ định (Sai: 'I don't like it. - So do I').",
+    "examples": [
+      {
+        "en": "She enjoys exploring ancient heritage sites, and so do her classmates.",
+        "vi": "Cô ấy thích khám phá các di sản cổ kính, và các bạn cùng lớp của cô ấy cũng vậy."
+      }
+    ],
+    "practice_questions": [
+      {
+        "q": "Nam didn't attend the revision workshop, and ______.",
+        "options": [
+          "A. neither did I",
+          "B. so did I",
+          "C. I didn't too",
+          "D. either did I"
+        ],
+        "ans": "A",
+        "exp": "Đồng tình phủ định dùng: Neither + trợ động từ (did) + S."
+      }
+    ]
+  },
+  {
+    "id": "gram_modals_deduction",
+    "topic": "Động Từ Khuyết Thiếu Suy Đoán Quá Khứ (Modals of Deduction in the Past)",
+    "grade_level": "Lớp 10, 11, 12",
+    "curriculum_unit": "Chuyên đề Modal Verbs",
+    "category": "modals",
+    "cefr_level": "B2 - C1",
+    "summary": "Cấu trúc Must have P.P, Can't have P.P, May/Might have P.P, Should have P.P suy đoán hoặc tiếc nuối trong quá khứ.",
+    "formula": {
+      "must_have": "Must + have + P.P (Chắc chắn đã xảy ra, căn cứ 99%)",
+      "cant_have": "Can't / Couldn't + have + P.P (Chắc chắn đã không xảy ra)",
+      "might_have": "May / Might / Could + have + P.P (Có lẽ đã xảy ra, không chắc chắn)",
+      "should_have": "Should + have + P.P (Lẽ ra nên làm nhưng đã không làm)"
+    },
+    "usage": [
+      "Suy đoán mức độ chắc chắn của sự việc đã xảy ra trong quá khứ.",
+      "Chỉ trích hoặc bày tỏ sự tiếc nuối với hành động lẽ ra phải làm."
+    ],
+    "signal_words": [
+      "must have",
+      "can't have",
+      "should have",
+      "might have"
+    ],
+    "phonics_rules": "Dạng rút gọn phát âm /mʌstəv/, /ʃʊdəv/.",
+    "common_mistakes": "Nhầm lẫn Must have P.P (suy đoán quá khứ) với Had to (bổn phận bắt buộc quá khứ).",
+    "examples": [
+      {
+        "en": "The streets are soaking wet; it must have rained cats and dogs last night.",
+        "vi": "Đường phố ướt sũng; đêm qua chắc chắn trời đã mưa như trút nước."
+      }
+    ],
+    "practice_questions": [
+      {
+        "q": "You ______ your phone at the café; you called me from it when you were on the bus!",
+        "options": [
+          "A. can't have left",
+          "B. must have left",
+          "C. shouldn't leave",
+          "D. might leave"
+        ],
+        "ans": "A",
+        "exp": "Suy đoán chắc chắn không thể xảy ra dựa trên bằng chứng bạn vừa gọi điện trên xe buýt."
+      }
+    ]
+  },
+  {
+    "id": "gram_mixed_conditionals",
+    "topic": "Câu Điều Kiện Hỗn Hợp (Mixed Conditionals: Type 3 + 2 & Type 2 + 3)",
+    "grade_level": "Lớp 11, 12",
+    "curriculum_unit": "Chuyên đề Câu Điều Kiện Nâng Cao",
+    "category": "conditionals",
+    "cefr_level": "B2 - C1",
+    "summary": "Kết hợp giữa giả định quá khứ tác động đến kết quả hiện tại (Type 3 + 2), hoặc giả định bản chất hiện tại tác động đến hành động quá khứ (Type 2 + 3).",
+    "formula": {
+      "type_3_2": "If + S + had + P.P, S + would + V-inf (now / today)",
+      "type_2_3": "If + S + past simple / were, S + would have + P.P (yesterday / then)"
+    },
+    "usage": [
+      "Type 3 + 2: Quá khứ làm gì -> Bây giờ nhận kết quả (e.g. If I had won the lottery yesterday, I would be rich today).",
+      "Type 2 + 3: Bản chất hiện tại -> Dẫn đến hành động quá khứ (e.g. If she spoke French, she would have translated that letter)."
+    ],
+    "signal_words": [
+      "now",
+      "today",
+      "yesterday",
+      "then",
+      "if only"
+    ],
+    "phonics_rules": "Nhấn mạnh vào từ chỉ thời gian ở vế kết quả (NOW, TODAY) để nhận diện hỗn hợp.",
+    "common_mistakes": "Chia nhầm cả hai vế cùng loại 3 khi có từ chỉ thời gian hiện tại 'now'.",
+    "examples": [
+      {
+        "en": "If you had taken my advice last week, you wouldn't be in such a mess now.",
+        "vi": "Nếu tuần trước bạn nghe lời khuyên của tôi thì bây giờ bạn đã không rơi vào mớ hỗn độn này."
+      }
+    ],
+    "practice_questions": [
+      {
+        "q": "If he ______ the map yesterday, he wouldn't be lost in the woods now.",
+        "options": [
+          "A. had consulted",
+          "B. consulted",
+          "C. has consulted",
+          "D. would consult"
+        ],
+        "ans": "A",
+        "exp": "Điều kiện hỗn hợp loại 3-2: Vế If chia quá khứ hoàn thành (had consulted), vế chính có 'now' dùng wouldn't be."
+      }
+    ]
+  },
+  {
+    "id": "gram_correlative_conjunctions",
+    "topic": "Liên Từ Tương Quan & Cấu Trúc Song Hành (Correlative Conjunctions & Parallelism)",
+    "grade_level": "Lớp 9, 10, 11, 12",
+    "curriculum_unit": "Chuyên đề Cú Pháp",
+    "category": "syntax",
+    "cefr_level": "B1 - B2",
+    "summary": "Cặp liên từ song đôi: Either... or, Neither... nor, Both... and, Not only... but also và quy tắc chia động từ theo chủ ngữ gần nhất.",
+    "formula": {
+      "either_or": "Either A or B + Verb (chia theo B)",
+      "neither_nor": "Neither A nor B + Verb (chia theo B)",
+      "both_and": "Both A and B + Verb (luôn số nhiều)",
+      "not_only_but_also": "Not only A but also B + Verb (chia theo B)"
+    },
+    "usage": [
+      "A và B bắt buộc phải có cùng từ loại hoặc cùng cấu trúc ngữ pháp (Parallelism).",
+      "Khi đảo ngữ Not only lên đầu câu: Not only + Trợ động từ + S1 + V1, but S2 + also + V2."
+    ],
+    "signal_words": [
+      "either... or",
+      "neither... nor",
+      "both... and",
+      "not only... but also"
+    ],
+    "phonics_rules": "Ngữ điệu lên ở vế đầu và xuống ở vế thứ hai.",
+    "common_mistakes": "A là danh từ nhưng B lại là mệnh đề (vi phạm tính song hành Parallelism).",
+    "examples": [
+      {
+        "en": "Not only did he complete the project ahead of time, but he also exceeded all expectations.",
+        "vi": "Không những anh ấy hoàn thành dự án trước thời hạn, mà còn vượt trên mọi kỳ vọng."
+      }
+    ],
+    "practice_questions": [
+      {
+        "q": "Neither the manager nor his assistants ______ satisfied with the quarterly performance.",
+        "options": [
+          "A. were",
+          "B. was",
+          "C. is",
+          "D. has been"
+        ],
+        "ans": "A",
+        "exp": "Động từ chia theo chủ ngữ gần nó nhất là 'his assistants' (số nhiều) -> dùng were."
+      }
+    ]
+  },
+  {
+    "id": "gram_wh_cleft_sentences",
+    "topic": "Câu Chẻ Với Từ Để Hỏi (Wh- Clefts & Pseudo-Clefts)",
+    "grade_level": "Lớp 11, 12",
+    "curriculum_unit": "Chuyên đề Câu Chẻ Nâng Cao",
+    "category": "cleft_sentences",
+    "cefr_level": "B2 - C1",
+    "summary": "Cấu trúc nhấn mạnh sử dụng mệnh đề danh từ bắt đầu bằng What, All, The thing that... để thu hút sự chú ý vào hành động hoặc tân ngữ.",
+    "formula": {
+      "what_cleft": "What + S + V + is/was + Noun phrase / To-infinitive",
+      "all_cleft": "All (that) + S + V + is/was + Noun phrase / Infinitive",
+      "reversed_cleft": "Noun phrase + is/was + what + S + V"
+    },
+    "usage": [
+      "Tạo hiệu ứng nhấn mạnh mạnh mẽ trong văn viết học thuật và bài phát biểu.",
+      "Tập trung vào điều quan trọng nhất người nói muốn truyền đạt."
+    ],
+    "signal_words": [
+      "What we need is...",
+      "All I want is...",
+      "The person who...",
+      "The reason why..."
+    ],
+    "phonics_rules": "Ngắt nghỉ nhẹ trước động từ to be (is/was).",
+    "common_mistakes": "Dùng 'Which' thay vì 'What' trong câu chẻ mở đầu.",
+    "examples": [
+      {
+        "en": "What impressed the interview panel most was her exceptional intercultural communication.",
+        "vi": "Điều gây ấn tượng nhất với hội đồng phỏng vấn chính là khả năng giao tiếp đa văn hóa xuất sắc của cô ấy."
+      }
+    ],
+    "practice_questions": [
+      {
+        "q": "______ surprised everyone was his modesty despite achieving an unprecedented score.",
+        "options": [
+          "A. What",
+          "B. Which",
+          "C. That",
+          "D. It was"
+        ],
+        "ans": "A",
+        "exp": "Cấu trúc Wh-cleft: What + V + was + Noun phrase."
+      }
+    ]
+  },
+  {
+    "id": "gram_locative_inversion",
+    "topic": "Đảo Ngữ Trạng Từ Chỉ Nơi Chốn & Hướng Chuyển Động (Locative Inversion)",
+    "grade_level": "Lớp 10, 11, 12",
+    "curriculum_unit": "Chuyên đề Đảo Ngữ",
+    "category": "inversion",
+    "cefr_level": "B2 - C1",
+    "summary": "Đưa cụm giới từ chỉ nơi chốn hoặc phó từ chỉ hướng chuyển động (Here, There, Up, Down, Out) lên đầu câu mà không cần trợ động từ.",
+    "formula": {
+      "prepositional": "Prepositional Phrase (Nơi chốn) + Verb + Subject (Danh từ)",
+      "directional": "Here / There / Up / Down + Verb + Subject (Danh từ)"
+    },
+    "usage": [
+      "Chủ ngữ PHẢI LÀ DANH TỪ. Nếu chủ ngữ là đại từ nhân xưng (he, she, it, they), KHÔNG đảo ngữ (Here he comes!).",
+      "Động từ thường là động từ chỉ trạng thái hoặc chuyển động: stand, lie, sit, come, walk, run."
+    ],
+    "signal_words": [
+      "Under the tree",
+      "On the hill",
+      "Here comes",
+      "Down ran",
+      "Into the room"
+    ],
+    "phonics_rules": "Nhấn mạnh vào danh từ chủ ngữ đứng cuối câu.",
+    "common_mistakes": "Thêm trợ động từ did/does khi đảo ngữ nơi chốn (Sai: 'Under the tree did an old man sit').",
+    "examples": [
+      {
+        "en": "On top of the hill stood a magnificent medieval castle.",
+        "vi": "Trên đỉnh ngọn đồi sừng sững một lâu đài thời trung cổ tráng lệ."
+      }
+    ],
+    "practice_questions": [
+      {
+        "q": "At the entrance to the national park ______ a colossal stone monument.",
+        "options": [
+          "A. stood",
+          "B. did stand",
+          "C. it stood",
+          "D. standing"
+        ],
+        "ans": "A",
+        "exp": "Đảo ngữ toàn bộ cụm giới từ chỉ nơi chốn: Cụm nơi chốn + Động từ (stood) + Chủ ngữ."
+      }
+    ]
+  },
+  {
+    "id": "gram_dative_verbs",
+    "topic": "Động Từ Hai Tân Ngữ & Chuyển Dịch Tân Ngữ (Ditransitive Verbs & Dative Shift)",
+    "grade_level": "Lớp 7, 8, 9, 10",
+    "curriculum_unit": "Chuyên đề Tân Ngữ",
+    "category": "syntax",
+    "cefr_level": "A2 - B1",
+    "summary": "Cấu trúc động từ đi liền hai tân ngữ: Tân ngữ gián tiếp (Người) và Tân ngữ trực tiếp (Vật) với giới từ TO hoặc FOR.",
+    "formula": {
+      "pattern_1": "S + V + Indirect Object (Người) + Direct Object (Vật)",
+      "pattern_with_to": "S + V + Direct Object (Vật) + TO + Indirect Object (give, send, lend, pass, show)",
+      "pattern_with_for": "S + V + Direct Object (Vật) + FOR + Indirect Object (buy, make, cook, build, find)"
+    },
+    "usage": [
+      "Khi tân ngữ trực tiếp là đại từ nhân xưng (it, them), bắt buộc phải dùng công thức có giới từ: Give it to me (Không nói: Give me it)."
+    ],
+    "signal_words": [
+      "give sb sth",
+      "buy sth for sb",
+      "send sth to sb"
+    ],
+    "phonics_rules": "Trọng âm rơi vào từ mang thông tin mới.",
+    "common_mistakes": "Nhầm lẫn giữa giới từ TO và FOR sau các động từ mua/làm (buy/make dùng FOR, give/send dùng TO).",
+    "examples": [
+      {
+        "en": "My mother baked a delicious strawberry cake for my sister's birthday.",
+        "vi": "Mẹ tôi đã nướng một chiếc bánh dâu tây thơm ngon cho ngày sinh nhật của em gái."
+      }
+    ],
+    "practice_questions": [
+      {
+        "q": "Could you please pass ______?",
+        "options": [
+          "A. the salt to me",
+          "B. to me the salt",
+          "C. the salt for me",
+          "D. me to the salt"
+        ],
+        "ans": "A",
+        "exp": "Pass sth TO sb = Chuyển cái gì cho ai."
+      }
+    ]
+  },
+  {
+    "id": "gram_unreal_past_as_if",
+    "topic": "Cấu Trúc Như Thể Là (As If / As Though & Unreal Past)",
+    "grade_level": "Lớp 11, 12",
+    "curriculum_unit": "Chuyên đề Giả Định",
+    "category": "subjunctive",
+    "cefr_level": "B2 - C1",
+    "summary": "Diễn tả một tình huống không có thật ở hiện tại hoặc quá khứ bằng cấu trúc lùi thì sau As if / As though.",
+    "formula": {
+      "unreal_present": "S + V(hiện tại) + as if / as though + S + past simple / were",
+      "unreal_past": "S + V(quá khứ) + as if / as though + S + had + P.P",
+      "real_situation": "S + V + as if / as though + S + V (không lùi thì nếu có thật)"
+    },
+    "usage": [
+      "Lùi thì khi giả định trái ngược với sự thật (e.g. He talks as if he were the boss, but he isn't).",
+      "Dùng 'were' cho tất cả các ngôi trong văn phong trang trọng."
+    ],
+    "signal_words": [
+      "as if",
+      "as though",
+      "as if it were"
+    ],
+    "phonics_rules": "Nhấn mạnh vào từ so sánh ví von as if.",
+    "common_mistakes": "Quên lùi thì khi ngữ cảnh rõ ràng là sự việc không có thật.",
+    "examples": [
+      {
+        "en": "He behaves as though he owned the entire company.",
+        "vi": "Anh ta cư xử như thể anh ta sở hữu toàn bộ công ty vậy (thực tế thì không)."
+      }
+    ],
+    "practice_questions": [
+      {
+        "q": "She looks at me as if she ______ my deepest secrets.",
+        "options": [
+          "A. knew",
+          "B. knows",
+          "C. will know",
+          "D. has known"
+        ],
+        "ans": "A",
+        "exp": "Giả định trái với hiện tại sau as if: lùi về thì quá khứ đơn (knew)."
+      }
+    ]
+  },
+  {
+    "id": "gram_passive_with_get",
+    "topic": "Thể Bị Động Với Động Từ GET (The Get-Passive)",
+    "grade_level": "Lớp 9, 10, 11",
+    "curriculum_unit": "Chuyên đề Bị Động",
+    "category": "passive_voice",
+    "cefr_level": "B1 - B2",
+    "summary": "Sử dụng GET thay cho BE trong thể bị động để diễn tả các sự việc bất ngờ, tai nạn hoặc hành động có tính chuyển biến.",
+    "formula": {
+      "affirmative": "S + get/gets/got + P.P (Past Participle)",
+      "negative": "S + do/does/did not + get + P.P",
+      "interrogative": "Did + S + get + P.P?"
+    },
+    "usage": [
+      "Rất phổ biến trong văn phong giao tiếp hiện đại và đề thi chứng chỉ quốc tế.",
+      "Thường đi với các cụm: get caught, get hurt, get married, get invited, get stuck."
+    ],
+    "signal_words": [
+      "get caught",
+      "get injured",
+      "get promoted",
+      "get fired"
+    ],
+    "phonics_rules": "Nối âm got a, get in.",
+    "common_mistakes": "Dùng get-passive với các động từ chỉ trạng thái lâu dài (như understand, believe).",
+    "examples": [
+      {
+        "en": "Several motorists got stuck in the torrential floodwater during rush hour.",
+        "vi": "Một số người đi xe đã bị mắc kẹt trong dòng nước ngập xối xả vào giờ cao điểm."
+      }
+    ],
+    "practice_questions": [
+      {
+        "q": "Fortunately, nobody ______ during the devastating hurricane.",
+        "options": [
+          "A. got injured",
+          "B. got injuring",
+          "C. was injuring",
+          "D. had injured"
+        ],
+        "ans": "A",
+        "exp": "Get injured = bị thương (bị động với GET)."
+      }
+    ]
   }
 ]

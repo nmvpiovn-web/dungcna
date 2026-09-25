@@ -207,6 +207,23 @@
       "char_count": 5929
     },
     {
+      "id": "CLIL_Content_and_Language_Integrated_Learning",
+      "filename": "CLIL_Content_and_Language_Integrated_Learning.md",
+      "folder": "01_CURRICULUM_GDPT",
+      "title": "Phương Pháp Tích Hợp Môn Học CLIL Trong Giảng Dạy Tiếng Anh",
+      "tags": [
+        "#curriculum",
+        "#clil",
+        "#pedagogy",
+        "#interdisciplinary"
+      ],
+      "cefr_level": "",
+      "content": "# 🔬 PHƯƠNG PHÁP CLIL TRONG TIẾNG ANH GDPT 2018\n- Tích hợp 4 chữ C: Content (Nội dung), Communication (Giao tiếp), Cognition (Nhận thức), Culture (Văn hóa).\n- Ứng dụng trong dạy học tích hợp Khoa học (STEM) và Địa lý tự nhiên.",
+      "raw": "---\ntitle: \"Phương Pháp Tích Hợp Môn Học CLIL Trong Giảng Dạy Tiếng Anh\"\ntags: [\"#curriculum\", \"#clil\", \"#pedagogy\", \"#interdisciplinary\"]\n---\n# 🔬 PHƯƠNG PHÁP CLIL TRONG TIẾNG ANH GDPT 2018\n- Tích hợp 4 chữ C: Content (Nội dung), Communication (Giao tiếp), Cognition (Nhận thức), Culture (Văn hóa).\n- Ứng dụng trong dạy học tích hợp Khoa học (STEM) và Địa lý tự nhiên.\n",
+      "wikilinks": [],
+      "char_count": 369
+    },
+    {
       "id": "Cambridge_CEFR_Framework_Alignment",
       "filename": "Cambridge_CEFR_Framework_Alignment.md",
       "folder": "01_CURRICULUM_GDPT",
@@ -221,6 +238,23 @@
       "raw": "---\ntitle: \"Khung Tham Chiếu Năng Lực Ngôn Ngữ CEFR & Chuẩn GDPT\"\ntags: [\"#curriculum\", \"#cefr\", \"#cambridge\"]\n---\n\n# 🎯 BẢNG QUY CHIẾU CEFR - CAMBRIDGE - GDPT VIỆT NAM\n\n| CEFR | Khung 6 Bậc VN | Kỳ Thi Cambridge Tương Đương | Cấp Lớp GDPT Khuyến Nghị | Vốn Từ Yêu Cầu |\n|---|---|---|---|---|\n| **Pre-A1** | Tiền Bậc 1 | Pre A1 Starters | Lớp 1 - 2 | 300 - 500 từ |\n| **A1** | Bậc 1 | A1 Movers | Lớp 3 - 5 | 800 - 1,200 từ |\n| **A2** | Bậc 2 | A2 Flyers / A2 Key (KET) | Lớp 6 - 7 | 1,500 - 2,000 từ |\n| **B1** | Bậc 3 | B1 Preliminary (PET) | Lớp 8 - 10 | 2,500 - 3,500 từ |\n| **B2** | Bậc 4 | B2 First (FCE) / IELTS 5.5-6.5 | Lớp 11 - 12 (Thi THPT QG) | 4,000 - 5,500 từ |\n| **C1** | Bậc 5 | C1 Advanced (CAE) / IELTS 7.0-8.0 | Học sinh giỏi Quốc Gia / Chuyên Anh | 7,000+ từ |\n",
       "wikilinks": [],
       "char_count": 780
+    },
+    {
+      "id": "Four_Skills_Listening_Speaking_Reading_Writing_Standards",
+      "filename": "Four_Skills_Listening_Speaking_Reading_Writing_Standards.md",
+      "folder": "01_CURRICULUM_GDPT",
+      "title": "Chuẩn Đánh Giá 4 Kỹ Năng Nghe - Nói - Đọc - Viết Theo Khung CEFR",
+      "tags": [
+        "#curriculum",
+        "#four-skills",
+        "#cefr",
+        "#rubrics"
+      ],
+      "cefr_level": "",
+      "content": "# 🎯 CHUẨN ĐẦU RA 4 KỸ NĂNG NGHE - NÓI - ĐỌC - VIẾT\n- Kỹ năng Nghe hiểu (Listening): Nhận diện chi tiết, nghe hiểu ý chính, đoán thái độ.\n- Kỹ năng Nói (Speaking): Phản xạ phát âm 44 âm IPA, diễn đạt lưu loát, tương tác hội thoại.\n- Kỹ năng Đọc (Reading): Skimming, Scanning, đoán nghĩa theo văn cảnh Context Clues.\n- Kỹ năng Viết (Writing): Viết lại câu giữ nguyên nghĩa, đoạn văn nghị luận xã hội.",
+      "raw": "---\ntitle: \"Chuẩn Đánh Giá 4 Kỹ Năng Nghe - Nói - Đọc - Viết Theo Khung CEFR\"\ntags: [\"#curriculum\", \"#four-skills\", \"#cefr\", \"#rubrics\"]\n---\n# 🎯 CHUẨN ĐẦU RA 4 KỸ NĂNG NGHE - NÓI - ĐỌC - VIẾT\n- Kỹ năng Nghe hiểu (Listening): Nhận diện chi tiết, nghe hiểu ý chính, đoán thái độ.\n- Kỹ năng Nói (Speaking): Phản xạ phát âm 44 âm IPA, diễn đạt lưu loát, tương tác hội thoại.\n- Kỹ năng Đọc (Reading): Skimming, Scanning, đoán nghĩa theo văn cảnh Context Clues.\n- Kỹ năng Viết (Writing): Viết lại câu giữ nguyên nghĩa, đoạn văn nghị luận xã hội.\n",
+      "wikilinks": [],
+      "char_count": 540
     },
     {
       "id": "GDPT_Master_Curriculum_MOC",
@@ -455,6 +489,38 @@
       "char_count": 643
     },
     {
+      "id": "Correlative_Conjunctions_and_Parallelism",
+      "filename": "Correlative_Conjunctions_and_Parallelism.md",
+      "folder": "02_GRAMMAR_KNOWLEDGE_BASE",
+      "title": "Liên Từ Tương Quan & Cấu Trúc Song Hành (Parallelism)",
+      "tags": [
+        "#grammar",
+        "#syntax",
+        "#parallelism"
+      ],
+      "cefr_level": "",
+      "content": "# ⚖️ TÍNH SONG HÀNH TRONG CÂU PHỨC\n- Either... or / Neither... nor (Động từ hòa hợp theo chủ ngữ gần nhất).\n- Both... and (Động từ chia số nhiều).\n- Not only... but also (Bắt buộc đồng nhất về từ loại và thì).",
+      "raw": "---\ntitle: \"Liên Từ Tương Quan & Cấu Trúc Song Hành (Parallelism)\"\ntags: [\"#grammar\", \"#syntax\", \"#parallelism\"]\n---\n# ⚖️ TÍNH SONG HÀNH TRONG CÂU PHỨC\n- Either... or / Neither... nor (Động từ hòa hợp theo chủ ngữ gần nhất).\n- Both... and (Động từ chia số nhiều).\n- Not only... but also (Bắt buộc đồng nhất về từ loại và thì).\n",
+      "wikilinks": [],
+      "char_count": 327
+    },
+    {
+      "id": "Ellipsis_and_Substitution_Techniques",
+      "filename": "Ellipsis_and_Substitution_Techniques.md",
+      "folder": "02_GRAMMAR_KNOWLEDGE_BASE",
+      "title": "Kỹ Thuật Lược Bỏ & Thay Thế (Ellipsis and Substitution)",
+      "tags": [
+        "#grammar",
+        "#syntax",
+        "#ellipsis"
+      ],
+      "cefr_level": "",
+      "content": "# ✂️ LƯỢC BỎ VÀ THAY THẾ CÂU\n- `So do I` (Đồng tình khẳng định)\n- `Neither do I` (Đồng tình phủ định)\n- `To do so` (Thay thế cụm vị ngữ dài)",
+      "raw": "---\ntitle: \"Kỹ Thuật Lược Bỏ & Thay Thế (Ellipsis and Substitution)\"\ntags: [\"#grammar\", \"#syntax\", \"#ellipsis\"]\n---\n# ✂️ LƯỢC BỎ VÀ THAY THẾ CÂU\n- `So do I` (Đồng tình khẳng định)\n- `Neither do I` (Đồng tình phủ định)\n- `To do so` (Thay thế cụm vị ngữ dài)\n",
+      "wikilinks": [],
+      "char_count": 257
+    },
+    {
       "id": "Future_Tenses_and_Modality",
       "filename": "Future_Tenses_and_Modality.md",
       "folder": "02_GRAMMAR_KNOWLEDGE_BASE",
@@ -576,6 +642,72 @@
       "raw": "---\ntitle: \"Đảo Ngữ Toàn Diện & Câu Chẻ (Inversion and Cleft Sentences)\"\ntags: [\"#grammar\", \"#inversion\", \"#cleft\", \"#hsg\", \"#chuyen-anh\"]\n---\n\n# ⚡ ĐẢO NGỮ (INVERSION) & CÂU CHẺ (CLEFT SENTENCES)\n\n## 📌 Các Cấu Trúc Đảo Ngữ Thường Gặp\n1. **Trạng từ phủ định**: `Never / Hardly / Scarcely / Seldom + Trợ động từ + S + V`\n2. **No sooner... than**: `No sooner had S + P.P than S + V-ed`\n3. **Only with**: `Only when / Only after + Clause + Trợ động từ + S + V`\n   - *Only on his fourth proposal did she accept to marry him.*\n\n## 📌 Câu Chẻ (Cleft Sentences)\n- `It is/was + Thành phần cần nhấn mạnh + that + S + V`\n  - *It was in Hoi An that we experienced the ancient lantern festival.*\n",
       "wikilinks": [],
       "char_count": 682
+    },
+    {
+      "id": "Locative_and_Directional_Inversion",
+      "filename": "Locative_and_Directional_Inversion.md",
+      "folder": "02_GRAMMAR_KNOWLEDGE_BASE",
+      "title": "Đảo Ngữ Cụm Nơi Chốn & Hướng Chuyển Động",
+      "tags": [
+        "#grammar",
+        "#inversion",
+        "#locative"
+      ],
+      "cefr_level": "",
+      "content": "# 🗺️ ĐẢO NGỮ NƠI CHỐN (LOCATIVE INVERSION)\n- `Cụm giới từ nơi chốn + Động từ + Danh từ chủ ngữ`\n- *On the top of the hill stood a magnificent castle.*",
+      "raw": "---\ntitle: \"Đảo Ngữ Cụm Nơi Chốn & Hướng Chuyển Động\"\ntags: [\"#grammar\", \"#inversion\", \"#locative\"]\n---\n# 🗺️ ĐẢO NGỮ NƠI CHỐN (LOCATIVE INVERSION)\n- `Cụm giới từ nơi chốn + Động từ + Danh từ chủ ngữ`\n- *On the top of the hill stood a magnificent castle.*\n",
+      "wikilinks": [],
+      "char_count": 255
+    },
+    {
+      "id": "Mixed_Conditionals_Type_2_and_3",
+      "filename": "Mixed_Conditionals_Type_2_and_3.md",
+      "folder": "02_GRAMMAR_KNOWLEDGE_BASE",
+      "title": "Câu Điều Kiện Hỗn Hợp (Mixed Conditionals: Type 2 & 3)",
+      "tags": [
+        "#grammar",
+        "#conditionals",
+        "#mixed",
+        "#hsg"
+      ],
+      "cefr_level": "",
+      "content": "# 🎲 CÂU ĐIỀU KIỆN HỖN HỢP\n- **Loại 3 + 2**: `If + S + had + P.P, S + would + V-inf (now)`\n- **Loại 2 + 3**: `If + S + past simple, S + would have + P.P`",
+      "raw": "---\ntitle: \"Câu Điều Kiện Hỗn Hợp (Mixed Conditionals: Type 2 & 3)\"\ntags: [\"#grammar\", \"#conditionals\", \"#mixed\", \"#hsg\"]\n---\n# 🎲 CÂU ĐIỀU KIỆN HỖN HỢP\n- **Loại 3 + 2**: `If + S + had + P.P, S + would + V-inf (now)`\n- **Loại 2 + 3**: `If + S + past simple, S + would have + P.P`\n",
+      "wikilinks": [],
+      "char_count": 279
+    },
+    {
+      "id": "Modals_of_Deduction_Past_Present",
+      "filename": "Modals_of_Deduction_Past_Present.md",
+      "folder": "02_GRAMMAR_KNOWLEDGE_BASE",
+      "title": "Động Từ Khuyết Thiếu Suy Đoán Quá Khứ & Hiện Tại",
+      "tags": [
+        "#grammar",
+        "#modals",
+        "#deduction"
+      ],
+      "cefr_level": "",
+      "content": "# 🔍 ĐỘNG TỪ TÌNH THÁI SUY ĐOÁN\n- `Must have P.P`: Chắc chắn đã xảy ra trong quá khứ.\n- `Can't have P.P`: Chắc chắn đã không xảy ra trong quá khứ.\n- `Should have P.P`: Lẽ ra nên làm nhưng không làm.",
+      "raw": "---\ntitle: \"Động Từ Khuyết Thiếu Suy Đoán Quá Khứ & Hiện Tại\"\ntags: [\"#grammar\", \"#modals\", \"#deduction\"]\n---\n# 🔍 ĐỘNG TỪ TÌNH THÁI SUY ĐOÁN\n- `Must have P.P`: Chắc chắn đã xảy ra trong quá khứ.\n- `Can't have P.P`: Chắc chắn đã không xảy ra trong quá khứ.\n- `Should have P.P`: Lẽ ra nên làm nhưng không làm.\n",
+      "wikilinks": [],
+      "char_count": 308
+    },
+    {
+      "id": "Participle_Clauses_and_Dangling_Modifiers",
+      "filename": "Participle_Clauses_and_Dangling_Modifiers.md",
+      "folder": "02_GRAMMAR_KNOWLEDGE_BASE",
+      "title": "Mệnh Đề Phân Từ & Lỗi Phân Từ Lơ Lửng (Participle Clauses)",
+      "tags": [
+        "#grammar",
+        "#syntax",
+        "#participles",
+        "#hsg"
+      ],
+      "cefr_level": "",
+      "content": "# 🧬 MỆNH ĐỀ PHÂN TỪ & BẪY PHÂN TỪ LƠ LỬNG\n- Hiện tại phân từ: `V-ing` (Chủ động)\n- Quá khứ phân từ: `P.P` (Bị động)\n- Hoàn thành phân từ: `Having + P.P` (Hành động hoàn tất trước)\n> [!warning] Bẫy Dangling Modifier\n> Tuyệt đối không dùng mệnh đề phân từ khi chủ ngữ hai vế khác nhau!",
+      "raw": "---\ntitle: \"Mệnh Đề Phân Từ & Lỗi Phân Từ Lơ Lửng (Participle Clauses)\"\ntags: [\"#grammar\", \"#syntax\", \"#participles\", \"#hsg\"]\n---\n# 🧬 MỆNH ĐỀ PHÂN TỪ & BẪY PHÂN TỪ LƠ LỬNG\n- Hiện tại phân từ: `V-ing` (Chủ động)\n- Quá khứ phân từ: `P.P` (Bị động)\n- Hoàn thành phân từ: `Having + P.P` (Hành động hoàn tất trước)\n> [!warning] Bẫy Dangling Modifier\n> Tuyệt đối không dùng mệnh đề phân từ khi chủ ngữ hai vế khác nhau!\n",
+      "wikilinks": [],
+      "char_count": 414
     },
     {
       "id": "Passive_Voice_and_Causative_Forms",
@@ -710,6 +842,40 @@
       "char_count": 806
     },
     {
+      "id": "Wh_Cleft_Sentences_and_Reversed_Clefts",
+      "filename": "Wh_Cleft_Sentences_and_Reversed_Clefts.md",
+      "folder": "02_GRAMMAR_KNOWLEDGE_BASE",
+      "title": "Câu Chẻ Wh- Clefts & Đảo Ngược Vị Trí Nhấn Mạnh",
+      "tags": [
+        "#grammar",
+        "#cleft",
+        "#wh-cleft",
+        "#advanced"
+      ],
+      "cefr_level": "",
+      "content": "# ⚡ CÂU CHẺ VỚI TỪ ĐỂ HỎI (WH- CLEFTS)\n- `What + S + V + is/was + Thành phần nhấn mạnh`\n- *What impressed us most was her extraordinary humility.*",
+      "raw": "---\ntitle: \"Câu Chẻ Wh- Clefts & Đảo Ngược Vị Trí Nhấn Mạnh\"\ntags: [\"#grammar\", \"#cleft\", \"#wh-cleft\", \"#advanced\"]\n---\n# ⚡ CÂU CHẺ VỚI TỪ ĐỂ HỎI (WH- CLEFTS)\n- `What + S + V + is/was + Thành phần nhấn mạnh`\n- *What impressed us most was her extraordinary humility.*\n",
+      "wikilinks": [],
+      "char_count": 267
+    },
+    {
+      "id": "Academic_Collocations_Oxford_5000",
+      "filename": "Academic_Collocations_Oxford_5000.md",
+      "folder": "03_VOCABULARY_ATLAS",
+      "title": "Danh Mục Collocations Học Thuật Chuẩn Oxford 5000",
+      "tags": [
+        "#vocab",
+        "#collocations",
+        "#oxford5000",
+        "#ielts"
+      ],
+      "cefr_level": "",
+      "content": "# 📚 COLLOCATIONS HỌC THUẬT OXFORD 5000\n- `Pose a threat`: Đe dọa\n- `Bridge the gap`: Thu hẹp khoảng cách\n- `Bear in mind`: Ghi nhớ kỹ trong đầu",
+      "raw": "---\ntitle: \"Danh Mục Collocations Học Thuật Chuẩn Oxford 5000\"\ntags: [\"#vocab\", \"#collocations\", \"#oxford5000\", \"#ielts\"]\n---\n# 📚 COLLOCATIONS HỌC THUẬT OXFORD 5000\n- `Pose a threat`: Đe dọa\n- `Bridge the gap`: Thu hẹp khoảng cách\n- `Bear in mind`: Ghi nhớ kỹ trong đầu\n",
+      "wikilinks": [],
+      "char_count": 270
+    },
+    {
       "id": "Collocations_and_Fixed_Phrases",
       "filename": "Collocations_and_Fixed_Phrases.md",
       "folder": "03_VOCABULARY_ATLAS",
@@ -723,6 +889,37 @@
       "raw": "---\ntitle: \"Collocations & Cụm Từ Cố Định Thường Gặp\"\ntags: [\"#vocab\", \"#collocations\"]\n---\n\n# 🔗 COLLOCATIONS & CỤM TỪ CỐ ĐỊNH\n\n- `Make an effort`: Nỗ lực làm gì\n- `Do morning exercise`: Tập thể dục\n- `Pay attention to`: Chú ý tới\n- `Take responsibility for`: Chịu trách nhiệm về\n- `Pose a threat to`: Gây ra mối đe dọa cho\n",
       "wikilinks": [],
       "char_count": 324
+    },
+    {
+      "id": "Etymology_Latin_Greek_Roots_22000",
+      "filename": "Etymology_Latin_Greek_Roots_22000.md",
+      "folder": "03_VOCABULARY_ATLAS",
+      "title": "Từ Nguyên Học: Gốc Từ Latin & Hy Lạp Trong 22.000 Từ Harold Levine",
+      "tags": [
+        "#vocab",
+        "#etymology",
+        "#latin-roots",
+        "#greek-roots",
+        "#harold-levine"
+      ],
+      "cefr_level": "",
+      "content": "# 🏛️ TỪ NGUYÊN HỌC & RỄ TỪ LATIN / HY LẠP TRONG TIẾNG ANH\n\n> [!abstract] Bí Quyết Học 1 Biết 10 Của Harold Levine\n> Hơn 60% từ vựng tiếng Anh học thuật bắt nguồn từ tiếng Latin và tiếng Hy Lạp cổ. Khi nắm vững 30 gốc từ căn bản, bạn có thể tự tin suy luận chính xác ý nghĩa của hàng nghìn từ vựng mới trong bài thi IELTS, TOEFL, SAT và HSG.\n\n## 📌 10 Gốc Từ Cốt Lõi Hay Gặp Nhất\n\n| Gốc Từ | Nguồn Gốc & Ý Nghĩa | Từ Vựng Tiêu Biểu | Dịch Nghĩa & Ứng Dụng |\n|---|---|---|---|\n| **CUR / CURS** | Latin: *chạy, di chuyển* | **Concur** (đồng ý, chạy cùng hướng), **Current**, **Excursion**, **Precursor** | *Good sportsmanship requires you to accept the umpire's decision even if you do not concur with it.* |\n| **MIT / MISS** | Latin: *gửi đi, buông bỏ* | **Mitigate** (làm nhẹ bớt), **Dismiss**, **Transmit**, **Emission** | *Planting coastal mangroves mitigates the risk of super typhoons.* |\n| **PORT** | Latin: *mang, vác* | **Portable** (dễ mang theo), **Export**, **Transport**, **Deport** | *Lightweight portable oxygen units saved countless mountaineers.* |\n| **CHRON** | Hy Lạp: *thời gian* | **Chronological** (theo thứ tự thời gian), **Synchronize**, **Chronic** | *Events were arranged in strict chronological sequence.* |\n| **GEN** | Latin/Hy Lạp: *sinh ra, nòi giống* | **Generation**, **Generate**, **Indigenous**, **Heterogeneous** | *Intergenerational dialogues foster community harmony.* |\n| **BENE** | Latin: *tốt lành* | **Beneficial**, **Benefactor**, **Benevolent**, **Benefit** | *Morning physical exercise yields immense beneficial effects.* |\n| **MAL** | Latin: *xấu, ác* | **Malfunction**, **Malicious**, **Malnutrition**, **Malevolent** | *The software suffered a severe security malfunction.* |\n| **SPEC / SPIC** | Latin: *nhìn ngắm* | **Spectator**, **Meticulous**, **Conspicuous**, **Inspect** | *The detective observed every conspicuous clue at the scene.* |\n| **DICT** | Latin: *nói, tuyên bố* | **Dictate**, **Contradict**, **Predict**, **Verdict** | *His testimony openly contradicted the physical evidence.* |\n| **TRACT** | Latin: *kéo, lôi* | **Attract**, **Distract**, **Extract**, **Retract** | *Noise pollution constantly distracts pupils in the classroom.* |\n\n## 🔗 Liên Kết\n- [[Word_Formation_Prefixes_Suffixes_Roots]]\n- [[Lexicon_Academic_IELTS_C1_C2]]\n- [[Sentence_Transformation_Techniques_700]]",
+      "raw": "---\ntitle: \"Từ Nguyên Học: Gốc Từ Latin & Hy Lạp Trong 22.000 Từ Harold Levine\"\ntags: [\"#vocab\", \"#etymology\", \"#latin-roots\", \"#greek-roots\", \"#harold-levine\"]\nsources: [\"22000_tu_toefl_ielts_harold_levine.docx\", \"Oxford English Dictionary\"]\n---\n\n# 🏛️ TỪ NGUYÊN HỌC & RỄ TỪ LATIN / HY LẠP TRONG TIẾNG ANH\n\n> [!abstract] Bí Quyết Học 1 Biết 10 Của Harold Levine\n> Hơn 60% từ vựng tiếng Anh học thuật bắt nguồn từ tiếng Latin và tiếng Hy Lạp cổ. Khi nắm vững 30 gốc từ căn bản, bạn có thể tự tin suy luận chính xác ý nghĩa của hàng nghìn từ vựng mới trong bài thi IELTS, TOEFL, SAT và HSG.\n\n## 📌 10 Gốc Từ Cốt Lõi Hay Gặp Nhất\n\n| Gốc Từ | Nguồn Gốc & Ý Nghĩa | Từ Vựng Tiêu Biểu | Dịch Nghĩa & Ứng Dụng |\n|---|---|---|---|\n| **CUR / CURS** | Latin: *chạy, di chuyển* | **Concur** (đồng ý, chạy cùng hướng), **Current**, **Excursion**, **Precursor** | *Good sportsmanship requires you to accept the umpire's decision even if you do not concur with it.* |\n| **MIT / MISS** | Latin: *gửi đi, buông bỏ* | **Mitigate** (làm nhẹ bớt), **Dismiss**, **Transmit**, **Emission** | *Planting coastal mangroves mitigates the risk of super typhoons.* |\n| **PORT** | Latin: *mang, vác* | **Portable** (dễ mang theo), **Export**, **Transport**, **Deport** | *Lightweight portable oxygen units saved countless mountaineers.* |\n| **CHRON** | Hy Lạp: *thời gian* | **Chronological** (theo thứ tự thời gian), **Synchronize**, **Chronic** | *Events were arranged in strict chronological sequence.* |\n| **GEN** | Latin/Hy Lạp: *sinh ra, nòi giống* | **Generation**, **Generate**, **Indigenous**, **Heterogeneous** | *Intergenerational dialogues foster community harmony.* |\n| **BENE** | Latin: *tốt lành* | **Beneficial**, **Benefactor**, **Benevolent**, **Benefit** | *Morning physical exercise yields immense beneficial effects.* |\n| **MAL** | Latin: *xấu, ác* | **Malfunction**, **Malicious**, **Malnutrition**, **Malevolent** | *The software suffered a severe security malfunction.* |\n| **SPEC / SPIC** | Latin: *nhìn ngắm* | **Spectator**, **Meticulous**, **Conspicuous**, **Inspect** | *The detective observed every conspicuous clue at the scene.* |\n| **DICT** | Latin: *nói, tuyên bố* | **Dictate**, **Contradict**, **Predict**, **Verdict** | *His testimony openly contradicted the physical evidence.* |\n| **TRACT** | Latin: *kéo, lôi* | **Attract**, **Distract**, **Extract**, **Retract** | *Noise pollution constantly distracts pupils in the classroom.* |\n\n## 🔗 Liên Kết\n- [[Word_Formation_Prefixes_Suffixes_Roots]]\n- [[Lexicon_Academic_IELTS_C1_C2]]\n- [[Sentence_Transformation_Techniques_700]]\n",
+      "wikilinks": [
+        {
+          "target": "Word_Formation_Prefixes_Suffixes_Roots",
+          "label": "Word_Formation_Prefixes_Suffixes_Roots"
+        },
+        {
+          "target": "Lexicon_Academic_IELTS_C1_C2",
+          "label": "Lexicon_Academic_IELTS_C1_C2"
+        },
+        {
+          "target": "Sentence_Transformation_Techniques_700",
+          "label": "Sentence_Transformation_Techniques_700"
+        }
+      ],
+      "char_count": 2583
     },
     {
       "id": "False_Friends_and_Common_Confusables",
@@ -739,6 +936,23 @@
       "raw": "---\ntitle: \"Cặp Từ Dễ Nhầm Lẫn Kinh Điển (Confusable Words)\"\ntags: [\"#vocab\", \"#confusables\", \"#error-identification\"]\n---\n\n# ⚠️ CÁC CẶP TỪ DỄ GÂY NHẦM LẪN KINH ĐIỂN\n\n- **Sensitive** (Nhạy cảm) vs **Sensible** (Biết điều, hợp lý).\n- **Considerate** (Chu đáo, ân cần) vs **Considerable** (Đáng kể, to lớn).\n- **Economic** (Thuộc về kinh tế) vs **Economical** (Tiết kiệm).\n- **Comprehensible** (Có thể hiểu được) vs **Comprehensive** (Toàn diện, bao quát).\n",
       "wikilinks": [],
       "char_count": 455
+    },
+    {
+      "id": "Idioms_and_Binomials_Top_50",
+      "filename": "Idioms_and_Binomials_Top_50.md",
+      "folder": "03_VOCABULARY_ATLAS",
+      "title": "Top 50 Thành Ngữ & Cặp Từ Cố Định Thường Xuất Hiện Trong Đề Thi",
+      "tags": [
+        "#vocab",
+        "#idioms",
+        "#binomials",
+        "#hsg"
+      ],
+      "cefr_level": "",
+      "content": "# 🎭 THÀNH NGỮ & CẶP TỪ CỐ ĐỊNH (BINOMIALS)\n- `Raining cats and dogs`: Mưa như trút nước\n- `Pros and cons`: Ưu và nhược điểm\n- `Safe and sound`: Bình an vô sự\n- `Give and take`: Có qua có lại",
+      "raw": "---\ntitle: \"Top 50 Thành Ngữ & Cặp Từ Cố Định Thường Xuất Hiện Trong Đề Thi\"\ntags: [\"#vocab\", \"#idioms\", \"#binomials\", \"#hsg\"]\n---\n# 🎭 THÀNH NGỮ & CẶP TỪ CỐ ĐỊNH (BINOMIALS)\n- `Raining cats and dogs`: Mưa như trút nước\n- `Pros and cons`: Ưu và nhược điểm\n- `Safe and sound`: Bình an vô sự\n- `Give and take`: Có qua có lại\n",
+      "wikilinks": [],
+      "char_count": 322
     },
     {
       "id": "Lexicon_Academic_IELTS_C1_C2",
@@ -822,6 +1036,23 @@
       "raw": "---\ntitle: \"Hệ Thống 44 Âm Quốc Tế (IPA) & Phonics Chuẩn Cambridge\"\ntags: [\"#vocab\", \"#phonics\", \"#ipa\", \"#pronunciation\"]\n---\n\n# 🎙️ HỆ THỐNG 44 ÂM QUỐC TẾ (IPA) & PHONICS\n\n## 1. Nguyên Âm (20 Vowels)\n- 7 nguyên âm ngắn: `/ɪ/, /e/, /æ/, /ɒ/, /ʌ/, /ʊ/, /ə/`\n- 5 nguyên âm dài: `/iː/, /uː/, /ɑː/, /ɔː/, /ɜː/`\n- 8 nguyên âm đôi: `/eɪ/, /aɪ/, /ɔɪ/, /aʊ/, /əʊ/, /ɪə/, /eə/, /ʊə/`\n\n## 2. Phụ Âm (24 Consonants)\n- Cặp vô thanh - hữu thanh: `/p/-/b/`, `/t/-/d/`, `/k/-/ɡ/`, `/f/-/v/`, `/θ/-/ð/`, `/s/-/z/`, `/ʃ/-/ʒ/`, `/tʃ/-/dʒ/`\n",
       "wikilinks": [],
       "char_count": 522
+    },
+    {
+      "id": "Synonyms_and_Antonyms_Thesaurus_Map",
+      "filename": "Synonyms_and_Antonyms_Thesaurus_Map.md",
+      "folder": "03_VOCABULARY_ATLAS",
+      "title": "Bản Đồ Từ Đồng Nghĩa & Trái Nghĩa (Thesaurus Map)",
+      "tags": [
+        "#vocab",
+        "#thesaurus",
+        "#synonyms",
+        "#antonyms"
+      ],
+      "cefr_level": "",
+      "content": "# 🔄 BẢN ĐỒ TỪ ĐỒNG NGHĨA & TRÁI NGHĨA\n- `Mitigate` = Alleviate = Lessen $\neq$ Exacerbate = Worsen\n- `Astute` = Shrewd = Crafty $\neq$ Naive = Gullible\n- `Concur` = Agree = Endorse $\neq$ Dissent = Contradict",
+      "raw": "---\ntitle: \"Bản Đồ Từ Đồng Nghĩa & Trái Nghĩa (Thesaurus Map)\"\ntags: [\"#vocab\", \"#thesaurus\", \"#synonyms\", \"#antonyms\"]\n---\n# 🔄 BẢN ĐỒ TỪ ĐỒNG NGHĨA & TRÁI NGHĨA\n- `Mitigate` = Alleviate = Lessen $\neq$ Exacerbate = Worsen\n- `Astute` = Shrewd = Crafty $\neq$ Naive = Gullible\n- `Concur` = Agree = Endorse $\neq$ Dissent = Contradict\n",
+      "wikilinks": [],
+      "char_count": 330
     },
     {
       "id": "Vocabulary_Atlas_MOC",
@@ -960,6 +1191,22 @@
       "char_count": 456
     },
     {
+      "id": "Olympic_30_4_Southern_Provinces_Strategy",
+      "filename": "Olympic_30_4_Southern_Provinces_Strategy.md",
+      "folder": "04_EXAMS_AND_QUESTION_BANK",
+      "title": "Chiến Thuật Thi Đấu Olympic Tiếng Anh 30/4",
+      "tags": [
+        "#exam",
+        "#olympic",
+        "#hsg"
+      ],
+      "cefr_level": "",
+      "content": "# 🏆 CHIẾN THUẬT OLYMPIC 30/4\n- Phân bổ 150 phút cho 50 câu hỏi nâng cao.\n- Tập trung vào phần Collocations, Prepositions và Word Formation nâng cao.",
+      "raw": "---\ntitle: \"Chiến Thuật Thi Đấu Olympic Tiếng Anh 30/4\"\ntags: [\"#exam\", \"#olympic\", \"#hsg\"]\n---\n# 🏆 CHIẾN THUẬT OLYMPIC 30/4\n- Phân bổ 150 phút cho 50 câu hỏi nâng cao.\n- Tập trung vào phần Collocations, Prepositions và Word Formation nâng cao.\n",
+      "wikilinks": [],
+      "char_count": 245
+    },
+    {
       "id": "Phonetics_Stress_Rules_and_Tricks",
       "filename": "Phonetics_Stress_Rules_and_Tricks.md",
       "folder": "04_EXAMS_AND_QUESTION_BANK",
@@ -992,6 +1239,23 @@
       "char_count": 427
     },
     {
+      "id": "Reading_Skimming_Scanning_Inference_Techniques",
+      "filename": "Reading_Skimming_Scanning_Inference_Techniques.md",
+      "folder": "04_EXAMS_AND_QUESTION_BANK",
+      "title": "Kỹ Thuật Đọc Hiểu Skimming, Scanning & Suy Luận (Inference)",
+      "tags": [
+        "#exam",
+        "#reading",
+        "#skimming",
+        "#scanning"
+      ],
+      "cefr_level": "",
+      "content": "# 📖 KỸ THUẬT ĐỌC HIỂU ĐẠT ĐIỂM TUYỆT ĐỐI\n- Skimming: Đọc câu mở đoạn và câu kết luận.\n- Scanning: Tìm con số, năm tháng, tên người viết hoa.\n- Inference: Suy luận ý ngầm của tác giả dựa trên văn cảnh.",
+      "raw": "---\ntitle: \"Kỹ Thuật Đọc Hiểu Skimming, Scanning & Suy Luận (Inference)\"\ntags: [\"#exam\", \"#reading\", \"#skimming\", \"#scanning\"]\n---\n# 📖 KỸ THUẬT ĐỌC HIỂU ĐẠT ĐIỂM TUYỆT ĐỐI\n- Skimming: Đọc câu mở đoạn và câu kết luận.\n- Scanning: Tìm con số, năm tháng, tên người viết hoa.\n- Inference: Suy luận ý ngầm của tác giả dựa trên văn cảnh.\n",
+      "wikilinks": [],
+      "char_count": 332
+    },
+    {
       "id": "Sentence_Transformation_Techniques_700",
       "filename": "Sentence_Transformation_Techniques_700.md",
       "folder": "04_EXAMS_AND_QUESTION_BANK",
@@ -1007,6 +1271,22 @@
       "raw": "---\ntitle: \"700 Kỹ Thuật Viết Lại Câu Tuyển Sinh & HSG\"\ntags: [\"#exam\", \"#sentence-transformation\", \"#hsg\", \"#vao-10\"]\n---\n\n# ✍️ 700 KỸ THUẬT BIẾN ĐỔI CÂU GIỮ NGUYÊN NGHĨA\n\nTrích xuất trực tiếp từ tài liệu viết lại câu HSG:\n\n- **Model 1**: `Because + clause -> Because of + Noun phrase`\n  - *Because she behaves well -> Because of her good behaviour.*\n- **Model 2**: `Although + clause -> Despite / In spite of + Noun phrase / V-ing`\n- **Model 3**: `Too + Adj to V -> So + Adj + that / Such + a/an Adj Noun + that`\n- **Model 4**: `Prefer V-ing to V-ing -> Would rather V-inf than V-inf`\n- **Model 5**: `It takes sb time to V -> Sb spends time V-ing`\n- **Model 6**: `The first time S have P.P -> S have never P.P before`\n",
       "wikilinks": [],
       "char_count": 720
+    },
+    {
+      "id": "Specialized_High_School_Entrance_Guide",
+      "filename": "Specialized_High_School_Entrance_Guide.md",
+      "folder": "04_EXAMS_AND_QUESTION_BANK",
+      "title": "Hướng Dẫn Toàn Diện Đỗ Lớp 10 Chuyên Anh",
+      "tags": [
+        "#exam",
+        "#vao-10",
+        "#chuyen-anh"
+      ],
+      "cefr_level": "",
+      "content": "# 🏛️ HƯỚNG DẪN ÔN THI VÀO LỚP 10 CHUYÊN ANH\n- Bí kíp 700 mô hình viết lại câu.\n- 1000 câu trắc nghiệm ngữ pháp phân hóa.\n- Quản trị thời gian phòng thi.",
+      "raw": "---\ntitle: \"Hướng Dẫn Toàn Diện Đỗ Lớp 10 Chuyên Anh\"\ntags: [\"#exam\", \"#vao-10\", \"#chuyen-anh\"]\n---\n# 🏛️ HƯỚNG DẪN ÔN THI VÀO LỚP 10 CHUYÊN ANH\n- Bí kíp 700 mô hình viết lại câu.\n- 1000 câu trắc nghiệm ngữ pháp phân hóa.\n- Quản trị thời gian phòng thi.\n",
+      "wikilinks": [],
+      "char_count": 253
     },
     {
       "id": "THPT_Quoc_Gia_Exam_Strategy",
@@ -1073,6 +1353,23 @@
       "char_count": 612
     },
     {
+      "id": "Parent_Student_Coaching_and_Progress_Tracking",
+      "filename": "Parent_Student_Coaching_and_Progress_Tracking.md",
+      "folder": "05_TEACHING_SOP_AND_PEDAGOGY",
+      "title": "Quy Chuẩn Đồng Hành Cùng Phụ Huynh & Theo Dõi Tiến Độ Học Sinh",
+      "tags": [
+        "#pedagogy",
+        "#parents",
+        "#progress-tracking",
+        "#sop"
+      ],
+      "cefr_level": "",
+      "content": "# 👨‍👩‍👧 QUY TRÌNH ĐỒNG HÀNH PHỤ HUYNH & THEO DÕI TIẾN ĐỘ\n\n## 1. Nhật Ký Tiến Bộ Số Hóa (Digital Learning Log)\n- Hệ thống tự động ghi nhận lịch sử làm bài kiểm tra, điểm danh từng buổi học, số từ vựng đã nhớ và điểm thi thử.\n- Phụ huynh đăng nhập tài khoản quyền Parent (`/login`) để xem biểu đồ tăng trưởng kỹ năng của con em mình.\n\n## 2. Thông Báo Tự Động Định Kỳ\n- **Nhắc nhở lịch học**: Gửi thông báo trước 1 giờ và trước 10 phút trước khi vào ca học.\n- **Báo cáo chuyên cần**: Thông báo tức thì sau giờ điểm danh nếu học sinh vắng mặt hoặc đi muộn.\n- **Tổng kết học phí**: Tự động thông báo biên lai học phí và lịch thanh toán định kỳ.",
+      "raw": "---\ntitle: \"Quy Chuẩn Đồng Hành Cùng Phụ Huynh & Theo Dõi Tiến Độ Học Sinh\"\ntags: [\"#pedagogy\", \"#parents\", \"#progress-tracking\", \"#sop\"]\n---\n\n# 👨‍👩‍👧 QUY TRÌNH ĐỒNG HÀNH PHỤ HUYNH & THEO DÕI TIẾN ĐỘ\n\n## 1. Nhật Ký Tiến Bộ Số Hóa (Digital Learning Log)\n- Hệ thống tự động ghi nhận lịch sử làm bài kiểm tra, điểm danh từng buổi học, số từ vựng đã nhớ và điểm thi thử.\n- Phụ huynh đăng nhập tài khoản quyền Parent (`/login`) để xem biểu đồ tăng trưởng kỹ năng của con em mình.\n\n## 2. Thông Báo Tự Động Định Kỳ\n- **Nhắc nhở lịch học**: Gửi thông báo trước 1 giờ và trước 10 phút trước khi vào ca học.\n- **Báo cáo chuyên cần**: Thông báo tức thì sau giờ điểm danh nếu học sinh vắng mặt hoặc đi muộn.\n- **Tổng kết học phí**: Tự động thông báo biên lai học phí và lịch thanh toán định kỳ.\n",
+      "wikilinks": [],
+      "char_count": 783
+    },
+    {
       "id": "Pedagogy_MOC",
       "filename": "Pedagogy_MOC.md",
       "folder": "05_TEACHING_SOP_AND_PEDAGOGY",
@@ -1121,6 +1418,64 @@
       "raw": "---\ntitle: \"Quy Trình Giáo Viên Mở Cổng Game Tương Tác (SOP Game Portal)\"\ntags: [\"#pedagogy\", \"#teacher-panel\", \"#games\", \"#sop\"]\n---\n\n# 🎮 QUY TRÌNH GIÁO VIÊN MỞ CỔNG GAME TƯƠNG TÁC\n\n> [!important] Nguyên Tắc Phân Quyền\n> Theo yêu cầu hệ thống, **Cổng Game Tương Tác** (Vocab Clash, Grammar Master, Phonics Flashcards) mặc định **ĐÓNG** với tài khoản Học Sinh. Chỉ có Giáo Viên và Leader mới có quyền gạt công tắc kích hoạt cổng game trong giờ học.\n\n1. Giáo viên đăng nhập tài khoản quyền Teacher (`/login`).\n2. Vào trang **Teacher Panel / Games Manager** (`/teacher/games`).\n3. Gạt công tắc `Enable Interactive Games` cho lớp phụ trách.\n",
       "wikilinks": [],
       "char_count": 638
+    },
+    {
+      "id": "Interactive_Obsidian_Canvas_Overview",
+      "filename": "Interactive_Obsidian_Canvas_Overview.md",
+      "folder": "06_CROSS_DISCIPLINARY_SYNAPSES",
+      "title": "Bản Đồ Nơ-ron Tư Duy Bằng Obsidian Canvas",
+      "tags": [
+        "#synapses",
+        "#canvas",
+        "#mindmap",
+        "#visual-learning"
+      ],
+      "cefr_level": "",
+      "content": "# 🎨 BẢN ĐỒ NƠ-RON TƯ DUY (OBSIDIAN CANVAS & SYNAPTIC MAPS)\n\nKhông gian đồ thị liên kết trực quan hỗ trợ học tập thông qua hình ảnh và sơ đồ dòng chảy logic:\n\n```mermaid\nflowchart TD\n    subgraph S1[\"🌱 Foundation: Primary (Lớp 1-5)\"]\n        Phonics[\"🎙️ Phonics 44 Âm IPA\"] --> VocabPrimary[\"🍼 Vốn từ A1 Starters/Movers/Flyers\"]\n        VocabPrimary --> BasicGrammar[\"⏱️ Thì Hiện Tại Đơn & Can/Must\"]\n    end\n\n    subgraph S2[\"🌿 Expansion: Secondary (Lớp 6-9)\"]\n        BasicGrammar --> ComplexTenses[\"📜 Quá Khứ & Tương Lai\"]\n        VocabPrimary --> VocabSecondary[\"🎒 Vốn từ A2 KET & B1 PET\"]\n        ComplexTenses --> PassiveRel[\"🛡️ Bị Động & Mệnh Đề Quan Hệ\"]\n    end\n\n    subgraph S3[\"🌳 Mastery: High School (Lớp 10-12) & Academic\"]\n        PassiveRel --> InversionSubj[\"⚡ Đảo Ngữ, Câu Chẻ & Giả Định\"]\n        VocabSecondary --> AcademicAVL[\"💎 22.000 Từ Harold Levine & C1-C2\"]\n        InversionSubj --> Exams1012[\"🎯 Tuyển Sinh Vào 10 & THPT Quốc Gia\"]\n    end\n\n    S1 --> S2 --> S3\n```\n\n## 🔗 Các Giao Lộ Tri Thức Trọng Tâm\n- Từ [[Phonics_and_IPA_Sound_System]] dẫn tới [[Phonetics_Stress_Rules_and_Tricks]].\n- Từ [[Word_Formation_Prefixes_Suffixes_Roots]] dẫn tới [[Etymology_Latin_Greek_Roots_22000]].\n- Từ [[Tense_Coordination_and_Sequence]] dẫn tới [[Error_Identification_Strategies]].",
+      "raw": "---\ntitle: \"Bản Đồ Nơ-ron Tư Duy Bằng Obsidian Canvas\"\ntags: [\"#synapses\", \"#canvas\", \"#mindmap\", \"#visual-learning\"]\n---\n\n# 🎨 BẢN ĐỒ NƠ-RON TƯ DUY (OBSIDIAN CANVAS & SYNAPTIC MAPS)\n\nKhông gian đồ thị liên kết trực quan hỗ trợ học tập thông qua hình ảnh và sơ đồ dòng chảy logic:\n\n```mermaid\nflowchart TD\n    subgraph S1[\"🌱 Foundation: Primary (Lớp 1-5)\"]\n        Phonics[\"🎙️ Phonics 44 Âm IPA\"] --> VocabPrimary[\"🍼 Vốn từ A1 Starters/Movers/Flyers\"]\n        VocabPrimary --> BasicGrammar[\"⏱️ Thì Hiện Tại Đơn & Can/Must\"]\n    end\n\n    subgraph S2[\"🌿 Expansion: Secondary (Lớp 6-9)\"]\n        BasicGrammar --> ComplexTenses[\"📜 Quá Khứ & Tương Lai\"]\n        VocabPrimary --> VocabSecondary[\"🎒 Vốn từ A2 KET & B1 PET\"]\n        ComplexTenses --> PassiveRel[\"🛡️ Bị Động & Mệnh Đề Quan Hệ\"]\n    end\n\n    subgraph S3[\"🌳 Mastery: High School (Lớp 10-12) & Academic\"]\n        PassiveRel --> InversionSubj[\"⚡ Đảo Ngữ, Câu Chẻ & Giả Định\"]\n        VocabSecondary --> AcademicAVL[\"💎 22.000 Từ Harold Levine & C1-C2\"]\n        InversionSubj --> Exams1012[\"🎯 Tuyển Sinh Vào 10 & THPT Quốc Gia\"]\n    end\n\n    S1 --> S2 --> S3\n```\n\n## 🔗 Các Giao Lộ Tri Thức Trọng Tâm\n- Từ [[Phonics_and_IPA_Sound_System]] dẫn tới [[Phonetics_Stress_Rules_and_Tricks]].\n- Từ [[Word_Formation_Prefixes_Suffixes_Roots]] dẫn tới [[Etymology_Latin_Greek_Roots_22000]].\n- Từ [[Tense_Coordination_and_Sequence]] dẫn tới [[Error_Identification_Strategies]].\n",
+      "wikilinks": [
+        {
+          "target": "Phonics_and_IPA_Sound_System",
+          "label": "Phonics_and_IPA_Sound_System"
+        },
+        {
+          "target": "Phonetics_Stress_Rules_and_Tricks",
+          "label": "Phonetics_Stress_Rules_and_Tricks"
+        },
+        {
+          "target": "Word_Formation_Prefixes_Suffixes_Roots",
+          "label": "Word_Formation_Prefixes_Suffixes_Roots"
+        },
+        {
+          "target": "Etymology_Latin_Greek_Roots_22000",
+          "label": "Etymology_Latin_Greek_Roots_22000"
+        },
+        {
+          "target": "Tense_Coordination_and_Sequence",
+          "label": "Tense_Coordination_and_Sequence"
+        },
+        {
+          "target": "Error_Identification_Strategies",
+          "label": "Error_Identification_Strategies"
+        }
+      ],
+      "char_count": 1417
+    },
+    {
+      "id": "Lexical_Chains_and_Cohesion_Matrix",
+      "filename": "Lexical_Chains_and_Cohesion_Matrix.md",
+      "folder": "06_CROSS_DISCIPLINARY_SYNAPSES",
+      "title": "Chuỗi Từ Vựng & Ma Trận Liên Kết Mạch Lạc (Lexical Cohesion)",
+      "tags": [
+        "#synapses",
+        "#cohesion",
+        "#discourse-analysis"
+      ],
+      "cefr_level": "",
+      "content": "# 🧬 CHUỖI TỪ VỰNG & TÍNH MẠCH LẠC VĂN BẢN\n- Liên kết lặp lại từ (Repetition).\n- Liên kết trường từ vựng (Collocational Field).\n- Đại từ thay thế và danh từ chỉ khái quát.",
+      "raw": "---\ntitle: \"Chuỗi Từ Vựng & Ma Trận Liên Kết Mạch Lạc (Lexical Cohesion)\"\ntags: [\"#synapses\", \"#cohesion\", \"#discourse-analysis\"]\n---\n# 🧬 CHUỖI TỪ VỰNG & TÍNH MẠCH LẠC VĂN BẢN\n- Liên kết lặp lại từ (Repetition).\n- Liên kết trường từ vựng (Collocational Field).\n- Đại từ thay thế và danh từ chỉ khái quát.\n",
+      "wikilinks": [],
+      "char_count": 305
     },
     {
       "id": "Mindmap_Grammar_Syntactic_Trees",
@@ -1202,7 +1557,7 @@
       "char_count": 443
     }
   ],
-  "total": 47,
+  "total": 66,
   "version": "2.4.0",
   "updated_at": "2026-09-25"
 }
