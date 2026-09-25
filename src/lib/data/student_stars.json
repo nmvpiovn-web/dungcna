@@ -1,0 +1,23 @@
+[
+  {
+    "student_id": "usr_student_1",
+    "stars_balance": 12000,
+    "total_earned_stars": 15000,
+    "stars_redeemed": 3000,
+    "last_updated": "2026-09-25 05:08:26"
+  },
+  {
+    "student_id": "usr_student_2",
+    "stars_balance": 8500,
+    "total_earned_stars": 10500,
+    "stars_redeemed": 2000,
+    "last_updated": "2026-09-25 05:08:27"
+  },
+  {
+    "student_id": "usr_student_3",
+    "stars_balance": 25000,
+    "total_earned_stars": 30000,
+    "stars_redeemed": 5000,
+    "last_updated": "2026-09-25 05:08:27"
+  }
+]

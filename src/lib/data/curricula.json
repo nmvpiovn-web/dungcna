@@ -1,0 +1,173 @@
+[
+  {
+    "id": "curr_g1",
+    "code": "grade-1",
+    "category": "primary",
+    "title": "Tiếng Anh Lớp 1",
+    "description": "Chương trình làm quen Tiếng Anh tiểu học chuẩn 2026 Bộ GD&ĐT (Phonics, Từ vựng hình ảnh, TPR)",
+    "icon": "🎒",
+    "order_num": 1
+  },
+  {
+    "id": "curr_g2",
+    "code": "grade-2",
+    "category": "primary",
+    "title": "Tiếng Anh Lớp 2",
+    "description": "Phát triển phản xạ nghe nói tự nhiên, nhận diện mặt chữ và phát âm chuẩn bản ngữ",
+    "icon": "🎨",
+    "order_num": 2
+  },
+  {
+    "id": "curr_g3",
+    "code": "grade-3",
+    "category": "primary",
+    "title": "Tiếng Anh Lớp 3",
+    "description": "Bắt đầu chương trình chính khóa Global Success / Family and Friends, cấu trúc câu căn bản",
+    "icon": "✏️",
+    "order_num": 3
+  },
+  {
+    "id": "curr_g4",
+    "code": "grade-4",
+    "category": "primary",
+    "title": "Tiếng Anh Lớp 4",
+    "description": "Mở rộng vốn từ vựng gia đình, trường học, sở thích và kỹ năng đọc hiểu mẩu chuyện ngắn",
+    "icon": "📘",
+    "order_num": 4
+  },
+  {
+    "id": "curr_g5",
+    "code": "grade-5",
+    "category": "primary",
+    "title": "Tiếng Anh Lớp 5",
+    "description": "Hoàn thiện khối Tiểu học, chuẩn bị chuyển cấp THCS, luyện kỹ năng viết đoạn văn ngắn",
+    "icon": "🏆",
+    "order_num": 5
+  },
+  {
+    "id": "curr_g6",
+    "code": "grade-6",
+    "category": "secondary",
+    "title": "Tiếng Anh Lớp 6",
+    "description": "Bước đệm THCS: Global Success, Friends Plus, i-Learn Smart World với 12 Unit chủ điểm",
+    "icon": "🌱",
+    "order_num": 6
+  },
+  {
+    "id": "curr_g7",
+    "code": "grade-7",
+    "category": "secondary",
+    "title": "Tiếng Anh Lớp 7",
+    "description": "Củng cố ngữ pháp thời hiện tại, quá khứ, tương lai, so sánh hơn và từ vựng giao tiếp thực tế",
+    "icon": "🚀",
+    "order_num": 7
+  },
+  {
+    "id": "curr_g8",
+    "code": "grade-8",
+    "category": "secondary",
+    "title": "Tiếng Anh Lớp 8",
+    "description": "Nâng cao khả năng thuyết trình, mệnh đề quan hệ, câu bị động và phong cách sống hiện đại",
+    "icon": "💡",
+    "order_num": 8
+  },
+  {
+    "id": "curr_g9",
+    "code": "grade-9",
+    "category": "secondary",
+    "title": "Tiếng Anh Lớp 9 & Thi Vào 10",
+    "description": "Chinh phục kỳ thi chuyển cấp vào lớp 10 THPT công lập & trường chuyên toàn quốc",
+    "icon": "🎯",
+    "order_num": 9
+  },
+  {
+    "id": "curr_g10",
+    "code": "grade-10",
+    "category": "high_school",
+    "title": "Tiếng Anh Lớp 10",
+    "description": "Chương trình GDPT 2018 mới: Dự án cộng đồng, môi trường số, phát triển tư duy phản biện",
+    "icon": "🏢",
+    "order_num": 10
+  },
+  {
+    "id": "curr_g11",
+    "code": "grade-11",
+    "category": "high_school",
+    "title": "Tiếng Anh Lớp 11",
+    "description": "Tích hợp liên môn STEM, cấu trúc câu phức, đọc báo chí và rèn luyện kỹ năng tự học",
+    "icon": "🔬",
+    "order_num": 11
+  },
+  {
+    "id": "curr_g12",
+    "code": "grade-12",
+    "category": "high_school",
+    "title": "Tiếng Anh Lớp 12",
+    "description": "Hoàn thiện chương trình phổ thông 12 năm, chuẩn bị các kỳ thi quan trọng bậc nhất",
+    "icon": "🎓",
+    "order_num": 12
+  },
+  {
+    "id": "curr_thptqg",
+    "code": "thpt_qg",
+    "category": "exam_prep",
+    "title": "Ôn Thi Đại Học & THPT QG 2026",
+    "description": "Kho đề thi tốt nghiệp THPT chuẩn format mới 2026, ma trận đề, bẫy trắc nghiệm và ĐGNL ĐHQG",
+    "icon": "🔥",
+    "order_num": 13
+  },
+  {
+    "id": "curr_ielts",
+    "code": "ielts",
+    "category": "certificate",
+    "title": "Luyện Thi IELTS Academic & General",
+    "description": "Format 4 kỹ năng Nghe - Nói - Đọc - Viết từ Band 5.0 lên 8.0+, chấm điểm chuẩn Cambridge",
+    "icon": "🌍",
+    "order_num": 14
+  },
+  {
+    "id": "curr_toeic",
+    "code": "toeic",
+    "category": "certificate",
+    "title": "Luyện Thi TOEIC 450 - 990",
+    "description": "TOEIC Listening & Reading format ETS mới nhất + chuyên đề Speaking & Writing doanh nghiệp",
+    "icon": "💼",
+    "order_num": 15
+  },
+  {
+    "id": "curr_toefl",
+    "code": "toefl",
+    "category": "certificate",
+    "title": "Luyện Thi TOEFL iBT",
+    "description": "Bài thi khảo thí chuẩn Mỹ: Đọc học thuật, Nghe bài giảng đại học, Viết tích hợp & Độc lập",
+    "icon": "🇺🇸",
+    "order_num": 16
+  },
+  {
+    "id": "curr_vstep",
+    "code": "vstep_b1_b2",
+    "category": "certificate",
+    "title": "Luyện Thi B1 - B2 VSTEP / CEFR",
+    "description": "Khung năng lực ngoại ngữ 6 bậc Việt Nam chuẩn Bộ GD&ĐT cho sinh viên & giáo viên",
+    "icon": "📜",
+    "order_num": 17
+  },
+  {
+    "id": "curr_cambridge",
+    "code": "cambridge_vocab",
+    "category": "pedagogy",
+    "title": "Từ Vựng Cambridge CEFR A1 - C1",
+    "description": "Hệ thống từ vựng phân tầng Starters, Movers, Flyers, KET, PET, FCE tra cứu tức thì",
+    "icon": "📖",
+    "order_num": 18
+  },
+  {
+    "id": "curr_native_pedagogy",
+    "code": "native_pedagogy",
+    "category": "pedagogy",
+    "title": "Phương Pháp Dạy Bản Ngữ & Kế Hoạch 5512",
+    "description": "Cẩm nang giáo viên: Phối hợp giáo viên bản ngữ, phương pháp TPR, CLT, giáo án số hóa nội bộ",
+    "icon": "👨‍🏫",
+    "order_num": 19
+  }
+]

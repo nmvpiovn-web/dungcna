@@ -1,0 +1,24 @@
+[
+  {
+    "id": "res_pedagogy_1",
+    "category": "native_methodology",
+    "grade_level": "all",
+    "title": "Mô hình Đồng giảng dạy (Co-Teaching Model) Giữa Giáo viên Việt Nam và Bản ngữ",
+    "content_markdown": "### Chiến Lược Co-Teaching Đạt Hiệu Quả Tối Đa\n1. **Phân chia vai trò (Role Clarity):**\n   - **Giáo viên bản ngữ (Native Speaker):** Chịu trách nhiệm phát âm chuẩn IPA, ngữ điệu (intonation), ngữ cảnh tự nhiên (collocations & idioms) và tổ chức hoạt động tương tác nói 100% tiếng Anh.\n   - **Giáo viên Việt Nam (Local Co-teacher):** Quản lý trật tự lớp, giải thích ngữ pháp cốt lõi bằng tiếng Việt khi học sinh gặp rào cản nhận thức, kết nối nội dung bài học với yêu cầu thi cử của Bộ GD&ĐT.\n2. **Kỹ thuật TPR (Total Physical Response) ứng dụng ở Tiểu học:**\n   - Dùng chuyển động cơ thể, cử chỉ tay để diễn đạt hành động thay vì dịch nghĩa từ vựng.\n3. **Kỹ thuật \"Prompt & Paraphrase\" ở THCS & THPT:**\n   - Thay vì sửa lỗi ngắt quãng khi học sinh đang nói, giáo viên ghi chú và mô phỏng lại cách diễn đạt chuẩn sau khi học sinh kết thúc câu.",
+    "native_teacher_tips": "Always maintain an encouraging environment. Do not interrupt student flow when speaking; give delayed feedback.",
+    "keywords": "co-teaching, native speaker, giao vien ban ngu, phuong phap giang day, TPR, phan am, intonation",
+    "downloads_url": "https://tienganh7-pro.pages.dev/resources/co-teaching-guide.pdf",
+    "created_at": "2026-09-25 04:59:33"
+  },
+  {
+    "id": "res_pedagogy_2",
+    "category": "lesson_plan_5512",
+    "grade_level": "secondary",
+    "title": "Khung Kế Hoạch Bài Dạy Tiếng Anh 5512 Chuẩn 4 Bước Hiện Hành 2026",
+    "content_markdown": "### Cấu Trúc Giáo Án Chuẩn Công Văn 5512/BGDĐT\n- **Hoạt động 1: Xác định vấn đề / Khởi động (Warm-up / Lead-in):** Tạo hứng thú, liên hệ kiến thức cũ với chủ đề mới (3-5 phút).\n- **Hoạt động 2: Hình thành kiến thức mới (Knowledge Formation):** Giới thiệu từ vựng, ngữ pháp thông qua ngữ cảnh thực tế (12-15 phút).\n- **Hoạt động 3: Luyện tập (Controlled & Semi-controlled Practice):** Bài tập điền từ, matching, đặt câu có phản hồi ngay (15 phút).\n- **Hoạt động 4: Vận dụng (Production / Application):** Dự án nhóm, thảo luận, thuyết trình hoặc viết ngắn (10 phút).",
+    "native_teacher_tips": "Make sure warm-up involves 100% active physical or verbal engagement to stimulate brain energy.",
+    "keywords": "giao an 5512, ke hoach bai day, lesson plan, warming up, production, tieu chuan bo giao duc",
+    "downloads_url": "https://tienganh7-pro.pages.dev/resources/lesson-plan-5512-template.docx",
+    "created_at": "2026-09-25 04:59:33"
+  }
+]

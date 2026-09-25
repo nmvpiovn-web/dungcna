@@ -1,0 +1,67 @@
+[
+  {
+    "id": "voc_1",
+    "word": "perseverance",
+    "ipa": "/ˌpɜː.sɪˈvɪə.rəns/",
+    "pos": "noun",
+    "cefr_level": "B2",
+    "cambridge_tier": "FCE",
+    "meaning_vi": "sự kiên trì, bền bỉ vượt khó",
+    "example_en": "Through sheer perseverance, she managed to master English and achieve an 8.0 in IELTS.",
+    "example_vi": "Bằng sự kiên trì bền bỉ phi thường, cô ấy đã làm chủ được tiếng Anh và đạt 8.0 IELTS.",
+    "collocations": "sheer perseverance, remarkable perseverance, perseverance pays off",
+    "grade_suitability": "Lớp 10-12, IELTS, THPT QG"
+  },
+  {
+    "id": "voc_2",
+    "word": "articulate",
+    "ipa": "/ɑːˈtɪk.jə.lət/",
+    "pos": "adjective / verb",
+    "cefr_level": "C1",
+    "cambridge_tier": "CAE",
+    "meaning_vi": "ăn nói lưu loát, diễn đạt rõ ràng mạch lạc",
+    "example_en": "An articulate speaker can convey complex academic notions with impressive clarity.",
+    "example_vi": "Một người nói lưu loát có thể truyền đạt các khái niệm học thuật phức tạp một cách rõ ràng ấn tượng.",
+    "collocations": "articulate speech, articulate arguments, articulate thoughts clearly",
+    "grade_suitability": "IELTS, TOEFL, VSTEP C1"
+  },
+  {
+    "id": "voc_3",
+    "word": "indispensable",
+    "ipa": "/ˌɪn.dɪˈspen.sə.bəl/",
+    "pos": "adjective",
+    "cefr_level": "B2",
+    "cambridge_tier": "FCE",
+    "meaning_vi": "không thể thiếu được, thiết yếu tối quan trọng",
+    "example_en": "Digital literacy has become an indispensable competency in the 21st century.",
+    "example_vi": "Năng lực số đã trở thành một kỹ năng không thể thiếu trong thế kỷ 21.",
+    "collocations": "indispensable tool, prove indispensable, indispensable component",
+    "grade_suitability": "Lớp 9-12, THPT QG, IELTS"
+  },
+  {
+    "id": "voc_4",
+    "word": "resilient",
+    "ipa": "/rɪˈzɪl.jənt/",
+    "pos": "adjective",
+    "cefr_level": "B2",
+    "cambridge_tier": "FCE",
+    "meaning_vi": "kiên cường, có khả năng phục hồi nhanh chóng sau biến cố",
+    "example_en": "Young learners are often surprisingly resilient when adapting to immersive linguistic environments.",
+    "example_vi": "Học sinh nhỏ tuổi thường kiên cường bất ngờ khi thích nghi với môi trường ngôn ngữ bản ngữ hoàn toàn.",
+    "collocations": "resilient economy, highly resilient, resilient mindset",
+    "grade_suitability": "Lớp 8-12, IELTS"
+  },
+  {
+    "id": "voc_5",
+    "word": "collaborate",
+    "ipa": "/kəˈlæb.ə.reɪt/",
+    "pos": "verb",
+    "cefr_level": "B1",
+    "cambridge_tier": "PET",
+    "meaning_vi": "hợp tác, cộng tác cùng làm việc",
+    "example_en": "Vietnamese teachers frequently collaborate with native English educators to co-teach pronunciation.",
+    "example_vi": "Giáo viên Việt Nam thường xuyên hợp tác cùng giáo viên bản ngữ để cùng giảng dạy phát âm chuẩn.",
+    "collocations": "collaborate closely with, collaborate on a project",
+    "grade_suitability": "Lớp 6-12, TOEIC, B1"
+  }
+]

@@ -1,0 +1,62 @@
+[
+  {
+    "id": "disc_101",
+    "evaluation_id": "eval_1",
+    "author_id": "usr_student_2",
+    "author_name": "Trần Gia Huy",
+    "author_role": "student",
+    "author_avatar": "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150",
+    "author_badge": "[HOC_VIEN]",
+    "comment_type": "rebuttal",
+    "content": "Thưa Cô Dung và thầy John, ở bài kiểm tra 15 phút vừa rồi em có bị trừ điểm ở câu phát âm đuôi -ed, em đã xem lại bảng quy tắc /t/, /d/, /ɪd/ trên hệ thống và làm lại đạt điểm tối đa ạ! Em xin phép được làm bài test nâng cao để cải thiện band điểm.",
+    "created_at": "2026-09-22T09:15:00Z"
+  },
+  {
+    "id": "disc_102",
+    "evaluation_id": "eval_1",
+    "author_id": "usr_super_2",
+    "author_name": "Ms. Dung",
+    "author_role": "superadmin",
+    "author_avatar": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150",
+    "author_badge": "[GV_CHINH_CODUNG]",
+    "comment_type": "leader_conclusion",
+    "content": "Cô Dung ghi nhận tinh thần tự học và phản biện rất cầu tiến của Gia Huy! Cô đã kích hoạt cho con bài test Cambridge KET Part 2 trên hệ thống, con làm xong cô và thầy John sẽ nhận xét chi tiết nhé. Cố lên con!",
+    "created_at": "2026-09-22T10:30:00Z"
+  },
+  {
+    "id": "disc_103",
+    "evaluation_id": "eval_1",
+    "author_id": "usr_teach_1",
+    "author_name": "Mr. Johnathan Miller",
+    "author_role": "teacher",
+    "author_avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150",
+    "author_badge": "[GV_BANNGU_JOHN]",
+    "comment_type": "comment",
+    "content": "Well done, Gia Huy! Your pronunciation in class yesterday was noticeably clearer. Remember to keep the voicing active on voiced consonants like /d/. Keep up the brilliant effort!",
+    "created_at": "2026-09-22T11:05:00Z"
+  },
+  {
+    "id": "disc_104",
+    "evaluation_id": "eval_2",
+    "author_id": "usr_student_1",
+    "author_name": "Lê Bảo Anh",
+    "author_role": "student",
+    "author_avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
+    "author_badge": "[HOC_VIEN]",
+    "comment_type": "inquiry",
+    "content": "Dạ em chào Cô Dung, ở phần Writing Task 2 bài luận về AI, em muốn hỏi cách mở rộng đoạn Body 2 để đạt tiêu chuẩn Coherence & Cohesion band 8.0 thì nên dùng các liên từ học thuật nào phù hợp ạ?",
+    "created_at": "2026-09-23T14:20:00Z"
+  },
+  {
+    "id": "disc_105",
+    "evaluation_id": "eval_2",
+    "author_id": "usr_super_2",
+    "author_name": "Ms. Dung",
+    "author_role": "superadmin",
+    "author_avatar": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150",
+    "author_badge": "[GV_CHINH_CODUNG]",
+    "comment_type": "leader_conclusion",
+    "content": "Chào Bảo Anh, câu hỏi rất hay! Để đạt tiêu chí Coherence band 8.0, con nên sử dụng cấu trúc 'Not only... but also...', hoặc 'Notwithstanding the aforementioned benefits, there exist substantial concerns regarding...'. Buổi học Thứ Sáu này cô và thầy John sẽ mổ xẻ bài mẫu 8.5 để con thực hành trực tiếp.",
+    "created_at": "2026-09-23T15:00:00Z"
+  }
+]

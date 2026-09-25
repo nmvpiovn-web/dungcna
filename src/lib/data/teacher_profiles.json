@@ -1,0 +1,113 @@
+[
+  {
+    "teacher_id": "usr_super_2",
+    "teacher_name": "Ms. Dung",
+    "username": "msdung",
+    "role_type": "lead",
+    "role_title": "Giáo Viên Trưởng / Leader Chuyên Môn",
+    "salary_type": "monthly_lead",
+    "base_salary_vnd": 25000000,
+    "rate_per_session_vnd": 800000,
+    "total_sessions_taught": 48,
+    "leader_rating": 5.0,
+    "leader_appraisal": "Chỉ đạo chiến lược học thuật, phụ trách chính các lớp ôn thi ĐH & IELTS 7.5+. Khảo sát phụ huynh hài lòng 100%.",
+    "bonuses": [
+      {
+        "id": "bon_001",
+        "date": "2026-09-20",
+        "amount_vnd": 5000000,
+        "reason": "Thưởng chỉ đạo kỳ thi HSG & Luyện thi Cambridge đạt kết quả xuất sắc",
+        "awarded_by": "Nguyễn Minh Vũ (SuperAdmin)"
+      }
+    ],
+    "private_reminders": []
+  },
+  {
+    "teacher_id": "usr_teach_1",
+    "teacher_name": "Mr. Johnathan Miller",
+    "username": "teacher.john",
+    "role_type": "native",
+    "role_title": "Giáo Viên Bản Ngữ (Native ESL Trainer)",
+    "salary_type": "per_session",
+    "base_salary_vnd": 18000000,
+    "rate_per_session_vnd": 700000,
+    "total_sessions_taught": 32,
+    "leader_rating": 4.9,
+    "leader_appraisal": "Nhiệt tình, phát âm chuẩn RP British, tạo không khí lớp học hào hứng. Tương tác với học sinh tiểu học và THCS rất tự nhiên.",
+    "bonuses": [
+      {
+        "id": "bon_002",
+        "date": "2026-09-18",
+        "amount_vnd": 1500000,
+        "reason": "Thưởng giảng dạy chuyên đề Speaking phản xạ IELTS vượt chỉ tiêu",
+        "awarded_by": "Ms. Dung (Leader)"
+      }
+    ],
+    "private_reminders": [
+      {
+        "id": "rem_001",
+        "date": "2026-09-22",
+        "content": "Mr. John lưu ý viết tóm tắt nhận xét sổ đầu bài bằng cả tiếng Anh và tiếng Việt ngắn gọn để phụ huynh lớp 7 dễ theo dõi nhé.",
+        "urgency": "medium",
+        "status": "acknowledged",
+        "sent_by": "Ms. Dung (Leader)"
+      }
+    ]
+  },
+  {
+    "teacher_id": "usr_teach_2",
+    "teacher_name": "Cô Nguyễn Hương",
+    "username": "nguyen.huong",
+    "role_type": "assistant_fixed",
+    "role_title": "Trợ Giảng Cố Định (Permanent Assistant)",
+    "salary_type": "monthly_with_allowance",
+    "base_salary_vnd": 12000000,
+    "rate_per_session_vnd": 300000,
+    "total_sessions_taught": 40,
+    "leader_rating": 4.8,
+    "leader_appraisal": "Quản lý nề nếp lớp học chu đáo, hỗ trợ cô Dung soạn bài tập và chấm bài 15 phút rất kịp thời.",
+    "bonuses": [
+      {
+        "id": "bon_003",
+        "date": "2026-09-15",
+        "amount_vnd": 1000000,
+        "reason": "Khen thưởng chuyên cần, điểm danh lớp học chính xác 100% không sót buổi nào",
+        "awarded_by": "Ms. Dung (Leader)"
+      }
+    ],
+    "private_reminders": [
+      {
+        "id": "rem_002",
+        "date": "2026-09-24",
+        "content": "Cô Hương nhớ đôn đốc em Hoàng Minh nộp bổ sung bài viết luận câu bị động trước ca học Thứ Bảy nhé.",
+        "urgency": "low",
+        "status": "pending",
+        "sent_by": "Ms. Dung (Leader)"
+      }
+    ]
+  },
+  {
+    "teacher_id": "usr_teach_3",
+    "teacher_name": "Thầy Trần Mai",
+    "username": "tran.mai",
+    "role_type": "assistant_temp",
+    "role_title": "Trợ Giảng Tạm Thời / Thỉnh Giảng (Temporary Assistant)",
+    "salary_type": "hourly_temp",
+    "base_salary_vnd": 0,
+    "rate_per_session_vnd": 250000,
+    "total_sessions_taught": 16,
+    "leader_rating": 4.6,
+    "leader_appraisal": "Nắm vững chuyên đề TOEIC và ngữ pháp THPT. Hỗ trợ ca tối nhiệt tình.",
+    "bonuses": [],
+    "private_reminders": [
+      {
+        "id": "rem_003",
+        "date": "2026-09-20",
+        "content": "Thầy Mai chú ý xác nhận lịch trực trợ giảng trước 12h trưa các ngày trong tuần để văn phòng tiện sắp xếp phòng học nhé.",
+        "urgency": "medium",
+        "status": "acknowledged",
+        "sent_by": "Ms. Dung (Leader)"
+      }
+    ]
+  }
+]

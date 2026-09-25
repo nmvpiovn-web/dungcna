@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="vi">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+		<title>Tiếng Anh Cô Dung - Hệ Thống Đào Tạo K12 &amp; Khảo Thí Quốc Tế</title>
+		
+		<!-- PWA & Mobile Meta Tags -->
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<meta name="theme-color" content="#0f172a" />
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+		<meta name="apple-mobile-web-app-title" content="Tiếng Anh Cô Dung" />
+		<link rel="apple-touch-icon" href="/icon.svg" />
+		<link rel="icon" type="image/svg+xml" href="/icon.svg" />
+		
+		<!-- Typography -->
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+		<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Lexend:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+		
+		<!-- Tailwind CSS Engine for Layout & Responsive Design -->
+		<script src="https://cdn.tailwindcss.com"></script>
+		<script>
+			tailwind.config = {
+				darkMode: 'class',
+				theme: {
+					extend: {
+						colors: {
+							brand: {
+								50: '#f0fdf4',
+								100: '#dcfce7',
+								200: '#bbf7d0',
+								300: '#86efac',
+								400: '#4ade80',
+								500: '#22c55e',
+								600: '#16a34a',
+								700: '#15803d',
+								800: '#166534',
+								900: '#14532d'
+							}
+						},
+						fontFamily: {
+							sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+							heading: ['Lexend', 'system-ui', 'sans-serif']
+						}
+					}
+				}
+			}
+		</script>
+
+		<!-- Instant Theme Initializer to prevent flash -->
+		<script>
+			(function() {
+				try {
+					const savedTheme = localStorage.getItem('tienganh_theme');
+					if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+						document.documentElement.classList.add('dark');
+					} else {
+						document.documentElement.classList.remove('dark');
+					}
+				} catch (e) {}
+			})();
+		</script>
+		
+		<script>
+			if ('serviceWorker' in navigator) {
+				window.addEventListener('load', () => {
+					navigator.serviceWorker.register('/sw.js').catch(() => {});
+				});
+			}
+		</script>
+		%sveltekit.head%
+	</head>
+	<body data-sveltekit-preload-data="hover" class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 antialiased selection:bg-emerald-500 selection:text-white min-h-screen transition-colors duration-150">
+		<div style="display: contents">%sveltekit.body%</div>
+	</body>
+</html>

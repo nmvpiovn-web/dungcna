@@ -1,0 +1,32 @@
+[
+  {
+    "id": "grammar",
+    "name": "Ngữ pháp & Giao tiếp",
+    "description": "Thì HTĐ, QKĐ, Câu ghép and/or/but/so",
+    "icon": "📚"
+  },
+  {
+    "id": "phonics",
+    "name": "Ngữ âm & Trọng âm",
+    "description": "Phát âm -ed, trọng âm 2 âm tiết",
+    "icon": "🔊"
+  },
+  {
+    "id": "unit1",
+    "name": "Unit 1: Hobbies",
+    "description": "Sở thích & Thời gian rảnh",
+    "icon": "🎨"
+  },
+  {
+    "id": "unit2",
+    "name": "Unit 2: Healthy Living",
+    "description": "Sống khỏe & Thói quen lành mạnh",
+    "icon": "🥗"
+  },
+  {
+    "id": "unit3",
+    "name": "Unit 3: Community Service",
+    "description": "Hoạt động vì cộng đồng & Tình nguyện",
+    "icon": "🤝"
+  }
+]

@@ -1,0 +1,13 @@
+[
+  {
+    "id": "wh_bot_reporting",
+    "name": "Telegram & Zalo Central Bot Reporter",
+    "url": "https://api.timbk.io.vn/api/webhook",
+    "secret": "wh_sec_tienganh_2026_superadmin_fomo",
+    "event_types": "test_submitted, teacher_added, daily_report, system_alert",
+    "is_active": 1,
+    "last_status": 200,
+    "last_triggered_at": null,
+    "created_at": "2026-09-25 04:59:33"
+  }
+]

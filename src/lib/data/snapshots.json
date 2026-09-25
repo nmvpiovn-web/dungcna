@@ -1,0 +1,38 @@
+[
+  {
+    "id": "snap_init_001",
+    "actor_email": "nmvpiovn@gmail.com",
+    "actor_role": "superadmin",
+    "action": "SYSTEM_UPGRADE_K12_OVERHAUL",
+    "entity_type": "system",
+    "entity_id": "d1_tienganh_pro_db",
+    "data_before": "{\"version\":\"1.0.0\",\"scope\":\"Grade 7 Only\"}",
+    "data_after": "{\"version\":\"2.0.0\",\"scope\":\"K-12 (Grades 1-12), THPT QG, IELTS, TOEIC, TOEFL, B1/B2 VSTEP, Cambridge CEFR, Native Pedagogy\",\"superadmins\":[\"nmvpiovn@gmail.com\",\"msdung@timbk.io.vn\"],\"database\":\"Cloudflare D1 tienganh-pro-db (APAC)\",\"features\":[\"15m/45m test engines\",\"Speaking WebSpeech API\",\"Writing Live Evaluation\",\"Full Audit Snapshots\",\"Bot Webhooks\",\"PWA / Mobile\"]}",
+    "ip_address": "127.0.0.1",
+    "created_at": "2026-09-25 04:59:33"
+  },
+  {
+    "id": "snap_eval_001",
+    "actor_email": "teacher.john@timbk.io.vn",
+    "actor_role": "teacher",
+    "action": "CREATE_STUDENT_EVALUATION",
+    "entity_type": "student_evaluation",
+    "entity_id": "eval_001",
+    "data_before": "{\"status\":\"new\"}",
+    "data_after": "{\"student\":\"Lê Bảo Anh\",\"aptitude\":\"reading_writing\",\"action_plan\":\"Luyện Speaking 1-on-1\"}",
+    "ip_address": "127.0.0.1",
+    "created_at": "2026-09-25 05:02:27"
+  },
+  {
+    "id": "snap_tuition_init_001",
+    "actor_email": "nmvpiovn@gmail.com",
+    "actor_role": "superadmin",
+    "action": "SUPERADMIN_INIT_TUITION_ENGINE",
+    "entity_type": "tuition_bill",
+    "entity_id": "all_bills",
+    "data_before": null,
+    "data_after": "{\"rule\":\"100 stars = 1000 VND\",\"billsCount\":3}",
+    "ip_address": "127.0.0.1",
+    "created_at": "2026-09-25 05:08:27"
+  }
+]
