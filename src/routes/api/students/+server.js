@@ -1,3 +1,4 @@
+// src/routes/api/students/+server.js
 import { json } from '@sveltejs/kit';
 import { 
   getAllUsers, 
@@ -7,41 +8,118 @@ import {
   enrollStudentAdditionalGrade, 
   removeStudentEnrolledGrade, 
   requestUnlockClass, 
-  updateUserProfile,
-  isTeacherOrAdmin, 
+  updateUserProfile 
 } from '../../../lib/unifiedStore.js';
+import { verifyServerAuth, isStaffUser, sanitizeUser, sanitizeUserList } from '../../../lib/server/auth.js';
 
 export const prerender = false;
 
-export async function GET({ url, platform }) {
+/**
+ * GET /api/students
+ * Server-side authentication and role-scoping.
+ * Excludes sensitive fields (passwords) from all returned payloads.
+ */
+export async function GET({ url, request, platform }) {
+  const auth = await verifyServerAuth(request, platform);
+  if (!auth.authenticated) {
+    return json({ 
+      success: false, 
+      error: auth.error || 'Unauthorized: Vui lòng đăng nhập để truy cập dữ liệu học sinh.' 
+    }, { status: 401 });
+  }
+
+  const requestedStudentId = url.searchParams.get('id');
+  const isStaff = isStaffUser(auth.user);
+
+  // If requester is a student, they are ONLY allowed to access their own profile
+  if (!isStaff) {
+    if (!requestedStudentId || requestedStudentId !== auth.user.id) {
+      return json({ 
+        success: false, 
+        error: 'Forbidden: Học sinh chỉ có quyền xem thông tin cá nhân của chính mình.' 
+      }, { status: 403 });
+    }
+  }
+
+  // 1. Try Cloudflare D1 if available
   if (platform?.env?.DB) {
     try {
-      const d1Res = await platform.env.DB.prepare("SELECT * FROM users WHERE role = 'student' ORDER BY created_at DESC").all();
-      if (d1Res?.results?.length > 0) {
-        return json({
-          success: true,
-          total: d1Res.results.length,
-          students: d1Res.results,
-          source: 'cloudflare_d1'
-        });
+      if (requestedStudentId) {
+        const d1Student = await platform.env.DB.prepare(`
+          SELECT id, username, phone, email, name, role, avatar, status, metadata, created_at, updated_at
+          FROM users 
+          WHERE role = 'student' AND (id = ? OR username = ?)
+          LIMIT 1
+        `).bind(requestedStudentId, requestedStudentId).first();
+
+        if (d1Student) {
+          return json({
+            success: true,
+            student: sanitizeUser(d1Student),
+            source: 'cloudflare_d1'
+          });
+        }
+      } else {
+        const d1Res = await platform.env.DB.prepare(`
+          SELECT id, username, phone, email, name, role, avatar, status, metadata, created_at, updated_at
+          FROM users 
+          WHERE role = 'student' 
+          ORDER BY created_at DESC
+        `).all();
+
+        if (d1Res?.results?.length > 0) {
+          return json({
+            success: true,
+            total: d1Res.results.length,
+            students: sanitizeUserList(d1Res.results),
+            source: 'cloudflare_d1'
+          });
+        }
       }
     } catch (e) {
       console.error('D1 students query error:', e);
     }
   }
 
+  // 2. Fallback to local store with strict password sanitization
   const users = getAllUsers();
   const students = users.filter(u => u.role === 'student');
+
+  if (requestedStudentId) {
+    const single = students.find(s => s.id === requestedStudentId || s.username === requestedStudentId);
+    if (!single) {
+      return json({ success: false, error: 'Không tìm thấy thông tin học sinh' }, { status: 404 });
+    }
+    return json({
+      success: true,
+      student: sanitizeUser(single),
+      source: 'local_store'
+    });
+  }
+
   return json({
     success: true,
     total: students.length,
-    students,
+    students: sanitizeUserList(students),
     source: 'local_store'
   });
 }
 
+/**
+ * POST /api/students
+ * Creates a new student record (Staff only: Admin, Leader, Teacher).
+ */
 export async function POST({ request, platform }) {
   try {
+    const auth = await verifyServerAuth(request, platform);
+    if (!auth.authenticated) {
+      return json({ success: false, error: auth.error || 'Unauthorized: Vui lòng đăng nhập.' }, { status: 401 });
+    }
+
+    if (!isStaffUser(auth.user)) {
+      return json({ success: false, error: 'Forbidden: Chỉ giáo viên hoặc quản trị viên mới có quyền thêm học sinh.' }, { status: 403 });
+    }
+
     const body = await request.json();
     if (!body.name) {
       return json({ success: false, error: 'Tên học sinh là bắt buộc' }, { status: 400 });
@@ -81,22 +159,53 @@ export async function POST({ request, platform }) {
     return json({
       success: true,
       message: 'Thêm học sinh thành công vào hệ thống!',
-      student: newStudent
+      student: sanitizeUser(newStudent)
     });
   } catch (err) {
     return json({ success: false, error: err.message }, { status: 500 });
   }
 }
 
+/**
+ * PATCH /api/students
+ * Performs profile updates, grade transfers, and enrollment modifications.
+ */
 export async function PATCH({ request, platform }) {
   try {
+    const auth = await verifyServerAuth(request, platform);
+    if (!auth.authenticated) {
+      return json({ success: false, error: auth.error || 'Unauthorized: Vui lòng đăng nhập.' }, { status: 401 });
+    }
+
     const body = await request.json();
     const action = body.action || 'change_grade';
     const studentId = body.student_id || body.id;
-    const operator = body.operator || null;
+    const operator = body.operator || auth.user;
+    const isStaff = isStaffUser(auth.user);
 
     if (!studentId && action !== 'bulk_sync') {
       return json({ success: false, error: 'Thiếu student_id' }, { status: 400 });
+    }
+
+    // Role-scoping checks:
+    // Only staff can change primary grade or add/remove enrolled grades
+    if (['change_grade', 'add_enrolled_grade', 'remove_enrolled_grade'].includes(action)) {
+      if (!isStaff) {
+        return json({ 
+          success: false, 
+          error: 'Forbidden: Chỉ giáo viên hoặc quản trị viên mới có quyền thay đổi phân quyền lớp học.' 
+        }, { status: 403 });
+      }
+    }
+
+    // For updating profile: students can only update their own profile
+    if (action === 'update_profile') {
+      if (!isStaff && studentId !== auth.user.id) {
+        return json({ 
+          success: false, 
+          error: 'Forbidden: Bạn chỉ có thể cập nhật hồ sơ của chính mình.' 
+        }, { status: 403 });
+      }
     }
 
     let result = null;
@@ -179,7 +288,10 @@ export async function PATCH({ request, platform }) {
     return json({
       success: true,
       action,
-      result
+      result: {
+        ...result,
+        user: sanitizeUser(result.user)
+      }
     });
   } catch (err) {
     return json({ success: false, error: err.message }, { status: 500 });
@@ -188,8 +300,21 @@ export async function PATCH({ request, platform }) {
 
 export const PUT = PATCH;
 
-export async function DELETE({ url, platform }) {
+/**
+ * DELETE /api/students
+ * Staff only
+ */
+export async function DELETE({ url, request, platform }) {
   try {
+    const auth = await verifyServerAuth(request, platform);
+    if (!auth.authenticated) {
+      return json({ success: false, error: auth.error || 'Unauthorized: Vui lòng đăng nhập.' }, { status: 401 });
+    }
+
+    if (!isStaffUser(auth.user)) {
+      return json({ success: false, error: 'Forbidden: Chỉ quản trị viên mới có quyền xóa học sinh.' }, { status: 403 });
+    }
+
     const studentId = url.searchParams.get('id');
     if (!studentId) {
       return json({ success: false, error: 'Thiếu student id' }, { status: 400 });
