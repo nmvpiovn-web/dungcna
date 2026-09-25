@@ -21,3 +21,9 @@ Thumbs.db
 # Vite
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# GDrive Tokens & Downloads
+scripts/gdrive_token.json
+data/gdrive_downloads/
+scripts/__pycache__/
+__pycache__/

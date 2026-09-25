@@ -18,12 +18,15 @@
   let newExampleVi = $state('');
   let newUnit = $state('unit1');
 
+  let selectedGrade = $state('all');
+
   let filteredWords = $derived.by(() => {
     return words.filter(w => {
       const matchUnit = selectedUnit === 'all' || w.unit_id === selectedUnit;
+      const matchGrade = selectedGrade === 'all' || (w.grade && w.grade.toLowerCase().includes(selectedGrade.toLowerCase()));
       const q = searchQuery.toLowerCase().trim();
       const matchSearch = !q || w.term.toLowerCase().includes(q) || w.meaning_vi.toLowerCase().includes(q);
-      return matchUnit && matchSearch;
+      return matchUnit && matchGrade && matchSearch;
     });
   });
 
@@ -40,6 +43,8 @@
         example_en: newExampleEn.trim(),
         example_vi: newExampleVi.trim(),
         unit_id: newUnit,
+        grade: 'Lớp 7',
+        cambridge_level: 'KET_A2',
         status: 'new'
       });
 
@@ -84,9 +89,22 @@
       {/if}
     </div>
 
+    <!-- Grade Filter Row -->
+    <div class="grade-tabs">
+      <span class="filter-label">Khối Lớp:</span>
+      <button class="tab-btn-grade" class:active={selectedGrade === 'all'} onclick={() => selectedGrade = 'all'}>
+        Tất cả ({words.length})
+      </button>
+      {#each ['Lớp 3', 'Lớp 4', 'Lớp 5', 'Lớp 7', 'Lớp 10', 'Lớp 11', 'Lớp 12'] as g}
+        <button class="tab-btn-grade" class:active={selectedGrade === g} onclick={() => selectedGrade = g}>
+          {g}
+        </button>
+      {/each}
+    </div>
+
     <div class="unit-tabs">
       <button class="tab-btn" class:active={selectedUnit === 'all'} onclick={() => selectedUnit = 'all'}>
-        Tất cả ({words.length})
+        Chủ điểm: Tất cả
       </button>
       {#each data.units as unit}
         <button class="tab-btn" class:active={selectedUnit === unit.id} onclick={() => selectedUnit = unit.id}>
@@ -102,6 +120,14 @@
       <div class="word-card">
         <div class="word-top">
           <div class="term-wrap">
+            <div class="badges-row">
+              {#if word.grade}
+                <span class="badge-grade">{word.grade}</span>
+              {/if}
+              {#if word.cambridge_level}
+                <span class="badge-cambridge">{word.cambridge_level}</span>
+              {/if}
+            </div>
             <strong class="word-term">{word.term}</strong>
             <span class="word-pos">{word.pos}</span>
             <span class="word-ipa">{word.ipa}</span>
@@ -129,6 +155,13 @@
                 <span><strong>Phụ âm:</strong> {word.consonants_detail}</span>
               </div>
             {/if}
+          </div>
+        {/if}
+
+        {#if word.phonics_note}
+          <div class="phonics-note-box">
+            <span class="note-icon">🗣️</span>
+            <span>{word.phonics_note}</span>
           </div>
         {/if}
 
@@ -258,6 +291,92 @@
     border: none;
     font-size: 1rem;
     outline: none;
+  }
+
+  .grade-tabs {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+  }
+
+  .filter-label {
+    font-size: 0.8rem;
+    font-weight: 800;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .tab-btn-grade {
+    padding: 6px 14px;
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    font-weight: 700;
+    font-size: 0.8rem;
+    color: #475569;
+    white-space: nowrap;
+    transition: all 0.15s;
+    cursor: pointer;
+  }
+
+  .tab-btn-grade:hover {
+    background: #f1f5f9;
+  }
+
+  .tab-btn-grade.active {
+    background: #059669;
+    color: white;
+    border-color: #059669;
+  }
+
+  .badges-row {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 4px;
+    flex-wrap: wrap;
+  }
+
+  .badge-grade {
+    font-size: 0.7rem;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    background: #ecfdf5;
+    color: #065f46;
+    border: 1px solid #a7f3d0;
+  }
+
+  .badge-cambridge {
+    font-size: 0.7rem;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    background: #eef2ff;
+    color: #3730a3;
+    border: 1px solid #c7d2fe;
+    text-transform: uppercase;
+  }
+
+  .phonics-note-box {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    margin-top: 8px;
+    padding: 8px 12px;
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: var(--border-radius-sm);
+    font-size: 0.8rem;
+    color: #92400e;
+    line-height: 1.4;
+  }
+
+  .note-icon {
+    font-size: 0.9rem;
+    flex-shrink: 0;
   }
 
   .unit-tabs {

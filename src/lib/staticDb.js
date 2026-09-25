@@ -1,10 +1,67 @@
 import wordsData from '$lib/data/words.json';
 import questionsData from '$lib/data/questions.json';
 import unitsData from '$lib/data/units.json';
+import grammarTopicsData from '$lib/data/grammar_topics.json';
+import vocabularyDbData from '$lib/data/vocabulary_db.json';
+import examsData from '$lib/data/exams.json';
 
 const STORAGE_KEY_PROGRESS = 'tienganh7_user_progress';
 const STORAGE_KEY_SCORES = 'tienganh7_game_scores';
 const STORAGE_KEY_CUSTOM_WORDS = 'tienganh7_custom_words';
+
+export function getStaticGrammarTopics({ grade, category, search } = {}) {
+  let list = [...grammarTopicsData];
+  if (grade && grade !== 'all') {
+    list = list.filter(g => (g.grade_level || '').toLowerCase().includes(grade.toLowerCase()));
+  }
+  if (category && category !== 'all') {
+    list = list.filter(g => g.category === category);
+  }
+  if (search && search.trim()) {
+    const q = search.trim().toLowerCase();
+    list = list.filter(g => 
+      (g.topic || '').toLowerCase().includes(q) ||
+      (g.summary || '').toLowerCase().includes(q) ||
+      (g.phonics_rules || '').toLowerCase().includes(q)
+    );
+  }
+  return list;
+}
+
+export function getStaticVocabularyDB({ grade, category, level, search, limit } = {}) {
+  let list = [...vocabularyDbData];
+  if (grade && grade !== 'all') {
+    list = list.filter(w => (w.grade || '').toLowerCase().includes(grade.toLowerCase()));
+  }
+  if (category && category !== 'all') {
+    list = list.filter(w => w.category === category);
+  }
+  if (level && level !== 'all') {
+    list = list.filter(w => (w.cambridge_level || '').toLowerCase() === level.toLowerCase());
+  }
+  if (search && search.trim()) {
+    const q = search.trim().toLowerCase();
+    list = list.filter(w => (w.term || '').toLowerCase().includes(q) || (w.meaning_vi || '').toLowerCase().includes(q));
+  }
+  if (limit && Number(limit) > 0) {
+    list = list.slice(0, Number(limit));
+  }
+  return list;
+}
+
+export function getStaticExamsCatalog({ grade, type } = {}) {
+  let list = [...examsData];
+  if (grade && grade !== 'all') {
+    const gNum = parseInt(grade.replace(/\D/g, ''), 10);
+    if (!isNaN(gNum)) {
+      list = list.filter(e => e.grade === gNum || (e.title || '').includes(grade));
+    }
+  }
+  if (type && type !== 'all') {
+    list = list.filter(e => e.format_type === type);
+  }
+  return list;
+}
 
 // Get all words (static default + any user-created custom words)
 export function getStaticWords({ unitId, search, limit, shuffle } = {}) {

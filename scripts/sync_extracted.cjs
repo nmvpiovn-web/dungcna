@@ -2,40 +2,55 @@ const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
 
-let accessToken = "ya29.a0AX07Cmttco0FKzJZxe5LQslb_qqf0f2UFr-0g18wJg8BG0bIHVez3MBruIkhrmcRmwN5jePbbU5QpwQVLr-fYrjAiNBy4sdLgyIJh8vO73WJXc9pY5M_lfPan_zQD3ls2Bp65uqt-WkziZuACw_aPsR-zmEgd-MnOjecxbfpx27cRIr0N9y0QKfDRRjRxxP2gJ3w8mgaCgYKAfMSARUSFQHGX2MiU_FkUhK7heH7cn-lKnwgpQ0206";
-const REFRESH_TOKEN = "1//04Y4v87xTV-lxCgYIARAAGAQSNwF-L9IrzYXhYPuuLhtugYHIP14AcfdwLX5-mQHdoo4IYSP4y-gDDVPpQyUCSCUJ27GWfs-I1Zg";
-let tokenExpiresAt = Date.now() + 3500 * 1000;
-
-const ROOT_FOLDER_ID = "1_V4YUCuTJ4uui49S6AfcaI8lZmIszKou";
-
+const TOKEN_FILE = path.join(__dirname, 'gdrive_token.json');
 const STATE_FILE = path.join(__dirname, 'extracted_sync_state.json');
 const CATALOG_FILE = path.join(__dirname, 'catalog.json');
 const TEMP_BASE_DIR = path.join(process.env.TEMP, 'giaoandethi_extract');
 const UNRAR_PATH = "C:\\Program Files\\WinRAR\\UnRAR.exe";
+const ROOT_FOLDER_ID = "1_V4YUCuTJ4uui49S6AfcaI8lZmIszKou";
+
+let currentAccessToken = "";
+let currentRefreshToken = "";
+let tokenExpiresAt = Date.now() + 3500 * 1000;
+
+function loadTokenConfig() {
+  if (fs.existsSync(TOKEN_FILE)) {
+    try {
+      const data = JSON.parse(fs.readFileSync(TOKEN_FILE, 'utf8'));
+      if (data.access_token) currentAccessToken = data.access_token;
+      if (data.refresh_token) currentRefreshToken = data.refresh_token;
+    } catch (e) {}
+  }
+}
 
 async function getValidToken() {
-  if (Date.now() > tokenExpiresAt - 5 * 60 * 1000) {
-    console.log('[Auth] Refreshing Google Drive access token...');
+  loadTokenConfig();
+  if (Date.now() > tokenExpiresAt - 5 * 60 * 1000 && currentRefreshToken) {
     try {
       const res = await fetch('https://developers.google.com/oauthplayground/refreshAccessToken', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           token_uri: 'https://oauth2.googleapis.com/token',
-          refresh_token: REFRESH_TOKEN
+          refresh_token: currentRefreshToken
         })
       });
       const data = await res.json();
       if (data.access_token) {
-        accessToken = data.access_token;
+        currentAccessToken = data.access_token;
         tokenExpiresAt = Date.now() + (data.expires_in || 3600) * 1000;
         console.log('[Auth] Token refreshed successfully!');
+        fs.writeFileSync(TOKEN_FILE, JSON.stringify({
+          access_token: currentAccessToken,
+          refresh_token: currentRefreshToken,
+          updated_at: new Date().toISOString()
+        }, null, 2));
       }
     } catch (e) {
       console.error('[Auth] Token refresh error:', e.message);
     }
   }
-  return accessToken;
+  return currentAccessToken;
 }
 
 function loadState() {
@@ -53,23 +68,27 @@ async function getOrCreateFolder(name, parentId, state) {
   if (state.folders[name]) return state.folders[name];
   const token = await getValidToken();
   console.log(`[Drive] Creating subfolder: ${name}...`);
-  const res = await fetch("https://www.googleapis.com/drive/v3/files", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      name: name,
-      mimeType: "application/vnd.google-apps.folder",
-      parents: [parentId]
-    })
-  });
-  const data = await res.json();
-  if (data.id) {
-    state.folders[name] = data.id;
-    saveState(state);
-    return data.id;
+  try {
+    const res = await fetch("https://www.googleapis.com/drive/v3/files", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        name: name,
+        mimeType: "application/vnd.google-apps.folder",
+        parents: [parentId]
+      })
+    });
+    const data = await res.json();
+    if (data.id) {
+      state.folders[name] = data.id;
+      saveState(state);
+      return data.id;
+    }
+  } catch (e) {
+    console.error(`[Drive] Failed to create folder ${name}:`, e.message);
   }
   return parentId;
 }
@@ -120,8 +139,9 @@ async function uploadFileToDrive(filePath, fileName, folderId) {
         body: body
       });
       if (res.status === 401) {
-        await getValidToken();
+        console.error('[Upload] Token 401 Unauthorized!');
         attempts++;
+        await new Promise(r => setTimeout(r, 2000));
         continue;
       }
       return await res.json();
@@ -175,26 +195,36 @@ async function extractDriveFileId(targetUrl) {
 
 function extractSingleArchive(archivePath, destDir) {
   const isZip = archivePath.toLowerCase().endsWith('.zip');
+  const timeoutMs = 40000; // 40 seconds timeout max per extraction
+
   if (isZip) {
+    // 1. Try native tar.exe (fastest, never prompts)
     try {
-      execSync(`powershell -NoProfile -Command "Expand-Archive -LiteralPath '${archivePath}' -DestinationPath '${destDir}' -Force"`, { stdio: 'pipe' });
+      execSync(`tar -xf "${archivePath}" -C "${destDir}"`, { stdio: 'pipe', timeout: timeoutMs });
       return;
-    } catch (zipErr) {
+    } catch (tarErr) {
+      // 2. Try WinRAR UnRAR
       try {
-        execSync(`tar -xf "${archivePath}" -C "${destDir}"`, { stdio: 'pipe' });
+        execSync(`"${UNRAR_PATH}" x -y -p- "${archivePath}" "${destDir}\\"`, { stdio: 'pipe', timeout: timeoutMs });
         return;
-      } catch (e2) {
-        throw zipErr;
+      } catch (unrarErr) {
+        // 3. Fallback to PowerShell Expand-Archive
+        try {
+          execSync(`powershell -NoProfile -Command "Expand-Archive -LiteralPath '${archivePath}' -DestinationPath '${destDir}' -Force"`, { stdio: 'pipe', timeout: timeoutMs });
+          return;
+        } catch (psErr) {
+          throw psErr;
+        }
       }
     }
   }
 
   // RAR
   try {
-    execSync(`"${UNRAR_PATH}" x -y -p- "${archivePath}" "${destDir}\\"`, { stdio: 'pipe' });
+    execSync(`"${UNRAR_PATH}" x -y -p- "${archivePath}" "${destDir}\\"`, { stdio: 'pipe', timeout: timeoutMs });
   } catch (unrarErr) {
     try {
-      execSync(`"${UNRAR_PATH}" x -y -predlog "${archivePath}" "${destDir}\\"`, { stdio: 'pipe' });
+      execSync(`"${UNRAR_PATH}" x -y -predlog "${archivePath}" "${destDir}\\"`, { stdio: 'pipe', timeout: timeoutMs });
     } catch (pwErr) {
       throw pwErr;
     }
@@ -250,7 +280,11 @@ async function uploadFilesConcurrently(filePaths, folderId, concurrency = 5) {
 }
 
 async function processPost(post, index, total, state) {
+  // FAST SKIP if already processed (synced or permanently failed)
   if (state.synced[post.title]) {
+    return;
+  }
+  if (state.failed[post.title] && state.failed[post.title] === 'No Google Drive link found') {
     return;
   }
 
@@ -271,6 +305,11 @@ async function processPost(post, index, total, state) {
   // 1. Check file metadata
   let meta = null;
   const token = await getValidToken();
+  if (!token) {
+    console.error(`[CRITICAL] Missing valid Google Drive token. Pausing pipeline.`);
+    throw new Error('NO_TOKEN');
+  }
+
   try {
     const metaRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?fields=id,name,mimeType,size`, {
       headers: { Authorization: `Bearer ${token}` }
@@ -282,7 +321,7 @@ async function processPost(post, index, total, state) {
   }
 
   if (!meta || !meta.name) {
-    state.failed[post.title] = meta;
+    state.failed[post.title] = meta ? (meta.error?.message || 'Empty metadata') : 'Fetch error';
     saveState(state);
     return;
   }
@@ -315,6 +354,15 @@ async function processPost(post, index, total, state) {
   fs.mkdirSync(extractDir, { recursive: true });
 
   try {
+    // Check file size limit (skip archives > 1.5GB to prevent memory out of range)
+    if (meta.size && parseInt(meta.size) > 1500 * 1024 * 1024) {
+      console.log(`[${index}/${total}] File size too large (${meta.size} bytes). Direct copying instead.`);
+      const copyRes = await copyFileToDrive(fileId, targetFolderId);
+      state.synced[post.title] = { id: copyRes.id, name: copyRes.name, type: 'direct_copy_large' };
+      saveState(state);
+      return;
+    }
+
     // Download
     const downRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
       headers: { Authorization: `Bearer ${token}` }
@@ -378,11 +426,19 @@ async function main() {
   console.log(`\n======================================================`);
   console.log(`   STARTING AUTO-EXTRACT & MULTI-THREAD UPLOAD`);
   console.log(`   Total Catalog Posts: ${posts.length}`);
+  console.log(`   Already Synced: ${Object.keys(state.synced || {}).length}`);
   console.log(`======================================================\n`);
 
   for (let i = 0; i < posts.length; i++) {
-    await processPost(posts[i], i + 1, posts.length, state);
-    await new Promise(r => setTimeout(r, 200));
+    try {
+      await processPost(posts[i], i + 1, posts.length, state);
+    } catch (err) {
+      if (err.message === 'NO_TOKEN') {
+        console.error('Pipeline stopped: Waiting for valid Google Drive OAuth token.');
+        process.exit(2);
+      }
+    }
+    await new Promise(r => setTimeout(r, 100));
   }
 
   console.log("\n=== PIPELINE 100% FINISHED ===");

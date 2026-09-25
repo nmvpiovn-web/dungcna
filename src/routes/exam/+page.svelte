@@ -286,6 +286,10 @@
     data.exams.filter(e => {
       if (activeExamCategory === 'my_grade') return isExamEnrolledForUser(currentUser, e);
       if (activeExamCategory === 'all') return true;
+      if (activeExamCategory === 'primary') return e.grade === 3 || e.grade === 4 || e.grade === 5 || e.title.includes('Lớp 3') || e.title.includes('Lớp 4') || e.title.includes('Lớp 5');
+      if (activeExamCategory === 'g7') return e.grade === 7 || e.title.includes('Lớp 7') || e.curriculum_id === 'curr_g7';
+      if (activeExamCategory === 'g9') return e.grade === 9 || e.title.includes('Vào 10') || e.curriculum_id === 'curr_g9';
+      if (activeExamCategory === 'highschool') return e.grade === 10 || e.grade === 11 || e.grade === 12 || e.title.includes('Lớp 11') || e.title.includes('Lớp 12') || e.title.includes('THPT');
       if (activeExamCategory === 'ielts') return e.format_type === 'ielts_academic' || e.curriculum_id === 'curr_ielts';
       if (activeExamCategory === 'toeic') return e.format_type === 'toeic_lr' || e.curriculum_id === 'curr_toeic';
       if (activeExamCategory === 'toefl') return e.format_type === 'toefl_ibt' || e.curriculum_id === 'curr_toefl';
@@ -656,16 +660,40 @@
           🌟 Tất Cả ({data.exams.length})
         </button>
         <button
+          onclick={() => activeExamCategory = 'primary'}
+          class="px-3 py-1.5 rounded-xl transition-all whitespace-nowrap {activeExamCategory === 'primary' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-white'}"
+        >
+          🎒 Tiểu Học (L3-5)
+        </button>
+        <button
+          onclick={() => activeExamCategory = 'g7'}
+          class="px-3 py-1.5 rounded-xl transition-all whitespace-nowrap {activeExamCategory === 'g7' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-white'}"
+        >
+          🌱 Lớp 7 (HSG &amp; KET)
+        </button>
+        <button
+          onclick={() => activeExamCategory = 'g9'}
+          class="px-3 py-1.5 rounded-xl transition-all whitespace-nowrap {activeExamCategory === 'g9' ? 'bg-amber-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-white'}"
+        >
+          🎯 Vào 10 (Lớp 9)
+        </button>
+        <button
+          onclick={() => activeExamCategory = 'highschool'}
+          class="px-3 py-1.5 rounded-xl transition-all whitespace-nowrap {activeExamCategory === 'highschool' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-white'}"
+        >
+          🏢 THPT &amp; ĐH (L10-12)
+        </button>
+        <button
           onclick={() => activeExamCategory = 'ielts'}
           class="px-3 py-1.5 rounded-xl transition-all whitespace-nowrap {activeExamCategory === 'ielts' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-white'}"
         >
-          🌍 IELTS Academic
+          🌍 IELTS
         </button>
         <button
           onclick={() => activeExamCategory = 'toeic'}
           class="px-3 py-1.5 rounded-xl transition-all whitespace-nowrap {activeExamCategory === 'toeic' ? 'bg-teal-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-white'}"
         >
-          💼 TOEIC (Thang 990)
+          💼 TOEIC
         </button>
         <button
           onclick={() => activeExamCategory = 'toefl'}

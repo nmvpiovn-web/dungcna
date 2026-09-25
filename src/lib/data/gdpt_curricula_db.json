@@ -1,0 +1,89 @@
+[
+  {
+    "grade_id": "g1_5",
+    "level_name": "Khối Tiểu Học (Tiếng Anh 1 - 5)",
+    "target_audience": "Học sinh 6 - 10 tuổi",
+    "cefr_benchmark": "Pre-A1 Starters / A1 Movers / A2 Flyers",
+    "core_books": [
+      "Global Success 1-5",
+      "Family and Friends",
+      "Phonics Smart"
+    ],
+    "grades": [
+      {
+        "grade": "Lớp 1",
+        "key_focus": "Làm quen ngữ âm Phonics A-Z, bảng chữ cái, chào hỏi, đồ vật quen thuộc."
+      },
+      {
+        "grade": "Lớp 2",
+        "key_focus": "Từ vựng gia đình, màu sắc, số đếm 1-20, câu mệnh lệnh ngắn."
+      },
+      {
+        "grade": "Lớp 3",
+        "key_focus": "Học kỳ 1 & 2 Global Success: Trường lớp, bạn bè, đồ dùng học tập, cơ thể."
+      },
+      {
+        "grade": "Lớp 4",
+        "key_focus": "Thời gian, nghề nghiệp, động vật, hoạt động hàng ngày, ma trận đề thi chuẩn Bộ."
+      },
+      {
+        "grade": "Lớp 5",
+        "key_focus": "Thói quen, quê hương, địa điểm du lịch, thì quá khứ đơn cơ bản, chuẩn bị chuyển cấp."
+      }
+    ]
+  },
+  {
+    "grade_id": "g6_9",
+    "level_name": "Khối Trung Học Cơ Sở (Tiếng Anh 6 - 9)",
+    "target_audience": "Học sinh 11 - 15 tuổi",
+    "cefr_benchmark": "A2 KET / B1 PET",
+    "core_books": [
+      "Global Success 6-9",
+      "Friends Plus",
+      "Cambridge KET/PET"
+    ],
+    "grades": [
+      {
+        "grade": "Lớp 6",
+        "key_focus": "Ngôi trường mới, gia đình, kỳ quan thiên nhiên, thì Hiện tại đơn & Hiện tại tiếp diễn."
+      },
+      {
+        "grade": "Lớp 7",
+        "key_focus": "Hobbies, Healthy Living, Community Service, Music & Arts, Food & Drink, Traffic."
+      },
+      {
+        "grade": "Lớp 8",
+        "key_focus": "Lối sống nông thôn/thành thị, công nghệ, thảm họa thiên nhiên, câu so sánh, câu điều kiện."
+      },
+      {
+        "grade": "Lớp 9",
+        "key_focus": "Ngoại khóa bồi dưỡng HSG, luyện thi vào lớp 10 THPT công lập & trường chuyên (Bắc Giang, Nam Định, Hà Nội, TP.HCM)."
+      }
+    ]
+  },
+  {
+    "grade_id": "g10_12",
+    "level_name": "Khối Trung Học Phổ Thông & Luyện Thi (Tiếng Anh 10 - 12)",
+    "target_audience": "Học sinh 16 - 18 tuổi",
+    "cefr_benchmark": "B1+ / B2 / C1 / IELTS 6.5 - 7.5+",
+    "core_books": [
+      "Global Success 10-12",
+      "Đề Thi Đổi Mới GDPT 2026",
+      "Cambridge IELTS"
+    ],
+    "grades": [
+      {
+        "grade": "Lớp 10",
+        "key_focus": "Gia đình, môi trường, âm nhạc, bình đẳng giới, ma trận đề thi 40 câu trắc nghiệm."
+      },
+      {
+        "grade": "Lớp 11",
+        "key_focus": "Thành phố tương lai (Cities of the future), lối sống lành mạnh, di sản văn hóa, ASEAN."
+      },
+      {
+        "grade": "Lớp 12",
+        "key_focus": "Ôn thi tốt nghiệp THPT Quốc Gia theo format đổi mới 2026, đọc hiểu chuyên sâu, tư duy phản biện."
+      }
+    ]
+  }
+]

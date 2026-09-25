@@ -1,0 +1,721 @@
+[
+  {
+    "id": "gram_present_simple",
+    "topic": "Hiện Tại Đơn & Hiện Tại Tiếp Diễn (Present Simple & Continuous)",
+    "grade_level": "Lớp 3, 4, 5, 6, 7",
+    "curriculum_unit": "Unit 1 - Unit 2",
+    "category": "tenses",
+    "cefr_level": "A1 - A2",
+    "summary": "Thì hiện tại đơn diễn tả thói quen, chân lý sự thật. Hiện tại tiếp diễn diễn tả hành động đang xảy ra tại thời điểm nói hoặc kế hoạch tương lai.",
+    "formula": {
+      "present_simple": {
+        "affirmative": "S + V(s/es) + O",
+        "negative": "S + do/does + not + V_inf + O",
+        "interrogative": "Do/Does + S + V_inf + O?"
+      },
+      "present_continuous": {
+        "affirmative": "S + am/is/are + V-ing + O",
+        "negative": "S + am/is/are + not + V-ing + O",
+        "interrogative": "Am/Is/Are + S + V-ing + O?"
+      },
+      "affirmative": "S + V(s/es) + O",
+      "negative": "S + do/does + not + V_inf + O",
+      "interrogative": "Do/Does + S + V_inf + O?"
+    },
+    "usage": [
+      "Hiện tại đơn: Sự thật hiển nhiên, thói quen lặp đi lặp lại, lịch trình tàu xe.",
+      "Hiện tại tiếp diễn: Hành động đang xảy ra lúc nói (now, at present), phàn nàn với 'always', kế hoạch đã sắp xếp."
+    ],
+    "signal_words": [
+      "Present Simple: always, usually, often, sometimes, rarely, never, every day/week, once a week",
+      "Present Continuous: now, right now, at the moment, at present, Look!, Listen!, Be quiet!"
+    ],
+    "phonics_rules": "Quy tắc phát âm đuôi -s/-es: /s/ sau âm vô thanh (/p, k, f, t, θ/), /ɪz/ sau âm xát (/s, z, ʃ, tʃ, dʒ/), /z/ sau các nguyên âm và phụ âm hữu thanh còn lại.",
+    "common_mistakes": "1. Quên thêm s/es với ngôi thứ 3 số ít (He, She, It).\n2. Dùng thì tiếp diễn với động từ chỉ trạng thái giác quan/cảm xúc (Stative verbs: know, like, want, believe, smell). Ví dụ sai: 'I am knowing him' -> Đúng: 'I know him'.",
+    "examples": [
+      {
+        "en": "She volunteers at the nursing home every Saturday.",
+        "vi": "Cô ấy làm tình nguyện tại viện dưỡng lão vào mỗi thứ Bảy."
+      },
+      {
+        "en": "Be quiet! The baby is sleeping in the bedroom.",
+        "vi": "Giữ im lặng nào! Em bé đang ngủ trong phòng ngủ."
+      },
+      {
+        "en": "The Earth orbits around the Sun.",
+        "vi": "Trái Đất quay xung quanh Mặt Trời."
+      }
+    ],
+    "practice_questions": [
+      {
+        "id": "gq_pres_1",
+        "prompt": "Listen! Someone ______ the guitar in the next room.",
+        "options": [
+          "A. plays",
+          "B. is playing",
+          "C. played",
+          "D. has played"
+        ],
+        "correct": "B",
+        "explanation": "Dấu hiệu 'Listen!' báo hiệu hành động đang diễn ra tại thời điểm nói -> Dùng thì Hiện tại tiếp diễn (is playing)."
+      },
+      {
+        "id": "gq_pres_2",
+        "prompt": "Water ______ at 100 degrees Celsius under standard atmospheric pressure.",
+        "options": [
+          "A. boil",
+          "B. boils",
+          "C. is boiling",
+          "D. boiled"
+        ],
+        "correct": "B",
+        "explanation": "Đây là chân lý khoa học / sự thật hiển nhiên -> Dùng Hiện tại đơn, chủ ngữ 'Water' không đếm được -> boils."
+      }
+    ]
+  },
+  {
+    "id": "gram_past_simple",
+    "topic": "Quá Khứ Đơn & Quá Khứ Tiếp Diễn (Past Simple & Continuous)",
+    "grade_level": "Lớp 6, 7, 8, 9",
+    "curriculum_unit": "Unit 3 - Unit 4",
+    "category": "tenses",
+    "cefr_level": "A2 - B1",
+    "summary": "Quá khứ đơn diễn tả hành động đã kết thúc tại thời điểm xác định trong quá khứ. Quá khứ tiếp diễn diễn tả hành động đang diễn ra tại một thời điểm hoặc một hành động đang diễn ra thì hành động khác xen vào (When / While).",
+    "formula": {
+      "past_simple": {
+        "affirmative": "S + V2/V-ed + O",
+        "negative": "S + did not + V_inf + O",
+        "interrogative": "Did + S + V_inf + O?"
+      },
+      "past_continuous": {
+        "affirmative": "S + was/were + V-ing + O",
+        "negative": "S + was/were + not + V-ing + O",
+        "interrogative": "Was/Were + S + V-ing + O?"
+      },
+      "affirmative": "S + V2/V-ed + O",
+      "negative": "S + did not + V_inf + O",
+      "interrogative": "Did + S + V_inf + O?"
+    },
+    "usage": [
+      "Quá khứ đơn: Hành động đã chấm dứt hoàn toàn trong quá khứ với thời gian cụ thể (yesterday, in 2020, 2 days ago).",
+      "Quá khứ tiếp diễn: Hành động đang xảy ra tại một thời điểm cụ thể trong quá khứ (at 8 PM yesterday).",
+      "Kết hợp When / While: Một hành động đang xảy ra (quá khứ tiếp diễn) thì hành động khác xen vào (quá khứ đơn)."
+    ],
+    "signal_words": [
+      "Past Simple: yesterday, last night/month/year, ago, in + năm quá khứ, when I was young",
+      "Past Continuous: at that moment, at + giờ + thời gian quá khứ, while, when, as"
+    ],
+    "phonics_rules": "Quy tắc phát âm đuôi -ed: /ɪd/ sau /t, d/ (wanted, needed); /t/ sau phụ âm vô thanh (/p, k, f, s, ʃ, tʃ/); /d/ sau các nguyên âm và phụ âm hữu thanh còn lại.",
+    "common_mistakes": "1. Dùng quá khứ đơn sau trợ động từ 'did/didn't' (Sai: 'Did you went?' -> Đúng: 'Did you go?').\n2. Nhầm lẫn giữa 'when' (thường đi với quá khứ đơn) và 'while' (thường đi với quá khứ tiếp diễn).",
+    "examples": [
+      {
+        "en": "We planted 50 trees in our school garden last weekend.",
+        "vi": "Chúng tôi đã trồng 50 cây xanh trong vườn trường vào cuối tuần trước."
+      },
+      {
+        "en": "While I was doing my homework, the electricity went out.",
+        "vi": "Trong khi tôi đang làm bài tập về nhà thì điện bị cúp."
+      }
+    ],
+    "practice_questions": [
+      {
+        "id": "gq_past_1",
+        "prompt": "When the teacher came into the classroom, the students ______ noise.",
+        "options": [
+          "A. make",
+          "B. made",
+          "C. were making",
+          "D. are making"
+        ],
+        "correct": "C",
+        "explanation": "Hành động học sinh đang làm ồn (were making noise) đang diễn ra thì thầy giáo bước vào (came - xen vào)."
+      },
+      {
+        "id": "gq_past_2",
+        "prompt": "Choose the word with the -ed pronounced as /ɪd/: naked, ploughed, washed, lived",
+        "options": [
+          "A. naked",
+          "B. ploughed",
+          "C. washed",
+          "D. lived"
+        ],
+        "correct": "A",
+        "explanation": "'naked' là tính từ đặc biệt phát âm đuôi -ed là /ɪd/ (/ˈneɪkɪd/). Các từ còn lại: ploughed /d/, washed /t/, lived /d/."
+      }
+    ]
+  },
+  {
+    "id": "tenses_perfect",
+    "topic": "Hiện Tại Hoàn Thành & Quá Khứ Hoàn Thành (Present & Past Perfect)",
+    "grade_level": "Lớp 7, 8, 9, 10, 11",
+    "curriculum_unit": "Unit 5 - Unit 6",
+    "category": "tenses",
+    "cefr_level": "B1 - B2",
+    "summary": "Hiện tại hoàn thành kết nối quá khứ với hiện tại (kết quả lưu lại hoặc kinh nghiệm). Quá khứ hoàn thành diễn tả hành động xảy ra và hoàn tất trước một mốc thời gian hoặc hành động khác trong quá khứ.",
+    "formula": {
+      "present_perfect": {
+        "affirmative": "S + have/has + V3/V-ed + O",
+        "negative": "S + have/has + not + V3/V-ed + O",
+        "interrogative": "Have/Has + S + V3/V-ed + O?"
+      },
+      "past_perfect": {
+        "affirmative": "S + had + V3/V-ed + O",
+        "negative": "S + had + not + V3/V-ed + O",
+        "interrogative": "Had + S + V3/V-ed + O?"
+      }
+    },
+    "usage": [
+      "Present Perfect: Kinh nghiệm trải nghiệm (ever, never), hành động vừa mới xảy ra (just, already), hành động kéo dài từ quá khứ đến nay (for, since).",
+      "Past Perfect: Hành động xảy ra trước một hành động khác trong quá khứ (Before S + V2, S + had V3; After S + had V3, S + V2)."
+    ],
+    "signal_words": [
+      "Present Perfect: already, yet, just, ever, never, since, for, so far, recently, lately",
+      "Past Perfect: before, after, by the time, as soon as, when"
+    ],
+    "phonics_rules": "Lưu ý dạng rút gọn: I've /aɪv/, He's /hiːz/, They'd /ðeɪd/.",
+    "common_mistakes": "Dùng Hiện tại hoàn thành với mốc thời gian cụ thể trong quá khứ (Sai: 'I have seen him yesterday' -> Đúng: 'I saw him yesterday').",
+    "examples": [
+      {
+        "en": "She has lived in Da Nang since 2018.",
+        "vi": "Cô ấy đã sống ở Đà Nẵng từ năm 2018."
+      },
+      {
+        "en": "By the time the police arrived, the burglar had already escaped.",
+        "vi": "Trước khi cảnh sát đến thì tên trộm đã tẩu thoát rồi."
+      }
+    ],
+    "practice_questions": [
+      {
+        "id": "gq_perf_1",
+        "prompt": "I have known him ______ we were in primary school.",
+        "options": [
+          "A. for",
+          "B. since",
+          "C. in",
+          "D. ago"
+        ],
+        "correct": "B",
+        "explanation": "'since' đi với mốc thời gian (mệnh đề quá khứ đơn: we were in primary school)."
+      }
+    ]
+  },
+  {
+    "id": "passive_voice",
+    "topic": "Câu Bị Động Toàn Diện (Passive Voice: Basic to Advanced)",
+    "grade_level": "Lớp 7, 8, 9, 10, 11, 12",
+    "curriculum_unit": "Unit 7 - Unit 8",
+    "category": "structures",
+    "cefr_level": "B1 - B2",
+    "summary": "Câu bị động nhấn mạnh vào đối tượng chịu tác động của hành động thay vì người thực hiện. Cấu trúc tổng quát: S + Be + V3/V-ed + (by O).",
+    "formula": {
+      "general": "S + BE (chia theo thì) + V3/ed + (by Agent)",
+      "present_simple": "am/is/are + V3/ed",
+      "past_simple": "was/were + V3/ed",
+      "modal_verbs": "modal (can, must, should) + be + V3/ed",
+      "impersonal_passive": "It is said/thought/believed that S + V..."
+    },
+    "usage": [
+      "Khi không biết người thực hiện hành động hoặc người thực hiện không quan trọng.",
+      "Trong văn phong khoa học, tin tức, văn bản học thuật báo cáo.",
+      "Bị động kép / Bị động khách quan: People say that S + V -> It is said that S + V hoặc S + is said to V."
+    ],
+    "signal_words": [
+      "by + tân ngữ (by the teacher, by millions of tourists)",
+      "Cụm chỉ phương tiện: with + công cụ (with a knife, with a hammer)"
+    ],
+    "phonics_rules": "Nhấn mạnh vào trợ động từ 'be' khi muốn khẳng định: It WAS done, not is done.",
+    "common_mistakes": "Bỏ quên trợ động từ 'be' (Sai: 'The car washed yesterday' -> Đúng: 'The car was washed yesterday').",
+    "examples": [
+      {
+        "en": "Millions of smartphones are produced every month.",
+        "vi": "Hàng triệu chiếc điện thoại thông minh được sản xuất mỗi tháng."
+      },
+      {
+        "en": "The Golden Bridge was built in 2018 in Da Nang.",
+        "vi": "Cầu Vàng được xây dựng năm 2018 tại Đà Nẵng."
+      }
+    ],
+    "practice_questions": [
+      {
+        "id": "gq_pass_1",
+        "prompt": "Solar panels ______ on the roofs of many smart houses to generate green energy.",
+        "options": [
+          "A. install",
+          "B. are installed",
+          "C. installing",
+          "D. are installing"
+        ],
+        "correct": "B",
+        "explanation": "Tấm pin năng lượng mặt trời là vật chịu tác động -> dùng bị động hiện tại đơn: are installed."
+      }
+    ]
+  },
+  {
+    "id": "gram_conditionals",
+    "topic": "Câu Điều Kiện & Mệnh Đề Ước (Conditionals Type 1, 2, 3 & Wish Clauses)",
+    "grade_level": "Lớp 8, 9, 10, 11, 12",
+    "curriculum_unit": "Unit 9 - Unit 10",
+    "category": "structures",
+    "cefr_level": "B1 - B2",
+    "summary": "Câu điều kiện diễn tả giả thiết và kết quả tương ứng. Loại 1: có thật ở hiện tại/tương lai; Loại 2: không có thật ở hiện tại; Loại 3: không có thật ở quá khứ.",
+    "formula": {
+      "type_1": "If + S + V(hiện tại đơn), S + will/can + V_inf",
+      "type_2": "If + S + V2/ed (were), S + would/could + V_inf",
+      "type_3": "If + S + had + V3/ed, S + would/could + have + V3/ed",
+      "wish_present": "S + wish(es) + S + V2/ed (were)",
+      "wish_past": "S + wish(es) + S + had + V3/ed"
+    },
+    "usage": [
+      "Loại 1: Lời hứa, cảnh báo, dự đoán khả thi.",
+      "Loại 2: Giả định trái ngược hiện tại hoặc lời khuyên (If I were you...).",
+      "Loại 3: Tiếc nuối về điều đã xảy ra trong quá khứ."
+    ],
+    "signal_words": [
+      "if, unless (= if not), provided that, as long as, in case, wish, if only"
+    ],
+    "phonics_rules": "Nối âm: 'If I were' /ɪf aɪ wɜːr/, 'would have' thường phát âm lướt là /ˈwʊdəv/.",
+    "common_mistakes": "Dùng 'will' hoặc 'would' ngay trong mệnh đề IF (Sai: 'If I will have time...' -> Đúng: 'If I have time...').",
+    "examples": [
+      {
+        "en": "If we protect the environment, wildlife will survive.",
+        "vi": "Nếu chúng ta bảo vệ môi trường, động vật hoang dã sẽ sống sót."
+      },
+      {
+        "en": "If I had a million dollars, I would build a charity hospital.",
+        "vi": "Nếu tôi có 1 triệu đô la, tôi sẽ xây một bệnh viện từ thiện."
+      }
+    ],
+    "practice_questions": [
+      {
+        "id": "gq_cond_1",
+        "prompt": "If I ______ you, I would take that prestigious scholarship immediately.",
+        "options": [
+          "A. am",
+          "B. was",
+          "C. were",
+          "D. had been"
+        ],
+        "correct": "C",
+        "explanation": "Câu điều kiện loại 2 giả định trái hiện tại/lời khuyên: dùng 'were' cho tất cả các ngôi."
+      }
+    ]
+  },
+  {
+    "id": "relative_clauses",
+    "topic": "Mệnh Đề Quan Hệ (Relative Clauses: Who, Whom, Which, That, Whose, Where, When)",
+    "grade_level": "Lớp 8, 9, 10, 11, 12",
+    "curriculum_unit": "Unit 11",
+    "category": "clauses",
+    "cefr_level": "B1 - B2",
+    "summary": "Mệnh đề quan hệ bổ nghĩa cho danh từ đứng trước. Phân loại: Mệnh đề quan hệ xác định (Defining) và không xác định (Non-defining - có dấu phẩy, không dùng THAT).",
+    "formula": {
+      "who": "Danh từ chỉ người + WHO + V / S + V",
+      "whom": "Danh từ chỉ người + WHOM + S + V",
+      "which": "Danh từ chỉ vật + WHICH + V / S + V",
+      "whose": "Danh từ chỉ người/vật + WHOSE + Noun",
+      "that": "Thay thế cho who, whom, which trong mệnh đề xác định (không có dấu phẩy)"
+    },
+    "usage": [
+      "Mệnh đề xác định: Cung cấp thông tin thiết yếu, không thể bỏ được.",
+      "Mệnh đề không xác định: Bổ sung thêm thông tin phụ, ngăn cách bằng dấu phẩy. Lưu ý: Không dùng 'that' sau dấu phẩy hoặc sau giới từ!"
+    ],
+    "signal_words": [
+      "who, whom, which, that, whose, where (place), when (time), why (reason)"
+    ],
+    "phonics_rules": "Hạ giọng ở cuối mệnh đề không xác định trước dấu phẩy.",
+    "common_mistakes": "Dùng 'that' trong mệnh đề có dấu phẩy (Sai: 'Da Nang, that is a coastal city,...' -> Đúng: 'Da Nang, which is a coastal city,...').",
+    "examples": [
+      {
+        "en": "The teacher who taught us English is very kind and patient.",
+        "vi": "Cô giáo dạy chúng tôi môn tiếng Anh rất tốt bụng và kiên nhẫn."
+      },
+      {
+        "en": "The book which I borrowed from the library is fascinating.",
+        "vi": "Cuốn sách mà tôi mượn từ thư viện rất lôi cuốn."
+      }
+    ],
+    "practice_questions": [
+      {
+        "id": "gq_rel_1",
+        "prompt": "Ha Long Bay, ______ is recognized as a UNESCO World Heritage site, attracts millions of tourists.",
+        "options": [
+          "A. that",
+          "B. which",
+          "C. where",
+          "D. whose"
+        ],
+        "correct": "B",
+        "explanation": "Mệnh đề có dấu phẩy (không xác định), bổ nghĩa cho danh từ riêng chỉ vật/địa danh làm chủ ngữ -> Dùng 'which' (không dùng 'that')."
+      }
+    ]
+  },
+  {
+    "id": "gerunds_infinitives",
+    "topic": "Danh Động Từ & Động Từ Nguyên Mẫu (Gerunds & Infinitives: V-ing vs To V)",
+    "grade_level": "Lớp 7, 8, 9, 10, 11",
+    "curriculum_unit": "Unit 1 - Unit 3",
+    "category": "structures",
+    "cefr_level": "A2 - B2",
+    "summary": "Quy tắc lựa chọn giữa V-ing và To-V sau các động từ, tính từ và giới từ. Một số động từ thay đổi nghĩa tuỳ thuộc vào V-ing hay To-V (remember, forget, stop, try).",
+    "formula": {
+      "gerund_verbs": "enjoy, avoid, mind, admit, suggest, consider, practice, keep + V-ing",
+      "infinitive_verbs": "want, decide, hope, promise, agree, refuse, plan, offer, need + To V",
+      "prepositions": "preposition (in, on, at, about, without, instead of) + V-ing"
+    },
+    "usage": [
+      "V-ing làm chủ ngữ trong câu: 'Learning English opens up global opportunities.'",
+      "To V chỉ mục đích: 'She studies hard to pass the high school entrance exam.'",
+      "Thay đổi nghĩa: stop to V (dừng lại ĐỂ làm gì) vs stop V-ing (dừng hẳn việc gì lại); remember to V (nhớ phải làm gì) vs remember V-ing (nhớ đã làm gì trong quá khứ)."
+    ],
+    "signal_words": [
+      "look forward to + V-ing, be used to + V-ing, can't help + V-ing, it's no use + V-ing"
+    ],
+    "phonics_rules": "Đuôi -ing phát âm là /ɪŋ/ (âm mũi cuối), không bật âm g.",
+    "common_mistakes": "Dùng To-V sau giới từ (Sai: 'He left without to say goodbye' -> Đúng: 'without saying goodbye').",
+    "examples": [
+      {
+        "en": "She enjoys volunteering at the community center.",
+        "vi": "Cô ấy rất thích đi làm tình nguyện tại trung tâm cộng đồng."
+      },
+      {
+        "en": "Remember to lock the front door before going to bed.",
+        "vi": "Hãy nhớ khóa cửa chính trước khi đi ngủ nhé."
+      }
+    ],
+    "practice_questions": [
+      {
+        "id": "gq_ger_1",
+        "prompt": "Wearing a wristband allows athletes ______ safely without muscle strain.",
+        "options": [
+          "A. playing",
+          "B. to play",
+          "C. play",
+          "D. played"
+        ],
+        "correct": "B",
+        "explanation": "Cấu trúc: allow somebody + TO V (cho phép ai làm gì) -> to play."
+      }
+    ]
+  },
+  {
+    "id": "comparisons",
+    "topic": "Các Cấu Trúc So Sánh (Comparisons: Equal, Comparative, Superlative & Double Comparative)",
+    "grade_level": "Lớp 6, 7, 8, 9, 10",
+    "curriculum_unit": "Unit 4 - Unit 5",
+    "category": "modifiers",
+    "cefr_level": "A2 - B1",
+    "summary": "So sánh bằng (as... as), so sánh hơn (-er / more... than), so sánh nhất (the -est / the most...), và so sánh kép (The more..., the more...).",
+    "formula": {
+      "equal": "as + adj/adv + as",
+      "comparative_short": "S1 + be/V + adj-er/adv-er + than + S2",
+      "comparative_long": "S1 + be/V + more + adj/adv + than + S2",
+      "superlative": "S + be/V + the + adj-est / the most + adj + (of/in)",
+      "double_comparative": "The + comparative..., the + comparative..."
+    },
+    "usage": [
+      "So sánh 2 đối tượng dùng so sánh hơn; so sánh từ 3 đối tượng trở lên dùng so sánh nhất.",
+      "So sánh kép biểu thị sự tăng giảm tỉ lệ thuận: 'The harder you practice, the better you perform.'"
+    ],
+    "signal_words": [
+      "than, as... as, the most, the -est, much/far/a lot + so sánh hơn (nhấn mạnh)"
+    ],
+    "phonics_rules": "Đuôi -er phát âm là /ər/, đuôi -est phát âm là /ɪst/.",
+    "common_mistakes": "Dùng 'more' cùng với tính từ ngắn có đuôi '-er' (Sai: 'more bigger' -> Đúng: 'bigger').",
+    "examples": [
+      {
+        "en": "The younger you are, the easier it is to learn a foreign language.",
+        "vi": "Bạn càng trẻ thì học ngoại ngữ càng dễ dàng hơn."
+      },
+      {
+        "en": "Solar energy is cleaner and more sustainable than coal.",
+        "vi": "Năng lượng mặt trời sạch hơn và bền vững hơn than đá."
+      }
+    ],
+    "practice_questions": [
+      {
+        "id": "gq_comp_1",
+        "prompt": "The younger you are, ______ it is to acquire authentic pronunciation.",
+        "options": [
+          "A. easier",
+          "B. the easier",
+          "C. easily",
+          "D. the easily"
+        ],
+        "correct": "B",
+        "explanation": "Cấu trúc so sánh kép: The + comparative, the + comparative -> the easier."
+      }
+    ]
+  },
+  {
+    "id": "modal_verbs",
+    "topic": "Động Từ Khuyết Thiếu (Modal Verbs: Can, Could, Must, Have to, Should, May, Might)",
+    "grade_level": "Lớp 6, 7, 8, 9, 10",
+    "curriculum_unit": "Unit 6 - Unit 7",
+    "category": "structures",
+    "cefr_level": "A2 - B1",
+    "summary": "Động từ khuyết thiếu bổ sung nghĩa về khả năng (ability), bắt buộc (obligation), lời khuyên (advice), xin phép (permission), khả năng xảy ra (possibility).",
+    "formula": {
+      "affirmative": "S + modal verb + V_inf",
+      "negative": "S + modal verb + not + V_inf",
+      "interrogative": "Modal verb + S + V_inf?"
+    },
+    "usage": [
+      "Can / Could: Khả năng ở hiện tại / quá khứ, lời yêu cầu lịch sự.",
+      "Must vs Have to: 'Must' mang tính bắt buộc chủ quan từ người nói; 'Have to' bắt buộc khách quan do luật lệ quy định.",
+      "Should / Ought to: Lời khuyên nên làm gì.",
+      "Mustn't: Cấm đoán (không được phép làm)."
+    ],
+    "signal_words": [
+      "can, could, may, might, must, should, ought to, have to, would rather, had better"
+    ],
+    "phonics_rules": "Âm câm: 'l' câm trong 'could' /kʊd/, 'should' /ʃʊd/, 'would' /wʊd/.",
+    "common_mistakes": "Thêm 'to' sau modal verb (Sai: 'He can to swim' -> Đúng: 'He can swim'). Ngoại lệ: ought to, have to.",
+    "examples": [
+      {
+        "en": "You must wear a helmet when riding a motorbike in Vietnam.",
+        "vi": "Bạn bắt buộc phải đội mũ bảo hiểm khi đi xe máy tại Việt Nam."
+      },
+      {
+        "en": "You should review vocabulary daily to retain words effectively.",
+        "vi": "Em nên ôn lại từ vựng hàng ngày để ghi nhớ lâu dài."
+      }
+    ],
+    "practice_questions": [
+      {
+        "id": "gq_mod_1",
+        "prompt": "You ______ park your car here. It's a strictly prohibited zone.",
+        "options": [
+          "A. shouldn't",
+          "B. needn't",
+          "C. mustn't",
+          "D. couldn't"
+        ],
+        "correct": "C",
+        "explanation": "Diễn tả sự cấm đoán tuyệt đối ('strictly prohibited zone') -> Dùng 'mustn't'."
+      }
+    ]
+  },
+  {
+    "id": "adverbial_clauses",
+    "topic": "Mệnh Đề Trạng Ngữ (Adverbial Clauses: Reason, Concession, Purpose, Result)",
+    "grade_level": "Lớp 7, 8, 9, 10",
+    "curriculum_unit": "Unit 7 - Unit 9",
+    "category": "clauses",
+    "cefr_level": "B1",
+    "summary": "Mệnh đề trạng ngữ chỉ nguyên nhân (because, since, as), nhượng bộ (although, even though, though), mục đích (so that, in order that), kết quả (so... that, such... that).",
+    "formula": {
+      "reason": "Because / Since / As + S + V, S + V",
+      "concession": "Although / Even though + S + V, S + V  <-->  Despite / In spite of + Noun/V-ing, S + V",
+      "result": "S + be + so + adj + that + S + V"
+    },
+    "usage": [
+      "Chỉ nguyên nhân: Giữa hai mệnh đề không dùng cả 'because' và 'so' trong cùng 1 câu!",
+      "Chỉ nhượng bộ: Không dùng cả 'although' và 'but' trong cùng một câu!"
+    ],
+    "signal_words": [
+      "because, because of, although, in spite of, despite, so that, so... that, such... that"
+    ],
+    "phonics_rules": "Phát âm âm /ð/ trong 'although' /ɔːlˈðoʊ/ và 'even though'.",
+    "common_mistakes": "Dùng cả 'Although' và 'But' (Sai: 'Although it rained, but we went out' -> Đúng: 'Although it rained, we went out').",
+    "examples": [
+      {
+        "en": "Although the exam was difficult, Nam scored top marks.",
+        "vi": "Mặc dù bài thi rất khó, Nam vẫn đạt điểm thủ khoa."
+      },
+      {
+        "en": "Linh wears headphones because her parents don't like loud noise.",
+        "vi": "Linh đeo tai nghe vì bố mẹ em không thích tiếng ồn lớn."
+      }
+    ],
+    "practice_questions": [
+      {
+        "id": "gq_adv_1",
+        "prompt": "Linh often uses her headphones ______ her parents do not like loud music.",
+        "options": [
+          "A. so",
+          "B. but",
+          "C. because",
+          "D. although"
+        ],
+        "correct": "C",
+        "explanation": "Mệnh đề sau giải thích nguyên nhân cho hành động trước -> Dùng 'because'."
+      }
+    ]
+  },
+  {
+    "id": "quantifiers_articles",
+    "topic": "Mạo Từ & Lượng Từ (Articles & Quantifiers: A/An/The, Many/Much, A Few/A Little)",
+    "grade_level": "Lớp 3, 4, 5, 6, 7, 8",
+    "curriculum_unit": "Unit 2 - Unit 4",
+    "category": "modifiers",
+    "cefr_level": "A1 - B1",
+    "summary": "Cách sử dụng mạo từ không xác định (a/an), mạo từ xác định (the), mạo từ rỗng (zero article) và các từ định lượng với danh từ đếm được và không đếm được.",
+    "formula": {
+      "articles": "a + phụ âm (a book, a university /juː/), an + nguyên âm (an apple, an hour /aʊər/)",
+      "countable": "many, a few, few, several, both + danh từ đếm được số nhiều",
+      "uncountable": "much, a little, little, a piece of + danh từ không đếm được"
+    },
+    "usage": [
+      "A/An dùng với danh từ số ít đếm được khi nhắc tới lần đầu.",
+      "The dùng khi đối tượng đã xác định, duy nhất (the Sun, the Moon), so sánh nhất (the best), nhạc cụ (play the piano).",
+      "A few / A little (có một ít, đủ dùng) vs Few / Little (hầu như không có, mang nghĩa tiêu cực)."
+    ],
+    "signal_words": [
+      "a, an, the, much, many, a lot of, plenty of, several, a few, a little, either, neither"
+    ],
+    "phonics_rules": "'The' phát âm là /ðiː/ trước danh từ bắt đầu bằng nguyên âm (the Earth, the apple) và /ðə/ trước phụ âm.",
+    "common_mistakes": "Dùng 'an' theo chữ cái thay vì theo phiên âm (Sai: 'an university' -> Đúng: 'a university' vì bắt đầu bằng bán nguyên âm /j/).",
+    "examples": [
+      {
+        "en": "She plays the piano in the music room every afternoon.",
+        "vi": "Em ấy chơi đàn dương cầm trong phòng âm nhạc mỗi chiều."
+      },
+      {
+        "en": "There is a little milk left in the bottle, enough for breakfast.",
+        "vi": "Còn một chút sữa trong bình, đủ cho bữa sáng."
+      }
+    ],
+    "practice_questions": [
+      {
+        "id": "gq_art_1",
+        "prompt": "Venus is ______ second planet from the Sun in our solar system.",
+        "options": [
+          "A. a",
+          "B. an",
+          "C. the",
+          "D. zero article"
+        ],
+        "correct": "C",
+        "explanation": "Số thứ tự (the second, the first) luôn đi với mạo từ xác định 'the'."
+      }
+    ]
+  },
+  {
+    "id": "reported_speech",
+    "topic": "Câu Tường Thuật (Reported Speech: Statements, Questions & Commands)",
+    "grade_level": "Lớp 8, 9, 10, 11, 12",
+    "curriculum_unit": "Unit 10 - Unit 12",
+    "category": "structures",
+    "cefr_level": "B1 - B2",
+    "summary": "Tường thuật lời nói gián tiếp từ câu trực tiếp. Nguyên tắc biến đổi 3 yếu tố: Lùi thì (Backshift), đổi đại từ / tính từ sở hữu, và đổi trạng từ chỉ thời gian / nơi chốn.",
+    "formula": {
+      "statements": "S + said (that) + S + V(lùi thì)",
+      "yes_no_questions": "S + asked + if/whether + S + V(lùi thì)",
+      "wh_questions": "S + asked + Wh-word + S + V(lùi thì)",
+      "commands": "S + told/ordered + O + to V (hoặc not to V)"
+    },
+    "usage": [
+      "Lùi thì: Hiện tại đơn -> Quá khứ đơn; Hiện tại tiếp diễn -> Quá khứ tiếp diễn; Hiện tại hoàn thành / Quá khứ đơn -> Quá khứ hoàn thành; Will -> Would; Can -> Could.",
+      "Trạng từ: now -> then, today -> that day, tomorrow -> the next day, yesterday -> the day before, here -> there."
+    ],
+    "signal_words": [
+      "said to, told, asked, wondered, ordered, requested, advised, warned"
+    ],
+    "phonics_rules": "Hạ giọng ở cuối câu hỏi tường thuật vì cấu trúc là câu trần thuật (S + V), không đảo trợ động từ.",
+    "common_mistakes": "Giữ nguyên trật tự câu hỏi đảo trợ động từ (Sai: 'He asked me where did I live' -> Đúng: 'He asked me where I lived').",
+    "examples": [
+      {
+        "en": "\"I am learning English online,\" Nam said. -> Nam said that he was learning English online.",
+        "vi": "\"Mình đang học tiếng Anh trực tuyến,\" Nam nói. -> Nam bảo rằng bạn ấy đang học tiếng Anh trực tuyến."
+      },
+      {
+        "en": "The teacher told us not to talk during the mock exam.",
+        "vi": "Giáo viên bảo chúng tôi không được nói chuyện trong giờ thi thử."
+      }
+    ],
+    "practice_questions": [
+      {
+        "id": "gq_rep_1",
+        "prompt": "\"Where are you going for your vacation?\" Mai asked John. -> Mai asked John where ______ for his vacation.",
+        "options": [
+          "A. is he going",
+          "B. was he going",
+          "C. he is going",
+          "D. he was going"
+        ],
+        "correct": "D",
+        "explanation": "Câu tường thuật Wh-question: đổi trật tự thành S + V và lùi thì (are going -> was going) -> he was going."
+      }
+    ]
+  },
+  {
+    "id": "gram_stative_dynamic_verbs",
+    "topic": "Động Từ Trạng Thái & Hành Động (Stative vs Dynamic Verbs)",
+    "grade_level": "Lớp 11 - Lớp 12",
+    "curriculum_unit": "Unit 3: Cities of the Future",
+    "category": "verbs",
+    "cefr_level": "B1 - B2",
+    "summary": "Động từ trạng thái (stative verbs) diễn tả nhận thức, cảm xúc, sở hữu và không chia ở thì tiếp diễn.",
+    "formula": {
+      "affirmative": "S + stative verb + O (không dùng V-ing)",
+      "negative": "S + do/does/did not + stative verb + O"
+    },
+    "usage": [
+      "Chỉ suy nghĩ, nhận thức: believe, think, understand, know, recognize.",
+      "Chỉ cảm xúc: like, love, hate, prefer, desire.",
+      "Chỉ giác quan: see, hear, smell, taste, feel.",
+      "Chỉ sở hữu: have, belong to, own, possess."
+    ],
+    "signal_words": [
+      "now",
+      "at present",
+      "currently",
+      "understand",
+      "believe",
+      "belong"
+    ],
+    "phonics_rules": "Trọng âm: be-LIEVE, un-der-STAND, be-LONG.",
+    "common_mistakes": "Chia thì tiếp diễn với động từ trạng thái (Sai: 'I am believing you' -> Đúng: 'I believe you').",
+    "examples": [
+      {
+        "en": "Environmental scientists firmly believe that green energy will save our cities.",
+        "vi": "Các nhà khoa học môi trường tin chắc rằng năng lượng xanh sẽ cứu lấy các đô thị của chúng ta."
+      }
+    ],
+    "practice_questions": [
+      {
+        "id": "gq_stat_1",
+        "prompt": "Environmental scientists firmly ______ that renewable energy is vital for smart cities.",
+        "options": [
+          "A. believe",
+          "B. are believing",
+          "C. was believing",
+          "D. have been believing"
+        ],
+        "correct": "A",
+        "explanation": "'believe' là động từ trạng thái, không chia ở dạng tiếp diễn."
+      }
+    ]
+  },
+  {
+    "id": "gram_used_to",
+    "topic": "Cấu trúc 'Used to' Chỉ Thói Quen Quá Khứ",
+    "grade_level": "Lớp 7 - Lớp 9",
+    "curriculum_unit": "Unit 7: Traffic",
+    "category": "structures",
+    "cefr_level": "A2 - B1",
+    "summary": "Diễn tả thói quen hoặc trạng thái từng xảy ra thường xuyên trong quá khứ nhưng nay không còn nữa.",
+    "formula": {
+      "affirmative": "S + used to + V_inf",
+      "negative": "S + didn't use to + V_inf",
+      "interrogative": "Did + S + use to + V_inf?"
+    },
+    "usage": [
+      "Diễn tả thói quen trong quá khứ đã chấm dứt hoàn toàn ở hiện tại."
+    ],
+    "signal_words": [
+      "when I was small",
+      "in the past",
+      "no longer",
+      "any more"
+    ],
+    "phonics_rules": "Phát âm /juːst tuː/ với âm /s/ vô thanh.",
+    "common_mistakes": "Nhầm lẫn giữa used to V và be used to V-ing.",
+    "examples": [
+      {
+        "en": "My father used to ride a bicycle to work when there was no motorbike.",
+        "vi": "Bố tôi từng đạp xe đạp đi làm khi chưa có xe máy."
+      }
+    ]
+  }
+]

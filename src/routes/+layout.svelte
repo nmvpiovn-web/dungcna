@@ -396,6 +396,20 @@
                 </a>
 
                 <a
+                  href="/grammar"
+                  onclick={closeAllDropdowns}
+                  class="flex items-center gap-3 p-2.5 rounded-xl hover:bg-emerald-50/70 dark:hover:bg-slate-800 transition-colors group"
+                >
+                  <div class="w-8 h-8 rounded-lg bg-teal-100 dark:bg-teal-900/50 text-teal-700 dark:text-teal-300 flex items-center justify-center text-sm font-bold">
+                    📐
+                  </div>
+                  <div>
+                    <div class="font-bold text-xs text-slate-900 dark:text-white group-hover:text-teal-600 dark:group-hover:text-teal-400">Chuyên Đề Ngữ Pháp &amp; Công Thức</div>
+                    <div class="text-[10px] text-slate-500 dark:text-slate-400">14 chuyên đề toàn cấp K12, cạm bẫy &amp; bài tập</div>
+                  </div>
+                </a>
+
+                <a
                   href="/pedagogy"
                   onclick={closeAllDropdowns}
                   class="flex items-center gap-3 p-2.5 rounded-xl hover:bg-emerald-50/70 dark:hover:bg-slate-800 transition-colors group"
@@ -713,6 +727,13 @@
               class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold"
             >
               <span>📖</span> <span>Từ Điển Phonics</span>
+            </a>
+            <a
+              href="/grammar"
+              onclick={() => mobileMenuOpen = false}
+              class="flex items-center gap-2 p-2.5 rounded-xl bg-teal-50 dark:bg-teal-950/60 text-teal-800 dark:text-teal-300 text-xs font-bold"
+            >
+              <span>📐</span> <span>Ngữ Pháp &amp; Công Thức</span>
             </a>
             <a
               href="/flashcards"
