@@ -1,12 +1,11 @@
 ---
-title: "👩‍🏫 Pedagogy & Teaching SOP Map of Content"
-tags: ["#pedagogy", "#sop", "#moc"]
-updated_at: "2026-09-25"
+title: "Bản Đồ Nghiệp Vụ Sư Phạm & Vận Hành Trung Tâm (Pedagogy MOC)"
+tags: ["#pedagogy", "#sop", "#teaching"]
 ---
-# 👩‍🏫 SỔ TAY QUY TRÌNH & PHƯƠNG PHÁP SƯ PHẠM CÔ DUNG
 
-- [[Co_Dung_Teaching_Philosophy]]: Triết lý lấy học sinh làm trung tâm, kết hợp công nghệ AI.
-- [[Gamification_and_Star_Rewards_Rubric]]: Quy chế tặng sao, bảng xếp hạng và mở Đấu trường trò chơi.
-- [[Tuition_and_Parent_Communication_SOP]]: Quy trình gửi phiếu điểm và thông báo học phí tự động qua Zalo Bot.
+# 👩‍🏫 BẢN ĐỒ NGHIỆP VỤ SƯ PHẠM & QUY TRÌNH VẬN HÀNH
 
-Quay lại: [[00_INDEX_MOC]].
+- [[Differentiated_Instruction_Framework|🎯 Khung Giảng Dạy Phân Hóa Năng Lực Học Sinh]]
+- [[Formative_Summative_Assessment_Rubrics|📊 Bộ Tiêu Chí Đánh Giá Quá Trình & Tổng Kết]]
+- [[Teacher_Panel_Game_Portal_Integration_SOP|🎮 Quy Trình Giáo Viên Mở Cổng Game Tương Tác]]
+- [[Leader_Operational_SOP_and_Audit_Workflow|📋 Quy Trình Kiểm Soát Tự Động Dành Cho Quản Lý]]

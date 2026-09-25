@@ -4,674 +4,1205 @@
       "id": "00_INDEX_MOC",
       "filename": "00_INDEX_MOC.md",
       "folder": "Root",
-      "title": "🧠 Tiếng Anh Cô Dung - Master Second Brain & Knowledge Graph",
+      "title": "🧠 Second Brain Tri Thức - Tiếng Anh Toàn Diện GDPT & CEFR",
       "tags": [
         "#moc",
         "#second-brain",
-        "#hub"
+        "#knowledge-graph",
+        "#tienganh"
       ],
       "cefr_level": "",
-      "content": "# 🧠 TIẾNG ANH CÔ DUNG: SECOND BRAIN KNOWLEDGE GRAPH\n\n> [!abstract] BẢN ĐỒ TRI THỨC TOÀN DIỆN (MAP OF CONTENT)\n> Chào mừng bạn đến với **Lớp Tri Thức Thứ Hai (Second Brain)** của Hệ thống Đào tạo Tiếng Anh Cô Dung. \n> Toàn bộ tri thức được kết nối bằng **mạng lưới liên kết 2 chiều (Bi-directional WikiLinks `[[...]]`)**, chuẩn hóa theo Chương trình GDPT 2018/2026 của Bộ GD&ĐT và Khung năng lực Châu Âu CEFR (A1 - C2).\n\n---\n\n## 🗺️ 5 TRỤ CỘT TRI THỨC CHÍNH (CORE PILLARS)\n\n```mermaid\ngraph TD\n    MOC[\"🧠 00_INDEX_MOC (Central Hub)\"]\n    MOC --> C[\"📚 01_CURRICULUM_GDPT\"]\n    MOC --> G[\"📐 02_GRAMMAR_KNOWLEDGE_BASE\"]\n    MOC --> V[\"🔤 03_VOCABULARY_ATLAS\"]\n    MOC --> E[\"📝 04_EXAMS_AND_QUESTION_BANK\"]\n    MOC --> P[\"👩‍🏫 05_TEACHING_SOP_AND_PEDAGOGY\"]\n\n    C <--> G\n    G <--> E\n    V <--> E\n    V <--> G\n    P --> C\n```\n\n### 1. [[GDPT_Master_Curriculum_MOC|📚 01. Chương Trình GDPT & Lộ Trình 12 Năm]]\n- [[Tieu_Hoc_Lop_1_5|🌱 Bậc Tiểu Học (Lớp 1 - 5)]]: Phonics tự nhiên, TPR, phản xạ nghe nói Cambridge Young Learners.\n- [[THCS_Lop_6_9|🌿 Bậc THCS (Lớp 6 - 9)]]: Chuyên đề ngữ pháp cốt lõi, bồi dưỡng HSG, luyện thi Vào 10 Chuyên Anh.\n- [[THPT_Lop_10_12|🌳 Bậc THPT (Lớp 10 - 12)]]: Ngữ pháp học thuật nâng cao, luyện thi Tốt nghiệp THPT 2026.\n- [[International_IELTS_TOEIC_CEFR|🌏 Hệ Thống Chứng Chỉ Quốc Tế]]: KET (A2), PET (B1), IELTS Academic (6.5 - 8.0+), TOEIC.\n\n### 2. [[Grammar_Master_MOC|📐 02. Cơ Sở Tri Thức Ngữ Pháp Toàn Diện (Grammar Vault)]]\n- **Thì & Dạng Động Từ:** [[Present_Simple_and_Continuous]], [[Past_Simple_and_Continuous]], [[Present_Perfect_Mastery]], [[Future_Forms_and_Intentions]].\n- **Cấu Trúc Câu Mệnh Đề:** [[Conditionals_Type_1_2_3_Mixed]], [[Relative_Clauses_Defining_NonDefining]], [[Passive_Voice_and_Causative]], [[Reported_Speech_and_Reporting_Verbs]].\n- **Chuyên Đề Nâng Cao (HSG & THPT):** [[Inversion_and_Cleft_Sentences]], [[Subjunctive_Mood_and_Wish]], [[Stative_vs_Dynamic_Verbs]], [[Phrasal_Verbs_Top_100]], [[Conjunctions_and_Adverbial_Clauses]], [[Comparison_Equal_Comparative_Superlative]].\n\n### 3. [[Vocabulary_Atlas_MOC|🔤 03. Bản Đồ Từ Vựng & Âm Vị Học (Lexicon Atlas)]]\n- [[Phonics_and_IPA_Sound_System|🔊 Hệ Thống 44 Âm Quốc Tế IPA & Quy Tắc Ngữ Âm]]: Phát âm đuôi -ed, -s/-es, trọng âm 2-3-4 âm tiết.\n- [[Word_Formation_and_Affixes|🧩 Cấu Tạo Từ & Tiền Tố - Hậu Tố]]: 1000 dạng bài Word Formation trích xuất từ đề thi HSG.\n- **Từ Vựng Theo Cấp Độ CEFR:**\n  - [[Lexicon_Primary_G1_G5|Pre-A1 -> A1 (Tiểu học)]]\n  - [[Lexicon_Secondary_G6_G9|A2 -> B1 (THCS)]]\n  - [[Lexicon_HighSchool_G10_G12|B1+ -> B2 (THPT)]]\n  - [[Lexicon_Academic_IELTS_C1_C2|C1 -> C2 (Học sinh giỏi & IELTS)]]\n- [[Collocations_and_Idiomatic_Expressions|💡 Cụm Từ Cố Định & Thành Ngữ Điểm Cao]]\n\n### 4. [[Exams_MOC|📝 04. Ngân Hàng Đề Thi & Kỹ Thuật Làm Bài]]\n- [[HSG_Grade7_YenLap_Breakdown|🏆 Đề HSG Lớp 7 Huyện Yên Lập (Phân tích chi tiết)]]\n- [[HSG_Grade12_QuangNam_Breakdown|🥇 Đề HSG Tỉnh Lớp 12 Quảng Nam (Phân tích đáp án)]]\n- [[THPT_QuocGia_2026_Format|🎯 Định Dạng Đề Thi Tốt Nghiệp THPT Mới 2026]]\n- [[Sentence_Transformation_Techniques_700|✍️ 700 Dạng Bài Viết Lại Câu Tuyển Chọn]]\n- [[IELTS_Academic_Reading_Techniques|📖 Kỹ Thuật Skimming/Scanning Reading IELTS 8.0+]]\n\n### 5. [[Pedagogy_MOC|👩‍🏫 05. Sổ Tay Nghiệp Vụ & Quy Chuẩn Giảng Dạy Cô Dung]]\n- [[Co_Dung_Teaching_Philosophy|✨ Triết Lý Giáo Dục Đa Trí Thông Minh]]\n- [[Gamification_and_Star_Rewards_Rubric|⭐ Quy Chuẩn Thưởng Sao & Đấu Trường Game]]\n- [[Tuition_and_Parent_Communication_SOP|📱 Quy Trình Báo Cáo Học Phí & Zalo Bot Tự Động]]\n\n---\n\n## ⚡ HƯỚNG DẪN TRUY XUẤT NHANH (QUICK ACTIONS)\n- **Mở trong Obsidian:** Nhấn `Ctrl + O` để tìm nhanh bất kỳ khái niệm nào.\n- **Xem Đồ Thị Tri Thức:** Nhấn `Ctrl + G` để mở **Graph View**, chiêm ngưỡng toàn bộ mạng lưới node tri thức liên kết 3D.\n- **Tra cứu trên Web:** Truy cập trực tiếp tại endpoint `/second-brain` trên ứng dụng SvelteKit.",
-      "raw": "---\ntitle: \"🧠 Tiếng Anh Cô Dung - Master Second Brain & Knowledge Graph\"\naliases: [\"Index\", \"Dashboard\", \"Home\", \"Second Brain Hub\"]\ntags: [\"#moc\", \"#second-brain\", \"#hub\"]\nauthor: \"Cô Dung & Đội Ngũ Sư Phạm\"\nversion: \"2.4.0\"\nupdated_at: \"2026-09-25\"\n---\n\n# 🧠 TIẾNG ANH CÔ DUNG: SECOND BRAIN KNOWLEDGE GRAPH\n\n> [!abstract] BẢN ĐỒ TRI THỨC TOÀN DIỆN (MAP OF CONTENT)\n> Chào mừng bạn đến với **Lớp Tri Thức Thứ Hai (Second Brain)** của Hệ thống Đào tạo Tiếng Anh Cô Dung. \n> Toàn bộ tri thức được kết nối bằng **mạng lưới liên kết 2 chiều (Bi-directional WikiLinks `[[...]]`)**, chuẩn hóa theo Chương trình GDPT 2018/2026 của Bộ GD&ĐT và Khung năng lực Châu Âu CEFR (A1 - C2).\n\n---\n\n## 🗺️ 5 TRỤ CỘT TRI THỨC CHÍNH (CORE PILLARS)\n\n```mermaid\ngraph TD\n    MOC[\"🧠 00_INDEX_MOC (Central Hub)\"]\n    MOC --> C[\"📚 01_CURRICULUM_GDPT\"]\n    MOC --> G[\"📐 02_GRAMMAR_KNOWLEDGE_BASE\"]\n    MOC --> V[\"🔤 03_VOCABULARY_ATLAS\"]\n    MOC --> E[\"📝 04_EXAMS_AND_QUESTION_BANK\"]\n    MOC --> P[\"👩‍🏫 05_TEACHING_SOP_AND_PEDAGOGY\"]\n\n    C <--> G\n    G <--> E\n    V <--> E\n    V <--> G\n    P --> C\n```\n\n### 1. [[GDPT_Master_Curriculum_MOC|📚 01. Chương Trình GDPT & Lộ Trình 12 Năm]]\n- [[Tieu_Hoc_Lop_1_5|🌱 Bậc Tiểu Học (Lớp 1 - 5)]]: Phonics tự nhiên, TPR, phản xạ nghe nói Cambridge Young Learners.\n- [[THCS_Lop_6_9|🌿 Bậc THCS (Lớp 6 - 9)]]: Chuyên đề ngữ pháp cốt lõi, bồi dưỡng HSG, luyện thi Vào 10 Chuyên Anh.\n- [[THPT_Lop_10_12|🌳 Bậc THPT (Lớp 10 - 12)]]: Ngữ pháp học thuật nâng cao, luyện thi Tốt nghiệp THPT 2026.\n- [[International_IELTS_TOEIC_CEFR|🌏 Hệ Thống Chứng Chỉ Quốc Tế]]: KET (A2), PET (B1), IELTS Academic (6.5 - 8.0+), TOEIC.\n\n### 2. [[Grammar_Master_MOC|📐 02. Cơ Sở Tri Thức Ngữ Pháp Toàn Diện (Grammar Vault)]]\n- **Thì & Dạng Động Từ:** [[Present_Simple_and_Continuous]], [[Past_Simple_and_Continuous]], [[Present_Perfect_Mastery]], [[Future_Forms_and_Intentions]].\n- **Cấu Trúc Câu Mệnh Đề:** [[Conditionals_Type_1_2_3_Mixed]], [[Relative_Clauses_Defining_NonDefining]], [[Passive_Voice_and_Causative]], [[Reported_Speech_and_Reporting_Verbs]].\n- **Chuyên Đề Nâng Cao (HSG & THPT):** [[Inversion_and_Cleft_Sentences]], [[Subjunctive_Mood_and_Wish]], [[Stative_vs_Dynamic_Verbs]], [[Phrasal_Verbs_Top_100]], [[Conjunctions_and_Adverbial_Clauses]], [[Comparison_Equal_Comparative_Superlative]].\n\n### 3. [[Vocabulary_Atlas_MOC|🔤 03. Bản Đồ Từ Vựng & Âm Vị Học (Lexicon Atlas)]]\n- [[Phonics_and_IPA_Sound_System|🔊 Hệ Thống 44 Âm Quốc Tế IPA & Quy Tắc Ngữ Âm]]: Phát âm đuôi -ed, -s/-es, trọng âm 2-3-4 âm tiết.\n- [[Word_Formation_and_Affixes|🧩 Cấu Tạo Từ & Tiền Tố - Hậu Tố]]: 1000 dạng bài Word Formation trích xuất từ đề thi HSG.\n- **Từ Vựng Theo Cấp Độ CEFR:**\n  - [[Lexicon_Primary_G1_G5|Pre-A1 -> A1 (Tiểu học)]]\n  - [[Lexicon_Secondary_G6_G9|A2 -> B1 (THCS)]]\n  - [[Lexicon_HighSchool_G10_G12|B1+ -> B2 (THPT)]]\n  - [[Lexicon_Academic_IELTS_C1_C2|C1 -> C2 (Học sinh giỏi & IELTS)]]\n- [[Collocations_and_Idiomatic_Expressions|💡 Cụm Từ Cố Định & Thành Ngữ Điểm Cao]]\n\n### 4. [[Exams_MOC|📝 04. Ngân Hàng Đề Thi & Kỹ Thuật Làm Bài]]\n- [[HSG_Grade7_YenLap_Breakdown|🏆 Đề HSG Lớp 7 Huyện Yên Lập (Phân tích chi tiết)]]\n- [[HSG_Grade12_QuangNam_Breakdown|🥇 Đề HSG Tỉnh Lớp 12 Quảng Nam (Phân tích đáp án)]]\n- [[THPT_QuocGia_2026_Format|🎯 Định Dạng Đề Thi Tốt Nghiệp THPT Mới 2026]]\n- [[Sentence_Transformation_Techniques_700|✍️ 700 Dạng Bài Viết Lại Câu Tuyển Chọn]]\n- [[IELTS_Academic_Reading_Techniques|📖 Kỹ Thuật Skimming/Scanning Reading IELTS 8.0+]]\n\n### 5. [[Pedagogy_MOC|👩‍🏫 05. Sổ Tay Nghiệp Vụ & Quy Chuẩn Giảng Dạy Cô Dung]]\n- [[Co_Dung_Teaching_Philosophy|✨ Triết Lý Giáo Dục Đa Trí Thông Minh]]\n- [[Gamification_and_Star_Rewards_Rubric|⭐ Quy Chuẩn Thưởng Sao & Đấu Trường Game]]\n- [[Tuition_and_Parent_Communication_SOP|📱 Quy Trình Báo Cáo Học Phí & Zalo Bot Tự Động]]\n\n---\n\n## ⚡ HƯỚNG DẪN TRUY XUẤT NHANH (QUICK ACTIONS)\n- **Mở trong Obsidian:** Nhấn `Ctrl + O` để tìm nhanh bất kỳ khái niệm nào.\n- **Xem Đồ Thị Tri Thức:** Nhấn `Ctrl + G` để mở **Graph View**, chiêm ngưỡng toàn bộ mạng lưới node tri thức liên kết 3D.\n- **Tra cứu trên Web:** Truy cập trực tiếp tại endpoint `/second-brain` trên ứng dụng SvelteKit.\n",
+      "content": "# 🧠 BẢN ĐỒ TRI THỨC TỔNG THỂ (MASTER MAP OF CONTENT)\n\nChào mừng bạn đến với **Second Brain Tiếng Anh Cô Dung** — hệ thống tri thức số hóa thế hệ mới liên kết đa chiều, chuẩn hóa theo khung chương trình GDPT 2018 của Bộ Giáo dục & Đào tạo Việt Nam và Khung tham chiếu Ngôn ngữ Chung Châu Âu (CEFR: Pre-A1 đến C1).\n\n> [!abstract] Kiến Trúc Second Brain 6 Trụ Cột (Hexagonal Knowledge Engine)\n> Vault tri thức này được thiết kế theo phương pháp **Zettelkasten** kết hợp với **Map of Content (MOC)**. Mọi quy tắc ngữ pháp, rễ từ vựng và câu hỏi thi đều có liên kết hai chiều `[[WikiLinks]]`, giúp người học và giáo viên truy xuất kiến thức tức thì.\n\n---\n\n## 🗺️ 6 Trụ Cột Tri Thức Cốt Lõi\n\n```mermaid\ngraph TD\n    MOC[\"🧠 00_INDEX_MOC (Trung Tâm Tri Thức)\"]\n    P1[\"📚 01. Chương Trình GDPT 2018\"]\n    P2[\"📐 02. Chuyên Đề Ngữ Pháp Master\"]\n    P3[\"🔤 03. Bản Đồ Từ Vựng & Phonics\"]\n    P4[\"📝 04. Ngân Hàng Đề Thi & Kỹ Năng\"]\n    P5[\"👩‍🏫 05. Sư Phạm & Vận Hành SOP\"]\n    P6[\"⚡ 06. Mạng Nơ-ron & Synapses\"]\n\n    MOC --> P1\n    MOC --> P2\n    MOC --> P3\n    MOC --> P4\n    MOC --> P5\n    MOC --> P6\n\n    P1 <--> P2\n    P2 <--> P4\n    P3 <--> P4\n    P2 <--> P3\n    P5 <--> P1\n    P6 <--> P2\n```\n\n---\n\n### 📚 1. Phân Hệ Chương Trình GDPT 2018\n- [[GDPT_Master_Curriculum_MOC|🗺️ Bản đồ tổng chương trình GDPT 12 năm]]\n- [[Tieu_Hoc_Lop_1_5|🌱 Bậc Tiểu học (Lớp 1-5): Nền tảng Phonics & Cambridge Starters/Movers/Flyers]]\n- [[THCS_Lop_6_9|🌿 Bậc THCS (Lớp 6-9): Chinh phục KET A2 & Luyện thi Vào 10 Chuyên]]\n- [[THPT_Lop_10_12|🌳 Bậc THPT (Lớp 10-12): Chuẩn B1/B2 PET/FCE & Kỳ thi Tốt nghiệp THPT Quốc Gia]]\n- [[Global_Success_Vs_Friends_Plus_Comparative|⚖️ Bảng so sánh đối sánh Global Success vs Friends Plus]]\n- [[Cambridge_CEFR_Framework_Alignment|🎯 Khung quy chiếu năng lực CEFR & Khung 6 bậc Việt Nam]]\n\n---\n\n### 📐 2. Chuyên Đề Ngữ Pháp Chuyên Sâu (Master Grammar Base)\n- [[Grammar_Master_MOC|📐 Tổng hợp Chuyên Đề Ngữ Pháp Toàn Diện]]\n- [[Present_Tenses_Deep_Dive|⏱️ Thì Hiện Tại Đơn & Hiện Tại Tiếp Diễn]]\n- [[Past_Tenses_and_Narrative_Structures|📜 Quá Khứ Đơn, Quá Khứ Tiếp Diễn & Quá Khứ Hoàn Thành]]\n- [[Future_Tenses_and_Modality|🚀 Tương Lai Đơn, Tương Lai Gần & Tương Lai Hoàn Thành]]\n- [[Tense_Coordination_and_Sequence|🔗 Phối Hợp Thì & Mệnh Đề Trạng Ngữ Chỉ Thời Gian]]\n- [[Conditionals_Type_0_1_2_3_Mixed_Inversion|🎲 Câu Điều Kiện Loại 0-3, Hỗn Hợp & Đảo Ngữ Câu Điều Kiện]]\n- [[Reported_Speech_and_Reporting_Verbs|🗣️ Câu Tường Thuật & 20 Động Từ Tường Thuật Phức Hợp]]\n- [[Passive_Voice_and_Causative_Forms|🛡️ Thể Bị Động Nâng Cao & Cấu Trúc Nhờ Vả (Have/Get sth done)]]\n- [[Relative_Clauses_Defining_NonDefining_Reduced|🧬 Mệnh Đề Quan Hệ Xác Định, Không Xác Định & Rút Gọn Mệnh Đề]]\n- [[Inversion_and_Cleft_Sentences|⚡ Đảo Ngữ Toàn Diện & Câu Chẻ Nhấn Mạnh (Cleft Sentences)]]\n- [[Subjunctive_Mood_and_Hypothetical_Structures|🎭 Thể Giả Định, It's High Time & Cấu Trúc Would Rather]]\n- [[Gerunds_and_Infinitives_Verb_Patterns|🔄 Danh Động Từ (Gerunds) & Động Từ Nguyên Thể (Infinitives)]]\n- [[Comparatives_Superlatives_Double_Comparatives|📈 So Sánh Hơn, So Sánh Nhất & So Sánh Kép (The More... The More)]]\n- [[Phrasal_Verbs_Top_100|🎯 Top 100 Cụm Động Từ Kinh Điển Thường Ra Đề]]\n- [[Conjunctions_Connectors_Cohesive_Devices|🧩 Liên Từ, Trạng Từ Liên Kết & Phép Nối Văn Bản]]\n\n---\n\n### 🔤 3. Bản Đồ Từ Vựng & Ngữ Âm (Vocabulary Atlas)\n- [[Vocabulary_Atlas_MOC|🔤 Bản Đồ Tổng Quan Từ Vựng & Âm Vị]]\n- [[Phonics_and_IPA_Sound_System|🎙️ Hệ Thống 44 Âm Quốc Tế IPA & Phonics Tiểu Học]]\n- [[Word_Formation_Prefixes_Suffixes_Roots|🧱 Cấu Tạo Từ: Tiền Tố, Hậu Tố & Gốc Từ Tiếng Anh]]\n- [[Lexicon_Primary_G1_G5|🍼 Vốn Từ Bậc Tiểu Học (Grade 1-5 Lexicon)]]\n- [[Lexicon_Secondary_G6_G9|🎒 Vốn Từ Bậc THCS (Grade 6-9 Lexicon)]]\n- [[Lexicon_HighSchool_G10_G12|🎓 Vốn Từ Bậc THPT & Ôn Thi THPT Quốc Gia (Grade 10-12)]]\n- [[Lexicon_Academic_IELTS_C1_C2|💎 Vốn Từ Học Thuật Cao Cấp C1-C2 & IELTS Academic 7.5+]]\n- [[Collocations_and_Fixed_Phrases|🔗 Collocations & Cụm Cố Định Thường Gặp]]\n- [[False_Friends_and_Common_Confusables|⚠️ Cặp Từ Dễ Nhầm Lẫn Kinh Điển (Confusable Words)]]\n\n---\n\n### 📝 4. Ngân Hàng Đề Thi & Kỹ Năng Làm Bài\n- [[Exams_MOC|📝 Bản Đồ Ngân Hàng Đề Thi & Ma Trận Đánh Giá]]\n- [[Sentence_Transformation_Techniques_700|✍️ 700 Mô Hình Viết Lại Câu Tuyển Sinh & HSG]]\n- [[Error_Identification_Strategies|🔍 Chiến Thuật Nhận Diện & Sửa Lỗi Sai Trong Đề Thi]]\n- [[Reading_Comprehension_Paraphrase_Skills|📖 Kỹ Năng Đọc Hiểu & Kỹ Thuật Paraphrase Đoán Nghĩa]]\n- [[Phonetics_Stress_Rules_and_Tricks|🎯 Bí Kíp Ăn Điểm Phát Âm Đuôi -ed, -s/-es & Trọng Âm]]\n- [[High_School_Entrance_Exam_Vao_10_Mastery|🏛️ Cẩm Nang Ôn Thi Tuyển Sinh Vào Lớp 10 Chuyên]]\n- [[THPT_Quoc_Gia_Exam_Strategy|🎯 Chiến Thuật Đạt Điểm 9+ Tiếng Anh THPT Quốc Gia]]\n\n---\n\n### 👩‍🏫 5. Nghiệp Vụ Sư Phạm & Vận Hành (Pedagogy & SOP)\n- [[Pedagogy_MOC|👩‍🏫 Bản Đồ Nghiệp Vụ Sư Phạm & Quy Chuẩn Lớp Học]]\n- [[Differentiated_Instruction_Framework|🎯 Phương Pháp Dạy Học Phân Hóa Năng Lực Học Sinh]]\n- [[Formative_Summative_Assessment_Rubrics|📊 Tiêu Chí Đánh Giá Quá Trình & Đánh Giá Tổng Kết]]\n- [[Teacher_Panel_Game_Portal_Integration_SOP|🎮 Quy Trình Giáo Viên Mở Cổng Game Tương Tác Trên Web]]\n- [[Leader_Operational_SOP_and_Audit_Workflow|📋 Quy Trình Vận Hành & Giám Sát Tự Động Dành Cho Leader]]\n\n---\n\n### ⚡ 6. Mạng Nơ-ron & Tương Tác Đa Nguồn (Synapses)\n- [[Synapses_Master_MOC|⚡ Bản Đồ Kết Nối Đa Chiều Nơ-ron Tri Thức]]\n- [[Mindmap_Grammar_Syntactic_Trees|🌳 Cây Cú Pháp Ngữ Pháp & Sơ Đồ Tư Duy]]\n- [[Spaced_Repetition_and_Active_Recall_System|⏰ Hệ Thống Lặp Lại Ngắt Quãng (Spaced Repetition) & Trí Nhớ Vĩnh Cửu]]\n- [[Multi_Source_Knowledge_Crawl_Matrix|🌐 Ma Trận Cào Dữ Liệu 15 Nguồn Giáo Dục Hàng Đầu]]",
+      "raw": "---\ntitle: \"🧠 Second Brain Tri Thức - Tiếng Anh Toàn Diện GDPT & CEFR\"\naliases: [\"Index\", \"Home\", \"MOC\", \"Bản Đồ Tri Thức\"]\ntags: [\"#moc\", \"#second-brain\", \"#knowledge-graph\", \"#tienganh\"]\nauthor: \"Hệ Thống Tiếng Anh Cô Dung\"\nvault_version: \"2.5.0-PRO\"\nupdated: \"2026-09-25\"\n---\n\n# 🧠 BẢN ĐỒ TRI THỨC TỔNG THỂ (MASTER MAP OF CONTENT)\n\nChào mừng bạn đến với **Second Brain Tiếng Anh Cô Dung** — hệ thống tri thức số hóa thế hệ mới liên kết đa chiều, chuẩn hóa theo khung chương trình GDPT 2018 của Bộ Giáo dục & Đào tạo Việt Nam và Khung tham chiếu Ngôn ngữ Chung Châu Âu (CEFR: Pre-A1 đến C1).\n\n> [!abstract] Kiến Trúc Second Brain 6 Trụ Cột (Hexagonal Knowledge Engine)\n> Vault tri thức này được thiết kế theo phương pháp **Zettelkasten** kết hợp với **Map of Content (MOC)**. Mọi quy tắc ngữ pháp, rễ từ vựng và câu hỏi thi đều có liên kết hai chiều `[[WikiLinks]]`, giúp người học và giáo viên truy xuất kiến thức tức thì.\n\n---\n\n## 🗺️ 6 Trụ Cột Tri Thức Cốt Lõi\n\n```mermaid\ngraph TD\n    MOC[\"🧠 00_INDEX_MOC (Trung Tâm Tri Thức)\"]\n    P1[\"📚 01. Chương Trình GDPT 2018\"]\n    P2[\"📐 02. Chuyên Đề Ngữ Pháp Master\"]\n    P3[\"🔤 03. Bản Đồ Từ Vựng & Phonics\"]\n    P4[\"📝 04. Ngân Hàng Đề Thi & Kỹ Năng\"]\n    P5[\"👩‍🏫 05. Sư Phạm & Vận Hành SOP\"]\n    P6[\"⚡ 06. Mạng Nơ-ron & Synapses\"]\n\n    MOC --> P1\n    MOC --> P2\n    MOC --> P3\n    MOC --> P4\n    MOC --> P5\n    MOC --> P6\n\n    P1 <--> P2\n    P2 <--> P4\n    P3 <--> P4\n    P2 <--> P3\n    P5 <--> P1\n    P6 <--> P2\n```\n\n---\n\n### 📚 1. Phân Hệ Chương Trình GDPT 2018\n- [[GDPT_Master_Curriculum_MOC|🗺️ Bản đồ tổng chương trình GDPT 12 năm]]\n- [[Tieu_Hoc_Lop_1_5|🌱 Bậc Tiểu học (Lớp 1-5): Nền tảng Phonics & Cambridge Starters/Movers/Flyers]]\n- [[THCS_Lop_6_9|🌿 Bậc THCS (Lớp 6-9): Chinh phục KET A2 & Luyện thi Vào 10 Chuyên]]\n- [[THPT_Lop_10_12|🌳 Bậc THPT (Lớp 10-12): Chuẩn B1/B2 PET/FCE & Kỳ thi Tốt nghiệp THPT Quốc Gia]]\n- [[Global_Success_Vs_Friends_Plus_Comparative|⚖️ Bảng so sánh đối sánh Global Success vs Friends Plus]]\n- [[Cambridge_CEFR_Framework_Alignment|🎯 Khung quy chiếu năng lực CEFR & Khung 6 bậc Việt Nam]]\n\n---\n\n### 📐 2. Chuyên Đề Ngữ Pháp Chuyên Sâu (Master Grammar Base)\n- [[Grammar_Master_MOC|📐 Tổng hợp Chuyên Đề Ngữ Pháp Toàn Diện]]\n- [[Present_Tenses_Deep_Dive|⏱️ Thì Hiện Tại Đơn & Hiện Tại Tiếp Diễn]]\n- [[Past_Tenses_and_Narrative_Structures|📜 Quá Khứ Đơn, Quá Khứ Tiếp Diễn & Quá Khứ Hoàn Thành]]\n- [[Future_Tenses_and_Modality|🚀 Tương Lai Đơn, Tương Lai Gần & Tương Lai Hoàn Thành]]\n- [[Tense_Coordination_and_Sequence|🔗 Phối Hợp Thì & Mệnh Đề Trạng Ngữ Chỉ Thời Gian]]\n- [[Conditionals_Type_0_1_2_3_Mixed_Inversion|🎲 Câu Điều Kiện Loại 0-3, Hỗn Hợp & Đảo Ngữ Câu Điều Kiện]]\n- [[Reported_Speech_and_Reporting_Verbs|🗣️ Câu Tường Thuật & 20 Động Từ Tường Thuật Phức Hợp]]\n- [[Passive_Voice_and_Causative_Forms|🛡️ Thể Bị Động Nâng Cao & Cấu Trúc Nhờ Vả (Have/Get sth done)]]\n- [[Relative_Clauses_Defining_NonDefining_Reduced|🧬 Mệnh Đề Quan Hệ Xác Định, Không Xác Định & Rút Gọn Mệnh Đề]]\n- [[Inversion_and_Cleft_Sentences|⚡ Đảo Ngữ Toàn Diện & Câu Chẻ Nhấn Mạnh (Cleft Sentences)]]\n- [[Subjunctive_Mood_and_Hypothetical_Structures|🎭 Thể Giả Định, It's High Time & Cấu Trúc Would Rather]]\n- [[Gerunds_and_Infinitives_Verb_Patterns|🔄 Danh Động Từ (Gerunds) & Động Từ Nguyên Thể (Infinitives)]]\n- [[Comparatives_Superlatives_Double_Comparatives|📈 So Sánh Hơn, So Sánh Nhất & So Sánh Kép (The More... The More)]]\n- [[Phrasal_Verbs_Top_100|🎯 Top 100 Cụm Động Từ Kinh Điển Thường Ra Đề]]\n- [[Conjunctions_Connectors_Cohesive_Devices|🧩 Liên Từ, Trạng Từ Liên Kết & Phép Nối Văn Bản]]\n\n---\n\n### 🔤 3. Bản Đồ Từ Vựng & Ngữ Âm (Vocabulary Atlas)\n- [[Vocabulary_Atlas_MOC|🔤 Bản Đồ Tổng Quan Từ Vựng & Âm Vị]]\n- [[Phonics_and_IPA_Sound_System|🎙️ Hệ Thống 44 Âm Quốc Tế IPA & Phonics Tiểu Học]]\n- [[Word_Formation_Prefixes_Suffixes_Roots|🧱 Cấu Tạo Từ: Tiền Tố, Hậu Tố & Gốc Từ Tiếng Anh]]\n- [[Lexicon_Primary_G1_G5|🍼 Vốn Từ Bậc Tiểu Học (Grade 1-5 Lexicon)]]\n- [[Lexicon_Secondary_G6_G9|🎒 Vốn Từ Bậc THCS (Grade 6-9 Lexicon)]]\n- [[Lexicon_HighSchool_G10_G12|🎓 Vốn Từ Bậc THPT & Ôn Thi THPT Quốc Gia (Grade 10-12)]]\n- [[Lexicon_Academic_IELTS_C1_C2|💎 Vốn Từ Học Thuật Cao Cấp C1-C2 & IELTS Academic 7.5+]]\n- [[Collocations_and_Fixed_Phrases|🔗 Collocations & Cụm Cố Định Thường Gặp]]\n- [[False_Friends_and_Common_Confusables|⚠️ Cặp Từ Dễ Nhầm Lẫn Kinh Điển (Confusable Words)]]\n\n---\n\n### 📝 4. Ngân Hàng Đề Thi & Kỹ Năng Làm Bài\n- [[Exams_MOC|📝 Bản Đồ Ngân Hàng Đề Thi & Ma Trận Đánh Giá]]\n- [[Sentence_Transformation_Techniques_700|✍️ 700 Mô Hình Viết Lại Câu Tuyển Sinh & HSG]]\n- [[Error_Identification_Strategies|🔍 Chiến Thuật Nhận Diện & Sửa Lỗi Sai Trong Đề Thi]]\n- [[Reading_Comprehension_Paraphrase_Skills|📖 Kỹ Năng Đọc Hiểu & Kỹ Thuật Paraphrase Đoán Nghĩa]]\n- [[Phonetics_Stress_Rules_and_Tricks|🎯 Bí Kíp Ăn Điểm Phát Âm Đuôi -ed, -s/-es & Trọng Âm]]\n- [[High_School_Entrance_Exam_Vao_10_Mastery|🏛️ Cẩm Nang Ôn Thi Tuyển Sinh Vào Lớp 10 Chuyên]]\n- [[THPT_Quoc_Gia_Exam_Strategy|🎯 Chiến Thuật Đạt Điểm 9+ Tiếng Anh THPT Quốc Gia]]\n\n---\n\n### 👩‍🏫 5. Nghiệp Vụ Sư Phạm & Vận Hành (Pedagogy & SOP)\n- [[Pedagogy_MOC|👩‍🏫 Bản Đồ Nghiệp Vụ Sư Phạm & Quy Chuẩn Lớp Học]]\n- [[Differentiated_Instruction_Framework|🎯 Phương Pháp Dạy Học Phân Hóa Năng Lực Học Sinh]]\n- [[Formative_Summative_Assessment_Rubrics|📊 Tiêu Chí Đánh Giá Quá Trình & Đánh Giá Tổng Kết]]\n- [[Teacher_Panel_Game_Portal_Integration_SOP|🎮 Quy Trình Giáo Viên Mở Cổng Game Tương Tác Trên Web]]\n- [[Leader_Operational_SOP_and_Audit_Workflow|📋 Quy Trình Vận Hành & Giám Sát Tự Động Dành Cho Leader]]\n\n---\n\n### ⚡ 6. Mạng Nơ-ron & Tương Tác Đa Nguồn (Synapses)\n- [[Synapses_Master_MOC|⚡ Bản Đồ Kết Nối Đa Chiều Nơ-ron Tri Thức]]\n- [[Mindmap_Grammar_Syntactic_Trees|🌳 Cây Cú Pháp Ngữ Pháp & Sơ Đồ Tư Duy]]\n- [[Spaced_Repetition_and_Active_Recall_System|⏰ Hệ Thống Lặp Lại Ngắt Quãng (Spaced Repetition) & Trí Nhớ Vĩnh Cửu]]\n- [[Multi_Source_Knowledge_Crawl_Matrix|🌐 Ma Trận Cào Dữ Liệu 15 Nguồn Giáo Dục Hàng Đầu]]\n",
       "wikilinks": [
         {
-          "target": "...",
-          "label": "..."
+          "target": "WikiLinks",
+          "label": "WikiLinks"
         },
         {
           "target": "GDPT_Master_Curriculum_MOC",
-          "label": "📚 01. Chương Trình GDPT & Lộ Trình 12 Năm"
+          "label": "🗺️ Bản đồ tổng chương trình GDPT 12 năm"
         },
         {
           "target": "Tieu_Hoc_Lop_1_5",
-          "label": "🌱 Bậc Tiểu Học (Lớp 1 - 5)"
+          "label": "🌱 Bậc Tiểu học (Lớp 1-5): Nền tảng Phonics & Cambridge Starters/Movers/Flyers"
         },
         {
           "target": "THCS_Lop_6_9",
-          "label": "🌿 Bậc THCS (Lớp 6 - 9)"
+          "label": "🌿 Bậc THCS (Lớp 6-9): Chinh phục KET A2 & Luyện thi Vào 10 Chuyên"
         },
         {
           "target": "THPT_Lop_10_12",
-          "label": "🌳 Bậc THPT (Lớp 10 - 12)"
+          "label": "🌳 Bậc THPT (Lớp 10-12): Chuẩn B1/B2 PET/FCE & Kỳ thi Tốt nghiệp THPT Quốc Gia"
         },
         {
-          "target": "International_IELTS_TOEIC_CEFR",
-          "label": "🌏 Hệ Thống Chứng Chỉ Quốc Tế"
+          "target": "Global_Success_Vs_Friends_Plus_Comparative",
+          "label": "⚖️ Bảng so sánh đối sánh Global Success vs Friends Plus"
+        },
+        {
+          "target": "Cambridge_CEFR_Framework_Alignment",
+          "label": "🎯 Khung quy chiếu năng lực CEFR & Khung 6 bậc Việt Nam"
         },
         {
           "target": "Grammar_Master_MOC",
-          "label": "📐 02. Cơ Sở Tri Thức Ngữ Pháp Toàn Diện (Grammar Vault)"
+          "label": "📐 Tổng hợp Chuyên Đề Ngữ Pháp Toàn Diện"
         },
         {
-          "target": "Present_Simple_and_Continuous",
-          "label": "Present_Simple_and_Continuous"
+          "target": "Present_Tenses_Deep_Dive",
+          "label": "⏱️ Thì Hiện Tại Đơn & Hiện Tại Tiếp Diễn"
         },
         {
-          "target": "Past_Simple_and_Continuous",
-          "label": "Past_Simple_and_Continuous"
+          "target": "Past_Tenses_and_Narrative_Structures",
+          "label": "📜 Quá Khứ Đơn, Quá Khứ Tiếp Diễn & Quá Khứ Hoàn Thành"
         },
         {
-          "target": "Present_Perfect_Mastery",
-          "label": "Present_Perfect_Mastery"
+          "target": "Future_Tenses_and_Modality",
+          "label": "🚀 Tương Lai Đơn, Tương Lai Gần & Tương Lai Hoàn Thành"
         },
         {
-          "target": "Future_Forms_and_Intentions",
-          "label": "Future_Forms_and_Intentions"
+          "target": "Tense_Coordination_and_Sequence",
+          "label": "🔗 Phối Hợp Thì & Mệnh Đề Trạng Ngữ Chỉ Thời Gian"
         },
         {
-          "target": "Conditionals_Type_1_2_3_Mixed",
-          "label": "Conditionals_Type_1_2_3_Mixed"
-        },
-        {
-          "target": "Relative_Clauses_Defining_NonDefining",
-          "label": "Relative_Clauses_Defining_NonDefining"
-        },
-        {
-          "target": "Passive_Voice_and_Causative",
-          "label": "Passive_Voice_and_Causative"
+          "target": "Conditionals_Type_0_1_2_3_Mixed_Inversion",
+          "label": "🎲 Câu Điều Kiện Loại 0-3, Hỗn Hợp & Đảo Ngữ Câu Điều Kiện"
         },
         {
           "target": "Reported_Speech_and_Reporting_Verbs",
-          "label": "Reported_Speech_and_Reporting_Verbs"
+          "label": "🗣️ Câu Tường Thuật & 20 Động Từ Tường Thuật Phức Hợp"
+        },
+        {
+          "target": "Passive_Voice_and_Causative_Forms",
+          "label": "🛡️ Thể Bị Động Nâng Cao & Cấu Trúc Nhờ Vả (Have/Get sth done)"
+        },
+        {
+          "target": "Relative_Clauses_Defining_NonDefining_Reduced",
+          "label": "🧬 Mệnh Đề Quan Hệ Xác Định, Không Xác Định & Rút Gọn Mệnh Đề"
         },
         {
           "target": "Inversion_and_Cleft_Sentences",
-          "label": "Inversion_and_Cleft_Sentences"
+          "label": "⚡ Đảo Ngữ Toàn Diện & Câu Chẻ Nhấn Mạnh (Cleft Sentences)"
         },
         {
-          "target": "Subjunctive_Mood_and_Wish",
-          "label": "Subjunctive_Mood_and_Wish"
+          "target": "Subjunctive_Mood_and_Hypothetical_Structures",
+          "label": "🎭 Thể Giả Định, It's High Time & Cấu Trúc Would Rather"
         },
         {
-          "target": "Stative_vs_Dynamic_Verbs",
-          "label": "Stative_vs_Dynamic_Verbs"
+          "target": "Gerunds_and_Infinitives_Verb_Patterns",
+          "label": "🔄 Danh Động Từ (Gerunds) & Động Từ Nguyên Thể (Infinitives)"
+        },
+        {
+          "target": "Comparatives_Superlatives_Double_Comparatives",
+          "label": "📈 So Sánh Hơn, So Sánh Nhất & So Sánh Kép (The More... The More)"
         },
         {
           "target": "Phrasal_Verbs_Top_100",
-          "label": "Phrasal_Verbs_Top_100"
+          "label": "🎯 Top 100 Cụm Động Từ Kinh Điển Thường Ra Đề"
         },
         {
-          "target": "Conjunctions_and_Adverbial_Clauses",
-          "label": "Conjunctions_and_Adverbial_Clauses"
-        },
-        {
-          "target": "Comparison_Equal_Comparative_Superlative",
-          "label": "Comparison_Equal_Comparative_Superlative"
+          "target": "Conjunctions_Connectors_Cohesive_Devices",
+          "label": "🧩 Liên Từ, Trạng Từ Liên Kết & Phép Nối Văn Bản"
         },
         {
           "target": "Vocabulary_Atlas_MOC",
-          "label": "🔤 03. Bản Đồ Từ Vựng & Âm Vị Học (Lexicon Atlas)"
+          "label": "🔤 Bản Đồ Tổng Quan Từ Vựng & Âm Vị"
         },
         {
           "target": "Phonics_and_IPA_Sound_System",
-          "label": "🔊 Hệ Thống 44 Âm Quốc Tế IPA & Quy Tắc Ngữ Âm"
+          "label": "🎙️ Hệ Thống 44 Âm Quốc Tế IPA & Phonics Tiểu Học"
         },
         {
-          "target": "Word_Formation_and_Affixes",
-          "label": "🧩 Cấu Tạo Từ & Tiền Tố - Hậu Tố"
+          "target": "Word_Formation_Prefixes_Suffixes_Roots",
+          "label": "🧱 Cấu Tạo Từ: Tiền Tố, Hậu Tố & Gốc Từ Tiếng Anh"
         },
         {
           "target": "Lexicon_Primary_G1_G5",
-          "label": "Pre-A1 -> A1 (Tiểu học)"
+          "label": "🍼 Vốn Từ Bậc Tiểu Học (Grade 1-5 Lexicon)"
         },
         {
           "target": "Lexicon_Secondary_G6_G9",
-          "label": "A2 -> B1 (THCS)"
+          "label": "🎒 Vốn Từ Bậc THCS (Grade 6-9 Lexicon)"
         },
         {
           "target": "Lexicon_HighSchool_G10_G12",
-          "label": "B1+ -> B2 (THPT)"
+          "label": "🎓 Vốn Từ Bậc THPT & Ôn Thi THPT Quốc Gia (Grade 10-12)"
         },
         {
           "target": "Lexicon_Academic_IELTS_C1_C2",
-          "label": "C1 -> C2 (Học sinh giỏi & IELTS)"
+          "label": "💎 Vốn Từ Học Thuật Cao Cấp C1-C2 & IELTS Academic 7.5+"
         },
         {
-          "target": "Collocations_and_Idiomatic_Expressions",
-          "label": "💡 Cụm Từ Cố Định & Thành Ngữ Điểm Cao"
+          "target": "Collocations_and_Fixed_Phrases",
+          "label": "🔗 Collocations & Cụm Cố Định Thường Gặp"
+        },
+        {
+          "target": "False_Friends_and_Common_Confusables",
+          "label": "⚠️ Cặp Từ Dễ Nhầm Lẫn Kinh Điển (Confusable Words)"
         },
         {
           "target": "Exams_MOC",
-          "label": "📝 04. Ngân Hàng Đề Thi & Kỹ Thuật Làm Bài"
-        },
-        {
-          "target": "HSG_Grade7_YenLap_Breakdown",
-          "label": "🏆 Đề HSG Lớp 7 Huyện Yên Lập (Phân tích chi tiết)"
-        },
-        {
-          "target": "HSG_Grade12_QuangNam_Breakdown",
-          "label": "🥇 Đề HSG Tỉnh Lớp 12 Quảng Nam (Phân tích đáp án)"
-        },
-        {
-          "target": "THPT_QuocGia_2026_Format",
-          "label": "🎯 Định Dạng Đề Thi Tốt Nghiệp THPT Mới 2026"
+          "label": "📝 Bản Đồ Ngân Hàng Đề Thi & Ma Trận Đánh Giá"
         },
         {
           "target": "Sentence_Transformation_Techniques_700",
-          "label": "✍️ 700 Dạng Bài Viết Lại Câu Tuyển Chọn"
+          "label": "✍️ 700 Mô Hình Viết Lại Câu Tuyển Sinh & HSG"
         },
         {
-          "target": "IELTS_Academic_Reading_Techniques",
-          "label": "📖 Kỹ Thuật Skimming/Scanning Reading IELTS 8.0+"
+          "target": "Error_Identification_Strategies",
+          "label": "🔍 Chiến Thuật Nhận Diện & Sửa Lỗi Sai Trong Đề Thi"
+        },
+        {
+          "target": "Reading_Comprehension_Paraphrase_Skills",
+          "label": "📖 Kỹ Năng Đọc Hiểu & Kỹ Thuật Paraphrase Đoán Nghĩa"
+        },
+        {
+          "target": "Phonetics_Stress_Rules_and_Tricks",
+          "label": "🎯 Bí Kíp Ăn Điểm Phát Âm Đuôi -ed, -s/-es & Trọng Âm"
+        },
+        {
+          "target": "High_School_Entrance_Exam_Vao_10_Mastery",
+          "label": "🏛️ Cẩm Nang Ôn Thi Tuyển Sinh Vào Lớp 10 Chuyên"
+        },
+        {
+          "target": "THPT_Quoc_Gia_Exam_Strategy",
+          "label": "🎯 Chiến Thuật Đạt Điểm 9+ Tiếng Anh THPT Quốc Gia"
         },
         {
           "target": "Pedagogy_MOC",
-          "label": "👩‍🏫 05. Sổ Tay Nghiệp Vụ & Quy Chuẩn Giảng Dạy Cô Dung"
+          "label": "👩‍🏫 Bản Đồ Nghiệp Vụ Sư Phạm & Quy Chuẩn Lớp Học"
         },
         {
-          "target": "Co_Dung_Teaching_Philosophy",
-          "label": "✨ Triết Lý Giáo Dục Đa Trí Thông Minh"
+          "target": "Differentiated_Instruction_Framework",
+          "label": "🎯 Phương Pháp Dạy Học Phân Hóa Năng Lực Học Sinh"
         },
         {
-          "target": "Gamification_and_Star_Rewards_Rubric",
-          "label": "⭐ Quy Chuẩn Thưởng Sao & Đấu Trường Game"
+          "target": "Formative_Summative_Assessment_Rubrics",
+          "label": "📊 Tiêu Chí Đánh Giá Quá Trình & Đánh Giá Tổng Kết"
         },
         {
-          "target": "Tuition_and_Parent_Communication_SOP",
-          "label": "📱 Quy Trình Báo Cáo Học Phí & Zalo Bot Tự Động"
+          "target": "Teacher_Panel_Game_Portal_Integration_SOP",
+          "label": "🎮 Quy Trình Giáo Viên Mở Cổng Game Tương Tác Trên Web"
+        },
+        {
+          "target": "Leader_Operational_SOP_and_Audit_Workflow",
+          "label": "📋 Quy Trình Vận Hành & Giám Sát Tự Động Dành Cho Leader"
+        },
+        {
+          "target": "Synapses_Master_MOC",
+          "label": "⚡ Bản Đồ Kết Nối Đa Chiều Nơ-ron Tri Thức"
+        },
+        {
+          "target": "Mindmap_Grammar_Syntactic_Trees",
+          "label": "🌳 Cây Cú Pháp Ngữ Pháp & Sơ Đồ Tư Duy"
+        },
+        {
+          "target": "Spaced_Repetition_and_Active_Recall_System",
+          "label": "⏰ Hệ Thống Lặp Lại Ngắt Quãng (Spaced Repetition) & Trí Nhớ Vĩnh Cửu"
+        },
+        {
+          "target": "Multi_Source_Knowledge_Crawl_Matrix",
+          "label": "🌐 Ma Trận Cào Dữ Liệu 15 Nguồn Giáo Dục Hàng Đầu"
         }
       ],
-      "char_count": 4121
+      "char_count": 5929
+    },
+    {
+      "id": "Cambridge_CEFR_Framework_Alignment",
+      "filename": "Cambridge_CEFR_Framework_Alignment.md",
+      "folder": "01_CURRICULUM_GDPT",
+      "title": "Khung Tham Chiếu Năng Lực Ngôn Ngữ CEFR & Chuẩn GDPT",
+      "tags": [
+        "#curriculum",
+        "#cefr",
+        "#cambridge"
+      ],
+      "cefr_level": "",
+      "content": "# 🎯 BẢNG QUY CHIẾU CEFR - CAMBRIDGE - GDPT VIỆT NAM\n\n| CEFR | Khung 6 Bậc VN | Kỳ Thi Cambridge Tương Đương | Cấp Lớp GDPT Khuyến Nghị | Vốn Từ Yêu Cầu |\n|---|---|---|---|---|\n| **Pre-A1** | Tiền Bậc 1 | Pre A1 Starters | Lớp 1 - 2 | 300 - 500 từ |\n| **A1** | Bậc 1 | A1 Movers | Lớp 3 - 5 | 800 - 1,200 từ |\n| **A2** | Bậc 2 | A2 Flyers / A2 Key (KET) | Lớp 6 - 7 | 1,500 - 2,000 từ |\n| **B1** | Bậc 3 | B1 Preliminary (PET) | Lớp 8 - 10 | 2,500 - 3,500 từ |\n| **B2** | Bậc 4 | B2 First (FCE) / IELTS 5.5-6.5 | Lớp 11 - 12 (Thi THPT QG) | 4,000 - 5,500 từ |\n| **C1** | Bậc 5 | C1 Advanced (CAE) / IELTS 7.0-8.0 | Học sinh giỏi Quốc Gia / Chuyên Anh | 7,000+ từ |",
+      "raw": "---\ntitle: \"Khung Tham Chiếu Năng Lực Ngôn Ngữ CEFR & Chuẩn GDPT\"\ntags: [\"#curriculum\", \"#cefr\", \"#cambridge\"]\n---\n\n# 🎯 BẢNG QUY CHIẾU CEFR - CAMBRIDGE - GDPT VIỆT NAM\n\n| CEFR | Khung 6 Bậc VN | Kỳ Thi Cambridge Tương Đương | Cấp Lớp GDPT Khuyến Nghị | Vốn Từ Yêu Cầu |\n|---|---|---|---|---|\n| **Pre-A1** | Tiền Bậc 1 | Pre A1 Starters | Lớp 1 - 2 | 300 - 500 từ |\n| **A1** | Bậc 1 | A1 Movers | Lớp 3 - 5 | 800 - 1,200 từ |\n| **A2** | Bậc 2 | A2 Flyers / A2 Key (KET) | Lớp 6 - 7 | 1,500 - 2,000 từ |\n| **B1** | Bậc 3 | B1 Preliminary (PET) | Lớp 8 - 10 | 2,500 - 3,500 từ |\n| **B2** | Bậc 4 | B2 First (FCE) / IELTS 5.5-6.5 | Lớp 11 - 12 (Thi THPT QG) | 4,000 - 5,500 từ |\n| **C1** | Bậc 5 | C1 Advanced (CAE) / IELTS 7.0-8.0 | Học sinh giỏi Quốc Gia / Chuyên Anh | 7,000+ từ |\n",
+      "wikilinks": [],
+      "char_count": 780
     },
     {
       "id": "GDPT_Master_Curriculum_MOC",
       "filename": "GDPT_Master_Curriculum_MOC.md",
       "folder": "01_CURRICULUM_GDPT",
-      "title": "📚 GDPT Master Curriculum MOC",
+      "title": "Bản Đồ Tổng Chương Trình Tiếng Anh GDPT 2018 (Grades 1-12)",
       "tags": [
         "#curriculum",
-        "#moc",
-        "#gdpt2018"
+        "#gdpt",
+        "#moc"
       ],
       "cefr_level": "",
-      "content": "# 📚 KHUNG CHƯƠNG TRÌNH GDPT 2018 & 2026 (MAP OF CONTENT)\n\nLộ trình đào tạo 12 năm học phổ thông kết nối với các chứng chỉ quốc tế:\n\n- [[Tieu_Hoc_Lop_1_5]]: Lớp 1 -> Lớp 5 (Chuẩn đầu ra Starters / Movers / Flyers).\n- [[THCS_Lop_6_9]]: Lớp 6 -> Lớp 9 (Chuẩn đầu ra KET A2 / PET B1 / Chuyên Anh).\n- [[THPT_Lop_10_12]]: Lớp 10 -> Lớp 12 (Chuẩn đầu ra THPT QG 2026 / IELTS 6.5 - 7.5+).\n- [[International_IELTS_TOEIC_CEFR]]: Bảng quy đổi chuẩn quốc tế.\n\nLiên kết với: [[00_INDEX_MOC]], [[Grammar_Master_MOC]], [[Vocabulary_Atlas_MOC]].",
-      "raw": "---\ntitle: \"📚 GDPT Master Curriculum MOC\"\ntags: [\"#curriculum\", \"#moc\", \"#gdpt2018\"]\nupdated_at: \"2026-09-25\"\n---\n# 📚 KHUNG CHƯƠNG TRÌNH GDPT 2018 & 2026 (MAP OF CONTENT)\n\nLộ trình đào tạo 12 năm học phổ thông kết nối với các chứng chỉ quốc tế:\n\n- [[Tieu_Hoc_Lop_1_5]]: Lớp 1 -> Lớp 5 (Chuẩn đầu ra Starters / Movers / Flyers).\n- [[THCS_Lop_6_9]]: Lớp 6 -> Lớp 9 (Chuẩn đầu ra KET A2 / PET B1 / Chuyên Anh).\n- [[THPT_Lop_10_12]]: Lớp 10 -> Lớp 12 (Chuẩn đầu ra THPT QG 2026 / IELTS 6.5 - 7.5+).\n- [[International_IELTS_TOEIC_CEFR]]: Bảng quy đổi chuẩn quốc tế.\n\nLiên kết với: [[00_INDEX_MOC]], [[Grammar_Master_MOC]], [[Vocabulary_Atlas_MOC]].\n",
+      "content": "# 📚 CHƯƠNG TRÌNH TIẾNG ANH GDPT 2018 (LỚP 1 - 12)\n\nChương trình GDPT môn Tiếng Anh 2018 theo định hướng phát triển năng lực giao tiếp:\n\n- [[Tieu_Hoc_Lop_1_5|🌱 Bậc Tiểu Học: Lớp 1 - 5 (Bậc 1 / CEFR A1)]]\n- [[THCS_Lop_6_9|🌿 Bậc Trung Học Cơ Sở: Lớp 6 - 9 (Bậc 2 / CEFR A2)]]\n- [[THPT_Lop_10_12|🌳 Bậc Trung Học Phổ Thông: Lớp 10 - 12 (Bậc 3 / CEFR B1-B2)]]\n- [[Global_Success_Vs_Friends_Plus_Comparative|⚖️ Bảng đối sánh Global Success vs Friends Plus]]\n- [[Cambridge_CEFR_Framework_Alignment|🎯 Khung chuẩn quy chiếu Cambridge & CEFR]]",
+      "raw": "---\ntitle: \"Bản Đồ Tổng Chương Trình Tiếng Anh GDPT 2018 (Grades 1-12)\"\ntags: [\"#curriculum\", \"#gdpt\", \"#moc\"]\naliases: [\"Chương Trình GDPT\", \"GDPT 2018 MOC\"]\n---\n\n# 📚 CHƯƠNG TRÌNH TIẾNG ANH GDPT 2018 (LỚP 1 - 12)\n\nChương trình GDPT môn Tiếng Anh 2018 theo định hướng phát triển năng lực giao tiếp:\n\n- [[Tieu_Hoc_Lop_1_5|🌱 Bậc Tiểu Học: Lớp 1 - 5 (Bậc 1 / CEFR A1)]]\n- [[THCS_Lop_6_9|🌿 Bậc Trung Học Cơ Sở: Lớp 6 - 9 (Bậc 2 / CEFR A2)]]\n- [[THPT_Lop_10_12|🌳 Bậc Trung Học Phổ Thông: Lớp 10 - 12 (Bậc 3 / CEFR B1-B2)]]\n- [[Global_Success_Vs_Friends_Plus_Comparative|⚖️ Bảng đối sánh Global Success vs Friends Plus]]\n- [[Cambridge_CEFR_Framework_Alignment|🎯 Khung chuẩn quy chiếu Cambridge & CEFR]]\n",
       "wikilinks": [
         {
           "target": "Tieu_Hoc_Lop_1_5",
-          "label": "Tieu_Hoc_Lop_1_5"
+          "label": "🌱 Bậc Tiểu Học: Lớp 1 - 5 (Bậc 1 / CEFR A1)"
         },
+        {
+          "target": "THCS_Lop_6_9",
+          "label": "🌿 Bậc Trung Học Cơ Sở: Lớp 6 - 9 (Bậc 2 / CEFR A2)"
+        },
+        {
+          "target": "THPT_Lop_10_12",
+          "label": "🌳 Bậc Trung Học Phổ Thông: Lớp 10 - 12 (Bậc 3 / CEFR B1-B2)"
+        },
+        {
+          "target": "Global_Success_Vs_Friends_Plus_Comparative",
+          "label": "⚖️ Bảng đối sánh Global Success vs Friends Plus"
+        },
+        {
+          "target": "Cambridge_CEFR_Framework_Alignment",
+          "label": "🎯 Khung chuẩn quy chiếu Cambridge & CEFR"
+        }
+      ],
+      "char_count": 697
+    },
+    {
+      "id": "Global_Success_Vs_Friends_Plus_Comparative",
+      "filename": "Global_Success_Vs_Friends_Plus_Comparative.md",
+      "folder": "01_CURRICULUM_GDPT",
+      "title": "So Sánh Đối Sách: Global Success vs Friends Plus",
+      "tags": [
+        "#curriculum",
+        "#comparative",
+        "#textbooks"
+      ],
+      "cefr_level": "",
+      "content": "# ⚖️ SO SÁNH GLOBAL SUCCESS VÀ FRIENDS PLUS\n\n| Tiêu Chí | Tiếng Anh Global Success (NXB GDVN) | Friends Plus (Chân Trời Sáng Tạo - OUP) |\n|---|---|---|\n| **Triết lý** | Bám sát ngữ cảnh Việt Nam, lồng ghép văn hóa truyền thống & di sản dân tộc | Định hướng quốc tế hóa, tăng cường kỹ năng CLIL (tích hợp môn học) |\n| **Bố cục Unit** | Getting Started -> A Closer Look 1 -> A Closer Look 2 -> Communication -> Skills 1 -> Skills 2 -> Looking Back & Project | Starter -> Vocabulary -> Reading -> Language Focus -> Vocabulary and Listening -> Language Focus -> Speaking -> Writing |\n| **Liên kết** | [[THCS_Lop_6_9]], [[Lexicon_Secondary_G6_G9]] | [[Cambridge_CEFR_Framework_Alignment]], [[Lexicon_Academic_IELTS_C1_C2]] |",
+      "raw": "---\ntitle: \"So Sánh Đối Sách: Global Success vs Friends Plus\"\ntags: [\"#curriculum\", \"#comparative\", \"#textbooks\"]\n---\n\n# ⚖️ SO SÁNH GLOBAL SUCCESS VÀ FRIENDS PLUS\n\n| Tiêu Chí | Tiếng Anh Global Success (NXB GDVN) | Friends Plus (Chân Trời Sáng Tạo - OUP) |\n|---|---|---|\n| **Triết lý** | Bám sát ngữ cảnh Việt Nam, lồng ghép văn hóa truyền thống & di sản dân tộc | Định hướng quốc tế hóa, tăng cường kỹ năng CLIL (tích hợp môn học) |\n| **Bố cục Unit** | Getting Started -> A Closer Look 1 -> A Closer Look 2 -> Communication -> Skills 1 -> Skills 2 -> Looking Back & Project | Starter -> Vocabulary -> Reading -> Language Focus -> Vocabulary and Listening -> Language Focus -> Speaking -> Writing |\n| **Liên kết** | [[THCS_Lop_6_9]], [[Lexicon_Secondary_G6_G9]] | [[Cambridge_CEFR_Framework_Alignment]], [[Lexicon_Academic_IELTS_C1_C2]] |\n",
+      "wikilinks": [
         {
           "target": "THCS_Lop_6_9",
           "label": "THCS_Lop_6_9"
         },
         {
-          "target": "THPT_Lop_10_12",
-          "label": "THPT_Lop_10_12"
+          "target": "Lexicon_Secondary_G6_G9",
+          "label": "Lexicon_Secondary_G6_G9"
         },
         {
-          "target": "International_IELTS_TOEIC_CEFR",
-          "label": "International_IELTS_TOEIC_CEFR"
+          "target": "Cambridge_CEFR_Framework_Alignment",
+          "label": "Cambridge_CEFR_Framework_Alignment"
         },
         {
-          "target": "00_INDEX_MOC",
-          "label": "00_INDEX_MOC"
-        },
-        {
-          "target": "Grammar_Master_MOC",
-          "label": "Grammar_Master_MOC"
-        },
-        {
-          "target": "Vocabulary_Atlas_MOC",
-          "label": "Vocabulary_Atlas_MOC"
+          "target": "Lexicon_Academic_IELTS_C1_C2",
+          "label": "Lexicon_Academic_IELTS_C1_C2"
         }
       ],
-      "char_count": 644
+      "char_count": 839
     },
     {
       "id": "THCS_Lop_6_9",
       "filename": "THCS_Lop_6_9.md",
       "folder": "01_CURRICULUM_GDPT",
-      "title": "🌿 Bậc THCS (Lớp 6 - 9) - Bứt Phá Ngữ Pháp & Bồi Dưỡng HSG",
+      "title": "Bậc THCS: Lớp 6 Đến Lớp 9 (GDPT 2018 & Luyện Thi Vào 10)",
       "tags": [
-        "#curriculum/secondary",
-        "#cefr/a2",
-        "#cefr/b1"
+        "#curriculum",
+        "#secondary",
+        "#ket",
+        "#vao-10"
       ],
       "cefr_level": "",
-      "content": "# 🌿 CHƯƠNG TRÌNH TIẾNG ANH THCS (LỚP 6 - 9)\n\n## 1. Trọng tâm học thuật\n- Nắm vững 12 thì cơ bản, câu bị động, câu điều kiện, mệnh đề quan hệ.\n- Chuyên sâu dạng bài [[Sentence_Transformation_Techniques_700|Viết lại câu 700 dạng]].\n- Luyện thi tuyển sinh lớp 10 THPT công lập & chuyên Anh.\n\n## 2. Phân phối chương trình\n- **Lớp 6:** My New School, Home Life, Community.\n- **Lớp 7:** Hobbies, Healthy Living, Community Service, Traffic Safety.\n- **Lớp 8:** Ethnic Groups, Local Crafts, Environmental Protection.\n- **Lớp 9:** Local Community, Wonders of Vietnam, Tourism, Careers.\n\nLiên kết: [[GDPT_Master_Curriculum_MOC]], [[HSG_Grade7_YenLap_Breakdown]], [[Lexicon_Secondary_G6_G9]].",
-      "raw": "---\ntitle: \"🌿 Bậc THCS (Lớp 6 - 9) - Bứt Phá Ngữ Pháp & Bồi Dưỡng HSG\"\ntags: [\"#curriculum/secondary\", \"#cefr/a2\", \"#cefr/b1\"]\n---\n# 🌿 CHƯƠNG TRÌNH TIẾNG ANH THCS (LỚP 6 - 9)\n\n## 1. Trọng tâm học thuật\n- Nắm vững 12 thì cơ bản, câu bị động, câu điều kiện, mệnh đề quan hệ.\n- Chuyên sâu dạng bài [[Sentence_Transformation_Techniques_700|Viết lại câu 700 dạng]].\n- Luyện thi tuyển sinh lớp 10 THPT công lập & chuyên Anh.\n\n## 2. Phân phối chương trình\n- **Lớp 6:** My New School, Home Life, Community.\n- **Lớp 7:** Hobbies, Healthy Living, Community Service, Traffic Safety.\n- **Lớp 8:** Ethnic Groups, Local Crafts, Environmental Protection.\n- **Lớp 9:** Local Community, Wonders of Vietnam, Tourism, Careers.\n\nLiên kết: [[GDPT_Master_Curriculum_MOC]], [[HSG_Grade7_YenLap_Breakdown]], [[Lexicon_Secondary_G6_G9]].\n",
+      "content": "# 🌿 CHƯƠNG TRÌNH TIẾNG ANH THCS (LỚP 6 - 9)\n\n## 🎯 Mục Tiêu Đào Tạo\n- Hoàn thiện ngữ pháp cơ bản và bước vào ngữ pháp nâng cao phục vụ kỳ thi tuyển sinh Lớp 10 và HSG.\n- Đạt trình độ **A2 Key (KET)** vào cuối Lớp 7, chuẩn bị nền tảng **B1 Preliminary (PET)** ở Lớp 8-9.\n\n## 📌 Khung Kiến Thức Trọng Tâm\n- [[Present_Tenses_Deep_Dive|Thì Hiện Tại Đơn & Hiện Tại Tiếp Diễn]]\n- [[Past_Tenses_and_Narrative_Structures|Quá Khứ Đơn & Quá Khứ Tiếp Diễn]]\n- [[Conditionals_Type_0_1_2_3_Mixed_Inversion|Câu Điều Kiện Loại 1 & 2]]\n- [[Passive_Voice_and_Causative_Forms|Câu Bị Động Cơ Bản & Nâng Cao]]\n- [[Reported_Speech_and_Reporting_Verbs|Câu Tường Thuật]]\n- [[Sentence_Transformation_Techniques_700|Kỹ thuật viết lại câu chuyển đổi thì và cấu trúc]]\n- [[High_School_Entrance_Exam_Vao_10_Mastery|Cẩm nang ôn thi vào Lớp 10]]",
+      "raw": "---\ntitle: \"Bậc THCS: Lớp 6 Đến Lớp 9 (GDPT 2018 & Luyện Thi Vào 10)\"\ntags: [\"#curriculum\", \"#secondary\", \"#ket\", \"#vao-10\"]\naliases: [\"THCS\", \"Secondary G6-G9\"]\n---\n\n# 🌿 CHƯƠNG TRÌNH TIẾNG ANH THCS (LỚP 6 - 9)\n\n## 🎯 Mục Tiêu Đào Tạo\n- Hoàn thiện ngữ pháp cơ bản và bước vào ngữ pháp nâng cao phục vụ kỳ thi tuyển sinh Lớp 10 và HSG.\n- Đạt trình độ **A2 Key (KET)** vào cuối Lớp 7, chuẩn bị nền tảng **B1 Preliminary (PET)** ở Lớp 8-9.\n\n## 📌 Khung Kiến Thức Trọng Tâm\n- [[Present_Tenses_Deep_Dive|Thì Hiện Tại Đơn & Hiện Tại Tiếp Diễn]]\n- [[Past_Tenses_and_Narrative_Structures|Quá Khứ Đơn & Quá Khứ Tiếp Diễn]]\n- [[Conditionals_Type_0_1_2_3_Mixed_Inversion|Câu Điều Kiện Loại 1 & 2]]\n- [[Passive_Voice_and_Causative_Forms|Câu Bị Động Cơ Bản & Nâng Cao]]\n- [[Reported_Speech_and_Reporting_Verbs|Câu Tường Thuật]]\n- [[Sentence_Transformation_Techniques_700|Kỹ thuật viết lại câu chuyển đổi thì và cấu trúc]]\n- [[High_School_Entrance_Exam_Vao_10_Mastery|Cẩm nang ôn thi vào Lớp 10]]\n",
       "wikilinks": [
         {
+          "target": "Present_Tenses_Deep_Dive",
+          "label": "Thì Hiện Tại Đơn & Hiện Tại Tiếp Diễn"
+        },
+        {
+          "target": "Past_Tenses_and_Narrative_Structures",
+          "label": "Quá Khứ Đơn & Quá Khứ Tiếp Diễn"
+        },
+        {
+          "target": "Conditionals_Type_0_1_2_3_Mixed_Inversion",
+          "label": "Câu Điều Kiện Loại 1 & 2"
+        },
+        {
+          "target": "Passive_Voice_and_Causative_Forms",
+          "label": "Câu Bị Động Cơ Bản & Nâng Cao"
+        },
+        {
+          "target": "Reported_Speech_and_Reporting_Verbs",
+          "label": "Câu Tường Thuật"
+        },
+        {
           "target": "Sentence_Transformation_Techniques_700",
-          "label": "Viết lại câu 700 dạng"
+          "label": "Kỹ thuật viết lại câu chuyển đổi thì và cấu trúc"
         },
         {
-          "target": "GDPT_Master_Curriculum_MOC",
-          "label": "GDPT_Master_Curriculum_MOC"
-        },
-        {
-          "target": "HSG_Grade7_YenLap_Breakdown",
-          "label": "HSG_Grade7_YenLap_Breakdown"
-        },
-        {
-          "target": "Lexicon_Secondary_G6_G9",
-          "label": "Lexicon_Secondary_G6_G9"
+          "target": "High_School_Entrance_Exam_Vao_10_Mastery",
+          "label": "Cẩm nang ôn thi vào Lớp 10"
         }
       ],
-      "char_count": 813
+      "char_count": 981
     },
     {
       "id": "THPT_Lop_10_12",
       "filename": "THPT_Lop_10_12.md",
       "folder": "01_CURRICULUM_GDPT",
-      "title": "🌳 Bậc THPT (Lớp 10 - 12) - Chinh Phục Tốt Nghiệp 2026 & Đại Học",
+      "title": "Bậc THPT: Lớp 10 Đến Lớp 12 & Ôn Thi Tốt Nghiệp THPT QG",
       "tags": [
-        "#curriculum/highschool",
-        "#cefr/b2",
-        "#cefr/c1"
+        "#curriculum",
+        "#high-school",
+        "#thpt-qg",
+        "#ielts"
       ],
       "cefr_level": "",
-      "content": "# 🌳 CHƯƠNG TRÌNH TIẾNG ANH THPT (LỚP 10 - 12)\n\n## 1. Định hướng khảo thí\n- Bám sát ma trận đề thi tốt nghiệp THPT Quốc Gia từ năm 2026.\n- Đọc hiểu chuyên sâu các chủ đề toàn cầu: [[Cities and Urbanisation]], [[Our Heritage]], Trí tuệ nhân tạo, Biến đổi khí hậu.\n- Sử dụng thành thạo [[Inversion_and_Cleft_Sentences]], [[Subjunctive_Mood_and_Wish]].\n\nLiên kết: [[GDPT_Master_Curriculum_MOC]], [[THPT_QuocGia_2026_Format]], [[HSG_Grade12_QuangNam_Breakdown]].",
-      "raw": "---\ntitle: \"🌳 Bậc THPT (Lớp 10 - 12) - Chinh Phục Tốt Nghiệp 2026 & Đại Học\"\ntags: [\"#curriculum/highschool\", \"#cefr/b2\", \"#cefr/c1\"]\n---\n# 🌳 CHƯƠNG TRÌNH TIẾNG ANH THPT (LỚP 10 - 12)\n\n## 1. Định hướng khảo thí\n- Bám sát ma trận đề thi tốt nghiệp THPT Quốc Gia từ năm 2026.\n- Đọc hiểu chuyên sâu các chủ đề toàn cầu: [[Cities and Urbanisation]], [[Our Heritage]], Trí tuệ nhân tạo, Biến đổi khí hậu.\n- Sử dụng thành thạo [[Inversion_and_Cleft_Sentences]], [[Subjunctive_Mood_and_Wish]].\n\nLiên kết: [[GDPT_Master_Curriculum_MOC]], [[THPT_QuocGia_2026_Format]], [[HSG_Grade12_QuangNam_Breakdown]].\n",
+      "content": "# 🌳 CHƯƠNG TRÌNH TIẾNG ANH THPT (LỚP 10 - 12)\n\n## 🎯 Mục Tiêu Bứt Phá\n- Làm chủ ngữ pháp học thuật, văn phong báo chí, nghiên cứu khoa học.\n- Chuẩn bị tuyệt đối cho kỳ thi Tốt nghiệp THPT Quốc Gia (Mục tiêu 9.0+) và chứng chỉ IELTS Academic 6.5 - 8.0+.\n\n## 📌 Các Chuyên Đề Phân Hóa Cao\n- [[Inversion_and_Cleft_Sentences|Đảo Ngữ Toàn Phần & Câu Chẻ Cleft Sentences]]\n- [[Subjunctive_Mood_and_Hypothetical_Structures|Thể Giả Định (Subjunctive Mood)]]\n- [[Relative_Clauses_Defining_NonDefining_Reduced|Mệnh Đề Quan Hệ Rút Gọn (V-ing / V-ed / To-inf)]]\n- [[Tense_Coordination_and_Sequence|Phối Hợp Thì Trong Mệnh Đề Trạng Ngữ Chỉ Thời Gian]]\n- [[Error_Identification_Strategies|Bẫy Tìm Lỗi Sai Kinh Điển Trong Đề THPT Quốc Gia]]\n- [[THPT_Quoc_Gia_Exam_Strategy|Chiến Lược Phân Bổ Thời Gian & Giải Đề 50 Câu]]",
+      "raw": "---\ntitle: \"Bậc THPT: Lớp 10 Đến Lớp 12 & Ôn Thi Tốt Nghiệp THPT QG\"\ntags: [\"#curriculum\", \"#high-school\", \"#thpt-qg\", \"#ielts\"]\naliases: [\"THPT\", \"High School G10-G12\"]\n---\n\n# 🌳 CHƯƠNG TRÌNH TIẾNG ANH THPT (LỚP 10 - 12)\n\n## 🎯 Mục Tiêu Bứt Phá\n- Làm chủ ngữ pháp học thuật, văn phong báo chí, nghiên cứu khoa học.\n- Chuẩn bị tuyệt đối cho kỳ thi Tốt nghiệp THPT Quốc Gia (Mục tiêu 9.0+) và chứng chỉ IELTS Academic 6.5 - 8.0+.\n\n## 📌 Các Chuyên Đề Phân Hóa Cao\n- [[Inversion_and_Cleft_Sentences|Đảo Ngữ Toàn Phần & Câu Chẻ Cleft Sentences]]\n- [[Subjunctive_Mood_and_Hypothetical_Structures|Thể Giả Định (Subjunctive Mood)]]\n- [[Relative_Clauses_Defining_NonDefining_Reduced|Mệnh Đề Quan Hệ Rút Gọn (V-ing / V-ed / To-inf)]]\n- [[Tense_Coordination_and_Sequence|Phối Hợp Thì Trong Mệnh Đề Trạng Ngữ Chỉ Thời Gian]]\n- [[Error_Identification_Strategies|Bẫy Tìm Lỗi Sai Kinh Điển Trong Đề THPT Quốc Gia]]\n- [[THPT_Quoc_Gia_Exam_Strategy|Chiến Lược Phân Bổ Thời Gian & Giải Đề 50 Câu]]\n",
       "wikilinks": [
         {
-          "target": "Cities and Urbanisation",
-          "label": "Cities and Urbanisation"
-        },
-        {
-          "target": "Our Heritage",
-          "label": "Our Heritage"
-        },
-        {
           "target": "Inversion_and_Cleft_Sentences",
-          "label": "Inversion_and_Cleft_Sentences"
+          "label": "Đảo Ngữ Toàn Phần & Câu Chẻ Cleft Sentences"
         },
         {
-          "target": "Subjunctive_Mood_and_Wish",
-          "label": "Subjunctive_Mood_and_Wish"
+          "target": "Subjunctive_Mood_and_Hypothetical_Structures",
+          "label": "Thể Giả Định (Subjunctive Mood)"
         },
         {
-          "target": "GDPT_Master_Curriculum_MOC",
-          "label": "GDPT_Master_Curriculum_MOC"
+          "target": "Relative_Clauses_Defining_NonDefining_Reduced",
+          "label": "Mệnh Đề Quan Hệ Rút Gọn (V-ing / V-ed / To-inf)"
         },
         {
-          "target": "THPT_QuocGia_2026_Format",
-          "label": "THPT_QuocGia_2026_Format"
+          "target": "Tense_Coordination_and_Sequence",
+          "label": "Phối Hợp Thì Trong Mệnh Đề Trạng Ngữ Chỉ Thời Gian"
         },
         {
-          "target": "HSG_Grade12_QuangNam_Breakdown",
-          "label": "HSG_Grade12_QuangNam_Breakdown"
+          "target": "Error_Identification_Strategies",
+          "label": "Bẫy Tìm Lỗi Sai Kinh Điển Trong Đề THPT Quốc Gia"
+        },
+        {
+          "target": "THPT_Quoc_Gia_Exam_Strategy",
+          "label": "Chiến Lược Phân Bổ Thời Gian & Giải Đề 50 Câu"
         }
       ],
-      "char_count": 596
+      "char_count": 979
     },
     {
       "id": "Tieu_Hoc_Lop_1_5",
       "filename": "Tieu_Hoc_Lop_1_5.md",
       "folder": "01_CURRICULUM_GDPT",
-      "title": "🌱 Bậc Tiểu Học (Lớp 1 - 5) - Chuẩn GDPT & Cambridge Young Learners",
+      "title": "Bậc Tiểu Học: Lớp 1 Đến Lớp 5 (GDPT 2018)",
       "tags": [
-        "#curriculum/primary",
-        "#cefr/a1"
+        "#curriculum",
+        "#primary",
+        "#phonics",
+        "#starters-movers-flyers"
       ],
       "cefr_level": "",
-      "content": "# 🌱 CHƯƠNG TRÌNH TIẾNG ANH TIỂU HỌC (LỚP 1 - 5)\n\n## 1. Mục tiêu đào tạo\n- Hình thành tình yêu với ngôn ngữ qua hình ảnh, bài hát, vận động TPR.\n- Làm chủ [[Phonics_and_IPA_Sound_System|Ngữ âm Phonics]] tự nhiên.\n- Tích lũy 500+ từ vựng cơ bản theo chủ đề trường học, gia đình, vật nuôi.\n\n## 2. Các đơn vị bài học trọng tâm\n- **Lớp 3:** Đồ dùng học tập, số đếm, màu sắc, thành viên gia đình.\n- **Lớp 4:** Giờ giấc, thời khóa biểu, nghề nghiệp cha mẹ, địa điểm công cộng.\n- **Lớp 5:** Kể về kỳ nghỉ hè quá khứ ([[Past_Simple_and_Continuous]]), thói quen hàng ngày ([[Present_Simple_and_Continuous]]).\n\nLiên kết: [[GDPT_Master_Curriculum_MOC]], [[Lexicon_Primary_G1_G5]].",
-      "raw": "---\ntitle: \"🌱 Bậc Tiểu Học (Lớp 1 - 5) - Chuẩn GDPT & Cambridge Young Learners\"\ntags: [\"#curriculum/primary\", \"#cefr/a1\"]\n---\n# 🌱 CHƯƠNG TRÌNH TIẾNG ANH TIỂU HỌC (LỚP 1 - 5)\n\n## 1. Mục tiêu đào tạo\n- Hình thành tình yêu với ngôn ngữ qua hình ảnh, bài hát, vận động TPR.\n- Làm chủ [[Phonics_and_IPA_Sound_System|Ngữ âm Phonics]] tự nhiên.\n- Tích lũy 500+ từ vựng cơ bản theo chủ đề trường học, gia đình, vật nuôi.\n\n## 2. Các đơn vị bài học trọng tâm\n- **Lớp 3:** Đồ dùng học tập, số đếm, màu sắc, thành viên gia đình.\n- **Lớp 4:** Giờ giấc, thời khóa biểu, nghề nghiệp cha mẹ, địa điểm công cộng.\n- **Lớp 5:** Kể về kỳ nghỉ hè quá khứ ([[Past_Simple_and_Continuous]]), thói quen hàng ngày ([[Present_Simple_and_Continuous]]).\n\nLiên kết: [[GDPT_Master_Curriculum_MOC]], [[Lexicon_Primary_G1_G5]].\n",
+      "content": "# 🌱 CHƯƠNG TRÌNH TIẾNG ANH TIỂU HỌC (LỚP 1 - 5)\n\n## 🎯 Mục Tiêu Giáo Dục\n- Hình thành phản xạ phát âm chuẩn thông qua [[Phonics_and_IPA_Sound_System|Hệ thống Phonics Quốc tế]].\n- Xây dựng vốn từ vựng cơ bản về bản thân, gia đình, bạn bè và thế giới xung quanh qua [[Lexicon_Primary_G1_G5|Vốn từ tiểu học]].\n- Làm quen với các bài thi đánh giá chuẩn quốc tế: Cambridge Starters (Lớp 3), Movers (Lớp 4), Flyers (Lớp 5) và các kỳ thi IOE Quốc Gia.\n\n## 📌 Khung Kiến Thức Trọng Tâm\n1. **Phonics**: Nguyên âm ngắn (/æ/, /e/, /ɪ/, /ɒ/, /ʌ/) và nguyên âm dài (/iː/, /uː/, /ɑː/, /ɔː/, /ɜː/).\n2. **Ngữ pháp sơ cấp**: Động từ To Be, cấu trúc What, Where, How many, Can/Can't.",
+      "raw": "---\ntitle: \"Bậc Tiểu Học: Lớp 1 Đến Lớp 5 (GDPT 2018)\"\ntags: [\"#curriculum\", \"#primary\", \"#phonics\", \"#starters-movers-flyers\"]\naliases: [\"Tiểu Học\", \"Primary G1-G5\"]\n---\n\n# 🌱 CHƯƠNG TRÌNH TIẾNG ANH TIỂU HỌC (LỚP 1 - 5)\n\n## 🎯 Mục Tiêu Giáo Dục\n- Hình thành phản xạ phát âm chuẩn thông qua [[Phonics_and_IPA_Sound_System|Hệ thống Phonics Quốc tế]].\n- Xây dựng vốn từ vựng cơ bản về bản thân, gia đình, bạn bè và thế giới xung quanh qua [[Lexicon_Primary_G1_G5|Vốn từ tiểu học]].\n- Làm quen với các bài thi đánh giá chuẩn quốc tế: Cambridge Starters (Lớp 3), Movers (Lớp 4), Flyers (Lớp 5) và các kỳ thi IOE Quốc Gia.\n\n## 📌 Khung Kiến Thức Trọng Tâm\n1. **Phonics**: Nguyên âm ngắn (/æ/, /e/, /ɪ/, /ɒ/, /ʌ/) và nguyên âm dài (/iː/, /uː/, /ɑː/, /ɔː/, /ɜː/).\n2. **Ngữ pháp sơ cấp**: Động từ To Be, cấu trúc What, Where, How many, Can/Can't.\n",
       "wikilinks": [
         {
           "target": "Phonics_and_IPA_Sound_System",
-          "label": "Ngữ âm Phonics"
-        },
-        {
-          "target": "Past_Simple_and_Continuous",
-          "label": "Past_Simple_and_Continuous"
-        },
-        {
-          "target": "Present_Simple_and_Continuous",
-          "label": "Present_Simple_and_Continuous"
-        },
-        {
-          "target": "GDPT_Master_Curriculum_MOC",
-          "label": "GDPT_Master_Curriculum_MOC"
+          "label": "Hệ thống Phonics Quốc tế"
         },
         {
           "target": "Lexicon_Primary_G1_G5",
-          "label": "Lexicon_Primary_G1_G5"
+          "label": "Vốn từ tiểu học"
         }
       ],
-      "char_count": 795
+      "char_count": 836
+    },
+    {
+      "id": "Comparatives_Superlatives_Double_Comparatives",
+      "filename": "Comparatives_Superlatives_Double_Comparatives.md",
+      "folder": "02_GRAMMAR_KNOWLEDGE_BASE",
+      "title": "So Sánh Hơn, So Sánh Nhất & So Sánh Kép",
+      "tags": [
+        "#grammar",
+        "#comparatives",
+        "#superlatives"
+      ],
+      "cefr_level": "",
+      "content": "# 📈 HỆ THỐNG CÂU SO SÁNH & SO SÁNH KÉP\n\n## 1. So Sánh Bằng, Hơn, Nhất\n- Bằng: `as + adj/adv + as`\n- Hơn: `adj-er / more + adj + than`\n- Nhất: `the + adj-est / the most + adj`\n\n## 2. So Sánh Kép (Double Comparatives)\n- `The + comparative + S + V, The + comparative + S + V`\n  - *The harder you work, the greater your achievement will be.*",
+      "raw": "---\ntitle: \"So Sánh Hơn, So Sánh Nhất & So Sánh Kép\"\ntags: [\"#grammar\", \"#comparatives\", \"#superlatives\"]\n---\n\n# 📈 HỆ THỐNG CÂU SO SÁNH & SO SÁNH KÉP\n\n## 1. So Sánh Bằng, Hơn, Nhất\n- Bằng: `as + adj/adv + as`\n- Hơn: `adj-er / more + adj + than`\n- Nhất: `the + adj-est / the most + adj`\n\n## 2. So Sánh Kép (Double Comparatives)\n- `The + comparative + S + V, The + comparative + S + V`\n  - *The harder you work, the greater your achievement will be.*\n",
+      "wikilinks": [],
+      "char_count": 449
+    },
+    {
+      "id": "Conditionals_Type_0_1_2_3_Mixed_Inversion",
+      "filename": "Conditionals_Type_0_1_2_3_Mixed_Inversion.md",
+      "folder": "02_GRAMMAR_KNOWLEDGE_BASE",
+      "title": "Câu Điều Kiện Loại 0-3, Hỗn Hợp & Đảo Ngữ Câu Điều Kiện",
+      "tags": [
+        "#grammar",
+        "#conditionals",
+        "#inversion"
+      ],
+      "cefr_level": "",
+      "content": "# 🎲 CÂU ĐIỀU KIỆN (CONDITIONALS) & ĐẢO NGỮ CÂU ĐIỀU KIỆN\n\n## 📊 Bảng 4 Loại Cơ Bản\n- **Type 0**: `If + S + V(hiện tại), S + V(hiện tại)` (Chân lý khoa học).\n- **Type 1**: `If + S + V(hiện tại), S + will + V-inf` (Có thể xảy ra).\n- **Type 2**: `If + S + V-ed/were, S + would + V-inf` (Trái thực tế hiện tại).\n- **Type 3**: `If + S + had + P.P, S + would have + P.P` (Trái thực tế quá khứ).\n\n## ⚡ Đảo Ngữ Câu Điều Kiện (Bỏ IF)\n1. **Loại 1**: `Should + S + V-inf, S + will + V-inf`\n2. **Loại 2**: `Were + S + to V-inf (hoặc Were + S + adj/noun), S + would + V-inf`\n3. **Loại 3**: `Had + S + P.P, S + would have + P.P`",
+      "raw": "---\ntitle: \"Câu Điều Kiện Loại 0-3, Hỗn Hợp & Đảo Ngữ Câu Điều Kiện\"\ntags: [\"#grammar\", \"#conditionals\", \"#inversion\"]\n---\n\n# 🎲 CÂU ĐIỀU KIỆN (CONDITIONALS) & ĐẢO NGỮ CÂU ĐIỀU KIỆN\n\n## 📊 Bảng 4 Loại Cơ Bản\n- **Type 0**: `If + S + V(hiện tại), S + V(hiện tại)` (Chân lý khoa học).\n- **Type 1**: `If + S + V(hiện tại), S + will + V-inf` (Có thể xảy ra).\n- **Type 2**: `If + S + V-ed/were, S + would + V-inf` (Trái thực tế hiện tại).\n- **Type 3**: `If + S + had + P.P, S + would have + P.P` (Trái thực tế quá khứ).\n\n## ⚡ Đảo Ngữ Câu Điều Kiện (Bỏ IF)\n1. **Loại 1**: `Should + S + V-inf, S + will + V-inf`\n2. **Loại 2**: `Were + S + to V-inf (hoặc Were + S + adj/noun), S + would + V-inf`\n3. **Loại 3**: `Had + S + P.P, S + would have + P.P`\n",
+      "wikilinks": [],
+      "char_count": 738
+    },
+    {
+      "id": "Conjunctions_Connectors_Cohesive_Devices",
+      "filename": "Conjunctions_Connectors_Cohesive_Devices.md",
+      "folder": "02_GRAMMAR_KNOWLEDGE_BASE",
+      "title": "Liên Từ, Trạng Từ Liên Kết & Phép Nối Văn Bản",
+      "tags": [
+        "#grammar",
+        "#conjunctions",
+        "#discourse-markers"
+      ],
+      "cefr_level": "",
+      "content": "# 🧩 LIÊN TỪ & TRẠNG TỪ LIÊN KẾT\n\n## 1. Phân Biệt Liên Từ (Conjunction) vs Giới Từ (Preposition)\n- `Because / As / Since + Clause` vs `Because of / Due to + Noun phrase / V-ing`\n- `Although / Even though + Clause` vs `Despite / In spite of + Noun phrase / V-ing`\n\n## 2. Trạng Từ Liên Kết Văn Bản (Cohesive Markers)\n- **Tương phản**: However, Nevertheless, On the contrary, In contrast.\n- **Nguyên nhân - Kết quả**: Therefore, Consequently, As a result, Thus.\n- **Bổ sung**: Furthermore, Moreover, In addition to, Besides.",
+      "raw": "---\ntitle: \"Liên Từ, Trạng Từ Liên Kết & Phép Nối Văn Bản\"\ntags: [\"#grammar\", \"#conjunctions\", \"#discourse-markers\"]\n---\n\n# 🧩 LIÊN TỪ & TRẠNG TỪ LIÊN KẾT\n\n## 1. Phân Biệt Liên Từ (Conjunction) vs Giới Từ (Preposition)\n- `Because / As / Since + Clause` vs `Because of / Due to + Noun phrase / V-ing`\n- `Although / Even though + Clause` vs `Despite / In spite of + Noun phrase / V-ing`\n\n## 2. Trạng Từ Liên Kết Văn Bản (Cohesive Markers)\n- **Tương phản**: However, Nevertheless, On the contrary, In contrast.\n- **Nguyên nhân - Kết quả**: Therefore, Consequently, As a result, Thus.\n- **Bổ sung**: Furthermore, Moreover, In addition to, Besides.\n",
+      "wikilinks": [],
+      "char_count": 643
+    },
+    {
+      "id": "Future_Tenses_and_Modality",
+      "filename": "Future_Tenses_and_Modality.md",
+      "folder": "02_GRAMMAR_KNOWLEDGE_BASE",
+      "title": "Tương Lai Đơn, Tương Lai Gần & Tương Lai Hoàn Thành",
+      "tags": [
+        "#grammar",
+        "#tenses",
+        "#future"
+      ],
+      "cefr_level": "",
+      "content": "# 🚀 CÁC THÌ TƯƠNG LAI & ĐỘNG TỪ TÌNH THÁI\n\n## 1. Phân Biệt Will vs Be Going To\n- **Will + V-inf**: Quyết định đưa ra ngay tại thời điểm nói, lời hứa, dự đoán chủ quan.\n- **Be going to + V-inf**: Kế hoạch đã có dự định từ trước, dự đoán có căn cứ/bằng chứng rõ ràng ở hiện tại (*Look at those dark clouds! It is going to rain.*).\n\n## 2. Tương Lai Hoàn Thành (Future Perfect)\n- **Công thức**: `S + will have + P.P`\n- **Dấu hiệu**: `By the end of this month`, `By next year`, `By the time + S + V(hiện tại đơn)`.\n  - *By 2030, scientists will have discovered a cure for the disease.*",
+      "raw": "---\ntitle: \"Tương Lai Đơn, Tương Lai Gần & Tương Lai Hoàn Thành\"\ntags: [\"#grammar\", \"#tenses\", \"#future\"]\n---\n\n# 🚀 CÁC THÌ TƯƠNG LAI & ĐỘNG TỪ TÌNH THÁI\n\n## 1. Phân Biệt Will vs Be Going To\n- **Will + V-inf**: Quyết định đưa ra ngay tại thời điểm nói, lời hứa, dự đoán chủ quan.\n- **Be going to + V-inf**: Kế hoạch đã có dự định từ trước, dự đoán có căn cứ/bằng chứng rõ ràng ở hiện tại (*Look at those dark clouds! It is going to rain.*).\n\n## 2. Tương Lai Hoàn Thành (Future Perfect)\n- **Công thức**: `S + will have + P.P`\n- **Dấu hiệu**: `By the end of this month`, `By next year`, `By the time + S + V(hiện tại đơn)`.\n  - *By 2030, scientists will have discovered a cure for the disease.*\n",
+      "wikilinks": [],
+      "char_count": 692
+    },
+    {
+      "id": "Gerunds_and_Infinitives_Verb_Patterns",
+      "filename": "Gerunds_and_Infinitives_Verb_Patterns.md",
+      "folder": "02_GRAMMAR_KNOWLEDGE_BASE",
+      "title": "Danh Động Từ (Gerunds) & Động Từ Nguyên Thể (Infinitives)",
+      "tags": [
+        "#grammar",
+        "#gerunds",
+        "#infinitives"
+      ],
+      "cefr_level": "",
+      "content": "# 🔄 DANH ĐỘNG TỪ & ĐỘNG TỪ NGUYÊN THỂ\n\n## 1. Động Từ Luôn Đi Với V-ing\n`admit, avoid, consider, deny, enjoy, finish, mind, practice, suggest, risk, spend time`.\n\n## 2. Động Từ Luôn Đi Với To V\n`decide, hope, plan, refuse, promise, agree, manage, afford, offer, intend`.\n\n## 3. Các Động Từ Thay Đổi Nghĩa Theo Dạng V-ing / To V\n- **Remember / Forget / Regret**:\n  - `+ To V`: Nhớ/quên/tiếc phải làm việc gì trong tương lai hoặc bổn phận.\n  - `+ V-ing`: Nhớ/quên/tiếc một việc đã làm trong quá khứ.\n- **Stop**:\n  - `Stop to V`: Dừng lại để làm việc khác.\n  - `Stop V-ing`: Dừng hẳn hành động đang làm.\n- **Try**:\n  - `Try to V`: Cố gắng nỗ lực làm gì.\n  - `Try V-ing`: Thử làm gì xem kết quả thế nào.",
+      "raw": "---\ntitle: \"Danh Động Từ (Gerunds) & Động Từ Nguyên Thể (Infinitives)\"\ntags: [\"#grammar\", \"#gerunds\", \"#infinitives\"]\n---\n\n# 🔄 DANH ĐỘNG TỪ & ĐỘNG TỪ NGUYÊN THỂ\n\n## 1. Động Từ Luôn Đi Với V-ing\n`admit, avoid, consider, deny, enjoy, finish, mind, practice, suggest, risk, spend time`.\n\n## 2. Động Từ Luôn Đi Với To V\n`decide, hope, plan, refuse, promise, agree, manage, afford, offer, intend`.\n\n## 3. Các Động Từ Thay Đổi Nghĩa Theo Dạng V-ing / To V\n- **Remember / Forget / Regret**:\n  - `+ To V`: Nhớ/quên/tiếc phải làm việc gì trong tương lai hoặc bổn phận.\n  - `+ V-ing`: Nhớ/quên/tiếc một việc đã làm trong quá khứ.\n- **Stop**:\n  - `Stop to V`: Dừng lại để làm việc khác.\n  - `Stop V-ing`: Dừng hẳn hành động đang làm.\n- **Try**:\n  - `Try to V`: Cố gắng nỗ lực làm gì.\n  - `Try V-ing`: Thử làm gì xem kết quả thế nào.\n",
+      "wikilinks": [],
+      "char_count": 822
     },
     {
       "id": "Grammar_Master_MOC",
       "filename": "Grammar_Master_MOC.md",
       "folder": "02_GRAMMAR_KNOWLEDGE_BASE",
-      "title": "📐 Grammar Master Map of Content",
+      "title": "Bản Đồ Chuyên Đề Ngữ Pháp Toàn Diện (Master Grammar MOC)",
       "tags": [
         "#grammar",
-        "#moc"
+        "#moc",
+        "#syntax"
       ],
       "cefr_level": "",
-      "content": "# 📐 CƠ SỞ TRI THỨC NGỮ PHÁP (GRAMMAR MASTER VAULT)\n\nTổng hợp các chuyên đề ngữ pháp tinh hoa phục vụ đào tạo từ cơ bản đến nâng cao:\n\n| Chuyên Đề | Cấp Độ | Liên Kết Ghi Chú | Bài Kiểm Tra Minh Họa |\n| :--- | :--- | :--- | :--- |\n| Thì Hiện Tại Đơn & Tiếp Diễn | A1 - A2 | [[Present_Simple_and_Continuous]] | [[ex_quick_15m_g7]] |\n| Thì Quá Khứ Đơn & Hoàn Thành | A2 - B1 | [[Past_Simple_and_Continuous]] | [[ex_std_45m_g7]] |\n| Hiện Tại Hoàn Thành Toàn Diện | A2 - B1 | [[Present_Perfect_Mastery]] | [[ex_g7_hsg_yen_lap]] |\n| Câu Điều Kiện Loại 1, 2, 3 & Mixed | A2 - B2 | [[Conditionals_Type_1_2_3_Mixed]] | [[ex_g9_vao_10]] |\n| Mệnh Đề Quan Hệ (Relative Clauses) | B1 - B2 | [[Relative_Clauses_Defining_NonDefining]] | [[ex_g10_gk1_friends]] |\n| Câu Bị Động & Thể Truyền Khiến | B1 - B2 | [[Passive_Voice_and_Causative]] | [[ex_g11_hsg_tinh]] |\n| Câu Gián Tiếp & Động Từ Báo Cáo | B1 - B2 | [[Reported_Speech_and_Reporting_Verbs]] | [[ex_g8_gk1_global]] |\n| Đảo Ngữ & Câu Chẻ Nhấn Mạnh | B2 - C1 | [[Inversion_and_Cleft_Sentences]] | [[ex_hsg_thpt_1000_syntax]] |\n| Thể Giả Định (Subjunctive Mood) | C1 - C2 | [[Subjunctive_Mood_and_Wish]] | [[ex_hsg_thpt_1000_syntax]] |\n| 100 Cụm Động Từ (Phrasal Verbs) | A2 - C1 | [[Phrasal_Verbs_Top_100]] | [[ex_phrasal_verbs_olympic]] |\n| Kỹ Thuật Viết Lại Câu (Rewriting) | A2 - B2 | [[Sentence_Transformation_Techniques_700]] | [[ex_rewriting_700_mastery]] |\n| Động Từ Trạng Thái vs Hành Động | B1 - B2 | [[Stative_vs_Dynamic_Verbs]] | [[ex_g11_cities_future]] |\n\nVề trang chủ: [[00_INDEX_MOC]]",
-      "raw": "---\ntitle: \"📐 Grammar Master Map of Content\"\ntags: [\"#grammar\", \"#moc\"]\nupdated_at: \"2026-09-25\"\n---\n# 📐 CƠ SỞ TRI THỨC NGỮ PHÁP (GRAMMAR MASTER VAULT)\n\nTổng hợp các chuyên đề ngữ pháp tinh hoa phục vụ đào tạo từ cơ bản đến nâng cao:\n\n| Chuyên Đề | Cấp Độ | Liên Kết Ghi Chú | Bài Kiểm Tra Minh Họa |\n| :--- | :--- | :--- | :--- |\n| Thì Hiện Tại Đơn & Tiếp Diễn | A1 - A2 | [[Present_Simple_and_Continuous]] | [[ex_quick_15m_g7]] |\n| Thì Quá Khứ Đơn & Hoàn Thành | A2 - B1 | [[Past_Simple_and_Continuous]] | [[ex_std_45m_g7]] |\n| Hiện Tại Hoàn Thành Toàn Diện | A2 - B1 | [[Present_Perfect_Mastery]] | [[ex_g7_hsg_yen_lap]] |\n| Câu Điều Kiện Loại 1, 2, 3 & Mixed | A2 - B2 | [[Conditionals_Type_1_2_3_Mixed]] | [[ex_g9_vao_10]] |\n| Mệnh Đề Quan Hệ (Relative Clauses) | B1 - B2 | [[Relative_Clauses_Defining_NonDefining]] | [[ex_g10_gk1_friends]] |\n| Câu Bị Động & Thể Truyền Khiến | B1 - B2 | [[Passive_Voice_and_Causative]] | [[ex_g11_hsg_tinh]] |\n| Câu Gián Tiếp & Động Từ Báo Cáo | B1 - B2 | [[Reported_Speech_and_Reporting_Verbs]] | [[ex_g8_gk1_global]] |\n| Đảo Ngữ & Câu Chẻ Nhấn Mạnh | B2 - C1 | [[Inversion_and_Cleft_Sentences]] | [[ex_hsg_thpt_1000_syntax]] |\n| Thể Giả Định (Subjunctive Mood) | C1 - C2 | [[Subjunctive_Mood_and_Wish]] | [[ex_hsg_thpt_1000_syntax]] |\n| 100 Cụm Động Từ (Phrasal Verbs) | A2 - C1 | [[Phrasal_Verbs_Top_100]] | [[ex_phrasal_verbs_olympic]] |\n| Kỹ Thuật Viết Lại Câu (Rewriting) | A2 - B2 | [[Sentence_Transformation_Techniques_700]] | [[ex_rewriting_700_mastery]] |\n| Động Từ Trạng Thái vs Hành Động | B1 - B2 | [[Stative_vs_Dynamic_Verbs]] | [[ex_g11_cities_future]] |\n\nVề trang chủ: [[00_INDEX_MOC]]\n",
+      "content": "# 📐 BẢN ĐỒ CHUYÊN ĐỀ NGỮ PHÁP TOÀN DIỆN\n\n- [[Present_Tenses_Deep_Dive|Thì Hiện Tại Đơn & Hiện Tại Tiếp Diễn]]\n- [[Past_Tenses_and_Narrative_Structures|Thì Quá Khứ Đơn, Quá Khứ Tiếp Diễn & Quá Khứ Hoàn Thành]]\n- [[Future_Tenses_and_Modality|Thì Tương Lai Đơn & Tương Lai Gần]]\n- [[Tense_Coordination_and_Sequence|Phối Hợp Thì Trong Mệnh Đề Trạng Ngữ Chỉ Thời Gian]]\n- [[Conditionals_Type_0_1_2_3_Mixed_Inversion|Câu Điều Kiện Loại 0, 1, 2, 3, Hỗn Hợp & Đảo Ngữ]]\n- [[Reported_Speech_and_Reporting_Verbs|Câu Tường Thuật & Động Từ Tường Thuật Chuyên Sâu]]\n- [[Passive_Voice_and_Causative_Forms|Thể Bị Động & Thể Nhờ Vả (Causative Form)]]\n- [[Relative_Clauses_Defining_NonDefining_Reduced|Mệnh Đề Quan Hệ & Kỹ Thuật Rút Gọn Mệnh Đề]]\n- [[Inversion_and_Cleft_Sentences|Đảo Ngữ & Câu Chẻ (Cleft Sentences)]]\n- [[Subjunctive_Mood_and_Hypothetical_Structures|Thể Giả Định (Subjunctive Mood) & Câu Ước Wish]]\n- [[Gerunds_and_Infinitives_Verb_Patterns|Danh Động Từ & Động Từ Nguyên Thể]]\n- [[Comparatives_Superlatives_Double_Comparatives|So Sánh Hơn, So Sánh Nhất & So Sánh Kép]]\n- [[Phrasal_Verbs_Top_100|Top 100 Cụm Động Từ Kinh Điển]]\n- [[Conjunctions_Connectors_Cohesive_Devices|Liên Từ & Trạng Từ Liên Kết]]",
+      "raw": "---\ntitle: \"Bản Đồ Chuyên Đề Ngữ Pháp Toàn Diện (Master Grammar MOC)\"\ntags: [\"#grammar\", \"#moc\", \"#syntax\"]\n---\n\n# 📐 BẢN ĐỒ CHUYÊN ĐỀ NGỮ PHÁP TOÀN DIỆN\n\n- [[Present_Tenses_Deep_Dive|Thì Hiện Tại Đơn & Hiện Tại Tiếp Diễn]]\n- [[Past_Tenses_and_Narrative_Structures|Thì Quá Khứ Đơn, Quá Khứ Tiếp Diễn & Quá Khứ Hoàn Thành]]\n- [[Future_Tenses_and_Modality|Thì Tương Lai Đơn & Tương Lai Gần]]\n- [[Tense_Coordination_and_Sequence|Phối Hợp Thì Trong Mệnh Đề Trạng Ngữ Chỉ Thời Gian]]\n- [[Conditionals_Type_0_1_2_3_Mixed_Inversion|Câu Điều Kiện Loại 0, 1, 2, 3, Hỗn Hợp & Đảo Ngữ]]\n- [[Reported_Speech_and_Reporting_Verbs|Câu Tường Thuật & Động Từ Tường Thuật Chuyên Sâu]]\n- [[Passive_Voice_and_Causative_Forms|Thể Bị Động & Thể Nhờ Vả (Causative Form)]]\n- [[Relative_Clauses_Defining_NonDefining_Reduced|Mệnh Đề Quan Hệ & Kỹ Thuật Rút Gọn Mệnh Đề]]\n- [[Inversion_and_Cleft_Sentences|Đảo Ngữ & Câu Chẻ (Cleft Sentences)]]\n- [[Subjunctive_Mood_and_Hypothetical_Structures|Thể Giả Định (Subjunctive Mood) & Câu Ước Wish]]\n- [[Gerunds_and_Infinitives_Verb_Patterns|Danh Động Từ & Động Từ Nguyên Thể]]\n- [[Comparatives_Superlatives_Double_Comparatives|So Sánh Hơn, So Sánh Nhất & So Sánh Kép]]\n- [[Phrasal_Verbs_Top_100|Top 100 Cụm Động Từ Kinh Điển]]\n- [[Conjunctions_Connectors_Cohesive_Devices|Liên Từ & Trạng Từ Liên Kết]]\n",
       "wikilinks": [
         {
-          "target": "Present_Simple_and_Continuous",
-          "label": "Present_Simple_and_Continuous"
+          "target": "Present_Tenses_Deep_Dive",
+          "label": "Thì Hiện Tại Đơn & Hiện Tại Tiếp Diễn"
         },
         {
-          "target": "ex_quick_15m_g7",
-          "label": "ex_quick_15m_g7"
+          "target": "Past_Tenses_and_Narrative_Structures",
+          "label": "Thì Quá Khứ Đơn, Quá Khứ Tiếp Diễn & Quá Khứ Hoàn Thành"
         },
         {
-          "target": "Past_Simple_and_Continuous",
-          "label": "Past_Simple_and_Continuous"
+          "target": "Future_Tenses_and_Modality",
+          "label": "Thì Tương Lai Đơn & Tương Lai Gần"
         },
         {
-          "target": "ex_std_45m_g7",
-          "label": "ex_std_45m_g7"
+          "target": "Tense_Coordination_and_Sequence",
+          "label": "Phối Hợp Thì Trong Mệnh Đề Trạng Ngữ Chỉ Thời Gian"
         },
         {
-          "target": "Present_Perfect_Mastery",
-          "label": "Present_Perfect_Mastery"
-        },
-        {
-          "target": "ex_g7_hsg_yen_lap",
-          "label": "ex_g7_hsg_yen_lap"
-        },
-        {
-          "target": "Conditionals_Type_1_2_3_Mixed",
-          "label": "Conditionals_Type_1_2_3_Mixed"
-        },
-        {
-          "target": "ex_g9_vao_10",
-          "label": "ex_g9_vao_10"
-        },
-        {
-          "target": "Relative_Clauses_Defining_NonDefining",
-          "label": "Relative_Clauses_Defining_NonDefining"
-        },
-        {
-          "target": "ex_g10_gk1_friends",
-          "label": "ex_g10_gk1_friends"
-        },
-        {
-          "target": "Passive_Voice_and_Causative",
-          "label": "Passive_Voice_and_Causative"
-        },
-        {
-          "target": "ex_g11_hsg_tinh",
-          "label": "ex_g11_hsg_tinh"
+          "target": "Conditionals_Type_0_1_2_3_Mixed_Inversion",
+          "label": "Câu Điều Kiện Loại 0, 1, 2, 3, Hỗn Hợp & Đảo Ngữ"
         },
         {
           "target": "Reported_Speech_and_Reporting_Verbs",
-          "label": "Reported_Speech_and_Reporting_Verbs"
+          "label": "Câu Tường Thuật & Động Từ Tường Thuật Chuyên Sâu"
         },
         {
-          "target": "ex_g8_gk1_global",
-          "label": "ex_g8_gk1_global"
+          "target": "Passive_Voice_and_Causative_Forms",
+          "label": "Thể Bị Động & Thể Nhờ Vả (Causative Form)"
+        },
+        {
+          "target": "Relative_Clauses_Defining_NonDefining_Reduced",
+          "label": "Mệnh Đề Quan Hệ & Kỹ Thuật Rút Gọn Mệnh Đề"
         },
         {
           "target": "Inversion_and_Cleft_Sentences",
-          "label": "Inversion_and_Cleft_Sentences"
+          "label": "Đảo Ngữ & Câu Chẻ (Cleft Sentences)"
         },
         {
-          "target": "ex_hsg_thpt_1000_syntax",
-          "label": "ex_hsg_thpt_1000_syntax"
+          "target": "Subjunctive_Mood_and_Hypothetical_Structures",
+          "label": "Thể Giả Định (Subjunctive Mood) & Câu Ước Wish"
         },
         {
-          "target": "Subjunctive_Mood_and_Wish",
-          "label": "Subjunctive_Mood_and_Wish"
+          "target": "Gerunds_and_Infinitives_Verb_Patterns",
+          "label": "Danh Động Từ & Động Từ Nguyên Thể"
         },
         {
-          "target": "ex_hsg_thpt_1000_syntax",
-          "label": "ex_hsg_thpt_1000_syntax"
+          "target": "Comparatives_Superlatives_Double_Comparatives",
+          "label": "So Sánh Hơn, So Sánh Nhất & So Sánh Kép"
         },
         {
           "target": "Phrasal_Verbs_Top_100",
-          "label": "Phrasal_Verbs_Top_100"
+          "label": "Top 100 Cụm Động Từ Kinh Điển"
         },
         {
-          "target": "ex_phrasal_verbs_olympic",
-          "label": "ex_phrasal_verbs_olympic"
-        },
-        {
-          "target": "Sentence_Transformation_Techniques_700",
-          "label": "Sentence_Transformation_Techniques_700"
-        },
-        {
-          "target": "ex_rewriting_700_mastery",
-          "label": "ex_rewriting_700_mastery"
-        },
-        {
-          "target": "Stative_vs_Dynamic_Verbs",
-          "label": "Stative_vs_Dynamic_Verbs"
-        },
-        {
-          "target": "ex_g11_cities_future",
-          "label": "ex_g11_cities_future"
-        },
-        {
-          "target": "00_INDEX_MOC",
-          "label": "00_INDEX_MOC"
+          "target": "Conjunctions_Connectors_Cohesive_Devices",
+          "label": "Liên Từ & Trạng Từ Liên Kết"
         }
       ],
-      "char_count": 1641
+      "char_count": 1316
     },
     {
       "id": "Inversion_and_Cleft_Sentences",
       "filename": "Inversion_and_Cleft_Sentences.md",
       "folder": "02_GRAMMAR_KNOWLEDGE_BASE",
-      "title": "Cấu Trúc Đảo Ngữ & Câu Chẻ Nhấn Mạnh (Inversion & Cleft Sentences)",
+      "title": "Đảo Ngữ Toàn Diện & Câu Chẻ (Inversion and Cleft Sentences)",
       "tags": [
-        "#grammar/advanced",
-        "#cefr/b2",
-        "#cefr/c1",
-        "#exam/hsg"
+        "#grammar",
+        "#inversion",
+        "#cleft",
+        "#hsg",
+        "#chuyen-anh"
       ],
       "cefr_level": "",
-      "content": "# ⚡ ĐẢO NGỮ VÀ CÂU CHẺ NHẤN MẠNH (INVERSION & CLEFT SENTENCES)\n\n> [!important] NGUYÊN TẮC VÀNG\n> Đảo ngữ là hiện tượng đưa trợ động từ lên trước chủ ngữ nhằm tăng cường độ biểu cảm hoặc nhấn mạnh tính chất phủ định.\n\n## 1. Công thức Đảo Ngữ Tổng Quát\n$$\\text{Negative Adverb} + \\text{Auxiliary} + \\text{Subject} + \\text{Main Verb}$$\n\n### A. Nhóm Phó Từ Phủ Định\n- **Hardly / Scarcely ... when:** Vừa mới ... thì ...\n  - *Ví dụ:* Hardly **had** the bell rung **when** the students left.\n- **No sooner ... than:** Vừa mới ... thì ...\n  - *Ví dụ:* No sooner **had** she arrived **than** the rain poured.\n- **Never / Rarely / Seldom:**\n  - *Ví dụ:* Never in my life **have I witnessed** such a magnificent spectacle.\n\n### B. Nhóm Cụm Từ Chứa 'No' (Đứng đầu câu đảo ngữ ngay)\n- Under no circumstances + Trợ động từ + S + V\n- At no time + Trợ động từ + S + V\n- On no account + Trợ động từ + S + V\n\n## 2. Câu Chẻ Nhấn Mạnh (Cleft Sentence)\n$$\\text{It} + \\text{is/was} + [\\text{Thành phần nhấn mạnh: S / O / Trạng từ}] + \\text{that} + \\dots$$\n\n- *Ví dụ:* **It was in Hanoi that** they first met each other. (Nhấn mạnh nơi chốn)\n- *Ví dụ:* **It was my teacher who** encouraged me to enter the English Olympic contest.\n\nLiên kết bài tập: [[ex_hsg_thpt_1000_syntax]], [[Grammar_Master_MOC]].",
-      "raw": "---\ntitle: \"Cấu Trúc Đảo Ngữ & Câu Chẻ Nhấn Mạnh (Inversion & Cleft Sentences)\"\ntags: [\"#grammar/advanced\", \"#cefr/b2\", \"#cefr/c1\", \"#exam/hsg\"]\n---\n# ⚡ ĐẢO NGỮ VÀ CÂU CHẺ NHẤN MẠNH (INVERSION & CLEFT SENTENCES)\n\n> [!important] NGUYÊN TẮC VÀNG\n> Đảo ngữ là hiện tượng đưa trợ động từ lên trước chủ ngữ nhằm tăng cường độ biểu cảm hoặc nhấn mạnh tính chất phủ định.\n\n## 1. Công thức Đảo Ngữ Tổng Quát\n$$\\text{Negative Adverb} + \\text{Auxiliary} + \\text{Subject} + \\text{Main Verb}$$\n\n### A. Nhóm Phó Từ Phủ Định\n- **Hardly / Scarcely ... when:** Vừa mới ... thì ...\n  - *Ví dụ:* Hardly **had** the bell rung **when** the students left.\n- **No sooner ... than:** Vừa mới ... thì ...\n  - *Ví dụ:* No sooner **had** she arrived **than** the rain poured.\n- **Never / Rarely / Seldom:**\n  - *Ví dụ:* Never in my life **have I witnessed** such a magnificent spectacle.\n\n### B. Nhóm Cụm Từ Chứa 'No' (Đứng đầu câu đảo ngữ ngay)\n- Under no circumstances + Trợ động từ + S + V\n- At no time + Trợ động từ + S + V\n- On no account + Trợ động từ + S + V\n\n## 2. Câu Chẻ Nhấn Mạnh (Cleft Sentence)\n$$\\text{It} + \\text{is/was} + [\\text{Thành phần nhấn mạnh: S / O / Trạng từ}] + \\text{that} + \\dots$$\n\n- *Ví dụ:* **It was in Hanoi that** they first met each other. (Nhấn mạnh nơi chốn)\n- *Ví dụ:* **It was my teacher who** encouraged me to enter the English Olympic contest.\n\nLiên kết bài tập: [[ex_hsg_thpt_1000_syntax]], [[Grammar_Master_MOC]].\n",
-      "wikilinks": [
-        {
-          "target": "ex_hsg_thpt_1000_syntax",
-          "label": "ex_hsg_thpt_1000_syntax"
-        },
-        {
-          "target": "Grammar_Master_MOC",
-          "label": "Grammar_Master_MOC"
-        }
+      "content": "# ⚡ ĐẢO NGỮ (INVERSION) & CÂU CHẺ (CLEFT SENTENCES)\n\n## 📌 Các Cấu Trúc Đảo Ngữ Thường Gặp\n1. **Trạng từ phủ định**: `Never / Hardly / Scarcely / Seldom + Trợ động từ + S + V`\n2. **No sooner... than**: `No sooner had S + P.P than S + V-ed`\n3. **Only with**: `Only when / Only after + Clause + Trợ động từ + S + V`\n   - *Only on his fourth proposal did she accept to marry him.*\n\n## 📌 Câu Chẻ (Cleft Sentences)\n- `It is/was + Thành phần cần nhấn mạnh + that + S + V`\n  - *It was in Hoi An that we experienced the ancient lantern festival.*",
+      "raw": "---\ntitle: \"Đảo Ngữ Toàn Diện & Câu Chẻ (Inversion and Cleft Sentences)\"\ntags: [\"#grammar\", \"#inversion\", \"#cleft\", \"#hsg\", \"#chuyen-anh\"]\n---\n\n# ⚡ ĐẢO NGỮ (INVERSION) & CÂU CHẺ (CLEFT SENTENCES)\n\n## 📌 Các Cấu Trúc Đảo Ngữ Thường Gặp\n1. **Trạng từ phủ định**: `Never / Hardly / Scarcely / Seldom + Trợ động từ + S + V`\n2. **No sooner... than**: `No sooner had S + P.P than S + V-ed`\n3. **Only with**: `Only when / Only after + Clause + Trợ động từ + S + V`\n   - *Only on his fourth proposal did she accept to marry him.*\n\n## 📌 Câu Chẻ (Cleft Sentences)\n- `It is/was + Thành phần cần nhấn mạnh + that + S + V`\n  - *It was in Hoi An that we experienced the ancient lantern festival.*\n",
+      "wikilinks": [],
+      "char_count": 682
+    },
+    {
+      "id": "Passive_Voice_and_Causative_Forms",
+      "filename": "Passive_Voice_and_Causative_Forms.md",
+      "folder": "02_GRAMMAR_KNOWLEDGE_BASE",
+      "title": "Thể Bị Động Nâng Cao & Cấu Trúc Nhờ Vả (Causative Forms)",
+      "tags": [
+        "#grammar",
+        "#passive-voice",
+        "#causative"
       ],
-      "char_count": 1430
+      "cefr_level": "",
+      "content": "# 🛡️ THỂ BỊ ĐỘNG NÂNG CAO & CẤU TRÚC NHỜ VẢ\n\n## 1. Bị Động Khách Quan (Impersonal Passive)\n- Câu chủ động: `People say/believe/rumour that S2 + V2`\n- Cách 1: `It is said/believed that S2 + V2`\n- Cách 2: \n  - Nếu V2 cùng thì với V1: `S2 + is/are said + TO V-inf`\n  - Nếu V2 trước thì so với V1: `S2 + is/are said + TO HAVE P.P`\n  - *People believe he committed the crime. -> He is believed to have committed the crime.*\n\n## 2. Cấu Trúc Nhờ Vả (Causative Form)\n- Chủ động: `Have sb + V-bare` / `Get sb + TO V`\n- Bị động: `Have / Get + Something + P.P (by somebody)`\n  - *I had the technician repair my laptop yesterday.*",
+      "raw": "---\ntitle: \"Thể Bị Động Nâng Cao & Cấu Trúc Nhờ Vả (Causative Forms)\"\ntags: [\"#grammar\", \"#passive-voice\", \"#causative\"]\n---\n\n# 🛡️ THỂ BỊ ĐỘNG NÂNG CAO & CẤU TRÚC NHỜ VẢ\n\n## 1. Bị Động Khách Quan (Impersonal Passive)\n- Câu chủ động: `People say/believe/rumour that S2 + V2`\n- Cách 1: `It is said/believed that S2 + V2`\n- Cách 2: \n  - Nếu V2 cùng thì với V1: `S2 + is/are said + TO V-inf`\n  - Nếu V2 trước thì so với V1: `S2 + is/are said + TO HAVE P.P`\n  - *People believe he committed the crime. -> He is believed to have committed the crime.*\n\n## 2. Cấu Trúc Nhờ Vả (Causative Form)\n- Chủ động: `Have sb + V-bare` / `Get sb + TO V`\n- Bị động: `Have / Get + Something + P.P (by somebody)`\n  - *I had the technician repair my laptop yesterday.*\n",
+      "wikilinks": [],
+      "char_count": 745
+    },
+    {
+      "id": "Past_Tenses_and_Narrative_Structures",
+      "filename": "Past_Tenses_and_Narrative_Structures.md",
+      "folder": "02_GRAMMAR_KNOWLEDGE_BASE",
+      "title": "Quá Khứ Đơn, Quá Khứ Tiếp Diễn & Quá Khứ Hoàn Thành",
+      "tags": [
+        "#grammar",
+        "#tenses",
+        "#past-simple",
+        "#past-perfect"
+      ],
+      "cefr_level": "",
+      "content": "# 📜 THÌ QUÁ KHỨ & KỸ THUẬT KỂ CHUYỆN (NARRATIVE TENSES)\n\n## 1. Quá Khứ Đơn vs Quá Khứ Tiếp Diễn\n- `S + was/were + V-ing + WHEN + S + V-ed`: Hành động đang diễn ra thì hành động khác cắt ngang.\n  - *I was walking home when it began to pour.*\n- `While + S + was/were + V-ing, S + was/were + V-ing`: Hai hành động diễn ra song song.\n\n## 2. Quá Khứ Hoàn Thành (Past Perfect)\n- **Công thức**: `S + had + P.P`\n- **Cách dùng**: Hành động xảy ra và hoàn tất TRƯỚC một hành động khác trong quá khứ.\n- **Cấu trúc nối**:\n  - `By the time + S + V(quá khứ đơn), S + had + P.P`\n  - `After + S + had + P.P, S + V(quá khứ đơn)`",
+      "raw": "---\ntitle: \"Quá Khứ Đơn, Quá Khứ Tiếp Diễn & Quá Khứ Hoàn Thành\"\ntags: [\"#grammar\", \"#tenses\", \"#past-simple\", \"#past-perfect\"]\n---\n\n# 📜 THÌ QUÁ KHỨ & KỸ THUẬT KỂ CHUYỆN (NARRATIVE TENSES)\n\n## 1. Quá Khứ Đơn vs Quá Khứ Tiếp Diễn\n- `S + was/were + V-ing + WHEN + S + V-ed`: Hành động đang diễn ra thì hành động khác cắt ngang.\n  - *I was walking home when it began to pour.*\n- `While + S + was/were + V-ing, S + was/were + V-ing`: Hai hành động diễn ra song song.\n\n## 2. Quá Khứ Hoàn Thành (Past Perfect)\n- **Công thức**: `S + had + P.P`\n- **Cách dùng**: Hành động xảy ra và hoàn tất TRƯỚC một hành động khác trong quá khứ.\n- **Cấu trúc nối**:\n  - `By the time + S + V(quá khứ đơn), S + had + P.P`\n  - `After + S + had + P.P, S + V(quá khứ đơn)`\n",
+      "wikilinks": [],
+      "char_count": 745
     },
     {
       "id": "Phrasal_Verbs_Top_100",
       "filename": "Phrasal_Verbs_Top_100.md",
       "folder": "02_GRAMMAR_KNOWLEDGE_BASE",
-      "title": "Top 100 Cụm Động Từ Thường Gặp Nhất Trong Đề Thi (Phrasal Verbs)",
+      "title": "Top 100 Cụm Động Từ Thường Gặp (Phrasal Verbs Mastery)",
       "tags": [
-        "#grammar/phrasal-verbs",
+        "#grammar",
         "#vocab",
-        "#exam"
+        "#phrasal-verbs"
       ],
       "cefr_level": "",
-      "content": "# 🎯 TOP CỤM ĐỘNG TỪ BẤT HỦ TRONG CÁC KỲ THI TIẾNG ANH\n\nTrích xuất trực tiếp từ chuyên đề Google Drive `phrasal_verbs_key.docx` & `100 cum dong tu hay gap nhat trong de thi.doc`:\n\n## 1. Nhóm 'Hold' & 'Bring'\n- **Hold up:** 1. Hoãn lại (= delay); 2. Cướp có vũ trang (= rob with weapon).\n  - *Câu thi thực tế:* The bank was **held up** by two armed men yesterday.\n- **Bring about:** Gây ra, mang lại sự chuyển biến lớn (= cause).\n  - *Câu thi thực tế:* Major technological breakthroughs will **bring about** social changes.\n\n## 2. Nhóm 'Call' & 'Put'\n- **Call off:** Hủy bỏ (= cancel).\n  - *Phân biệt:* **Put off** là trì hoãn (= postpone, delay).\n- **Put up with:** Chịu đựng (= tolerate).\n  - *Ví dụ:* I cannot **put up with** his rude behavior any longer.\n\n## 3. Nhóm 'Look'\n- **Look after:** Chăm sóc (= take care of).\n- **Look forward to + V-ing:** Mong đợi điều gì với niềm hân hoan.\n- **Look down on:** Khinh thường ai đó.\n- **Look up to:** Tôn kính, ngưỡng mộ ai đó (= admire).\n\nLiên kết bài tập: [[ex_phrasal_verbs_olympic]], [[Grammar_Master_MOC]].",
-      "raw": "---\ntitle: \"Top 100 Cụm Động Từ Thường Gặp Nhất Trong Đề Thi (Phrasal Verbs)\"\ntags: [\"#grammar/phrasal-verbs\", \"#vocab\", \"#exam\"]\n---\n# 🎯 TOP CỤM ĐỘNG TỪ BẤT HỦ TRONG CÁC KỲ THI TIẾNG ANH\n\nTrích xuất trực tiếp từ chuyên đề Google Drive `phrasal_verbs_key.docx` & `100 cum dong tu hay gap nhat trong de thi.doc`:\n\n## 1. Nhóm 'Hold' & 'Bring'\n- **Hold up:** 1. Hoãn lại (= delay); 2. Cướp có vũ trang (= rob with weapon).\n  - *Câu thi thực tế:* The bank was **held up** by two armed men yesterday.\n- **Bring about:** Gây ra, mang lại sự chuyển biến lớn (= cause).\n  - *Câu thi thực tế:* Major technological breakthroughs will **bring about** social changes.\n\n## 2. Nhóm 'Call' & 'Put'\n- **Call off:** Hủy bỏ (= cancel).\n  - *Phân biệt:* **Put off** là trì hoãn (= postpone, delay).\n- **Put up with:** Chịu đựng (= tolerate).\n  - *Ví dụ:* I cannot **put up with** his rude behavior any longer.\n\n## 3. Nhóm 'Look'\n- **Look after:** Chăm sóc (= take care of).\n- **Look forward to + V-ing:** Mong đợi điều gì với niềm hân hoan.\n- **Look down on:** Khinh thường ai đó.\n- **Look up to:** Tôn kính, ngưỡng mộ ai đó (= admire).\n\nLiên kết bài tập: [[ex_phrasal_verbs_olympic]], [[Grammar_Master_MOC]].\n",
-      "wikilinks": [
-        {
-          "target": "ex_phrasal_verbs_olympic",
-          "label": "ex_phrasal_verbs_olympic"
-        },
-        {
-          "target": "Grammar_Master_MOC",
-          "label": "Grammar_Master_MOC"
-        }
+      "content": "# 🎯 TOP 100 CỤM ĐỘNG TỪ KINH ĐIỂN TRONG ĐỀ THI\n\n- **Hold up**: Chặn cướp có vũ trang; làm trì hoãn chuyến đi.\n- **Run out of**: Cạn kiệt tiền bạc, nhiên liệu.\n- **Get over**: Vượt qua, bình phục sau bệnh tật.\n- **Look after**: Chăm sóc, nuôi dưỡng.\n- **Take after**: Có nét giống cha mẹ hoặc người thân.\n- **Turn down**: Từ chối lời mời/đơn xin việc; vặn nhỏ âm lượng.\n- **Bring up**: Nuôi nấng trẻ con; nêu ra một vấn đề để thảo luận.",
+      "raw": "---\ntitle: \"Top 100 Cụm Động Từ Thường Gặp (Phrasal Verbs Mastery)\"\ntags: [\"#grammar\", \"#vocab\", \"#phrasal-verbs\"]\n---\n\n# 🎯 TOP 100 CỤM ĐỘNG TỪ KINH ĐIỂN TRONG ĐỀ THI\n\n- **Hold up**: Chặn cướp có vũ trang; làm trì hoãn chuyến đi.\n- **Run out of**: Cạn kiệt tiền bạc, nhiên liệu.\n- **Get over**: Vượt qua, bình phục sau bệnh tật.\n- **Look after**: Chăm sóc, nuôi dưỡng.\n- **Take after**: Có nét giống cha mẹ hoặc người thân.\n- **Turn down**: Từ chối lời mời/đơn xin việc; vặn nhỏ âm lượng.\n- **Bring up**: Nuôi nấng trẻ con; nêu ra một vấn đề để thảo luận.\n",
+      "wikilinks": [],
+      "char_count": 556
+    },
+    {
+      "id": "Present_Tenses_Deep_Dive",
+      "filename": "Present_Tenses_Deep_Dive.md",
+      "folder": "02_GRAMMAR_KNOWLEDGE_BASE",
+      "title": "Thì Hiện Tại Đơn & Hiện Tại Tiếp Diễn (Present Simple & Continuous)",
+      "tags": [
+        "#grammar",
+        "#tenses",
+        "#present-simple",
+        "#present-continuous"
       ],
-      "char_count": 1191
+      "cefr_level": "",
+      "content": "# ⏱️ THÌ HIỆN TẠI ĐƠN & HIỆN TẠI TIẾP DIỄN\n\n## 1. Hiện Tại Đơn (Present Simple)\n- **Công thức**: `S + V(s/es) + O` | Phủ định: `S + do/does + not + V-inf`\n- **Cách dùng**: Chân lý hiển nhiên, thói quen lặp lại, lịch trình giờ giấc tàu xe cố định.\n- **Quy tắc đuôi -s/-es**:\n  - `/s/`: sau âm vô thanh (/p, k, f, t, θ/)\n  - `/ɪz/`: sau âm xát (/s, z, ʃ, tʃ, dʒ/)\n  - `/z/`: sau các âm còn lại\n\n## 2. Hiện Tại Tiếp Diễn (Present Continuous)\n- **Công thức**: `S + am/is/are + V-ing + O`\n- **Cách dùng**: Hành động đang diễn ra tại thời điểm nói, kế hoạch tương lai đã sắp xếp, phàn nàn với 'always'.\n- **Lưu ý bẫy Stative Verbs**: Các động từ chỉ cảm giác, tri giác, sở hữu (know, understand, believe, love, hate, prefer, belong, own) KHÔNG dùng ở thì tiếp diễn.",
+      "raw": "---\ntitle: \"Thì Hiện Tại Đơn & Hiện Tại Tiếp Diễn (Present Simple & Continuous)\"\ntags: [\"#grammar\", \"#tenses\", \"#present-simple\", \"#present-continuous\"]\n---\n\n# ⏱️ THÌ HIỆN TẠI ĐƠN & HIỆN TẠI TIẾP DIỄN\n\n## 1. Hiện Tại Đơn (Present Simple)\n- **Công thức**: `S + V(s/es) + O` | Phủ định: `S + do/does + not + V-inf`\n- **Cách dùng**: Chân lý hiển nhiên, thói quen lặp lại, lịch trình giờ giấc tàu xe cố định.\n- **Quy tắc đuôi -s/-es**:\n  - `/s/`: sau âm vô thanh (/p, k, f, t, θ/)\n  - `/ɪz/`: sau âm xát (/s, z, ʃ, tʃ, dʒ/)\n  - `/z/`: sau các âm còn lại\n\n## 2. Hiện Tại Tiếp Diễn (Present Continuous)\n- **Công thức**: `S + am/is/are + V-ing + O`\n- **Cách dùng**: Hành động đang diễn ra tại thời điểm nói, kế hoạch tương lai đã sắp xếp, phàn nàn với 'always'.\n- **Lưu ý bẫy Stative Verbs**: Các động từ chỉ cảm giác, tri giác, sở hữu (know, understand, believe, love, hate, prefer, belong, own) KHÔNG dùng ở thì tiếp diễn.\n",
+      "wikilinks": [],
+      "char_count": 918
+    },
+    {
+      "id": "Relative_Clauses_Defining_NonDefining_Reduced",
+      "filename": "Relative_Clauses_Defining_NonDefining_Reduced.md",
+      "folder": "02_GRAMMAR_KNOWLEDGE_BASE",
+      "title": "Mệnh Đề Quan Hệ Xác Định, Không Xác Định & Rút Gọn Mệnh Đề",
+      "tags": [
+        "#grammar",
+        "#relative-clause",
+        "#participles"
+      ],
+      "cefr_level": "",
+      "content": "# 🧬 MỆNH ĐỀ QUAN HỆ & RÚT GỌN MỆNH ĐỀ QUAN HỆ\n\n## 1. Phân Biệt Defining vs Non-defining\n- **Defining Clause**: Mệnh đề xác định, cần thiết để làm rõ nghĩa cho danh từ, không có dấu phẩy, dùng được `that`.\n- **Non-defining Clause**: Mệnh đề không xác định, cung cấp thêm thông tin phụ, có dấu phẩy ngăn cách, **TUYỆT ĐỐI KHÔNG DÙNG THAT**, không được lược bỏ đại từ quan hệ.\n\n## 2. Rút Gọn Mệnh Đề Quan Hệ\n1. **Dạng chủ động**: Dùng cụm hiện tại phân từ `V-ing`.\n   - *The girl who is sitting in the corner -> The girl sitting in the corner.*\n2. **Dạng bị động**: Dùng cụm quá khứ phân từ `P.P (V-ed)`.\n   - *The novel which was written by To Hoai -> The novel written by To Hoai.*\n3. **Sau the first, the second, the only, the last, so sánh nhất**: Dùng `To V-inf`.\n   - *He was the first man who set foot on the moon -> He was the first man to set foot on the moon.*",
+      "raw": "---\ntitle: \"Mệnh Đề Quan Hệ Xác Định, Không Xác Định & Rút Gọn Mệnh Đề\"\ntags: [\"#grammar\", \"#relative-clause\", \"#participles\"]\n---\n\n# 🧬 MỆNH ĐỀ QUAN HỆ & RÚT GỌN MỆNH ĐỀ QUAN HỆ\n\n## 1. Phân Biệt Defining vs Non-defining\n- **Defining Clause**: Mệnh đề xác định, cần thiết để làm rõ nghĩa cho danh từ, không có dấu phẩy, dùng được `that`.\n- **Non-defining Clause**: Mệnh đề không xác định, cung cấp thêm thông tin phụ, có dấu phẩy ngăn cách, **TUYỆT ĐỐI KHÔNG DÙNG THAT**, không được lược bỏ đại từ quan hệ.\n\n## 2. Rút Gọn Mệnh Đề Quan Hệ\n1. **Dạng chủ động**: Dùng cụm hiện tại phân từ `V-ing`.\n   - *The girl who is sitting in the corner -> The girl sitting in the corner.*\n2. **Dạng bị động**: Dùng cụm quá khứ phân từ `P.P (V-ed)`.\n   - *The novel which was written by To Hoai -> The novel written by To Hoai.*\n3. **Sau the first, the second, the only, the last, so sánh nhất**: Dùng `To V-inf`.\n   - *He was the first man who set foot on the moon -> He was the first man to set foot on the moon.*\n",
+      "wikilinks": [],
+      "char_count": 1000
+    },
+    {
+      "id": "Reported_Speech_and_Reporting_Verbs",
+      "filename": "Reported_Speech_and_Reporting_Verbs.md",
+      "folder": "02_GRAMMAR_KNOWLEDGE_BASE",
+      "title": "Câu Tường Thuật & 20 Động Từ Tường Thuật Phức Hợp",
+      "tags": [
+        "#grammar",
+        "#reported-speech",
+        "#indirect-speech"
+      ],
+      "cefr_level": "",
+      "content": "# 🗣️ CÂU TƯỜNG THUẬT & ĐỘNG TỪ TƯỜNG THUẬT CHUYÊN SÂU\n\n## 1. Ba Bước Chuyển Đổi Trực Tiếp Sang Gián Tiếp\n1. **Lùi thì**: Hiện tại đơn -> Quá khứ đơn; Hiện tại hoàn thành -> Quá khứ hoàn thành; Will -> Would; Can -> Could.\n2. **Đổi đại từ**: Thay đổi chủ ngữ, tân ngữ, tính từ sở hữu tương ứng người nói và người nghe.\n3. **Đổi trạng từ thời gian/nơi chốn**: Now -> Then; Today -> That day; Yesterday -> The day before; Tomorrow -> The next day; Here -> There; This/These -> That/Those.\n\n## 2. Các Động Từ Tường Thuật Nâng Cao\n- `Verb + to V`: offer, promise, threaten, agree, refuse.\n- `Verb + sb + to V`: advise, ask, encourage, remind, tell, warn.\n- `Verb + V-ing`: admit, deny, suggest, recommend.\n- `Verb + preposition + V-ing`: apologize for, congratulate on, insist on, accuse of.",
+      "raw": "---\ntitle: \"Câu Tường Thuật & 20 Động Từ Tường Thuật Phức Hợp\"\ntags: [\"#grammar\", \"#reported-speech\", \"#indirect-speech\"]\n---\n\n# 🗣️ CÂU TƯỜNG THUẬT & ĐỘNG TỪ TƯỜNG THUẬT CHUYÊN SÂU\n\n## 1. Ba Bước Chuyển Đổi Trực Tiếp Sang Gián Tiếp\n1. **Lùi thì**: Hiện tại đơn -> Quá khứ đơn; Hiện tại hoàn thành -> Quá khứ hoàn thành; Will -> Would; Can -> Could.\n2. **Đổi đại từ**: Thay đổi chủ ngữ, tân ngữ, tính từ sở hữu tương ứng người nói và người nghe.\n3. **Đổi trạng từ thời gian/nơi chốn**: Now -> Then; Today -> That day; Yesterday -> The day before; Tomorrow -> The next day; Here -> There; This/These -> That/Those.\n\n## 2. Các Động Từ Tường Thuật Nâng Cao\n- `Verb + to V`: offer, promise, threaten, agree, refuse.\n- `Verb + sb + to V`: advise, ask, encourage, remind, tell, warn.\n- `Verb + V-ing`: admit, deny, suggest, recommend.\n- `Verb + preposition + V-ing`: apologize for, congratulate on, insist on, accuse of.\n",
+      "wikilinks": [],
+      "char_count": 914
+    },
+    {
+      "id": "Subjunctive_Mood_and_Hypothetical_Structures",
+      "filename": "Subjunctive_Mood_and_Hypothetical_Structures.md",
+      "folder": "02_GRAMMAR_KNOWLEDGE_BASE",
+      "title": "Thể Giả Định (Subjunctive Mood) & Cấu Trúc Ước Muốn",
+      "tags": [
+        "#grammar",
+        "#subjunctive",
+        "#hsg",
+        "#chuyen-anh"
+      ],
+      "cefr_level": "",
+      "content": "# 🎭 THỂ GIẢ ĐỊNH & CẤU TRÚC GIẢ ĐỊNH NÂNG CAO\n\n## 1. Giả Định Với Động Từ Yêu Cầu / Đề Xuất\nSau `advise, demand, insist, propose, recommend, request, suggest`:\n- `S1 + Verb + THAT + S2 + (should) + V-bare`\n  - *The board insisted that every manager submit a report.*\n\n## 2. Cấu Trúc Ước Muốn WISH & IT'S HIGH TIME\n- `It is high time + S + V-ed`: Đã đến lúc phải làm gì (*It's high time you started studying.*).\n- `S + would rather + S + V-ed`: Muốn ai đó làm gì ở hiện tại.",
+      "raw": "---\ntitle: \"Thể Giả Định (Subjunctive Mood) & Cấu Trúc Ước Muốn\"\ntags: [\"#grammar\", \"#subjunctive\", \"#hsg\", \"#chuyen-anh\"]\n---\n\n# 🎭 THỂ GIẢ ĐỊNH & CẤU TRÚC GIẢ ĐỊNH NÂNG CAO\n\n## 1. Giả Định Với Động Từ Yêu Cầu / Đề Xuất\nSau `advise, demand, insist, propose, recommend, request, suggest`:\n- `S1 + Verb + THAT + S2 + (should) + V-bare`\n  - *The board insisted that every manager submit a report.*\n\n## 2. Cấu Trúc Ước Muốn WISH & IT'S HIGH TIME\n- `It is high time + S + V-ed`: Đã đến lúc phải làm gì (*It's high time you started studying.*).\n- `S + would rather + S + V-ed`: Muốn ai đó làm gì ở hiện tại.\n",
+      "wikilinks": [],
+      "char_count": 602
+    },
+    {
+      "id": "Tense_Coordination_and_Sequence",
+      "filename": "Tense_Coordination_and_Sequence.md",
+      "folder": "02_GRAMMAR_KNOWLEDGE_BASE",
+      "title": "Phối Hợp Thì & Mệnh Đề Trạng Ngữ Chỉ Thời Gian",
+      "tags": [
+        "#grammar",
+        "#tenses",
+        "#high-school",
+        "#thpt-qg"
+      ],
+      "cefr_level": "",
+      "content": "# 🔗 PHỐI HỢP THÌ TRONG MỆNH ĐỀ TRẠNG NGỮ CHỈ THỜI GIAN\n\n> [!important] Quy Tắc Bất Di Bất Dịch\n> **KHÔNG BAO GIỜ** dùng các thì TƯƠNG LAI (`will`, `shall`, `be going to`) trong mệnh đề trạng ngữ chỉ thời gian bắt đầu bằng:\n> `When`, `As soon as`, `While`, `Before`, `After`, `By the time`, `Until / Till`.\n\n## 📌 Các Cặp Phối Hợp Thì Hay Gặp Nhất\n- `S + will + V-inf + (When / As soon as) + S + V(s/es)`: *John will call as soon as he arrives.*\n- `S + was/were + V-ing + WHEN + S + V-ed`: *She was cooking when the telephone rang.*\n- `By the time + S + V-ed, S + had + P.P`: *By the time the ambulance arrived, the patient had stabilized.*",
+      "raw": "---\ntitle: \"Phối Hợp Thì & Mệnh Đề Trạng Ngữ Chỉ Thời Gian\"\ntags: [\"#grammar\", \"#tenses\", \"#high-school\", \"#thpt-qg\"]\nsources: [\"NHÓM 7 THPT Hương Khê\", \"VnDoc\"]\n---\n\n# 🔗 PHỐI HỢP THÌ TRONG MỆNH ĐỀ TRẠNG NGỮ CHỈ THỜI GIAN\n\n> [!important] Quy Tắc Bất Di Bất Dịch\n> **KHÔNG BAO GIỜ** dùng các thì TƯƠNG LAI (`will`, `shall`, `be going to`) trong mệnh đề trạng ngữ chỉ thời gian bắt đầu bằng:\n> `When`, `As soon as`, `While`, `Before`, `After`, `By the time`, `Until / Till`.\n\n## 📌 Các Cặp Phối Hợp Thì Hay Gặp Nhất\n- `S + will + V-inf + (When / As soon as) + S + V(s/es)`: *John will call as soon as he arrives.*\n- `S + was/were + V-ing + WHEN + S + V-ed`: *She was cooking when the telephone rang.*\n- `By the time + S + V-ed, S + had + P.P`: *By the time the ambulance arrived, the patient had stabilized.*\n",
+      "wikilinks": [],
+      "char_count": 806
+    },
+    {
+      "id": "Collocations_and_Fixed_Phrases",
+      "filename": "Collocations_and_Fixed_Phrases.md",
+      "folder": "03_VOCABULARY_ATLAS",
+      "title": "Collocations & Cụm Từ Cố Định Thường Gặp",
+      "tags": [
+        "#vocab",
+        "#collocations"
+      ],
+      "cefr_level": "",
+      "content": "# 🔗 COLLOCATIONS & CỤM TỪ CỐ ĐỊNH\n\n- `Make an effort`: Nỗ lực làm gì\n- `Do morning exercise`: Tập thể dục\n- `Pay attention to`: Chú ý tới\n- `Take responsibility for`: Chịu trách nhiệm về\n- `Pose a threat to`: Gây ra mối đe dọa cho",
+      "raw": "---\ntitle: \"Collocations & Cụm Từ Cố Định Thường Gặp\"\ntags: [\"#vocab\", \"#collocations\"]\n---\n\n# 🔗 COLLOCATIONS & CỤM TỪ CỐ ĐỊNH\n\n- `Make an effort`: Nỗ lực làm gì\n- `Do morning exercise`: Tập thể dục\n- `Pay attention to`: Chú ý tới\n- `Take responsibility for`: Chịu trách nhiệm về\n- `Pose a threat to`: Gây ra mối đe dọa cho\n",
+      "wikilinks": [],
+      "char_count": 324
+    },
+    {
+      "id": "False_Friends_and_Common_Confusables",
+      "filename": "False_Friends_and_Common_Confusables.md",
+      "folder": "03_VOCABULARY_ATLAS",
+      "title": "Cặp Từ Dễ Nhầm Lẫn Kinh Điển (Confusable Words)",
+      "tags": [
+        "#vocab",
+        "#confusables",
+        "#error-identification"
+      ],
+      "cefr_level": "",
+      "content": "# ⚠️ CÁC CẶP TỪ DỄ GÂY NHẦM LẪN KINH ĐIỂN\n\n- **Sensitive** (Nhạy cảm) vs **Sensible** (Biết điều, hợp lý).\n- **Considerate** (Chu đáo, ân cần) vs **Considerable** (Đáng kể, to lớn).\n- **Economic** (Thuộc về kinh tế) vs **Economical** (Tiết kiệm).\n- **Comprehensible** (Có thể hiểu được) vs **Comprehensive** (Toàn diện, bao quát).",
+      "raw": "---\ntitle: \"Cặp Từ Dễ Nhầm Lẫn Kinh Điển (Confusable Words)\"\ntags: [\"#vocab\", \"#confusables\", \"#error-identification\"]\n---\n\n# ⚠️ CÁC CẶP TỪ DỄ GÂY NHẦM LẪN KINH ĐIỂN\n\n- **Sensitive** (Nhạy cảm) vs **Sensible** (Biết điều, hợp lý).\n- **Considerate** (Chu đáo, ân cần) vs **Considerable** (Đáng kể, to lớn).\n- **Economic** (Thuộc về kinh tế) vs **Economical** (Tiết kiệm).\n- **Comprehensible** (Có thể hiểu được) vs **Comprehensive** (Toàn diện, bao quát).\n",
+      "wikilinks": [],
+      "char_count": 455
+    },
+    {
+      "id": "Lexicon_Academic_IELTS_C1_C2",
+      "filename": "Lexicon_Academic_IELTS_C1_C2.md",
+      "folder": "03_VOCABULARY_ATLAS",
+      "title": "Vốn Từ Học Thuật Cao Cấp C1-C2 & IELTS Academic 7.5+",
+      "tags": [
+        "#vocab",
+        "#academic",
+        "#ielts",
+        "#c1-c2"
+      ],
+      "cefr_level": "",
+      "content": "# 💎 VỐN TỪ HỌC THUẬT CAO CẤP C1-C2\n\nTrích xuất từ Academic Word List (AWL) & các đề thi HSG Quốc gia:\n- `unprecedented`: Chưa từng có tiền lệ\n- `inferiority complex`: Mặc cảm tự ti\n- `ubiquitous`: Phổ biến ở khắp mọi nơi\n- `exacerbate`: Làm trầm trọng thêm tình hình",
+      "raw": "---\ntitle: \"Vốn Từ Học Thuật Cao Cấp C1-C2 & IELTS Academic 7.5+\"\ntags: [\"#vocab\", \"#academic\", \"#ielts\", \"#c1-c2\"]\n---\n\n# 💎 VỐN TỪ HỌC THUẬT CAO CẤP C1-C2\n\nTrích xuất từ Academic Word List (AWL) & các đề thi HSG Quốc gia:\n- `unprecedented`: Chưa từng có tiền lệ\n- `inferiority complex`: Mặc cảm tự ti\n- `ubiquitous`: Phổ biến ở khắp mọi nơi\n- `exacerbate`: Làm trầm trọng thêm tình hình\n",
+      "wikilinks": [],
+      "char_count": 388
+    },
+    {
+      "id": "Lexicon_HighSchool_G10_G12",
+      "filename": "Lexicon_HighSchool_G10_G12.md",
+      "folder": "03_VOCABULARY_ATLAS",
+      "title": "Vốn Từ Bậc THPT & Ôn Thi THPT Quốc Gia (Lớp 10 - 12)",
+      "tags": [
+        "#vocab",
+        "#high-school",
+        "#thpt-qg"
+      ],
+      "cefr_level": "",
+      "content": "# 🌳 VỐN TỪ BẬC TRUNG HỌC PHỔ THÔNG (LỚP 10 - 12)\n\nChủ đề: Đô thị hóa, Năng lượng tái tạo, Di sản thế giới, Kỹ năng sống độc lập.\n- `pedestrian zone`: Phố đi bộ\n- `sustainable ecosystem`: Hệ sinh thái bền vững\n- `ancient citadel`: Hoàng thành cổ kính\n- `carbon emission`: Khí thải carbon",
+      "raw": "---\ntitle: \"Vốn Từ Bậc THPT & Ôn Thi THPT Quốc Gia (Lớp 10 - 12)\"\ntags: [\"#vocab\", \"#high-school\", \"#thpt-qg\"]\n---\n\n# 🌳 VỐN TỪ BẬC TRUNG HỌC PHỔ THÔNG (LỚP 10 - 12)\n\nChủ đề: Đô thị hóa, Năng lượng tái tạo, Di sản thế giới, Kỹ năng sống độc lập.\n- `pedestrian zone`: Phố đi bộ\n- `sustainable ecosystem`: Hệ sinh thái bền vững\n- `ancient citadel`: Hoàng thành cổ kính\n- `carbon emission`: Khí thải carbon\n",
+      "wikilinks": [],
+      "char_count": 403
+    },
+    {
+      "id": "Lexicon_Primary_G1_G5",
+      "filename": "Lexicon_Primary_G1_G5.md",
+      "folder": "03_VOCABULARY_ATLAS",
+      "title": "Vốn Từ Bậc Tiểu Học: Lớp 1 - 5 (Starters, Movers, Flyers)",
+      "tags": [
+        "#vocab",
+        "#primary",
+        "#starters-movers-flyers"
+      ],
+      "cefr_level": "",
+      "content": "# 🌱 VỐN TỪ BẬC TIỂU HỌC (LỚP 1 - 5)\n\nChủ đề: Bản thân, Đồ dùng học tập, Gia đình, Thú nuôi, Sinh nhật, Đồ ăn thức uống.\n- `school bag`: Cặp sách học sinh\n- `pencil case`: Hộp bút\n- `morning exercise`: Thể dục buổi sáng\n- `delicious`: Ngon miệng",
+      "raw": "---\ntitle: \"Vốn Từ Bậc Tiểu Học: Lớp 1 - 5 (Starters, Movers, Flyers)\"\ntags: [\"#vocab\", \"#primary\", \"#starters-movers-flyers\"]\n---\n\n# 🌱 VỐN TỪ BẬC TIỂU HỌC (LỚP 1 - 5)\n\nChủ đề: Bản thân, Đồ dùng học tập, Gia đình, Thú nuôi, Sinh nhật, Đồ ăn thức uống.\n- `school bag`: Cặp sách học sinh\n- `pencil case`: Hộp bút\n- `morning exercise`: Thể dục buổi sáng\n- `delicious`: Ngon miệng\n",
+      "wikilinks": [],
+      "char_count": 377
+    },
+    {
+      "id": "Lexicon_Secondary_G6_G9",
+      "filename": "Lexicon_Secondary_G6_G9.md",
+      "folder": "03_VOCABULARY_ATLAS",
+      "title": "Vốn Từ Bậc THCS: Lớp 6 - 9 (Cambridge KET - PET)",
+      "tags": [
+        "#vocab",
+        "#secondary",
+        "#ket",
+        "#pet"
+      ],
+      "cefr_level": "",
+      "content": "# 🌿 VỐN TỪ BẬC TRUNG HỌC CƠ SỞ (LỚP 6 - 9)\n\nChủ đề: Dịch vụ cộng đồng, Phong tục truyền thống, Thiên tai môi trường, Làng nghề.\n- `community service`: Hoạt động phục vụ cộng đồng\n- `craft village`: Làng nghề thủ công truyền thống\n- `natural disaster`: Thảm họa thiên tai\n- `pollution`: Sự ô nhiễm",
+      "raw": "---\ntitle: \"Vốn Từ Bậc THCS: Lớp 6 - 9 (Cambridge KET - PET)\"\ntags: [\"#vocab\", \"#secondary\", \"#ket\", \"#pet\"]\n---\n\n# 🌿 VỐN TỪ BẬC TRUNG HỌC CƠ SỞ (LỚP 6 - 9)\n\nChủ đề: Dịch vụ cộng đồng, Phong tục truyền thống, Thiên tai môi trường, Làng nghề.\n- `community service`: Hoạt động phục vụ cộng đồng\n- `craft village`: Làng nghề thủ công truyền thống\n- `natural disaster`: Thảm họa thiên tai\n- `pollution`: Sự ô nhiễm\n",
+      "wikilinks": [],
+      "char_count": 411
     },
     {
       "id": "Phonics_and_IPA_Sound_System",
       "filename": "Phonics_and_IPA_Sound_System.md",
       "folder": "03_VOCABULARY_ATLAS",
-      "title": "Hệ Thống 44 Ký Hiệu Quốc Tế IPA & Quy Tắc Ngữ Âm Chuẩn Xác",
+      "title": "Hệ Thống 44 Âm Quốc Tế (IPA) & Phonics Chuẩn Cambridge",
       "tags": [
+        "#vocab",
         "#phonics",
         "#ipa",
         "#pronunciation"
       ],
       "cefr_level": "",
-      "content": "# 🔊 BẢN ĐỒ NGỮ ÂM QUỐC TẾ IPA (PHONICS SOUND SYSTEM)\n\n## 1. Quy tắc phát âm đuôi '-ed'\nCó 3 cách phát âm cực chuẩn:\n1. **/ɪd/:** Khi động từ kết thúc bằng âm **/t/** hoặc **/d/** (wanted, decided, visited).\n2. **/t/:** Khi động từ kết thúc bằng phụ âm vô thanh: **/p, k, f, s, ʃ, tʃ/** (stopped, looked, laughed, washed, watched).\n3. **/d/:** Các trường hợp còn lại (nguyên âm và phụ âm hữu thanh: played, loved, cleaned).\n\n## 2. Quy tắc phát âm đuôi '-s / -es'\n1. **/ɪz/:** Khi từ kết thúc bằng âm gió **/s, z, ʃ, ʒ, tʃ, dʒ/** (kisses, watches, bridges).\n2. **/s/:** Khi từ kết thúc bằng âm vô thanh **/p, t, k, f, θ/** (stops, cats, books, laughs, months).\n3. **/z/:** Các trường hợp còn lại (days, bags, loves).\n\n## 3. Quy tắc trọng âm (Word Stress)\n- **Từ 2 âm tiết:**\n  - Danh từ / Tính từ: Thường nhấn âm 1 (*TEA-cher, HAP-py*).\n  - Động từ: Thường nhấn âm 2 (*re-LAX, de-CIDE*).\n- **Hậu tố hút trọng âm:** -ee, -eer, -ese, -ique (employ-EE, engi-NEER).\n- **Hậu tố khiến trọng âm rơi ngay trước nó:** -tion, -sion, -ic, -ical, -ity, -logy (so-LU-tion, de-CI-sion, sta-TI-stics).\n\nLiên kết: [[Vocabulary_Atlas_MOC]], [[00_INDEX_MOC]].",
-      "raw": "---\ntitle: \"Hệ Thống 44 Ký Hiệu Quốc Tế IPA & Quy Tắc Ngữ Âm Chuẩn Xác\"\ntags: [\"#phonics\", \"#ipa\", \"#pronunciation\"]\n---\n# 🔊 BẢN ĐỒ NGỮ ÂM QUỐC TẾ IPA (PHONICS SOUND SYSTEM)\n\n## 1. Quy tắc phát âm đuôi '-ed'\nCó 3 cách phát âm cực chuẩn:\n1. **/ɪd/:** Khi động từ kết thúc bằng âm **/t/** hoặc **/d/** (wanted, decided, visited).\n2. **/t/:** Khi động từ kết thúc bằng phụ âm vô thanh: **/p, k, f, s, ʃ, tʃ/** (stopped, looked, laughed, washed, watched).\n3. **/d/:** Các trường hợp còn lại (nguyên âm và phụ âm hữu thanh: played, loved, cleaned).\n\n## 2. Quy tắc phát âm đuôi '-s / -es'\n1. **/ɪz/:** Khi từ kết thúc bằng âm gió **/s, z, ʃ, ʒ, tʃ, dʒ/** (kisses, watches, bridges).\n2. **/s/:** Khi từ kết thúc bằng âm vô thanh **/p, t, k, f, θ/** (stops, cats, books, laughs, months).\n3. **/z/:** Các trường hợp còn lại (days, bags, loves).\n\n## 3. Quy tắc trọng âm (Word Stress)\n- **Từ 2 âm tiết:**\n  - Danh từ / Tính từ: Thường nhấn âm 1 (*TEA-cher, HAP-py*).\n  - Động từ: Thường nhấn âm 2 (*re-LAX, de-CIDE*).\n- **Hậu tố hút trọng âm:** -ee, -eer, -ese, -ique (employ-EE, engi-NEER).\n- **Hậu tố khiến trọng âm rơi ngay trước nó:** -tion, -sion, -ic, -ical, -ity, -logy (so-LU-tion, de-CI-sion, sta-TI-stics).\n\nLiên kết: [[Vocabulary_Atlas_MOC]], [[00_INDEX_MOC]].\n",
-      "wikilinks": [
-        {
-          "target": "Vocabulary_Atlas_MOC",
-          "label": "Vocabulary_Atlas_MOC"
-        },
-        {
-          "target": "00_INDEX_MOC",
-          "label": "00_INDEX_MOC"
-        }
-      ],
-      "char_count": 1261
+      "content": "# 🎙️ HỆ THỐNG 44 ÂM QUỐC TẾ (IPA) & PHONICS\n\n## 1. Nguyên Âm (20 Vowels)\n- 7 nguyên âm ngắn: `/ɪ/, /e/, /æ/, /ɒ/, /ʌ/, /ʊ/, /ə/`\n- 5 nguyên âm dài: `/iː/, /uː/, /ɑː/, /ɔː/, /ɜː/`\n- 8 nguyên âm đôi: `/eɪ/, /aɪ/, /ɔɪ/, /aʊ/, /əʊ/, /ɪə/, /eə/, /ʊə/`\n\n## 2. Phụ Âm (24 Consonants)\n- Cặp vô thanh - hữu thanh: `/p/-/b/`, `/t/-/d/`, `/k/-/ɡ/`, `/f/-/v/`, `/θ/-/ð/`, `/s/-/z/`, `/ʃ/-/ʒ/`, `/tʃ/-/dʒ/`",
+      "raw": "---\ntitle: \"Hệ Thống 44 Âm Quốc Tế (IPA) & Phonics Chuẩn Cambridge\"\ntags: [\"#vocab\", \"#phonics\", \"#ipa\", \"#pronunciation\"]\n---\n\n# 🎙️ HỆ THỐNG 44 ÂM QUỐC TẾ (IPA) & PHONICS\n\n## 1. Nguyên Âm (20 Vowels)\n- 7 nguyên âm ngắn: `/ɪ/, /e/, /æ/, /ɒ/, /ʌ/, /ʊ/, /ə/`\n- 5 nguyên âm dài: `/iː/, /uː/, /ɑː/, /ɔː/, /ɜː/`\n- 8 nguyên âm đôi: `/eɪ/, /aɪ/, /ɔɪ/, /aʊ/, /əʊ/, /ɪə/, /eə/, /ʊə/`\n\n## 2. Phụ Âm (24 Consonants)\n- Cặp vô thanh - hữu thanh: `/p/-/b/`, `/t/-/d/`, `/k/-/ɡ/`, `/f/-/v/`, `/θ/-/ð/`, `/s/-/z/`, `/ʃ/-/ʒ/`, `/tʃ/-/dʒ/`\n",
+      "wikilinks": [],
+      "char_count": 522
     },
     {
       "id": "Vocabulary_Atlas_MOC",
       "filename": "Vocabulary_Atlas_MOC.md",
       "folder": "03_VOCABULARY_ATLAS",
-      "title": "🔤 Vocabulary Atlas Map of Content",
+      "title": "Bản Đồ Từ Vựng & Ngữ Âm Quốc Tế (Vocabulary Atlas MOC)",
       "tags": [
         "#vocab",
         "#moc",
-        "#phonics"
+        "#phonics",
+        "#ipa"
       ],
       "cefr_level": "",
-      "content": "# 🔤 BẢN ĐỒ TỪ VỰNG & NGỮ ÂM (VOCABULARY ATLAS MOC)\n\nMạng lưới từ vựng phân tầng đa chiều:\n\n- [[Phonics_and_IPA_Sound_System]]: Bảng 44 ký hiệu phiên âm quốc tế IPA và quy luật phát âm.\n- [[Word_Formation_and_Affixes]]: 1000 quy tắc biến đổi từ (Noun, Verb, Adj, Adv).\n- [[Lexicon_Primary_G1_G5]]: 500 từ cơ sở bậc Tiểu học.\n- [[Lexicon_Secondary_G6_G9]]: 1000 từ học thuật bậc THCS.\n- [[Lexicon_HighSchool_G10_G12]]: 1500 từ chuyên sâu bậc THPT.\n- [[Lexicon_Academic_IELTS_C1_C2]]: Từ vựng Band 7.5 - 8.5+ IELTS & HSG Quốc Gia.\n- [[Collocations_and_Idiomatic_Expressions]]: Thành ngữ và cụm từ cố định.\n\nQuay lại: [[00_INDEX_MOC]]",
-      "raw": "---\ntitle: \"🔤 Vocabulary Atlas Map of Content\"\ntags: [\"#vocab\", \"#moc\", \"#phonics\"]\nupdated_at: \"2026-09-25\"\n---\n# 🔤 BẢN ĐỒ TỪ VỰNG & NGỮ ÂM (VOCABULARY ATLAS MOC)\n\nMạng lưới từ vựng phân tầng đa chiều:\n\n- [[Phonics_and_IPA_Sound_System]]: Bảng 44 ký hiệu phiên âm quốc tế IPA và quy luật phát âm.\n- [[Word_Formation_and_Affixes]]: 1000 quy tắc biến đổi từ (Noun, Verb, Adj, Adv).\n- [[Lexicon_Primary_G1_G5]]: 500 từ cơ sở bậc Tiểu học.\n- [[Lexicon_Secondary_G6_G9]]: 1000 từ học thuật bậc THCS.\n- [[Lexicon_HighSchool_G10_G12]]: 1500 từ chuyên sâu bậc THPT.\n- [[Lexicon_Academic_IELTS_C1_C2]]: Từ vựng Band 7.5 - 8.5+ IELTS & HSG Quốc Gia.\n- [[Collocations_and_Idiomatic_Expressions]]: Thành ngữ và cụm từ cố định.\n\nQuay lại: [[00_INDEX_MOC]]\n",
+      "content": "# 🔤 BẢN ĐỒ TỔNG QUAN TỪ VỰNG & NGỮ ÂM\n\n- [[Phonics_and_IPA_Sound_System|🎙️ Hệ Thống 44 Âm Quốc Tế IPA & Phonics]]\n- [[Word_Formation_Prefixes_Suffixes_Roots|🧱 Cấu Tạo Từ: Tiền Tố, Hậu Tố & Gốc Từ]]\n- [[Lexicon_Primary_G1_G5|🌱 Vốn Từ Tiểu Học Lớp 1 - 5]]\n- [[Lexicon_Secondary_G6_G9|🌿 Vốn Từ THCS Lớp 6 - 9]]\n- [[Lexicon_HighSchool_G10_G12|🌳 Vốn Từ THPT Lớp 10 - 12]]\n- [[Lexicon_Academic_IELTS_C1_C2|💎 Vốn Từ Học Thuật C1-C2]]\n- [[Collocations_and_Fixed_Phrases|🔗 Collocations & Cụm Cố Định]]\n- [[False_Friends_and_Common_Confusables|⚠️ Cặp Từ Dễ Nhầm Lẫn (Confusables)]]",
+      "raw": "---\ntitle: \"Bản Đồ Từ Vựng & Ngữ Âm Quốc Tế (Vocabulary Atlas MOC)\"\ntags: [\"#vocab\", \"#moc\", \"#phonics\", \"#ipa\"]\n---\n\n# 🔤 BẢN ĐỒ TỔNG QUAN TỪ VỰNG & NGỮ ÂM\n\n- [[Phonics_and_IPA_Sound_System|🎙️ Hệ Thống 44 Âm Quốc Tế IPA & Phonics]]\n- [[Word_Formation_Prefixes_Suffixes_Roots|🧱 Cấu Tạo Từ: Tiền Tố, Hậu Tố & Gốc Từ]]\n- [[Lexicon_Primary_G1_G5|🌱 Vốn Từ Tiểu Học Lớp 1 - 5]]\n- [[Lexicon_Secondary_G6_G9|🌿 Vốn Từ THCS Lớp 6 - 9]]\n- [[Lexicon_HighSchool_G10_G12|🌳 Vốn Từ THPT Lớp 10 - 12]]\n- [[Lexicon_Academic_IELTS_C1_C2|💎 Vốn Từ Học Thuật C1-C2]]\n- [[Collocations_and_Fixed_Phrases|🔗 Collocations & Cụm Cố Định]]\n- [[False_Friends_and_Common_Confusables|⚠️ Cặp Từ Dễ Nhầm Lẫn (Confusables)]]\n",
       "wikilinks": [
         {
           "target": "Phonics_and_IPA_Sound_System",
-          "label": "Phonics_and_IPA_Sound_System"
+          "label": "🎙️ Hệ Thống 44 Âm Quốc Tế IPA & Phonics"
         },
         {
-          "target": "Word_Formation_and_Affixes",
-          "label": "Word_Formation_and_Affixes"
+          "target": "Word_Formation_Prefixes_Suffixes_Roots",
+          "label": "🧱 Cấu Tạo Từ: Tiền Tố, Hậu Tố & Gốc Từ"
         },
         {
           "target": "Lexicon_Primary_G1_G5",
-          "label": "Lexicon_Primary_G1_G5"
+          "label": "🌱 Vốn Từ Tiểu Học Lớp 1 - 5"
         },
         {
           "target": "Lexicon_Secondary_G6_G9",
-          "label": "Lexicon_Secondary_G6_G9"
+          "label": "🌿 Vốn Từ THCS Lớp 6 - 9"
         },
         {
           "target": "Lexicon_HighSchool_G10_G12",
-          "label": "Lexicon_HighSchool_G10_G12"
+          "label": "🌳 Vốn Từ THPT Lớp 10 - 12"
         },
         {
           "target": "Lexicon_Academic_IELTS_C1_C2",
-          "label": "Lexicon_Academic_IELTS_C1_C2"
+          "label": "💎 Vốn Từ Học Thuật C1-C2"
         },
         {
-          "target": "Collocations_and_Idiomatic_Expressions",
-          "label": "Collocations_and_Idiomatic_Expressions"
+          "target": "Collocations_and_Fixed_Phrases",
+          "label": "🔗 Collocations & Cụm Cố Định"
         },
         {
-          "target": "00_INDEX_MOC",
-          "label": "00_INDEX_MOC"
+          "target": "False_Friends_and_Common_Confusables",
+          "label": "⚠️ Cặp Từ Dễ Nhầm Lẫn (Confusables)"
         }
       ],
-      "char_count": 744
+      "char_count": 690
+    },
+    {
+      "id": "Word_Formation_Prefixes_Suffixes_Roots",
+      "filename": "Word_Formation_Prefixes_Suffixes_Roots.md",
+      "folder": "03_VOCABULARY_ATLAS",
+      "title": "Cấu Tạo Từ: Tiền Tố, Hậu Tố & Gốc Từ (Word Formation)",
+      "tags": [
+        "#vocab",
+        "#word-formation",
+        "#roots",
+        "#hsg"
+      ],
+      "cefr_level": "",
+      "content": "# 🧱 CẤU TẠO TỪ: TIỀN TỐ, HẬU TỐ & GỐC TỪ\n\n- **Tiền tố phủ định**: un- (unhappy), in- (inactive), im- (impatient), il- (illegal), ir- (irresponsible), dis- (disappear).\n- **Hậu tố danh từ**: -tion (preservation), -ment (astonishment), -ness (weakness), -ity (resilience, inferiority).\n- **Hậu tố tính từ**: -ful (hopeful), -less (pointless), -able (sustainable), -ive (creative), -ous (dangerous).",
+      "raw": "---\ntitle: \"Cấu Tạo Từ: Tiền Tố, Hậu Tố & Gốc Từ (Word Formation)\"\ntags: [\"#vocab\", \"#word-formation\", \"#roots\", \"#hsg\"]\n---\n\n# 🧱 CẤU TẠO TỪ: TIỀN TỐ, HẬU TỐ & GỐC TỪ\n\n- **Tiền tố phủ định**: un- (unhappy), in- (inactive), im- (impatient), il- (illegal), ir- (irresponsible), dis- (disappear).\n- **Hậu tố danh từ**: -tion (preservation), -ment (astonishment), -ness (weakness), -ity (resilience, inferiority).\n- **Hậu tố tính từ**: -ful (hopeful), -less (pointless), -able (sustainable), -ive (creative), -ous (dangerous).\n",
+      "wikilinks": [],
+      "char_count": 523
+    },
+    {
+      "id": "Error_Identification_Strategies",
+      "filename": "Error_Identification_Strategies.md",
+      "folder": "04_EXAMS_AND_QUESTION_BANK",
+      "title": "Chiến Thuật Nhận Diện & Sửa Lỗi Sai Trong Đề Thi",
+      "tags": [
+        "#exam",
+        "#error-identification",
+        "#thpt-qg"
+      ],
+      "cefr_level": "",
+      "content": "# 🔍 CHIẾN THUẬT SỬA LỖI SAI (ERROR IDENTIFICATION)\n\nTổng hợp 4 bẫy lỗi sai chiếm 90% số câu trong đề thi:\n1. **Sự hòa hợp Chủ - Vị với trạng từ chen giữa**: *The manager along with his staff IS (không dùng are).*\n2. **Cặp từ gây nhầm lẫn**: *considerate vs considerable, sensible vs sensitive.*\n3. **Cấu trúc song hành**: *He enjoys reading, swimming, and TO TRAVEL (sai -> traveling).*\n4. **Đại từ thay thế số ít / số nhiều**: *Each student must submit THEIR paper (trong văn phong chuẩn -> HIS OR HER paper).*",
+      "raw": "---\ntitle: \"Chiến Thuật Nhận Diện & Sửa Lỗi Sai Trong Đề Thi\"\ntags: [\"#exam\", \"#error-identification\", \"#thpt-qg\"]\n---\n\n# 🔍 CHIẾN THUẬT SỬA LỖI SAI (ERROR IDENTIFICATION)\n\nTổng hợp 4 bẫy lỗi sai chiếm 90% số câu trong đề thi:\n1. **Sự hòa hợp Chủ - Vị với trạng từ chen giữa**: *The manager along with his staff IS (không dùng are).*\n2. **Cặp từ gây nhầm lẫn**: *considerate vs considerable, sensible vs sensitive.*\n3. **Cấu trúc song hành**: *He enjoys reading, swimming, and TO TRAVEL (sai -> traveling).*\n4. **Đại từ thay thế số ít / số nhiều**: *Each student must submit THEIR paper (trong văn phong chuẩn -> HIS OR HER paper).*\n",
+      "wikilinks": [],
+      "char_count": 632
     },
     {
       "id": "Exams_MOC",
       "filename": "Exams_MOC.md",
       "folder": "04_EXAMS_AND_QUESTION_BANK",
-      "title": "📝 Exams & Question Bank Map of Content",
+      "title": "Bản Đồ Ngân Hàng Đề Thi & Kỹ Năng Đánh Giá (Exams MOC)",
       "tags": [
         "#exam",
-        "#moc"
+        "#moc",
+        "#testing"
       ],
       "cefr_level": "",
-      "content": "# 📝 NGÂN HÀNG ĐỀ THI & PHÂN TÍCH MA TRẬN KHẢO THÍ\n\nTổng hợp bộ đề thi thực chiến có lời giải chi tiết:\n\n- [[HSG_Grade7_YenLap_Breakdown]]: Phân tích đề thi HSG Lớp 7 Huyện Yên Lập.\n- [[HSG_Grade12_QuangNam_Breakdown]]: Phân tích đề thi HSG Tỉnh Lớp 12 Tỉnh Quảng Nam.\n- [[THPT_QuocGia_2026_Format]]: Ma trận đề thi tốt nghiệp THPT Quốc Gia form mới 2026.\n- [[Sentence_Transformation_Techniques_700]]: Cẩm nang 700 câu viết lại câu ăn chắc điểm 9+.\n- [[IELTS_Academic_Reading_Techniques]]: Chiến thuật đọc hiểu IELTS Reading 8.0+.\n\nQuay lại: [[00_INDEX_MOC]].",
-      "raw": "---\ntitle: \"📝 Exams & Question Bank Map of Content\"\ntags: [\"#exam\", \"#moc\"]\nupdated_at: \"2026-09-25\"\n---\n# 📝 NGÂN HÀNG ĐỀ THI & PHÂN TÍCH MA TRẬN KHẢO THÍ\n\nTổng hợp bộ đề thi thực chiến có lời giải chi tiết:\n\n- [[HSG_Grade7_YenLap_Breakdown]]: Phân tích đề thi HSG Lớp 7 Huyện Yên Lập.\n- [[HSG_Grade12_QuangNam_Breakdown]]: Phân tích đề thi HSG Tỉnh Lớp 12 Tỉnh Quảng Nam.\n- [[THPT_QuocGia_2026_Format]]: Ma trận đề thi tốt nghiệp THPT Quốc Gia form mới 2026.\n- [[Sentence_Transformation_Techniques_700]]: Cẩm nang 700 câu viết lại câu ăn chắc điểm 9+.\n- [[IELTS_Academic_Reading_Techniques]]: Chiến thuật đọc hiểu IELTS Reading 8.0+.\n\nQuay lại: [[00_INDEX_MOC]].\n",
+      "content": "# 📝 BẢN ĐỒ NGÂN HÀNG ĐỀ THI & MA TRẬN ĐÁNH GIÁ\n\n- [[Sentence_Transformation_Techniques_700|✍️ 700 Kỹ Thuật Viết Lại Câu Tuyển Sinh & HSG]]\n- [[Error_Identification_Strategies|🔍 Bẫy Nhận Diện & Sửa Lỗi Sai Kinh Điển]]\n- [[Phonetics_Stress_Rules_and_Tricks|🎯 Bí Kíp Ăn Điểm Ngữ Âm & Trọng Âm]]\n- [[High_School_Entrance_Exam_Vao_10_Mastery|🏛️ Cẩm Nang Ôn Thi Tuyển Sinh Vào Lớp 10 Chuyên]]\n- [[THPT_Quoc_Gia_Exam_Strategy|🎯 Chiến Thuật Đạt Điểm 9+ THPT Quốc Gia]]",
+      "raw": "---\ntitle: \"Bản Đồ Ngân Hàng Đề Thi & Kỹ Năng Đánh Giá (Exams MOC)\"\ntags: [\"#exam\", \"#moc\", \"#testing\"]\n---\n\n# 📝 BẢN ĐỒ NGÂN HÀNG ĐỀ THI & MA TRẬN ĐÁNH GIÁ\n\n- [[Sentence_Transformation_Techniques_700|✍️ 700 Kỹ Thuật Viết Lại Câu Tuyển Sinh & HSG]]\n- [[Error_Identification_Strategies|🔍 Bẫy Nhận Diện & Sửa Lỗi Sai Kinh Điển]]\n- [[Phonetics_Stress_Rules_and_Tricks|🎯 Bí Kíp Ăn Điểm Ngữ Âm & Trọng Âm]]\n- [[High_School_Entrance_Exam_Vao_10_Mastery|🏛️ Cẩm Nang Ôn Thi Tuyển Sinh Vào Lớp 10 Chuyên]]\n- [[THPT_Quoc_Gia_Exam_Strategy|🎯 Chiến Thuật Đạt Điểm 9+ THPT Quốc Gia]]\n",
       "wikilinks": [
         {
-          "target": "HSG_Grade7_YenLap_Breakdown",
-          "label": "HSG_Grade7_YenLap_Breakdown"
-        },
-        {
-          "target": "HSG_Grade12_QuangNam_Breakdown",
-          "label": "HSG_Grade12_QuangNam_Breakdown"
-        },
-        {
-          "target": "THPT_QuocGia_2026_Format",
-          "label": "THPT_QuocGia_2026_Format"
-        },
-        {
           "target": "Sentence_Transformation_Techniques_700",
-          "label": "Sentence_Transformation_Techniques_700"
+          "label": "✍️ 700 Kỹ Thuật Viết Lại Câu Tuyển Sinh & HSG"
         },
         {
-          "target": "IELTS_Academic_Reading_Techniques",
-          "label": "IELTS_Academic_Reading_Techniques"
+          "target": "Error_Identification_Strategies",
+          "label": "🔍 Bẫy Nhận Diện & Sửa Lỗi Sai Kinh Điển"
         },
         {
-          "target": "00_INDEX_MOC",
-          "label": "00_INDEX_MOC"
+          "target": "Phonetics_Stress_Rules_and_Tricks",
+          "label": "🎯 Bí Kíp Ăn Điểm Ngữ Âm & Trọng Âm"
+        },
+        {
+          "target": "High_School_Entrance_Exam_Vao_10_Mastery",
+          "label": "🏛️ Cẩm Nang Ôn Thi Tuyển Sinh Vào Lớp 10 Chuyên"
+        },
+        {
+          "target": "THPT_Quoc_Gia_Exam_Strategy",
+          "label": "🎯 Chiến Thuật Đạt Điểm 9+ THPT Quốc Gia"
         }
       ],
-      "char_count": 664
+      "char_count": 570
+    },
+    {
+      "id": "High_School_Entrance_Exam_Vao_10_Mastery",
+      "filename": "High_School_Entrance_Exam_Vao_10_Mastery.md",
+      "folder": "04_EXAMS_AND_QUESTION_BANK",
+      "title": "Cẩm Nang Ôn Thi Tuyển Sinh Vào Lớp 10 Chuyên & Trọng Điểm",
+      "tags": [
+        "#exam",
+        "#vao-10",
+        "#chuyen-anh"
+      ],
+      "cefr_level": "",
+      "content": "# 🏛️ CẨM NANG ÔN THI TUYỂN SINH VÀO LỚP 10\n\nMa trận đề thi vào lớp 10 các tỉnh thành:\n1. Phát âm & Trọng âm (4 câu - 1.0 điểm).\n2. Ngữ pháp & Từ vựng trắc nghiệm (10-12 câu - 2.5 điểm).\n3. Đọc hiểu điền từ & Đọc hiểu trả lời câu hỏi (10 câu - 2.5 điểm).\n4. Tìm lỗi sai (3 câu - 0.75 điểm).\n5. Viết lại câu & Nối câu (6-8 câu - 2.0 điểm).",
+      "raw": "---\ntitle: \"Cẩm Nang Ôn Thi Tuyển Sinh Vào Lớp 10 Chuyên & Trọng Điểm\"\ntags: [\"#exam\", \"#vao-10\", \"#chuyen-anh\"]\n---\n\n# 🏛️ CẨM NANG ÔN THI TUYỂN SINH VÀO LỚP 10\n\nMa trận đề thi vào lớp 10 các tỉnh thành:\n1. Phát âm & Trọng âm (4 câu - 1.0 điểm).\n2. Ngữ pháp & Từ vựng trắc nghiệm (10-12 câu - 2.5 điểm).\n3. Đọc hiểu điền từ & Đọc hiểu trả lời câu hỏi (10 câu - 2.5 điểm).\n4. Tìm lỗi sai (3 câu - 0.75 điểm).\n5. Viết lại câu & Nối câu (6-8 câu - 2.0 điểm).\n",
+      "wikilinks": [],
+      "char_count": 456
+    },
+    {
+      "id": "Phonetics_Stress_Rules_and_Tricks",
+      "filename": "Phonetics_Stress_Rules_and_Tricks.md",
+      "folder": "04_EXAMS_AND_QUESTION_BANK",
+      "title": "Bí Kíp Ăn Điểm Phát Âm Đuôi -ed, -s/-es & Trọng Âm",
+      "tags": [
+        "#exam",
+        "#phonetics",
+        "#stress"
+      ],
+      "cefr_level": "",
+      "content": "# 🎯 BÍ KÍP ĂN ĐIỂM NGỮ ÂM & TRỌNG ÂM\n\n## 1. Phát Âm Đuôi -ed\n- `/ɪd/`: sau /t/, /d/ (wanted, decided).\n- `/t/`: sau âm vô thanh /p, k, f, s, ʃ, tʃ/ (helped, watched, laughed).\n- `/d/`: các âm còn lại.\n- **Ngoại lệ**: naked, wicked, aged, learned, beloved luôn phát âm là `/ɪd/`.\n\n## 2. Quy Tắc Trọng Âm\n- Danh từ / Tính từ 2 âm tiết: Nhấn âm 1 (`TABLE`, `CLEVER`).\n- Động từ 2 âm tiết: Nhấn âm 2 (`DECIDE`, `ENJOY`).\n- Hậu tố kéo trọng âm về trước nó: `-tion`, `-sion`, `-ic`, `-ity` (`in-for-MA-tion`, `e-lec-TRI-ci-ty`).",
+      "raw": "---\ntitle: \"Bí Kíp Ăn Điểm Phát Âm Đuôi -ed, -s/-es & Trọng Âm\"\ntags: [\"#exam\", \"#phonetics\", \"#stress\"]\n---\n\n# 🎯 BÍ KÍP ĂN ĐIỂM NGỮ ÂM & TRỌNG ÂM\n\n## 1. Phát Âm Đuôi -ed\n- `/ɪd/`: sau /t/, /d/ (wanted, decided).\n- `/t/`: sau âm vô thanh /p, k, f, s, ʃ, tʃ/ (helped, watched, laughed).\n- `/d/`: các âm còn lại.\n- **Ngoại lệ**: naked, wicked, aged, learned, beloved luôn phát âm là `/ɪd/`.\n\n## 2. Quy Tắc Trọng Âm\n- Danh từ / Tính từ 2 âm tiết: Nhấn âm 1 (`TABLE`, `CLEVER`).\n- Động từ 2 âm tiết: Nhấn âm 2 (`DECIDE`, `ENJOY`).\n- Hậu tố kéo trọng âm về trước nó: `-tion`, `-sion`, `-ic`, `-ity` (`in-for-MA-tion`, `e-lec-TRI-ci-ty`).\n",
+      "wikilinks": [],
+      "char_count": 633
+    },
+    {
+      "id": "Reading_Comprehension_Paraphrase_Skills",
+      "filename": "Reading_Comprehension_Paraphrase_Skills.md",
+      "folder": "04_EXAMS_AND_QUESTION_BANK",
+      "title": "Kỹ Năng Đọc Hiểu & Kỹ Thuật Paraphrase Đoán Nghĩa",
+      "tags": [
+        "#exam",
+        "#reading",
+        "#paraphrase"
+      ],
+      "cefr_level": "",
+      "content": "# 📖 KỸ NĂNG ĐỌC HIỂU & CHIẾN THUẬT PARAPHRASE\n\n- **Skimming**: Đọc lướt tiêu đề và câu chủ đề đoạn văn để nắm ý chính (Main Idea).\n- **Scanning**: Quét nhanh từ khóa (Keywords: tên riêng, con số, thuật ngữ).\n- **Context Clues**: Đoán nghĩa từ vựng mới dựa vào từ đồng nghĩa, từ trái nghĩa hoặc giải thích trong câu.",
+      "raw": "---\ntitle: \"Kỹ Năng Đọc Hiểu & Kỹ Thuật Paraphrase Đoán Nghĩa\"\ntags: [\"#exam\", \"#reading\", \"#paraphrase\"]\n---\n\n# 📖 KỸ NĂNG ĐỌC HIỂU & CHIẾN THUẬT PARAPHRASE\n\n- **Skimming**: Đọc lướt tiêu đề và câu chủ đề đoạn văn để nắm ý chính (Main Idea).\n- **Scanning**: Quét nhanh từ khóa (Keywords: tên riêng, con số, thuật ngữ).\n- **Context Clues**: Đoán nghĩa từ vựng mới dựa vào từ đồng nghĩa, từ trái nghĩa hoặc giải thích trong câu.\n",
+      "wikilinks": [],
+      "char_count": 427
     },
     {
       "id": "Sentence_Transformation_Techniques_700",
       "filename": "Sentence_Transformation_Techniques_700.md",
       "folder": "04_EXAMS_AND_QUESTION_BANK",
-      "title": "Cẩm Nang 700 Dạng Bài Viết Lại Câu Tuyển Chọn (Rewriting Sentences)",
+      "title": "700 Kỹ Thuật Viết Lại Câu Tuyển Sinh & HSG",
       "tags": [
-        "#exam/rewriting",
-        "#grammar"
+        "#exam",
+        "#sentence-transformation",
+        "#hsg",
+        "#vao-10"
       ],
       "cefr_level": "",
-      "content": "# ✍️ CẨM NANG 700 CÂU BIẾN ĐỔI CÂU TƯƠNG ĐƯƠNG (REWRITING SENTENCES)\n\nTrích xuất trực tiếp từ kho tài liệu `700 CÂU BÀI TẬP VIẾT LẠI CÂU`:\n\n## 1. Dạng 1: Chuyển đổi liên từ nguyên nhân - kết quả\n$$\\text{Because} + \\text{Clause} \\iff \\text{Because of} / \\text{Due to} / \\text{Owing to} + \\text{Noun Phrase / V-ing}$$\n- *Gốc:* Because the weather was terrible, the flight was delayed.\n- *Viết lại:* **Because of the terrible weather**, the flight was delayed.\n\n## 2. Dạng 2: Chuyển đổi mệnh đề nhượng bộ\n$$\\text{Although / Even though} + \\text{Clause} \\iff \\text{In spite of / Despite} + \\text{Noun Phrase / V-ing}$$\n- *Gốc:* Although she had a high fever, she went to take the exam.\n- *Viết lại:* **In spite of having a high fever**, she went to take the exam.\n\n## 3. Dạng 3: Cấu trúc So ... That <=> Too ... For <=> Such ... That\n$$\\text{S} + \\text{be} + \\text{so} + \\text{adj} + \\text{that} + \\dots \\iff \\text{It is} + \\text{too} + \\text{adj} + \\text{for someone to V}$$\n- *Gốc:* The tea is so hot that I cannot drink it.\n- *Viết lại:* The tea is **too hot for me to drink**.\n\nLiên kết: [[Exams_MOC]], [[Grammar_Master_MOC]].",
-      "raw": "---\ntitle: \"Cẩm Nang 700 Dạng Bài Viết Lại Câu Tuyển Chọn (Rewriting Sentences)\"\ntags: [\"#exam/rewriting\", \"#grammar\"]\n---\n# ✍️ CẨM NANG 700 CÂU BIẾN ĐỔI CÂU TƯƠNG ĐƯƠNG (REWRITING SENTENCES)\n\nTrích xuất trực tiếp từ kho tài liệu `700 CÂU BÀI TẬP VIẾT LẠI CÂU`:\n\n## 1. Dạng 1: Chuyển đổi liên từ nguyên nhân - kết quả\n$$\\text{Because} + \\text{Clause} \\iff \\text{Because of} / \\text{Due to} / \\text{Owing to} + \\text{Noun Phrase / V-ing}$$\n- *Gốc:* Because the weather was terrible, the flight was delayed.\n- *Viết lại:* **Because of the terrible weather**, the flight was delayed.\n\n## 2. Dạng 2: Chuyển đổi mệnh đề nhượng bộ\n$$\\text{Although / Even though} + \\text{Clause} \\iff \\text{In spite of / Despite} + \\text{Noun Phrase / V-ing}$$\n- *Gốc:* Although she had a high fever, she went to take the exam.\n- *Viết lại:* **In spite of having a high fever**, she went to take the exam.\n\n## 3. Dạng 3: Cấu trúc So ... That <=> Too ... For <=> Such ... That\n$$\\text{S} + \\text{be} + \\text{so} + \\text{adj} + \\text{that} + \\dots \\iff \\text{It is} + \\text{too} + \\text{adj} + \\text{for someone to V}$$\n- *Gốc:* The tea is so hot that I cannot drink it.\n- *Viết lại:* The tea is **too hot for me to drink**.\n\nLiên kết: [[Exams_MOC]], [[Grammar_Master_MOC]].\n",
-      "wikilinks": [
-        {
-          "target": "Exams_MOC",
-          "label": "Exams_MOC"
-        },
-        {
-          "target": "Grammar_Master_MOC",
-          "label": "Grammar_Master_MOC"
-        }
+      "content": "# ✍️ 700 KỸ THUẬT BIẾN ĐỔI CÂU GIỮ NGUYÊN NGHĨA\n\nTrích xuất trực tiếp từ tài liệu viết lại câu HSG:\n\n- **Model 1**: `Because + clause -> Because of + Noun phrase`\n  - *Because she behaves well -> Because of her good behaviour.*\n- **Model 2**: `Although + clause -> Despite / In spite of + Noun phrase / V-ing`\n- **Model 3**: `Too + Adj to V -> So + Adj + that / Such + a/an Adj Noun + that`\n- **Model 4**: `Prefer V-ing to V-ing -> Would rather V-inf than V-inf`\n- **Model 5**: `It takes sb time to V -> Sb spends time V-ing`\n- **Model 6**: `The first time S have P.P -> S have never P.P before`",
+      "raw": "---\ntitle: \"700 Kỹ Thuật Viết Lại Câu Tuyển Sinh & HSG\"\ntags: [\"#exam\", \"#sentence-transformation\", \"#hsg\", \"#vao-10\"]\n---\n\n# ✍️ 700 KỸ THUẬT BIẾN ĐỔI CÂU GIỮ NGUYÊN NGHĨA\n\nTrích xuất trực tiếp từ tài liệu viết lại câu HSG:\n\n- **Model 1**: `Because + clause -> Because of + Noun phrase`\n  - *Because she behaves well -> Because of her good behaviour.*\n- **Model 2**: `Although + clause -> Despite / In spite of + Noun phrase / V-ing`\n- **Model 3**: `Too + Adj to V -> So + Adj + that / Such + a/an Adj Noun + that`\n- **Model 4**: `Prefer V-ing to V-ing -> Would rather V-inf than V-inf`\n- **Model 5**: `It takes sb time to V -> Sb spends time V-ing`\n- **Model 6**: `The first time S have P.P -> S have never P.P before`\n",
+      "wikilinks": [],
+      "char_count": 720
+    },
+    {
+      "id": "THPT_Quoc_Gia_Exam_Strategy",
+      "filename": "THPT_Quoc_Gia_Exam_Strategy.md",
+      "folder": "04_EXAMS_AND_QUESTION_BANK",
+      "title": "Chiến Thuật Đạt Điểm 9+ Tiếng Anh THPT Quốc Gia",
+      "tags": [
+        "#exam",
+        "#thpt-qg",
+        "#scoring-strategy"
       ],
-      "char_count": 1250
+      "cefr_level": "",
+      "content": "# 🎯 CHIẾN THUẬT ĐẠT ĐIỂM 9+ THPT QUỐC GIA\n\n1. **Giai đoạn 1 (15 phút đầu)**: Quét sạch 25 câu nhận biết và thông hiểu (Phát âm, trọng âm, câu giao tiếp, ngữ pháp cơ bản).\n2. **Giai đoạn 2 (25 phút tiếp theo)**: Xử lý bài đọc điền từ, bài đọc hiểu ngắn và các câu biến đổi câu.\n3. **Giai đoạn 3 (15 phút cuối)**: Tập trung cao độ cho bài đọc hiểu 8 câu phân hóa cao và 3 câu tìm lỗi sai từ vựng khó.",
+      "raw": "---\ntitle: \"Chiến Thuật Đạt Điểm 9+ Tiếng Anh THPT Quốc Gia\"\ntags: [\"#exam\", \"#thpt-qg\", \"#scoring-strategy\"]\n---\n\n# 🎯 CHIẾN THUẬT ĐẠT ĐIỂM 9+ THPT QUỐC GIA\n\n1. **Giai đoạn 1 (15 phút đầu)**: Quét sạch 25 câu nhận biết và thông hiểu (Phát âm, trọng âm, câu giao tiếp, ngữ pháp cơ bản).\n2. **Giai đoạn 2 (25 phút tiếp theo)**: Xử lý bài đọc điền từ, bài đọc hiểu ngắn và các câu biến đổi câu.\n3. **Giai đoạn 3 (15 phút cuối)**: Tập trung cao độ cho bài đọc hiểu 8 câu phân hóa cao và 3 câu tìm lỗi sai từ vựng khó.\n",
+      "wikilinks": [],
+      "char_count": 514
+    },
+    {
+      "id": "Differentiated_Instruction_Framework",
+      "filename": "Differentiated_Instruction_Framework.md",
+      "folder": "05_TEACHING_SOP_AND_PEDAGOGY",
+      "title": "Phương Pháp Dạy Học Phân Hóa Năng Lực Học Sinh",
+      "tags": [
+        "#pedagogy",
+        "#differentiated-instruction"
+      ],
+      "cefr_level": "",
+      "content": "# 🎯 DẠY HỌC PHÂN HÓA NĂNG LỰC (DIFFERENTIATED INSTRUCTION)\n\nPhân tầng học sinh thành 3 nhóm năng lực trong lớp học:\n- **Nhóm Nền Tảng (Core)**: Củng cố 44 âm IPA, từ vựng cơ bản và ngữ pháp thì đơn giản.\n- **Nhóm Nâng Cao (Proficient)**: Luyện phản xạ câu ghép, đọc hiểu đoạn văn dài và cấu trúc câu bị động, điều kiện.\n- **Nhóm Xuất Sắc (Mastery)**: Luyện các bài toán viết lại câu HSG, đảo ngữ, câu chẻ và từ vựng học thuật C1.",
+      "raw": "---\ntitle: \"Phương Pháp Dạy Học Phân Hóa Năng Lực Học Sinh\"\ntags: [\"#pedagogy\", \"#differentiated-instruction\"]\n---\n\n# 🎯 DẠY HỌC PHÂN HÓA NĂNG LỰC (DIFFERENTIATED INSTRUCTION)\n\nPhân tầng học sinh thành 3 nhóm năng lực trong lớp học:\n- **Nhóm Nền Tảng (Core)**: Củng cố 44 âm IPA, từ vựng cơ bản và ngữ pháp thì đơn giản.\n- **Nhóm Nâng Cao (Proficient)**: Luyện phản xạ câu ghép, đọc hiểu đoạn văn dài và cấu trúc câu bị động, điều kiện.\n- **Nhóm Xuất Sắc (Mastery)**: Luyện các bài toán viết lại câu HSG, đảo ngữ, câu chẻ và từ vựng học thuật C1.\n",
+      "wikilinks": [],
+      "char_count": 546
+    },
+    {
+      "id": "Formative_Summative_Assessment_Rubrics",
+      "filename": "Formative_Summative_Assessment_Rubrics.md",
+      "folder": "05_TEACHING_SOP_AND_PEDAGOGY",
+      "title": "Tiêu Chí Đánh Giá Quá Trình & Tổng Kết (Assessment Rubrics)",
+      "tags": [
+        "#pedagogy",
+        "#rubrics",
+        "#assessment"
+      ],
+      "cefr_level": "",
+      "content": "# 📊 TIÊU CHÍ ĐÁNH GIÁ NĂNG LỰC HỌC SINH\n\n- **Đánh giá thường xuyên (Formative)**: Chuyên cần, thái độ phát biểu, làm bài tập qua cổng web tương tác hàng tuần.\n- **Đánh giá định kỳ (Summative)**: Điểm kiểm tra 15 phút, giữa kỳ và cuối học kỳ theo ma trận 4 mức độ nhận thức (Nhận biết - Thông hiểu - Vận dụng - Vận dụng cao).",
+      "raw": "---\ntitle: \"Tiêu Chí Đánh Giá Quá Trình & Tổng Kết (Assessment Rubrics)\"\ntags: [\"#pedagogy\", \"#rubrics\", \"#assessment\"]\n---\n\n# 📊 TIÊU CHÍ ĐÁNH GIÁ NĂNG LỰC HỌC SINH\n\n- **Đánh giá thường xuyên (Formative)**: Chuyên cần, thái độ phát biểu, làm bài tập qua cổng web tương tác hàng tuần.\n- **Đánh giá định kỳ (Summative)**: Điểm kiểm tra 15 phút, giữa kỳ và cuối học kỳ theo ma trận 4 mức độ nhận thức (Nhận biết - Thông hiểu - Vận dụng - Vận dụng cao).\n",
+      "wikilinks": [],
+      "char_count": 450
+    },
+    {
+      "id": "Leader_Operational_SOP_and_Audit_Workflow",
+      "filename": "Leader_Operational_SOP_and_Audit_Workflow.md",
+      "folder": "05_TEACHING_SOP_AND_PEDAGOGY",
+      "title": "Quy Trình Vận Hành & Giám Sát Tự Động Dành Cho Leader",
+      "tags": [
+        "#pedagogy",
+        "#leader",
+        "#sop",
+        "#notifications"
+      ],
+      "cefr_level": "",
+      "content": "# 📋 QUY TRÌNH KIỂM SOÁT VẬN HÀNH DÀNH CHO LEADER\n\nTrung tâm thông báo PWA thông minh dành riêng cho Leader:\n1. **Thông báo đăng ký mới**: Nhận thông báo tức thì khi có học viên mới ghi danh kèm số điện thoại và phân lớp.\n2. **Thông báo lịch dạy & thời khóa biểu**: Tự động nhắc nhở trước 1 giờ và trước 10 phút.\n3. **Cảnh báo điểm danh**: Báo cáo lớp học thiếu học sinh hoặc giáo viên chưa điểm danh.\n4. **Nhắc hạn học phí**: Tự động tổng hợp danh sách phụ huynh tới hạn thanh toán.",
+      "raw": "---\ntitle: \"Quy Trình Vận Hành & Giám Sát Tự Động Dành Cho Leader\"\ntags: [\"#pedagogy\", \"#leader\", \"#sop\", \"#notifications\"]\n---\n\n# 📋 QUY TRÌNH KIỂM SOÁT VẬN HÀNH DÀNH CHO LEADER\n\nTrung tâm thông báo PWA thông minh dành riêng cho Leader:\n1. **Thông báo đăng ký mới**: Nhận thông báo tức thì khi có học viên mới ghi danh kèm số điện thoại và phân lớp.\n2. **Thông báo lịch dạy & thời khóa biểu**: Tự động nhắc nhở trước 1 giờ và trước 10 phút.\n3. **Cảnh báo điểm danh**: Báo cáo lớp học thiếu học sinh hoặc giáo viên chưa điểm danh.\n4. **Nhắc hạn học phí**: Tự động tổng hợp danh sách phụ huynh tới hạn thanh toán.\n",
+      "wikilinks": [],
+      "char_count": 612
     },
     {
       "id": "Pedagogy_MOC",
       "filename": "Pedagogy_MOC.md",
       "folder": "05_TEACHING_SOP_AND_PEDAGOGY",
-      "title": "👩‍🏫 Pedagogy & Teaching SOP Map of Content",
+      "title": "Bản Đồ Nghiệp Vụ Sư Phạm & Vận Hành Trung Tâm (Pedagogy MOC)",
       "tags": [
         "#pedagogy",
         "#sop",
-        "#moc"
+        "#teaching"
       ],
       "cefr_level": "",
-      "content": "# 👩‍🏫 SỔ TAY QUY TRÌNH & PHƯƠNG PHÁP SƯ PHẠM CÔ DUNG\n\n- [[Co_Dung_Teaching_Philosophy]]: Triết lý lấy học sinh làm trung tâm, kết hợp công nghệ AI.\n- [[Gamification_and_Star_Rewards_Rubric]]: Quy chế tặng sao, bảng xếp hạng và mở Đấu trường trò chơi.\n- [[Tuition_and_Parent_Communication_SOP]]: Quy trình gửi phiếu điểm và thông báo học phí tự động qua Zalo Bot.\n\nQuay lại: [[00_INDEX_MOC]].",
-      "raw": "---\ntitle: \"👩‍🏫 Pedagogy & Teaching SOP Map of Content\"\ntags: [\"#pedagogy\", \"#sop\", \"#moc\"]\nupdated_at: \"2026-09-25\"\n---\n# 👩‍🏫 SỔ TAY QUY TRÌNH & PHƯƠNG PHÁP SƯ PHẠM CÔ DUNG\n\n- [[Co_Dung_Teaching_Philosophy]]: Triết lý lấy học sinh làm trung tâm, kết hợp công nghệ AI.\n- [[Gamification_and_Star_Rewards_Rubric]]: Quy chế tặng sao, bảng xếp hạng và mở Đấu trường trò chơi.\n- [[Tuition_and_Parent_Communication_SOP]]: Quy trình gửi phiếu điểm và thông báo học phí tự động qua Zalo Bot.\n\nQuay lại: [[00_INDEX_MOC]].\n",
+      "content": "# 👩‍🏫 BẢN ĐỒ NGHIỆP VỤ SƯ PHẠM & QUY TRÌNH VẬN HÀNH\n\n- [[Differentiated_Instruction_Framework|🎯 Khung Giảng Dạy Phân Hóa Năng Lực Học Sinh]]\n- [[Formative_Summative_Assessment_Rubrics|📊 Bộ Tiêu Chí Đánh Giá Quá Trình & Tổng Kết]]\n- [[Teacher_Panel_Game_Portal_Integration_SOP|🎮 Quy Trình Giáo Viên Mở Cổng Game Tương Tác]]\n- [[Leader_Operational_SOP_and_Audit_Workflow|📋 Quy Trình Kiểm Soát Tự Động Dành Cho Quản Lý]]",
+      "raw": "---\ntitle: \"Bản Đồ Nghiệp Vụ Sư Phạm & Vận Hành Trung Tâm (Pedagogy MOC)\"\ntags: [\"#pedagogy\", \"#sop\", \"#teaching\"]\n---\n\n# 👩‍🏫 BẢN ĐỒ NGHIỆP VỤ SƯ PHẠM & QUY TRÌNH VẬN HÀNH\n\n- [[Differentiated_Instruction_Framework|🎯 Khung Giảng Dạy Phân Hóa Năng Lực Học Sinh]]\n- [[Formative_Summative_Assessment_Rubrics|📊 Bộ Tiêu Chí Đánh Giá Quá Trình & Tổng Kết]]\n- [[Teacher_Panel_Game_Portal_Integration_SOP|🎮 Quy Trình Giáo Viên Mở Cổng Game Tương Tác]]\n- [[Leader_Operational_SOP_and_Audit_Workflow|📋 Quy Trình Kiểm Soát Tự Động Dành Cho Quản Lý]]\n",
       "wikilinks": [
         {
-          "target": "Co_Dung_Teaching_Philosophy",
-          "label": "Co_Dung_Teaching_Philosophy"
+          "target": "Differentiated_Instruction_Framework",
+          "label": "🎯 Khung Giảng Dạy Phân Hóa Năng Lực Học Sinh"
         },
         {
-          "target": "Gamification_and_Star_Rewards_Rubric",
-          "label": "Gamification_and_Star_Rewards_Rubric"
+          "target": "Formative_Summative_Assessment_Rubrics",
+          "label": "📊 Bộ Tiêu Chí Đánh Giá Quá Trình & Tổng Kết"
         },
         {
-          "target": "Tuition_and_Parent_Communication_SOP",
-          "label": "Tuition_and_Parent_Communication_SOP"
+          "target": "Teacher_Panel_Game_Portal_Integration_SOP",
+          "label": "🎮 Quy Trình Giáo Viên Mở Cổng Game Tương Tác"
         },
         {
-          "target": "00_INDEX_MOC",
-          "label": "00_INDEX_MOC"
+          "target": "Leader_Operational_SOP_and_Audit_Workflow",
+          "label": "📋 Quy Trình Kiểm Soát Tự Động Dành Cho Quản Lý"
         }
       ],
-      "char_count": 513
+      "char_count": 538
+    },
+    {
+      "id": "Teacher_Panel_Game_Portal_Integration_SOP",
+      "filename": "Teacher_Panel_Game_Portal_Integration_SOP.md",
+      "folder": "05_TEACHING_SOP_AND_PEDAGOGY",
+      "title": "Quy Trình Giáo Viên Mở Cổng Game Tương Tác (SOP Game Portal)",
+      "tags": [
+        "#pedagogy",
+        "#teacher-panel",
+        "#games",
+        "#sop"
+      ],
+      "cefr_level": "",
+      "content": "# 🎮 QUY TRÌNH GIÁO VIÊN MỞ CỔNG GAME TƯƠNG TÁC\n\n> [!important] Nguyên Tắc Phân Quyền\n> Theo yêu cầu hệ thống, **Cổng Game Tương Tác** (Vocab Clash, Grammar Master, Phonics Flashcards) mặc định **ĐÓNG** với tài khoản Học Sinh. Chỉ có Giáo Viên và Leader mới có quyền gạt công tắc kích hoạt cổng game trong giờ học.\n\n1. Giáo viên đăng nhập tài khoản quyền Teacher (`/login`).\n2. Vào trang **Teacher Panel / Games Manager** (`/teacher/games`).\n3. Gạt công tắc `Enable Interactive Games` cho lớp phụ trách.",
+      "raw": "---\ntitle: \"Quy Trình Giáo Viên Mở Cổng Game Tương Tác (SOP Game Portal)\"\ntags: [\"#pedagogy\", \"#teacher-panel\", \"#games\", \"#sop\"]\n---\n\n# 🎮 QUY TRÌNH GIÁO VIÊN MỞ CỔNG GAME TƯƠNG TÁC\n\n> [!important] Nguyên Tắc Phân Quyền\n> Theo yêu cầu hệ thống, **Cổng Game Tương Tác** (Vocab Clash, Grammar Master, Phonics Flashcards) mặc định **ĐÓNG** với tài khoản Học Sinh. Chỉ có Giáo Viên và Leader mới có quyền gạt công tắc kích hoạt cổng game trong giờ học.\n\n1. Giáo viên đăng nhập tài khoản quyền Teacher (`/login`).\n2. Vào trang **Teacher Panel / Games Manager** (`/teacher/games`).\n3. Gạt công tắc `Enable Interactive Games` cho lớp phụ trách.\n",
+      "wikilinks": [],
+      "char_count": 638
+    },
+    {
+      "id": "Mindmap_Grammar_Syntactic_Trees",
+      "filename": "Mindmap_Grammar_Syntactic_Trees.md",
+      "folder": "06_CROSS_DISCIPLINARY_SYNAPSES",
+      "title": "Cây Cú Pháp Ngữ Pháp & Sơ Đồ Tư Duy (Syntactic Trees)",
+      "tags": [
+        "#synapses",
+        "#mindmap",
+        "#syntax-tree"
+      ],
+      "cefr_level": "",
+      "content": "# 🌳 CÂY CÚ PHÁP NGỮ PHÁP & SƠ ĐỒ TƯ DUY\n\nPhân rã cấu trúc câu tiếng Anh theo sơ đồ hình cây (Constituent Parsing):\n- `S (Sentence) -> NP (Noun Phrase) + VP (Verb Phrase)`\n- `NP -> Determiner + (Adjective) + Noun`\n- `VP -> Auxiliary + Verb + (NP) + (PP)`",
+      "raw": "---\ntitle: \"Cây Cú Pháp Ngữ Pháp & Sơ Đồ Tư Duy (Syntactic Trees)\"\ntags: [\"#synapses\", \"#mindmap\", \"#syntax-tree\"]\n---\n\n# 🌳 CÂY CÚ PHÁP NGỮ PHÁP & SƠ ĐỒ TƯ DUY\n\nPhân rã cấu trúc câu tiếng Anh theo sơ đồ hình cây (Constituent Parsing):\n- `S (Sentence) -> NP (Noun Phrase) + VP (Verb Phrase)`\n- `NP -> Determiner + (Adjective) + Noun`\n- `VP -> Auxiliary + Verb + (NP) + (PP)`\n",
+      "wikilinks": [],
+      "char_count": 374
+    },
+    {
+      "id": "Multi_Source_Knowledge_Crawl_Matrix",
+      "filename": "Multi_Source_Knowledge_Crawl_Matrix.md",
+      "folder": "06_CROSS_DISCIPLINARY_SYNAPSES",
+      "title": "Ma Trận Cào Dữ Liệu 15 Nguồn Giáo Dục Hàng Đầu",
+      "tags": [
+        "#synapses",
+        "#scraping",
+        "#sources",
+        "#data-pipeline"
+      ],
+      "cefr_level": "",
+      "content": "# 🌐 MA TRẬN 15 NGUỒN CÀO HỌC LIỆU GIÁO DỤC\n\n| STT | Nguồn Học Liệu | Trọng Tâm Dữ Liệu Trích Xuất | Số Lượng Thu Thập |\n|---|---|---|---|\n| **1** | **Google Drive Archive (Giaoandethitienganh)** | Đề thi Word .docx, audio mp3, giáo án toàn bộ Lớp 1-12 | 12,067 tệp tin |\n| **2** | **VietJack** | SGK Global Success & Friends Plus Lớp 1-12 | Toàn bộ 12 khối lớp |\n| **3** | **VnDoc** | Đề thi giữa kỳ, cuối kỳ 1 & 2, chuyên đề ngữ pháp trắc nghiệm | 500+ đề thi & chuyên đề |\n| **4** | **Loigiaihay** | Lời giải chi tiết SGK Tiếng Anh theo từng tiết học | 100% Units SGK |\n| **5** | **Thư Viện Học Liệu** | Ma trận đề kiểm tra định kỳ chuẩn Bộ GD&ĐT | Ma trận 4 mức độ nhận thức |\n| **6** | **Hoc247** | Lý thuyết ngữ pháp nâng cao và bài tập phân dạng | 30 chuyên đề chuyên sâu |\n| **7** | **Tuyensinh247** | Đề thi tuyển sinh vào 10 chuyên và tốt nghiệp THPT Quốc Gia | Đề thi chính thức các năm |\n| **8** | **British Council LearnEnglish** | Bảng âm vị học IPA 44 âm & Phonics chuẩn quốc tế | Bảng chuẩn âm IPA |\n| **9** | **Cambridge English Qualifications** | Từ vựng và cấu trúc KET (A2), PET (B1), FCE (B2) | Cambridge Wordlists |\n| **10** | **Oxford 3000 & 5000 / CEFR** | Danh mục từ vựng học thuật lõi theo khung chuẩn châu Âu | Phân cấp A1 - C1 |\n| **11** | **BBC Learning English** | 6 Minute English, ngữ pháp phản xạ & collocations | Audio & Transcript |\n| **12** | **Tailieudieuky** | Đề thi học sinh giỏi Quốc gia, Chuyên Anh, Olympic 30/4 | Bộ đề HSG các tỉnh |\n| **13** | **Khoahoc.vietjack.com** | Ngân hàng 50,000+ câu trắc nghiệm có lời giải chi tiết | Ngân hàng câu hỏi phân cấp |\n| **14** | **EnglishClub / EngVid** | Ngữ pháp cú pháp nâng cao (Inversion, Cleft, Subjunctive) | Lý thuyết chuẩn cú pháp |\n| **15** | **IELTS Academic / AVL** | Academic Vocabulary List (AVL) và kỹ năng Paraphrase | Band 6.5 - 8.0+ |",
+      "raw": "---\ntitle: \"Ma Trận Cào Dữ Liệu 15 Nguồn Giáo Dục Hàng Đầu\"\ntags: [\"#synapses\", \"#scraping\", \"#sources\", \"#data-pipeline\"]\n---\n\n# 🌐 MA TRẬN 15 NGUỒN CÀO HỌC LIỆU GIÁO DỤC\n\n| STT | Nguồn Học Liệu | Trọng Tâm Dữ Liệu Trích Xuất | Số Lượng Thu Thập |\n|---|---|---|---|\n| **1** | **Google Drive Archive (Giaoandethitienganh)** | Đề thi Word .docx, audio mp3, giáo án toàn bộ Lớp 1-12 | 12,067 tệp tin |\n| **2** | **VietJack** | SGK Global Success & Friends Plus Lớp 1-12 | Toàn bộ 12 khối lớp |\n| **3** | **VnDoc** | Đề thi giữa kỳ, cuối kỳ 1 & 2, chuyên đề ngữ pháp trắc nghiệm | 500+ đề thi & chuyên đề |\n| **4** | **Loigiaihay** | Lời giải chi tiết SGK Tiếng Anh theo từng tiết học | 100% Units SGK |\n| **5** | **Thư Viện Học Liệu** | Ma trận đề kiểm tra định kỳ chuẩn Bộ GD&ĐT | Ma trận 4 mức độ nhận thức |\n| **6** | **Hoc247** | Lý thuyết ngữ pháp nâng cao và bài tập phân dạng | 30 chuyên đề chuyên sâu |\n| **7** | **Tuyensinh247** | Đề thi tuyển sinh vào 10 chuyên và tốt nghiệp THPT Quốc Gia | Đề thi chính thức các năm |\n| **8** | **British Council LearnEnglish** | Bảng âm vị học IPA 44 âm & Phonics chuẩn quốc tế | Bảng chuẩn âm IPA |\n| **9** | **Cambridge English Qualifications** | Từ vựng và cấu trúc KET (A2), PET (B1), FCE (B2) | Cambridge Wordlists |\n| **10** | **Oxford 3000 & 5000 / CEFR** | Danh mục từ vựng học thuật lõi theo khung chuẩn châu Âu | Phân cấp A1 - C1 |\n| **11** | **BBC Learning English** | 6 Minute English, ngữ pháp phản xạ & collocations | Audio & Transcript |\n| **12** | **Tailieudieuky** | Đề thi học sinh giỏi Quốc gia, Chuyên Anh, Olympic 30/4 | Bộ đề HSG các tỉnh |\n| **13** | **Khoahoc.vietjack.com** | Ngân hàng 50,000+ câu trắc nghiệm có lời giải chi tiết | Ngân hàng câu hỏi phân cấp |\n| **14** | **EnglishClub / EngVid** | Ngữ pháp cú pháp nâng cao (Inversion, Cleft, Subjunctive) | Lý thuyết chuẩn cú pháp |\n| **15** | **IELTS Academic / AVL** | Academic Vocabulary List (AVL) và kỹ năng Paraphrase | Band 6.5 - 8.0+ |\n",
+      "wikilinks": [],
+      "char_count": 1965
+    },
+    {
+      "id": "Spaced_Repetition_and_Active_Recall_System",
+      "filename": "Spaced_Repetition_and_Active_Recall_System.md",
+      "folder": "06_CROSS_DISCIPLINARY_SYNAPSES",
+      "title": "Hệ Thống Lặp Lại Ngắt Quãng (Spaced Repetition) & Trí Nhớ Vĩnh Cửu",
+      "tags": [
+        "#synapses",
+        "#spaced-repetition",
+        "#active-recall",
+        "#anki"
+      ],
+      "cefr_level": "",
+      "content": "# ⏰ THUẬT TOÁN LẶP LẠI NGẮT QUÃNG (SPACED REPETITION)\n\nỨng dụng thuật toán **SuperMemo SM-2** trong học từ vựng và ngữ pháp tiếng Anh:\n- **Lần 1**: Ngay sau khi học xong buổi học (Review trong 10 phút).\n- **Lần 2**: Sau 24 giờ (1 ngày sau).\n- **Lần 3**: Sau 3 ngày.\n- **Lần 4**: Sau 7 ngày (1 tuần).\n- **Lần 5**: Sau 30 ngày (1 tháng).",
+      "raw": "---\ntitle: \"Hệ Thống Lặp Lại Ngắt Quãng (Spaced Repetition) & Trí Nhớ Vĩnh Cửu\"\ntags: [\"#synapses\", \"#spaced-repetition\", \"#active-recall\", \"#anki\"]\n---\n\n# ⏰ THUẬT TOÁN LẶP LẠI NGẮT QUÃNG (SPACED REPETITION)\n\nỨng dụng thuật toán **SuperMemo SM-2** trong học từ vựng và ngữ pháp tiếng Anh:\n- **Lần 1**: Ngay sau khi học xong buổi học (Review trong 10 phút).\n- **Lần 2**: Sau 24 giờ (1 ngày sau).\n- **Lần 3**: Sau 3 ngày.\n- **Lần 4**: Sau 7 ngày (1 tuần).\n- **Lần 5**: Sau 30 ngày (1 tháng).\n",
+      "wikilinks": [],
+      "char_count": 490
+    },
+    {
+      "id": "Synapses_Master_MOC",
+      "filename": "Synapses_Master_MOC.md",
+      "folder": "06_CROSS_DISCIPLINARY_SYNAPSES",
+      "title": "Mạng Nơ-ron & Tương Tác Đa Chiều (Synapses Master MOC)",
+      "tags": [
+        "#synapses",
+        "#second-brain",
+        "#knowledge-graph"
+      ],
+      "cefr_level": "",
+      "content": "# ⚡ MẠNG NƠ-RON & TƯƠNG TÁC ĐA CHIỀU (SYNAPSES)\n\n- [[Mindmap_Grammar_Syntactic_Trees|🌳 Cây Cú Pháp & Bản Đồ Tư Duy]]\n- [[Spaced_Repetition_and_Active_Recall_System|⏰ Thuật Toán Lặp Lại Ngắt Quãng (SuperMemo SM-2 & Anki)]]\n- [[Multi_Source_Knowledge_Crawl_Matrix|🌐 Ma Trận Cào Dữ Liệu 15 Nguồn Học Liệu Giáo Dục]]",
+      "raw": "---\ntitle: \"Mạng Nơ-ron & Tương Tác Đa Chiều (Synapses Master MOC)\"\ntags: [\"#synapses\", \"#second-brain\", \"#knowledge-graph\"]\n---\n\n# ⚡ MẠNG NƠ-RON & TƯƠNG TÁC ĐA CHIỀU (SYNAPSES)\n\n- [[Mindmap_Grammar_Syntactic_Trees|🌳 Cây Cú Pháp & Bản Đồ Tư Duy]]\n- [[Spaced_Repetition_and_Active_Recall_System|⏰ Thuật Toán Lặp Lại Ngắt Quãng (SuperMemo SM-2 & Anki)]]\n- [[Multi_Source_Knowledge_Crawl_Matrix|🌐 Ma Trận Cào Dữ Liệu 15 Nguồn Học Liệu Giáo Dục]]\n",
+      "wikilinks": [
+        {
+          "target": "Mindmap_Grammar_Syntactic_Trees",
+          "label": "🌳 Cây Cú Pháp & Bản Đồ Tư Duy"
+        },
+        {
+          "target": "Spaced_Repetition_and_Active_Recall_System",
+          "label": "⏰ Thuật Toán Lặp Lại Ngắt Quãng (SuperMemo SM-2 & Anki)"
+        },
+        {
+          "target": "Multi_Source_Knowledge_Crawl_Matrix",
+          "label": "🌐 Ma Trận Cào Dữ Liệu 15 Nguồn Học Liệu Giáo Dục"
+        }
+      ],
+      "char_count": 443
     }
   ],
-  "total": 13,
+  "total": 47,
   "version": "2.4.0",
   "updated_at": "2026-09-25"
 }

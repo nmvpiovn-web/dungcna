@@ -16,7 +16,8 @@
     { id: '02_GRAMMAR_KNOWLEDGE_BASE', name: '📐 02. Chuyên Đề Ngữ Pháp', count: vaultData.notes.filter(n => n.folder.includes('02')).length },
     { id: '03_VOCABULARY_ATLAS', name: '🔤 03. Từ Vựng & Phonics', count: vaultData.notes.filter(n => n.folder.includes('03')).length },
     { id: '04_EXAMS_AND_QUESTION_BANK', name: '📝 04. Ngân Hàng Đề Thi', count: vaultData.notes.filter(n => n.folder.includes('04')).length },
-    { id: '05_TEACHING_SOP_AND_PEDAGOGY', name: '👩‍🏫 05. Sư Phạm & SOP', count: vaultData.notes.filter(n => n.folder.includes('05')).length }
+    { id: '05_TEACHING_SOP_AND_PEDAGOGY', name: '👩‍🏫 05. Sư Phạm & SOP', count: vaultData.notes.filter(n => n.folder.includes('05')).length },
+    { id: '06_CROSS_DISCIPLINARY_SYNAPSES', name: '⚡ 06. Mạng Nơ-ron & Synapses', count: vaultData.notes.filter(n => n.folder.includes('06')).length }
   ];
 
   let filteredNotes = $derived.by(() => {

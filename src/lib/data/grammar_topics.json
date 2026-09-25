@@ -970,5 +970,206 @@
         "explanation": "'In spite of + her illness' (danh từ) thay thế cho mệnh đề 'Although she was ill'."
       }
     ]
+  },
+  {
+    "id": "gram_tense_coordination",
+    "topic": "Phối Hợp Thì & Mệnh Đề Trạng Ngữ Chỉ Thời Gian (Sequence of Tenses)",
+    "grade_level": "Lớp 8, 9, 10, 11, 12",
+    "curriculum_unit": "Chuyên đề Phối Hợp Thì",
+    "category": "tenses",
+    "cefr_level": "B1 - B2",
+    "summary": "Quy tắc phối hợp giữa các thì trong câu phức, mệnh đề trạng ngữ chỉ thời gian với When, While, As soon as, By the time, Before, After (Trích xuất từ tài liệu THPT Hương Khê).",
+    "formula": {
+      "affirmative": "S + will + V-inf + When / As soon as + S + V(s/es)",
+      "negative": "S + will not + V-inf + until + S + V(s/es)",
+      "interrogative": "Will + S + V-inf + when + S + V(s/es)?",
+      "past_coordination": "S + was/were + V-ing + WHEN + S + V-ed",
+      "perfect_coordination": "By the time + S + V-ed, S + had + P.P"
+    },
+    "usage": [
+      "Không bao giờ dùng các thì tương lai (will/shall) trong mệnh đề thời gian (bắt đầu bằng when, until, as soon as, before, after, by the time).",
+      "Diễn tả một hành động đang diễn ra thì một hành động khác xen vào trong quá khứ.",
+      "Diễn tả một hành động hoàn tất trước một mốc thời gian hoặc một hành động khác trong quá khứ/tương lai."
+    ],
+    "signal_words": [
+      "as soon as",
+      "when",
+      "while",
+      "by the time",
+      "until",
+      "before",
+      "after",
+      "the moment that"
+    ],
+    "phonics_rules": "Ngữ điệu hạ giọng ở cuối câu trần thuật và lên giọng ở cuối mệnh đề phụ chỉ thời gian.",
+    "common_mistakes": "Dùng 'will' trong mệnh đề thời gian (Sai: 'When he will arrive' -> Đúng: 'When he arrives').",
+    "examples": [
+      {
+        "en": "John will start studying for the exam when he finishes his lunch.",
+        "vi": "John sẽ bắt đầu ôn thi khi anh ấy ăn xong bữa trưa."
+      },
+      {
+        "en": "By the time the police arrived, the burglar had already escaped.",
+        "vi": "Trước khi cảnh sát tới nơi, tên trộm đã tẩu thoát rồi."
+      }
+    ],
+    "practice_questions": [
+      {
+        "q": "Mark will book his flight ticket ______.",
+        "options": [
+          "A. after he had saved enough money",
+          "B. as soon as he saves enough money",
+          "C. when he saved money",
+          "D. until he was saving"
+        ],
+        "ans": "B",
+        "exp": "Mệnh đề chính dùng tương lai đơn, mệnh đề thời gian với as soon as chia hiện tại đơn."
+      }
+    ]
+  },
+  {
+    "id": "gram_word_formation",
+    "topic": "Cấu Tạo Từ & Biến Đổi Từ Loại (Word Formation & Morphology)",
+    "grade_level": "Lớp 6, 7, 8, 9, 10, 11, 12",
+    "curriculum_unit": "Chuyên đề Word Formation",
+    "category": "morphology",
+    "cefr_level": "A2 - C1",
+    "summary": "Quy tắc thêm tiền tố phủ định (un-, in-, im-, il-, ir-, dis-), hậu tố danh từ (-tion, -ment, -ness, -ity), hậu tố tính từ (-ful, -less, -able) (Trích xuất từ 1000 Bài tập Word Formation).",
+    "formula": {
+      "affirmative": "Prefix + Root Word + Suffix = New Part of Speech",
+      "noun_derivation": "Verb + -tion/-ment/-ance -> Noun",
+      "adj_derivation": "Noun + -ful/-less/-al/-ic -> Adjective"
+    },
+    "usage": [
+      "Xác định vị trí chỗ trống trong câu (sau to be là adj, sau mạo từ là noun, bổ nghĩa cho động từ là adv).",
+      "Xét ngữ cảnh để thêm tiền tố phủ định phù hợp."
+    ],
+    "signal_words": [
+      "un-",
+      "in-",
+      "im-",
+      "il-",
+      "ir-",
+      "dis-",
+      "-tion",
+      "-ment",
+      "-ness",
+      "-able",
+      "-less",
+      "-ful"
+    ],
+    "phonics_rules": "Hậu tố -tion kéo trọng âm rơi vào âm tiết ngay trước nó (e.g., infor-MA-tion, pre-ser-VA-tion).",
+    "common_mistakes": "Nhầm lẫn giữa hậu tố người (-er, -or, -ist) và hậu tố hành động (-tion, -ment).",
+    "examples": [
+      {
+        "en": "On our arrival at the hotel, we were warmly greeted by the receptionist.",
+        "vi": "Khi chúng tôi vừa đến khách sạn, chúng tôi được lễ tân chào đón nồng hậu."
+      }
+    ],
+    "practice_questions": [
+      {
+        "q": "A person with a severe ______ complex is generally quite shy. (INFERIOR)",
+        "options": [
+          "A. inferiority",
+          "B. inferior",
+          "C. inferiorly",
+          "D. inferiorness"
+        ],
+        "ans": "A",
+        "exp": "Cụm danh từ 'inferiority complex' = mặc cảm tự ti."
+      }
+    ]
+  },
+  {
+    "id": "gram_question_tags",
+    "topic": "Câu Hỏi Đuôi & 10 Trường Hợp Bẫy Đặc Biệt (Question Tags)",
+    "grade_level": "Lớp 7, 8, 9, 10, 11, 12",
+    "curriculum_unit": "Chuyên đề Câu Hỏi Đuôi",
+    "category": "syntax",
+    "cefr_level": "A2 - B1",
+    "summary": "Cấu trúc hỏi đuôi khẳng định/phủ định và các ngoại lệ kinh điển: Let's -> shall we, I am -> aren't I, Nobody/No one -> đại từ they.",
+    "formula": {
+      "affirmative": "S + V(+), Auxiliary(-) + Pronoun?",
+      "negative": "S + V(-), Auxiliary(+) + Pronoun?",
+      "i_am": "I am... -> aren't I?",
+      "lets": "Let's + V-inf -> shall we?"
+    },
+    "usage": [
+      "Dùng để xác nhận thông tin hoặc thăm dò ý kiến người nghe.",
+      "Lên giọng ở cuối câu khi thực sự hỏi thông tin chưa biết; xuống giọng khi chỉ mong đợi sự đồng tình."
+    ],
+    "signal_words": [
+      "isn't it?",
+      "aren't they?",
+      "did you?",
+      "shall we?",
+      "will you?"
+    ],
+    "phonics_rules": "Ngữ điệu lên giọng (Rising intonation) khi chưa chắc chắn; ngữ điệu xuống giọng (Falling intonation) khi chắc chắn.",
+    "common_mistakes": "Quên rằng các từ bán phủ định (hardly, seldom, rarely, never) làm mệnh đề chính mang nghĩa phủ định, nên câu hỏi đuôi phải dùng KHẲNG ĐỊNH.",
+    "examples": [
+      {
+        "en": "Nobody called while I was out, did they?",
+        "vi": "Không ai gọi điện khi tôi ra ngoài đúng không?"
+      }
+    ],
+    "practice_questions": [
+      {
+        "q": "Let's go for a walk in the park, ______?",
+        "options": [
+          "A. shall we",
+          "B. will we",
+          "C. do we",
+          "D. aren't we"
+        ],
+        "ans": "A",
+        "exp": "Câu rủ bắt đầu bằng Let's có câu hỏi đuôi luôn là 'shall we?'."
+      }
+    ]
+  },
+  {
+    "id": "gram_double_comparatives",
+    "topic": "So Sánh Kép: Càng... Càng... (Double Comparatives)",
+    "grade_level": "Lớp 8, 9, 10, 11, 12",
+    "curriculum_unit": "Chuyên đề So Sánh",
+    "category": "comparisons",
+    "cefr_level": "B1 - B2",
+    "summary": "Cấu trúc The more... the more... diễn tả sự tương quan tỉ lệ thuận hoặc tỉ lệ nghịch giữa hai hành động, hiện tượng.",
+    "formula": {
+      "affirmative": "The + comparative + S + V, The + comparative + S + V",
+      "with_nouns": "The more + Noun + S + V, The + comparative + S + V",
+      "short_adjectives": "The + Adj-er + S + V, The + Adj-er + S + V"
+    },
+    "usage": [
+      "Diễn tả hai vế biến đổi đồng thời (Càng... thì càng...).",
+      "Thường xuyên xuất hiện trong phần viết lại câu thi vào 10 và THPT Quốc Gia."
+    ],
+    "signal_words": [
+      "The more...",
+      "The harder...",
+      "The higher...",
+      "The less..."
+    ],
+    "phonics_rules": "Nhấn mạnh vào từ so sánh ở đầu mỗi mệnh đề.",
+    "common_mistakes": "Quên mạo từ 'THE' ở một trong hai vế.",
+    "examples": [
+      {
+        "en": "The more you read, the more knowledgeable you become.",
+        "vi": "Bạn càng đọc nhiều sách, bạn càng trở nên hiểu biết hơn."
+      }
+    ],
+    "practice_questions": [
+      {
+        "q": "The ______ you study, the ______ your exam scores will be.",
+        "options": [
+          "A. harder / better",
+          "B. more hard / good",
+          "C. hardest / best",
+          "D. hard / good"
+        ],
+        "ans": "A",
+        "exp": "Cấu trúc: The harder + S + V, the better + S + V."
+      }
+    ]
   }
 ]

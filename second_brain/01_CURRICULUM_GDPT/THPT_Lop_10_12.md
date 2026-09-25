@@ -1,12 +1,19 @@
 ---
-title: "🌳 Bậc THPT (Lớp 10 - 12) - Chinh Phục Tốt Nghiệp 2026 & Đại Học"
-tags: ["#curriculum/highschool", "#cefr/b2", "#cefr/c1"]
+title: "Bậc THPT: Lớp 10 Đến Lớp 12 & Ôn Thi Tốt Nghiệp THPT QG"
+tags: ["#curriculum", "#high-school", "#thpt-qg", "#ielts"]
+aliases: ["THPT", "High School G10-G12"]
 ---
+
 # 🌳 CHƯƠNG TRÌNH TIẾNG ANH THPT (LỚP 10 - 12)
 
-## 1. Định hướng khảo thí
-- Bám sát ma trận đề thi tốt nghiệp THPT Quốc Gia từ năm 2026.
-- Đọc hiểu chuyên sâu các chủ đề toàn cầu: [[Cities and Urbanisation]], [[Our Heritage]], Trí tuệ nhân tạo, Biến đổi khí hậu.
-- Sử dụng thành thạo [[Inversion_and_Cleft_Sentences]], [[Subjunctive_Mood_and_Wish]].
+## 🎯 Mục Tiêu Bứt Phá
+- Làm chủ ngữ pháp học thuật, văn phong báo chí, nghiên cứu khoa học.
+- Chuẩn bị tuyệt đối cho kỳ thi Tốt nghiệp THPT Quốc Gia (Mục tiêu 9.0+) và chứng chỉ IELTS Academic 6.5 - 8.0+.
 
-Liên kết: [[GDPT_Master_Curriculum_MOC]], [[THPT_QuocGia_2026_Format]], [[HSG_Grade12_QuangNam_Breakdown]].
+## 📌 Các Chuyên Đề Phân Hóa Cao
+- [[Inversion_and_Cleft_Sentences|Đảo Ngữ Toàn Phần & Câu Chẻ Cleft Sentences]]
+- [[Subjunctive_Mood_and_Hypothetical_Structures|Thể Giả Định (Subjunctive Mood)]]
+- [[Relative_Clauses_Defining_NonDefining_Reduced|Mệnh Đề Quan Hệ Rút Gọn (V-ing / V-ed / To-inf)]]
+- [[Tense_Coordination_and_Sequence|Phối Hợp Thì Trong Mệnh Đề Trạng Ngữ Chỉ Thời Gian]]
+- [[Error_Identification_Strategies|Bẫy Tìm Lỗi Sai Kinh Điển Trong Đề THPT Quốc Gia]]
+- [[THPT_Quoc_Gia_Exam_Strategy|Chiến Lược Phân Bổ Thời Gian & Giải Đề 50 Câu]]

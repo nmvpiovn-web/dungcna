@@ -613,5 +613,50 @@
     "created_by": "Cô Dung Olympic Team",
     "is_published": 1,
     "created_at": "2026-09-25 10:00:00"
+  },
+  {
+    "id": "ex_g8_hsg_provincial",
+    "curriculum_id": "curr_g8",
+    "title": "Đề Khảo Sát Học Sinh Giỏi Tiếng Anh Lớp 8 Cấp Tỉnh (Google Drive #24)",
+    "description": "Đề thi chính thức HSG THCS: Phát âm phân hóa, Cụm động từ (Phrasal Verbs) và 10 mô hình viết lại câu nâng cao.",
+    "grade": 8,
+    "format_type": "hsg_olympic",
+    "skill_category": "advanced_syntax",
+    "duration_minutes": 90,
+    "total_questions": 30,
+    "pass_percentage": 70,
+    "created_by": "Ban Chuyên Môn GDPT",
+    "is_published": 1,
+    "created_at": "2026-09-25 04:59:28"
+  },
+  {
+    "id": "ex_thpt_qg_national_2026",
+    "curriculum_id": "curr_g12",
+    "title": "Đề Thi Thử Tốt Nghiệp THPT Quốc Gia Chuẩn Cấu Trúc Bộ GD&ĐT 2026",
+    "description": "50 câu hỏi chuẩn ma trận đề thi mẫu: Phát âm, trọng âm, tìm lỗi sai, đọc điền từ và đọc hiểu phân hóa cao.",
+    "grade": 12,
+    "format_type": "thpt_quoc_gia",
+    "skill_category": "comprehensive_exam",
+    "duration_minutes": 60,
+    "total_questions": 40,
+    "pass_percentage": 60,
+    "created_by": "Hội Đồng Khảo Thí THPT",
+    "is_published": 1,
+    "created_at": "2026-09-25 04:59:28"
+  },
+  {
+    "id": "ex_g5_ioe_national",
+    "curriculum_id": "curr_g5",
+    "title": "Olympic Tiếng Anh Trên Internet (IOE) Bậc Tiểu Học Lớp 5 Toàn Quốc",
+    "description": "Đề luyện thi IOE cấp Quốc gia & cấp Tỉnh: Phản xạ từ vựng, ngữ âm nguyên âm/phụ âm và sắp xếp trật tự từ.",
+    "grade": 5,
+    "format_type": "ioe_primary",
+    "skill_category": "speed_vocabulary",
+    "duration_minutes": 30,
+    "total_questions": 25,
+    "pass_percentage": 70,
+    "created_by": "Ban Chuyên Môn Tiểu Học",
+    "is_published": 1,
+    "created_at": "2026-09-25 04:59:28"
   }
 ]

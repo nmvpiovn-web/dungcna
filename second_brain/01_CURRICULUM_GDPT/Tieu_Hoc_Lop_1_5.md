@@ -1,17 +1,16 @@
 ---
-title: "🌱 Bậc Tiểu Học (Lớp 1 - 5) - Chuẩn GDPT & Cambridge Young Learners"
-tags: ["#curriculum/primary", "#cefr/a1"]
+title: "Bậc Tiểu Học: Lớp 1 Đến Lớp 5 (GDPT 2018)"
+tags: ["#curriculum", "#primary", "#phonics", "#starters-movers-flyers"]
+aliases: ["Tiểu Học", "Primary G1-G5"]
 ---
+
 # 🌱 CHƯƠNG TRÌNH TIẾNG ANH TIỂU HỌC (LỚP 1 - 5)
 
-## 1. Mục tiêu đào tạo
-- Hình thành tình yêu với ngôn ngữ qua hình ảnh, bài hát, vận động TPR.
-- Làm chủ [[Phonics_and_IPA_Sound_System|Ngữ âm Phonics]] tự nhiên.
-- Tích lũy 500+ từ vựng cơ bản theo chủ đề trường học, gia đình, vật nuôi.
+## 🎯 Mục Tiêu Giáo Dục
+- Hình thành phản xạ phát âm chuẩn thông qua [[Phonics_and_IPA_Sound_System|Hệ thống Phonics Quốc tế]].
+- Xây dựng vốn từ vựng cơ bản về bản thân, gia đình, bạn bè và thế giới xung quanh qua [[Lexicon_Primary_G1_G5|Vốn từ tiểu học]].
+- Làm quen với các bài thi đánh giá chuẩn quốc tế: Cambridge Starters (Lớp 3), Movers (Lớp 4), Flyers (Lớp 5) và các kỳ thi IOE Quốc Gia.
 
-## 2. Các đơn vị bài học trọng tâm
-- **Lớp 3:** Đồ dùng học tập, số đếm, màu sắc, thành viên gia đình.
-- **Lớp 4:** Giờ giấc, thời khóa biểu, nghề nghiệp cha mẹ, địa điểm công cộng.
-- **Lớp 5:** Kể về kỳ nghỉ hè quá khứ ([[Past_Simple_and_Continuous]]), thói quen hàng ngày ([[Present_Simple_and_Continuous]]).
-
-Liên kết: [[GDPT_Master_Curriculum_MOC]], [[Lexicon_Primary_G1_G5]].
+## 📌 Khung Kiến Thức Trọng Tâm
+1. **Phonics**: Nguyên âm ngắn (/æ/, /e/, /ɪ/, /ɒ/, /ʌ/) và nguyên âm dài (/iː/, /uː/, /ɑː/, /ɔː/, /ɜː/).
+2. **Ngữ pháp sơ cấp**: Động từ To Be, cấu trúc What, Where, How many, Can/Can't.

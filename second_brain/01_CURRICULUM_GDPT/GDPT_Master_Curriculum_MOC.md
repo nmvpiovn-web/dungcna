@@ -1,15 +1,15 @@
 ---
-title: "📚 GDPT Master Curriculum MOC"
-tags: ["#curriculum", "#moc", "#gdpt2018"]
-updated_at: "2026-09-25"
+title: "Bản Đồ Tổng Chương Trình Tiếng Anh GDPT 2018 (Grades 1-12)"
+tags: ["#curriculum", "#gdpt", "#moc"]
+aliases: ["Chương Trình GDPT", "GDPT 2018 MOC"]
 ---
-# 📚 KHUNG CHƯƠNG TRÌNH GDPT 2018 & 2026 (MAP OF CONTENT)
 
-Lộ trình đào tạo 12 năm học phổ thông kết nối với các chứng chỉ quốc tế:
+# 📚 CHƯƠNG TRÌNH TIẾNG ANH GDPT 2018 (LỚP 1 - 12)
 
-- [[Tieu_Hoc_Lop_1_5]]: Lớp 1 -> Lớp 5 (Chuẩn đầu ra Starters / Movers / Flyers).
-- [[THCS_Lop_6_9]]: Lớp 6 -> Lớp 9 (Chuẩn đầu ra KET A2 / PET B1 / Chuyên Anh).
-- [[THPT_Lop_10_12]]: Lớp 10 -> Lớp 12 (Chuẩn đầu ra THPT QG 2026 / IELTS 6.5 - 7.5+).
-- [[International_IELTS_TOEIC_CEFR]]: Bảng quy đổi chuẩn quốc tế.
+Chương trình GDPT môn Tiếng Anh 2018 theo định hướng phát triển năng lực giao tiếp:
 
-Liên kết với: [[00_INDEX_MOC]], [[Grammar_Master_MOC]], [[Vocabulary_Atlas_MOC]].
+- [[Tieu_Hoc_Lop_1_5|🌱 Bậc Tiểu Học: Lớp 1 - 5 (Bậc 1 / CEFR A1)]]
+- [[THCS_Lop_6_9|🌿 Bậc Trung Học Cơ Sở: Lớp 6 - 9 (Bậc 2 / CEFR A2)]]
+- [[THPT_Lop_10_12|🌳 Bậc Trung Học Phổ Thông: Lớp 10 - 12 (Bậc 3 / CEFR B1-B2)]]
+- [[Global_Success_Vs_Friends_Plus_Comparative|⚖️ Bảng đối sánh Global Success vs Friends Plus]]
+- [[Cambridge_CEFR_Framework_Alignment|🎯 Khung chuẩn quy chiếu Cambridge & CEFR]]
