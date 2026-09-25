@@ -19,8 +19,8 @@
 
   let { data } = $props();
 
-  let currentUser = $state(null);
-  let linkedChild = $state(null);
+  let currentUser = $state(typeof window !== 'undefined' ? getCurrentUser() : null);
+  let linkedChild = $state(typeof window !== 'undefined' && currentUser?.role === 'parent' ? getLinkedStudentForParent(currentUser) : null);
   let childRecommendations = $state([]);
   let studentStars = $state(850);
   let activeCurriculumTab = $state('all');
@@ -120,21 +120,23 @@
   );
 
   let targetStudentUser = $derived(
-    currentUser?.role === 'parent' ? linkedChild : (currentUser?.role === 'student' ? currentUser : null)
+    currentUser?.role === 'parent' ? (linkedChild || getLinkedStudentForParent(currentUser)) : (currentUser?.role === 'student' ? currentUser : null)
   );
 
   let enrolledGrades = $derived(
-    targetStudentUser ? getUserEnrolledGrades(targetStudentUser) : []
+    targetStudentUser ? getUserEnrolledGrades(targetStudentUser) : (currentUser?.role === 'student' ? getUserEnrolledGrades(currentUser) : [])
   );
 
   let studentEnrolledCurricula = $derived.by(() => {
-    if (!targetStudentUser) return [];
-    return data.curricula.filter(c => isCurriculumEnrolled(targetStudentUser, c));
+    const student = targetStudentUser || (currentUser?.role === 'student' ? currentUser : null);
+    if (!student) return [];
+    return data.curricula.filter(c => isCurriculumEnrolled(student, c));
   });
 
   let studentLockedCurricula = $derived.by(() => {
-    if (!targetStudentUser) return [];
-    return data.curricula.filter(c => !isCurriculumEnrolled(targetStudentUser, c));
+    const student = targetStudentUser || (currentUser?.role === 'student' ? currentUser : null);
+    if (!student) return [];
+    return data.curricula.filter(c => !isCurriculumEnrolled(student, c));
   });
 
   async function handleRequestUnlock(curr) {
@@ -922,7 +924,7 @@
   {/if}
 
   <!-- CURRICULUM SECTION: ROLE ISOLATED -->
-  {#if targetStudentUser}
+  {#if targetStudentUser || currentUser?.role === 'student'}
     <!-- ================= STUDENT / PARENT VIEW: ONLY ENROLLED CLASSES SHOWN ================= -->
     <div class="space-y-6">
       <!-- Section 1: Active Enrolled Curriculum -->
@@ -936,7 +938,7 @@
               Khóa Học Của Em: {enrolledGrades.join(' • ') || 'Lớp 7'} 🎓
             </h2>
             <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-1">
-              Học viên: <strong class="text-emerald-700 dark:text-emerald-400">{targetStudentUser.name}</strong> • 
+              Học viên: <strong class="text-emerald-700 dark:text-emerald-400">{(targetStudentUser || currentUser)?.name || 'Học viên'}</strong> • 
               Hệ thống được thiết kế độc quyền riêng cho khối lớp của em. Hoàn thành đề thi và từ vựng mỗi ngày để nhận Sao!
             </p>
           </div>

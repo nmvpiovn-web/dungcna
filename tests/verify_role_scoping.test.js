@@ -131,6 +131,33 @@ console.log(`Teacher accessible courses: ${teacherAccess.length}/19`);
 if (adminAccess.length !== 19 || teacherAccess.length !== 19) {
   throw new Error('Teacher and Admin must have access to all 19 courses!');
 }
-console.log('✅ Teacher & Admin full catalog access verified!');
+console.log('\n--- TEST 7: New user thienbao registering with Lớp 7 ---');
+const thienbao = {
+  id: `usr_${Date.now()}`,
+  username: 'thienbao',
+  name: 'Thiên Bảo',
+  role: 'student',
+  grade: 'Lớp 7',
+  status: 'trial',
+  approval_status: 'trial',
+  metadata: JSON.stringify({
+    grade: 'Lớp 7',
+    target: 'Chương trình GDPT 2026',
+    is_trial: true
+  })
+};
+const thienbaoEnrolled = getUserEnrolledGrades(thienbao);
+const thienbaoCurricula = curriculaData.filter(c => isCurriculumEnrolled(thienbao, c));
+const thienbaoLocked = curriculaData.filter(c => !isCurriculumEnrolled(thienbao, c));
 
-console.log('\n🎉 ALL 6 AUTOMATED VERIFICATION TESTS PASSED!');
+console.log(`thienbao enrolled classes:`, thienbaoEnrolled);
+console.log(`thienbao accessible: ${thienbaoCurricula.length}, locked: ${thienbaoLocked.length}`);
+if (thienbaoCurricula.length !== 1 || thienbaoCurricula[0].code !== 'grade-7') {
+  throw new Error(`thienbao must only have access to Lớp 7! Got: ${thienbaoCurricula.map(c => c.title)}`);
+}
+if (thienbaoLocked.length !== 18) {
+  throw new Error(`thienbao must have exactly 18 locked classes! Got: ${thienbaoLocked.length}`);
+}
+console.log('✅ thienbao role and grade scoping verified!');
+
+console.log('\n🎉 ALL 7 AUTOMATED VERIFICATION TESTS PASSED!');

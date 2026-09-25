@@ -185,26 +185,35 @@
 
 {#if isOpen}
   <div class="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200">
-    <div class="w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl overflow-hidden relative font-sans text-slate-800 dark:text-slate-100 flex flex-col h-[92vh] max-h-[720px]">
+    <div class="w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl overflow-hidden relative font-sans text-slate-800 dark:text-slate-100 flex flex-col max-h-[92dvh] sm:max-h-[85vh]">
       
-      <!-- Top Decorative Banner (Header: Fixed Top) -->
-      <div class="flex-shrink-0 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 dark:from-emerald-950 dark:via-teal-950 dark:to-slate-900 p-4 sm:p-5 text-center relative text-white border-b border-emerald-500/20">
-        {#if canDismiss}
-          <button
-            onclick={() => isOpen = false}
-            class="absolute top-4 right-4 text-emerald-100 hover:text-white p-1.5 rounded-full bg-black/20 hover:bg-black/40 text-xs transition-all"
-            title="Đóng"
-          >
-            ✕
-          </button>
-        {/if}
-
-        <div class="w-11 h-11 mx-auto rounded-2xl bg-white/20 dark:bg-emerald-500/20 border border-white/30 dark:border-emerald-400/40 flex items-center justify-center text-2xl shadow-lg mb-1">
-          👩‍🏫
+      <!-- Top Slim Header: Brand + Hotline: 0905 960 437 (Clean & Space-Saving) -->
+      <div class="flex-shrink-0 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 dark:from-emerald-950 dark:via-teal-950 dark:to-slate-900 px-4 py-3 flex items-center justify-between text-white border-b border-emerald-500/30">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">🎓</span>
+          <span class="font-heading font-black text-sm sm:text-base tracking-tight text-white">Tiếng Anh Cô Dung</span>
         </div>
-        <div class="text-[10px] font-extrabold text-emerald-100 dark:text-emerald-300 uppercase tracking-widest">HỆ THỐNG ĐÀO TẠO &amp; KHẢO THÍ K12</div>
-        <h2 class="text-xl sm:text-2xl font-black text-white mt-0.5">Tiếng Anh Cô Dung</h2>
-        <p class="text-xs text-emerald-50 dark:text-slate-300 mt-0.5">Đăng nhập tài khoản để vào phòng thi, học bài và tích lũy Sao đổi học phí</p>
+
+        <div class="flex items-center gap-2">
+          <a
+            href="tel:0905960437"
+            class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 hover:bg-white/30 text-white text-xs font-black shadow-sm transition-all hover:scale-105 active:scale-95 border border-white/40"
+            title="Gọi Hotline tư vấn"
+          >
+            <span>📞</span>
+            <span>Hotline: 0905 960 437</span>
+          </a>
+
+          {#if canDismiss}
+            <button
+              onclick={() => isOpen = false}
+              class="w-7 h-7 rounded-full bg-black/20 hover:bg-black/40 text-emerald-100 hover:text-white flex items-center justify-center text-xs font-bold transition-all ml-1"
+              title="Đóng"
+            >
+              ✕
+            </button>
+          {/if}
+        </div>
       </div>
 
       <!-- Tab Switcher (Header: Fixed Top) -->
@@ -579,14 +588,27 @@
                 </p>
               </div>
 
-              <!-- Selected Class Indicator Badge -->
-              <div class="p-3 rounded-2xl border text-center transition-all {regSelectedGrade ? 'bg-emerald-500/10 border-emerald-500 text-emerald-600 dark:text-emerald-400 font-black text-sm shadow-sm' : 'bg-slate-100 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-400 text-xs italic'}">
-                {#if regSelectedGrade}
-                  <span>✅ Lớp đã chọn: <strong>{regSelectedGrade}</strong></span>
-                {:else}
-                  <span>👇 Vui lòng bấm chọn một lớp học bên dưới:</span>
-                {/if}
-              </div>
+              <!-- Selected Class Indicator Badge & Immediate Direct CTA -->
+              {#if regSelectedGrade}
+                <div class="p-3 rounded-2xl bg-gradient-to-r from-emerald-500/15 via-teal-500/20 to-emerald-500/15 border-2 border-emerald-500 text-center space-y-2.5 animate-in zoom-in-95 duration-150 shadow-md">
+                  <div class="text-xs font-black text-emerald-800 dark:text-emerald-300 flex items-center justify-center gap-1.5">
+                    <span>✅ ĐÃ CHỌN:</span>
+                    <span class="text-sm underline font-extrabold uppercase bg-emerald-600 text-white px-2.5 py-0.5 rounded-lg shadow-sm">{regSelectedGrade}</span>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={isLoading}
+                    onclick={handleFinalizeRegister}
+                    class="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-sm shadow-xl shadow-emerald-600/30 transition-all hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2 ring-2 ring-emerald-400"
+                  >
+                    <span>{isLoading ? '⏳ Đang khởi tạo tài khoản...' : `👉 BẤM ĐÂY ĐỂ VÀO HỌC ${regSelectedGrade.toUpperCase()} NGAY 🚀`}</span>
+                  </button>
+                </div>
+              {:else}
+                <div class="p-2.5 rounded-2xl bg-amber-500/10 border border-amber-400/50 text-amber-700 dark:text-amber-300 text-xs font-bold text-center">
+                  👇 Vui lòng bấm chọn 1 khối lớp bên dưới để tiếp tục:
+                </div>
+              {/if}
 
               <!-- Categories Grid of Class Options -->
               <div class="space-y-3 pr-1 text-xs">
@@ -621,7 +643,7 @@
                 {/each}
               </div>
 
-              <div class="text-[10px] text-center text-slate-400 pt-1">
+              <div class="text-[10px] text-center text-slate-400 pt-1 pb-2">
                 🔒 Tài khoản sau khi đăng ký sẽ hoạt động ở mức <strong>Dùng Thử (Trial)</strong>, sau khi Admin CP hoặc Cô Dung Leader duyệt sẽ kích hoạt chính thức.
               </div>
             </div>
@@ -631,7 +653,7 @@
 
       <!-- ================= PERMANENT STICKY ACTION FOOTER BAR ================= -->
       <!-- ACTION BUTTONS ALWAYS VISIBLE HERE - NEVER HIDDEN OR SCROLLED OFF-SCREEN -->
-      <div class="flex-shrink-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 px-4 sm:px-5 py-3 shadow-lg z-20">
+      <div class="flex-shrink-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 px-4 sm:px-5 py-3.5 shadow-lg z-30">
         {#if activeTab === 'login'}
           <button
             type="submit"
@@ -676,19 +698,13 @@
                 type="button"
                 disabled={!regSelectedGrade || isLoading}
                 onclick={handleFinalizeRegister}
-                class="flex-1 py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-xs sm:text-sm shadow-xl shadow-emerald-600/30 transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
+                class="flex-1 py-3.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-xs sm:text-sm shadow-xl shadow-emerald-600/30 transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
               >
-                <span>{isLoading ? '⏳ Đang đăng ký...' : '✨ Xác Nhận & Vào Học (Tài Khoản Trial)'}</span>
+                <span>{isLoading ? '⏳ Đang đăng ký...' : '✨ Hoàn Tất & Vào Học (Trial)'}</span>
               </button>
             </div>
           {/if}
         {/if}
-      </div>
-
-      <!-- Footer Policy -->
-      <div class="flex-shrink-0 py-2 px-5 bg-slate-50 dark:bg-slate-950 text-center text-[10px] text-slate-500 border-t border-slate-200/50 dark:border-slate-800/50 flex items-center justify-between">
-        <span>Hệ Thống Tiếng Anh Cô Dung 2026</span>
-        <span class="text-emerald-600 dark:text-emerald-400 font-semibold">Bảo mật RBAC &amp; D1 Database</span>
       </div>
     </div>
   </div>

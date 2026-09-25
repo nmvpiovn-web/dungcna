@@ -1,6 +1,5 @@
-const CACHE_NAME = 'tienganh-pro-v3';
+const CACHE_NAME = 'tienganh-pro-v5';
 const STATIC_ASSETS = [
-  '/',
   '/manifest.webmanifest',
   '/icon.svg',
   '/favicon.png',
@@ -33,7 +32,17 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
-  // Network first with cache fallback
+
+  // Always bypass cache for HTML navigations to ensure instant deployments
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
+  // Network first with cache fallback for other assets
   event.respondWith(
     fetch(event.request)
       .then((response) => {
