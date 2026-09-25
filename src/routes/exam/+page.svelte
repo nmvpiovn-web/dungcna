@@ -22,7 +22,13 @@
   let lockedExamAlert = $state('');
   let isRequestingUnlock = $state(false);
   let selectedExamId = $state(data.exams[0]?.id || 'ex_quick_15m_g7');
-  let currentExam = $derived(data.exams.find(e => e.id === selectedExamId) || data.exams[0]);
+  let dynamicExam = $state(null);
+  let dynamicQuestions = $state([]);
+  let currentExam = $derived(
+    dynamicExam && selectedExamId === dynamicExam.id 
+      ? dynamicExam 
+      : (data.exams.find(e => e.id === selectedExamId) || data.exams[0])
+  );
 
   // Session & Attendance-based candidate selection
   let selectedSessionId = $state(data.sessions?.[0]?.id || 'sess_1');
@@ -125,6 +131,9 @@
 
   // Questions for currently selected exam
   let activeQuestions = $derived.by(() => {
+    if (dynamicExam && selectedExamId === dynamicExam.id) {
+      return dynamicQuestions;
+    }
     const list = data.allQuestions.filter(q => q.exam_id === selectedExamId);
     if (list.length > 0) return list;
     // Fallback to default questions mapped
@@ -276,7 +285,97 @@
   }
 
   // Category Filter & Exam Derivation
-  let activeExamCategory = $state('all'); // 'all' | 'my_grade' | 'ielts' | 'toeic' | 'toefl' | 'quick_15m' | 'standard_45m'
+  let activeExamCategory = $state('all'); // 'all' | 'my_grade' | 'primary' | 'g7' | 'g9' | 'highschool' | 'ielts' | 'toeic' | 'toefl' | 'quick_5m' | 'quick_15m' | 'standard_45m' | 'random_builder'
+
+  // Random Test Generator State
+  let randomDuration = $state(15); // 5 | 15 | 45
+  let randomGrade = $state(7);
+  let randomSkill = $state('all'); // 'all' | 'grammar_vocab' | 'phonics' | 'reading'
+  let randomSuccessNotice = $state('');
+
+  function generateRandomExam() {
+    let pool = [...data.allQuestions];
+
+    // Check user role permission for selected grade
+    if (currentUser?.role === 'student') {
+      const enrolledGrades = getUserEnrolledGrades(currentUser);
+      const isAllowed = enrolledGrades.some(g => {
+        const clean = g.toLowerCase().trim();
+        const match = clean.match(/lớp\s*([0-9]+)/i);
+        if (match && Number(match[1]) === Number(randomGrade)) return true;
+        if (randomGrade === 0 && (clean.includes('ielts') || clean.includes('ket') || clean.includes('pet'))) return true;
+        return false;
+      });
+      if (!isAllowed) {
+        playAudioFeedback(false);
+        lockedExamAlert = `🔒 Em đang được phân quyền vào ${currentUser.grade || 'Lớp 7'}. Vui lòng chọn đúng khối lớp của em hoặc liên hệ Cô Dung để mở thêm lớp nhé!`;
+        setTimeout(() => lockedExamAlert = '', 6000);
+        return;
+      }
+    }
+
+    // Filter by grade
+    if (randomGrade > 0) {
+      pool = pool.filter(q => Number(q.grade) === Number(randomGrade));
+    } else {
+      pool = pool.filter(q => Number(q.grade) === 0 || (q.cambridge_level && ['KET_A2', 'PET_B1', 'IELTS_7'].includes(q.cambridge_level)));
+    }
+
+    // Filter by skill if not 'all'
+    if (randomSkill !== 'all') {
+      const skillFiltered = pool.filter(q => (q.skill || '').toLowerCase().includes(randomSkill.toLowerCase()));
+      if (skillFiltered.length >= 5) {
+        pool = skillFiltered;
+      }
+    }
+
+    if (pool.length === 0) {
+      pool = data.allQuestions.slice(0, 30);
+    }
+
+    // Determine target question count based on duration
+    const targetCount = randomDuration === 5 ? 5 : (randomDuration === 15 ? 10 : Math.min(25, pool.length));
+
+    // Fisher-Yates shuffle
+    const shuffled = [...pool];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+
+    const chosen = shuffled.slice(0, targetCount).map((q, idx) => ({
+      ...q,
+      question_index: idx + 1
+    }));
+
+    const gradeLabel = randomGrade > 0 ? `Lớp ${randomGrade}` : 'Quốc Tế (Cambridge & IELTS)';
+    const dynId = `dyn_random_${Date.now()}`;
+    const dynExam = {
+      id: dynId,
+      curriculum_id: randomGrade > 0 ? `curr_g${randomGrade}` : 'curr_general',
+      title: `🎲 Đề Thi Ngẫu Nhiên ${randomDuration} Phút - ${gradeLabel} (#${Math.floor(Math.random() * 900 + 100)})`,
+      description: `Đề thi trắc nghiệm được hệ thống xáo trộn ngẫu nhiên từ ngân hàng 570+ câu hỏi chuẩn Bộ GD&ĐT & Cambridge. Thời gian: ${randomDuration} phút, gồm ${chosen.length} câu hỏi.`,
+      grade: randomGrade,
+      format_type: randomDuration === 5 ? 'quick_5m' : (randomDuration === 15 ? 'quick_15m' : 'standard_45m'),
+      skill_category: randomSkill,
+      duration_minutes: randomDuration,
+      total_questions: chosen.length,
+      pass_percentage: 70,
+      created_by: 'Hệ Thống Trực Tuyến',
+      is_published: 1,
+      is_random: true,
+      created_at: new Date().toISOString()
+    };
+
+    dynamicExam = dynExam;
+    dynamicQuestions = chosen;
+    selectedExamId = dynId;
+    lockedExamAlert = '';
+    resetExamState();
+    startExam();
+    randomSuccessNotice = `🎉 Đã tạo đề ngẫu nhiên ${randomDuration} phút thành công! Thời gian làm bài bắt đầu đếm ngược.`;
+    setTimeout(() => randomSuccessNotice = '', 5000);
+  }
 
   let enrolledExamsCount = $derived(
     currentUser?.role === 'student' ? data.exams.filter(e => isExamEnrolledForUser(currentUser, e)).length : data.exams.length
@@ -286,15 +385,17 @@
     data.exams.filter(e => {
       if (activeExamCategory === 'my_grade') return isExamEnrolledForUser(currentUser, e);
       if (activeExamCategory === 'all') return true;
-      if (activeExamCategory === 'primary') return e.grade === 3 || e.grade === 4 || e.grade === 5 || e.title.includes('Lớp 3') || e.title.includes('Lớp 4') || e.title.includes('Lớp 5');
+      if (activeExamCategory === 'primary') return (e.grade >= 1 && e.grade <= 5) || e.title.includes('Lớp 1') || e.title.includes('Lớp 2') || e.title.includes('Lớp 3') || e.title.includes('Lớp 4') || e.title.includes('Lớp 5');
       if (activeExamCategory === 'g7') return e.grade === 7 || e.title.includes('Lớp 7') || e.curriculum_id === 'curr_g7';
       if (activeExamCategory === 'g9') return e.grade === 9 || e.title.includes('Vào 10') || e.curriculum_id === 'curr_g9';
-      if (activeExamCategory === 'highschool') return e.grade === 10 || e.grade === 11 || e.grade === 12 || e.title.includes('Lớp 11') || e.title.includes('Lớp 12') || e.title.includes('THPT');
+      if (activeExamCategory === 'highschool') return (e.grade >= 10 && e.grade <= 12) || e.title.includes('Lớp 10') || e.title.includes('Lớp 11') || e.title.includes('Lớp 12') || e.title.includes('THPT');
       if (activeExamCategory === 'ielts') return e.format_type === 'ielts_academic' || e.curriculum_id === 'curr_ielts';
       if (activeExamCategory === 'toeic') return e.format_type === 'toeic_lr' || e.curriculum_id === 'curr_toeic';
       if (activeExamCategory === 'toefl') return e.format_type === 'toefl_ibt' || e.curriculum_id === 'curr_toefl';
-      if (activeExamCategory === 'quick_15m') return e.format_type === 'quick_15m';
-      if (activeExamCategory === 'standard_45m') return e.format_type === 'standard_45m';
+      if (activeExamCategory === 'quick_5m') return e.format_type === 'quick_5m' || e.duration_minutes === 5;
+      if (activeExamCategory === 'quick_15m') return e.format_type === 'quick_15m' || e.duration_minutes === 15;
+      if (activeExamCategory === 'standard_45m') return e.format_type === 'standard_45m' || e.duration_minutes === 45;
+      if (activeExamCategory === 'random_builder') return false;
       return true;
     })
   );
@@ -654,6 +755,31 @@
           </button>
         {/if}
         <button
+          onclick={() => activeExamCategory = 'random_builder'}
+          class="px-3.5 py-1.5 rounded-xl transition-all whitespace-nowrap flex items-center gap-1.5 {activeExamCategory === 'random_builder' ? 'bg-gradient-to-r from-amber-500 to-rose-500 text-white shadow-md shadow-rose-500/30 ring-2 ring-amber-400' : 'bg-gradient-to-r from-amber-500/20 to-rose-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30'}"
+        >
+          <span>🎲 Tạo Đề Random (5p • 15p • 45p)</span>
+          <span class="px-1.5 py-0.2 rounded-full bg-white/20 text-[9px]">Mới</span>
+        </button>
+        <button
+          onclick={() => activeExamCategory = 'quick_5m'}
+          class="px-3 py-1.5 rounded-xl transition-all whitespace-nowrap {activeExamCategory === 'quick_5m' ? 'bg-amber-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-white'}"
+        >
+          ⚡ Đề 5 Phút (Khởi Động)
+        </button>
+        <button
+          onclick={() => activeExamCategory = 'quick_15m'}
+          class="px-3 py-1.5 rounded-xl transition-all whitespace-nowrap {activeExamCategory === 'quick_15m' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-white'}"
+        >
+          ⏱️ Đề 15 Phút (Thường Xuyên)
+        </button>
+        <button
+          onclick={() => activeExamCategory = 'standard_45m'}
+          class="px-3 py-1.5 rounded-xl transition-all whitespace-nowrap {activeExamCategory === 'standard_45m' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-white'}"
+        >
+          📝 Đề 45 Phút (1 Tiết Chuẩn)
+        </button>
+        <button
           onclick={() => activeExamCategory = 'all'}
           class="px-3 py-1.5 rounded-xl transition-all whitespace-nowrap {activeExamCategory === 'all' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-white'}"
         >
@@ -663,7 +789,7 @@
           onclick={() => activeExamCategory = 'primary'}
           class="px-3 py-1.5 rounded-xl transition-all whitespace-nowrap {activeExamCategory === 'primary' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-white'}"
         >
-          🎒 Tiểu Học (L3-5)
+          🎒 Tiểu Học (L1-5)
         </button>
         <button
           onclick={() => activeExamCategory = 'g7'}
@@ -701,35 +827,162 @@
         >
           🎓 TOEFL iBT
         </button>
-        <button
-          onclick={() => activeExamCategory = 'quick_15m'}
-          class="px-3 py-1.5 rounded-xl transition-all whitespace-nowrap {activeExamCategory === 'quick_15m' ? 'bg-amber-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-white'}"
-        >
-          ⚡ Đề 15 Phút
-        </button>
-        <button
-          onclick={() => activeExamCategory = 'standard_45m'}
-          class="px-3 py-1.5 rounded-xl transition-all whitespace-nowrap {activeExamCategory === 'standard_45m' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-white'}"
-        >
-          ⏱️ Đề 45 Phút Chuẩn Bộ
-        </button>
       </div>
     </div>
+
+    <!-- RANDOM EXAM GENERATOR INTERACTIVE PANEL -->
+    {#if activeExamCategory === 'random_builder'}
+      <div class="rounded-2xl bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950/60 border border-amber-500/40 p-5 md:p-6 shadow-2xl space-y-5 animate-in fade-in duration-200">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
+          <div class="space-y-1">
+            <div class="text-xs font-black text-amber-400 uppercase tracking-wider flex items-center gap-2">
+              <span class="text-lg">🎲</span>
+              <span>BỘ TẠO ĐỀ THI TRẮC NGHIỆM NGẪU NHIÊN THEO THỜI LƯỢNG (DYNAMIC TEST BUILDER)</span>
+            </div>
+            <p class="text-xs text-slate-400">
+              Hệ thống xáo trộn ngẫu nhiên từ kho <strong>{data.allQuestions?.length || 573} câu hỏi</strong> chuẩn GDPT 2018 &amp; Cambridge. Mỗi lần tạo là một đề thi hoàn toàn mới!
+            </p>
+          </div>
+          {#if randomSuccessNotice}
+            <div class="px-3 py-1.5 rounded-xl bg-emerald-500/20 text-emerald-300 font-bold text-xs border border-emerald-500/30 animate-pulse">
+              {randomSuccessNotice}
+            </div>
+          {/if}
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+          <!-- 1. Duration Choice -->
+          <div class="space-y-2">
+            <span class="block font-bold text-slate-300">1. Thời Lượng Làm Bài:</span>
+            <div class="grid grid-cols-3 gap-1.5">
+              <button
+                type="button"
+                onclick={() => randomDuration = 5}
+                class="py-2.5 px-2 rounded-xl font-bold text-xs text-center border transition-all {randomDuration === 5 ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-md shadow-amber-500/30 font-black' : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700'}"
+              >
+                <div>⚡ 5 Phút</div>
+                <div class="text-[10px] opacity-80 font-normal">5 câu</div>
+              </button>
+              <button
+                type="button"
+                onclick={() => randomDuration = 15}
+                class="py-2.5 px-2 rounded-xl font-bold text-xs text-center border transition-all {randomDuration === 15 ? 'bg-indigo-600 text-white border-indigo-400 shadow-md shadow-indigo-600/30 font-black' : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700'}"
+              >
+                <div>⏱️ 15 Phút</div>
+                <div class="text-[10px] opacity-80 font-normal">10 câu</div>
+              </button>
+              <button
+                type="button"
+                onclick={() => randomDuration = 45}
+                class="py-2.5 px-2 rounded-xl font-bold text-xs text-center border transition-all {randomDuration === 45 ? 'bg-emerald-600 text-white border-emerald-400 shadow-md shadow-emerald-600/30 font-black' : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700'}"
+              >
+                <div>📝 45 Phút</div>
+                <div class="text-[10px] opacity-80 font-normal">25 câu</div>
+              </button>
+            </div>
+          </div>
+
+          <!-- 2. Grade Choice -->
+          <div class="space-y-2">
+            <label class="block font-bold text-slate-300" for="rand-grade">2. Khối Lớp / Hệ Học:</label>
+            <select
+              id="rand-grade"
+              bind:value={randomGrade}
+              class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-white font-bold focus:outline-none focus:border-amber-400"
+            >
+              <optgroup label="🌱 Cấp 2 (THCS)">
+                <option value={7}>Lớp 7 (Global Success &amp; KET A2)</option>
+                <option value={6}>Lớp 6 (Friends Plus &amp; A1)</option>
+                <option value={8}>Lớp 8 (THCS &amp; PET B1)</option>
+                <option value={9}>Lớp 9 (Luyện Thi Vào 10 Chuyên)</option>
+              </optgroup>
+              <optgroup label="🎒 Cấp 1 (Tiểu Học)">
+                <option value={1}>Lớp 1 (Phonics Starters)</option>
+                <option value={2}>Lớp 2 (Starters A1)</option>
+                <option value={3}>Lớp 3 (Movers A1)</option>
+                <option value={4}>Lớp 4 (Movers A1+)</option>
+                <option value={5}>Lớp 5 (Flyers A2)</option>
+              </optgroup>
+              <optgroup label="🏢 Cấp 3 (THPT)">
+                <option value={10}>Lớp 10 (Global Success B1)</option>
+                <option value={11}>Lớp 11 (B1+ &amp; ASEAN)</option>
+                <option value={12}>Lớp 12 (Tốt Nghiệp THPT QG)</option>
+              </optgroup>
+              <optgroup label="🌍 Chứng Chỉ Quốc Tế">
+                <option value={0}>IELTS Academic &amp; Cambridge KET/PET</option>
+              </optgroup>
+            </select>
+          </div>
+
+          <!-- 3. Skill Choice -->
+          <div class="space-y-2">
+            <label class="block font-bold text-slate-300" for="rand-skill">3. Trọng Tâm Kỹ Năng:</label>
+            <select
+              id="rand-skill"
+              bind:value={randomSkill}
+              class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-white font-medium focus:outline-none focus:border-amber-400"
+            >
+              <option value="all">🌟 Tổng Hợp Toàn Diện (Mixed Skills)</option>
+              <option value="grammar">📐 Ngữ Pháp Cú Pháp (Grammar Focus)</option>
+              <option value="vocabulary">🔤 Từ Vựng &amp; Cụm Từ (Vocabulary)</option>
+              <option value="phonics">🔊 Ngữ Âm &amp; Phát Âm (Phonics &amp; IPA)</option>
+              <option value="reading">📖 Đọc Hiểu &amp; Biển Báo (Reading)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Action Button -->
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
+          <div class="text-xs text-slate-400 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+            <span>Đề sẽ được tạo ngẫu nhiên, tự động chuyển sang chế độ làm bài thi ngay tức thì.</span>
+          </div>
+
+          <button
+            type="button"
+            onclick={generateRandomExam}
+            class="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-amber-500 via-rose-500 to-indigo-600 hover:from-amber-400 hover:to-indigo-500 text-white font-black text-sm shadow-xl shadow-rose-600/30 flex items-center justify-center gap-2 transition-all hover:scale-105"
+          >
+            <span>🚀 Bắt Đầu Làm Đề Ngẫu Nhiên {randomDuration} Phút</span>
+          </button>
+        </div>
+      </div>
+    {/if}
+
+    <!-- Quick Random Banner for other tabs -->
+    {#if activeExamCategory !== 'random_builder'}
+      <div class="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs">
+        <div class="flex items-center gap-2 text-slate-300">
+          <span class="text-base">🎲</span>
+          <span>Cần bài tập nhanh không trùng lặp? Hãy thử <strong>Bộ Tạo Đề Ngẫu Nhiên 5p • 15p • 45p</strong> từ kho 573 câu hỏi!</span>
+        </div>
+        <button
+          type="button"
+          onclick={() => activeExamCategory = 'random_builder'}
+          class="px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs whitespace-nowrap self-start sm:self-auto shadow-sm"
+        >
+          🎲 Mở Bộ Tạo Đề
+        </button>
+      </div>
+    {/if}
 
     <!-- Exam Cards Grid -->
     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
       {#each filteredExams as ex}
         {@const isEnrolled = isExamEnrolledForUser(currentUser, ex)}
         {@const isSelected = selectedExamId === ex.id}
+        {@const is5m = ex.format_type === 'quick_5m' || ex.duration_minutes === 5}
+        {@const is15m = ex.format_type === 'quick_15m' || ex.duration_minutes === 15}
+        {@const is45m = ex.format_type === 'standard_45m' || ex.duration_minutes === 45}
         <button
           onclick={() => handleSelectExam(ex)}
           class="p-3 rounded-2xl border text-left transition-all duration-150 flex flex-col justify-between {isSelected ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg shadow-indigo-600/30 ring-2 ring-indigo-400/50' : (isEnrolled ? 'bg-slate-50 dark:bg-slate-950/80 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/80' : 'bg-slate-100/70 dark:bg-slate-950/40 border-slate-200/80 dark:border-slate-800/60 text-slate-400 opacity-60 hover:opacity-90')}"
         >
           <div>
             <div class="flex items-center justify-between text-[10px] font-bold uppercase mb-1">
-              <span class="{isSelected ? 'text-indigo-200' : (isEnrolled ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400')}">
+              <span class="{isSelected ? 'text-indigo-200' : (isEnrolled ? (is5m ? 'text-amber-500 font-extrabold' : (is15m ? 'text-indigo-500 dark:text-indigo-400 font-extrabold' : 'text-emerald-500 font-extrabold')) : 'text-slate-400')}">
                 {#if !isEnrolled}🔒 {/if}
-                {ex.format_type === 'quick_15m' ? '⚡ 15 Phút' : ex.format_type === 'standard_45m' ? '⏱️ 45 Phút' : ex.format_type === 'ielts_academic' ? '🌍 IELTS' : ex.format_type === 'toeic_lr' ? '💼 TOEIC' : ex.format_type === 'toefl_ibt' ? '🎓 TOEFL' : '📜 Khảo Thí'}
+                {is5m ? '⚡ 5 Phút' : (is15m ? '⏱️ 15 Phút' : (is45m ? '📝 45 Phút' : (ex.format_type === 'ielts_academic' ? '🌍 IELTS' : (ex.format_type === 'toeic_lr' ? '💼 TOEIC' : (ex.format_type === 'toefl_ibt' ? '🎓 TOEFL' : '📜 Khảo Thí')))))}
               </span>
               {#if !isEnrolled}
                 <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold border border-amber-500/20">Khóa</span>

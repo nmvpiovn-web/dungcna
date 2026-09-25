@@ -376,7 +376,10 @@
     "BÀI TẬP ÔN KỸ NĂNG NGHE HỌC KỲ 2 TIẾNG ANH 6 - CÓ ĐÁP ÁN": "1LzMqvohqbRHt89IG_aRuq66x-rNeDJcA",
     "BỘ ĐỀ KIỂM TRA THAM KHẢO TIẾNG ANH 10 BRIGHT": "1ifh-B3Gon03Z3o92amnGNHjZQr_ohICB",
     "BÀI TẬP TIẾNG ANH 7 GLOBAL SUCCESS CÓ KEY - NEW": "1gTAc6lsvHinqJ2BnQXPYwODReLI_2Z2r",
-    "TỪ VỰNG - NGỮ PHÁP - BÀI TẬP ÁP DỤNG TIẾNG ANH 6 GLOBAL SUCCESS - CÓ ĐÁP ÁN": "17Pm7yY6QOXJQPzDH0ks3_ZxD0sxjTiEH"
+    "TỪ VỰNG - NGỮ PHÁP - BÀI TẬP ÁP DỤNG TIẾNG ANH 6 GLOBAL SUCCESS - CÓ ĐÁP ÁN": "17Pm7yY6QOXJQPzDH0ks3_ZxD0sxjTiEH",
+    "BỘ ĐỀ KIỂM TRA THAM KHẢO TIẾNG ANH 7": "1edaKv-wqcVyXlrLv0d83Zaa2pdSEIn27",
+    "105 CÂU GIAO TIẾP  HÀNG NGÀY CHO BÉ CÓ FILE NGHE": "1Q51f4Bai78qxwkDEfg017zzmbzDLY5h5",
+    "45 ĐỀ THI HỌC KỲ 2 TIẾNG ANH 3-4-5 CÓ ĐÁP ÁN": "1gqsLfuk4gqdAu7cNtX-_4JasyFMjMPU8"
   },
   "synced": {
     "TỔNG HỢP CÁC CHUYÊN ĐỀ NGỮ PHÁP BỒI DƯỠNG HỌC SINH GIỎI TIẾNG ANH THPT - CÓ ĐÁP ÁN": {
@@ -17059,6 +17062,697 @@
       "id": "1fRchQ3nIfOzgo1HRmm5_6hPXm272HHTj",
       "name": "200 CÂU IOE CẤP HUYỆN NĂM 2022 - giaoandethit.pdf",
       "type": "direct_copy"
+    },
+    "NGÂN HÀNG CÂU HỎI TRẮC NGHIỆM THEO CHUYÊN ĐỀ MÔN TIẾNG ANH | CÓ ĐÁP ÁN": {
+      "id": "1HHjUtMDWuOBHgqfa_AYOwv8AjIfJdDUs",
+      "name": "Ngan hang cau hoi trac nghiem tieng anh giaoandethitienganh.info.docx",
+      "type": "direct_copy"
+    },
+    "100 IDIOMS THƯỜNG GẶP KỲ THI TỐT NGHIỆP THPTQG | CÓ VÍ DỤ": {
+      "name": "100 idioms hay thi -giaoandethitienganh.info.rar",
+      "extractedCount": 1,
+      "files": [
+        "100 idioms hay thi -giaoandethitienganh.info.doc"
+      ]
+    },
+    "50 CHỦ ĐỀ TRANH LUẬN | LUYỆN NÓI CHO HỌC SINH TIỂU HỌC": {
+      "id": "1HoVH9seB40s4RSHZ9vT2BWW3MyJx29Nk",
+      "name": "50_Debate_Prompts_for_Kids.pdf",
+      "type": "direct_copy"
+    },
+    "BỘ ĐỀ TIẾNG ANH CHUẨN BỊ CHO KỲ THI THPTQG | HIỆP GIANG": {
+      "id": "1pl3CgXvgqkd9tOM944hOVDZC3nL7SjDV",
+      "name": "Bộ đề tiếng anh chuẩn bị cho kì thi THPT Quốc Gia.pdf",
+      "type": "direct_copy"
+    },
+    "30 BÀI ĐỌC HIỂU CẤP ĐỘ A1 CÓ HÌNH ẢNH MINH HỌA": {
+      "name": "READING A1-giaoandethitienganh.info.rar",
+      "extractedCount": 1,
+      "files": [
+        "READING A1-giaoandethitienganh.info.docx"
+      ]
+    },
+    "CHỦ ĐỀ NÓI TIẾNG ANH 6 HỌC KỲ 1": {
+      "id": "1dPbiLr05NZZcow-8YOATthKFEz_L9ear",
+      "name": "SPEAKING ENGLISH 6 FOR THE FIRST giaoandethitienganh.info.docx",
+      "type": "direct_copy"
+    },
+    "TÓM TẮT NGỮ PHÁP TIẾNG ANH 11 ": {
+      "id": "1S7XttarEOlmHMiWlD99bnmbm5m-rzt5l",
+      "name": "TÓM TẮT NGỮ PHÁP CĂN BẢN TIẾNG ANH LỚP 11 giaoandethitienganh.info.docx",
+      "type": "direct_copy"
+    },
+    "BÀI TẬP VIẾT CÂU CHO HỌC SINH GIỎI CÓ KEY": {
+      "id": "1M-_lEulPNU8oYaOlOwa63TUaCqASo1Dc",
+      "name": "Bài tập viết lại câu ôn thi HSG (With key) giaoandethitienganh.info.doc",
+      "type": "direct_copy"
+    },
+    "90 THÀNH NGỮ HAY - KHÓ": {
+      "id": "1hpge_GdJpSVDoVGHC89WfHd5AVhxbOD-",
+      "name": "90 THÀNH NGỮ HAY - LẠ - KHÓ giaoandethitienganh.info.doc",
+      "type": "direct_copy"
+    },
+    "800 PHRASAL VERB PHỔ BIẾN TRONG TIẾNG ANH": {
+      "id": "1wYgLqTnKXsk58TWEqfg3_0b0NvRZKxuP",
+      "name": "800 phrasal verbs giaoandethitienganh.info.doc",
+      "type": "direct_copy"
+    },
+    "245 CÂU VERB FORM TIẾNG ANH 8 CÓ ĐÁP ÁN": {
+      "id": "1WjMhRRPqBHONqDMrxX7v7bb81kd9PSwL",
+      "name": "245 VERB FORM TIẾNG ANH 8 CÓ KEY giaoandethitienganh.info.doc",
+      "type": "direct_copy"
+    },
+    "60 BÀI TẬP ĐỌC HIỂU ĐIỀN TỪ VÀO CHỖ TRỐNG TIẾNG ANH 9 CÓ ĐÁP ÁN": {
+      "id": "1N1zbrv4N4EMCHvVk4Y1m0Gvsla19_zWy",
+      "name": "ĐỌC HIỂU ĐIỀN TỪ VÀO CHỖ TRỐNG TIẾNG ANH 9 CÓ KEY giaoandethitienganh.info.doc",
+      "type": "direct_copy"
+    },
+    "TỔNG HỢP ĐỀ THI THPTQG NĂM 2020 CÓ ĐÁP ÁN": {
+      "id": "12zYwb4KRGWbKtoudeADafpkdsejMWIa7",
+      "name": "Đề thi tốt nghiệp THPT 2020 có đáp án giaoandethitienganh.info.doc",
+      "type": "direct_copy"
+    },
+    "350 CÂU BÀI TẬP TÌM TỪ ĐỒNG NGHĨA VÀ TRÁI NGHĨA LUYỆN HỌC SINH GIỎI TIẾNG ANH 9": {
+      "id": "1D2ubjnpYUe0sXoaCz3MdxfBPnwVi7jOV",
+      "name": "SYNONYMS AND ANTONYMS KEY giaoandethitienganh.info.doc",
+      "type": "direct_copy"
+    },
+    "30 PHIẾU BÀI TẬP TĂNG CƯỜNG TIẾNG ANH 9 CÓ ĐÁP ÁN": {
+      "id": "1mO2UcTwoaBetT6-P498wx0u-GYB2DYMP",
+      "name": "35 PHIEU BAI TAP TANG CUONG TA9 giaoandethitienganh.info.doc",
+      "type": "direct_copy"
+    },
+    "30 PHIẾU BÀI TẬP TĂNG CƯỜNG TIẾNG ANH 8 | CÓ ĐÁP ÁN": {
+      "id": "1LttD2V7215nygUKmzRjK_3J1R6NCjV2J",
+      "name": "30 phiếu bài tập tiếng anh tăng cường tiếng anh 8 giaoandethitienganh.info.doc",
+      "type": "direct_copy"
+    },
+    "5 DẠNG BÀI ÔN THI VÀO 10": {
+      "id": "1TMUoqAi3VMsGT361saXfRE7IG2VgkvtA",
+      "name": "5 DẠNG BÀI ÔN THI VÀO 10 giaoandethitienganh.info.doc",
+      "type": "direct_copy"
+    },
+    "650 CÂU CHIA ĐỘNG TỪ TIẾNG ANH 6": {
+      "id": "1zHb7W2NzorlW6UiPkXdJhxP5Y19bbnfo",
+      "name": "CHIA DONG TU TRONG NGOAC LOP 6 giaoandethitienganh.info.doc",
+      "type": "direct_copy"
+    },
+    "400 CÂU TRẮC NGHIỆM PHÁT ÂM ÔN THI HỌC SINH GIỎI TIẾNG ANH 9": {
+      "id": "1AtAA-wvlyn98vmBVbyOrUOqG7ow2_A_o",
+      "name": "400 CÂU TRẮC NGHIỆM PHÁT ÂM ÔN THI HỌC SINH GIỎI TIẾNG ANH 9 giaoandethitienganh.info.doc",
+      "type": "direct_copy"
+    },
+    "30 PHIẾU BÀI TẬP TĂNG CƯỜNG TIẾNG ANH 7": {
+      "id": "1r6c6_p0wBmYjsJCqWGGrulK2hS4ewdt6",
+      "name": "30 PHIẾU BÀI TẬP TĂNG CƯỜNG TIẾNG ANH 7 giaoandethitienganh.info.doc",
+      "type": "direct_copy"
+    },
+    "30 PHIẾU BÀI TẬP TĂNG CƯỜNG TIẾNG ANH 6": {
+      "id": "1G2p_NKCL24EcNFnD-6Acumamxr5edwCv",
+      "name": "30 phieu bai tap tieng anh 6 giaoandethitienganh.info.doc",
+      "type": "direct_copy"
+    },
+    "BÀI TẬP TIẾNG ANH 10-11-12 CÓ ĐÁP ÁN": {
+      "id": "1VtTjUxw1tQkbiAvJF_WfGskuDc52eY2U",
+      "name": "BÀI TẬP TIẾNG ANH 10 giaoandethitienganh.info.docx",
+      "type": "direct_copy"
+    },
+    "BỒI DƯỠNG HỌC SINH GIỎI TIẾNG ANH THCS CÓ ĐÁP ÁN": {
+      "id": "1H8z6vryidSD9MiHi_DuxZYahIiFrI8sp",
+      "name": "BỒI DƯỠNG HSG TIẾNG ANH THCS GIAOANDETHITIENGANH.INFO.doc",
+      "type": "direct_copy"
+    },
+    "BÀI TẬP BỔ TRỢ HÈ TIẾNG ANH 9 CÓ ĐÁP ÁN": {
+      "id": "1Lwr7tDudfmAkh9eCkKjesSo-SZam9xnm",
+      "name": "BÀI TẬP ANH 9 KÌ 1 giaoandethitienganh.info.docx",
+      "type": "direct_copy"
+    },
+    "BÀI TẬP BỔ TRỢ HÈ TIẾNG ANH 8 CÓ ĐÁP ÁN": {
+      "id": "1S_zl19aps-L2fZj63OCJd6zWG1LEDp1e",
+      "name": "BÀI TẬP ANH 8 KÌ 1 giaoandethitienganh.info.docx",
+      "type": "direct_copy"
+    },
+    "10 ĐỀ ÔN HÈ TIẾNG ANH 4 LÊN 5": {
+      "id": "11Mf816znb3dRSqXAF8xC_GHY7V9Slm1u",
+      "name": "10 de on he tieng anh 4 len 5 giaoandethitienganh.info.doc",
+      "type": "direct_copy"
+    },
+    "BÀI TẬP BỔ TRỢ HÈ TIẾNG ANH 7 CÓ ĐÁP ÁN": {
+      "id": "1bmjEE3wpOr-hRInqE5BpTooyQdRPiuz2",
+      "name": "BÀI TẬP ANH 7 KÌ 1 giaoandethitienganh.info.docx",
+      "type": "direct_copy"
+    },
+    "270 CÂU BÀI TẬP VIẾT LẠI CÂU MỤC TIÊU 9+ THI THPTQG CÓ ĐÁP ÁN": {
+      "id": "1qNkyYKhCOjWr9ohp1aD4sinX-h24Nrat",
+      "name": "270 cau viet lai cau muc tieu 9 thptqg co dap an giaoandethitienganh.info.doc",
+      "type": "direct_copy"
+    },
+    "TÀI LIỆU LUYỆN SPEAKING CHO HỌC SINH THCS - THPT": {
+      "id": "1A3rdO5HhDwkubnxHZ4PofmYtSqySNsO7",
+      "name": "ORAL TEST giaoandethitienganh.info.doc",
+      "type": "direct_copy"
+    },
+    "8 ĐỀ ÔN HÈ TIẾNG ANH 5 LÊN 6": {
+      "id": "1srXz5Zf7i8KZkdK2_NWn0Oq2b7nWHLw7",
+      "name": "Bài tập ôn hè Tiếng Anh lớp 5 lên 6 giaoandethitienganh.info.doc",
+      "type": "direct_copy"
+    },
+    "320 WORD FORM LUYỆN THI THPTQG CÓ ĐÁP ÁN": {
+      "id": "1n1In5tl68hbDIekkXNvMWmp3aKnpjLDo",
+      "name": "word formation exercises with key giaoandethitienganh.info.docx",
+      "type": "direct_copy"
+    },
+    "200 WORD FORM TIẾNG ANH 7 CÓ KEY": {
+      "id": "1pxr3x1bDDm03iedhYsWdSGsn7GWOqxCT",
+      "name": "200 WORD FORM TA7 CÓ KEY giaoandethitienganh.info.docx",
+      "type": "direct_copy"
+    },
+    "450 CÂU TRẮC NGHIỆM TỪ ĐỒNG NGHĨA VÀ TRÁI NGHĨA CÓ ĐÁP ÁN + GIẢI": {
+      "id": "1yrrM6CFt8Dc7UfPqzGBPEfyW-OdOyQiz",
+      "name": "465 câu trắc nghiệm từ đồng nghĩa và trái nghĩa giaoandethitienganh.info.doc",
+      "type": "direct_copy"
+    },
+    "TUYỂN CHỌN ĐỀ THI VÀO LỚP 6 MÔN TIẾNG ANH": {
+      "id": "1aQSKvYxO96DLb7jM3y53Qa6a-Wec6j3w",
+      "name": "de-thi-vao-lop-6-mon-tieng-anh giaoandethitienganh.info.docx",
+      "type": "direct_copy"
+    },
+    "50 ĐỀ THI THỬ THPTQG CÓ ĐÁP ÁN | LƯU HOẰNG TRÍ": {
+      "id": "1Xhh2d8v_iDwCF20-sEZXY9lv3i_hi1k9",
+      "name": "Bộ 50 đề thi thử THPTQG Lưu Hoằng Trí giaoandethitienganhinfo.docx",
+      "type": "direct_copy"
+    },
+    "350 CÂU TRỌNG ÂM ÔN THI THPTQG CÓ ĐÁP ÁN": {
+      "id": "1KbU4mMW62SphbXbeMdHspB22drrXKZN2",
+      "name": "350-cau-bai-tap-trong-am-on-thi-thpt-quoc-gia-giaoandethitienganh.info.doc",
+      "type": "direct_copy"
+    },
+    "PRO S TIẾNG ANH | CÔ PHƯƠNG": {
+      "id": "1HGbUy5BkUzuIUyUFBBPXa7on384XR3hj",
+      "name": "Pro S Tiếng Anh ngữ pháp tiếng anh (tập 1) giaoandethitienganh.info.doc",
+      "type": "direct_copy"
+    },
+    "240 CÂU BÀI TẬP VỀ GIỚI TỪ TIẾNG ANH 9 CÓ ĐÁP ÁN": {
+      "id": "1sZbUmW8M98mJ-KP2pBfJi9V3NkKs6k56",
+      "name": "240 cau gioi tu lop 9 co key giaoandethitienganh.info.doc",
+      "type": "direct_copy"
+    },
+    "9 ĐỀ ÔN HÈ TIẾNG ANH 3 LÊN 4": {
+      "id": "1euykXRGE2-h-0JqTGIJ1M9hitpkEcUIw",
+      "name": "9deonhetienganh3len4-giaoandethitienganh.info.doc",
+      "type": "direct_copy"
+    },
+    "100 CÂU VIẾT LẠI CÂU TIẾNG ANH 9 CÓ ĐÁP ÁN": {
+      "id": "19_P1mzEddj8Qp1n4IzM1lnd-YOxKTyoE",
+      "name": "100 cau viet lai cau tieng anh 9 giaoandethitienganh.info.doc",
+      "type": "direct_copy"
+    },
+    "210 CÂU CHIA ĐỘNG TỪ TIẾNG ANH 8": {
+      "id": "1fFKx5i8MNDz1kvyI-XQkYBSfsMtyWU-m",
+      "name": "210 CÂU CHIA ĐỘNG TỪ TIẾNG ANH 8 NO KEY giaoandethitienganh.info.doc",
+      "type": "direct_copy"
+    },
+    "1000 CÂU TRẮC NGHIỆM LUYỆN THI HỌC SINH GIỎI TIẾNG ANH 9 CÓ ĐAP ÁN": {
+      "id": "1fpYAxOZJNj7NGGZAg4Iilm9EyLcvCqJT",
+      "name": "1000 câu trắc nghiệm luyện học sinh giỏi tiếng anh 9 giaoandethitienganh.info.doc",
+      "type": "direct_copy"
+    },
+    "200 CÂU BÀI TẬP CHUYỂN SANG CÂU BỊ ĐỘNG TIẾNG ANH 9": {
+      "id": "1mvFM6D27l5FnEvIt1SVjCCj-SzZ421ht",
+      "name": "200 cau bi dong tieng anh 9 giaoandethitienganh.info.doc",
+      "type": "direct_copy"
+    },
+    "160 CÂU TRẮC NGHIỆM GIAO TIẾP TIẾNG ANH 9 CÓ KEY": {
+      "id": "17Rm01F-5XIKyGBGaZ2GkWqsi5jhJff2v",
+      "name": "160 câu trắc nghiệm giao tiếp có key tiếng anh 9 giaoandethitienganh.info.doc",
+      "type": "direct_copy"
+    },
+    "SÁNG KIẾN KINH NGHIỆM MÔN TIẾNG ANH THPT ĐẠT CẤP TỈNH": {
+      "id": "1BufUin_rgRtt7UyDPMwdraeAzt0jfhsD",
+      "name": "SKKN TA THPT đạt giải cấp tỉnh giaoandethitienganh.info.doc",
+      "type": "direct_copy"
+    },
+    "PDF - KỸ THUẬT DẠY TIẾNG ANH | NGUYỄN QUỐC HÙNG M.A": {
+      "id": "1HZc2k7efI9Wi1LrXFw4Nc82AkT1VqFtT",
+      "name": "SÁCH KỸ THUẬT DẠY TIẾNG ANH giaoandethitienganh.info.pdf",
+      "type": "direct_copy"
+    },
+    "BỘ ĐỀ KIỂM TRA THAM KHẢO TIẾNG ANH 7": {
+      "name": "Bộ Đề kiểm tra Tiếng anh 7 mới (word +audio) giaoandethitienganh.info.zip",
+      "extractedCount": 40,
+      "files": [
+        "Đề kiểm tra 1 tiết lần 1 TA 7 mới_1_audio.mp3",
+        "Đề kiểm tra 1 tiết lần 1 TA 7 mới_2.doc",
+        "Đề kiểm tra 1 tiết lần 1 TA 7 mới_2_audio1.mp3",
+        "Đề kiểm tra 1 tiết lần 1 TA 7 mới_1.doc",
+        "Đề kiểm tra 1 tiết lần 1 TA 7 mới_2_audio2.mp3",
+        "Đề kiểm tra 1 tiết lần 1 TA 7 mới_3.doc",
+        "Đề kiểm tra 1 tiết lần 1 TA 7 mới_4.doc",
+        "Đề kiểm tra 1 tiết lần 1 TA 7 mới_4_audio.mp3",
+        "Đề kiểm tra 1 tiết lần 1 TA 7 mới_3_audio.mp3",
+        "Đề kiểm tra 1 tiết lần 2 TA 7 mới_1.doc",
+        "Đề kiểm tra 1 tiết lần 2 TA 7 mới_2.doc",
+        "Đề kiểm tra 1 tiết lần 2 TA 7 mới_1audio2.wma",
+        "Đề kiểm tra 1 tiết lần 2 TA 7 mới_1_audio1.wma",
+        "Đề kiểm 1 tiết HK II TA 7 mới lần 3_1.doc",
+        "Đề kiểm 1 tiết HK II TA 7 mới lần 3_1_audio.mp3",
+        "Đề kiểm 1 tiết HK II TA 7 mới lần 3_2.doc",
+        "Đề kiểm tra 1 tiết lần 2 TA 7 mới_2_Fun Food.mp4",
+        "Đề kiểm tra 1 tiết lần 2 TA 7 mới_2_HelloVietNam.mp3",
+        "Đề kiểm 1 tiết HK II TA 7 mới lần 3_2_audio2.mp3",
+        "Đề kiểm 1 tiết HK II TA 7 mới lần 3_3.doc",
+        "Đề kiểm 1 tiết HK II TA 7 mới lần 3_4.docx",
+        "Đề kiểm 1 tiết HK II TA 7 mới lần 4_1.doc",
+        "Đề kiểm 1 tiết HK II TA 7 mới lần 3_2_audio1.mp3",
+        "Đề kiểm 1 tiết HK II TA 7 mới lần 4_2.doc",
+        "Đề thi HKI TA 7 mới _1_audio.mp3",
+        "Đề thi HKI TA 7 mới _2.doc",
+        "Đề thi HKI TA 7 mới _1.doc",
+        "Đề thi HKI TA 7 mới _3_audio2.mp3",
+        "Đề thi HKI TA 7 mới _3_audio1.mp3",
+        "Đề thi HKI TA 7 mới _3.docx",
+        "Đề thi HKI TA 7 mới _4_oral.xls",
+        "Đề thi HKI TA 7 mới _4_Listen-Part 1+2.mp3",
+        "Đề thi HKI TA 7 mới _4.doc",
+        "Đề thi HK II TA 7 mới_1.doc",
+        "Đề thi HK II TA 7 mới_1_TASK1.mp3",
+        "Đề thi HK II TA 7 mới_1_TASK2.mp3",
+        "Đề thi HK II TA 7 mới_2.doc",
+        "Đề thi HK II TA 7 mới_2_TASK2.mp3",
+        "Đề thi HK II TA 7 mới_2_TASK1.mp3",
+        "Đề thi HKI TA 7 mới _2_audio.wav"
+      ]
+    },
+    "TÓM TẮT PHƯƠNG PHÁP DẠY TIẾNG ANH THCS": {
+      "id": "1251agI9GDPRUA6-coKhMNef5YxrpnEul",
+      "name": "PHƯƠNG PHÁP DẠY TIẾNG ANH CHO HS THCS giaoandethitienganh.info.docx",
+      "type": "direct_copy"
+    },
+    "253 CÂU TÌM LỖI SAI TIẾNG ANH 9": {
+      "id": "1pjf3xkZpXCI73ZfFLyx-Umg4oP-8ufpf",
+      "name": "253 CÂU TÌM LỖI SAI TIẾNG ANH 9 giaoandethitienganh.info.docx",
+      "type": "direct_copy"
+    },
+    "140 CÂU IDIOMS THƯỜNG GẶP THPTQG CÓ ĐÁP ÁN": {
+      "id": "1kHM4Y0ebr3tZlo4gltHRV4RK9aQaSgQy",
+      "name": "140 IDIOMS CÓ KEY giaoandethitienganh.info.doc",
+      "type": "direct_copy"
+    },
+    "550 CÂU TRẮC NGHIỆM ÔN HÈ TIẾNG ANH 5 LÊN 6": {
+      "id": "1BSn0bHKAqVQAOXO6dUjiwVDH01cenj9V",
+      "name": "550 câu trắc nghiệm hè lớp 5 lên lớp 6 giaoandethitienganh.info.docx",
+      "type": "direct_copy"
+    },
+    "20 BÀI ĐỌC HIỂU LUYỆN THI THPTQG CHỦ ĐỀ COVID 19": {
+      "id": "176bV4Lxt6lnar-QPCxdrRSkGPrGKT8ef",
+      "name": "ĐÁP ÁN- 20 BÀI ĐỌC ĐIỀN- ĐỌC HIỂU VỀ COVID 19- giaoandethitienganh.info.doc",
+      "type": "direct_copy"
+    },
+    "VERY EASY READING | RÈN KỸ NĂNG ĐỌC HIỂU TIẾNG ANH CHO HỌC SINH LỚP 3-4-5": {
+      "id": "1WJqGlmISK_NdmIvMU3qsN1TrPVC51JRT",
+      "name": "very-easy-reading-1 giaoandethitienganh.info.doc",
+      "type": "direct_copy"
+    },
+    "CÁC DẠNG BÀI TẬP ÔN HÈ TIẾNG ANH 8": {
+      "id": "1xKLok23XNCn502jUfyrBSmceW5iFQUHr",
+      "name": "CÁC DẠNG BÀI TẬP ÔN HÈ ANH 8 giaoandethitienganh.info.doc",
+      "type": "direct_copy"
+    },
+    "ĐỀ CƯƠNG ÔN HÈ TIẾNG ANH 7": {
+      "id": "1hcmmVCxWVVgcEohl1vRyvWlEEyefezwS",
+      "name": "ĐỀ CƯƠNG ÔN HÈ TIẾNG ANH 7 giaoandethitienganh.info.doc",
+      "type": "direct_copy"
+    },
+    "ĐỀ THI MINH HỌA KỲ THI THPTQG | ĐẶNG TOÁN": {
+      "id": "1S6QGjS_rqEwRxGh73Ht0bAOKae6kAJRO",
+      "name": "DE THI THU MON ANH - DAP AN CHI TIET (Thầy Đặng Toán) giaoandethitienganh.info.docx",
+      "type": "direct_copy"
+    },
+    "BÀI TẬP ÔN KIẾN THỨC ANH 6 HÈ 2020": {
+      "id": "13w7KSTPXnD75keQvFHb8ofCaJNpJKK6y",
+      "name": "BAI TAP ON KIEN THUC TIENG ANH 6 HE 2020 GIAOANDETHITIENGANH.INFO.doc",
+      "type": "direct_copy"
+    },
+    "BÀI TẬP ĐIỀN TỪ VÀ SẮP XẾP LẠI CÂU TIẾNG ANH 4 HỌC KỲ 1": {
+      "id": "1KstN2F5qf_GBf8IIfsUzXeKgHsy3ViLf",
+      "name": "BÀI TẬP ĐIỀN TỪ VÀ SẮP XẾP LẠI CÂU TA4 giaoandethitienganh.info.docx",
+      "type": "direct_copy"
+    },
+    "ĐỀ CƯƠNG ÔN TẬP LỚP 5 LÊN LỚP 6 MÔN TIẾNG ANH": {
+      "id": "1oZbh6zT6KXeyQMHSTp2pdhgBFsi1RY49",
+      "name": "LUYỆN GIẢI ĐỀ CƯƠNG ÔN TẬP TIẾNG ANH 5 LÊN 6 giaoandethitienganh.info.docx",
+      "type": "direct_copy"
+    },
+    "120 CÂU GIAO TIẾP THƯỜNG GẶP TRONG BÀI THI THPTQG": {
+      "id": "1STh9jnHVKWez02zCyw8dgpHH4yFsF2Ar",
+      "name": "120 câu tiếng anh giao tiếp thường gặp trong thi giaoandethitienganh.info.doc",
+      "type": "direct_copy"
+    },
+    "NHỮNG CẤU TRÚC CÂU THƯỜNG GẶP TRONG KỲ THI THPTQG CÓ ĐÁP ÁN": {
+      "id": "1KndFRskyqSzPrNRf54T00p2BDbvPJN_X",
+      "name": "NHỮNG CẤU TRÚC THƯỜNG GẶP TRONG BÀI THI-giaoandethitienganh.info.doc",
+      "type": "direct_copy"
+    },
+    "MỆNH ĐỀ TRẠNG NGỮ - MỆNH ĐỀ QUAN HỆ RÚT GỌN - TỪ VỰNG VỀ NƠI CHỐN VÀ ẨM THỰC - BÀI TẬP CÓ ĐÁP ÁN": {
+      "id": "1_qhFY42thXrKRRJ91kXJOecEX0lsU6A8",
+      "name": "Mệnh-đề-trạng-ngữ-Mệnh-đề-quan-hệ-rút-gọn-từ-vựng-chủ-điểm-nơi-chốn-từ-vựng-chủ-điểm-về-ẩm-thực-và-bài-tập-luyện-tập-giaoandethitienganh.info.docx",
+      "type": "direct_copy"
+    },
+    "BÀI TẬP TỪ VỰNG, ĐỌC HIỂU CHO TRẺ LÀM QUEN TIẾNG ANH": {
+      "id": "1vhmEZcjHH5vDdpuDP65vX776XyMBxQTK",
+      "name": "Words blends, vocabulary and comprehension giaoandethitienganh.info.pdf",
+      "type": "direct_copy"
+    },
+    "HƯỚNG DẪN CHI TIẾT CÁCH LÀM BÀI TẬP NGỮ ÂM, TRỌNG ÂM, SỰ HÒA HỢP CHỦ NGỮ VÀ ĐỘNG TỪ ÔN THI VÀO 10 CÓ ĐÁP ÁN": {
+      "id": "1r5q9Zb8uGmgMjXKm1weOC1sGbz7E3HmG",
+      "name": "Cách-phát-âm-một-số-phụ-âm-sự-hoà-hợp-giữa-chủ-ngữ-và-động-từ-giaoandethitienganh.info.docx",
+      "type": "direct_copy"
+    },
+    "CỤM TỪ ĐI VỚI DO-MAKE-TAKE VÀ BÀI TẬP THỰC HÀNH KỸ NĂNG ĐOÁN NGHĨA CỦA TỪ QUA NGỮ CẢNH": {
+      "id": "1lCdyGVT2X90HM1RaOv1sEApqa4V69X3d",
+      "name": "Cụm-từ-đi-với-Do-Make-Take-và-bài-tập-thực-hành-Kỹ-năng-đoán-nghĩa-từ-qua-ngữ-cảnh-giaoandethitienganh.info.docx",
+      "type": "direct_copy"
+    },
+    "BỘ ĐỀ LUYỆN THI OLYMPIC TIẾNG ANH 5": {
+      "id": "1BxA554eHjZNXxtgTIyb8Nxk-iAkcnn4O",
+      "name": "BỘ ĐỀ LUYỆN THI OLYMPIC L5 giaoandethitienganh.info.docx",
+      "type": "direct_copy"
+    },
+    "670 CÂU TRẮC NGHIỆM KIẾN THỨC TIẾNG ANH 6": {
+      "id": "1r6uyXOgpHzM-h7W22JGLGngAcPCs7igg",
+      "name": "675 cau trac nghiem tieng Anh lop 6 giaoandethitienganh.info.doc",
+      "type": "direct_copy"
+    },
+    "COLORING PAGES ALPHABETS": {
+      "id": "10rSPjfT4Go0xc-66ahEXjhKhgfdD2STt",
+      "name": "coloring pages - alphabets giaoandethitienganh.info.pdf",
+      "type": "direct_copy"
+    },
+    "ENGLISH GRAMMAR MASTER IN 30 DAYS": {
+      "id": "1SPvx_Iv6hxWr41mSSF-_yTU_8aL9pbiM",
+      "name": "English grammar master in 30 days giaoandethitienganh.info.pdf",
+      "type": "direct_copy"
+    },
+    "1300 BÀI TẬP RÈN KỸ NĂNG LÀM BÀI TRẮC NGHIỆM TỪ VỰNG TIẾNG ANH CÓ KEY": {
+      "id": "1RLoC0HAR21slrT7b-0LDJKlVwPRdB18Z",
+      "name": "1300-bai-tap-ren-luyen-ky-nang-lam-bai-trac-nghiem-tu-vung-tieng-anh giaoandethitienganh.info.docx",
+      "type": "direct_copy"
+    },
+    "500 CÂU HỎI MÔN TIẾNG ANH THI CÔNG CHỨC CÓ ĐÁP ÁN": {
+      "id": "1YNIkW5dC8StRzeyHdvvO3z3YJRJCI6Nd",
+      "name": "500-cau-hoi-thi-cong-chuc-mon-tieng-anh.pdf",
+      "type": "direct_copy"
+    },
+    "105 CÂU GIAO TIẾP  HÀNG NGÀY CHO BÉ CÓ FILE NGHE": {
+      "name": "Những câu tiếng Anh đơn giản cha mẹ có thể nói với con hàng ngày giaoandethitienganh.info.rar",
+      "extractedCount": 3,
+      "files": [
+        "DAILY ENGLISH SENTENCES TO SPEAK WITH YOUR KIDS giaoandethitienganh.docx",
+        "Nhung cau tieng Anh thong dung giao tiep voi con hang ngay Phan 2.mp3",
+        "Nhung cau tieng Anh thong dung de giao tiep voi con hang ngay Phan 1.mp3"
+      ]
+    },
+    "240 SPEAKING TOPICS FOR IELTS CÓ HƯỚNG DẪN CHI TIẾT - BÀI TẬP VẬN DỤNG": {
+      "id": "1uCmC-_3Y2V3smgVnk9h2CitfO1Ak-EkD",
+      "name": "240_Speaking_Topics giaoandethitienganh.info.doc",
+      "type": "direct_copy"
+    },
+    "CÁC CỤM TỪ HAY THƯỜNG GẶP ÔN THI VÀO LỚP 6": {
+      "id": "1BjILHzhFGc7SVX70eCAIO3qOxDQw1x0Y",
+      "name": "các cụm từ thường gặp ôn thi vào lớp 6 giaoandethitienganh.info.doc",
+      "type": "direct_copy"
+    },
+    "CÂU ĐIỀU KIỆN - CÂU ƯỚC - KỸ NĂNG LÀM BÀI ĐỌC HIỂU THI VÀO 10 CÓ ĐÁP ÁN": {
+      "id": "10dpRUjhRnsWyIGSeyV-mp3N4ez8nU7U7",
+      "name": "giaoandethitienganh.info Câu-điều-kiện-câu-ước-và-kỹ-năng-làm-bài-đọc-hiểu-vào-10-năm-2020.docx",
+      "type": "direct_copy"
+    },
+    "45 ĐỀ THI HỌC KỲ 2 TIẾNG ANH 3-4-5 CÓ ĐÁP ÁN": {
+      "name": "45 ĐỀ THI HKII TIẾNG ANH 345 giaoandethitienganh.info.zip",
+      "extractedCount": 246,
+      "files": [
+        "(xem thử 136)DE 1.doc",
+        "question 2.mp3",
+        "question 4.mp3",
+        "DE 1.doc",
+        "question 1.mp3",
+        "queston 3.mp3",
+        "question 5.wav",
+        "DE 10.doc",
+        "question 1.mp3",
+        "question 2.mp3",
+        "question 4.mp3",
+        "question 3.mp3",
+        "DE 11.doc",
+        "question 2.mp3",
+        "question 3.mp3",
+        "question 1.mp3",
+        "question 1.mp3",
+        "question 2.mp3",
+        "question 3.mp3",
+        "DE 13.doc",
+        "DE 12.doc",
+        "DE 14.doc",
+        "question 3.mp3",
+        "question 2.mp3",
+        "question 1.mp3",
+        "question 1.mp3",
+        "question 2.mp3",
+        "question 3.mp3",
+        "DE 15.doc",
+        "question 1.mp3",
+        "question 2.mp3",
+        "question 3.mp3",
+        "DE 2.doc",
+        "question 1.mp3",
+        "question 2.mp3",
+        "DE 3.doc",
+        "question 4.mp3",
+        "question 1.mp3",
+        "Question 2.mp3",
+        "Question 3.mp3",
+        "question 3.mp3",
+        "Question 4.mp3",
+        "Question 5.mp3",
+        "DE 4.doc",
+        "question 1.mp3",
+        "question 3.mp3",
+        "question2.mp3",
+        "DE 5.doc",
+        "question 4.mp3",
+        "question 1.mp3",
+        "question 2.mp3",
+        "question 3.mp3",
+        "question 1.mp3",
+        "DE 6.doc",
+        "question 3.mp3",
+        "question 2.mp3",
+        "question 4.mp3",
+        "DE 7.doc",
+        "question 1.mp3",
+        "question 3.mp3",
+        "question 2.mp3",
+        "DE 8.doc",
+        "question 4.mp3",
+        "task 2.mp3",
+        "task 1.mp3",
+        "task 3.mp3",
+        "task 4.mp3",
+        "DE 9.doc",
+        "task 1.mp3",
+        "task 2.mp3",
+        "task 3.mp3",
+        "Answer Key G2.doc",
+        "U11 Q5,6.mp3",
+        "U15 Q7,8.mp3",
+        "U17 Q9,10.mp3",
+        "U2 Q1,2.mp3",
+        "U4 Q3,4.mp3",
+        "ĐỀ KTHK 2 - G2.docx",
+        "DE SO 1.doc",
+        "question 1.mp3",
+        "question 3.mp3",
+        "DE SO 10.doc",
+        "question 1.mp3",
+        "question 2.mp3",
+        "question 2.mp3",
+        "question 1.mp3",
+        "DE SO 11.doc",
+        "question 3.mp3",
+        "question 2.mp3",
+        "question 2.mp3",
+        "question 1.mp3",
+        "question 3.mp3",
+        "question 3.mp3",
+        "question 1.wav",
+        "DE SO 13.doc",
+        "question 2.wav",
+        "DE SO 14.doc",
+        "question 4.wav",
+        "question 1.mp3",
+        "DE SO 12.doc",
+        "question 3.wav",
+        "question 2.mp3",
+        "question 3.wav",
+        "question 2.mp3",
+        "question 1.mp3",
+        "DE SO 1.doc",
+        "question 3.mp3",
+        "DE SO 2.doc",
+        "DE SO 15.doc",
+        "question 1.mp3",
+        "question 3.mp3",
+        "question 2.mp3",
+        "question 1.mp3",
+        "question 2.mp3",
+        "DE SO 3.doc",
+        "question 3.mp3",
+        "question 4.mp3",
+        "DE SO 4.doc",
+        "question 1.mp3",
+        "question 2.mp3",
+        "question 5.mp3",
+        "question 4.mp3",
+        "DE SO 5.doc",
+        "question 1.mp3",
+        "question 2.mp3",
+        "question 3.mp3",
+        "DE SO 6.doc",
+        "Task 1.mp3",
+        "Task 3.mp3",
+        "Task 2.mp3",
+        "question 3.mp3",
+        "question 1.mp3",
+        "question 2.mp3",
+        "question 3.mp3",
+        "DE SO 8.doc",
+        "question 2.mp3",
+        "question 3.mp3",
+        "question 1.mp3",
+        "DE SO 9.doc",
+        "Question 1.mp3",
+        "Question 2.mp3",
+        "Question 3.mp3",
+        "DE SO 7.doc",
+        "question 2.mp3",
+        "DE SO 10.doc",
+        "question 1.wav",
+        "Question 1.mp3",
+        "question 2.mp3",
+        "DE SO 11.doc",
+        "question 1.mp3",
+        "question 2.mp3",
+        "DE SO 12.doc",
+        "question 1.mp3",
+        "question 2.mp3",
+        "DE SO 13.doc",
+        "DE SO 1.doc",
+        "question 1.mp3",
+        "question 2.mp3",
+        "DE SO 14.doc",
+        "question 1.mp3",
+        "question 2.mp3",
+        "question 2.mp3",
+        "question 1.wma",
+        "question 1.wav",
+        "DE SO 2.doc",
+        "question 2.mp3",
+        "question 1.mp3",
+        "question 2.wma",
+        "DE SO 3.doc",
+        "question 3.wma",
+        "TASK 1.mp3",
+        "TASK 3.mp3",
+        "DE SO 4.doc",
+        "TASK 2.mp3",
+        "DE SO 15.doc",
+        "DE SO 5.doc",
+        "question 1.mp3",
+        "question 2.mp3",
+        "Task 1.mp3",
+        "Task 2.mp3",
+        "DE SO 7.doc",
+        "question 1.mp3",
+        "DE SO 6.doc",
+        "question 2.mp3",
+        "DE SO 8.doc",
+        "question 2.mp3",
+        "Question 3.mp3",
+        "DE SO 9.doc",
+        "question 1.m4a",
+        "question 1.mp3",
+        "question 2.mp3",
+        "question 3.mp3",
+        "i-Learn Smart Start Grade 3 Final - Listening Test.pdf",
+        "i-Learn Smart Start Grade 3 Final - Reading & Writing.pdf",
+        "G3FTP1.wav",
+        "G3FTP3.wav",
+        "G3FTP2.wav",
+        "G3MTP1.mp3",
+        "i-Learn Smart Start Grade 3 Midterm - Key.pdf",
+        "G3MTP3.mp3",
+        "i-Learn Smart Start Grade 3 Midterm - Listening test.pdf",
+        "G3MTP2.wav",
+        "i-Learn Smar Start Grade 4 Final - Key.Final.pdf",
+        "SS Level G3 Final key.pdf",
+        "i-Learn Smart Start Grade 3 Midterm - Reading _ Writing test.pdf",
+        "i-Learn Smart Start Grade 4 Final - Listening Test.final.Final.pdf",
+        "i-Learn Smart Start Grade 4 Final - Reading & Writing Test.Final.pdf",
+        "G4FTP2.wav",
+        "G4MTP1.wav",
+        "G4FTP1.wav",
+        "G4MTP2.wav",
+        "G4MTP3.wav",
+        "i-Learn Smart Start Grade 4 Midterm - Key.Final.pdf",
+        "i-Learn Smart Start Grade 4 Midterm - Listening Test.pdf",
+        "i-Learn Smart Start Grade 4 Midterm - Reading & Writing Test.pdf",
+        "i-Learn Smart Start Grade 5 Final - Listening Test.tb.pdf",
+        "i-Learn Smart Start Grade 5 Final - Reading & Writing Test.tb.pdf",
+        "ISS_G5_FT_AK.pdf",
+        "G5FTP1.wav",
+        "G5FTP3.wav",
+        "G5FTP2.mp3",
+        "G5FTP4.wav",
+        "G5MTP1.wav",
+        "G5MTP2.wav",
+        "G5MTP3.wav",
+        "G5MTP4.wav",
+        "i-Learn Smart Start Grade 5 Midterm - Key.new.pdf",
+        "G2_N-T_ThanhHoa-Part1.mp3",
+        "i-Learn Smart Start Grade 5 Midterm - Listening Test.tb.pdf",
+        "i-Learn Smart Start Grade 5 Midterm - Reading & Writing Test.tb.pdf",
+        "G2_N-T_ThanhHoa-Part2.mp3",
+        "G2_U-Z .pdf",
+        "G2_U-Z _Key+Script.pdf",
+        "G2_U-Z_Part2.mp3",
+        "i-learn_My_Phonics_G2_N-T.pdf",
+        "G4FTP3.wav",
+        "i-learn_My_Phonics_G2_N-T_Answer_Key.pdf",
+        "G2_U-Z_Part1.mp3",
+        "G1_A-G_ThanhHoa-Part2.mp3",
+        "G1_A-G_ThanhHoa-Part1.mp3",
+        "G1_H-M.pdf",
+        "G1_H-M_Part1.mp3",
+        "G1_H-M_Key+Script.pdf",
+        "G1_H-M_Part2.mp3",
+        "i-learn_My_Phonics_G1_A-G.pdf",
+        "i-learn_My_Phonics_G1_A-G_Answer_Key.pdf"
+      ]
+    },
+    "LÝ THUYẾT - BÀI TẬP VỀ NHỮNG TỪ DỄ GÂY NHẦM LẪN, TỪ ĐỒNG NGHĨA, TRÁI NGHĨA CÓ ĐÁP ÁN": {
+      "id": "1fZxHwQR7tHFL1c5vFQcpNLF4lhULdDNY",
+      "name": "BAI-TAP-VE-NHUNG-TU-GAY-NHAM-LAN-ĐỒNG-NGHĨA-KHÁC-NGHÍA-TRONG-KY-THI-THPT-QUOC-GIA-NAM-HOC-2020.docx",
+      "type": "direct_copy"
+    },
+    "100 IELTS SPEAKING TOPICS  CÓ HƯỚNG DẪN GIẢI VÀ GIẢI THÍCH TỪ KHÓ": {
+      "id": "1x7Ddi6SDZNuzTBzbTDEot4OY7kTcUNvm",
+      "name": "TONG HOP 100 TOPICS CHO IELTS SPEAKING giaoandethitienganh.info.doc",
+      "type": "direct_copy"
+    },
+    "LÝ THUYẾT - 210 CÂU BÀI TẬP CỤM ĐỘNG TỪ TIẾNG ANH THCS CÓ KEY": {
+      "id": "1CSItTgruxH5Yca4X5HdsdGy8tTPYxUT7",
+      "name": "bai tap tu luan va trac nghiem phrasal verbs thcs co key giaoandethitienganh.info.docx",
+      "type": "direct_copy"
     }
   },
   "failed": {
@@ -19391,6 +20085,442 @@
       }
     },
     "800 CÂU TỰ LUYỆN IOE TIẾNG ANH 9": "Google Drive folder (cannot copy directly)",
-    "1300 CÂU TRẮC NGHIỆM TỪ VỰNG CÓ ĐÁP ÁN VÀ GIẢI CHI TIẾT": "Google Drive folder (cannot copy directly)"
+    "1300 CÂU TRẮC NGHIỆM TỪ VỰNG CÓ ĐÁP ÁN VÀ GIẢI CHI TIẾT": "Google Drive folder (cannot copy directly)",
+    "BỘ ĐỀ THI HỌC KỲ 1 VÀ HỌC KỲ 2 TIẾNG ANH 2": "File not found: 1itkOOqMIDeqXULltm45OFT4CpBCLnwwx.",
+    "220 FLASHCARD VỀ TỪ TRÁI NGHĨA": "File not found: 1LVgDDmpMtQiSmqzgA3j6S_3O1-55JACA.",
+    "LÝ THUYẾT - BÀI TẬP VIẾT CÂU TIẾNG ANH": {
+      "error": {
+        "code": 403,
+        "message": "This file cannot be copied by the user.",
+        "errors": [
+          {
+            "message": "This file cannot be copied by the user.",
+            "domain": "global",
+            "reason": "cannotCopyFile"
+          }
+        ]
+      }
+    },
+    "TÀI LIỆU LUYỆN THI IOE TIẾNG ANH 3-4-5": "File not found: 1N-oO_Uo1rh82uW9mkiFyZ89-_MgbDbgj.",
+    "ÔN TẬP HỌC KỲ 1 TIẾNG ANH 10 CÓ ĐÁP ÁN": {
+      "error": {
+        "code": 403,
+        "message": "This file cannot be copied by the user.",
+        "errors": [
+          {
+            "message": "This file cannot be copied by the user.",
+            "domain": "global",
+            "reason": "cannotCopyFile"
+          }
+        ]
+      }
+    },
+    "TÀI LIỆU HƯỚNG DẪN DẠY WARM - UP": "File not found: 1BAIq29R71eWqUQePYou3XUc7nkUnSxvV.",
+    "LUYỆN GIẢI BỘ ĐỀ KIỂM TRA TIẾNG ANH 6 ": {
+      "error": {
+        "code": 403,
+        "message": "This file cannot be copied by the user.",
+        "errors": [
+          {
+            "message": "This file cannot be copied by the user.",
+            "domain": "global",
+            "reason": "cannotCopyFile"
+          }
+        ]
+      }
+    },
+    "HỆ THỐNG CÁC CHỦ ĐIỂM NGỮ PHÁP TIẾNG ANH VÀ BÀI TẬP ÁP DỤNG CÓ ĐÁP ÁN + GIẢI CHI TIẾT": "File not found: 1ea8H3pvxanDXzRZEOnzt4sc-luX09vdJ.",
+    "BỘ ĐỀ LUYỆN THI OLYMPIC TIẾNG ANH 8": "File not found: 14wwp5TdMjCH_2cVw4mbz4f1wz8afjaz-.",
+    "BỘ ĐỀ KIỂM TRA TIẾNG ANH 7 CÓ FILE NGHE + ĐÁP ÁN | THU HUẾ ": "File not found: 10E5BZrySFrzxDLzZDkZlJfb9SNfxKzo9.",
+    "BỘ ĐỀ KIỂM TRA ĐỊNH KỲ TIẾNG ANH 6 GLOBAL SUCCESS CÓ FILE NGHE + ĐÁP ÁN": "File not found: 1e7wkGL__gffSMGrLTKLS1Oo-WxxdGZxw.",
+    "CUỘC THI HÙNG BIỆN TIẾNG ANH TIỂU HỌC | No key": "File not found: 191A4PvcQNtP8T5LZ4eReO0LjpOqT5KH5.",
+    "CUỘC THI ENGLISH SPEAKING CONTEST TIẾNG ANH 9 | CÓ PHẦN THI NGHE | CÓ ĐÁP ÁN": "File not found: 1S-u8p3rDTbDm0y6YBmhH5Cp9OZBxWZuK.",
+    "TUYỂN TẬP ĐỀ KIỂM TRA TIẾNG ANH 6 ": "File not found: 12GuapySv3bz_TRvoNWED3WQ6Jor9b7PK.",
+    "BÀI GIẢNG POWERPOINT TIẾNG ANH 6 GLOBAL SUCCESS HỌC KỲ 2": "File not found: 17SFmPR36hTrjvWo8qldiqVRw9qK1n_3T.",
+    "66 BÀI ĐỌC HIỂU LUYỆN THI B1+B2+C1 CÓ ĐÁP ÁN": "Google Drive folder (cannot copy directly)",
+    "BỘ ĐỀ KIỂM TRA THAM KHẢO TIẾNG ANH 4 CÓ FILE NGHE + ĐÁP ÁN": {
+      "error": {
+        "code": 403,
+        "message": "This file cannot be copied by the user.",
+        "errors": [
+          {
+            "message": "This file cannot be copied by the user.",
+            "domain": "global",
+            "reason": "cannotCopyFile"
+          }
+        ]
+      }
+    },
+    "BỘ ĐỀ KIỂM TRA THAM KHẢO GIỮA HỌC KỲ 1 TIẾNG ANH 3-4-5 CÓ FILE NGHE": "File not found: 1j7uS9M8Vk02mk-akAAsMrgzVg2qc_-RA.",
+    "BÀI TẬP TRẮC NGHIỆM NGỮ PHÁP TIẾNG ANH CƠ BẢN VÀ NÂNG CAO CÓ ĐÁP ÁN VÀ GIẢI THÍCH | BẢN GIÁO VIÊN + BẢN HỌC SINH": "File not found: 17QHlhQ24Dqe61txosD8RiFQBXne4_xTJ.",
+    "BÀI TẬP TỪ ĐỒNG NGHĨA CƠ BẢN VÀ NÂNG CAO CÓ ĐÁP ÁN _ GIẢI CHI TIẾT | BẢN HỌC SINH + BẢN GIÁO VIÊN": "File not found: 1olegTW-7PrbjenS-zLF4ddtbXRQDxNOp.",
+    "BỘ ĐỀ LUYỆN THI OLYMPIC TIẾNG ANH 4": "File not found: 1v9rlUFyvOCdda76RHzuLgkBxE1kNLhaT.",
+    "B1 LISTENING PRACTICE | ĐẦY ĐỦ KEY + SCRIPT + EXERCISE + AUDIO ( ĐỊNH DẠNG PRE-WHILE-POST LISTENING)": "File not found: 1pwOP1oGONViui13PYRIQ-KF9jlkb_fz4.",
+    "BÀI TẬP TRẮC NGHIỆM TỪ TRÁI NGHĨA CƠ BẢN VÀ NÂNG CAO CÓ KEY - GIẢI CHI TIẾT | BẢN GIÁO VIÊN + BẢN HỌC SINH": "File not found: 1rWSj-zjq0xxOPOBJta5Kx0jT8GPoV5cG.",
+    "BÀI TẬP TRẮC NGHIỆM TIẾNG ANH 7 MỚI CÓ ĐÁP ÁN - GIẢI CHI TIẾT | BẢN GIÁO VIÊN + BẢN HỌC SINH": "File not found: 1UdndK9BzRlgbL3MgqWgYwi5hzS_pxQuQ.",
+    "15 ĐỀ ÔN THI VÀO LỚP 10 CÓ KEY | MS HUYEN": "File not found: 10Aim9N8zvFuOM1GO3mlt9LLnxXpfzyat.",
+    "BÀI TẬP TRẮC NGHIỆM TIẾNG ANH 8 MỚI CÓ ĐÁP ÁN - GIẢI CHI TIẾT | BẢN GIÁO VIÊN + BẢN HỌC SINH": "File not found: 1FpAcW7-euU8YhzzcjQKFiuEohe2ZBW4v.",
+    "BỘ POWERPOINT CÁC CHUYÊN ĐỀ NGỮ PHÁP TIẾNG ANH ": "File not found: 1qBPlSF61Hx-VA538YfWMK9oIJQMhIQx4.",
+    "BÀI TẬP TRẮC NGHIỆM TÌM LỖI SAI CƠ BẢN VÀ NÂNG CAO - CÓ ĐÁP ÁN + GIẢI CHI TIẾT | BẢN HỌC SINH + BẢN GIÁO VIÊN": "File not found: 14S1QPulgIXkmCeyvPALDXYD1oz_YCK8l.",
+    "TỔNG ÔN CÁC CHỦ ĐIỂM NGỮ PHÁP TRỌNG TÂM KỲ THI PET": "File not found: 180h20aYdifHWawOt2yg27qZtOwLAE8vf.",
+    "BỘ ĐỀ KIỂM TRA THAM KHẢO GIỮA HỌC KỲ 1 TIẾNG ANH 6-7-8-9": "Google Drive folder (cannot copy directly)",
+    "BÀI TẬP TRẮC NGHIỆM NGỮ ÂM CƠ BẢN VÀ NÂNG CAO - CÓ ĐÁP ÁN - GIẢI CHI TIẾT | BẢN GIÁO VIÊN VÀ HỌC SINH": {
+      "error": {
+        "code": 403,
+        "message": "This file cannot be copied by the user.",
+        "errors": [
+          {
+            "message": "This file cannot be copied by the user.",
+            "domain": "global",
+            "reason": "cannotCopyFile"
+          }
+        ]
+      }
+    },
+    "BÀI TẬP TRẮC NGHIỆM TIẾNG ANH 7 CÓ ĐÁP ÁN VÀ GIẢI CHI TIẾT | PHIÊN BẢN HỌC SINH VÀ GIÁO VIÊN": "File not found: 1TPBjdjJGIRdfKfZbnZ_DxqKAuttdXg6a.",
+    "BÀI TẬP TRẮC NGHIỆM TRỌNG ÂM CƠ BẢN VÀ NÂNG CAO CÓ KEY + GIẢI CHI TIẾT ( PHIÊN BẢN HỌC SINH - GIÁO VIÊN )": "File not found: 12OfhkJ-isHcX4-mGnEyAifn922Mc7P9-.",
+    "BÀI TẬP TRẮC NGHIỆM TIẾNG ANH 10 - CHƯƠNG TRÌNH MỚI - CÓ KEY + GIẢI THÍCH": "File not found: 1f4-zF6sMpRSeG7fG2iRdLRq2sWhzL6is.",
+    "MỘT SỐ BÀI NGHE THAM KHẢO PET CÓ KEY - CÓ SCRIPT": "File not found: 1Gu2hoFVdQquBwMZ94LoG-_YLFRY-gPBi.",
+    "BÀI TẬP TRẮC NGHIỆM TIẾNG ANH 11 - THEO CHƯƠNG TRÌNH MỚI - CÓ ĐÁP ÁN + GIẢI THÍCH": "File not found: 1imCXKbPDb1BaAaoKCbsAGdhf9kwljCPB.",
+    "BỘ ĐỀ LUYỆN THI HỌC SINH GIỎI TIẾNG ANH 6 CÓ FILE NGHE + KEY": "File not found: 18vACaE0cFTgvCer119kJt030ZlRANK9D.",
+    "BÀI TẬP TRẮC NGHIỆM TIẾNG ANH 12 CÓ ĐÁP ÁN": "File not found: 1Xs62nUbP-G0W_7IyBp7Hno6uaoBBuuIL.",
+    "A1 - A2 READING PRACTICE TESTS WITH KEY": "File not found: 1FcwPgeSgMEDFduNXefC_ODH5yrA7msbc.",
+    "BÀI TẬP LUYỆN NGHE TRÌNH ĐỘ A1 - FILE NGHE - ĐÁP ÁN - SCRIPT - BÀI TẬP": "File not found: 1oK5gRecYhX2XJ0R6FDob9atrpm-YRKau.",
+    "BỘ ĐỀ THI HỌC KỲ TIẾNG ANH 11 - GIẢI CHI TIẾT": "File not found: 1KPmhKyTMDKlk25xIWNedcfI-es2V38Ua.",
+    "BÀI TẬP TỔNG HỢP CÁC CHUYÊN ĐỀ NGỮ PHÁP  VÀ TỪ VỰNG TRÌNH ĐỘ B1 | CÓ ĐÁP ÁN": "File not found: 1VUEohtRJRFajEss3THKbUc0lAZKmisB8.",
+    "ĐỀ KIỂM TRA THAM KHẢO MÔN TIẾNG ANH 5 | File word | CÓ AUDIO": "File not found: 1oJ64zhzawGiCOvJw_-zIyW47uB5rnQNe.",
+    "TỔNG ÔN CÁC CHUYÊN ĐỀ NGỮ PHÁP TIẾNG ANH  - CÓ ĐÁP ÁN": "File not found: 1K5DN2LXpluz4YMKePtvoARBeFywYmDWb.",
+    "TÀI LIỆU LUYỆN THI IOE CẤP QUỐC GIA TIẾNG ANH 5": "File not found: 1b-9oaGjk1V8xrfVZRDBk3uKwnQ0z6kMl.",
+    "BỘ ĐỀ KIỂM TRA ĐỊNH KỲ TIẾNG ANH 11 - CÓ FILE NGHE - ĐÁP ÁN": "File not found: 1J8GXVJqALUhyl9IFtxsqyIc4olg4fljv.",
+    "WORKSHEET LUYỆN VIẾT CHO HỌC SINH TIỂU HỌC": "File not found: 1xW1Z-HjFGN2XeDE9MwuOSqhhjwpP3YJD.",
+    "BÀI TẬP NHẤN TRỌNG ÂM TỪ CÓ 3 ÂM TIẾT | CÓ KEY": "File not found: 1nJdQMjGuaXKSXw38N2flvAbIvabHM1mf.",
+    "BỘ ĐỀ KHẢO SÁT ĐẦU NĂM TIẾNG ANH 6- 7 - 8 - 9": "File not found: 11dbL9MhLf9rAAZQVoSVjrbVfuez_64Ef.",
+    "14 BÀI TẬP MÔ TẢ TRANH": "File not found: 1u7erqNvAq-WQd26O60dxYAFMeKIV6hru.",
+    "BỒI DƯỠNG HỌC SINH GIỎI TIẾNG ANH 5 ": "File not found: 1-QHnFljL_eb9Ahm8nBS-ACvor2NnR2uR.",
+    "TỰ HỌC IELTS TẠI NHÀ": "File not found: 1u8lqb4geTNUAcG5Ih0C3YmRmgcN-VUOp.",
+    "50 ĐỀ BỒI DƯỠNG HỌC SINH GIỎI TIẾNG ANH 12 CÓ ĐÁP ÁN": "File not found: 1Nb4sI4BrWYUfswgcQgFyf5W_iY7Krxk3.",
+    "KẾ HOẠCH CÂU LẠC BỘ TIẾNG ANH TIỂU HỌC": "File not found: 19si_EP7T0KNu03lc1H3K5SsmfS-22TOr.",
+    "PHIẾU BÀI TẬP TỪ VỰNG - NGỮ PHÁP LÀM THÊM TIẾNG ANH TIỂU HỌC": "File not found: 1pw126Vkr0lTAtCRwTv9Fy9VjWpivQuT7.",
+    "HỌC LIỆU CAMDRIDGE IELTS TỪ 1 ĐẾN 16": "File not found: 1T8oy-zIro-uPVpGGF4T5UNtJUIMpyddl.",
+    "30 ĐỀ BÀI TẬP RÈN THÊM TIẾNG ANH 7": "File not found: 1mLeuRw82MzmWLl6YVnPiQt828l5AZvTX.",
+    "BỘ ĐỀ BỒI DƯỠNG HỌC SINH GIỎI TIẾNG ANH 6 CÓ FILE NGHE - ĐÁP ÁN": "File not found: 1faBxRDnRWaVLnrh59LOMlNbATdJB-jlq.",
+    "ĐÁP ÁN GỢI Ý MODULE 1 BỒI DƯỠNG TIẾNG ANH THCS + THPT": "File not found: 1Yohgp8ljfa94tH4H2zTG_xk_S7uENeS_.",
+    "BỒI DƯỠNG HỌC SINH GIỎI TIẾNG ANH 5 | BÀI TẬP HAY + HÌNH ẢNH ĐẸP": "File not found: 1bRlg7ZZLT64gkv8oiDodQoYVEPW1xuPc.",
+    "100 ĐỀ THI THỬ TỐT NGHIỆP THPTQG | GIẢI CHI TIẾT": "File not found: 1XSsuKYQhVtiBgCBcmXZ5glJjd8_BIpih.",
+    "GIÁO ÁN BỒI DƯỠNG HỌC SINH GIỎI TIẾNG ANH 8": "File not found: 1QDTPioz5qDWJoccA2Fv7xwfKcR7uLrBS.",
+    "6500 CÂU BÀI TẬP ĐỌC HIỂU ÔN THI THPTQG | GIẢI CHI TIẾT": "File not found: 1xK6fg6P14ydqIf2wRMJliFbAsbCRSBHj.",
+    "BÀI TẬP CHUYÊN SÂU TIẾNG ANH 6 GLOBAL SUCCESS HỌC KỲ 1 | CÓ FILE NGHE - CÓ KEY": "File not found: 14833MpTcuzFLM5WbA86sjH-YyEzSYdyB.",
+    "KẾ HOẠCH GIÁO DỤC TIẾNG ANH 6-7-8-9 HỆ 10 NĂM THEO PHỤ LỤC 3 - 5": "File not found: 1OutFusaHsDKYkDuaZFkustTgxrRMd-1j.",
+    "10 ĐỀ THI THỬ VÀO LỚP 6 TRƯỜNG CHẤT LƯỢNG CAO - CÓ KEY": "File not found: 1Y5t8tN96T6rb-t3-NkBjTLI4Why2v9U1.",
+    "909 GAMES AND ACTIVITIES FOR KIDS ": "File not found: 1mr5YRcMqlVEE7gEB0owdswZdz3Ukyy32.",
+    "LUYỆN NGHE TIẾNG ANH THPT": "File not found: 15s3ihKS9pHVpGFIXYhHp-3ownahwEW3a.",
+    "ĐỀ KIỂM TRA 15 PHÚY - 1 TIẾT - ĐỀ HỌC SINH GIỎI THAM KHẢO TIẾNG ANH 5": "File not found: 1a6XXaHOYZdpqYfgQ8hA4axsFRIjZnxP8.",
+    "LUYỆN KỸ NĂNG NGHE TRÌNH ĐỘ A1 | DÀNH CHO TIỂU HỌC ": "File not found: 1NFEONji7iYw6QtA_SCnmiIoiXlMU4PmQ.",
+    "BÀI TẬP LUYỆN NGHE TRÌNH ĐỘ B1 - FILE NGHE - BÀI TẬP - SCRIPT - ĐÁP ÁN | File word": "File not found: 1dbjgLfCSwD5DSaGniD5cdVDOyu8Ws8Ee.",
+    "TUYỂN TẬP ĐỀ THI HỌC SINH GIỎI TỈNH PHÚ THỌ CÓ FILE NGHE ĐÁP ÁN": "File not found: 1iRT3vG6oVKaPPaY6_rYAQTHQF8h4b7VP.",
+    "30 CHUYÊN ĐỀ NGỮ PHÁP TIẾNG ANH HAY - CÓ ĐÁP ÁN VÀ GIẢI CHI TIẾT": "File not found: 1gDBAG0-8t4hJ_ge-VfQgaR0jKGWcWUNu.",
+    "1000 CÂU TRẮC NGHIỆM TIẾNG ANH 12 | CHƯƠNG TRÌNH CŨ": "File not found: 1ObHKVYRXiZb8GHXX_xx0E969o7zK8SN0.",
+    "CÁC BÀI LUẬN MẪU THPT CHUYÊN": "File not found: 1kMkvX6ET0JH1kt2SCagbM98bdJQE8iV4.",
+    "BÀI TẬP DẠY THÊM TIẾNG ANH 8 HỌC KỲ 1": "File not found: 1j-mpJg-p4xEIqFkcaGrpWEX0f9mAwJyb.",
+    "200 CÂU TRẮC NGHIỆM NGỮ PHÁP CƠ BẢN - NÂNG CAO TIẾNG ANH 5": "File not found: 1ZQ-yyXF7WkdKXpEz9hU4SISnZR31rI3p.",
+    "PHIẾU BÀI TẬP WORD FORMATION CÓ ĐÁP ÁN": "File not found: 1PM4VZc9MmgQUOGrIPUFeLYKjkgOLXD6H.",
+    "GIÁO ÁN THAM KHẢO TIẾNG ANH 3-4-5 THEO CÔNG VĂN 2345": "File not found: 14YQJSOlzXPWYL0BeDgVls3FvWfCa2E1K.",
+    "TÀI LIỆU LUYỆN NGHE TIẾNG ANH THCS - THPT": "File not found: 1JkEQpstLYpeGHrCFSyGN4o_dO0pcTp0f.",
+    "BỘ ĐỀ KIỂM TRA ĐỊNH KỲ TIẾNG ANH 12 CÓ FILE NGHE ĐÁP ÁN": "File not found: 1Q_oDqGYSux_9qFiaMLmeU9cBdMYv4VbQ.",
+    "BỘ ĐỀ KIỂM TRA HỌC KỲ 2 TIẾNG ANH 6 THAM KHẢO": "File not found: 1egfWUwftBfHf35nS4QW8uc5dWFwzvMrx.",
+    "TỔNG HỢP 48 WORKSHEET CHO BÉ MỚI LÀM QUEN VỚI TIẾNG ANH ĐỦ CÁC CHỦ ĐỀ": "File not found: 1MRcT-0bTh8oHRMntH991bgAF6urY5r9P.",
+    "CHINH PHỤC 9+ KỲ THI THPTQG CÓ GIẢI CHI TIÊT": "File not found: 173flb9WDUaFpVN97y2uiXZ5tGCiT0h4E.",
+    "BỘ ĐỀ THI OLYMPIC 30/4 TIẾNG ANH 11 CÓ KEY": "File not found: 1S38TvJ9yZF5hOIxEbE9z3JyF7gaW7UDI.",
+    "ĐỀ THI HỌC SINH GIỎI TIẾNG ANH 11 CÓ ĐÁP ÁN": "File not found: 1FQGBEYTDKfuHXOvEXcfLcwhT0X20zCto.",
+    "KẾ HOẠCH GIÁO DỤC TIẾNG ANH 7-8-9 THEO CÔNG VĂN 5512": "File not found: 1hiWEna8Ve0tXLokyv5zXV1mMHo9IfWQB.",
+    "LUYỆN TẬP NGỮ PHÁP TIẾNG ANH TIỂU HỌC": "File not found: 13MFsf001qyxMDBdJVUraajbVWayRJUxT.",
+    "KẾ HOẠCH GIÁO DỤC TIẾNG ANH 3-4-5": "File not found: 1Wo5wVQnoQE5TD3NkwkKPFsZeSjn2_9CT.",
+    "BỘ ĐỀ KIỂM TRA THAM KHẢO TIẾNG ANH 7 CÓ FILE NGHE": "File not found: 11mK6U-lUGXyWCfkq-d_SwjuNuzhJyO8M.",
+    "KẾ HOẠCH GIÁO DỤC VÀ BỘ ĐỀ KIỂM TRA THAM KHẢO TIẾNG ANH 6 GLOBAL SUCCESS": "File not found: 1XFbLiaF6Rp-FAyeFStY8tHH7t3VvvVoV.",
+    "TÀI LIỆU LUYỆN THI B2 - C1 CÓ FILE NGHE": "File not found: 14TftD7nXTQ-0iD-rhhgWqu_2n3hqvMXg.",
+    "40 ĐỀ ÔN TẬP TIẾNG ANH 6 CHƯƠNG TRÌNH CŨ": "File not found: 1sQ6GU0CxS_d24Yqc9wVdGJ1Qb-UFFJt8.",
+    "KHO SÁNG KIẾN KINH NGHIỆM TIỂU HỌC - THCS - THPT": "File not found: 16xC-cw50fdlN56Gt304CfM2v2WOW4k2O.",
+    "TỔNG HỢP CÁC MÃ ĐỀ THI TỐT NGHIỆP THPTQG NĂM 2021 CÓ ĐÁP ÁN": "File not found: 1k1QqHi16bWD6HP3euwX9mi39MEaP22gX.",
+    "GIÁO ÁN TIẾNG ANH 6 GLOBAL SUCCESS HỌC KỲ 1 THEO CV 5512": "No Google Drive link found",
+    "GIÁO ÁN TIẾNG ANH 9 HỌC KỲ 1+2 CV 5512": "File not found: 1I7V0EFOFVlqwOKP0dGA0ziS0YYTPxtRa.",
+    "POWERPOINT TIẾNG ANH 6 GLOBAL SUCCESS HỌC KỲ 1": "Google Drive folder (cannot copy directly)",
+    "DIỄN GIẢI VÀ BÀI TẬP NGỮ ÂM - TRỌNG ÂM TIẾNG ANH 9 ÔN VÀO 10": "File not found: 1ivcPS_cNivj1XDDp0rsQYZJBxrBrl6Ud.",
+    "GIÁO ÁN DẠY THÊM BUỔI 2 TIẾNG ANH 9 ": "File not found: 1PXSTv1xiPvMNWQfwva9aFBDBFij4upuh.",
+    "20 CHUYÊN ĐỀ BỒI DƯỠNG HỌC SINH GIỎI MÔN TIẾNG ANH CÓ ĐÁP ÁN": "File not found: 1hzBSGDJQC74-y1yijKX_BNebUnQPJirK.",
+    "GIÁO ÁN TIẾNG ANH 7 VÀ TIẾNG ANH 8 THEO CÔNG VĂN 5512": "File not found: 1s_l_xuwmFF3Yo8K2WYdM8gd54mFr56YW.",
+    "BỘ ĐỀ SPEAKING TESTS THEO TỪNG UNIT TIẾNG ANH 6 ": "File not found: 1cob02w8cGQal92O76dGCwBWTayomdj92.",
+    "TRỌNG TÂM NGỮ PHÁP ÔN THI THPTQG CÓ ĐÁP ÁN": "File not found: 14OWfATBmwTXS15j-q2ogfeLsI1Hz0ROh.",
+    "50 BÀI WRITING MẪU TASK 2 BAND 8.0 IELTS | FILE WORD": "File not found: 12gEtIRY9CggZ_4Y69qIjv5FAVX6VRwyy.",
+    "100 ĐỀ LUYỆN THI HỌC SINH GIỎI TIẾNG ANH 8 | CÓ ĐÁP ÁN": "File not found: 1oXqUo0QgsV_4-TAuGGnxTjqEW84MbId9.",
+    "100 ĐỀ BỒI DƯỠNG HỌC SINH GIỎI TIẾNG ANH 9 | CÓ ĐÁP ÁN": "File not found: 15FG5URnjZb3hfkHyHAsllWqK6_3NPdwU.",
+    "100 ĐỀ LUYỆN THI HỌC SINH GIỎI TIẾNG ANH 6": "File not found: 1Q5mNwtAUqdW64mravNZYuIxlCymtoolw.",
+    "BỘ ĐỀ KIỂM TRA HỌC KỲ 2 TIẾNG ANH 6 MỚI": "File not found: 1WZhbFaX_gEejbaRVaHp4kVKDv1IfcI6j.",
+    "BÀI GIẢNG TRÌNH CHIẾU TIẾNG ANH 6 RIGHT ON": "File not found: 16auKaJ1kpqLpuuB8VXJRprwlmSag0r2X.",
+    "BỘ ĐỀ KIỂM TRA TIẾNG ANH 7 | MINH HƯƠNG": "File not found: 1rcKZ_P7ZbXpFQqys1-nhogripHuT1pvW.",
+    "BỘ ĐỀ KIỂM TRA TIẾNG ANH 6 | MINH HƯƠNG | TẬP 1": "File not found: 1ZnzD9PKQUGsb5V8lkooH8oGKqxouwhyb.",
+    "EM HỌC GIỎI TIẾNG ANH 8 TẬP 1": "File not found: 11gv82xi7_u5TmYwL8QLHSW-OXFrhrPvq.",
+    "BỘ ĐỀ KIỂM TRA TIẾNG ANH 9 | MINH HƯƠNG": "File not found: 14dtn1M9xZ-SC6PDaFlWTx3mZB1skNDTt.",
+    "BỘ ĐỀ KIỂM TRA THAM KHẢO TIẾNG ANH 12 | HỌC KỲ 2 | CÓ ĐÁP ÁN": "File not found: 1alxcUEnAmGYMJ9E_ZbgOVUb6hVQjgtqT.",
+    "TỔNG HỢP MỘT SỐ ĐỀ THI TỐT NGHIỆP THPTQG NĂM 2021 CÓ ĐÁP ÁN": "File not found: 1tqSbt98gWcxLHQWj-ZYauWvTBwMsrNZT.",
+    "20 CHUYÊN ĐỀ ÔN THI HỌC SINH GIỎI TIẾNG ANH 9": "File not found: 1JF_neAPytwnuDkkOYRtWCjbaoi4AyVzx.",
+    "NGỮ PHÁP TIẾNG ANH THEO CHUYÊN ĐỀ ": "File not found: 1wbKIXA58VOZ0fSM1u0I9sXKUrpXqm4DY.",
+    "BỘ ĐỀ LUYỆN THI OLYMPIC TIẾNG ANH TIỂU HỌC": "File not found: 1FaBfokXA0A8TQkS2jJ_OXuE6OLGGUfl-.",
+    "55 ĐỀ BỒI DƯỠNG HỌC SINH GIỎI TIẾNG ANH 8 CÓ ĐÁP ÁN": "File not found: 1fWv5cZGndDTSqV2CmTHQjNTNGS1scF61.",
+    "BỒI DƯỠNG HỌC SINH GIỎI VÀ LUYỆN THI THPTQG CÓ ĐÁP ÁN | 330 TRANG WORD": "File not found: 1MD6BvLz4McWRHXfE2vMmbJqdCweIVcVJ.",
+    "GAME : SUMMER CAMP": "File not found: 1X7XcbTI66wwBQVyBf_PX8LbnnCs3iD-M.",
+    "VSTEP SPEAKING QUESTIONS | BỘ CÂU HỎI LUYỆN NÓI VSTEP": "Google Drive folder (cannot copy directly)",
+    "MINI READING FOR KIDS | MER JELLY": "No Google Drive link found",
+    "ĐỀ THI CHÍNH THỨC THPTQG NĂM 2021 - MÃ ĐỀ 409 CÓ ĐÁP ÁN | TẢI MIỄN PHÍ": "No Google Drive link found",
+    "USE OF ENGLISH | B2 EXAM": "Google Drive folder (cannot copy directly)",
+    "ĐỀ KIỂM TRA TIẾNG ANH 5 | File word": "No Google Drive link found",
+    "BỒI DƯỠNG CHUYÊN SÂU NGỮ PHÁP TIẾNG ANH": "Google Drive folder (cannot copy directly)",
+    "BÀI TẬP ĐỒNG NGHĨA  TRÁI NGHĨA ÔN VÀO 10 | CÓ ĐÁP ÁN": "Google Drive folder (cannot copy directly)",
+    "KEY FOR IELTS SPEAKING | File word": "No Google Drive link found",
+    "ĐỀ THI TIẾNG ANH VÀO LỚP 6 | File word": "No Google Drive link found",
+    "BỘ ĐỀ TỰ LUYỆN IOE 3-4-5": "Google Drive folder (cannot copy directly)",
+    "TỔNG HỢP TỪ VỰNG VÀ NGỮ PHÁP DESTINATION B1": "Google Drive folder (cannot copy directly)",
+    "300 CÂU XÁC ĐỊNH LỖI SAI TRONG CÂU TIẾNG ANH THCS": "Google Drive folder (cannot copy directly)",
+    "BÀI TẬP ĐỌC HIỂU TIẾNG ANH TIỂU HỌC | DẠNG YES / NO": "Google Drive folder (cannot copy directly)",
+    "TỔNG HỢP ĐỀ THI THỬ THPTQG TỪ CÁC SỞ | GIẢI CHI TIẾT": "File not found: 1QOboySXWT1lYZYjGsE6K1mDIWI0_2Rjr.",
+    "2000 ENGLISH COLLOCATIONS AND IDIOMS ": "File not found: 1XkaF7hwH8XSWdWTADIX8CxCxahBMN4Ok.",
+    "230 CÂU BÀI TẬP VIẾT LẠI CÂU ÔN THI VÀO 10 - CÓ ĐÁP ÁN": "Google Drive folder (cannot copy directly)",
+    "222 CÂU TRẮC NGHIỆM NGỮ PHÁP TỔNG HỢP ÔN THI VÀO 10 THÀNH PHỐ HỒ CHÍ MINH CÓ ĐÁP ÁN": "File not found: 1FkvfReMbPpFJ5i--AkZb8FPrQQw-wN5s.",
+    "BỘ CÂU HỎI THI NÓI TIẾNG ANH THEO CHỦ ĐỀ| ENGLISH SPEAKING QUESTIONS": "File not found: 1gEkJI6FEXnWM3CyiUEds0RjGHgrogvrz.",
+    "1000 CÂU TRẮC NGHIỆM MỤC TIÊU 9+ THI THPTQG | GIẢI CHI TIẾT": "File not found: 1f1kzimG7iTdBuO2VzFtqIkwwcIY-Z_i4.",
+    "200 CÂU TỔNG ÔN TỪ VỰNG THI VÀO 10 THÀNH PHỐ HỒ CHÍ MINH | CÓ ĐÁP ÁN": "Google Drive folder (cannot copy directly)",
+    "90 CÂU SẮP XẾP TỪ THÀNH CÂU LUYỆN THI VÀO 10 T.P HỒ CHÍ MINH": "Google Drive folder (cannot copy directly)",
+    "400 CÂU BÀI TẬP WORD FORM ÔN THI VÀO 10 TP HỒ CHÍ MINH CÓ ĐÁP ÁN": "Google Drive folder (cannot copy directly)",
+    "CÁC BIỂN BÁO HAY GẶP THI VÀO 10 CÓ ĐÁP ÁN": "Google Drive folder (cannot copy directly)",
+    "TRỌNG TÂM TỪ, CỤM TỪ ÔN THI VÀO 10": "Google Drive folder (cannot copy directly)",
+    "CÁC CHUYÊN ĐỀ BỒI DƯỠNG HỌC SINH GIỎI TIẾNG ANH THCS": "Google Drive folder (cannot copy directly)",
+    "400 CÂU TRẮC NGHIỆM TIẾNG ANH TỪ ĐỀ THI THPTQG CHÍNH THỨC | GIẢI CHI TIẾT": "File not found: 1mAqo-4XERz2UnvmqgSIsfov2VzW5yxaR.",
+    "BÀI TẬP CHUYỂN ĐỔI CÂU THEO TỪNG CHUYÊN ĐỀ NGỮ PHÁP | TRANSFORMATION | ÔN THI VÀO LỚP 10 T.P HỒ CHÍ MINH CÓ ĐÁP ÁN": "Google Drive folder (cannot copy directly)",
+    "BỘ CÂU HỎI TRẮC NGHIỆM ÔN THI VÀO LỚP 6 TRƯỜNG CHUYÊN CÓ ĐÁP ÁN": "File not found: 1A-4ypCXRHZDIBapiXPkMolxNKbegtNap.",
+    "[CẬP NHẬT MỖI NGÀY ] ĐỀ THI VÀO 10 NĂM HỌC 2021-2022  CÁC TỈNH THÀNH TRONG CẢ NƯỚC [ ĐỀ  NGHỊ CÁC BẠN BÁN TÀI LIỆU KHÔNG TẢI VỀ BÁN LẠI ]": "File not found: 1zCU580haDQSe18Iru721HNFTENYjZxcD.",
+    "100 CÂU BÀI TẬP VIẾT LẠI CÂU ÔN VÀO LỚP 6": "File not found: 1vWGtqoMCDBipr7sZJiiYmRFi2qUoTG0Y.",
+    "150 CÂU BÀI TẬP CHUYỂN ĐỔI CÂU ÔN THI VÀO 10 THÀNH PHỐ HỒ CHÍ MINH": "File not found: 1PHCF5LVb4fdsecVPqjIsIv9iQsZ06Tut.",
+    "PHÁT TRIỂN KỸ NĂNG NGHE TIẾNG ANH 7": "File not found: 1kLk7rgp77fsGwZZvphgCV4AmEwjk7i09.",
+    "PHÁT TRIỂN KỸ NĂNG NGHE TIẾNG ANH 6 | FILE NGHE- BÀI TẬP - ĐÁP ÁN - SCRIPT ": "File not found: 1bvTyr0DVpxjDv3M6lC3dYPTANIsdVjw0.",
+    "PHÁT TRIỂN KỸ NĂNG NGHE TIẾNG ANH CHO HỌC SINH LỚP 5": "File not found: 16Mtf3ICQoFPx5c6gGng9DWQhkou2WbbU.",
+    "BÀI TẬP NGUYÊN ÂM DÀI CHO BÉ LÀM QUEN TIẾNG ANH": "File not found: 1tQZrxtLIduf4PduMhTx2enQZOZ7-MHvo.",
+    "50 BÀI VIẾT MẪU IELTS TASK 2 - BAND 8.0": "File not found: 1ilvtBDK4PMnsObYsePqDUnLvfxkH__xf.",
+    "170 BÀI ESSAY WRITING MẪU THEO CHỦ ĐỀ": "Google Drive folder (cannot copy directly)",
+    "TOÁN TIẾNG ANH LỚP 1 CƠ BẢN": "File not found: 1DSOZRcWbpoLCpYpXuM_mQ6dgvNXY6_qY.",
+    "300 HOẠT ĐỘNG WARM-UP VÀ CÁC TRÒ CHƠI HAY CHO TIẾT HỌC TIẾNG ANH": "File not found: 1iWBN0xjjH1huCDR4_5c3EGVuT81W4c-x.",
+    "BÀI TẬP TRẮC NGHIỆM ĐỌC HIỂU TIẾNG ANH TIỂU HỌC": "File not found: 1elt38Nr_36AmL9v21K-p8yDIe4si5eDZ.",
+    "BỘ ĐỀ ÔN VÀO LỚP 10 DẠNG ĐỀ 30 CÂU CÓ ĐÁP ÁN": "File not found: 1FoHtJmFwrfh7W1wWlJmkS3lc0YEDx178.",
+    "LÝ THUYẾT VÀ BÀI TẬP THEO CHUYÊN ĐỀ TIẾNG ANH 6": "File not found: 1TahMTkcGnQ9qZniJYbIbmCQPd3-3q-XR.",
+    "1500 CÂU LUYỆN THI IOE TIẾNG ANH 4-5": "File not found: 1yVsdWUowrZ9zHg-JYqHggf-Pik6thfZX.",
+    "GAME HỌC VỀ CÁC LOẠI HOA QUẢ": "No Google Drive link found",
+    "BỘ ĐỀ KIỂM TRA TIẾNG ANH 10 THEO SÁCH GIÁO KHOA CƠ BẢN CÓ ĐÁP ÁN": "File not found: 1SliFJ_0EbNtzxM07MlLo3VOzruTY60Ly.",
+    "BỘ ĐỀ THI THỬ VÀO 10 | CÓ ĐÁP ÁN": "File not found: 176mY9bFJfbhsT-knWe_OCuMFMoh7W9Ck.",
+    "GAME HỌC CÁC THÀNH VIÊN TRONG GIA ĐÌNH": "File not found: 1dEKQGXf3UkDyrpwKBSWVYqfOBSvPsUVX.",
+    "CHUYÊN ĐỀ KỸ NĂNG GIAO TIẾP | LÝ THUYẾT - BÀI TẬP - ĐÁP ÁN": "File not found: 1IGMJKwbxPe707XxOJDBt_pvtlcmN-EhQ.",
+    "BỘ ĐỀ TỰ LUYỆN LỚP 9 LÊN 10 MÔNBỘ ĐỀ TỰ LUYỆN LỚP 9 LÊN 10 MÔN TIẾNG ANH TIẾNG ANH": "File not found: 1oNpbIXeOvnngPbSSPshhPjej0375RPHK.",
+    "ADJECTIVES | GAME HỌC CÁC CẶP TÍNH TỪ TRÁI NGHĨA TRONG TIẾNG ANH ": "File not found: 1aUCBR782w5LcSXcSH9AP0nj-Tdn-lfr6.",
+    "TÀI LIỆU ÔN THI VÀO 10 | HƯƠNG THỦY": "File not found: 1WIFe90Phi9ND1Hb0Hx1d41A5xTCDwiXy.",
+    "BÀI TẬP ÔN HÈ LỚP 5 LÊN LỚP 6": "File not found: 1PUGi4pf8L_WFvwgFZNpkorXX294ptm7M.",
+    "TRÒ CHƠI HỌC CẤU TRÚC : WAS / WERE + V - ING": "File not found: 1c2gOcra28yCEiVyjjU3nYogn53Jji_7P.",
+    "STARTERS - MOVERS - FLYERS SPEAKING SAMPLES": "Google Drive folder (cannot copy directly)",
+    "BÀI TẬP 15 CHUYÊN ĐỀ NGỮ PHÁP CÓ ĐÁP ÁN": "File not found: 19ccJfopZQNZLLFzsFAHrKUjJUBOFkkF_.",
+    "10 ĐỀ THI THỬ THPTQG MÔN TIẾNG ANH 2021 | CÓ ĐÁP ÁN": "File not found: 1XUHoEraf9mQAO06flA-YuopyuUqlH6ow.",
+    "BỘ ĐỀ BỒI DƯỠNG HỌC SINH GIỎI CẤP TỈNH TIẾNG ANH 9 CÓ FILE NGHE ĐÁP ÁN": "File not found: 1p1K-HEQIOYcbklg-93A9nD7y3pAdoFHs.",
+    "1000 WORD FORM HAY GẶP VÀ QUY TẮC THÀNH LẬP TỪ LOẠI": "File not found: 13ltOc5lQ5-ad-qqiG5Pn379RUA7h0U48.",
+    "LUYỆN TẬP THEO CHUYÊN ĐỀ NGỮ PHÁP ÔN THI VÀO 10 CÓ ĐÁP ÁN": "File not found: 11imksYQEkDMURTFlkCynr_fsRZ_i7jKB.",
+    "BÀI TẬP TIẾNG ANH HAY TIỂU HỌC": "File not found: 19wnU0iXlULMsqmcaWwYCNAsaI6BRroiT.",
+    "BÀI TẬP TỪ VỰNG THEO CHỦ ĐỀ TIẾNG ANH TIỂU HỌC": "File not found: 1M3Hjzmon4ch1jg47nAEY1PsuOOIOJwVl.",
+    "BÀI TẬP ĐỌC HIỂU FLYERS | FLYERS READING | CÓ ĐÁP ÁN": "File not found: 13SMCyvAKuQVgGSrU8uO3Rc9VLX60Yxtg.",
+    "ÔN TẬP CÁC CHỦ ĐIỂM NGỮ PHÁP TIẾNG ANH CÓ ĐÁP ÁN": "File not found: 1d5_Lx_OcqSK7fCbWHhZ2JgU4AyiO66sw.",
+    "CÂU CHUYỆN TIẾNG ANH CHO BÉ TỪ MẪU GIÁO ĐẾN LỚP 3": "No Google Drive link found",
+    "BỘ ĐỀ THI THỬ VÀO 10 CÓ ĐÁP ÁN": "File not found: 1qfHidIFw3ZNjZY_56BVo99mWoQ_WmdE2.",
+    "500 CÂU BÀI TẬP PHÁT ÂM TIẾNG ANH 9 ÔN THI VÀO 10 CÓ KEY": "File not found: 1-d8W-GkvP8pNhPTzsHTfxAjCuog3cmea.",
+    "WORD TRANSFORMATION CHUYÊN SÂU | CÓ ĐÁP ÁN": "File not found: 1Y62WQLguMREuwrcSYq8ErrMOJ56wwusX.",
+    "400 CÂU TÌM LỖI SAI TIẾNG ANH 8 NÂNG CAO | CÓ LÝ THUYẾT | CÓ ĐÁP ÁN": "File not found: 1-pxmuHg4N-xTUUHwiXGPfVmd9Vlt4EeN.",
+    "ĐỀ CƯƠNG ÔN THI THPTQG CÓ ĐÁP ÁN": "File not found: 1LhuEGSJlztx2zDmiUF4uy_tW7DR7ZNRP.",
+    "ĐỀ THI CHÍNH THỨC VÀO 10 CÁC SỞ GIÁO DỤC NĂM 2020 ": "File not found: 15dBftMlVwjIkZQbphNh29CdJA_TPPK45.",
+    "MỘT SỐ ĐỀ THI HỌC SINH GIỎI TIẾNG ANH 6789 NĂM 2020-2021 CÓ FILE NGHE": "File not found: 1d2oCQ8uUdu0jhR9aMgRUV_6Ts-kcsmaV.",
+    "BÀI TẬP VIẾT LẠI CÂU TIẾNG ANH 7 HK2 | CÓ ĐÁP ÁN": "File not found: 1yqKZbW3JU6FOYPMOTY53hkaKGGh4bvcu.",
+    "BỘ ĐỀ THI VÀO LỚP 6 TRƯỜNG ĐIỂM  | GIẢI CHI TIẾT": "Google Drive folder (cannot copy directly)",
+    "ĐỀ CƯƠNG TỰ LUYỆN ÔN THI VÀO 10": "Google Drive folder (cannot copy directly)",
+    "BỘ CÂU HỎI RUNG CHUÔNG VÀNG THPT ": "Google Drive folder (cannot copy directly)",
+    "BỘ ĐỀ THI THAM KHẢO TIẾNG ANH 8 CÓ FILE NGHE - ĐÁP ÁN": "File not found: 1cykbdbewg9mShIlTmzdjCpf56hNazLGg.",
+    "BỘ ĐỀ THI THAM KHẢO HỌC KỲ 2 TIẾNG ANH 9 CÓ FILE NGHE": "File not found: 1HAjWmu7lTWl_nNPdLg_E4Sm0-QlPAyjh.",
+    "BỘ ĐỀ ÔN THI VÀO 10 TRẮC NGHIỆM 50 CÂU": "File not found: 1pwOPYxohfMORH28009vMk99oftsDT7W5.",
+    "BỘ ĐỀ THI HỌC KỲ 2 TIẾNG ANH 3-4-5 | CÓ FILE NGHE": "File not found: 1sNawJzQvbGqCbEbxt1NRbJt3FM_GQJOs.",
+    "HƯỚNG DẪN THI NÓI TIẾNG ANH 6 - 7- 8- 9 HỌC KỲ 2 | TOPIC SPEAKING ENGLISH 6 - 7 - 8 - 9": "File not found: 1-QPnF0fU1glE19LaqRVdDm3bbhQ34fxq.",
+    "ĐỀ CƯƠNG ÔN TẬP HỌC KỲ 2 TIẾNG ANH 4 | LÝ THUYẾT + BÀI TẬP": "File not found: 1ugZ3cIa4POUN8gV34wY6HOVD4w6CcLO4.",
+    "ĐỀ CƯƠNG ÔN TẬP HỌC KỲ 2 TIẾNG ANH 3 | LÝ THUYẾT - BÀI TẬP VẬN DỤNG": "File not found: 1F0aOyzvUMOQSYIFsVrQSrLw0GZpyQS_4.",
+    "ĐỀ CƯƠNG ÔN TẬP HỌC KỲ 2 TIẾNG ANH 5 | ÔN TỪ VỰNG - NGỮ PHÁP - BÀI TẬP VẬN DỤNG": "File not found: 1PpYpIRPcLEo3KyrCmT2hei8DSAZUc3zR.",
+    "BỘ ĐỀ KHẢO SÁT HỌC SINH GIỎI TIẾNG ANH 6 CÓ FILE NGHE ĐÁP ÁN": "File not found: 1eR_Kka3OeZMwb-tVouD9-vgQPlXEfJw2.",
+    "BỘ WORKSHEET LUYỆN TẬP GIỚI TỪ TIẾNG ANH 5 CÓ ĐÁP ÁN": "File not found: 1oJxSmXNBlJWEs27az1vvISW7-HaMjmWj.",
+    "BỘ ĐỀ THI HỌC SINH GIỎI CẤP HUYỆN TIẾNG ANH 8 CÓ FILE NGHE ĐÁP ÁN": "File not found: 1xwUuDogEsy212TcNs5XWrbzNXGtT3OtN.",
+    "BỘ ĐỀ THI HỌC KỲ 2 THÀNH PHỐ HỒ CHÍ MINH QUA CÁC NĂM": "Google Drive folder (cannot copy directly)",
+    "17 WORKSHEET  LUYỆN TẬP DÙNG THERE IS - THERE ARE": "File not found: 1RphI_jkn2126hD5v4LkgI1doxUi8cfUY.",
+    "20 ĐỀ LUYỆN THI VÀO 10 CÓ FILE NGHE VÀ ĐÁP ÁN": "File not found: 1CUcprDAmbDmkNNr40M_tIXHQvcXWfRPy.",
+    "BỘ ĐỀ LUYỆN KỸ NĂNG NGHE TRÌNH ĐỘ A2": "File not found: 1dKsWY0MSesaaCZuswyDevBX7M2A822iY.",
+    "CHƯƠNG TRÌNH CÂU LẠC BỘ TIẾNG ANH": "The operation was aborted due to timeout",
+    "BỘ ĐỀ THI HỌC SINH GIỎI TIẾNG ANH 6 CÓ FILE NGHE ĐÁP ÁN": "Google Drive folder (cannot copy directly)",
+    "BỘ ĐỀ MINH HỌA KỲ THI THPTQG MÔN TIẾNG ANH CÓ ĐÁP ÁN - GIẢI CHI TIẾT": "File not found: 1ezhd8Qc_TSxBmqifNij5YY_VqnYuEbzL.",
+    "400 CÂU TÌM LỖI SAI ÔN VÀO 10 CÓ ĐÁP ÁN": "Google Drive folder (cannot copy directly)",
+    "200 CÂU TRẮC NGHIỆM VIẾT LẠI CÂU ÔN VÀO 10 CÓ ĐÁP ÁN ": "Google Drive folder (cannot copy directly)",
+    "45 ĐỀ THI MINH HỌA THPTQG 2020 CÓ ĐÁP ÁN - GIẢI CHI TIẾT - MA TRẬN": "Google Drive folder (cannot copy directly)",
+    "25 ĐỀ ÔN THI THPT CÓ ĐÁP ÁN - GIẢI CHI TIẾT": "Google Drive folder (cannot copy directly)",
+    "50 ĐỀ BỒI DƯỠNG HỌC SINH GIỎI TIẾNG ANH 9 CÓ FILE NGHE - ĐÁP ÁN": "File not found: 1afe6AWwTOWrFtCGvfZxoBQT85-hWOtBR.",
+    "30 ĐỀ HỌC SINH GIỎI TIẾNG ANH 9 CÓ KEY-FILE NGHE": "Google Drive folder (cannot copy directly)",
+    "BỘ ĐỀ ÔN THI GIỮA HỌC KỲ 2 TIẾNG ANH 3 CÓ ĐÁP ÁN": "File not found: 19KL94UPlVpUers0INqvKW1kMPY1eXpxb.",
+    "REVIEW FOR MOVERS AND FLYERS EXAM": "File not found: 1HcoQ5MCjk2SwegZzjcgiJH7tJhPBSGZp.",
+    "GAME HỌC CÁC QUỐC GIA VÀ THÀNH PHỐ TRÊN THẾ GIỚI": "File not found: 1s69ec1hYZFm8ZFOCple9HzlzX4MKzcnX.",
+    "100 ĐỀ KIỂM TRA TIÊNG ANH 11": "File not found: 1EpF7EK4aHZPHeESkZQTwx7Pl5uFcI5WH.",
+    "5 ĐỀ ÔN THI GIỮA HỌC KỲ 2 TIẾNG ANH 4 CÓ ĐÁP ÁN": "File not found: 11NcmqdzET1c4nA2FnIUI5JqsKsN_cwEp.",
+    "VỞ LUYỆN TỪ FLYERS ": "File not found: 1snBNW15M8pq1barRSNWT2XOsMQdWHzpg.",
+    "ÔN TẬP TỪ VỰNG TIẾNG ANH 3 HỌC KỲ 2": "File not found: 1P-oEGqzVCoJpzV89dkUQgqtS4u2DwvA8.",
+    "15 ĐỀ ÔN THI VÀO LỚP 6 CÓ ĐÁP ÁN": "File not found: 1OXdq65fj6p4eW5bWLLj_wxhnWoemZ7lC.",
+    "GAME WATCHING THE STARS | GAME HỌC CÁC CẶP TỪ TRÁI NGHĨA TIẾNG ANH ": "File not found: 1--L2dhYvgIyhEjceWTo_7eQEgKiNFAZm.",
+    "BÀI TẬP CÂU TRÁI NGHĨA ĐỒNG NGHĨA CÓ ĐÁP ÁN": "File not found: 1_sO4eB7E7_S9yr5q2sm4IgMXk1jnT62-.",
+    "GAME: IDIOMS | GAME HỌC VỀ THÀNH NGỮ TIẾNG ANH": "File not found: 1SiALuYt4jStMGsvshO5iU2k8hEK8zZ9E.",
+    "940 CẶP TỪ ĐỒNG NGHĨA TRONG TIẾNG ANH": "File not found: 1cHfRhy1P7PPPXnKEUMPBlbgApxa_yyhC.",
+    "KỸ THUẬT DẠY ĐỌC VÀ VIẾT THÔNG QUA CÁC BÀI HÁT TIẾNG ANH": "File not found: 1Fho7gqOdqVjA8jmONdqLfJrj8p2i1ref.",
+    "BỘ ĐỀ THI GIỮA HỌC KỲ 2 TIẾNG ANH 8 VÀ 9 CÓ ĐÁP ÁN- FILE NGHE- ĐÁP ÁN- HƯỚNG DẪN CHẤM- MA TRẬN": "File not found: 1t0JrgOUcciWe-oRsDKqmDjrVgC3uHevP.",
+    "BỘ ĐỀ THI GIỮA KỲ 2 MÔN TIẾNG ANH 6-7 CÓ FILE NGHE-ĐÁP ÁN- HƯỚNG DẪN CHẤM- MA TRẬN": "File not found: 1zZercEybkX_YsFa4C9pwJRYVKnLdqjwF.",
+    "ALPHABET GAME | GAME HỌC CHỮ CÁI A-Z CHO TRẺ": "File not found: 1m-AKu7R-AKUksj0yZq6kCnBfLFToBZJX.",
+    "BỘ ĐỀ KIỂM TRA 1 TIẾT TIẾNG ANH 8 MỚI CÓ FILE NGHE - ĐÁP ÁN - MA TRẬN  - HƯỚNG DẪN CHẤM": "File not found: 1ZVtsCUPkIIt0bAu-8Kir4XE84vNz1ckP.",
+    "350 CÂU BÀI TẬP TRỌNG ÂM ÔN THI THPTQG CÓ ĐÁP ÁN": "File not found: 1FAurKwFtKaXPONXaQSN0TfdTPMnVlb-5.",
+    "25 CHUYÊN ĐỀ NGỮ PHÁP TIẾNG ANH DƯỚI DẠNG SƠ ĐỒ TƯ DUY CÓ ĐÁP ÁN": "File not found: 1RUuHOMiXTbTl3HjIrWXNb3hfQv1PFiOi.",
+    "32 TOPICS MẪU HÙNG BIỆN TIẾNG ANH TIỂU HỌC": "File not found: 18t2zLPnAfacz1xo_uOQiqKhsLP_G5T-e.",
+    "25 ĐỀ BỒI DƯỠNG TIẾNG ANH 12 CÓ ĐÁP ÁN": "File not found: 1tIWJ9Tct3h0YFA5ii5HXmlXxuTQZgKJp.",
+    "20 DẠNG BÀI TẬP TIẾNG ANH TIỂU HỌC": "File not found: 1zha9hpZyGKANk9v-1Hkj1IXNJDXVlYLP.",
+    "ĐỀ KIỂM TRA 1 TIẾT SỐ 1-2-3-4 TIẾNG ANH 9 CÓ FILE NGHE - MA TRẬN": "File not found: 1LeIFyAm1MpD7vLD4J7toMyicsEE3fSot.",
+    "TỔNG HỢP ĐỀ ÔN THI GIỮA HỌC KỲ 2 TIẾNG ANH 6": "File not found: 1v1LLhi02UA2XTNE4PKJsNRI3SUmesliO.",
+    "BỘ ĐỀ KIỂM TRA 1 TIẾT SỐ 1-2-3-4 TIẾNG ANH 8 CÓ FILE NGHE - ĐÁP ÁN - MA TRẬN": "File not found: 1TOfroj9mQvBb7jVrzpXt21C-BuJzDFOB.",
+    "CẨM NANG TỰ HỌC 2000 TỪ VỰNG TIẾNG ANH THEO CHỦ ĐỀ": "File not found: 1OnJ1kmRJj1YVewnvBoGq5QVSLvo7-Jv_.",
+    "BỘ ĐỀ KIỂM TRA MỘT TIẾT SỐ 1-2-3-4 TIẾNG ANH 7 CÓ FILE NGHE-ĐÁP ÁN-MA TRẬN": "File not found: 1tCA5Zhcx3k14803TbRf-4RniJ1RFcsqq.",
+    "BỘ ĐỀ KIỂM TRA 1 TIẾT SỐ 1-2-3-4 TIẾNG ANH 6 CÓ FILE NGHE-ĐÁP ÁN - MA TRẬN": "File not found: 1iJSDj9JlcULQBvuzWv3AArtKoxUFHzt9.",
+    "500 WORD FORM TRANSFORMATION EXERCISES FOR ADVANCED": "File not found: 1alybgRafetvFg1UOzWHype6B_g78SvOm.",
+    "50 CHỦ ĐỀ THI NÓI - VIẾT TIẾNG ANH TRÌNH ĐỘ B1": "File not found: 1cQfH6BLffOC11QeG6hiJCM5M77DTSGnh.",
+    "GRAMMAR FOR EVERYONE ": "File not found: 1D0DdFC5grH0o8f6PMhoYvLHZjsLnTMmw.",
+    "LÝ THUYẾT - BÀI TẬP VỀ GIỚI TỪ ÔN THI ĐẠI HỌC CÓ ĐÁP ÁN": "File not found: 1i3x-cEE9mlHB9CqQz-KDApNA5WobI1Hi.",
+    "130 CÂU GIAO TIẾP THƯỜNG GẶP TRONG KỲ THI THPTQG": "File not found: 1ntDhyfEMzjYNDItAZiU3fsj-htmEY2J8.",
+    "70 TRÒ CHƠI POWERPOINT DÙNG TRONG THIẾT KẾ DẠY HỌC": "File not found: 1G5gAoaN_jOKa2iQBKDBmHxbbhyatCpCH.",
+    "CÁC BÀI NÓI MẪU SPEAKING TOPICS  HỌC KỲ 1 TIẾNG ANH 6-7-8-9 ": "File not found: 1-NER2Dri6iYmIZ0_kKspG0PUgbgrvlVJ.",
+    "ĐỀ THI HỌC SINH GIỎI TIẾNG ANH 11 CÓ FILE NGHE-ĐÁP ÁN": "File not found: 1Rkp5utog0eGtaLEAzO31UGEJSU1tuaag.",
+    "BÀI GIẢNG POWERPOINT PHONICS": "File not found: 1xTpoxu-opeumG4mVjqQnXhkAOZM3Tgn6.",
+    "15 ĐỀ THI THAM KHẢO HỌC KỲ 1 TIẾNG ANH 10-11-12": "File not found: 1ZoFq47vcSIS9VRHI6EYdLQX_yq_S5vQu.",
+    "ĐỀ THI THAM KHẢO HỌC KỲ 1 TIẾNG ANH 7": "File not found: 18xLyai8iAE0bqnz-D0zvZqpRCvZs4Czt.",
+    "LUYỆN ĐỌC TIẾNG ANH TIỂU HỌC": "File not found: 1GkNQE94WP3rRtG2oQgouBwgYM4Iww5D8.",
+    "ĐỀ CƯƠNG ÔN THI HỌC KỲ 1 TIẾNG ANH 11": "File not found: 1n5sonOMRSIOkOIkiE-ujVeUEOITQyqjK.",
+    "[PDF] ĐỀ KIỂM TRA TIẾNG ANH 6": "File not found: 1hFbtR63zt0SjxTKhzkzkcUFnhZPeQGwW.",
+    "ĐỀ LUYỆN THI HỌC SINH GIỎI TIẾNG ANH 12 CÓ ĐÁP ÁN VÀ GIẢI CHI TIẾT": "File not found: 1ihPK40_vbbzzsqVRA9LeHDdhs8JbOTz2.",
+    "BẢNG TRA CỨU CỤM ĐỘNG TỪ - CỤM GIỚI TỪ": "File not found: 1HERNjvk01tm_Pc9qQ9uvSaZ82IJiMxd3.",
+    "TỔNG HỢP TÀI LIỆU TIẾNG ANH 6 HỆ 7 NĂM HAY": "File not found: 1SyCehmbIuuoJ_y6wJ9eISpniVhVeKxrj.",
+    "350 CÂU TRỌNG ÂM TIẾNG ANH 10 CÓ ĐÁP ÁN": "File not found: 1k8kc8EjJ03G_ZmmCHfpMrGM3yGkHmAdt.",
+    "100 ĐỀ THI ĐỊNH KỲ TIẾNG ANH 11 CÓ ĐÁP ÁN": "File not found: 1oAAY4PwHx7h1SXV8rqgSzHkBMBW-2Lw4.",
+    "BỘ ĐỀ KỂM TRA ĐỊNH KỲ THAM KHẢO TIẾNG ANH 11 CÓ FILE NGHE ĐÁP ÁN": "File not found: 1Bx0BHlALG1_T0e5bPjU28ww9nn90ovkY.",
+    "TỔNG HỢP ĐỀ THI ĐỀ XUẤT TRẠI HÈ HÙNG VƯƠNG TIẾNG ANH 11 CÓ FILE NGHE ĐÁP ÁN": "File not found: 12sEbQKWf6pduiFaiGm00cOIm1OqHKkaL.",
+    "BÀI TẬP THÀNH NGỮ TIẾNG ANH": "File not found: 1fJOQTo4it0v47lppUKCtaoMKpIfg3zZe.",
+    "TỔNG HỢP ĐỀ KIỂM TRA TIẾNG ANH 9": "File not found: 14M9d6cMWN_XZtDWOe5dYcQbXlagHvABw.",
+    "TỔNG HỢP ĐỀ KIỂM TRA TIẾNG ANH 8": "File not found: 1M4Z-q2AAKZP-LrG0IlMmV53y4DS9Sibf.",
+    "TÀI LIỆU LUYỆN THI IOE TIẾNG ANH 9": "File not found: 1qeZJBH_PTIoqMLAtjRlrW8Pc_Jf3mS8G.",
+    "TỔNG HỢP ĐỀ KIỂM TRA TIẾNG ANH 7": "File not found: 1zhh_ob7SewxYbRjcohmPZRGzRzv0puNq.",
+    "TỔNG HỢP ĐỀ THI HỌC SINH GIỎI CÁC TỈNH DUYÊN HẢI -ĐỒNG BẰNG BẮC BỘ TIẾNG ANH 10": "File not found: 1ojGUA4lnVuM-frOmFhqxhCaA5OR_K_K1.",
+    "TỔNG HỢP ĐỀ KIỂM TRA TIẾNG ANH 6": "File not found: 1qjo1mdQmeIC07CXadhh5jJowCefQljsh.",
+    "150 BÀI LUẬN MẪU HAY NHẤT CÓ DIỄN GIẢI TỪ VÀ DỊCH ": "File not found: 1USk-i7G35Vd_cXgTgrA3NSIKLa7PhvEs.",
+    "BÀI TẬP TĂNG CƯỜNG VỐN TỪ VỰNG TIẾNG ANH 6": "File not found: 1TsPC3VhkyyP-WXTd2ht9xKpz1TZFml20.",
+    "TRỌN BỘ QUY TẮC ĐÁNH DẤU TRỌNG ÂM TIẾNG ANH ": "File not found: 1_GiBXwIDa5JqnIgsYj3bMuue596oibQr.",
+    "TÀI LIỆU ÔN THI THPTQG": "File not found: 1iVF7Jw5fbn8IMzhW3Xqq5xRuDr_QwDPu.",
+    "140 CÂU WORD FORM TIẾNG ANH 12 CÓ KEY": "File not found: 17_a76huBT4LiI18Jd577Tz7EaCKXdQdg.",
+    "28 ĐỀ LUYỆN THI HỌC SINH GIỎI CẤP TỈNH HUYỆN TIẾNG ANH 9 CÓ FILE NGHE ĐÁP ÁN": "The operation was aborted due to timeout",
+    "TỔNG HỢP ĐỀ THI HỌC SINH GIỎI ĐỒNG BẰNG BẮC BỘ VÀ DUYÊN HẢI MIỀN TRUNG TIẾNG ANH 11 CÓ ĐÁP ÁN FILE NGHE": "File not found: 185TvFfjLJX-oQDb_TVXOhsFNdNofhKb2.",
+    "75 BÀI TẬP ĐỌC HIỂU TIẾNG ANH 9 CÓ ĐÁP ÁN": "File not found: 17Dkq1LM17Zjk4X7LwsAQJOwi4IwFaYe5.",
+    "100 CẤU TRÚC CÂU TIẾNG ANH THƯỜNG GẶP NHẤT CÓ VÍ DỤ MINH HỌA": "File not found: 1dWhM8298BZb-a3DWt9lM8tF-oYgiXJcA.",
+    "BÀI TẬP TIẾNG ANH TIỂU HỌC THEO CHỦ ĐỀ": "File not found: 1JVvsaXi9hOvgHUcjCPUEPebu_IvYURU2.",
+    "BÀI TẬP CƠ BẢN VÀ NÂNG CAO TIẾNG ANH TIỂU HỌC LỚP 3-4-5": "File not found: 1umfxA9stvGvxeLjp7-Dv1fca7Xm1JyEK.",
+    "500 ACTIVITIES FOR THE PRIMARY CLASSROOM": "File not found: 1SAw3hNflpMgvvW5htxZEzfa7awFPqiLt.",
+    "BÀI TẬP RÈN KỸ NĂNG ĐỌC HIỂU TIẾNG ANH 6": "File not found: 1rnfL4vCW3ZwWXaGGRLWWwA8jrf5TDqif.",
+    "130 GAMES POWERPOINT": "File not found: 1Hb1iiIFyJAThlHEnCZw-cm3oVer1U2Pw.",
+    "POWERPONT MID - AUTUMM | TRUNG THU": "File not found: 1Afz4y-2NW5fJFEA54hk6u6OyU3ht7tOn.",
+    "WORKSHEET BÀI TẬP CÁC CHUYÊN ĐỀ NGỮ PHÁP TIẾNG ANH THCS": "File not found: 1-7EWCzBdAuyBTbJsPrKDy51tU6WZJjdr.",
+    "100 CÂU TRẮC NGHIỆM BỒI DƯỠNG HỌC SINH GIỎI TIẾNG ANH 4": "File not found: 13eHhODcHYDM8i8j_aHNPfs89bxoGDThp.",
+    "100 CÂU TRẮC NGHIỆM TỪ VỰNG  - NGỮ PHÁP TIẾNG ANH 3": "File not found: 1ZPJDp-4c5Cgf9lnls60m9j-9DX0wuZma.",
+    "TỔNG HỢP NGỮ PHÁP TIẾNG ANH 6": "File not found: 1inSpgMG3R81NIdi5o4VIefCqJfoKocji.",
+    "BÀI TẬP CÁC CHUYÊN ĐỀ NGỮ PHÁP TIẾNG ANH THCS CÓ ĐÁP ÁN": "File not found: 1lzs-l62lX4w1BuwB2ww_WU9Llg_uTtg-.",
+    "BỒI DƯỠNG HỌC SINH GIỎI TIẾNG ANH 12 CÓ GIẢI CHI TIẾT": "File not found: 1ZWr3ZABfkeP-_N5-h53HVkPv-ImS0oft.",
+    "430 CÂU TRẮC NGHIỆM TỪ VỰNG - NGỮ PHÁP TIẾNG ANH 7 CÓ ĐÁP ÁN": "File not found: 109AVIpkuTgi0y-1Erd0BQq4KULgLJpos.",
+    "MỘT SỐ BÀI TẬP ĐỌC HIỂU TIẾNG ANH TIỂU HỌC": "File not found: 1-PXK9SkXlsqmIjPtRwPIGFrs1VQB4qrk.",
+    "BỘ ĐỀ KIỂM TRA 1 TIẾT TIẾNG ANH 8 CÓ ĐÁP ÁN VÀ FILE NGHE": "File not found: 1sDKHKCRXjr5r4a0yOtPMOnRYjAKOkUVQ.",
+    "BỘ BÀI GIẢNG POWERPOINT NGỮ PHÁP TIẾNG ANH": "File not found: 1wjSW-uopDBObTLlI4AnoHHDjIgI8hkQ0.",
+    "TÀI LIỆU THI IOE TIẾNG ANH 3-4-5": "File not found: 1QaYUQaWDMuRxasd1YVBvf80-QFbo7RR-.",
+    "BÀI TẬP BỔ TRỢ KIẾN THỨC TIẾNG ANH 8": "File not found: 1kbNP9Ke3wvLoQAfcSTjJD7YBw6zKKH_g.",
+    "TRỌNG TÂM TIẾNG ANH 11": "File not found: 1rd2KwwR3iq4-qjKd8IrSqNzp_gWBrgzd.",
+    "250 CÂU NGỮ ÂM TIẾNG ANH 7 CÓ ĐÁP ÁN": "File not found: 1l8Wa1Zl3BS9ZD7NuiNMqZc4vKSMXaUnC.",
+    "24 BÀI POWERPOINT THI OTE RẤT HAY | DÙNG CHO CÂU LẠC BỘ TIẾNG ANH ": "Google Drive folder (cannot copy directly)",
+    "BỘ THẺ TỪ TIẾNG ANH 12345": "File not found: 1kR4bGIJqfZsqEhZb_nGsRI6aI-ALCHDc.",
+    "WORKSHEET HỌC TỪ VỰNG THEO CHỦ ĐỀ TIẾNG ANH TIỂU HỌC": "Archive empty or extraction failed",
+    "BỘ ĐỀ KIỂM TRA TIẾNG ANH 1": "File not found: 1Pg6vzDgMvMkPUv6qqd7OC8izuMEXNijs.",
+    "TỔNG HỢP TÀI LIỆU TIẾNG ANH 1": {
+      "error": {
+        "code": 403,
+        "message": "This file cannot be copied by the user.",
+        "errors": [
+          {
+            "message": "This file cannot be copied by the user.",
+            "domain": "global",
+            "reason": "cannotCopyFile"
+          }
+        ]
+      }
+    },
+    "22 ĐỀ ÔN TẬP HỌC KỲ 1 TIẾNG ANH 12 CÓ ĐÁP ÁN": "File not found: 1GNCCSNGvQRnv5_fNXvyhM4Ph-Kz8lPVi.",
+    "110 CÂU WORD FORM TIẾNG ANH 7 CÓ ĐÁP ÁN": "File not found: 1XZCV0QkD94XlMCb3ejh1KoY6g7Wq-o4k.",
+    "TUYỂN TẬP ĐỀ THI HỌC SINH NĂNG KHIẾU TIẾNG ANH 8 CÓ FILE NGHE - ĐÁP ÁN": "File not found: 1g34ZyfCesuLOx40T70zNMWemcCvygKL2.",
+    "RÈN ĐỌC HIỂU TIẾNG ANH 7 CÓ ĐÁP ÁN": "File not found: 13rL2jnjH_HuVA-o7AfR0rnBtiEaejUFL.",
+    "WORD FORMATION ÔN THI THPTQG": "File not found: 15I4rVRhMuh0Jt4nXPFqfZ_gez5_UNM01.",
+    "CHUYÊN ĐỀ WORD FORM TIẾNG ANH 9 TỔNG HỢP": "File not found: 16YYPpJBUPE1WQMVbhOSp6uQpeJPyu_KA.",
+    "290 THÀNH NGỮ TIẾNG ANH THƯỜNG GẶP": "File not found: 1Jy98TxD_sXNF0eJfvpZewzT0JW7dowzR.",
+    "69 BÀI ĐỌC HIỂU TIẾNG ANH 8 CÓ ĐÁP ÁN": "File not found: 1r7xyN9yzCcdmdWv5eAnjQoqizUekzr73.",
+    "175 CÂU CHIA ĐỘNG TỪ TIẾNG ANH 7 CÓ KEY": "File not found: 1QodR6MV6OdMD0X0zL9j6t74mlGq31Lqi.",
+    "28 ĐỀ THI HỌC SINH GIỎI CẤP TỈNH CÓ ĐÁP ÁN VÀ FILE NGHE TIẾNG ANH 9": "File not found: 1RpMSFyE1w707zqvwUfPDM8PFB8MUqNi2.",
+    "100 CÂU TÌM LỖI SAI TIẾNG ANH 9 CÓ ĐÁP ÁN": "File not found: 1K4tHbaBNLRwwDhVLK9vJOB6p6pSn2GxG.",
+    "60 BÀI TẬP WORD FORM TIẾNG ANH NÂNG CAO CÓ ĐÁP ÁN": "File not found: 1EeZvEQlac8DAsx0GjWdwG_zBGFpRlkZ7.",
+    "22 ĐỀ THI HỌC SINH GIỎI CẤP HUYỆN TIẾNG ANH 9 | CÓ FILE NGHE - ĐÁP ÁN": "File not found: 1U6AdsDo7KaXF2xXbHwAm2hmNiiSUSfYc.",
+    "160 WORD FORM TIẾNG ANH 8 CÓ ĐÁP ÁN": "File not found: 1UNnbp2k_uE_1Lm2b8cgNaWsNuRtdGh_S.",
+    "BÀI GIẢNG POWERPOINT QUY TẮC ĐÁNH DẤU TRỌNG ÂM": "File not found: 1sNESfY_-353rZqko2AOQb2SRELzrDmgF.",
+    "TUYỂN TẬP ĐỀ KHẢO SÁT NĂNG LỰC ĐẦU NĂM TIẾNG ANH 6": "File not found: 1nex7iNp42Ch3x8mbASIoR_KxJ0M6rk7L.",
+    "SENTENCE BUILDING TIẾNG ANH 6 CÓ ĐÁP ÁN": "File not found: 1R9WS8e9u_ItfJVzFVJ7wccH3ibtWEVmU.",
+    "ĐỀ THI HỌC SINH GIỎI TIẾNG ANH 11 CÁC TỈNH CÓ FILE NGHE VÀ ĐÁP ÁN": "File not found: 1RguDwxyV9qHm1B1Aql5sLhkzRpR1g2N1.",
+    "15 ĐỀ LUYỆN KỸ NĂNG NGHE TIẾNG ANH 9 CÓ AUDIO - KEY - TRANSCRIPTS": "File not found: 1jcXxQ7vU9UWzO_7lNVUW4wLAQK6_Uo_E.",
+    "300 CÂU CHIA ĐỘNG TỪ TIẾNG ANH 6 CÓ KEY": "File not found: 1qdO0-BLIGnB7e61oiwRmoop4hkzsv8du.",
+    "160 CÂU WORD FORM TIẾNG ANH 9 CÓ ĐÁP ÁN": "File not found: 1m9TZsSpbTMMefROZG2r7qnYYguVKCm3Q.",
+    "1000 CÂU BÀI TẬP WORD FORM CÓ ĐÁP ÁN": "File not found: 1Ut9kj-u7EnVPFfnt3nHFRCn70dhHb1ra.",
+    "POWERPOINT LAND ANIMALS": "No Google Drive link found",
+    "TUYỂN TẬP ĐỀ THI HỌC SINH NĂNG KHIẾU TIẾNG ANH 7 CÓ FILE NGHE VÀ ĐÁP ÁN": "File not found: 1_uDxZuDTso0p227VlnmJeilYcKEj-19b.",
+    "POWERPOINT SCHOOL OBJECTS ": "No Google Drive link found",
+    "TUYỂN TẬP ĐỀ THI HỌC SINH NĂNG KHIẾU TIẾNG ANH  6 CÓ FILE NGHE - ĐÁP ÁN": "File not found: 1wpesoGbbp6GLexsSfWFQ3tD_b7D1mnZk.",
+    "20 BÀI ĐỌC HIỂU READING TIẾNG ANH 6 CÓ ĐÁP ÁN": "File not found: 1ytGic_Z_WnOsfCIhU4uPZ_Deh5W-eDUq.",
+    "BỘ ĐỀ THI HỌC SINH GIỎI TIẾNG ANH 10 CÓ FILE NGHE VÀ ĐÁP ÁN": "File not found: 1G1uGzSEF_GrsxpY1PcxQICXv5uovPlYa.",
+    "TUYỂN TẬP ĐỀ THI HỌC SINH GIỎI TIẾNG ANH 12 CÓ FILE NGHE VÀ ĐÁP ÁN": "Google Drive folder (cannot copy directly)",
+    "6 ĐỀ KIỂM TRA SỐ 1 VÀ 2 TIẾNG ANH 6 CÓ ĐÁP ÁN VÀ FILE NGHE": "Google Drive folder (cannot copy directly)",
+    "20 BÀI ĐỌC HIỂU TIẾNG ANH THCS | CÓ ĐÁP ÁN": "Google Drive folder (cannot copy directly)",
+    "5 PHIẾU BÀI TẬP ÔN HÈ TIẾNG ANH 8 ": "Google Drive folder (cannot copy directly)",
+    "READING COMPREHENSION | ĐỌC HIỂU CHO HỌC SINH TIỂU HỌC CÓ AUDIO": "Google Drive folder (cannot copy directly)",
+    "410 CÂU WORD FORM TIẾNG ANH 9 CÓ ĐÁP ÁN ": "Google Drive folder (cannot copy directly)",
+    "40 PHIẾU BÀI TẬP TĂNG CƯỜNG TIẾNG ANH 5": "Google Drive folder (cannot copy directly)",
+    "40 PHIẾU BÀI TẬP TĂNG CƯỜNG TIẾNG ANH 4": "Google Drive folder (cannot copy directly)",
+    "40 PHIẾU BÀI TẬP TĂNG CƯỜNG TIẾNG ANH 3": "Google Drive folder (cannot copy directly)",
+    "50 BÀI LUYỆN NGHE A2 - B1": "Google Drive folder (cannot copy directly)",
+    "BỒI DƯỠNG KỸ NĂNG NGHE TIẾNG ANH 7 | BÀI TẬP - AUDIO - KEY - SCRIPTS": "Google Drive folder (cannot copy directly)",
+    "BỒI DƯỠNG KỸ NĂNG NGHE TIẾNG ANH 6 | BÀI TẬP - AUDIO - KEY": "Google Drive folder (cannot copy directly)",
+    "BỒI DƯỠNG KỸ NĂNG NGHE TIẾNG ANH 1 + 2": "Google Drive folder (cannot copy directly)",
+    "BỔ TRỢ KỸ NĂNG NGHE TIẾNG ANH 3 - AUDIO - ĐÁP ÁN": "Google Drive folder (cannot copy directly)",
+    "MIND MAP TIẾNG ANH 3-4-5": "Google Drive folder (cannot copy directly)",
+    "LUYỆN KỸ NĂNG NGHE TIẾNG ANH 5 - CÓ AUDIO + KEY": "Google Drive folder (cannot copy directly)",
+    "BỔ TRỢ KỸ NĂNG NGHE VÀ ĐỌC TIẾNG ANH 4": "Google Drive folder (cannot copy directly)",
+    "22 ĐỀ THI HỌC KỲ I TIẾNG ANH 9 CÓ MA TRẬN ĐẦY ĐỦ": "Google Drive folder (cannot copy directly)",
+    "300 CÂU WORD FORM TIẾNG ANH 9 LUYỆN THI HỌC SINH GIỎI - ÔN THI VÀO 10 CÓ ĐÁP ÁN": "Google Drive folder (cannot copy directly)",
+    "BỘ ĐỀ KIỂM TRA THAM KHẢO TIẾNG ANH 8 CÓ FILE NGHE": "Google Drive folder (cannot copy directly)",
+    "PHIẾU BÀI TẬP TIẾNG ANH 5": "Google Drive folder (cannot copy directly)",
+    "PHIẾU BÀI TẬP TIẾNG ANH 4": "Google Drive folder (cannot copy directly)",
+    "BÀI TẬP BỔ TRỢ TIẾNG ANH 3": "Google Drive folder (cannot copy directly)",
+    "800 CÂU TRẮC NGHIỆM TIẾNG ANH 8 CŨ": "Google Drive folder (cannot copy directly)",
+    "160 GAMES POWERPOINT DẠY HỌC HỮU ÍCH": "Google Drive folder (cannot copy directly)"
   }
 }
