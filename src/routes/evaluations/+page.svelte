@@ -246,6 +246,30 @@
   // Derived filtered evaluations
   let filteredEvaluations = $derived(
     evaluations.filter(e => {
+      // Role-based privacy scoping
+      if (currentUser?.role === 'student') {
+        const sId = (currentUser.id || '').toLowerCase();
+        const sName = (currentUser.name || '').toLowerCase();
+        const uName = (currentUser.username || '').toLowerCase();
+        const evId = (e.student_id || '').toLowerCase();
+        const evName = (e.student_name || '').toLowerCase();
+        const isMine = evId === sId || evName === sName || (uName && evName.includes(uName));
+        if (!isMine) return false;
+      } else if (currentUser?.role === 'parent') {
+        let meta = {};
+        try { meta = typeof currentUser.metadata === 'string' ? JSON.parse(currentUser.metadata) : (currentUser.metadata || {}); } catch {}
+        const linkedId = (currentUser.linked_student_id || meta.linked_student_id || '').toLowerCase();
+        const linkedName = (currentUser.linked_student_name || meta.linked_student_name || '').toLowerCase();
+        const parentPhone = (currentUser.phone || meta.phone || '').replace(/[^0-9]/g, '');
+        const evId = (e.student_id || '').toLowerCase();
+        const evName = (e.student_name || '').toLowerCase();
+        const evParentPhone = (e.parent_phone || '').replace(/[^0-9]/g, '');
+        const isChild = (linkedId && evId === linkedId) ||
+                        (linkedName && evName === linkedName) ||
+                        (parentPhone && evParentPhone && evParentPhone === parentPhone);
+        if (!isChild) return false;
+      }
+
       const matchSearch = !searchQuery || e.student_name.toLowerCase().includes(searchQuery.toLowerCase()) || e.teacher_name.toLowerCase().includes(searchQuery.toLowerCase());
       const matchAptitude = filterAptitude === 'all' || e.primary_aptitude === filterAptitude;
       return matchSearch && matchAptitude;
@@ -363,6 +387,40 @@
     </div>
   {/if}
 
+  <!-- Student Header Badge if logged in as student -->
+  {#if currentUser?.role === 'student'}
+    {@const isOfficial = currentUser.approval_status === 'official' || (currentUser.status === 'active' && !currentUser.is_trial && !currentUser.metadata?.includes('"is_trial":true'))}
+    {@const primaryGrade = currentUser.grade || 'Lớp 7'}
+    <div class="rounded-2xl bg-indigo-950/40 border border-indigo-500/30 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg">
+      <div class="flex items-center gap-3.5">
+        <div class="w-11 h-11 rounded-2xl bg-indigo-600/30 border border-indigo-500/40 text-indigo-300 font-bold flex items-center justify-center text-xl shadow-md">
+          📊
+        </div>
+        <div class="space-y-0.5">
+          <div class="text-sm font-bold text-white flex flex-wrap items-center gap-2">
+            <span>Học Sinh: <strong class="text-indigo-200">{currentUser.name}</strong></span>
+            {#if isOfficial}
+              <span class="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/30">
+                ✓ Học Sinh Chính Thức
+              </span>
+            {:else}
+              <span class="text-[10px] px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">
+                ⏳ Dùng Thử (Trial) • Chờ Cô Dung Duyệt
+              </span>
+            {/if}
+          </div>
+          <div class="text-xs text-slate-400">
+            Tài khoản: <strong class="text-slate-200">@{currentUser.username}</strong> • Sổ theo dõi đánh giá năng lực &amp; chuyên cần
+          </div>
+        </div>
+      </div>
+      <div class="sm:text-right bg-indigo-900/30 px-3.5 py-2 rounded-xl border border-indigo-500/20">
+        <div class="text-[10px] text-indigo-300 font-extrabold uppercase tracking-wider">Khối Lớp Đã Đăng Ký</div>
+        <div class="text-sm font-black text-white">{primaryGrade}</div>
+      </div>
+    </div>
+  {/if}
+
   <!-- Header Banner -->
   <div class="rounded-3xl bg-gradient-to-r from-slate-900 via-indigo-950/60 to-slate-900 border border-slate-800 p-6 md:p-8 shadow-2xl relative overflow-hidden">
     <div class="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
@@ -385,25 +443,25 @@
       </div>
 
       <!-- Action Buttons -->
-      <div class="flex flex-wrap items-center gap-3">
-        {#if currentUser && isTeacherOrAdmin(currentUser)}
+      {#if currentUser && isTeacherOrAdmin(currentUser)}
+        <div class="flex flex-wrap items-center gap-3">
           <button
             onclick={() => showAddStudentModal = true}
             class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs flex items-center gap-2 border border-slate-700 transition-all shadow-md"
           >
             <span>➕ Thêm Học Sinh</span>
           </button>
-        {/if}
-        <button
-          onclick={() => {
-            if (students.length > 0) openEvaluationModal(students[0]);
-            else alert('Vui lòng thêm học sinh trước khi đánh giá!');
-          }}
-          class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-bold text-xs flex items-center gap-2 shadow-lg shadow-indigo-600/30 transition-all hover:scale-105"
-        >
-          <span>✍️ Tạo Đánh Giá Năng Lực Mới</span>
-        </button>
-      </div>
+          <button
+            onclick={() => {
+              if (students.length > 0) openEvaluationModal(students[0]);
+              else alert('Vui lòng thêm học sinh trước khi đánh giá!');
+            }}
+            class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-bold text-xs flex items-center gap-2 shadow-lg shadow-indigo-600/30 transition-all hover:scale-105"
+          >
+            <span>✍️ Tạo Đánh Giá Năng Lực Mới</span>
+          </button>
+        </div>
+      {/if}
     </div>
   </div>
 
@@ -414,14 +472,16 @@
         onclick={() => activeTab = 'evaluations'}
         class="px-4 py-2 rounded-xl text-xs font-bold transition-all {activeTab === 'evaluations' ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-900 text-slate-400 hover:text-white'}"
       >
-        📑 Danh Sách Đánh Giá Đã Lưu ({evaluations.length})
+        📑 {currentUser?.role === 'student' ? 'Phiếu Đánh Giá Của Em' : (currentUser?.role === 'parent' ? 'Phiếu Đánh Giá Của Con' : 'Danh Sách Đánh Giá Đã Lưu')} ({filteredEvaluations.length})
       </button>
-      <button
-        onclick={() => activeTab = 'students'}
-        class="px-4 py-2 rounded-xl text-xs font-bold transition-all {activeTab === 'students' ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-900 text-slate-400 hover:text-white'}"
-      >
-        👥 Danh Sách Học Sinh ({students.length})
-      </button>
+      {#if currentUser && isTeacherOrAdmin(currentUser)}
+        <button
+          onclick={() => activeTab = 'students'}
+          class="px-4 py-2 rounded-xl text-xs font-bold transition-all {activeTab === 'students' ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-900 text-slate-400 hover:text-white'}"
+        >
+          👥 Danh Sách Học Sinh ({students.length})
+        </button>
+      {/if}
     </div>
 
     <!-- Aptitude Filter (Only on evaluations tab) -->
@@ -445,10 +505,28 @@
   <!-- TAB 1: EVALUATIONS LIST -->
   {#if activeTab === 'evaluations'}
     {#if filteredEvaluations.length === 0}
-      <div class="p-12 text-center rounded-2xl bg-slate-900/60 border border-slate-800">
-        <div class="text-4xl mb-3">📋</div>
-        <h3 class="text-lg font-bold text-slate-200">Chưa có bản đánh giá nào phù hợp</h3>
-        <p class="text-xs text-slate-400 mt-1">Hãy bấm "Tạo Đánh Giá Năng Lực Mới" để bắt đầu ghi nhận năng khiếu học sinh.</p>
+      <div class="p-12 text-center rounded-2xl bg-slate-900/60 border border-slate-800 space-y-3">
+        {#if currentUser?.role === 'student'}
+          <div class="text-4xl">🌱</div>
+          <h3 class="text-lg font-bold text-slate-200">Em chưa có bản đánh giá năng lực định kỳ nào</h3>
+          <p class="text-xs text-slate-400 max-w-md mx-auto">Giáo viên phụ trách và Cô Dung sẽ cập nhật đánh giá 4 kỹ năng (Nghe - Nói - Đọc - Viết) và nhận xét sổ đầu bài sau buổi học hoặc bài khảo thí.</p>
+          <div class="pt-2">
+            <a
+              href="/exam"
+              class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/25 transition-all"
+            >
+              <span>⚡ Làm Bài Khảo Thí Năng Lực Đầu Vào</span>
+            </a>
+          </div>
+        {:else if currentUser?.role === 'parent'}
+          <div class="text-4xl">👨‍👩‍👧</div>
+          <h3 class="text-lg font-bold text-slate-200">Chưa có bản đánh giá của con em</h3>
+          <p class="text-xs text-slate-400 max-w-md mx-auto">Giáo viên phụ trách đang tổng hợp kết quả học tập và nhận xét năng khiếu. Quý phụ huynh vui lòng quay lại sau ca học gần nhất.</p>
+        {:else}
+          <div class="text-4xl mb-3">📋</div>
+          <h3 class="text-lg font-bold text-slate-200">Chưa có bản đánh giá nào phù hợp</h3>
+          <p class="text-xs text-slate-400 mt-1">Hãy bấm "Tạo Đánh Giá Năng Lực Mới" để bắt đầu ghi nhận năng khiếu học sinh.</p>
+        {/if}
       </div>
     {:else}
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -575,18 +653,20 @@
             <div class="mt-5 pt-3 border-t border-slate-800/80 flex items-center justify-between gap-3">
               <div class="text-[11px] text-slate-400 flex items-center gap-1.5">
                 <span>📱 Phụ huynh: <strong>{ev.parent_name || 'Chưa cập nhật'}</strong></span>
-                {#if ev.parent_phone}
+                {#if ev.parent_phone && currentUser?.role !== 'student'}
                   <span class="text-slate-500">({ev.parent_phone})</span>
                 {/if}
               </div>
 
               <div class="flex items-center gap-2">
-                <button
-                  onclick={() => openEvaluationModal({ id: ev.student_id, name: ev.student_name }, ev)}
-                  class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold"
-                >
-                  Sửa
-                </button>
+                {#if currentUser && isTeacherOrAdmin(currentUser)}
+                  <button
+                    onclick={() => openEvaluationModal({ id: ev.student_id, name: ev.student_name }, ev)}
+                    class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold"
+                  >
+                    Sửa
+                  </button>
+                {/if}
                 <button
                   onclick={() => openReportModal(ev)}
                   class="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-emerald-600/20"

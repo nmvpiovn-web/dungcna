@@ -44,6 +44,9 @@
     sessions = getAllClassSessions();
     attendanceRecords = getAllAttendanceRecords();
     teacherProfiles = getAllTeacherProfiles();
+    if (currentUser?.role === 'student' || currentUser?.role === 'parent') {
+      activeTabFilter = 'my_schedule';
+    }
   }
 
   function showToast(msg) {
@@ -131,6 +134,40 @@
         <span>{toastMsg}</span>
       </div>
       <button onclick={() => toastMsg = ''} class="text-emerald-500 hover:text-white">✕</button>
+    </div>
+  {/if}
+
+  <!-- Student Header Badge if logged in as student -->
+  {#if currentUser?.role === 'student'}
+    {@const isOfficial = currentUser.approval_status === 'official' || (currentUser.status === 'active' && !currentUser.is_trial && !currentUser.metadata?.includes('"is_trial":true'))}
+    {@const primaryGrade = currentUser.grade || 'Lớp 7'}
+    <div class="rounded-2xl bg-indigo-950/40 border border-indigo-500/30 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg">
+      <div class="flex items-center gap-3.5">
+        <div class="w-11 h-11 rounded-2xl bg-indigo-600/30 border border-indigo-500/40 text-indigo-300 font-bold flex items-center justify-center text-xl shadow-md">
+          📅
+        </div>
+        <div class="space-y-0.5">
+          <div class="text-sm font-bold text-white flex flex-wrap items-center gap-2">
+            <span>Học Sinh: <strong class="text-indigo-200">{currentUser.name}</strong></span>
+            {#if isOfficial}
+              <span class="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/30">
+                ✓ Học Sinh Chính Thức
+              </span>
+            {:else}
+              <span class="text-[10px] px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">
+                ⏳ Dùng Thử (Trial) • Chờ Cô Dung Duyệt
+              </span>
+            {/if}
+          </div>
+          <div class="text-xs text-slate-400">
+            Tài khoản: <strong class="text-slate-200">@{currentUser.username}</strong> • Thời khóa biểu học trực tiếp tại nhà Cô Dung
+          </div>
+        </div>
+      </div>
+      <div class="sm:text-right bg-indigo-900/30 px-3.5 py-2 rounded-xl border border-indigo-500/20">
+        <div class="text-[10px] text-indigo-300 font-extrabold uppercase tracking-wider">Khối Lớp Đã Đăng Ký</div>
+        <div class="text-sm font-black text-white">{primaryGrade}</div>
+      </div>
     </div>
   {/if}
 
@@ -348,14 +385,16 @@
               </div>
             </div>
 
-            <button
-              type="button"
-              onclick={() => handleSendReminderNotification(s)}
-              class="px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-bold text-[10px] shadow-sm transition-all"
-              title="Gửi tin nhắn thử nghiệm tới Zalo phụ huynh"
-            >
-              🔔 Test Bot
-            </button>
+            {#if currentUser && isTeacherOrAdmin(currentUser)}
+              <button
+                type="button"
+                onclick={() => handleSendReminderNotification(s)}
+                class="px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-bold text-[10px] shadow-sm transition-all"
+                title="Gửi tin nhắn thử nghiệm tới Zalo phụ huynh"
+              >
+                🔔 Test Bot
+              </button>
+            {/if}
           </div>
 
           <!-- Attendance indicator & Student Count -->

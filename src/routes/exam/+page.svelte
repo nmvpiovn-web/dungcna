@@ -11,12 +11,16 @@
     getAttendanceForSession,
     getAllClassSessions,
     getAllUsers,
-    isSuperAdmin
+    isSuperAdmin,
+    getUserEnrolledGrades,
+    requestUnlockClass
   } from '$lib/unifiedStore';
 
   let { data } = $props();
 
-  let currentUser = $state(null);
+  let currentUser = $state(typeof window !== 'undefined' ? getCurrentUser() : null);
+  let lockedExamAlert = $state('');
+  let isRequestingUnlock = $state(false);
   let selectedExamId = $state(data.exams[0]?.id || 'ex_quick_15m_g7');
   let currentExam = $derived(data.exams.find(e => e.id === selectedExamId) || data.exams[0]);
 
@@ -156,12 +160,53 @@
   let audioChunks = [];
   let speechTranscript = $state('');
 
+  function isExamEnrolledForUser(user, exam) {
+    if (!user || user.role !== 'student') return true;
+    const grades = getUserEnrolledGrades(user);
+    const title = (exam.title || '').toLowerCase();
+    const curriculumId = (exam.curriculum_id || '').toLowerCase();
+
+    return grades.some(g => {
+      const clean = g.toLowerCase().trim();
+      const match = clean.match(/lớp\s*([0-9]+)/i) || clean.match(/grade-?([0-9]+)/i);
+      if (match) {
+        const num = Number(match[1]);
+        if (Number(exam.grade) === num || title.includes(`lớp ${num}`)) return true;
+      }
+      if (clean.includes('ielts') && (curriculumId.includes('ielts') || title.includes('ielts') || exam.format_type === 'ielts_academic')) return true;
+      if (clean.includes('toeic') && (curriculumId.includes('toeic') || title.includes('toeic') || exam.format_type === 'toeic_lr')) return true;
+      if (clean.includes('toefl') && (curriculumId.includes('toefl') || title.includes('toefl') || exam.format_type === 'toefl_ibt')) return true;
+      if ((clean.includes('đại học') || clean.includes('thptqg')) && (curriculumId.includes('thptqg') || Number(exam.grade) === 12)) return true;
+      return false;
+    });
+  }
+
+  async function handleUnlockRequest(exam) {
+    if (!currentUser) return;
+    isRequestingUnlock = true;
+    try {
+      await requestUnlockClass(currentUser.id, exam.title);
+      playAudioFeedback('success');
+      lockedExamAlert = `✅ Đã gửi yêu cầu mở đề thi "${exam.title}" tới Leader Cô Dung!`;
+      setTimeout(() => lockedExamAlert = '', 6000);
+    } catch (err) {
+      lockedExamAlert = 'Lỗi gửi yêu cầu: ' + err.message;
+    } finally {
+      isRequestingUnlock = false;
+    }
+  }
+
   onMount(() => {
     currentUser = getCurrentUser();
     refreshEligibleStudents();
     if (currentUser?.role === 'student') {
+      activeExamCategory = 'my_grade';
       studentName = currentUser?.name || 'Học viên';
       selectedStudentId = currentUser?.id || '';
+      const match = data.exams.find(e => isExamEnrolledForUser(currentUser, e));
+      if (match) {
+        selectedExamId = match.id;
+      }
     } else if (eligibleStudents.length > 0) {
       selectedStudentId = eligibleStudents[0].id;
       studentName = eligibleStudents[0].name;
@@ -186,12 +231,24 @@
     timeLeftSeconds = (currentExam?.duration_minutes || 15) * 60;
   }
 
-  function handleSelectExam(id) {
-    selectedExamId = id;
+  function handleSelectExam(ex) {
+    if (currentUser?.role === 'student' && !isExamEnrolledForUser(currentUser, ex)) {
+      playAudioFeedback(false);
+      lockedExamAlert = `🔒 Đề thi "${ex.title}" chưa được mở cho lớp của em (${currentUser.grade || 'Lớp 7'}). Hãy hoàn thành bài thi khối lớp mình trước nhé!`;
+      setTimeout(() => lockedExamAlert = '', 7000);
+      return;
+    }
+    selectedExamId = ex.id;
+    lockedExamAlert = '';
     resetExamState();
   }
 
   function startExam() {
+    if (currentUser?.role === 'student' && !isExamEnrolledForUser(currentUser, currentExam)) {
+      playAudioFeedback(false);
+      lockedExamAlert = `🔒 Không thể làm bài: Đề thi này chưa được mở cho khối lớp của em (${currentUser.grade || 'Lớp 7'}).`;
+      return;
+    }
     isStarted = true;
     isSubmitted = false;
     userAnswers = {};
@@ -219,10 +276,15 @@
   }
 
   // Category Filter & Exam Derivation
-  let activeExamCategory = $state('all'); // 'all' | 'ielts' | 'toeic' | 'toefl' | 'quick_15m' | 'standard_45m'
+  let activeExamCategory = $state('all'); // 'all' | 'my_grade' | 'ielts' | 'toeic' | 'toefl' | 'quick_15m' | 'standard_45m'
+
+  let enrolledExamsCount = $derived(
+    currentUser?.role === 'student' ? data.exams.filter(e => isExamEnrolledForUser(currentUser, e)).length : data.exams.length
+  );
 
   let filteredExams = $derived(
     data.exams.filter(e => {
+      if (activeExamCategory === 'my_grade') return isExamEnrolledForUser(currentUser, e);
       if (activeExamCategory === 'all') return true;
       if (activeExamCategory === 'ielts') return e.format_type === 'ielts_academic' || e.curriculum_id === 'curr_ielts';
       if (activeExamCategory === 'toeic') return e.format_type === 'toeic_lr' || e.curriculum_id === 'curr_toeic';
@@ -525,26 +587,47 @@
       {/if}
     </div>
   {:else if currentUser?.role === 'student'}
+    {@const isOfficial = currentUser.approval_status === 'official' || (currentUser.status === 'active' && !currentUser.is_trial && !currentUser.metadata?.includes('"is_trial":true'))}
+    {@const primaryGrade = currentUser.grade || 'Lớp 7'}
     <!-- Student Header Badge -->
-    <div class="rounded-2xl bg-indigo-950/40 border border-indigo-500/30 p-4 flex items-center justify-between shadow-lg">
-      <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-xl bg-indigo-600/30 border border-indigo-500/40 text-indigo-400 font-bold flex items-center justify-center text-base">
+    <div class="rounded-2xl bg-indigo-950/40 border border-indigo-500/30 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg">
+      <div class="flex items-center gap-3.5">
+        <div class="w-11 h-11 rounded-2xl bg-indigo-600/30 border border-indigo-500/40 text-indigo-300 font-bold flex items-center justify-center text-xl shadow-md">
           🎓
         </div>
-        <div>
-          <div class="text-xs font-bold text-white flex items-center gap-2">
-            <span>Thí Sinh: {currentUser.name}</span>
-            <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-semibold border border-emerald-500/30">Học sinh chính thức</span>
+        <div class="space-y-0.5">
+          <div class="text-sm font-bold text-white flex flex-wrap items-center gap-2">
+            <span>Thí Sinh: <strong class="text-indigo-200">{currentUser.name}</strong></span>
+            {#if isOfficial}
+              <span class="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/30">
+                ✓ Học Sinh Chính Thức
+              </span>
+            {:else}
+              <span class="text-[10px] px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">
+                ⏳ Dùng Thử (Trial) • Chờ Cô Dung Duyệt
+              </span>
+            {/if}
           </div>
-          <div class="text-[11px] text-slate-400 mt-0.5">
-            Tài khoản: {currentUser.username} • {currentSession?.class_name || 'Lớp Tiếng Anh Cô Dung'}
+          <div class="text-xs text-slate-400">
+            Tài khoản: <strong class="text-slate-200">@{currentUser.username}</strong> • Chương trình: <strong class="text-emerald-400">{primaryGrade} GDPT 2026</strong>
           </div>
         </div>
       </div>
-      <div class="text-right">
-        <div class="text-[10px] text-slate-400 font-semibold uppercase">Lớp phân quyền</div>
-        <div class="text-xs font-bold text-indigo-300">{currentSession?.grade_level || 'Lớp 7'}</div>
+      <div class="sm:text-right bg-indigo-900/30 px-3.5 py-2 rounded-xl border border-indigo-500/20">
+        <div class="text-[10px] text-indigo-300 font-extrabold uppercase tracking-wider">Khối Lớp Đã Đăng Ký</div>
+        <div class="text-sm font-black text-white">{primaryGrade}</div>
       </div>
+    </div>
+  {/if}
+
+  <!-- Locked Exam Alert Banner -->
+  {#if lockedExamAlert}
+    <div class="p-4 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-800 dark:text-amber-200 text-xs font-semibold flex items-center justify-between shadow-lg animate-in slide-in-from-top-2">
+      <div class="flex items-center gap-2.5">
+        <span class="text-xl">🔒</span>
+        <span>{lockedExamAlert}</span>
+      </div>
+      <button onclick={() => lockedExamAlert = ''} class="text-amber-600 hover:text-white font-bold text-sm">✕</button>
     </div>
   {/if}
 
@@ -558,6 +641,14 @@
 
       <!-- Category Filter Tabs -->
       <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs font-bold">
+        {#if currentUser?.role === 'student'}
+          <button
+            onclick={() => activeExamCategory = 'my_grade'}
+            class="px-3 py-1.5 rounded-xl transition-all whitespace-nowrap {activeExamCategory === 'my_grade' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-white'}"
+          >
+            🎯 Đề Khối Của Em ({enrolledExamsCount})
+          </button>
+        {/if}
         <button
           onclick={() => activeExamCategory = 'all'}
           class="px-3 py-1.5 rounded-xl transition-all whitespace-nowrap {activeExamCategory === 'all' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-white'}"
@@ -600,16 +691,23 @@
     <!-- Exam Cards Grid -->
     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
       {#each filteredExams as ex}
+        {@const isEnrolled = isExamEnrolledForUser(currentUser, ex)}
+        {@const isSelected = selectedExamId === ex.id}
         <button
-          onclick={() => handleSelectExam(ex.id)}
-          class="p-3 rounded-2xl border text-left transition-all duration-150 flex flex-col justify-between {selectedExamId === ex.id ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg shadow-indigo-600/30 ring-2 ring-indigo-400/50' : 'bg-slate-50 dark:bg-slate-950/80 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/80'}"
+          onclick={() => handleSelectExam(ex)}
+          class="p-3 rounded-2xl border text-left transition-all duration-150 flex flex-col justify-between {isSelected ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg shadow-indigo-600/30 ring-2 ring-indigo-400/50' : (isEnrolled ? 'bg-slate-50 dark:bg-slate-950/80 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/80' : 'bg-slate-100/70 dark:bg-slate-950/40 border-slate-200/80 dark:border-slate-800/60 text-slate-400 opacity-60 hover:opacity-90')}"
         >
           <div>
             <div class="flex items-center justify-between text-[10px] font-bold uppercase mb-1">
-              <span class="{selectedExamId === ex.id ? 'text-indigo-200' : 'text-indigo-600 dark:text-indigo-400'}">
+              <span class="{isSelected ? 'text-indigo-200' : (isEnrolled ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400')}">
+                {#if !isEnrolled}🔒 {/if}
                 {ex.format_type === 'quick_15m' ? '⚡ 15 Phút' : ex.format_type === 'standard_45m' ? '⏱️ 45 Phút' : ex.format_type === 'ielts_academic' ? '🌍 IELTS' : ex.format_type === 'toeic_lr' ? '💼 TOEIC' : ex.format_type === 'toefl_ibt' ? '🎓 TOEFL' : '📜 Khảo Thí'}
               </span>
-              <span class="opacity-80 font-mono">{ex.duration_minutes}'</span>
+              {#if !isEnrolled}
+                <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold border border-amber-500/20">Khóa</span>
+              {:else}
+                <span class="opacity-80 font-mono">{ex.duration_minutes}'</span>
+              {/if}
             </div>
             <div class="font-bold text-xs line-clamp-2 leading-snug">{ex.title}</div>
           </div>

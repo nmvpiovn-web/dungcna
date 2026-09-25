@@ -759,6 +759,63 @@
         </a>
       </div>
     </div>
+  {:else if currentUser?.role === 'parent'}
+    <!-- Polite Gate for Parents Attempting to Access Admin CP -->
+    <div class="max-w-xl mx-auto my-12 p-8 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl text-center space-y-5 animate-in zoom-in-95 duration-200">
+      <div class="w-16 h-16 mx-auto rounded-3xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-3xl shadow-inner">
+        👨‍👩‍👧
+      </div>
+      <div class="space-y-2">
+        <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 text-xs font-bold">
+          <span>Tài Khoản Phụ Huynh: <strong>{currentUser.name}</strong></span>
+        </div>
+        <h2 class="text-xl font-heading font-black text-slate-900 dark:text-white">
+          Khu Vực Quản Lý Giảng Dạy &amp; Điều Hành
+        </h2>
+        <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed max-w-md mx-auto">
+          Trang Admin CP dành riêng cho Đội ngũ Giáo viên và Ban Quản Lý Cô Dung. Quý phụ huynh vui lòng theo dõi thời khóa biểu và phiếu đánh giá năng lực của con tại các mục dành cho Phụ huynh.
+        </p>
+      </div>
+
+      <div class="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+        <a
+          href="/schedule"
+          class="w-full sm:w-auto px-6 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs shadow-lg shadow-emerald-600/25 transition-all hover:scale-105 flex items-center justify-center gap-2"
+        >
+          <span>📅 Xem Thời Khóa Biểu &amp; Giờ Đưa Đón</span>
+        </a>
+        <a
+          href="/evaluations"
+          class="w-full sm:w-auto px-6 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs shadow-lg shadow-indigo-600/25 transition-all hover:scale-105 flex items-center justify-center gap-2"
+        >
+          <span>📑 Xem Phiếu Đánh Giá Của Con</span>
+        </a>
+      </div>
+    </div>
+  {:else if !currentUser || (!isTeacherOrAdmin(currentUser) && currentUser?.role !== 'teacher' && !isSuperAdmin(currentUser))}
+    <!-- Unauthorized Guest Gate -->
+    <div class="max-w-xl mx-auto my-12 p-8 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl text-center space-y-5 animate-in zoom-in-95 duration-200">
+      <div class="w-16 h-16 mx-auto rounded-3xl bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center text-3xl shadow-inner">
+        🔒
+      </div>
+      <div class="space-y-2">
+        <h2 class="text-xl font-heading font-black text-slate-900 dark:text-white">
+          Yêu Cầu Đăng Nhập Tài Khoản Giáo Viên / Quản Lý
+        </h2>
+        <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed max-w-md mx-auto">
+          Bạn cần đăng nhập bằng tài khoản Giáo viên hoặc Leader Cô Dung để truy cập bảng điều khiển Admin CP.
+        </p>
+      </div>
+
+      <div class="pt-2 flex items-center justify-center gap-3">
+        <a
+          href="/"
+          class="px-6 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white font-extrabold text-xs shadow-lg transition-all flex items-center justify-center gap-2"
+        >
+          <span>🏠 Về Trang Chủ</span>
+        </a>
+      </div>
+    </div>
   {:else}
     <!-- Header Banner -->
     <div class="rounded-3xl bg-slate-900 border border-slate-800 p-6 md:p-8 shadow-2xl relative overflow-hidden">

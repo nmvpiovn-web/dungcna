@@ -1996,14 +1996,28 @@ export function getSessionsForUser(user) {
     let meta = {};
     try { meta = typeof linkedChild.metadata === 'string' ? JSON.parse(linkedChild.metadata) : (linkedChild.metadata || {}); } catch {}
     const studentClassId = meta.class_id;
-    return allSessions.filter(s => (s.student_ids && s.student_ids.includes(linkedChild.id)) || (studentClassId && s.class_id === studentClassId));
+    const studentGrade = linkedChild.grade || meta.grade;
+    const enrolledGrades = getUserEnrolledGrades(linkedChild);
+    return allSessions.filter(s => 
+      (s.student_ids && s.student_ids.includes(linkedChild.id)) || 
+      (studentClassId && s.class_id === studentClassId) ||
+      (studentGrade && s.grade_level === studentGrade) ||
+      (enrolledGrades.length > 0 && enrolledGrades.includes(s.grade_level))
+    );
   }
 
   if (user.role === 'student') {
     let meta = {};
     try { meta = typeof user.metadata === 'string' ? JSON.parse(user.metadata) : (user.metadata || {}); } catch {}
     const studentClassId = meta.class_id;
-    return allSessions.filter(s => (s.student_ids && s.student_ids.includes(user.id)) || (studentClassId && s.class_id === studentClassId));
+    const studentGrade = user.grade || meta.grade;
+    const enrolledGrades = getUserEnrolledGrades(user);
+    return allSessions.filter(s => 
+      (s.student_ids && s.student_ids.includes(user.id)) || 
+      (studentClassId && s.class_id === studentClassId) ||
+      (studentGrade && s.grade_level === studentGrade) ||
+      (enrolledGrades.length > 0 && enrolledGrades.includes(s.grade_level))
+    );
   }
 
   return allSessions;

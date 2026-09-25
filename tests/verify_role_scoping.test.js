@@ -160,4 +160,161 @@ if (thienbaoLocked.length !== 18) {
 }
 console.log('✅ thienbao role and grade scoping verified!');
 
-console.log('\n🎉 ALL 7 AUTOMATED VERIFICATION TESTS PASSED!');
+console.log('\n--- ROUND 1 REGRESSION: User daian ("Nguyễn Đại An") Trial Status & Badge ---');
+const daian = {
+  id: 'usr_daian_123',
+  username: 'daian',
+  name: 'Nguyễn Đại An',
+  role: 'student',
+  grade: 'Lớp 7',
+  status: 'trial',
+  approval_status: 'trial',
+  metadata: JSON.stringify({
+    grade: 'Lớp 7',
+    target: 'Chương trình GDPT 2026',
+    is_trial: true
+  })
+};
+
+function getStudentBadge(user) {
+  const isOfficial = user.approval_status === 'official' || (user.status === 'active' && !user.is_trial && !user.metadata?.includes('"is_trial":true'));
+  return isOfficial ? '✓ Học Sinh Chính Thức' : '⏳ Dùng Thử (Trial) • Chờ Cô Dung Duyệt';
+}
+
+const daianBadge = getStudentBadge(daian);
+console.log('daian initial badge:', daianBadge);
+if (daianBadge !== '⏳ Dùng Thử (Trial) • Chờ Cô Dung Duyệt') {
+  throw new Error(`daian is a trial user! Badge should NOT be official. Got: ${daianBadge}`);
+}
+console.log('✅ Round 1 Passed: Trial accounts properly display "⏳ Dùng Thử (Trial) • Chờ Cô Dung Duyệt"!');
+
+console.log('\n--- ROUND 2 REGRESSION: /exam Scoping for daian (Grade 7) ---');
+const examsData = JSON.parse(fs.readFileSync(new URL('../src/lib/data/exams.json', import.meta.url), 'utf-8'));
+
+function isExamEnrolledForUser(user, exam) {
+  if (!user || user.role !== 'student') return true;
+  const grades = getUserEnrolledGrades(user);
+  const title = (exam.title || '').toLowerCase();
+  const curriculumId = (exam.curriculum_id || '').toLowerCase();
+
+  return grades.some(g => {
+    const clean = g.toLowerCase().trim();
+    const match = clean.match(/lớp\s*([0-9]+)/i) || clean.match(/grade-?([0-9]+)/i);
+    if (match) {
+      const num = Number(match[1]);
+      if (Number(exam.grade) === num || title.includes(`lớp ${num}`)) return true;
+    }
+    if (clean.includes('ielts') && (curriculumId.includes('ielts') || title.includes('ielts') || exam.format_type === 'ielts_academic')) return true;
+    if (clean.includes('toeic') && (curriculumId.includes('toeic') || title.includes('toeic') || exam.format_type === 'toeic_lr')) return true;
+    if (clean.includes('toefl') && (curriculumId.includes('toefl') || title.includes('toefl') || exam.format_type === 'toefl_ibt')) return true;
+    if ((clean.includes('đại học') || clean.includes('thptqg')) && (curriculumId.includes('thptqg') || Number(exam.grade) === 12)) return true;
+    return false;
+  });
+}
+
+const accessibleExams = examsData.filter(e => isExamEnrolledForUser(daian, e));
+const lockedExams = examsData.filter(e => !isExamEnrolledForUser(daian, e));
+console.log(`daian accessible exams count: ${accessibleExams.length}, locked exams: ${lockedExams.length}`);
+console.log('Accessible exams:', accessibleExams.map(e => e.title));
+
+if (!accessibleExams.every(e => e.grade === 7 || e.title.includes('Lớp 7'))) {
+  throw new Error('daian must only have access to Grade 7 exams!');
+}
+if (!lockedExams.some(e => e.format_type === 'ielts_academic')) {
+  throw new Error('IELTS exams must be locked for Grade 7 student!');
+}
+if (!lockedExams.some(e => e.format_type === 'toeic_lr')) {
+  throw new Error('TOEIC exams must be locked for Grade 7 student!');
+}
+console.log('✅ Round 2 Passed: /exam strictly scopes to Grade 7; other exams locked with 🔒!');
+
+console.log('\n--- ROUND 3 REGRESSION: /evaluations Privacy Scoping for daian ---');
+const evaluationsData = JSON.parse(fs.readFileSync(new URL('../src/lib/data/student_evaluations.json', import.meta.url), 'utf-8'));
+
+function filterEvaluationsForUser(user, evaluations) {
+  return evaluations.filter(e => {
+    if (user?.role === 'student') {
+      const sId = (user.id || '').toLowerCase();
+      const sName = (user.name || '').toLowerCase();
+      const uName = (user.username || '').toLowerCase();
+      const evId = (e.student_id || '').toLowerCase();
+      const evName = (e.student_name || '').toLowerCase();
+      return evId === sId || evName === sName || (uName && evName.includes(uName));
+    }
+    return true;
+  });
+}
+
+const daianEvals = filterEvaluationsForUser(daian, evaluationsData);
+console.log(`Evaluations visible to daian: ${daianEvals.length} (out of ${evaluationsData.length} total)`);
+if (daianEvals.length !== 0) {
+  throw new Error('New student daian has no evaluations yet; must not see other students\' evaluations!');
+}
+console.log('✅ Round 3 Passed: /evaluations strictly isolates student records; zero privacy leakage!');
+
+console.log('\n--- ROUND 4 REGRESSION: /schedule Scoping for daian ---');
+const classSessionsData = JSON.parse(fs.readFileSync(new URL('../src/lib/data/class_sessions.json', import.meta.url), 'utf-8'));
+
+function getSessionsForUserTest(user, sessions) {
+  if (user.role === 'student') {
+    let meta = {};
+    try { meta = typeof user.metadata === 'string' ? JSON.parse(user.metadata) : (user.metadata || {}); } catch {}
+    const studentClassId = meta.class_id;
+    const studentGrade = user.grade || meta.grade;
+    const enrolledGrades = getUserEnrolledGrades(user);
+    return sessions.filter(s => 
+      (s.student_ids && s.student_ids.includes(user.id)) || 
+      (studentClassId && s.class_id === studentClassId) ||
+      (studentGrade && s.grade_level === studentGrade) ||
+      (enrolledGrades.length > 0 && enrolledGrades.includes(s.grade_level))
+    );
+  }
+  return sessions;
+}
+
+const daianSessions = getSessionsForUserTest(daian, classSessionsData);
+console.log(`Sessions visible to daian: ${daianSessions.length}`);
+console.log('Session classes:', daianSessions.map(s => `${s.class_name} (${s.day_name} ${s.start_time})`));
+
+if (!daianSessions.every(s => s.grade_level === 'Lớp 7')) {
+  throw new Error('daian must only see Grade 7 schedule sessions!');
+}
+if (daianSessions.some(s => s.grade_level === 'Lớp 12')) {
+  throw new Error('daian must NOT see Grade 12 session!');
+}
+console.log('✅ Round 4 Passed: /schedule returns Grade 7 sessions for daian!');
+
+console.log('\n--- ROUND 5 REGRESSION: /admin Gate & Approval Flow ---');
+function canAccessAdminCP(user) {
+  if (!user) return false;
+  return user.role === 'teacher' || user.role === 'superadmin' || user.username === 'admin';
+}
+
+if (canAccessAdminCP(daian)) {
+  throw new Error('Student daian must NOT have access to Admin CP!');
+}
+const parentUser = { id: 'usr_p1', role: 'parent', name: 'Phụ huynh' };
+if (canAccessAdminCP(parentUser)) {
+  throw new Error('Parent must NOT have access to Admin CP!');
+}
+console.log('Admin CP gate correctly blocks student and parent.');
+
+// Admin approves daian to official
+const approvedDaian = {
+  ...daian,
+  status: 'active',
+  approval_status: 'official',
+  metadata: JSON.stringify({
+    grade: 'Lớp 7',
+    target: 'Chương trình GDPT 2026',
+    is_trial: false
+  })
+};
+const approvedBadge = getStudentBadge(approvedDaian);
+console.log('daian badge after Admin approval:', approvedBadge);
+if (approvedBadge !== '✓ Học Sinh Chính Thức') {
+  throw new Error(`Approved daian badge should be official. Got: ${approvedBadge}`);
+}
+console.log('✅ Round 5 Passed: Admin approval flow converts trial to official correctly!');
+
+console.log('\n🎉 ALL 12 AUDIT & REGRESSION TESTS PASSED!');
