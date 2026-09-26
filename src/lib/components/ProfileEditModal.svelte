@@ -146,25 +146,25 @@
 
 {#if isOpen}
   <div class="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md animate-in fade-in duration-200">
-    <div class="w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl overflow-hidden relative font-sans text-slate-800 dark:text-slate-100 flex flex-col max-h-[92vh]">
+    <div class="w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl overflow-hidden relative font-sans text-slate-800 dark:text-slate-100 flex flex-col max-h-[92vh]">
       
-      <!-- Modal Header -->
-      <div class="bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 dark:from-emerald-950 dark:via-slate-900 dark:to-slate-950 p-6 text-white border-b border-emerald-500/20 relative">
+      <!-- Modal Header (Academic Ledger Style) -->
+      <div class="bg-slate-900 p-5 text-slate-100 border-b border-slate-800 relative">
         <button
           onclick={() => isOpen = false}
-          class="absolute top-4 right-4 text-emerald-100 hover:text-white p-1.5 rounded-full bg-black/20 hover:bg-black/40 text-xs transition-all"
+          class="absolute top-4 right-4 text-slate-400 hover:text-white p-1 rounded-md bg-slate-800 hover:bg-slate-700 text-xs transition-colors"
           title="Đóng"
         >
           ✕
         </button>
 
         <div class="flex items-center gap-3">
-          <div class="w-12 h-12 rounded-2xl bg-white/20 border border-white/30 flex items-center justify-center text-2xl shadow-md">
+          <div class="w-10 h-10 rounded-md bg-slate-800 border border-slate-700 flex items-center justify-center text-xl">
             👤
           </div>
           <div>
-            <div class="text-[11px] font-bold uppercase tracking-wider text-emerald-100">TIẾNG ANH CÔ DUNG</div>
-            <h2 class="text-xl font-heading font-black">Chỉnh Sửa Hồ Sơ Cá Nhân</h2>
+            <div class="text-[11px] font-semibold uppercase tracking-wider text-sky-400">TIẾNG ANH CÔ DUNG</div>
+            <h2 class="text-lg font-semibold text-white">Chỉnh Sửa Hồ Sơ Cá Nhân</h2>
           </div>
         </div>
       </div>
@@ -172,17 +172,17 @@
       <!-- Modal Body -->
       <form onsubmit={handleSaveProfile} class="p-6 overflow-y-auto space-y-4 flex-1 text-xs">
         {#if statusMessage}
-          <div class="p-3 rounded-2xl text-xs font-semibold {statusMessage.includes('✅') ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-300' : 'bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-300'}">
+          <div class="p-3 rounded-md text-xs font-semibold {statusMessage.includes('✅') ? 'bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300' : 'bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-300'}">
             {statusMessage}
           </div>
         {/if}
 
         <!-- Avatar Selection -->
-        <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 space-y-3">
-          <div class="font-bold text-slate-700 dark:text-slate-300">Ảnh Đại Diện (Avatar):</div>
+        <div class="p-4 rounded-lg bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 space-y-3">
+          <div class="font-semibold text-slate-700 dark:text-slate-300">Ảnh Đại Diện (Avatar):</div>
           
           <div class="flex items-center gap-4">
-            <img src={avatar} alt="Avatar Preview" class="w-16 h-16 rounded-2xl object-cover border-2 border-emerald-500 shadow-md bg-white" />
+            <img src={avatar} alt="Avatar Preview" class="w-16 h-16 rounded-md object-cover border border-slate-300 dark:border-slate-700 shadow-xs bg-white" />
             
             <div class="flex-1 space-y-1.5">
               <label class="block text-[11px] font-semibold text-slate-500 dark:text-slate-400">
@@ -192,20 +192,20 @@
                 type="file"
                 accept="image/*"
                 onchange={handleFileUpload}
-                class="block w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-emerald-600 file:text-white hover:file:bg-emerald-500 cursor-pointer"
+                class="block w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-sky-700 file:text-white hover:file:bg-sky-600 cursor-pointer"
               />
             </div>
           </div>
 
           <!-- Quick Avatar Presets -->
           <div>
-            <div class="text-[10px] text-slate-500 uppercase font-bold mb-1.5">Hoặc chọn avatar gợi ý:</div>
+            <div class="text-[11px] text-slate-500 uppercase font-semibold mb-1.5">Hoặc chọn avatar gợi ý:</div>
             <div class="flex items-center gap-2 overflow-x-auto pb-1">
               {#each presetAvatars as p}
                 <button
                   type="button"
                   onclick={() => avatar = p.url}
-                  class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border transition-all text-[11px] whitespace-nowrap {avatar === p.url ? 'border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-300 font-bold' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400'}"
+                  class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border transition-colors text-[11px] whitespace-nowrap {avatar === p.url ? 'border-sky-500 bg-sky-50 dark:bg-sky-950/50 text-sky-700 dark:text-sky-300 font-semibold' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400'}"
                 >
                   <img src={p.url} alt={p.label} class="w-5 h-5 rounded-full object-cover" />
                   <span>{p.label}</span>
@@ -322,8 +322,8 @@
               </div>
 
               {#if showTransferModal}
-                <div class="p-3 mt-2 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-200 space-y-2 animate-in fade-in duration-200">
-                  <div class="font-bold flex items-center gap-1.5 text-xs text-amber-700 dark:text-amber-300">
+                <div class="p-3 mt-2 rounded-md bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200 space-y-2 animate-in fade-in duration-200">
+                  <div class="font-semibold flex items-center gap-1.5 text-xs text-amber-800 dark:text-amber-300">
                     <span>📩</span> Gửi Yêu Cầu Chuyển Khối Lớp Tới Cô Dung
                   </div>
                   <p class="text-[11px] text-slate-600 dark:text-slate-300">
@@ -334,7 +334,7 @@
                     <select
                       id="req-target-grade"
                       bind:value={requestedTargetGrade}
-                      class="w-full bg-white dark:bg-slate-900 border border-amber-300 dark:border-amber-700 rounded-xl px-2.5 py-1.5 text-xs text-slate-900 dark:text-white"
+                      class="w-full bg-white dark:bg-slate-900 border border-amber-300 dark:border-amber-700 rounded-md px-2.5 py-1.5 text-xs text-slate-900 dark:text-white"
                     >
                       {#each gradeOptions as g}
                         <option value={g}>{g}</option>
@@ -348,7 +348,7 @@
                       type="text"
                       bind:value={transferReason}
                       placeholder="VD: Em muốn học thêm IELTS / Em lên lớp mới..."
-                      class="w-full bg-white dark:bg-slate-900 border border-amber-300 dark:border-amber-700 rounded-xl px-2.5 py-1.5 text-xs text-slate-900 dark:text-white"
+                      class="w-full bg-white dark:bg-slate-900 border border-amber-300 dark:border-amber-700 rounded-md px-2.5 py-1.5 text-xs text-slate-900 dark:text-white"
                     />
                   </div>
                   <div class="flex items-center gap-2 pt-1">
@@ -356,14 +356,14 @@
                       type="button"
                       disabled={isSendingTransfer}
                       onclick={handleSendClassTransferRequest}
-                      class="flex-1 py-1.5 px-3 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs transition-all shadow-sm flex items-center justify-center gap-1.5"
+                      class="flex-1 py-1.5 px-3 rounded-md bg-amber-700 hover:bg-amber-600 text-white font-semibold text-xs transition-colors shadow-xs flex items-center justify-center gap-1.5"
                     >
                       {isSendingTransfer ? '⏳ Đang gửi...' : '🚀 Gửi Yêu Cầu Ngay'}
                     </button>
                     <button
                       type="button"
                       onclick={() => showTransferModal = false}
-                      class="py-1.5 px-3 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 text-slate-700 dark:text-slate-200 font-semibold text-xs"
+                      class="py-1.5 px-3 rounded-md bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 text-slate-700 dark:text-slate-200 font-semibold text-xs"
                     >
                       Hủy
                     </button>
@@ -374,7 +374,7 @@
           </div>
 
           <div>
-            <label for="prof-school" class="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+            <label for="prof-school" class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
               Trường Đang Theo Học (Có gợi ý):
             </label>
             <input
@@ -383,7 +383,7 @@
               list="popular-schools-list"
               bind:value={school}
               placeholder="Gõ để xem gợi ý trường tiêu biểu..."
-              class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
+              class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-md px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-sky-500"
             />
             <datalist id="popular-schools-list">
               {#each POPULAR_SCHOOLS as sch}
@@ -395,7 +395,7 @@
 
         <!-- Target / Goal -->
         <div>
-          <label for="prof-target" class="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+          <label for="prof-target" class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
             Mục Tiêu Học Tập &amp; Điểm Số Hướng Tới:
           </label>
           <input
@@ -403,7 +403,7 @@
             type="text"
             bind:value={target}
             placeholder="VD: Đạt 9.0+ trên lớp, Chinh phục IELTS 7.5+, Thi đỗ Chuyên Anh..."
-            class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
+            class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-md px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-sky-500"
           />
         </div>
 
@@ -411,7 +411,7 @@
         <button
           type="submit"
           disabled={isSaving}
-          class="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-xs shadow-lg shadow-emerald-600/25 transition-all hover:scale-[1.01] flex items-center justify-center gap-2 mt-4"
+          class="w-full py-2.5 rounded-md bg-sky-700 hover:bg-sky-600 text-white font-semibold text-xs shadow-xs transition-colors flex items-center justify-center gap-2 mt-4"
         >
           <span>{isSaving ? '⏳ Đang lưu hồ sơ...' : '💾 Lưu Thay Đổi Hồ Sơ'}</span>
         </button>

@@ -150,7 +150,7 @@
                 </div>
                 <p class="text-xs text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">{item.message}</p>
                 {#if item.created_at}
-                  <span class="inline-block text-[10px] text-slate-400 mt-2">
+                  <span class="inline-block text-[11px] text-slate-400 mt-2">
                     {new Date(item.created_at * (item.created_at < 10000000000 ? 1000 : 1)).toLocaleString('vi-VN')}
                   </span>
                 {/if}
@@ -160,7 +160,7 @@
             {#if !item.is_read}
               <button 
                 onclick={() => markAsRead(item.id)}
-                class="px-2.5 py-1 rounded-lg text-[11px] font-semibold text-sky-600 dark:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-950/50 transition-colors shrink-0"
+                class="px-2.5 py-1 rounded-md text-[11px] font-semibold text-sky-600 dark:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-950/50 transition-colors shrink-0"
               >
                 Đã đọc
               </button>

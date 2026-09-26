@@ -357,7 +357,7 @@
                 <div class="font-bold text-emerald-800 dark:text-emerald-300 flex items-center justify-between">
                   <span>💬 Lời nhận xét của {item.teacher_name}:</span>
                   {#if item.submission.stars_awarded > 0}
-                    <span class="text-amber-500 font-extrabold">+{item.submission.stars_awarded} sao ⭐</span>
+                    <span class="text-amber-500 font-semibold">+{item.submission.stars_awarded} sao ⭐</span>
                   {/if}
                 </div>
                 <p class="text-emerald-700 dark:text-emerald-400 mt-1 italic">"{item.submission.teacher_feedback}"</p>
@@ -519,7 +519,7 @@
               bind:value={writingContent}
               placeholder="Điền đáp án các câu hỏi hoặc tóm tắt đoạn văn theo yêu cầu..."
               rows="8"
-              class="w-full text-xs font-mono p-4 rounded-2xl bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500"
+              class="w-full text-xs font-mono p-4 rounded-lg bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 focus:outline-none focus:ring-1 focus:ring-sky-500"
             ></textarea>
           </div>
 
@@ -693,7 +693,7 @@
             <div class="relative py-2 border-b border-slate-400">
               <!-- Midline guideline for lowercase letters -->
               <div class="border-b border-dashed border-sky-300/80 mb-2"></div>
-              <div class="text-[9px] font-sans text-slate-300 absolute left-0 top-1">{i + 1}</div>
+              <div class="text-[11px] font-sans text-slate-400 absolute left-0 top-1">{i + 1}</div>
             </div>
           {/each}
         </div>
@@ -708,12 +708,12 @@
           <div class="border border-slate-300 rounded-lg p-3 text-center flex flex-col justify-between">
             <span class="font-bold text-slate-800">Điểm Số / Chữ Ký</span>
             <div class="text-2xl font-bold text-slate-300 my-auto">....... / 10</div>
-            <div class="text-[10px] text-slate-500">Thưởng sao: ....... ⭐</div>
+            <div class="text-xs text-slate-500">Thưởng sao: ....... ⭐</div>
           </div>
         </div>
 
         <!-- Submission Instruction for Parent -->
-        <div class="mt-4 text-center font-sans text-[10px] text-slate-500 italic">
+        <div class="mt-4 text-center font-sans text-[11px] text-slate-500 italic">
           Sau khi hoàn thành, học sinh hoặc phụ huynh chụp ảnh phiếu bài tập này và tải lên webapp tại mục "Chụp Ảnh Bài Viết Tay" để cô giáo chấm điểm.
         </div>
       </div>

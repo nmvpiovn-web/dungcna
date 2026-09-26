@@ -167,10 +167,10 @@
       <!-- Right: User Quick Info, Stars, Notifications -->
       <div class="flex items-center gap-3">
         {#if currentUser?.role === 'student' && studentStars}
-          <div class="flex items-center gap-1 px-2.5 py-1 rounded-md bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400 font-semibold text-xs shadow-sm">
+          <div class="flex items-center gap-1 px-2.5 py-1 rounded-md bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400 font-semibold text-xs shadow-xs">
             <span>⭐</span>
             <span>{studentStars.stars_balance || 0}</span>
-            <span class="text-[10px] opacity-80 hidden sm:inline">sao</span>
+            <span class="text-[11px] opacity-80 hidden sm:inline">sao</span>
           </div>
         {/if}
 
@@ -199,17 +199,17 @@
 
         <!-- User Chip & Role Switch for Superadmin -->
         <div class="flex items-center gap-2 pl-2 border-l border-slate-200 dark:border-slate-800">
-          <div class="w-8 h-8 rounded-md bg-slate-700 dark:bg-slate-600 text-white flex items-center justify-center font-semibold text-xs shadow-sm">
+          <div class="w-8 h-8 rounded-md bg-slate-700 dark:bg-slate-600 text-white flex items-center justify-center font-semibold text-xs shadow-xs">
             {currentUser?.name?.[0] || currentUser?.username?.[0] || 'U'}
           </div>
           <div class="hidden sm:block text-left text-xs">
             <div class="font-semibold text-slate-800 dark:text-slate-200 line-clamp-1">{currentUser?.name || currentUser?.username || 'Khách'}</div>
-            <div class="text-[10px] text-slate-500 dark:text-slate-400">{currentUser?.role || 'User'}</div>
+            <div class="text-[11px] text-slate-500 dark:text-slate-400 capitalize">{currentUser?.role || 'User'}</div>
           </div>
         </div>
 
         {#if isSuperAdmin(currentUser)}
-          <a href="/admincp" class="hidden sm:inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-rose-700 hover:bg-rose-800 text-white text-xs font-semibold shadow-sm transition-all">
+          <a href="/admincp" class="hidden sm:inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-rose-700 hover:bg-rose-800 text-white text-xs font-semibold shadow-xs transition-all">
             <span>⚡ AdminCP Tổng</span>
           </a>
         {/if}
@@ -222,7 +222,7 @@
         {@const isActive = $page.url.pathname === item.path || ($page.url.hash && item.path.includes($page.url.hash))}
         <a 
           href={item.path}
-          class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all {isActive ? 'bg-sky-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}"
+          class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold whitespace-nowrap transition-all {isActive ? 'bg-sky-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}"
         >
           <span>{item.icon}</span>
           <span>{item.label}</span>

@@ -175,23 +175,23 @@
     aria-modal="true"
     aria-label="Trung Tâm Báo Cáo Leader"
   >
-    <!-- Drawer Header -->
-    <div class="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-indigo-500/10 dark:from-emerald-950/30 dark:via-teal-950/30 dark:to-indigo-950/30">
+    <!-- Drawer Header (Academic Ledger Style) -->
+    <div class="p-4 sm:p-5 border-b border-slate-800 bg-slate-900 text-slate-100">
       <div class="flex items-center justify-between mb-3">
         <div class="flex items-center gap-2.5">
-          <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center text-xl shadow-md shadow-emerald-500/30">
+          <div class="w-10 h-10 rounded-md bg-emerald-700 text-white flex items-center justify-center text-lg shadow-xs">
             🔔
           </div>
           <div>
-            <h2 class="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+            <h2 class="text-base sm:text-lg font-semibold text-white flex items-center gap-2">
               Trung Tâm Báo Cáo Leader
               {#if unreadCount > 0}
-                <span class="px-2 py-0.5 rounded-full text-xs font-bold bg-rose-600 text-white animate-pulse">
+                <span class="px-2 py-0.5 rounded text-xs font-semibold bg-rose-600 text-white">
                   {unreadCount} mới
                 </span>
               {/if}
             </h2>
-            <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">
+            <p class="text-xs text-slate-400 font-normal">
               Dành riêng cho Cô Dung • Đăng ký, Lịch học, Điểm danh &amp; Học phí
             </p>
           </div>
@@ -199,7 +199,7 @@
 
         <button
           onclick={onClose}
-          class="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-300 flex items-center justify-center font-bold text-sm transition-colors"
+          class="w-8 h-8 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-semibold text-sm transition-colors"
           title="Đóng"
         >
           ✕
@@ -342,11 +342,11 @@
       {:else}
         {#each filteredNotifications as notif (notif.id)}
           <div 
-            class="p-3.5 sm:p-4 rounded-2xl border transition-all duration-200 {notif.is_read ? 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800/80 opacity-80' : 'bg-gradient-to-r from-slate-50 to-white dark:from-slate-850 dark:to-slate-900 border-emerald-500/40 dark:border-emerald-500/40 shadow-md ring-1 ring-emerald-500/10'}"
+            class="p-3.5 sm:p-4 rounded-lg border transition-colors {notif.is_read ? 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800/80 opacity-80' : 'bg-slate-50 dark:bg-slate-850 border-emerald-500/40 dark:border-emerald-500/40 shadow-xs'}"
           >
             <div class="flex items-start justify-between gap-3 mb-2">
               <div class="flex items-center gap-2">
-                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border {getBadgeClass(notif.type, notif.priority)}">
+                <span class="px-2 py-0.5 rounded text-[11px] font-semibold uppercase tracking-wider border {getBadgeClass(notif.type, notif.priority)}">
                   {#if notif.priority === 'urgent'}
                     🚨 KHẨN CẤP
                   {:else if notif.type === 'teacher_missing_attendance'}
