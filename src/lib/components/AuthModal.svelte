@@ -287,18 +287,18 @@
         {:else}
           <!-- Visual Step Breadcrumb Indicator -->
           <div class="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800 text-[11px] font-semibold uppercase tracking-wider">
-            <span class="flex items-center gap-1 {regStep === 'role' ? 'text-sky-700 dark:text-sky-400' : 'text-slate-400'}">
-              <span class="w-4 h-4 rounded flex items-center justify-center text-[10px] {regStep === 'role' ? 'bg-sky-700 text-white' : 'bg-slate-200 dark:bg-slate-800'}">1</span>
+            <span class="flex items-center gap-1.5 {regStep === 'role' ? 'text-sky-700 dark:text-sky-400' : 'text-slate-400'}">
+              <span class="w-5 h-5 rounded flex items-center justify-center text-xs font-semibold {regStep === 'role' ? 'bg-sky-700 text-white' : 'bg-slate-200 dark:bg-slate-800'}">1</span>
               <span>Chọn Role</span>
             </span>
             <span class="text-slate-300 dark:text-slate-700">➔</span>
-            <span class="flex items-center gap-1 {regStep === 'credentials' ? 'text-sky-700 dark:text-sky-400' : 'text-slate-400'}">
-              <span class="w-4 h-4 rounded flex items-center justify-center text-[10px] {regStep === 'credentials' ? 'bg-sky-700 text-white' : 'bg-slate-200 dark:bg-slate-800'}">2</span>
+            <span class="flex items-center gap-1.5 {regStep === 'credentials' ? 'text-sky-700 dark:text-sky-400' : 'text-slate-400'}">
+              <span class="w-5 h-5 rounded flex items-center justify-center text-xs font-semibold {regStep === 'credentials' ? 'bg-sky-700 text-white' : 'bg-slate-200 dark:bg-slate-800'}">2</span>
               <span>Tài Khoản</span>
             </span>
             <span class="text-slate-300 dark:text-slate-700">➔</span>
-            <span class="flex items-center gap-1 {regStep === 'class_popup' ? 'text-sky-700 dark:text-sky-400' : 'text-slate-400'}">
-              <span class="w-4 h-4 rounded flex items-center justify-center text-[10px] {regStep === 'class_popup' ? 'bg-sky-700 text-white' : 'bg-slate-200 dark:bg-slate-800'}">3</span>
+            <span class="flex items-center gap-1.5 {regStep === 'class_popup' ? 'text-sky-700 dark:text-sky-400' : 'text-slate-400'}">
+              <span class="w-5 h-5 rounded flex items-center justify-center text-xs font-semibold {regStep === 'class_popup' ? 'bg-sky-700 text-white' : 'bg-slate-200 dark:bg-slate-800'}">3</span>
               <span>Chọn Lớp (*)</span>
             </span>
           </div>
@@ -324,7 +324,7 @@
                   <div class="flex-1 min-w-0">
                     <div class="font-semibold text-xs sm:text-sm text-slate-900 dark:text-white flex items-center gap-2">
                       <span>Tôi Là Học Sinh</span>
-                      <span class="px-1.5 py-0.2 rounded bg-emerald-600 text-white text-[10px] font-medium">Khuyên Dùng</span>
+                      <span class="px-2 py-0.5 rounded bg-emerald-600 text-white text-[11px] font-medium">Khuyên Dùng</span>
                     </div>
                     <div class="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">
                       Vào phòng thi 15p - 45p, học từ vựng, luyện thi IELTS/TOEIC và tích lũy Sao đổi học phí.

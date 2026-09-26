@@ -257,7 +257,7 @@
               placeholder="VD: 0912345678 hoặc nick zalo"
               class="w-full bg-blue-50/50 dark:bg-slate-950 border border-blue-300 dark:border-blue-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-blue-500"
             />
-            <span class="text-[10px] text-slate-500 block mt-0.5">Dùng để Bot Zalo Cô Dung gửi phiếu học phí &amp; kết quả thi.</span>
+            <span class="text-xs text-slate-500 block mt-1">Dùng để Bot Zalo Cô Dung gửi phiếu học phí &amp; kết quả thi.</span>
           </div>
 
           <div>
@@ -281,7 +281,7 @@
                 Khối Lớp Học Tập:
               </label>
               {#if !isAdminOrTeacher}
-                <span class="inline-flex items-center gap-1 text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
+                <span class="inline-flex items-center gap-1 text-[11px] font-medium text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
                   🔒 Cố định
                 </span>
               {/if}
@@ -297,7 +297,7 @@
                   <option value={g}>{g}</option>
                 {/each}
               </select>
-              <span class="text-[10px] text-emerald-600 dark:text-emerald-400 block mt-1">
+              <span class="text-xs text-emerald-600 dark:text-emerald-400 block mt-1">
                 ⭐ Bạn là Giáo viên/Admin: Có toàn quyền đổi khối lớp trực tiếp.
               </span>
             {:else}

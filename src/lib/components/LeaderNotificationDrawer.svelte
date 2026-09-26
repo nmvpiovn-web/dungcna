@@ -475,7 +475,7 @@
     <div class="p-3.5 sm:p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/80">
       <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2 flex items-center justify-between">
         <span>🧪 Giả Lập Tình Huống Cảnh Báo (Test Deck)</span>
-        <span class="text-[10px] lowercase text-slate-400 font-normal">Click để kích hoạt kiểm thử</span>
+        <span class="text-[11px] lowercase text-slate-400 font-normal">Click để kích hoạt kiểm thử</span>
       </div>
       <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5 text-xs">
         <button

@@ -76,13 +76,19 @@ html.theme-sky {
 
 body {
   font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-  line-height: 1.5;
+  font-size: 0.9375rem; /* 15px standard readable academic copy */
+  line-height: 1.6;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
   color: var(--text-main);
   background-color: var(--bg-page);
   font-feature-settings: 'tnum' on, 'cv02' on, 'cv03' on, 'cv04' on;
+}
+
+/* Cho phép rounded-full hợp lệ cho Avatar, Badge tròn, Spinner */
+.avatar, .user-avatar, .status-dot, .loading-spinner {
+  border-radius: 9999px !important;
 }
 
 /* ========================================================================= */

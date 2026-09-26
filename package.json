@@ -13,7 +13,7 @@
     "preview": "wrangler pages dev build --port 4173",
     "prepare": "svelte-kit sync || echo ''",
     "gen": "wrangler types",
-    "check": "wrangler types --check"
+    "check": "npx --yes svelte-check --threshold error && wrangler types --check"
   },
   "devDependencies": {
     "@sveltejs/adapter-cloudflare": "^7.2.9",

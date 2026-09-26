@@ -180,10 +180,10 @@
                 {item.body}
               </p>
 
-              <div class="text-[10px] text-slate-400 flex items-center justify-between">
+              <div class="text-[11px] font-mono text-slate-400 flex items-center justify-between">
                 <span>{item.created_at}</span>
                 {#if item.reference_id}
-                  <span class="font-mono text-slate-400/80">Ref: {item.reference_id}</span>
+                  <span>Ref: {item.reference_id}</span>
                 {/if}
               </div>
             </div>
