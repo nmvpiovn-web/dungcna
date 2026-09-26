@@ -208,20 +208,31 @@ export async function POST({ request, platform }) {
     }
   }
 
-  // ACTION 3: APPROVE/REJECT LEAVE (Manager/Leader only)
-  if (action === 'approve_leave') {
+  // ACTION 3: APPROVE/REJECT LEAVE (Manager/Leader only - 2-Step Workflow Enforced)
+  if (action === 'approve_leave' || action === 'admin_decision') {
     if (!manager) {
       return json({ success: false, error: 'Forbidden: Chỉ Leader Cô Dung và Superadmin mới có quyền phê duyệt' }, { status: 403 });
     }
 
-    const { leave_id, decision, admin_notes } = body; // decision: 'approved' | 'rejected'
-    if (!leave_id || (decision !== 'approved' && decision !== 'rejected')) {
+    const { leave_id, decision, admin_notes } = body;
+    const targetDecision = (decision === 'approve' || decision === 'approved') ? 'approved' : (decision === 'reject' || decision === 'rejected') ? 'rejected' : null;
+    
+    if (!leave_id || !targetDecision) {
       return json({ success: false, error: 'Mã đơn hoặc quyết định duyệt không hợp lệ' }, { status: 400 });
     }
 
     const leave = await db.prepare('SELECT * FROM teacher_leave_requests WHERE id = ?').bind(leave_id).first();
     if (!leave) {
-      return json({ success: false, error: 'Không tìm thấy đơn' }, { status: 404 });
+      return json({ success: false, error: 'Không tìm thấy đơn nghỉ' }, { status: 404 });
+    }
+
+    // STRICT SERVER ENFORCEMENT: 2-Step Workflow
+    // If a substitute teacher was designated, they MUST have accepted before Leader can approve
+    if (targetDecision === 'approved' && leave.substitute_teacher_id && leave.substitute_status !== 'accepted') {
+      return json({ 
+        success: false, 
+        error: 'PreconditionFailed: Chưa thể duyệt đơn khi giáo viên dạy thay chưa bấm xác nhận đồng ý nhận ca' 
+      }, { status: 400 });
     }
 
     try {
@@ -229,7 +240,7 @@ export async function POST({ request, platform }) {
         UPDATE teacher_leave_requests 
         SET admin_status = ?, admin_notes = ?, updated_at = CURRENT_TIMESTAMP
         WHERE id = ?;
-      `).bind(decision, admin_notes || '', leave_id).run();
+      `).bind(targetDecision, admin_notes || '', leave_id).run();
 
       // Notify teacher
       await db.prepare(`

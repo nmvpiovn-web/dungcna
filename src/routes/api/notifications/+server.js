@@ -20,14 +20,16 @@ export async function GET({ request, platform }) {
   try {
     let sql = `
       SELECT * FROM system_notifications 
-      WHERE (target_role = ? OR target_role = 'all' OR target_user_id = ?)
+      WHERE (target_user_id = ?) 
+         OR (target_user_id IS NULL AND (target_role = ? OR target_role = 'all'))
     `;
-    const params = [user.role, user.id];
+    const params = [user.id, user.role];
 
     if (isLeader) {
       sql = `
         SELECT * FROM system_notifications 
-        WHERE (target_role = ? OR target_role = 'leader' OR target_role = 'all' OR target_user_id = ?)
+        WHERE (target_user_id = ?)
+           OR (target_user_id IS NULL AND (target_role = ? OR target_role = 'leader' OR target_role = 'all'))
       `;
     }
 

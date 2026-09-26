@@ -38,22 +38,25 @@ export async function GET({ url, request, platform }) {
     }
     allowedStudentId = user.id;
   } else if (user.role === 'parent') {
-    // Parent can only inspect bills tied to their registered phone or their child's id
+    // Parent can only inspect bills tied to their registered phone or their verified children
+    const allUsers = getAllUsers();
+    const myChildren = allUsers.filter(u => 
+      u.role === 'student' && 
+      ((user.phone && (u.parent_phone === user.phone || u.phone === user.phone)) || (user.name && u.parent_name === user.name))
+    );
+    const myChildIds = myChildren.map(c => c.id);
+
     if (requestedStudentId) {
-      // Find all students linked to this parent
-      const allUsers = getAllUsers();
-      const myChildren = allUsers.filter(u => 
-        u.role === 'student' && 
-        (u.parent_phone === user.phone || u.parent_name === user.name || u.phone === user.phone)
-      );
-      const isMyChild = myChildren.some(c => c.id === requestedStudentId || c.username === requestedStudentId);
-      if (!isMyChild && user.phone) {
+      if (!myChildIds.includes(requestedStudentId) && requestedStudentId !== user.id) {
         return json({
           success: false,
           error: 'Forbidden: Quý phụ huynh chỉ có quyền xem học phí của con em mình'
         }, { status: 403 });
       }
       allowedStudentId = requestedStudentId;
+    } else if (!user.phone && myChildIds.length === 0) {
+      // Fail-closed: parent without phone and without linked child sees nothing
+      return json({ success: true, total: 0, bills: [], source: 'fail_closed_unlinked_parent' });
     }
   }
 
@@ -66,9 +69,13 @@ export async function GET({ url, request, platform }) {
         if (allowedStudentId) {
           query += ' WHERE student_id = ?';
           params.push(allowedStudentId);
-        } else if (user.role === 'parent' && user.phone) {
-          query += ' WHERE parent_phone = ?';
-          params.push(user.phone);
+        } else if (user.role === 'parent') {
+          if (user.phone) {
+            query += ' WHERE parent_phone = ?';
+            params.push(user.phone);
+          } else {
+            query += ' WHERE 1 = 0'; // Fail-closed
+          }
         }
         query += ' ORDER BY created_at DESC';
 
@@ -90,8 +97,12 @@ export async function GET({ url, request, platform }) {
     let bills = getAllTuitionBills();
     if (allowedStudentId) {
       bills = bills.filter(b => b.student_id === allowedStudentId);
-    } else if (user.role === 'parent' && user.phone) {
-      bills = bills.filter(b => b.parent_phone === user.phone);
+    } else if (user.role === 'parent') {
+      if (user.phone) {
+        bills = bills.filter(b => b.parent_phone === user.phone);
+      } else {
+        bills = [];
+      }
     }
 
     return json({
