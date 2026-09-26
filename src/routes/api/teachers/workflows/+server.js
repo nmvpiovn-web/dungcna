@@ -345,38 +345,48 @@ export async function POST({ request, platform }) {
     }
 
     try {
-      const batchStmts = [
-        db.prepare(`
-          UPDATE teacher_leave_requests 
-          SET admin_status = ?, admin_notes = ?, updated_at = CURRENT_TIMESTAMP
-          WHERE id = ? AND admin_status = 'pending';
-        `).bind(targetDecision, admin_notes || '', leave_id)
-      ];
+      // STEP 1: Update leave request status if pending
+      const updateLeave = await db.prepare(`
+        UPDATE teacher_leave_requests 
+        SET admin_status = ?, admin_notes = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE id = ? AND admin_status = 'pending';
+      `).bind(targetDecision, admin_notes || '', leave_id).run();
 
-      // Update EXACT single class session bound to this leave request
-      if (targetDecision === 'approved' && leave.session_id && leave.substitute_teacher_id) {
-        batchStmts.push(
-          db.prepare(`
-            UPDATE class_sessions 
-            SET substitute_teacher_id = ?, 
-                substitute_teacher_name = ?, 
-                substitute_notes = ?,
-                status = 'substitute_assigned',
-                updated_at = CURRENT_TIMESTAMP
-            WHERE id = ? AND teacher_id = ?;
-          `).bind(
-            leave.substitute_teacher_id,
-            leave.substitute_teacher_name,
-            `Dạy thay cho ${leave.teacher_name} theo đơn ${leave_id}`,
-            leave.session_id,
-            leave.teacher_id
-          )
-        );
+      if (!updateLeave || updateLeave.meta?.changes !== 1) {
+        return json({ success: false, error: 'Đơn xin nghỉ này đã được xử lý trước đó (changes = 0).' }, { status: 409 });
       }
 
-      const batchRes = await db.batch(batchStmts);
-      if (!batchRes || batchRes[0].meta?.changes !== 1) {
-        return json({ success: false, error: 'Đơn xin nghỉ này đã được xử lý trước đó.' }, { status: 409 });
+      // STEP 2: Update bound class session
+      if (targetDecision === 'approved' && leave.session_id && leave.substitute_teacher_id) {
+        const updateSess = await db.prepare(`
+          UPDATE class_sessions 
+          SET substitute_teacher_id = ?, 
+              substitute_teacher_name = ?, 
+              substitute_notes = ?,
+              status = 'substitute_assigned',
+              updated_at = CURRENT_TIMESTAMP
+          WHERE id = ? AND teacher_id = ?;
+        `).bind(
+          leave.substitute_teacher_id,
+          leave.substitute_teacher_name,
+          `Dạy thay cho ${leave.teacher_name} theo đơn ${leave_id}`,
+          leave.session_id,
+          leave.teacher_id
+        ).run();
+
+        if (!updateSess || updateSess.meta?.changes !== 1) {
+          // Rollback leave status if class session update failed
+          await db.prepare(`
+            UPDATE teacher_leave_requests 
+            SET admin_status = 'pending', updated_at = CURRENT_TIMESTAMP 
+            WHERE id = ?;
+          `).bind(leave_id).run();
+
+          return json({
+            success: false,
+            error: 'Không thể phân công ca học: Ca học không tồn tại hoặc đã thay đổi giáo viên phụ trách.'
+          }, { status: 409 });
+        }
       }
 
       // Notify teacher
@@ -481,7 +491,7 @@ export async function POST({ request, platform }) {
     }
   }
 
-  // ACTION 6: DISBURSE SALARY ADVANCE (Manager / Finance) - Phase 3: Disbursed (Thực chi) - ATOMIC BATCH
+  // ACTION 6: DISBURSE SALARY ADVANCE (Manager / Finance) - Phase 3: Disbursed (Thực chi)
   if (action === 'disburse_salary_advance') {
     if (!manager) {
       return json({ success: false, error: 'Forbidden: Chỉ Ban Quản Lý / Kế toán mới có quyền thực chi' }, { status: 403 });
@@ -501,16 +511,23 @@ export async function POST({ request, platform }) {
     const refCode = disbursement_ref || `UNC_${Date.now().toString().slice(-6)}`;
 
     try {
-      // ATOMIC TRANSACTION BATCH:
-      // 1. Advance MUST be in 'approved' status to be disbursed!
-      const updateStmt = db.prepare(`
+      // STEP 1: Execute UPDATE first. If status is NOT 'approved', this changes 0 rows!
+      const updateRes = await db.prepare(`
         UPDATE teacher_salary_advances 
         SET status = 'disbursed', disbursed_at = CURRENT_TIMESTAMP, disbursed_by = ?, disbursement_ref = ?
         WHERE id = ? AND status = 'approved';
-      `).bind(auth.user.name, refCode, advance_id);
+      `).bind(auth.user.name, refCode, advance_id).run();
 
-      // 2. Append to financial transactions ledger
-      const ledgerStmt = db.prepare(`
+      // If changes !== 1, stop immediately! Do NOT write to ledger!
+      if (!updateRes || updateRes.meta?.changes !== 1) {
+        return json({
+          success: false,
+          error: `Thực chi thất bại: Đơn ứng lương đang ở trạng thái '${advance.status}', chỉ có thể chi khi đã 'approved' và chưa từng thực chi (changes = 0).`
+        }, { status: 409 });
+      }
+
+      // STEP 2: Only after state change is confirmed, write to financial ledger
+      await db.prepare(`
         INSERT INTO salary_transactions 
         (id, teacher_id, teacher_name, transaction_type, amount_vnd, billing_cycle, status, ref_id, notes, created_by)
         VALUES (?, ?, ?, 'advance_disbursed', ?, ?, 'completed', ?, ?, ?);
@@ -523,17 +540,9 @@ export async function POST({ request, platform }) {
         advance_id,
         notes || `Thực chi chuyển khoản mã ${refCode}`,
         auth.user.name
-      );
+      ).run();
 
-      const batchRes = await db.batch([updateStmt, ledgerStmt]);
-      if (!batchRes || batchRes[0].meta?.changes !== 1) {
-        return json({
-          success: false,
-          error: `Thực chi thất bại: Đơn ứng lương đang ở trạng thái '${advance.status}', chỉ có thể chi khi đã 'approved' và chưa từng thực chi.`
-        }, { status: 409 });
-      }
-
-      // 3. Notify teacher
+      // STEP 3: Notify teacher
       await db.prepare(`
         INSERT INTO system_notifications (id, target_role, target_user_id, title, body, category, reference_id)
         VALUES (?, 'teacher', ?, 'Kế toán đã thực chi ứng lương', ?, 'salary', ?);
@@ -550,7 +559,7 @@ export async function POST({ request, platform }) {
     }
   }
 
-  // ACTION 7: DEDUCT SALARY ADVANCE (Payroll Engine / Manager) - Phase 4: Deducted (Đối trừ) - ATOMIC BATCH
+  // ACTION 7: DEDUCT SALARY ADVANCE (Payroll Engine / Manager) - Phase 4: Deducted (Đối trừ)
   if (action === 'deduct_salary_advance') {
     if (!manager) {
       return json({ success: false, error: 'Forbidden: Thao tác quyết toán chỉ dành cho Ban Quản Lý' }, { status: 403 });
@@ -569,16 +578,23 @@ export async function POST({ request, platform }) {
     const txId = `tx_ded_${advance_id}_${payroll_id}`;
 
     try {
-      // ATOMIC TRANSACTION BATCH:
-      // 1. Advance MUST be in 'disbursed' status! If changes !== 1, fail closed!
-      const updateStmt = db.prepare(`
+      // STEP 1: Execute UPDATE first. Only transitions if status === 'disbursed'!
+      const updateRes = await db.prepare(`
         UPDATE teacher_salary_advances 
         SET status = 'deducted', deducted_at = CURRENT_TIMESTAMP, deducted_payroll_id = ?
         WHERE id = ? AND status = 'disbursed';
-      `).bind(payroll_id, advance_id);
+      `).bind(payroll_id, advance_id).run();
 
-      // 2. Insert into ledger (has UNIQUE constraint on transaction_type, ref_id)
-      const ledgerStmt = db.prepare(`
+      // If changes !== 1, stop immediately! Do NOT write to ledger!
+      if (!updateRes || updateRes.meta?.changes !== 1) {
+        return json({
+          success: false,
+          error: 'Không thể đối trừ: Khoản ứng lương này đã được đối trừ trước đó hoặc chưa được thực chi (changes = 0).'
+        }, { status: 409 });
+      }
+
+      // STEP 2: Only after state change is confirmed, write to financial ledger
+      await db.prepare(`
         INSERT INTO salary_transactions 
         (id, teacher_id, teacher_name, transaction_type, amount_vnd, billing_cycle, status, ref_id, notes, created_by)
         VALUES (?, ?, ?, 'advance_deducted', ?, ?, 'completed', ?, ?, ?);
@@ -591,16 +607,7 @@ export async function POST({ request, platform }) {
         advance_id,
         `Đối trừ quyết toán vào bảng lương ${payroll_id}`,
         auth.user.name
-      );
-
-      const batchRes = await db.batch([updateStmt, ledgerStmt]);
-      // STRICT CHECK: Ensure update statement actually changed 1 row!
-      if (!batchRes || batchRes[0].meta?.changes !== 1) {
-        return json({
-          success: false,
-          error: 'Không thể đối trừ: Khoản ứng lương này đã được đối trừ trước đó hoặc chưa được thực chi (changes = 0).'
-        }, { status: 409 });
-      }
+      ).run();
 
       return json({ success: true, message: 'Đã đối trừ khoản ứng lương thành công', transaction_id: txId });
     } catch (e) {

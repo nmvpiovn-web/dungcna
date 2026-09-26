@@ -214,10 +214,11 @@ export async function POST({ request, platform }) {
           final_amount_vnd = excluded.final_amount_vnd,
           status = excluded.status,
           approved_by = excluded.approved_by,
-          updated_at = CURRENT_TIMESTAMP;
+          updated_at = CURRENT_TIMESTAMP
+        WHERE (tuition_bills.status = 'draft' OR ? = 1);
       `;
 
-      await db.prepare(d1Sql).bind(
+      const runRes = await db.prepare(d1Sql).bind(
         billData.id, billData.student_id || 'student_1', billData.student_name, billData.age || 13, billData.grade_level || 'Lớp 7',
         billData.program_name || 'Tiếng Anh K12', billData.billing_period || 'Tháng 10/2026',
         billData.base_tuition_vnd, billData.attendance_total_sessions || 12, billData.attendance_attended_sessions || 12,
@@ -229,8 +230,16 @@ export async function POST({ request, platform }) {
         billData.eval_speaking || 8.0, billData.eval_grammar || 8.0, billData.test_score_15m || 8.0,
         billData.test_score_45m || 8.5, billData.template_id || 1, billData.status,
         billData.superadmin_notes || '', billData.approved_by,
-        billData.parent_name || '', billData.parent_phone || '', billData.parent_zalo_id || ''
+        billData.parent_name || '', billData.parent_phone || '', billData.parent_zalo_id || '',
+        manager ? 1 : 0
       ).run();
+
+      if (body.id && (!runRes || runRes.meta?.changes !== 1)) {
+        return json({
+          success: false,
+          error: 'Forbidden: Hóa đơn đã được duyệt hoặc không còn ở trạng thái dự thảo (draft). Giáo viên không được phép ghi đè.'
+        }, { status: 403 });
+      }
     } else {
       saveTuitionBill(billData);
     }
