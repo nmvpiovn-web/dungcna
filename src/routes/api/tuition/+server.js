@@ -31,19 +31,21 @@ async function ensureStarLedgerTable(db) {
 
   try {
     await db.prepare('ALTER TABLE tuition_bills ADD COLUMN version INTEGER DEFAULT 1;').run();
-  } catch {}
+  } catch (colErr) {
+    if (!colErr?.message || (!colErr.message.includes('duplicate column') && !colErr.message.includes('already exists'))) {
+      throw colErr;
+    }
+  }
 
-  try {
-    await db.prepare(`
-      CREATE TRIGGER IF NOT EXISTS trg_student_stars_no_negative
-      BEFORE UPDATE ON student_stars
-      FOR EACH ROW
-      WHEN NEW.stars_balance < 0
-      BEGIN
-        SELECT RAISE(ABORT, 'INSUFFICIENT_STARS: stars_balance cannot be negative');
-      END;
-    `).run();
-  } catch {}
+  await db.prepare(`
+    CREATE TRIGGER IF NOT EXISTS trg_student_stars_no_negative
+    BEFORE UPDATE ON student_stars
+    FOR EACH ROW
+    WHEN NEW.stars_balance < 0
+    BEGIN
+      SELECT RAISE(ABORT, 'INSUFFICIENT_STARS: stars_balance cannot be negative');
+    END;
+  `).run();
 }
 
 function isManager(user) {
@@ -604,16 +606,14 @@ export async function POST({ request, platform }) {
         }
       }
 
-      // Execute transaction batch
-      let batchResults;
-      if (typeof db.batch === 'function') {
-        batchResults = await db.batch(statements);
-      } else {
-        batchResults = [];
-        for (const s of statements) {
-          batchResults.push(await s.run());
-        }
+      // Execute transaction batch (Fail-Closed if driver does not support atomic batch)
+      if (typeof db.batch !== 'function') {
+        return json({
+          success: false,
+          error: 'FailClosed: Database driver does not support atomic batch transactions'
+        }, { status: 500 });
       }
+      const batchResults = await db.batch(statements);
 
       // Check the bill statement result (always the last statement in the batch)
       const billRunRes = batchResults[batchResults.length - 1];
@@ -721,15 +721,13 @@ export async function DELETE({ url, request, platform }) {
           DELETE FROM tuition_bills WHERE id = ? AND version = ? AND stars_deducted = ?;
         `).bind(billId, expectedVersion, starsDeducted);
 
-        let batchRes;
-        if (typeof db.batch === 'function') {
-          batchRes = await db.batch([stmtStars, stmtLedger, stmtDelete]);
-        } else {
-          await stmtStars.run();
-          await stmtLedger.run();
-          const delRes = await stmtDelete.run();
-          batchRes = [null, null, delRes];
+        if (typeof db.batch !== 'function') {
+          return json({
+            success: false,
+            error: 'FailClosed: Database driver does not support atomic batch transactions'
+          }, { status: 500 });
         }
+        const batchRes = await db.batch([stmtStars, stmtLedger, stmtDelete]);
 
         const delResult = batchRes[2];
         if (!delResult || delResult.meta?.changes !== 1) {
@@ -740,13 +738,14 @@ export async function DELETE({ url, request, platform }) {
         }
       } else {
         const stmtDelete = db.prepare('DELETE FROM tuition_bills WHERE id = ? AND version = ?;').bind(billId, expectedVersion);
-        let delRes;
-        if (typeof db.batch === 'function') {
-          const res = await db.batch([stmtDelete]);
-          delRes = res[0];
-        } else {
-          delRes = await stmtDelete.run();
+        if (typeof db.batch !== 'function') {
+          return json({
+            success: false,
+            error: 'FailClosed: Database driver does not support atomic batch transactions'
+          }, { status: 500 });
         }
+        const res = await db.batch([stmtDelete]);
+        const delRes = res[0];
         if (!delRes || delRes.meta?.changes !== 1) {
           return json({
             success: false,
