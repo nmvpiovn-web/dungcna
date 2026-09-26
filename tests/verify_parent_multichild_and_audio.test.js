@@ -319,7 +319,7 @@ describe('PARENT MULTI-CHILD, AUDIO STREAMING & EXAM BANK AUDIT SUITE', () => {
   // 3. EXAMS QUESTION BANK & DYNAMIC GENERATOR
   // =========================================================================
   describe('3. Exams Question Bank & Dynamic Generator', () => {
-    test('EX-01: Dynamic test generator produces 10 questions for Grade 7 (15m)', async () => {
+    test('EX-01: Dynamic test generator produces 15 questions for Grade 7 (15m blueprint)', async () => {
       const url = new URL('http://localhost/api/exams?random=1&grade=7&duration=15');
       const res = await getExams({ url });
       assert.strictEqual(res.status, 200);
@@ -327,21 +327,21 @@ describe('PARENT MULTI-CHILD, AUDIO STREAMING & EXAM BANK AUDIT SUITE', () => {
       assert.strictEqual(json.success, true);
       assert.strictEqual(json.is_generated, true);
       assert.strictEqual(json.grade, 7);
-      assert.strictEqual(json.total_questions, 10);
+      assert.strictEqual(json.total_questions, 15);
       assert.ok(json.questions.every(q => q.grade === 7));
       // Answers MUST NOT be leaked in random exams
       assert.strictEqual(json.questions[0].correct_answer, undefined);
       assert.strictEqual(json.questions[0].explanation, undefined);
     });
 
-    test('EX-02: Dynamic test generator produces 25 questions for Grade 12 (45m)', async () => {
+    test('EX-02: Dynamic test generator produces 30 questions for Grade 12 (45m blueprint)', async () => {
       const url = new URL('http://localhost/api/exams?random=1&grade=12&duration=45');
       const res = await getExams({ url });
       assert.strictEqual(res.status, 200);
       const json = await res.json();
       assert.strictEqual(json.success, true);
       assert.strictEqual(json.grade, 12);
-      assert.strictEqual(json.total_questions, 25);
+      assert.strictEqual(json.total_questions, 30);
       assert.ok(json.questions.every(q => q.grade === 12));
     });
 
@@ -374,7 +374,7 @@ describe('PARENT MULTI-CHILD, AUDIO STREAMING & EXAM BANK AUDIT SUITE', () => {
       assert.ok(json.questions[0].explanation !== undefined, 'Teacher key must include explanation');
     });
 
-    test('EX-05: Server-side scoring evaluates answers from bank and strictly ignores client body.score', async () => {
+    test('EX-05: Server-side scoring evaluates answers, ignores client max_score tampering, and persists to D1', async () => {
       const url = new URL('http://localhost/api/exams');
       const req = new Request(url, {
         method: 'POST',
@@ -385,8 +385,9 @@ describe('PARENT MULTI-CHILD, AUDIO STREAMING & EXAM BANK AUDIT SUITE', () => {
         body: JSON.stringify({
           exam_id: 'ex_g7_quick_5m',
           score: 10.0, // MALICIOUS CLIENT ATTEMPT: Claims perfect score 10.0
+          max_score: 100.0, // MALICIOUS ATTEMPT: Inflate max_score scale to 100
           answers: {
-            'q_g7_5m_01': 'A' // Submit answer (evaluated on server against question bank)
+            '379': 'A' // 1 correct answer out of 5 questions = 2.0 / 10.0
           }
         })
       });
@@ -394,8 +395,18 @@ describe('PARENT MULTI-CHILD, AUDIO STREAMING & EXAM BANK AUDIT SUITE', () => {
       assert.strictEqual(res.status, 200);
       const json = await res.json();
       assert.strictEqual(json.success, true);
-      assert.ok(json.server_calculated_score !== undefined);
+      // Server determines max_score = 10.0, rejecting client 100.0
+      assert.strictEqual(json.max_score, 10.0, 'Server must enforce authoritative 10-point scale');
+      assert.strictEqual(json.server_calculated_score, 2.0, 'Score must be calculated exactly from question bank (1/5 * 10 = 2.0)');
       assert.strictEqual(json.attempt.user_id, 'usr_child_1');
+
+      // Verify D1 Persistence & readback across worker instances
+      const d1Record = await mockPlatform.env.DB.prepare(
+        'SELECT * FROM exam_attempts WHERE id = ?'
+      ).bind(json.attempt.id).first();
+      assert.ok(d1Record, 'Attempt must be persisted into Cloudflare D1 table');
+      assert.strictEqual(d1Record.user_id, 'usr_child_1');
+      assert.strictEqual(Number(d1Record.score), 2.0);
     });
 
     test('EX-06: Anti-empty submission rejects attempts with empty answers with HTTP 400', async () => {

@@ -36,11 +36,14 @@ export async function GET({ url, request, platform }) {
   const isRandom = url.searchParams.get('random') === '1';
 
   try {
-    // 1. Dynamic random test generator from questions pool (Anti-leakage enforced)
+    // 1. Dynamic random test generator from questions pool (Strict blueprints & shortage check)
     if (isRandom) {
       const targetGrade = grade ? parseInt(grade, 10) : 7;
       const duration = parseInt(url.searchParams.get('duration') || '15', 10);
       const skill = url.searchParams.get('skill') || 'all';
+
+      // Standard Master Plan blueprints: 5m: 5, 15m: 15, 30m: 20, 45m: 30, thpt_qg: 40
+      const requiredCount = duration <= 5 ? 5 : (duration <= 15 ? 15 : (duration <= 30 ? 20 : (duration <= 45 ? 30 : 40)));
 
       let pool = [...questionsData];
       if (targetGrade > 0) {
@@ -51,11 +54,23 @@ export async function GET({ url, request, platform }) {
 
       if (skill !== 'all') {
         const filteredBySkill = pool.filter(q => (q.skill || '').toLowerCase().includes(skill.toLowerCase()));
-        if (filteredBySkill.length >= 5) pool = filteredBySkill;
+        if (filteredBySkill.length < requiredCount) {
+          return json({
+            success: false,
+            error: `ShortageError: Ngân hàng câu hỏi không đủ số lượng cho kỹ năng '${skill}'. Yêu cầu ${requiredCount} câu, hiện có ${filteredBySkill.length} câu.`
+          }, { status: 400 });
+        }
+        pool = filteredBySkill;
       }
 
-      const count = duration <= 5 ? 5 : (duration <= 15 ? 10 : Math.min(25, pool.length));
-      const shuffled = [...pool].sort(() => Math.random() - 0.5).slice(0, count);
+      if (pool.length < requiredCount) {
+        return json({
+          success: false,
+          error: `ShortageError: Ngân hàng câu hỏi khối ${targetGrade} không đủ số lượng (${pool.length}/${requiredCount} câu) cho bài thi ${duration} phút.`
+        }, { status: 400 });
+      }
+
+      const shuffled = [...pool].sort(() => Math.random() - 0.5).slice(0, requiredCount);
 
       // SECURITY RULE: Never leak correct_answer and explanation in random practice exams
       const sanitizedQuestions = (isStaff && includeAnswers) 
@@ -72,18 +87,59 @@ export async function GET({ url, request, platform }) {
       });
     }
 
-    // 2. Exam attempts (Strict RBAC protection)
+    // 2. Exam attempts (Strict RBAC & D1 Persistence)
     let attempts = [];
     if (user) {
-      attempts = getAllExamAttempts();
-      if (!isStaff) {
-        attempts = attempts.filter(a => a.user_id === user.id);
-      } else if (studentId) {
-        attempts = attempts.filter(a => a.user_id === studentId);
-      }
+      if (platform?.env?.DB) {
+        try {
+          await platform.env.DB.prepare(`
+            CREATE TABLE IF NOT EXISTS exam_attempts (
+              id TEXT PRIMARY KEY,
+              user_id TEXT NOT NULL,
+              user_name TEXT,
+              user_email TEXT,
+              exam_id TEXT NOT NULL,
+              exam_title TEXT,
+              score REAL NOT NULL,
+              max_score REAL NOT NULL,
+              answers_json TEXT NOT NULL,
+              duration_seconds INTEGER DEFAULT 0,
+              session_id TEXT,
+              class_id TEXT,
+              created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            );
+          `).run();
 
-      if (examId) attempts = attempts.filter(a => a.exam_id === examId);
-      if (sessionId) attempts = attempts.filter(a => a.session_id === sessionId);
+          let query = 'SELECT * FROM exam_attempts WHERE 1=1';
+          const params = [];
+          if (!isStaff) {
+            query += ' AND user_id = ?';
+            params.push(user.id);
+          } else if (studentId) {
+            query += ' AND user_id = ?';
+            params.push(studentId);
+          }
+          if (examId) {
+            query += ' AND exam_id = ?';
+            params.push(examId);
+          }
+          if (sessionId) {
+            query += ' AND session_id = ?';
+            params.push(sessionId);
+          }
+          query += ' ORDER BY created_at DESC;';
+
+          const d1Res = await platform.env.DB.prepare(query).bind(...params).all();
+          attempts = d1Res.results || [];
+        } catch (dbErr) {
+          console.warn('D1 exam_attempts read fallback:', dbErr.message);
+          attempts = getAllExamAttempts();
+          if (!isStaff) attempts = attempts.filter(a => a.user_id === user.id);
+        }
+      } else {
+        attempts = getAllExamAttempts();
+        if (!isStaff) attempts = attempts.filter(a => a.user_id === user.id);
+      }
     }
 
     let exams = getExams();
@@ -168,17 +224,31 @@ export async function POST({ request, platform }) {
     }
 
     // ANTI-EMPTY SUBMISSION CHECK
-    if (Object.keys(userAnswers).length === 0) {
+    if (!userAnswers || typeof userAnswers !== 'object' || Object.keys(userAnswers).length === 0) {
       return json({ success: false, error: 'EmptySubmission: Không thể nộp bài thi trống (chưa chọn câu trả lời)' }, { status: 400 });
     }
 
+    // SERVER-SIDE DETERMINED MAX SCORE:
+    // Never trust client-controlled body.max_score!
+    const officialExam = getExams().find(e => e.id === examId);
+    const maxScore = isStaff && body.max_score !== undefined
+      ? Math.min(100, Math.max(1, Number(body.max_score)))
+      : (officialExam?.max_score ? Number(officialExam.max_score) : 10.0);
+
     // SERVER-SIDE SCORING: Calculate score from authoritative question bank
-    // NEVER TRUST CLIENT-SUPPLIED body.score!
     const examQuestions = questionsData.filter(q => q.exam_id === examId);
     let serverCalculatedScore = 0;
-    const maxScore = Number(body.max_score) || 10.0;
 
     if (examQuestions.length > 0) {
+      const validQuestionKeys = new Set(examQuestions.map(q => q.id !== undefined ? String(q.id) : String(q.question_index)));
+      
+      // Foreign key & type validation: Ensure submitted answers are valid primitive types
+      for (const [key, val] of Object.entries(userAnswers)) {
+        if (typeof val === 'object' && val !== null) {
+          return json({ success: false, error: `InvalidAnswerType: Câu trả lời cho '${key}' phải là chuỗi đáp án hợp lệ` }, { status: 400 });
+        }
+      }
+
       let correctCount = 0;
       for (const q of examQuestions) {
         const qKey = q.id !== undefined ? String(q.id) : String(q.question_index);
@@ -195,24 +265,79 @@ export async function POST({ request, platform }) {
       serverCalculatedScore = 0;
     }
 
-    const saved = saveExamAttempt({
+    const attemptId = `att_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+    const saved = {
+      id: attemptId,
       user_id: effectiveUserId,
       user_name: effectiveUserName,
       user_email: user.email || body.user_email || '',
       exam_id: examId,
-      exam_title: body.exam_title || 'Bài kiểm tra',
+      exam_title: body.exam_title || officialExam?.title || 'Bài kiểm tra',
       score: serverCalculatedScore,
       max_score: maxScore,
       answers: userAnswers,
       duration_seconds: body.duration_seconds || 0,
       session_id: body.session_id || '',
-      class_id: body.class_id || ''
-    });
+      class_id: body.class_id || '',
+      created_at: new Date().toISOString()
+    };
+
+    // D1 Persistence with fail-closed guarantee
+    if (platform?.env?.DB) {
+      try {
+        await platform.env.DB.prepare(`
+          CREATE TABLE IF NOT EXISTS exam_attempts (
+            id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            user_name TEXT,
+            user_email TEXT,
+            exam_id TEXT NOT NULL,
+            exam_title TEXT,
+            score REAL NOT NULL,
+            max_score REAL NOT NULL,
+            answers_json TEXT NOT NULL,
+            duration_seconds INTEGER DEFAULT 0,
+            session_id TEXT,
+            class_id TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+          );
+        `).run();
+
+        await platform.env.DB.prepare(`
+          INSERT INTO exam_attempts (
+            id, user_id, user_name, user_email, exam_id, exam_title,
+            score, max_score, answers_json, duration_seconds, session_id, class_id
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+        `).bind(
+          saved.id,
+          saved.user_id,
+          saved.user_name,
+          saved.user_email,
+          saved.exam_id,
+          saved.exam_title,
+          saved.score,
+          saved.max_score,
+          JSON.stringify(saved.answers),
+          saved.duration_seconds,
+          saved.session_id,
+          saved.class_id
+        ).run();
+      } catch (dbErr) {
+        console.error('D1 exam_attempts write error:', dbErr);
+        return json({
+          success: false,
+          error: `DatabasePersistenceError: Không thể lưu kết quả thi vào D1 (${dbErr.message})`
+        }, { status: 500 });
+      }
+    }
+
+    saveExamAttempt(saved);
 
     return json({
       success: true,
       message: 'Đã chấm điểm và lưu kết quả thi thành công!',
       server_calculated_score: serverCalculatedScore,
+      max_score: maxScore,
       attempt: saved
     });
   } catch (err) {

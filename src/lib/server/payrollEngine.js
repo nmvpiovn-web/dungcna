@@ -64,12 +64,13 @@ export function calculateTeacherMonthlyPayroll({
   existingPeriod = null,
   customRateModel = null
 }) {
-  // 1. Locked Period Protection: Cannot recalculate if period is locked
-  if (existingPeriod && existingPeriod.status === 'locked') {
-    throw new Error(`LockedPayrollPeriodError: Kỳ lương ${billingCycle} đã bị khóa sổ (Locked), không được phép tính lại.`);
+  // 1. Locked / Closed / Paid Period Protection: Cannot recalculate finalized cycles
+  if (existingPeriod && ['locked', 'closed', 'paid'].includes(existingPeriod.status)) {
+    throw new Error(`LockedPayrollPeriodError: Kỳ lương ${billingCycle} có trạng thái '${existingPeriod.status}', không được phép tính lại.`);
   }
 
   const rateModel = { ...DEFAULT_RATE_MODEL, ...(customRateModel || {}) };
+  const mode = rateModel.mode || 'hourly'; // 'hourly' | 'per_session' | 'fixed_monthly' | 'hybrid'
 
   let mainSessionsCount = 0;
   let substituteSessionsCount = 0;
@@ -79,12 +80,33 @@ export function calculateTeacherMonthlyPayroll({
   const sessionDetails = [];
 
   for (const s of sessions) {
+    // Strictly filter: only sessions belonging to this teacher
+    if (s.teacher_id && s.teacher_id !== teacherId) {
+      continue;
+    }
+    // Strictly filter: only sessions in this billing cycle (if date available)
+    if (s.session_date && billingCycle && !s.session_date.startsWith(billingCycle)) {
+      continue;
+    }
     // Strictly filter: only completed or confirmed sessions are payable
     if (s.status !== 'completed' && s.status !== 'confirmed') {
       continue;
     }
 
-    const pay = calculateSessionPay(s, rateModel);
+    let pay = 0;
+    if (mode === 'per_session') {
+      const baseSessionRate = rateModel.rate_per_session || 300000;
+      const role = s.role || 'main_teacher';
+      const mult = rateModel.role_multipliers?.[role] ?? 1.0;
+      pay = Math.round(baseSessionRate * mult);
+    } else if (mode === 'fixed_monthly') {
+      // In purely fixed monthly, individual sessions are logged for attendance but pay is base salary
+      pay = 0;
+    } else {
+      // Standard hourly or hybrid calculation
+      pay = calculateSessionPay(s, rateModel);
+    }
+
     grossTeachingPay += pay;
 
     if (s.role === 'substitute') {
@@ -104,6 +126,11 @@ export function calculateTeacherMonthlyPayroll({
     });
   }
 
+  // Handle fixed monthly base component if configured in rateModel
+  if (mode === 'fixed_monthly' || mode === 'hybrid') {
+    grossTeachingPay += Math.round(Number(rateModel.fixed_monthly_base || 0));
+  }
+
   // 2. Gross Total = Teaching Pay + Bonuses - Penalties
   const sanitizedBonus = Math.round(Math.max(0, Number(bonusAmount || 0)));
   const sanitizedPenalty = Math.round(Math.max(0, Number(penaltyAmount || 0)));
@@ -114,6 +141,14 @@ export function calculateTeacherMonthlyPayroll({
   const advanceDetails = [];
 
   for (const adv of advances) {
+    // Strictly filter: only advances belonging to this teacher
+    if (adv.teacher_id && adv.teacher_id !== teacherId) {
+      continue;
+    }
+    // Strictly filter: only advances belonging to this billing cycle
+    if (adv.billing_cycle && adv.billing_cycle !== billingCycle) {
+      continue;
+    }
     // Only deduct if actually disbursed to the teacher
     if (adv.status === 'disbursed') {
       const advAmount = Math.round(Number(adv.amount || 0));
