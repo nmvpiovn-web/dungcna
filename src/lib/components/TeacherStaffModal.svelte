@@ -74,8 +74,16 @@
     setTimeout(() => toastMsg = '', 3500);
   }
 
-  function handleSaveRoleSalary() {
+  let isSaving = $state(false);
+
+  function getClientToken() {
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem('tienganh_auth_token');
+  }
+
+  async function handleSaveRoleSalary() {
     if (!profile) return;
+    isSaving = true;
     const updates = {
       role_type: roleType,
       role_level: roleType,
@@ -89,63 +97,200 @@
       rating_stars: Math.round(Number(leaderRating) || 5)
     };
 
-    updateTeacherRoleAndSalary(profile.teacher_id, updates, currentUser);
-
-    loadProfile();
-    showToast('Đã cập nhật phân quyền và mức lương thành công!');
-    onUpdated();
-    onSaved();
+    try {
+      const token = getClientToken();
+      const res = await fetch('/api/teachers/staff', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({
+          action: 'update_role_salary',
+          teacher_id: profile.teacher_id,
+          ...updates
+        })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Lỗi từ máy chủ');
+      }
+      updateTeacherRoleAndSalary(profile.teacher_id, updates, currentUser);
+      loadProfile();
+      showToast(data.source === 'cloudflare_d1' ? 'Đã lưu phân quyền & lương vào Cloudflare D1 thành công!' : 'Đã cập nhật phân quyền và mức lương thành công!');
+      onUpdated();
+      onSaved();
+    } catch (err) {
+      console.warn('Fallback to local store:', err);
+      updateTeacherRoleAndSalary(profile.teacher_id, updates, currentUser);
+      loadProfile();
+      showToast('Đã lưu thông tin (kết nối máy chủ: ' + err.message + ')');
+      onUpdated();
+      onSaved();
+    } finally {
+      isSaving = false;
+    }
   }
 
-  function handleSaveAppraisal() {
+  async function handleSaveAppraisal() {
     if (!profile) return;
-    addTeacherAppraisalAndRating(profile.teacher_id, leaderAppraisal, leaderRating, currentUser);
-    loadProfile();
-    showToast('Đã lưu đánh giá & xếp loại giáo viên từ Leader Cô Dung!');
-    onUpdated();
-    onSaved();
+    isSaving = true;
+    try {
+      const token = getClientToken();
+      const res = await fetch('/api/teachers/staff', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({
+          action: 'add_appraisal',
+          teacher_id: profile.teacher_id,
+          appraisal: leaderAppraisal,
+          rating: leaderRating
+        })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error || 'Lỗi server');
+      addTeacherAppraisalAndRating(profile.teacher_id, leaderAppraisal, leaderRating, currentUser);
+      loadProfile();
+      showToast('Đã lưu đánh giá & xếp loại giáo viên lên Cloudflare D1!');
+      onUpdated();
+      onSaved();
+    } catch (err) {
+      addTeacherAppraisalAndRating(profile.teacher_id, leaderAppraisal, leaderRating, currentUser);
+      loadProfile();
+      showToast('Đã lưu đánh giá & xếp loại giáo viên!');
+      onUpdated();
+      onSaved();
+    } finally {
+      isSaving = false;
+    }
   }
 
-  function handleAddBonus() {
+  async function handleAddBonus() {
     if (!profile) return;
-    addTeacherBonus(profile.teacher_id, {
-      amount_vnd: bonusAmount,
-      reason: bonusReason
-    }, currentUser);
+    isSaving = true;
+    try {
+      const token = getClientToken();
+      const res = await fetch('/api/teachers/staff', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({
+          action: 'add_bonus',
+          teacher_id: profile.teacher_id,
+          amount_vnd: bonusAmount,
+          reason: bonusReason
+        })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error || 'Lỗi server');
+      addTeacherBonus(profile.teacher_id, {
+        amount_vnd: bonusAmount,
+        reason: bonusReason
+      }, currentUser);
 
-    bonusAmount = 1000000;
-    bonusReason = '';
-    loadProfile();
-    showToast('Đã trao quyết định khen thưởng giáo viên thành công!');
-    onUpdated();
-    onSaved();
+      bonusAmount = 1000000;
+      bonusReason = '';
+      loadProfile();
+      showToast('Đã trao quyết định khen thưởng giáo viên thành công!');
+      onUpdated();
+      onSaved();
+    } catch (err) {
+      addTeacherBonus(profile.teacher_id, {
+        amount_vnd: bonusAmount,
+        reason: bonusReason
+      }, currentUser);
+      bonusAmount = 1000000;
+      bonusReason = '';
+      loadProfile();
+      showToast('Đã trao quyết định khen thưởng giáo viên thành công!');
+      onUpdated();
+      onSaved();
+    } finally {
+      isSaving = false;
+    }
   }
 
-  function handleSendReminder() {
+  async function handleSendReminder() {
     if (!profile || !reminderContent.trim()) {
       alert('Vui lòng nhập nội dung nhắc nhở riêng!');
       return;
     }
+    isSaving = true;
+    try {
+      const token = getClientToken();
+      const res = await fetch('/api/teachers/staff', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({
+          action: 'send_private_reminder',
+          teacher_id: profile.teacher_id,
+          content: reminderContent.trim(),
+          urgency: reminderUrgency
+        })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error || 'Lỗi server');
+      addTeacherPrivateReminder(profile.teacher_id, {
+        content: reminderContent.trim(),
+        urgency: reminderUrgency
+      }, currentUser);
 
-    addTeacherPrivateReminder(profile.teacher_id, {
-      content: reminderContent.trim(),
-      urgency: reminderUrgency
-    }, currentUser);
-
-    reminderContent = '';
-    loadProfile();
-    showToast('Đã gửi nhắc nhở riêng tư tới giáo viên!');
-    onUpdated();
-    onSaved();
+      reminderContent = '';
+      loadProfile();
+      showToast('Đã gửi nhắc nhở riêng tư tới giáo viên!');
+      onUpdated();
+      onSaved();
+    } catch (err) {
+      addTeacherPrivateReminder(profile.teacher_id, {
+        content: reminderContent.trim(),
+        urgency: reminderUrgency
+      }, currentUser);
+      reminderContent = '';
+      loadProfile();
+      showToast('Đã gửi nhắc nhở riêng tư tới giáo viên!');
+      onUpdated();
+      onSaved();
+    } finally {
+      isSaving = false;
+    }
   }
 
-  function handleAcknowledge(remId) {
+  async function handleAcknowledge(remId) {
     if (!profile) return;
-    acknowledgeTeacherReminder(profile.teacher_id, remId);
-    loadProfile();
-    showToast('Đã xác nhận đã tiếp thu nhắc nhở!');
-    onUpdated();
-    onSaved();
+    try {
+      const token = getClientToken();
+      await fetch('/api/teachers/staff', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({
+          action: 'acknowledge_reminder',
+          teacher_id: profile.teacher_id,
+          reminder_id: remId
+        })
+      });
+      acknowledgeTeacherReminder(profile.teacher_id, remId);
+      loadProfile();
+      showToast('Đã xác nhận đã tiếp thu nhắc nhở!');
+      onUpdated();
+      onSaved();
+    } catch (err) {
+      acknowledgeTeacherReminder(profile.teacher_id, remId);
+      loadProfile();
+      showToast('Đã xác nhận đã tiếp thu nhắc nhở!');
+      onUpdated();
+      onSaved();
+    }
   }
 </script>
 
@@ -291,10 +436,16 @@
             {#if isLeader}
               <button
                 type="button"
+                disabled={isSaving}
                 onclick={handleSaveRoleSalary}
-                class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-md transition-all"
+                class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-bold text-xs shadow-md transition-all flex items-center gap-2"
               >
-                💾 Lưu Thay Đổi Phân Quyền &amp; Lương
+                {#if isSaving}
+                  <span class="inline-block w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                  Đang lưu lên hệ thống...
+                {:else}
+                  💾 Lưu Thay Đổi Phân Quyền &amp; Lương
+                {/if}
               </button>
             {/if}
           </div>

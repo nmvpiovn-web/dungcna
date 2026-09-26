@@ -1,9 +1,15 @@
 <script>
   import { onMount } from 'svelte';
-  import vaultData from '$lib/data/second_brain_vault.json';
-  import { getCurrentUser, isTeacherOrAdmin, isSuperAdmin } from '$lib/unifiedStore';
+  import { getCurrentUser, getAuthToken, isTeacherOrAdmin, isSuperAdmin } from '$lib/unifiedStore';
 
   let currentUser = $state(null);
+  let vaultNotes = $state([]);
+  let vaultFolders = $state([]);
+  let vaultVersion = $state('2.2.0');
+  let isLoading = $state(true);
+  let isForbidden = $state(false);
+  let errorMessage = $state('');
+
   let searchQuery = $state('');
   let selectedFolder = $state('all');
   let selectedNoteId = $state('00_INDEX_MOC');
@@ -14,10 +20,63 @@
 
   const LOCAL_VAULT_PATH = 'c:\\Users\\admin\\.gemini\\antigravity\\scratch\\tienganh7-sveltekit\\obsidian_vault';
 
-  onMount(() => {
+  async function loadVault() {
     currentUser = getCurrentUser();
+    if (!currentUser || !isTeacherOrAdmin(currentUser)) {
+      isForbidden = true;
+      isLoading = false;
+      vaultNotes = [];
+      return;
+    }
+
+    const token = getAuthToken();
+    if (!token) {
+      isForbidden = true;
+      isLoading = false;
+      vaultNotes = [];
+      return;
+    }
+
+    try {
+      isLoading = true;
+      const res = await fetch('/api/second-brain', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (res.status === 401 || res.status === 403) {
+        isForbidden = true;
+        isLoading = false;
+        vaultNotes = [];
+        return;
+      }
+
+      const data = await res.json();
+      if (data.success) {
+        vaultNotes = data.notes || [];
+        vaultFolders = data.folders || [];
+        vaultVersion = data.version || '2.2.0';
+        isForbidden = false;
+      } else {
+        errorMessage = data.error || 'Lỗi khi tải kho tri thức';
+        isForbidden = true;
+        vaultNotes = [];
+      }
+    } catch (err) {
+      errorMessage = err.message || 'Lỗi kết nối';
+      isForbidden = true;
+      vaultNotes = [];
+    } finally {
+      isLoading = false;
+    }
+  }
+
+  onMount(() => {
+    loadVault();
     const handleAuth = (e) => {
       currentUser = e.detail;
+      loadVault();
     };
     window.addEventListener('tienganh:auth-change', handleAuth);
     return () => {
@@ -25,43 +84,47 @@
     };
   });
 
-  const folders = [
-    { id: '07_GOOGLE_DRIVE_LIBRARY', name: '📄 07. Tài liệu Google Drive', count: vaultData.notes.filter(n => n.folder === '07_GOOGLE_DRIVE_LIBRARY').length },
-    { id: 'all', name: '📂 Toàn Bộ Tri Thức', count: vaultData.notes.length },
-    { id: 'Root', name: '🏠 Bản Đồ Tổng (MOC)', count: vaultData.notes.filter(n => n.folder === 'Root').length },
-    { id: '01_CURRICULUM_GDPT', name: '📚 01. Chương Trình GDPT', count: vaultData.notes.filter(n => n.folder.includes('01')).length },
-    { id: '02_GRAMMAR_KNOWLEDGE_BASE', name: '📐 02. Chuyên Đề Ngữ Pháp', count: vaultData.notes.filter(n => n.folder.includes('02')).length },
-    { id: '03_VOCABULARY_ATLAS', name: '🔤 03. Từ Vựng & Phonics', count: vaultData.notes.filter(n => n.folder.includes('03')).length },
-    { id: '04_EXAMS_AND_QUESTION_BANK', name: '📝 04. Ngân Hàng Đề Thi', count: vaultData.notes.filter(n => n.folder.includes('04')).length },
-    { id: '05_TEACHING_SOP_AND_PEDAGOGY', name: '👩‍🏫 05. Sư Phạm & SOP', count: vaultData.notes.filter(n => n.folder.includes('05')).length },
-    { id: '06_CROSS_DISCIPLINARY_SYNAPSES', name: '⚡ 06. Mạng Nơ-ron & Synapses', count: vaultData.notes.filter(n => n.folder.includes('06')).length }
-  ];
+  let folders = $derived.by(() => {
+    if (vaultFolders.length > 0) return vaultFolders;
+    return [
+      { id: '07_GOOGLE_DRIVE_LIBRARY', name: '📄 07. Tài liệu Google Drive', count: vaultNotes.filter(n => n.folder === '07_GOOGLE_DRIVE_LIBRARY').length },
+      { id: 'all', name: '📂 Toàn Bộ Tri Thức', count: vaultNotes.length },
+      { id: 'Root', name: '🏠 Bản Đồ Tổng (MOC)', count: vaultNotes.filter(n => n.folder === 'Root').length },
+      { id: '01_CURRICULUM_GDPT', name: '📚 01. Chương Trình GDPT', count: vaultNotes.filter(n => n.folder && n.folder.includes('01')).length },
+      { id: '02_GRAMMAR_KNOWLEDGE_BASE', name: '📐 02. Chuyên Đề Ngữ Pháp', count: vaultNotes.filter(n => n.folder && n.folder.includes('02')).length },
+      { id: '03_VOCABULARY_ATLAS', name: '🔤 03. Từ Vựng & Phonics', count: vaultNotes.filter(n => n.folder && n.folder.includes('03')).length },
+      { id: '04_EXAMS_AND_QUESTION_BANK', name: '📝 04. Ngân Hàng Đề Thi', count: vaultNotes.filter(n => n.folder && n.folder.includes('04')).length },
+      { id: '05_TEACHING_SOP_AND_PEDAGOGY', name: '👩‍🏫 05. Sư Phạm & SOP', count: vaultNotes.filter(n => n.folder && n.folder.includes('05')).length },
+      { id: '06_CROSS_DISCIPLINARY_SYNAPSES', name: '⚡ 06. Mạng Nơ-ron & Synapses', count: vaultNotes.filter(n => n.folder && n.folder.includes('06')).length }
+    ];
+  });
 
   let filteredNotes = $derived.by(() => {
-    let list = vaultData.notes;
+    let list = vaultNotes;
     if (selectedFolder !== 'all') {
       list = list.filter(n => n.folder === selectedFolder || n.folder.includes(selectedFolder));
     }
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase().trim();
       list = list.filter(n => 
-        n.title.toLowerCase().includes(q) ||
-        n.content.toLowerCase().includes(q) ||
-        n.tags.some(t => t.toLowerCase().includes(q))
+        (n.title || '').toLowerCase().includes(q) ||
+        (n.content || '').toLowerCase().includes(q) ||
+        (Array.isArray(n.tags) && n.tags.some(t => t.toLowerCase().includes(q)))
       );
     }
     return list;
   });
 
   let currentNote = $derived.by(() => {
-    return vaultData.notes.find(n => n.id === selectedNoteId || n.id.toLowerCase() === selectedNoteId.toLowerCase()) || vaultData.notes[0];
+    if (vaultNotes.length === 0) return null;
+    return vaultNotes.find(n => n.id === selectedNoteId || n.id.toLowerCase() === selectedNoteId.toLowerCase()) || vaultNotes[0];
   });
 
   let currentBacklinks = $derived.by(() => {
     if (!currentNote) return [];
-    return vaultData.notes.filter(n => 
+    return vaultNotes.filter(n => 
       n.id !== currentNote.id && 
-      n.wikilinks.some(wl => wl.target === currentNote.id || wl.target === currentNote.title)
+      Array.isArray(n.wikilinks) && n.wikilinks.some(wl => wl.target === currentNote.id || wl.target === currentNote.title)
     );
   });
 
@@ -214,7 +277,7 @@
           <div class="flex items-center gap-2">
             <h1 class="text-xl font-heading font-black text-white tracking-tight">Obsidian Second Brain</h1>
             <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-teal-500/20 text-teal-300 border border-teal-500/30">
-              v{vaultData.version}
+              v{vaultVersion}
             </span>
           </div>
           <p class="text-xs text-teal-200/80">Lớp tri thức thứ hai • Bản đồ liên kết WikiLinks [[...]] chuẩn GDPT &amp; CEFR</p>
@@ -231,16 +294,6 @@
           <span>🟣</span> Mở Vault Obsidian Máy
         </a>
 
-        <!-- Download Vault Zip -->
-        <a
-          href="/downloads/obsidian_second_brain_vault.zip"
-          download
-          class="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold shadow-md shadow-teal-600/25 transition-all hover:scale-[1.02]"
-          title="Tải trọn bộ folder để mở trực tiếp trong Obsidian"
-        >
-          <span>📥</span> Tải Vault (.zip)
-        </a>
-
         <!-- Mobile Toggle Button -->
         <button
           type="button"
@@ -253,7 +306,12 @@
     </div>
   </header>
 
-  {#if currentUser && !isTeacherOrAdmin(currentUser)}
+  {#if isLoading}
+    <div class="max-w-2xl mx-auto my-24 p-8 text-center space-y-4">
+      <div class="w-12 h-12 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+      <p class="text-sm font-bold text-slate-500 dark:text-slate-400">Đang nạp kho tri thức bảo mật từ server...</p>
+    </div>
+  {:else if isForbidden || !currentUser || !isTeacherOrAdmin(currentUser)}
     <!-- Restricted Access Warning for Students / Guests -->
     <div class="max-w-2xl mx-auto my-12 p-8 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl text-center space-y-4">
       <div class="w-16 h-16 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center text-3xl mx-auto border border-amber-500/30">

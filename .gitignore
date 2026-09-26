@@ -27,3 +27,8 @@ scripts/gdrive_token.json
 data/gdrive_downloads/
 scripts/__pycache__/
 __pycache__/
+
+# Scratch files & local tests (contains temp tokens/tests)
+scratch/
+data/teacher_profiles_cache.json
+*.log

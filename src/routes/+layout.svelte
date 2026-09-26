@@ -17,7 +17,8 @@
     getUnreadLeaderNotificationCount,
     scanScheduleAndAttendanceForLeader,
     scanTuitionDueAlerts,
-    SUPERADMIN_EMAILS 
+    SUPERADMIN_EMAILS,
+    verifySessionWithServer
   } from '$lib/unifiedStore';
   import AuthModal from '$lib/components/AuthModal.svelte';
   import ProfileEditModal from '$lib/components/ProfileEditModal.svelte';
@@ -88,10 +89,20 @@
       leaderUnreadCount = getUnreadLeaderNotificationCount();
     }, 2000);
 
-    // Enforce login on every fresh launch / unauthenticated session
+    // Enforce login and verify session integrity with server
     if (!isLoggedIn()) {
       showAuthModal = true;
       canDismiss = false;
+    } else {
+      verifySessionWithServer().then(res => {
+        if (!res.valid) {
+          currentUser = null;
+          showAuthModal = true;
+          canDismiss = false;
+        } else {
+          currentUser = res.user;
+        }
+      });
     }
 
     const handleAuthEvent = (e) => {

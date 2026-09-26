@@ -1,9 +1,27 @@
 import { json } from '@sveltejs/kit';
 import vaultData from '$lib/data/second_brain_vault.json';
+import { verifyServerAuth, isStaffUser } from '$lib/server/auth.js';
 
 export const prerender = false;
 
-export async function GET({ url }) {
+export async function GET({ request, url, platform }) {
+  // 1. Strict Server Authentication (Fail-Closed)
+  const auth = await verifyServerAuth(request, platform);
+  if (!auth.authenticated) {
+    return json({
+      success: false,
+      error: auth.error || 'Unauthorized: Vui lòng đăng nhập để truy cập kho tri thức Second Brain.'
+    }, { status: auth.status || 401 });
+  }
+
+  // 2. Strict Role-Based Access Control (Only Teacher, Leader, SuperAdmin)
+  if (!isStaffUser(auth.user)) {
+    return json({
+      success: false,
+      error: 'Forbidden: Kho tri thức và giáo án Second Brain chỉ dành riêng cho Giáo Viên và Ban Quản Lý Cô Dung.'
+    }, { status: 403 });
+  }
+
   const query = (url.searchParams.get('q') || '').toLowerCase().trim();
   const folder = url.searchParams.get('folder') || '';
   const noteId = url.searchParams.get('id') || '';

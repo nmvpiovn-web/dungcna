@@ -75,40 +75,94 @@ export function saveAllUsers(list) {
   }
 }
 
+// Cryptographic In-Memory Session State (Fail-Closed: Zero trust in unverified client localStorage)
+let inMemorySessionVerified = false;
+let inMemoryVerifiedUser = null;
+
+export function isSessionVerified() {
+  return inMemorySessionVerified;
+}
+
+export function setSessionVerified(status, user = null) {
+  inMemorySessionVerified = Boolean(status);
+  inMemoryVerifiedUser = status ? user : null;
+}
+
+export function getAuthToken() {
+  if (typeof window === 'undefined') return null;
+  const token = localStorage.getItem('tienganh_auth_token') || sessionStorage.getItem('tienganh_auth_token');
+  if (token) return token;
+  try {
+    const match = document.cookie.match(/session_token=([^;]+)/);
+    if (match) return decodeURIComponent(match[1]);
+  } catch {}
+  return null;
+}
+
 export function isLoggedIn() {
   if (typeof window === 'undefined') return true;
-  const isAuth = sessionStorage.getItem(STORAGE_KEY_SESSION) === 'true';
-  const storedUser = localStorage.getItem(STORAGE_KEY_USER);
-  const token = localStorage.getItem('tienganh_auth_token') || sessionStorage.getItem('tienganh_auth_token');
-  return (isAuth || !!token || !!storedUser) && !!storedUser;
+  // Strict Defense: Session MUST be cryptographically verified in-memory by server verification
+  // LocalStorage keys/flags cannot spoof authentication without runtime server approval
+  if (!inMemorySessionVerified || !inMemoryVerifiedUser) {
+    return false;
+  }
+  const token = getAuthToken();
+  if (!token) return false;
+  const parts = token.split('.');
+  if (parts.length !== 2) return false;
+  if (!/^[0-9a-f]{64}$/i.test(parts[1])) return false;
+  return true;
 }
 
 export function getCurrentUser() {
   if (typeof window === 'undefined') {
     return usersData.find(u => u.username === 'admin') || usersData[0];
   }
-  try {
-    const isAuth = sessionStorage.getItem(STORAGE_KEY_SESSION) === 'true';
-    const stored = localStorage.getItem(STORAGE_KEY_USER);
-    const token = localStorage.getItem('tienganh_auth_token') || sessionStorage.getItem('tienganh_auth_token');
-    if ((isAuth || token || stored) && stored) {
-      if (!isAuth) {
-        sessionStorage.setItem(STORAGE_KEY_SESSION, 'true');
-      }
-      return JSON.parse(stored);
-    }
-  } catch {}
-  return null;
+  if (!isLoggedIn()) {
+    return null;
+  }
+  return inMemoryVerifiedUser;
 }
 
-export function setCurrentUser(user) {
-  if (typeof window !== 'undefined') {
-    if (user) {
-      localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(user));
-      sessionStorage.setItem(STORAGE_KEY_SESSION, 'true');
+export async function verifySessionWithServer() {
+  if (typeof window === 'undefined') return { valid: false };
+  const token = getAuthToken();
+  if (!token) {
+    logoutUser();
+    return { valid: false, error: 'No token' };
+  }
+
+  try {
+    const res = await fetch('/api/auth/verify', {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    const data = await res.json();
+    if (res.ok && (data.valid || data.authenticated) && data.user) {
+      inMemorySessionVerified = true;
+      inMemoryVerifiedUser = data.user;
+      localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(data.user));
+      return { valid: true, user: data.user };
     } else {
-      localStorage.removeItem(STORAGE_KEY_USER);
-      sessionStorage.removeItem(STORAGE_KEY_SESSION);
+      logoutUser();
+      return { valid: false, error: data.error || 'Token expired or invalid' };
+    }
+  } catch (err) {
+    logoutUser();
+    return { valid: false, error: err.message };
+  }
+}
+
+export function setCurrentUser(user, token = null) {
+  if (typeof window !== 'undefined') {
+    if (user && token) {
+      inMemorySessionVerified = true;
+      inMemoryVerifiedUser = user;
+      localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(user));
+      localStorage.setItem('tienganh_auth_token', token);
+    } else {
+      logoutUser();
     }
     window.dispatchEvent(new CustomEvent('tienganh:auth-change', { detail: user }));
   }
@@ -116,11 +170,14 @@ export function setCurrentUser(user) {
 }
 
 export function logoutUser() {
+  inMemorySessionVerified = false;
+  inMemoryVerifiedUser = null;
   if (typeof window !== 'undefined') {
-    sessionStorage.removeItem(STORAGE_KEY_SESSION);
-    sessionStorage.removeItem('tienganh_auth_token');
     localStorage.removeItem(STORAGE_KEY_USER);
     localStorage.removeItem('tienganh_auth_token');
+    localStorage.removeItem('tienganh_session_verified');
+    sessionStorage.removeItem('tienganh_auth_token');
+    sessionStorage.removeItem('tienganh_session_verified');
     document.cookie = 'session_token=; path=/; max-age=0; SameSite=Lax';
     window.dispatchEvent(new CustomEvent('tienganh:auth-change', { detail: null }));
   }
@@ -2419,6 +2476,27 @@ export function saveAllTeacherProfiles(profiles) {
 export function getTeacherProfile(teacherId) {
   const profiles = getAllTeacherProfiles();
   return profiles.find(p => p.teacher_id === teacherId);
+}
+
+export async function syncTeacherProfilesFromServer() {
+  if (typeof window === 'undefined') return getAllTeacherProfiles();
+  const token = localStorage.getItem('tienganh_auth_token');
+  if (!token) return getAllTeacherProfiles();
+  try {
+    const res = await fetch('/api/teachers/staff', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.success && data.profiles && Array.isArray(data.profiles)) {
+        saveAllTeacherProfiles(data.profiles);
+        return data.profiles;
+      }
+    }
+  } catch (e) {
+    console.warn('Failed to sync teacher profiles from server:', e);
+  }
+  return getAllTeacherProfiles();
 }
 
 export function updateTeacherRoleAndSalary(teacherId, updates, leaderUser = null) {

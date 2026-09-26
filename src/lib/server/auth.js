@@ -14,7 +14,7 @@ const enc = new TextEncoder();
  * Returns null if secret is not properly configured.
  */
 export function getAuthSecret(platform) {
-  const secret = platform?.env?.AUTH_SECRET;
+  const secret = platform?.env?.AUTH_SECRET || (typeof process !== 'undefined' ? process.env?.AUTH_SECRET : null);
   if (!secret || typeof secret !== 'string' || secret.trim() === '') {
     return null;
   }
@@ -246,6 +246,27 @@ export async function verifyServerAuth(request, platform) {
       };
     } catch (d1Err) {
       console.error('D1 auth query error:', d1Err);
+      if (platform?.env?.ENABLE_LOCAL_MOCK === 'true' || process.env.ENABLE_LOCAL_MOCK === 'true') {
+        const allUsers = typeof getAllUsers === 'function' ? getAllUsers() : [];
+        const match = allUsers.find(u => u.id === userId || (u.username && u.username.toLowerCase() === userId.toLowerCase()));
+        if (match) {
+          if (match.status === 'locked' || match.status === 'disabled' || match.status === 'suspended') {
+            return {
+              authenticated: false,
+              status: 403,
+              user: null,
+              error: 'Forbidden: Tài khoản đã bị khóa hoặc vô hiệu hóa.'
+            };
+          }
+          return {
+            authenticated: true,
+            status: 200,
+            user: sanitizeUser(match),
+            tokenPayload: verifiedPayload,
+            source: 'local_mock'
+          };
+        }
+      }
       return {
         authenticated: false,
         status: 500,

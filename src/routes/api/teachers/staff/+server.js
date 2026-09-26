@@ -1,4 +1,5 @@
 import { json } from '@sveltejs/kit';
+import { verifyServerAuth, isStaffUser, SUPERADMIN_USERNAMES } from '$lib/server/auth';
 import { 
   getAllTeacherProfiles, 
   getTeacherProfile, 
@@ -11,65 +12,339 @@ import {
 
 export const prerender = false;
 
-export async function GET({ url }) {
+// Non-production local mock cache
+let localMockCache = null;
+
+function getLocalMockCache() {
+  if (!localMockCache || localMockCache.length === 0) {
+    localMockCache = getAllTeacherProfiles();
+  }
+  return localMockCache;
+}
+
+function parseD1Profile(row) {
+  if (!row) return null;
+  return {
+    ...row,
+    bonuses: typeof row.bonuses === 'string' ? JSON.parse(row.bonuses || '[]') : (row.bonuses || []),
+    private_reminders: typeof row.private_reminders === 'string' ? JSON.parse(row.private_reminders || '[]') : (row.private_reminders || [])
+  };
+}
+
+let tableEnsured = false;
+async function ensureTeacherProfilesTable(db) {
+  if (!db || tableEnsured) return;
   try {
-    const teacherId = url.searchParams.get('teacher_id');
-    if (teacherId) {
-      const profile = getTeacherProfile(teacherId);
-      if (!profile) return json({ success: false, error: 'Không tìm thấy hồ sơ' }, { status: 404 });
-      return json({ success: true, profile });
+    await db.prepare(`
+      CREATE TABLE IF NOT EXISTS teacher_profiles (
+        teacher_id TEXT PRIMARY KEY,
+        teacher_name TEXT NOT NULL,
+        username TEXT NOT NULL,
+        role_type TEXT NOT NULL,
+        role_title TEXT NOT NULL,
+        salary_type TEXT NOT NULL,
+        base_salary_vnd REAL DEFAULT 0,
+        rate_per_session_vnd REAL DEFAULT 0,
+        total_sessions_taught INTEGER DEFAULT 0,
+        leader_rating REAL DEFAULT 5.0,
+        leader_appraisal TEXT,
+        bonuses TEXT,
+        private_reminders TEXT,
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+      )
+    `).run();
+
+    // Check if table has records, if not seed initial profiles
+    const countRow = await db.prepare('SELECT COUNT(*) as cnt FROM teacher_profiles').first();
+    if (!countRow || countRow.cnt === 0) {
+      const initial = getAllTeacherProfiles();
+      for (const p of initial) {
+        await db.prepare(`
+          INSERT INTO teacher_profiles (
+            teacher_id, teacher_name, username, role_type, role_title,
+            salary_type, base_salary_vnd, rate_per_session_vnd, total_sessions_taught,
+            leader_rating, leader_appraisal, bonuses, private_reminders
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).bind(
+          p.teacher_id, p.teacher_name, p.username, p.role_type, p.role_title,
+          p.salary_type, p.base_salary_vnd || 0, p.rate_per_session_vnd || 0, p.total_sessions_taught || 0,
+          p.leader_rating || 5.0, p.leader_appraisal || '',
+          JSON.stringify(p.bonuses || []), JSON.stringify(p.private_reminders || [])
+        ).run();
+      }
+    }
+    tableEnsured = true;
+  } catch (e) {
+    console.error('Error ensuring teacher_profiles table:', e);
+  }
+}
+
+function isManager(user) {
+  if (!user) return false;
+  return user.role === 'superadmin' || user.role === 'leader' || SUPERADMIN_USERNAMES.includes(user.username);
+}
+
+export async function GET({ url, request, platform }) {
+  try {
+    // 1. Authenticate request
+    const auth = await verifyServerAuth(request, platform);
+    if (!auth.authenticated) {
+      return json({ success: false, error: 'Unauthorized: Yêu cầu đăng nhập tài khoản hợp lệ' }, { status: 401 });
+    }
+    if (!isStaffUser(auth.user)) {
+      return json({ success: false, error: 'Forbidden: Yêu cầu quyền Quản trị hoặc Giáo viên' }, { status: 403 });
     }
 
-    const profiles = getAllTeacherProfiles();
-    return json({ success: true, total: profiles.length, profiles });
+    const hasManagerPrivileges = isManager(auth.user);
+    const requestedTeacherId = url.searchParams.get('teacher_id');
+
+    // Teachers can ONLY inspect their own profile
+    if (!hasManagerPrivileges) {
+      if (requestedTeacherId && requestedTeacherId !== auth.user.id) {
+        return json({ 
+          success: false, 
+          error: 'Forbidden: Giáo viên chỉ có quyền xem hồ sơ của chính mình' 
+        }, { status: 403 });
+      }
+    }
+
+    const targetTeacherId = hasManagerPrivileges ? requestedTeacherId : auth.user.id;
+
+    // 2. Query from Cloudflare D1 if available (Fail-Closed)
+    if (platform?.env?.DB) {
+      await ensureTeacherProfilesTable(platform.env.DB);
+      try {
+        if (targetTeacherId) {
+          const row = await platform.env.DB.prepare('SELECT * FROM teacher_profiles WHERE teacher_id = ?').bind(targetTeacherId).first();
+          if (!row) {
+            return json({ success: false, error: 'Không tìm thấy hồ sơ giáo viên' }, { status: 404 });
+          }
+          return json({ success: true, profile: parseD1Profile(row), source: 'cloudflare_d1' });
+        } else {
+          const res = await platform.env.DB.prepare('SELECT * FROM teacher_profiles ORDER BY role_type ASC').all();
+          const profiles = (res?.results || []).map(parseD1Profile);
+          return json({ success: true, total: profiles.length, profiles, source: 'cloudflare_d1' });
+        }
+      } catch (d1Err) {
+        console.error('D1 teacher query error:', d1Err);
+        return json({ success: false, error: 'Lỗi truy vấn cơ sở dữ liệu Cloudflare D1: ' + d1Err.message }, { status: 500 });
+      }
+    }
+
+    // 3. Fallback only in local mock mode
+    const isMock = Boolean(import.meta.env?.DEV || platform?.env?.ENABLE_LOCAL_MOCK === 'true' || process.env.ENABLE_LOCAL_MOCK === 'true');
+    if (!isMock) {
+      return json({ 
+        success: false, 
+        error: 'Lỗi cấu hình: Thiếu binding Cloudflare D1 (DB) trên môi trường production (Fail-Closed).' 
+      }, { status: 500 });
+    }
+
+    const mockProfiles = getLocalMockCache();
+    if (targetTeacherId) {
+      const profile = mockProfiles.find(p => p.teacher_id === targetTeacherId);
+      if (!profile) return json({ success: false, error: 'Không tìm thấy hồ sơ' }, { status: 404 });
+      return json({ success: true, profile, source: 'local_dev_mock' });
+    }
+
+    return json({ success: true, total: mockProfiles.length, profiles: mockProfiles, source: 'local_dev_mock' });
   } catch (err) {
     return json({ success: false, error: err.message }, { status: 500 });
   }
 }
 
-export async function POST({ request }) {
+export async function POST({ request, platform }) {
   try {
+    // 1. Authenticate request
+    const auth = await verifyServerAuth(request, platform);
+    if (!auth.authenticated) {
+      return json({ success: false, error: 'Unauthorized: Yêu cầu đăng nhập tài khoản hợp lệ' }, { status: 401 });
+    }
+    if (!isStaffUser(auth.user)) {
+      return json({ success: false, error: 'Forbidden: Yêu cầu quyền Quản trị hoặc Giáo viên' }, { status: 403 });
+    }
+
     const body = await request.json();
     const action = body.action;
     const teacherId = body.teacher_id;
 
     if (!teacherId) return json({ success: false, error: 'Thiếu teacher_id' }, { status: 400 });
 
+    const hasManagerPrivileges = isManager(auth.user);
+
+    // RESTRICT: Only SuperAdmin and Leader can modify role, salary, appraisal or bonuses
+    const MANAGER_ONLY_ACTIONS = ['update_role_salary', 'add_appraisal', 'add_bonus', 'send_private_reminder'];
+    if (MANAGER_ONLY_ACTIONS.includes(action) && !hasManagerPrivileges) {
+      return json({ 
+        success: false, 
+        error: 'Forbidden: Giáo viên không có quyền điều chỉnh chức danh, mức lương, đánh giá hoặc khen thưởng.' 
+      }, { status: 403 });
+    }
+
+    // Teachers can only acknowledge their own reminders
+    if (action === 'acknowledge_reminder' && !hasManagerPrivileges && teacherId !== auth.user.id) {
+      return json({
+        success: false,
+        error: 'Forbidden: Bạn chỉ có thể xác nhận nhắc nhở gửi cho chính mình'
+      }, { status: 403 });
+    }
+
+    // PRODUCTION: Must write to Cloudflare D1 with strict Fail-Closed error propagation
+    if (platform?.env?.DB) {
+      await ensureTeacherProfilesTable(platform.env.DB);
+      if (action === 'update_role_salary') {
+        const baseSalary = Number(body.base_salary_vnd) || 0;
+        const ratePerSession = Number(body.rate_per_session_vnd) || 0;
+        const roleType = body.role_type || 'lead';
+        const roleTitle = body.role_title || 'Giáo viên';
+        const salaryType = body.salary_type || 'per_session';
+        const leaderRating = Number(body.leader_rating) || 5.0;
+
+        try {
+          const sql = `
+            INSERT INTO teacher_profiles (
+              teacher_id, teacher_name, username, role_type, role_title,
+              salary_type, base_salary_vnd, rate_per_session_vnd, leader_rating, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+            ON CONFLICT(teacher_id) DO UPDATE SET
+              role_type = excluded.role_type,
+              role_title = excluded.role_title,
+              salary_type = excluded.salary_type,
+              base_salary_vnd = excluded.base_salary_vnd,
+              rate_per_session_vnd = excluded.rate_per_session_vnd,
+              leader_rating = excluded.leader_rating,
+              updated_at = CURRENT_TIMESTAMP;
+          `;
+          const teacherName = body.teacher_name || 'Giáo viên';
+          const username = body.username || 'teacher';
+
+          await platform.env.DB.prepare(sql).bind(
+            teacherId, teacherName, username, roleType, roleTitle,
+            salaryType, baseSalary, ratePerSession, leaderRating
+          ).run();
+
+          const row = await platform.env.DB.prepare('SELECT * FROM teacher_profiles WHERE teacher_id = ?').bind(teacherId).first();
+          if (!row) {
+            return json({ success: false, persisted: false, error: 'Không tìm thấy bản ghi sau khi lưu' }, { status: 500 });
+          }
+
+          return json({
+            success: true,
+            persisted: true,
+            profile: parseD1Profile(row),
+            source: 'cloudflare_d1'
+          });
+        } catch (d1Err) {
+          console.error('D1 teacher update error (FAIL-CLOSED):', d1Err);
+          return json({ 
+            success: false, 
+            persisted: false, 
+            error: 'Lỗi ghi cơ sở dữ liệu Cloudflare D1: ' + d1Err.message 
+          }, { status: 500 });
+        }
+      }
+
+      if (action === 'add_appraisal') {
+        const appraisal = body.appraisal || '';
+        const rating = Number(body.rating) || 5.0;
+        try {
+          await platform.env.DB.prepare(`
+            UPDATE teacher_profiles
+            SET leader_appraisal = ?, leader_rating = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE teacher_id = ?
+          `).bind(appraisal, rating, teacherId).run();
+
+          const row = await platform.env.DB.prepare('SELECT * FROM teacher_profiles WHERE teacher_id = ?').bind(teacherId).first();
+          return json({ success: true, persisted: true, profile: parseD1Profile(row), source: 'cloudflare_d1' });
+        } catch (d1Err) {
+          return json({ success: false, persisted: false, error: 'Lỗi D1: ' + d1Err.message }, { status: 500 });
+        }
+      }
+
+      if (action === 'add_bonus') {
+        const newBonus = {
+          id: `bon_${Date.now()}`,
+          date: new Date().toISOString().slice(0, 10),
+          amount_vnd: Number(body.amount_vnd) || 1000000,
+          reason: body.reason || 'Khen thưởng chuyên môn xuất sắc',
+          awarded_by: auth.user.name || 'Ms. Dung (Leader)'
+        };
+        try {
+          const row = await platform.env.DB.prepare('SELECT bonuses FROM teacher_profiles WHERE teacher_id = ?').bind(teacherId).first();
+          const currentBonuses = row && row.bonuses ? JSON.parse(row.bonuses) : [];
+          currentBonuses.unshift(newBonus);
+          await platform.env.DB.prepare('UPDATE teacher_profiles SET bonuses = ?, updated_at = CURRENT_TIMESTAMP WHERE teacher_id = ?')
+            .bind(JSON.stringify(currentBonuses), teacherId).run();
+          return json({ success: true, persisted: true, bonus: newBonus, source: 'cloudflare_d1' });
+        } catch (d1Err) {
+          return json({ success: false, persisted: false, error: 'Lỗi D1: ' + d1Err.message }, { status: 500 });
+        }
+      }
+
+      if (action === 'send_private_reminder') {
+        const newReminder = {
+          id: `rem_${Date.now()}`,
+          date: new Date().toISOString().slice(0, 10),
+          content: body.content || '',
+          urgency: body.urgency || 'medium',
+          status: 'pending',
+          sent_by: auth.user.name || 'Ms. Dung (Leader)'
+        };
+        try {
+          const row = await platform.env.DB.prepare('SELECT private_reminders FROM teacher_profiles WHERE teacher_id = ?').bind(teacherId).first();
+          const currentReminders = row && row.private_reminders ? JSON.parse(row.private_reminders) : [];
+          currentReminders.unshift(newReminder);
+          await platform.env.DB.prepare('UPDATE teacher_profiles SET private_reminders = ?, updated_at = CURRENT_TIMESTAMP WHERE teacher_id = ?')
+            .bind(JSON.stringify(currentReminders), teacherId).run();
+          return json({ success: true, persisted: true, reminder: newReminder, source: 'cloudflare_d1' });
+        } catch (d1Err) {
+          return json({ success: false, persisted: false, error: 'Lỗi D1: ' + d1Err.message }, { status: 500 });
+        }
+      }
+
+      if (action === 'acknowledge_reminder') {
+        try {
+          const row = await platform.env.DB.prepare('SELECT private_reminders FROM teacher_profiles WHERE teacher_id = ?').bind(teacherId).first();
+          if (row && row.private_reminders) {
+            const list = JSON.parse(row.private_reminders);
+            const item = list.find(r => r.id === body.reminder_id);
+            if (item) item.status = 'acknowledged';
+            await platform.env.DB.prepare('UPDATE teacher_profiles SET private_reminders = ?, updated_at = CURRENT_TIMESTAMP WHERE teacher_id = ?')
+              .bind(JSON.stringify(list), teacherId).run();
+          }
+          return json({ success: true, persisted: true, message: 'Đã xác nhận đã đọc nhắc nhở' });
+        } catch (d1Err) {
+          return json({ success: false, persisted: false, error: 'Lỗi D1: ' + d1Err.message }, { status: 500 });
+        }
+      }
+    }
+
+    // NON-D1 FALLBACK: Fail-Closed on production, allow isolated mock in dev
+    const isMock = Boolean(import.meta.env?.DEV || platform?.env?.ENABLE_LOCAL_MOCK === 'true' || process.env.ENABLE_LOCAL_MOCK === 'true');
+    if (!isMock) {
+      return json({ 
+        success: false, 
+        persisted: false,
+        error: 'Lỗi cấu hình hệ thống: Thiếu binding Cloudflare D1 (DB) trên môi trường production (Fail-Closed).' 
+      }, { status: 500 });
+    }
+
+    // In isolated local dev mock mode:
     if (action === 'update_role_salary') {
-      const res = updateTeacherRoleAndSalary(teacherId, {
-        role_type: body.role_type,
-        role_title: body.role_title,
-        base_salary_vnd: body.base_salary_vnd,
-        rate_per_session_vnd: body.rate_per_session_vnd,
-        salary_type: body.salary_type
-      });
-      return json(res);
-    }
-
-    if (action === 'add_appraisal') {
-      const res = addTeacherAppraisalAndRating(teacherId, body.appraisal, body.rating);
-      return json(res);
-    }
-
-    if (action === 'add_bonus') {
-      const res = addTeacherBonus(teacherId, {
-        amount_vnd: body.amount_vnd,
-        reason: body.reason
-      });
-      return json(res);
-    }
-
-    if (action === 'send_private_reminder') {
-      const res = addTeacherPrivateReminder(teacherId, {
-        content: body.content,
-        urgency: body.urgency
-      });
-      return json(res);
-    }
-
-    if (action === 'acknowledge_reminder') {
-      const ok = acknowledgeTeacherReminder(teacherId, body.reminder_id);
-      return json({ success: ok, message: 'Đã xác nhận đã đọc nhắc nhở' });
+      const mockProfiles = getLocalMockCache();
+      const idx = mockProfiles.findIndex(p => p.teacher_id === teacherId);
+      const updates = {
+        role_type: body.role_type || 'lead',
+        role_title: body.role_title || 'Giáo viên',
+        base_salary_vnd: Number(body.base_salary_vnd) || 0,
+        rate_per_session_vnd: Number(body.rate_per_session_vnd) || 0,
+        salary_type: body.salary_type || 'per_session',
+        leader_rating: Number(body.leader_rating) || 5.0,
+        updated_at: new Date().toISOString()
+      };
+      if (idx >= 0) mockProfiles[idx] = { ...mockProfiles[idx], ...updates };
+      updateTeacherRoleAndSalary(teacherId, updates);
+      return json({ success: true, persisted: false, profile: idx >= 0 ? mockProfiles[idx] : null, source: 'local_dev_mock' });
     }
 
     return json({ success: false, error: 'Hành động không hợp lệ' }, { status: 400 });

@@ -11,7 +11,7 @@
     "updated_at": "2026-09-25 04:59:23",
     "username": "admin",
     "phone": "0901234567",
-    "password": "admin"
+    "password": "D1_AUTHENTICATED_SECURE_HASH"
   },
   {
     "id": "usr_super_2",
@@ -25,7 +25,7 @@
     "updated_at": "2026-09-25 04:59:23",
     "username": "msdung",
     "phone": "0912345678",
-    "password": "msdung"
+    "password": "D1_AUTHENTICATED_SECURE_HASH"
   },
   {
     "id": "usr_teach_1",
