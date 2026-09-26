@@ -79,7 +79,8 @@ export function isLoggedIn() {
   if (typeof window === 'undefined') return true;
   const isAuth = sessionStorage.getItem(STORAGE_KEY_SESSION) === 'true';
   const storedUser = localStorage.getItem(STORAGE_KEY_USER);
-  return isAuth && !!storedUser;
+  const token = localStorage.getItem('tienganh_auth_token') || sessionStorage.getItem('tienganh_auth_token');
+  return (isAuth || !!token || !!storedUser) && !!storedUser;
 }
 
 export function getCurrentUser() {
@@ -89,7 +90,11 @@ export function getCurrentUser() {
   try {
     const isAuth = sessionStorage.getItem(STORAGE_KEY_SESSION) === 'true';
     const stored = localStorage.getItem(STORAGE_KEY_USER);
-    if (isAuth && stored) {
+    const token = localStorage.getItem('tienganh_auth_token') || sessionStorage.getItem('tienganh_auth_token');
+    if ((isAuth || token || stored) && stored) {
+      if (!isAuth) {
+        sessionStorage.setItem(STORAGE_KEY_SESSION, 'true');
+      }
       return JSON.parse(stored);
     }
   } catch {}

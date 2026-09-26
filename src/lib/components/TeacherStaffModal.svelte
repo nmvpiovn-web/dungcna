@@ -12,7 +12,13 @@
     TEACHER_ROLE_TYPES 
   } from '$lib/unifiedStore';
 
-  let { isOpen = $bindable(false), teacherId = null, onUpdated = () => {} } = $props();
+  let { 
+    isOpen = $bindable(false), 
+    teacherId = null, 
+    staffProfile = null, 
+    onUpdated = () => {}, 
+    onSaved = () => {} 
+  } = $props();
 
   let currentUser = $state(null);
   let profile = $state(null);
@@ -49,16 +55,16 @@
 
   function loadProfile() {
     const all = getAllTeacherProfiles();
-    const targetId = teacherId || (currentUser?.role === 'teacher' ? currentUser.id : all[0]?.teacher_id);
-    profile = all.find(p => p.teacher_id === targetId) || all[0];
+    const targetId = teacherId || staffProfile?.teacher_id || (currentUser?.role === 'teacher' ? currentUser.id : all[0]?.teacher_id);
+    profile = all.find(p => p.teacher_id === targetId) || (staffProfile?.teacher_id === targetId ? staffProfile : all[0]);
 
     if (profile) {
-      roleType = profile.role_type || 'lead';
-      roleTitle = profile.role_title || '';
+      roleType = profile.role_type || profile.role_level || 'lead';
+      roleTitle = profile.role_title || profile.role_label || '';
       baseSalaryVnd = profile.base_salary_vnd || 0;
-      ratePerSessionVnd = profile.rate_per_session_vnd || 0;
+      ratePerSessionVnd = profile.rate_per_session_vnd || profile.per_session_rate_vnd || 0;
       salaryType = profile.salary_type || 'monthly';
-      leaderRating = profile.leader_rating || 5.0;
+      leaderRating = profile.leader_rating || profile.rating_stars || 5.0;
       leaderAppraisal = profile.leader_appraisal || '';
     }
   }
@@ -70,17 +76,25 @@
 
   function handleSaveRoleSalary() {
     if (!profile) return;
-    updateTeacherRoleAndSalary(profile.teacher_id, {
+    const updates = {
       role_type: roleType,
+      role_level: roleType,
       role_title: roleTitle,
+      role_label: roleTitle,
       base_salary_vnd: Number(baseSalaryVnd),
       rate_per_session_vnd: Number(ratePerSessionVnd),
-      salary_type: salaryType
-    }, currentUser);
+      per_session_rate_vnd: Number(ratePerSessionVnd),
+      salary_type: salaryType,
+      leader_rating: Number(leaderRating) || 5.0,
+      rating_stars: Math.round(Number(leaderRating) || 5)
+    };
+
+    updateTeacherRoleAndSalary(profile.teacher_id, updates, currentUser);
 
     loadProfile();
     showToast('Đã cập nhật phân quyền và mức lương thành công!');
     onUpdated();
+    onSaved();
   }
 
   function handleSaveAppraisal() {
@@ -89,6 +103,7 @@
     loadProfile();
     showToast('Đã lưu đánh giá & xếp loại giáo viên từ Leader Cô Dung!');
     onUpdated();
+    onSaved();
   }
 
   function handleAddBonus() {
@@ -103,6 +118,7 @@
     loadProfile();
     showToast('Đã trao quyết định khen thưởng giáo viên thành công!');
     onUpdated();
+    onSaved();
   }
 
   function handleSendReminder() {
@@ -120,6 +136,7 @@
     loadProfile();
     showToast('Đã gửi nhắc nhở riêng tư tới giáo viên!');
     onUpdated();
+    onSaved();
   }
 
   function handleAcknowledge(remId) {
@@ -128,6 +145,7 @@
     loadProfile();
     showToast('Đã xác nhận đã tiếp thu nhắc nhở!');
     onUpdated();
+    onSaved();
   }
 </script>
 

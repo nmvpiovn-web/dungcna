@@ -37,7 +37,18 @@ export async function POST({ request, platform }) {
         user = d1User;
       } catch (e) {
         console.error('D1 login error:', e);
-        return json({ success: false, error: 'Lỗi truy vấn cơ sở dữ liệu: ' + (e.message || String(e)) }, { status: 500 });
+        if (platform?.env?.ENABLE_LOCAL_MOCK === 'true' || process.env.ENABLE_LOCAL_MOCK === 'true') {
+          const allUsers = typeof getAllUsers === 'function' ? getAllUsers() : [];
+          user = allUsers.find(u => 
+            (u.username === username || u.email === username || u.phone === username) && 
+            u.password === password
+          );
+          if (!user) {
+            return json({ success: false, error: 'Tên đăng nhập hoặc mật khẩu không chính xác' }, { status: 401 });
+          }
+        } else {
+          return json({ success: false, error: 'Lỗi truy vấn cơ sở dữ liệu: ' + (e.message || String(e)) }, { status: 500 });
+        }
       }
     } else if (platform?.env?.ENABLE_LOCAL_MOCK === 'true' || process.env.ENABLE_LOCAL_MOCK === 'true') {
       // 2. Fallback to local store ONLY when ENABLE_LOCAL_MOCK is explicitly configured (isolated dev/testing)

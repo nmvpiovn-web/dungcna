@@ -1,11 +1,17 @@
 <script>
-  let { bill, templateId = 1, showPrintBtn = true } = $props();
+  let { bill = null, templateId = 1, showPrintBtn = true } = $props();
+
+  function fmtVnd(val) {
+    if (val === null || val === undefined || isNaN(val)) return '0';
+    return Number(val).toLocaleString('vi-VN');
+  }
 
   function printBill() {
     window.print();
   }
 </script>
 
+{#if bill}
 <div class="tuition-container">
   {#if showPrintBtn}
     <div class="no-print flex items-center justify-between pb-4 border-b border-slate-700/50 mb-6">
@@ -377,6 +383,7 @@
     </div>
   {/if}
 </div>
+{/if}
 
 <style>
   @media print {

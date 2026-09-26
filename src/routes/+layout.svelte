@@ -187,15 +187,15 @@
             👩‍🏫
           </div>
           <div>
-            <div class="flex items-center gap-2">
-              <span class="font-extrabold text-base sm:text-lg tracking-tight text-slate-900 dark:text-white">
+            <div class="flex items-center gap-1.5">
+              <span class="font-extrabold text-sm sm:text-base tracking-tight text-slate-900 dark:text-white whitespace-nowrap">
                 Tiếng Anh Cô Dung
               </span>
-              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-50 text-sky-700 border border-sky-200 dark:bg-sky-500/20 dark:text-sky-300 dark:border-sky-500/30">
+              <span class="hidden 2xl:inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-50 text-sky-700 border border-sky-200 dark:bg-sky-500/20 dark:text-sky-300 dark:border-sky-500/30">
                 2026 CTGDPT
               </span>
             </div>
-            <span class="text-[11px] text-slate-500 dark:text-slate-400 block -mt-0.5">K12 &amp; Khảo Thí Chuẩn Quốc Tế</span>
+            <span class="hidden xl:block text-[10.5px] text-slate-500 dark:text-slate-400 -mt-0.5">K12 &amp; Khảo Thí Chuẩn Quốc Tế</span>
           </div>
         </a>
 
@@ -206,7 +206,7 @@
             <a
               href="/"
               onclick={closeAllDropdowns}
-              class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold tracking-wide transition-all bg-emerald-50 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300 border border-emerald-300/40"
+              class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold tracking-wide transition-all bg-emerald-50 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300 border border-emerald-300/40"
             >
               <span>🎓</span>
               <span>Lớp Của Tôi: {currentUserGrade || 'Lớp 7'}</span>
@@ -215,10 +215,10 @@
             <div class="relative">
               <button
                 onclick={() => toggleSubmenu('courses')}
-                class="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold tracking-wide transition-all {activeDropdown === 'courses' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300' : 'text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'}"
+                class="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold tracking-wide transition-all {activeDropdown === 'courses' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300' : 'text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'}"
               >
                 <span>📚</span>
-                <span>Lộ Trình Đào Tạo</span>
+                <span>Lộ Trình</span>
                 <span class="text-[10px] transition-transform duration-200 {activeDropdown === 'courses' ? 'rotate-180' : ''}">▾</span>
               </button>
 
@@ -288,10 +288,10 @@
           <div class="relative">
             <button
               onclick={() => toggleSubmenu('exams')}
-              class="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold tracking-wide transition-all {$page.url.pathname.startsWith('/exam') ? 'bg-emerald-600 text-white shadow-sm' : activeDropdown === 'exams' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300' : 'text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'}"
+              class="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold tracking-wide transition-all {$page.url.pathname.startsWith('/exam') ? 'bg-emerald-600 text-white shadow-sm' : activeDropdown === 'exams' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300' : 'text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'}"
             >
               <span>⏱️</span>
-              <span>Khảo Thí &amp; Phòng Thi</span>
+              <span>Phòng Thi</span>
               <span class="text-[10px] transition-transform duration-200 {activeDropdown === 'exams' ? 'rotate-180' : ''}">▾</span>
             </button>
 
@@ -346,10 +346,10 @@
           <div class="relative">
             <button
               onclick={() => toggleSubmenu('tools')}
-              class="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold tracking-wide transition-all {$page.url.pathname === '/dictionary' || $page.url.pathname === '/flashcards' || $page.url.pathname === '/games' || $page.url.pathname === '/pedagogy' ? 'bg-emerald-600 text-white shadow-sm' : activeDropdown === 'tools' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300' : 'text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'}"
+              class="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold tracking-wide transition-all {$page.url.pathname === '/dictionary' || $page.url.pathname === '/flashcards' || $page.url.pathname === '/games' || $page.url.pathname === '/grammar' || $page.url.pathname === '/pedagogy' ? 'bg-emerald-600 text-white shadow-sm' : activeDropdown === 'tools' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300' : 'text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'}"
             >
               <span>🛠️</span>
-              <span>Công Cụ Học Tập</span>
+              <span>Công Cụ</span>
               <span class="text-[10px] transition-transform duration-200 {activeDropdown === 'tools' ? 'rotate-180' : ''}">▾</span>
             </button>
 
@@ -411,33 +411,21 @@
                   </div>
                 </a>
 
-                <a
-                  href="/pedagogy"
-                  onclick={closeAllDropdowns}
-                  class="flex items-center gap-3 p-2.5 rounded-xl hover:bg-emerald-50/70 dark:hover:bg-slate-800 transition-colors group"
-                >
-                  <div class="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 flex items-center justify-center text-sm font-bold">
-                    👨‍🏫
-                  </div>
-                  <div>
-                    <div class="font-bold text-xs text-slate-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400">Giáo Án 5512 &amp; Bản Ngữ</div>
-                    <div class="text-[10px] text-slate-500 dark:text-slate-400">Mô hình Co-Teaching &amp; Học liệu nội bộ</div>
-                  </div>
-                </a>
-
-                <a
-                  href="/second-brain"
-                  onclick={closeAllDropdowns}
-                  class="flex items-center gap-3 p-2.5 rounded-xl hover:bg-emerald-50/70 dark:hover:bg-slate-800 transition-colors group"
-                >
-                  <div class="w-8 h-8 rounded-lg bg-teal-100 dark:bg-teal-900/50 text-teal-700 dark:text-teal-300 flex items-center justify-center text-sm font-bold">
-                    🧠
-                  </div>
-                  <div>
-                    <div class="font-bold text-xs text-slate-900 dark:text-white group-hover:text-teal-600 dark:group-hover:text-teal-400">Obsidian Second Brain</div>
-                    <div class="text-[10px] text-slate-500 dark:text-slate-400">Kho tri thức liên kết WikiLinks [[...]] 12 lớp</div>
-                  </div>
-                </a>
+                {#if isTeacherOrAdmin(currentUser)}
+                  <a
+                    href="/pedagogy"
+                    onclick={closeAllDropdowns}
+                    class="flex items-center gap-3 p-2.5 rounded-xl hover:bg-emerald-50/70 dark:hover:bg-slate-800 transition-colors group border-t border-slate-100 dark:border-slate-800/80"
+                  >
+                    <div class="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 flex items-center justify-center text-sm font-bold">
+                      👨‍🏫
+                    </div>
+                    <div>
+                      <div class="font-bold text-xs text-slate-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400">Giáo Án 5512 &amp; Bản Ngữ</div>
+                      <div class="text-[10px] text-slate-500 dark:text-slate-400">Mô hình Co-Teaching &amp; Học liệu nội bộ</div>
+                    </div>
+                  </a>
+                {/if}
               </div>
             {/if}
           </div>
@@ -446,38 +434,28 @@
           <a
             href="/schedule"
             onclick={closeAllDropdowns}
-            class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold tracking-wide transition-all {$page.url.pathname === '/schedule' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'}"
+            class="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold tracking-wide transition-all {$page.url.pathname === '/schedule' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'}"
           >
             <span>📅</span>
             <span>Thời Khóa Biểu</span>
-          </a>
-
-          <!-- Item 4b: Obsidian Second Brain (Direct Link) -->
-          <a
-            href="/second-brain"
-            onclick={closeAllDropdowns}
-            class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold tracking-wide transition-all {$page.url.pathname === '/second-brain' ? 'bg-teal-600 text-white shadow-sm' : 'text-teal-700 dark:text-teal-400 hover:text-teal-800 dark:hover:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-950/40'}"
-          >
-            <span>🧠</span>
-            <span>Second Brain</span>
           </a>
 
           <!-- Item 5: Sổ Liên Lạc Phụ Huynh (Direct Link) -->
           <a
             href="/?tab=parent"
             onclick={closeAllDropdowns}
-            class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold tracking-wide transition-all {currentUser?.role === 'parent' ? 'bg-purple-100 text-purple-800 border border-purple-300 dark:bg-purple-500/20 dark:text-purple-300 dark:border-purple-500/30' : 'text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'}"
+            class="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold tracking-wide transition-all {currentUser?.role === 'parent' ? 'bg-purple-100 text-purple-800 border border-purple-300 dark:bg-purple-500/20 dark:text-purple-300 dark:border-purple-500/30' : 'text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'}"
           >
             <span>👨‍👩‍👧</span>
             <span>Sổ Phụ Huynh</span>
           </a>
 
-          <!-- Item 5: Admin CP Dropdown (Only for Teacher / SuperAdmin) -->
+          <!-- Item 6: Admin CP Dropdown (Only for Teacher / SuperAdmin - Contains Second Brain) -->
           {#if isTeacherOrAdmin(currentUser)}
             <div class="relative">
               <button
                 onclick={() => toggleSubmenu('admin')}
-                class="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold tracking-wide transition-all {$page.url.pathname.startsWith('/admin') ? 'bg-amber-500 text-white shadow-sm' : activeDropdown === 'admin' ? 'bg-amber-50 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300' : 'text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30'}"
+                class="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold tracking-wide transition-all {$page.url.pathname.startsWith('/admin') || $page.url.pathname.startsWith('/second-brain') ? 'bg-amber-500 text-white shadow-sm' : activeDropdown === 'admin' ? 'bg-amber-50 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300' : 'text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30'}"
               >
                 <span>⚙️</span>
                 <span>Admin CP</span>
@@ -497,6 +475,21 @@
                     <div>
                       <div class="font-bold text-xs text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400">Báo Học Phí &amp; Đổi Sao</div>
                       <div class="text-[10px] text-slate-500 dark:text-slate-400">Khấu trừ 100 sao = 1.000đ, in PDF VietQR</div>
+                    </div>
+                  </a>
+
+                  <!-- Obsidian Second Brain: Admin & Teacher Only -->
+                  <a
+                    href="/second-brain"
+                    onclick={closeAllDropdowns}
+                    class="flex items-center gap-3 p-2.5 rounded-xl hover:bg-teal-50/70 dark:hover:bg-slate-800 transition-colors group"
+                  >
+                    <div class="w-8 h-8 rounded-lg bg-teal-100 dark:bg-teal-900/50 text-teal-700 dark:text-teal-300 flex items-center justify-center text-sm font-bold">
+                      🧠
+                    </div>
+                    <div>
+                      <div class="font-bold text-xs text-slate-900 dark:text-white group-hover:text-teal-600 dark:group-hover:text-teal-400">Obsidian Second Brain</div>
+                      <div class="text-[10px] text-slate-500 dark:text-slate-400">Kho tri thức &amp; WikiLinks Vault local</div>
                     </div>
                   </a>
 
@@ -708,13 +701,17 @@
 
       <!-- Mobile Navigation Drawer -->
       {#if mobileMenuOpen}
-        <div class="lg:hidden py-4 border-t border-slate-200 dark:border-slate-800 space-y-3 animate-in slide-in-from-top-2 duration-150">
-          <div class="grid grid-cols-2 gap-2">
+        <div class="lg:hidden py-4 border-t border-slate-200 dark:border-slate-800 space-y-4 animate-in slide-in-from-top-2 duration-150 max-h-[82vh] overflow-y-auto">
+          <!-- Section 1: Khóa Học & Lộ Trình -->
+          <div class="space-y-1.5">
+            <div class="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 px-1">
+              📚 Lộ Trình &amp; Khóa Học
+            </div>
             {#if currentUser?.role === 'student'}
               <a
                 href="/"
                 onclick={() => mobileMenuOpen = false}
-                class="col-span-2 flex items-center justify-between p-3 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 text-xs font-bold border border-emerald-300/40"
+                class="flex items-center justify-between p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 text-xs font-bold border border-emerald-300/40"
               >
                 <div class="flex items-center gap-2">
                   <span class="text-base">🎓</span>
@@ -723,95 +720,123 @@
                 <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-200 dark:bg-emerald-900/60 uppercase">Đang Học</span>
               </a>
             {:else}
-              <a
-                href="/?tab=primary"
-                onclick={() => mobileMenuOpen = false}
-                class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold"
-              >
-                <span>🎒</span> <span>Tiểu Học (L1-5)</span>
-              </a>
-              <a
-                href="/?tab=secondary"
-                onclick={() => mobileMenuOpen = false}
-                class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold"
-              >
-                <span>🌱</span> <span>THCS (L6-9)</span>
-              </a>
-              <a
-                href="/?tab=high_school"
-                onclick={() => mobileMenuOpen = false}
-                class="col-span-2 flex items-center gap-2 p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold"
-              >
-                <span>🏢</span> <span>THPT &amp; Ôn Thi ĐH</span>
-              </a>
+              <div class="grid grid-cols-2 gap-2">
+                <a
+                  href="/?tab=primary"
+                  onclick={() => mobileMenuOpen = false}
+                  class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold"
+                >
+                  <span>🎒</span> <span>Tiểu Học (L1-5)</span>
+                </a>
+                <a
+                  href="/?tab=secondary"
+                  onclick={() => mobileMenuOpen = false}
+                  class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold"
+                >
+                  <span>🌱</span> <span>THCS (L6-9)</span>
+                </a>
+                <a
+                  href="/?tab=high_school"
+                  onclick={() => mobileMenuOpen = false}
+                  class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold"
+                >
+                  <span>🏢</span> <span>THPT &amp; ĐH</span>
+                </a>
+                <a
+                  href="/?tab=certificate"
+                  onclick={() => mobileMenuOpen = false}
+                  class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold"
+                >
+                  <span>🌍</span> <span>IELTS / TOEIC</span>
+                </a>
+              </div>
             {/if}
-            <a
-              href="/exam"
-              onclick={() => mobileMenuOpen = false}
-              class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold"
-            >
-              <span>⏱️</span> <span>Phòng Thi &amp; 15p</span>
-            </a>
-            <a
-              href="/dictionary"
-              onclick={() => mobileMenuOpen = false}
-              class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold"
-            >
-              <span>📖</span> <span>Từ Điển Phonics</span>
-            </a>
-            <a
-              href="/grammar"
-              onclick={() => mobileMenuOpen = false}
-              class="flex items-center gap-2 p-2.5 rounded-xl bg-teal-50 dark:bg-teal-950/60 text-teal-800 dark:text-teal-300 text-xs font-bold"
-            >
-              <span>📐</span> <span>Ngữ Pháp &amp; Công Thức</span>
-            </a>
-            <a
-              href="/flashcards"
-              onclick={() => mobileMenuOpen = false}
-              class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold"
-            >
-              <span>🗂️</span> <span>Flashcard 3D</span>
-            </a>
-            <a
-              href="/games"
-              onclick={() => mobileMenuOpen = false}
-              class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold"
-            >
-              <span>🎮</span> <span>Game Từ Vựng</span>
-            </a>
-            <a
-              href="/schedule"
-              onclick={() => mobileMenuOpen = false}
-              class="flex items-center gap-2 p-2.5 rounded-xl bg-indigo-100 dark:bg-indigo-950/60 text-indigo-800 dark:text-indigo-300 text-xs font-bold"
-            >
-              <span>📅</span> <span>Thời Khóa Biểu</span>
-            </a>
-            <a
-              href="/second-brain"
-              onclick={() => mobileMenuOpen = false}
-              class="flex items-center gap-2 p-2.5 rounded-xl bg-teal-100 dark:bg-teal-950/60 text-teal-800 dark:text-teal-300 text-xs font-bold"
-            >
-              <span>🧠</span> <span>Obsidian Second Brain</span>
-            </a>
-            <a
-              href="/?tab=parent"
-              onclick={() => mobileMenuOpen = false}
-              class="flex items-center gap-2 p-2.5 rounded-xl bg-purple-100 dark:bg-purple-950/60 text-purple-800 dark:text-purple-300 text-xs font-bold"
-            >
-              <span>👨‍👩‍👧</span> <span>Sổ Phụ Huynh</span>
-            </a>
           </div>
 
+          <!-- Section 2: Khảo Thí & Học Tập -->
+          <div class="space-y-1.5">
+            <div class="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 px-1">
+              ⏱️ Phòng Thi &amp; Học Tập Đa Giác Quan
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <a
+                href="/exam"
+                onclick={() => mobileMenuOpen = false}
+                class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold"
+              >
+                <span>⏱️</span> <span>Phòng Thi &amp; 15p</span>
+              </a>
+              <a
+                href="/dictionary"
+                onclick={() => mobileMenuOpen = false}
+                class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold"
+              >
+                <span>📖</span> <span>Từ Điển Phonics</span>
+              </a>
+              <a
+                href="/grammar"
+                onclick={() => mobileMenuOpen = false}
+                class="flex items-center gap-2 p-2.5 rounded-xl bg-teal-50 dark:bg-teal-950/50 text-teal-800 dark:text-teal-300 text-xs font-bold"
+              >
+                <span>📐</span> <span>Ngữ Pháp Cốt Lõi</span>
+              </a>
+              <a
+                href="/flashcards"
+                onclick={() => mobileMenuOpen = false}
+                class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold"
+              >
+                <span>🗂️</span> <span>Flashcard 3D</span>
+              </a>
+              <a
+                href="/games"
+                onclick={() => mobileMenuOpen = false}
+                class="col-span-2 flex items-center justify-between p-2.5 rounded-xl bg-purple-50 dark:bg-purple-950/40 text-purple-800 dark:text-purple-300 text-xs font-bold border border-purple-200/50 dark:border-purple-800/40"
+              >
+                <div class="flex items-center gap-2">
+                  <span>🎮</span> <span>Đấu Trường Game Từ Vựng</span>
+                </div>
+                <span class="text-[10px] px-2 py-0.5 rounded-full bg-purple-200 dark:bg-purple-900/60 uppercase">Speed Match</span>
+              </a>
+            </div>
+          </div>
+
+          <!-- Section 3: Tiện Ích & Liên Lạc -->
+          <div class="space-y-1.5">
+            <div class="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 px-1">
+              📅 Lịch Học &amp; Gia Đình
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <a
+                href="/schedule"
+                onclick={() => mobileMenuOpen = false}
+                class="flex items-center gap-2 p-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-800 dark:text-indigo-300 text-xs font-bold"
+              >
+                <span>📅</span> <span>Thời Khóa Biểu</span>
+              </a>
+              <a
+                href="/?tab=parent"
+                onclick={() => mobileMenuOpen = false}
+                class="flex items-center gap-2 p-2.5 rounded-xl bg-purple-50 dark:bg-purple-950/50 text-purple-800 dark:text-purple-300 text-xs font-bold"
+              >
+                <span>👨‍👩‍👧</span> <span>Sổ Phụ Huynh</span>
+              </a>
+            </div>
+          </div>
+
+          <!-- Section 4: Dành Riêng Cho Leader & Giáo Viên (Chỉ Admin / Teacher mới thấy) -->
           {#if isTeacherOrAdmin(currentUser)}
-            <div class="pt-2 border-t border-slate-200 dark:border-slate-800 space-y-1.5">
+            <div class="pt-3 border-t border-slate-200 dark:border-slate-800 space-y-2">
+              <div class="text-[10px] font-black uppercase tracking-wider text-amber-600 dark:text-amber-400 px-1 flex items-center gap-1">
+                <span>👑</span> <span>Khu Vực Quản Trị &amp; Sư Phạm</span>
+              </div>
+
               <button
                 onclick={() => { mobileMenuOpen = false; showLeaderDrawer = true; }}
-                class="w-full flex items-center justify-between p-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-xs font-bold shadow-md"
+                class="w-full flex items-center justify-between p-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-xs font-bold shadow-md"
               >
                 <div class="flex items-center gap-2">
                   <span>🔔</span>
-                  <span>Báo Cáo Leader (Cô Dung)</span>
+                  <span>Trung Tâm Báo Cáo Leader (Cô Dung)</span>
                 </div>
                 {#if leaderUnreadCount > 0}
                   <span class="px-2 py-0.5 rounded-full bg-rose-600 text-[10px] font-black animate-pulse">
@@ -820,14 +845,36 @@
                 {/if}
               </button>
 
-              <a
-                href="/admin"
-                onclick={() => mobileMenuOpen = false}
-                class="flex items-center justify-between p-2.5 rounded-xl bg-amber-500/10 text-amber-700 dark:text-amber-300 text-xs font-bold"
-              >
-                <span>⚙️ Trung Tâm Quản Trị (Admin CP)</span>
-                <span>➔</span>
-              </a>
+              <div class="grid grid-cols-2 gap-2">
+                <a
+                  href="/admin"
+                  onclick={() => mobileMenuOpen = false}
+                  class="flex items-center gap-2 p-2.5 rounded-xl bg-amber-500/15 text-amber-800 dark:text-amber-300 text-xs font-bold border border-amber-500/30"
+                >
+                  <span>⚙️</span> <span>Admin CP</span>
+                </a>
+                <a
+                  href="/second-brain"
+                  onclick={() => mobileMenuOpen = false}
+                  class="flex items-center gap-2 p-2.5 rounded-xl bg-teal-500/15 text-teal-800 dark:text-teal-300 text-xs font-bold border border-teal-500/30"
+                >
+                  <span>🧠</span> <span>Second Brain</span>
+                </a>
+                <a
+                  href="/evaluations"
+                  onclick={() => mobileMenuOpen = false}
+                  class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold"
+                >
+                  <span>📊</span> <span>Đánh Giá Năng Lực</span>
+                </a>
+                <a
+                  href="/pedagogy"
+                  onclick={() => mobileMenuOpen = false}
+                  class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold"
+                >
+                  <span>👨‍🏫</span> <span>Giáo Án 5512</span>
+                </a>
+              </div>
             </div>
           {/if}
         </div>

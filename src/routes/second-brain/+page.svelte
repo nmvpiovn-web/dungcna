@@ -1,13 +1,29 @@
 <script>
   import { onMount } from 'svelte';
   import vaultData from '$lib/data/second_brain_vault.json';
+  import { getCurrentUser, isTeacherOrAdmin, isSuperAdmin } from '$lib/unifiedStore';
 
+  let currentUser = $state(null);
   let searchQuery = $state('');
   let selectedFolder = $state('all');
   let selectedNoteId = $state('00_INDEX_MOC');
   let historyStack = $state(['00_INDEX_MOC']);
   let historyIndex = $state(0);
   let isMobileSidebarOpen = $state(false);
+  let copiedPath = $state(false);
+
+  const LOCAL_VAULT_PATH = 'c:\\Users\\admin\\.gemini\\antigravity\\scratch\\tienganh7-sveltekit\\obsidian_vault';
+
+  onMount(() => {
+    currentUser = getCurrentUser();
+    const handleAuth = (e) => {
+      currentUser = e.detail;
+    };
+    window.addEventListener('tienganh:auth-change', handleAuth);
+    return () => {
+      window.removeEventListener('tienganh:auth-change', handleAuth);
+    };
+  });
 
   const folders = [
     { id: '07_GOOGLE_DRIVE_LIBRARY', name: '📄 07. Tài liệu Google Drive', count: vaultData.notes.filter(n => n.folder === '07_GOOGLE_DRIVE_LIBRARY').length },
@@ -70,6 +86,30 @@
       historyIndex++;
       selectedNoteId = historyStack[historyIndex];
     }
+  }
+
+  let currentNoteLocalFullPath = $derived.by(() => {
+    if (!currentNote) return '';
+    const sub = currentNote.folder === 'Root' ? '' : currentNote.folder + '\\';
+    return `${LOCAL_VAULT_PATH}\\${sub}${currentNote.filename}`;
+  });
+
+  let obsidianUriByPath = $derived.by(() => {
+    if (!currentNoteLocalFullPath) return '';
+    return `obsidian://open?path=${encodeURIComponent(currentNoteLocalFullPath)}`;
+  });
+
+  let obsidianUriByVault = $derived.by(() => {
+    if (!currentNote) return '';
+    const rel = currentNote.folder === 'Root' ? currentNote.filename : `${currentNote.folder}/${currentNote.filename}`;
+    return `obsidian://open?vault=obsidian_vault&file=${encodeURIComponent(rel.replace(/\.md$/, ''))}`;
+  });
+
+  function copyAbsolutePath() {
+    if (!currentNoteLocalFullPath) return;
+    navigator.clipboard.writeText(currentNoteLocalFullPath);
+    copiedPath = true;
+    setTimeout(() => copiedPath = false, 2500);
   }
 
   // Parse markdown into formatted HTML with Callouts & WikiLinks
@@ -181,15 +221,24 @@
         </div>
       </div>
 
-      <div class="flex items-center gap-2.5 w-full sm:w-auto justify-between sm:justify-end">
+      <div class="flex items-center gap-2.5 w-full sm:w-auto justify-between sm:justify-end flex-wrap">
+        <!-- Direct Obsidian Local Vault Open Button -->
+        <a
+          href="obsidian://open?vault=obsidian_vault"
+          class="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-purple-700 hover:bg-purple-600 text-white text-xs font-bold shadow-md shadow-purple-900/30 transition-all hover:scale-[1.02]"
+          title="Mở toàn bộ Vault trên ứng dụng Obsidian của máy tính"
+        >
+          <span>🟣</span> Mở Vault Obsidian Máy
+        </a>
+
         <!-- Download Vault Zip -->
         <a
           href="/downloads/obsidian_second_brain_vault.zip"
           download
-          class="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold shadow-md shadow-teal-600/25 transition-all hover:scale-[1.02]"
+          class="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold shadow-md shadow-teal-600/25 transition-all hover:scale-[1.02]"
           title="Tải trọn bộ folder để mở trực tiếp trong Obsidian"
         >
-          <span>📥</span> Tải Trọn Bộ Vault (.zip)
+          <span>📥</span> Tải Vault (.zip)
         </a>
 
         <!-- Mobile Toggle Button -->
@@ -204,8 +253,30 @@
     </div>
   </header>
 
-  <!-- Main Dual-Pane Workspace -->
-  <div class="max-w-7xl mx-auto w-full flex-1 flex flex-col sm:flex-row p-4 sm:p-6 gap-6 relative">
+  {#if currentUser && !isTeacherOrAdmin(currentUser)}
+    <!-- Restricted Access Warning for Students / Guests -->
+    <div class="max-w-2xl mx-auto my-12 p-8 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl text-center space-y-4">
+      <div class="w-16 h-16 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center text-3xl mx-auto border border-amber-500/30">
+        🔒
+      </div>
+      <h2 class="text-xl font-black text-slate-900 dark:text-white">
+        Khu Vực Tri Thức Nội Bộ (Obsidian Second Brain)
+      </h2>
+      <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed max-w-md mx-auto">
+        Kho tài liệu và ma trận bài giảng chuyên sâu này dành riêng cho <strong>Ban Giám Hiệu (Cô Dung, SuperAdmin)</strong> và đội ngũ <strong>Giáo viên</strong>. Tài khoản học sinh của bạn chỉ được truy cập vào phần bài tập và lộ trình đào tạo chính quy.
+      </p>
+      <div class="pt-4 flex items-center justify-center gap-3">
+        <a
+          href="/"
+          class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-all shadow-md"
+        >
+          Quay Về Trang Chủ Học Tập
+        </a>
+      </div>
+    </div>
+  {:else}
+    <!-- Main Dual-Pane Workspace -->
+    <div class="max-w-7xl mx-auto w-full flex-1 flex flex-col sm:flex-row p-4 sm:p-6 gap-6 relative">
     
     <!-- LEFT SIDEBAR: Index & Filter -->
     <aside class="w-full sm:w-80 md:w-96 flex-shrink-0 flex flex-col space-y-4 {isMobileSidebarOpen ? 'block' : 'hidden sm:flex'}">
@@ -323,10 +394,29 @@
             <span>📁 second_brain / {currentNote.folder} / {currentNote.filename}</span>
           </div>
 
-          <div class="flex items-center gap-2">
-            <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20">
-              WikiLinks Active
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="hidden sm:inline-block text-[11px] font-bold px-2 py-0.5 rounded-full bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20">
+              WikiLinks
             </span>
+
+            <!-- Direct Link to Open File in Obsidian -->
+            <a
+              href={obsidianUriByPath}
+              class="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs shadow-sm transition-all hover:scale-105"
+              title="Mở file markdown này trực tiếp trong phần mềm Obsidian trên máy tính"
+            >
+              <span>🟣</span> <span>Mở Trong Obsidian Local</span>
+            </a>
+
+            <!-- Copy Full Path Button -->
+            <button
+              type="button"
+              onclick={copyAbsolutePath}
+              class="px-2.5 py-1 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-[11px] font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all flex items-center gap-1"
+              title="Sao chép đường dẫn tuyệt đối của file trên máy tính"
+            >
+              <span>{copiedPath ? '✓ Đã Copy Path' : '📋 Copy Path'}</span>
+            </button>
           </div>
         </div>
 
@@ -411,6 +501,6 @@
         </div>
       {/if}
     </main>
-
   </div>
+  {/if}
 </div>

@@ -214,12 +214,19 @@
       leaderNotifications = e.detail || getAllLeaderNotifications();
     };
 
+    const handleAuthEvent = (e) => {
+      currentUser = e.detail || getCurrentUser();
+      loadData();
+    };
+
     window.addEventListener('tienganh:leader-notifications-change', handleLeaderEvent);
     window.addEventListener('tienganh:leader-notification-new', handleLeaderEvent);
+    window.addEventListener('tienganh:auth-change', handleAuthEvent);
 
     return () => {
       window.removeEventListener('tienganh:leader-notifications-change', handleLeaderEvent);
       window.removeEventListener('tienganh:leader-notification-new', handleLeaderEvent);
+      window.removeEventListener('tienganh:auth-change', handleAuthEvent);
     };
   });
 
@@ -533,15 +540,34 @@
   }
 
   function openEditStaff(teacher) {
-    const profile = teacherProfiles.find(p => p.teacher_id === teacher.id) || {
+    const existing = teacherProfiles.find(p => p.teacher_id === teacher.id);
+    const profile = existing ? {
+      ...existing,
+      teacher_id: teacher.id,
+      teacher_name: teacher.name,
+      username: teacher.username || existing.username,
+      teacher_email: teacher.email || existing.teacher_email,
+      role_type: existing.role_type || existing.role_level || 'assistant_fixed',
+      role_title: existing.role_title || existing.role_label || 'Trợ Giảng',
+      rate_per_session_vnd: existing.rate_per_session_vnd || existing.per_session_rate_vnd || 200000,
+      per_session_rate_vnd: existing.rate_per_session_vnd || existing.per_session_rate_vnd || 200000,
+      base_salary_vnd: existing.base_salary_vnd || 5000000,
+      total_sessions_taught: existing.total_sessions_taught || existing.monthly_completed_sessions || 0
+    } : {
       teacher_id: teacher.id,
       teacher_name: teacher.name,
       teacher_email: teacher.email,
+      username: teacher.username,
       role_level: 'assistant_fixed',
+      role_type: 'assistant_fixed',
       role_label: 'Trợ Giảng Cố Định',
+      role_title: 'Trợ Giảng Cố Định',
       base_salary_vnd: 5000000,
+      rate_per_session_vnd: 200000,
       per_session_rate_vnd: 200000,
+      total_sessions_taught: 8,
       monthly_completed_sessions: 8,
+      leader_rating: 5.0,
       rating_stars: 5,
       private_reminders: []
     };
@@ -1588,8 +1614,8 @@
                   </div>
                 </div>
 
-                <span class="px-2.5 py-1 rounded-xl text-[10px] font-extrabold uppercase border {isLeader ? 'bg-amber-500/20 text-amber-300 border-amber-500/30' : profile.role_level === 'native' ? 'bg-teal-500/20 text-teal-300 border-teal-500/30' : 'bg-slate-800 text-slate-300 border-slate-700'}">
-                  {profile.role_label || (isLeader ? 'Leader Cô Dung' : 'Giáo Viên')}
+                <span class="px-2.5 py-1 rounded-xl text-[10px] font-extrabold uppercase border {isLeader ? 'bg-amber-500/20 text-amber-300 border-amber-500/30' : (profile.role_type === 'native' || profile.role_level === 'native') ? 'bg-teal-500/20 text-teal-300 border-teal-500/30' : 'bg-slate-800 text-slate-300 border-slate-700'}">
+                  {profile.role_title || profile.role_label || (isLeader ? 'Leader Cô Dung' : 'Giáo Viên')}
                 </span>
               </div>
 
@@ -1597,19 +1623,19 @@
               <div class="p-3 rounded-2xl bg-slate-950 border border-slate-800/80 space-y-2 text-xs">
                 <div class="flex justify-between items-center text-slate-400">
                   <span>Lương Cứng:</span>
-                  <span class="font-bold text-white">{(profile.base_salary_vnd || 5000000).toLocaleString()}đ / tháng</span>
+                  <span class="font-bold text-white">{(profile.base_salary_vnd || 5000000).toLocaleString('vi-VN')}đ / tháng</span>
                 </div>
                 <div class="flex justify-between items-center text-slate-400">
                   <span>Thù Lao Ca Dạy:</span>
-                  <span class="font-bold text-emerald-400">{(profile.per_session_rate_vnd || 200000).toLocaleString()}đ / ca</span>
+                  <span class="font-bold text-emerald-400">{(profile.rate_per_session_vnd || profile.per_session_rate_vnd || 200000).toLocaleString('vi-VN')}đ / ca</span>
                 </div>
                 <div class="flex justify-between items-center text-slate-400">
                   <span>Ca Đã Dạy Tháng:</span>
-                  <span class="font-bold text-indigo-400">{profile.monthly_completed_sessions || 8} ca</span>
+                  <span class="font-bold text-indigo-400">{profile.total_sessions_taught || profile.monthly_completed_sessions || 0} ca</span>
                 </div>
                 <div class="flex justify-between items-center border-t border-slate-800 pt-1 text-slate-300">
                   <span>Đánh Giá Leader:</span>
-                  <span class="font-bold text-amber-400">{'⭐'.repeat(profile.rating_stars || 5)}</span>
+                  <span class="font-bold text-amber-400">{'⭐'.repeat(Math.min(5, Math.max(1, Math.round(profile.leader_rating || profile.rating_stars || 5))))} ({profile.leader_rating || profile.rating_stars || 5.0})</span>
                 </div>
               </div>
 
@@ -2636,7 +2662,9 @@
   <TeacherStaffModal
     bind:isOpen={showStaffModal}
     staffProfile={editingStaffProfile}
+    teacherId={editingStaffProfile?.teacher_id}
     onSaved={handleStaffSaved}
+    onUpdated={handleStaffSaved}
   />
 
   <!-- MODAL 6: SỬA BUỔI HỌC (SessionEditModal) -->
@@ -2654,11 +2682,28 @@
   />
 
   <!-- MODAL 8: HÓA ĐƠN HỌC PHÍ & PREVIEW 5 MẪU PDF (TuitionBillReport) -->
-  <TuitionBillReport
-    bind:isOpen={showPdfPreviewModal}
-    bill={previewBill}
-    templateId={previewTemplateId}
-  />
+  {#if showPdfPreviewModal && previewBill}
+    <div class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+      <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-4xl p-6 md:p-8 space-y-4 shadow-2xl my-8 relative">
+        <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+          <div class="text-sm font-bold text-white flex items-center gap-2">
+            <span>📑</span>
+            <span>Bản Xem Trước Hóa Đơn &amp; Đổi Sao (Mẫu {previewTemplateId})</span>
+          </div>
+          <button
+            onclick={() => showPdfPreviewModal = false}
+            class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center text-sm font-bold transition-colors"
+          >
+            ✕
+          </button>
+        </div>
+        <TuitionBillReport
+          bill={previewBill}
+          templateId={previewTemplateId}
+        />
+      </div>
+    </div>
+  {/if}
 
   <!-- MODAL 9: LẬP HÓA ĐƠN HỌC PHÍ MỚI -->
   {#if showBillModal}
