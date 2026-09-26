@@ -561,6 +561,278 @@ describe('CODEX AUDIT HANDOFF 7216f8c - REAL BEHAVIORAL SUITE', async () => {
       const bal = sqlite.prepare('SELECT stars_balance FROM student_stars WHERE student_id = ?').get('std_err');
       assert.strictEqual(bal.stars_balance, 500, 'Student balance must be safely restored after insert error');
     });
+
+    test('P1-03.8: Missing student_id or non-existent student rejected with HTTP 400 (never defaults to student_1)', async () => {
+      // 1. Missing student_id
+      const reqMissing = new Request('http://localhost/api/tuition', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${teacherToken}` },
+        body: JSON.stringify({ student_name: 'HS Vo Danh', base_tuition_vnd: 1000000 })
+      });
+      const resMissing = await postTuition({ request: reqMissing, platform: { env: { DB: db, AUTH_SECRET: TEST_SECRET } } });
+      assert.strictEqual(resMissing.status, 400);
+      assert.match((await resMissing.json()).error, /Thiếu student_id/i);
+
+      // 2. Empty string student_id
+      const reqEmpty = new Request('http://localhost/api/tuition', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${teacherToken}` },
+        body: JSON.stringify({ student_id: '   ', student_name: 'HS Vo Danh', base_tuition_vnd: 1000000 })
+      });
+      const resEmpty = await postTuition({ request: reqEmpty, platform: { env: { DB: db, AUTH_SECRET: TEST_SECRET } } });
+      assert.strictEqual(resEmpty.status, 400);
+
+      // 3. Unknown student not existing in users or student_stars
+      const reqUnknown = new Request('http://localhost/api/tuition', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${teacherToken}` },
+        body: JSON.stringify({ student_id: 'std_non_existent_999', student_name: 'Khong Co', base_tuition_vnd: 1000000 })
+      });
+      const resUnknown = await postTuition({ request: reqUnknown, platform: { env: { DB: db, AUTH_SECRET: TEST_SECRET } } });
+      assert.strictEqual(resUnknown.status, 400);
+      assert.match((await resUnknown.json()).error, /không tồn tại trong hệ thống/i);
+    });
+
+    test('P1-03.9: Inactive student account rejected with HTTP 403', async () => {
+      sqlite.prepare("INSERT INTO users (id, username, role, name, status) VALUES ('std_suspended', 'suspended_hs', 'student', 'HS Bi Khoa', 'suspended')").run();
+      sqlite.prepare("INSERT INTO student_stars (student_id, stars_balance) VALUES ('std_suspended', 500)").run();
+
+      const req = new Request('http://localhost/api/tuition', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${teacherToken}` },
+        body: JSON.stringify({ student_id: 'std_suspended', student_name: 'HS Bi Khoa', base_tuition_vnd: 1000000, stars_deducted: 100 })
+      });
+      const res = await postTuition({ request: req, platform: { env: { DB: db, AUTH_SECRET: TEST_SECRET } } });
+      assert.strictEqual(res.status, 403);
+      assert.match((await res.json()).error, /không ở trạng thái hoạt động/i);
+    });
+
+    test('P1-03.10: Fault Injection on student_star_ledger: balance stays 500, no bill inserted', async () => {
+      sqlite.prepare('INSERT INTO student_stars (student_id, stars_balance) VALUES (?, ?)').run('std_ledger_err', 500);
+
+      const failingLedgerDb = {
+        ...db,
+        prepare(sql) {
+          if (sql.includes('INSERT INTO student_star_ledger')) {
+            return {
+              bind() { return this; },
+              async run() { throw new Error('D1_IO_ERROR: disk failure on student_star_ledger'); }
+            };
+          }
+          return db.prepare(sql);
+        }
+      };
+
+      const billReq = new Request('http://localhost/api/tuition', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${teacherToken}` },
+        body: JSON.stringify({ student_id: 'std_ledger_err', student_name: 'HS Ledger Err', base_tuition_vnd: 2000000, stars_deducted: 200 })
+      });
+
+      const res = await postTuition({ request: billReq, platform: { env: { DB: failingLedgerDb, AUTH_SECRET: TEST_SECRET } } });
+      assert.strictEqual(res.status, 500);
+
+      // Student balance MUST remain exactly 500
+      const bal = sqlite.prepare('SELECT stars_balance FROM student_stars WHERE student_id = ?').get('std_ledger_err');
+      assert.strictEqual(bal.stars_balance, 500, 'Student balance must remain 500 when ledger insert fails');
+
+      // No bill should have been committed
+      const bills = sqlite.prepare('SELECT * FROM tuition_bills WHERE student_id = ?').all('std_ledger_err');
+      assert.strictEqual(bills.length, 0, 'No bill should be committed when transaction fails');
+    });
+
+    test('P1-03.11: Fault Injection on revision refund: balance restored to original (no rogue refund kept)', async () => {
+      sqlite.prepare('INSERT INTO student_stars (student_id, stars_balance) VALUES (?, ?)').run('std_rev_fail', 300);
+
+      // Create initial bill with 200 stars deducted (leaves 100 stars)
+      const createReq = new Request('http://localhost/api/tuition', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${teacherToken}` },
+        body: JSON.stringify({ id: 'bill_rev_fail_01', student_id: 'std_rev_fail', student_name: 'HS Rev Fail', base_tuition_vnd: 2000000, stars_deducted: 200 })
+      });
+      await postTuition({ request: createReq, platform: { env: { DB: db, AUTH_SECRET: TEST_SECRET } } });
+
+      let bal = sqlite.prepare('SELECT stars_balance FROM student_stars WHERE student_id = ?').get('std_rev_fail');
+      assert.strictEqual(bal.stars_balance, 100);
+
+      // Now prepare a DB that fails when updating tuition_bills during revision
+      const failingUpdateDb = {
+        ...db,
+        prepare(sql) {
+          if (sql.includes('UPDATE tuition_bills')) {
+            return {
+              bind() { return this; },
+              async run() { throw new Error('D1_STORAGE_WRITE_ABORT: update tuition_bills failed'); }
+            };
+          }
+          return db.prepare(sql);
+        }
+      };
+
+      // Revise bill to deduct 50 stars (would refund 150 stars)
+      const reviseReq = new Request('http://localhost/api/tuition', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${teacherToken}` },
+        body: JSON.stringify({ id: 'bill_rev_fail_01', student_id: 'std_rev_fail', student_name: 'HS Rev Fail', base_tuition_vnd: 2000000, stars_deducted: 50 })
+      });
+      const reviseRes = await postTuition({ request: reviseReq, platform: { env: { DB: failingUpdateDb, AUTH_SECRET: TEST_SECRET } } });
+      assert.strictEqual(reviseRes.status, 500);
+
+      // Verify student balance was NOT inflated to 250! It must be safely restored to 100!
+      bal = sqlite.prepare('SELECT stars_balance FROM student_stars WHERE student_id = ?').get('std_rev_fail');
+      assert.strictEqual(bal.stars_balance, 100, 'Student balance must be restored to 100 when bill revision fails');
+    });
+
+    test('P1-03.12: Fault Injection during DELETE: star refund is rolled back and balance remains untouched', async () => {
+      sqlite.prepare('INSERT INTO student_stars (student_id, stars_balance) VALUES (?, ?)').run('std_del_fail', 0);
+
+      // Create bill deducting 100 stars
+      const createReq = new Request('http://localhost/api/tuition', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${teacherToken}` },
+        body: JSON.stringify({ id: 'bill_del_fail_01', student_id: 'std_del_fail', student_name: 'HS Del Fail', base_tuition_vnd: 1000000, stars_deducted: 100 })
+      });
+      // Temporarily give 100 stars to create the bill
+      sqlite.prepare('UPDATE student_stars SET stars_balance = 100 WHERE student_id = ?').run('std_del_fail');
+      await postTuition({ request: createReq, platform: { env: { DB: db, AUTH_SECRET: TEST_SECRET } } });
+
+      let bal = sqlite.prepare('SELECT stars_balance FROM student_stars WHERE student_id = ?').get('std_del_fail');
+      assert.strictEqual(bal.stars_balance, 0);
+
+      // Prepare DB that fails specifically when deleting from tuition_bills
+      const failingDelDb = {
+        ...db,
+        prepare(sql) {
+          if (sql.includes('DELETE FROM tuition_bills')) {
+            return {
+              bind() { return this; },
+              async run() { throw new Error('D1_FATAL_DISK_ABORT: delete failed'); }
+            };
+          }
+          return db.prepare(sql);
+        }
+      };
+
+      const delReq = new Request('http://localhost/api/tuition?id=bill_del_fail_01', {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${leaderToken}` }
+      });
+      const delRes = await deleteTuition({ url: new URL(delReq.url), request: delReq, platform: { env: { DB: failingDelDb, AUTH_SECRET: TEST_SECRET } } });
+      assert.strictEqual(delRes.status, 500);
+
+      // Student balance MUST remain 0, NOT 100!
+      bal = sqlite.prepare('SELECT stars_balance FROM student_stars WHERE student_id = ?').get('std_del_fail');
+      assert.strictEqual(bal.stars_balance, 0, 'Balance must remain 0 when bill deletion aborts');
+
+      // Bill must still exist
+      const billRow = sqlite.prepare('SELECT * FROM tuition_bills WHERE id = ?').get('bill_del_fail_01');
+      assert.ok(billRow, 'Bill must still exist');
+    });
+
+    test('P1-03.13: Concurrent POST with optimistic CAS versioning: no double debit on same bill', async () => {
+      sqlite.prepare('INSERT INTO student_stars (student_id, stars_balance) VALUES (?, ?)').run('std_race_post', 500);
+
+      // Create initial bill with 0 stars deducted (version 1)
+      const createReq = new Request('http://localhost/api/tuition', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${teacherToken}` },
+        body: JSON.stringify({ id: 'bill_race_01', student_id: 'std_race_post', student_name: 'HS Race', base_tuition_vnd: 2000000, stars_deducted: 0 })
+      });
+      await postTuition({ request: createReq, platform: { env: { DB: db, AUTH_SECRET: TEST_SECRET } } });
+
+      let bal = sqlite.prepare('SELECT stars_balance FROM student_stars WHERE student_id = ?').get('std_race_post');
+      assert.strictEqual(bal.stars_balance, 500);
+
+      // Wrap DB with slight microtask yield so both workers read existing bill at version 1 concurrently before either writes
+      let reads = 0;
+      const racingDb = {
+        ...db,
+        prepare(sql) {
+          const original = db.prepare(sql);
+          if (sql.includes('SELECT id, status, student_id, stars_deducted, version FROM tuition_bills')) {
+            return {
+              bind(...args) {
+                const bound = original.bind(...args);
+                return {
+                  async first() {
+                    reads++;
+                    const result = await bound.first();
+                    // Yield to event loop to let second worker also read version 1
+                    await new Promise(resolve => setTimeout(resolve, 5));
+                    return result;
+                  }
+                };
+              }
+            };
+          }
+          return original;
+        }
+      };
+
+      // Two concurrent requests both read version 1 and attempt to deduct 100 stars
+      const req1 = new Request('http://localhost/api/tuition', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${teacherToken}` },
+        body: JSON.stringify({ id: 'bill_race_01', student_id: 'std_race_post', student_name: 'HS Race', base_tuition_vnd: 2000000, stars_deducted: 100 })
+      });
+      const req2 = new Request('http://localhost/api/tuition', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${teacherToken}` },
+        body: JSON.stringify({ id: 'bill_race_01', student_id: 'std_race_post', student_name: 'HS Race', base_tuition_vnd: 2000000, stars_deducted: 100 })
+      });
+
+      const [res1, res2] = await Promise.all([
+        postTuition({ request: req1, platform: { env: { DB: racingDb, AUTH_SECRET: TEST_SECRET } } }),
+        postTuition({ request: req2, platform: { env: { DB: racingDb, AUTH_SECRET: TEST_SECRET } } })
+      ]);
+
+      const statuses = [res1.status, res2.status].sort();
+      // Exactly one worker won (200), the other received CAS conflict (403/409)
+      assert.strictEqual(statuses[0], 200);
+      assert.ok(statuses[1] === 403 || statuses[1] === 409, `Second request should be rejected (got ${statuses[1]})`);
+
+      // Balance MUST be debited exactly ONCE (500 - 100 = 400, NEVER 300!)
+      bal = sqlite.prepare('SELECT stars_balance FROM student_stars WHERE student_id = ?').get('std_race_post');
+      assert.strictEqual(bal.stars_balance, 400, 'Student balance must be debited exactly once, no double spending');
+    });
+
+    test('P1-03.14: Concurrent DELETE race: zero double refund', async () => {
+      sqlite.prepare('INSERT INTO student_stars (student_id, stars_balance) VALUES (?, ?)').run('std_race_del', 100);
+
+      // Create bill deducting 100 stars
+      const createReq = new Request('http://localhost/api/tuition', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${teacherToken}` },
+        body: JSON.stringify({ id: 'bill_race_del_01', student_id: 'std_race_del', student_name: 'HS Race Del', base_tuition_vnd: 1000000, stars_deducted: 100 })
+      });
+      await postTuition({ request: createReq, platform: { env: { DB: db, AUTH_SECRET: TEST_SECRET } } });
+
+      let bal = sqlite.prepare('SELECT stars_balance FROM student_stars WHERE student_id = ?').get('std_race_del');
+      assert.strictEqual(bal.stars_balance, 0);
+
+      // Two concurrent DELETE requests hit the endpoint
+      const del1 = new Request('http://localhost/api/tuition?id=bill_race_del_01', {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${leaderToken}` }
+      });
+      const del2 = new Request('http://localhost/api/tuition?id=bill_race_del_01', {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${leaderToken}` }
+      });
+
+      const [res1, res2] = await Promise.all([
+        deleteTuition({ url: new URL(del1.url), request: del1, platform: { env: { DB: db, AUTH_SECRET: TEST_SECRET } } }),
+        deleteTuition({ url: new URL(del2.url), request: del2, platform: { env: { DB: db, AUTH_SECRET: TEST_SECRET } } })
+      ]);
+
+      const statuses = [res1.status, res2.status].sort();
+      assert.strictEqual(statuses[0], 200);
+      assert.ok(statuses[1] === 404 || statuses[1] === 409);
+
+      // Student balance MUST be refunded exactly ONCE (0 + 100 = 100, NEVER 200!)
+      bal = sqlite.prepare('SELECT stars_balance FROM student_stars WHERE student_id = ?').get('std_race_del');
+      assert.strictEqual(bal.stars_balance, 100, 'Student balance must be refunded exactly once, never double refunded');
+    });
   });
 
   // =========================================================================

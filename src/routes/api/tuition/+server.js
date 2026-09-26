@@ -28,6 +28,22 @@ async function ensureStarLedgerTable(db) {
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
   `).run();
+
+  try {
+    await db.prepare('ALTER TABLE tuition_bills ADD COLUMN version INTEGER DEFAULT 1;').run();
+  } catch {}
+
+  try {
+    await db.prepare(`
+      CREATE TRIGGER IF NOT EXISTS trg_student_stars_no_negative
+      BEFORE UPDATE ON student_stars
+      FOR EACH ROW
+      WHEN NEW.stars_balance < 0
+      BEGIN
+        SELECT RAISE(ABORT, 'INSUFFICIENT_STARS: stars_balance cannot be negative');
+      END;
+    `).run();
+  } catch {}
 }
 
 function isManager(user) {
@@ -167,6 +183,8 @@ export async function POST({ request, platform }) {
   }
 
   const manager = isManager(auth.user);
+  let studentId = null;
+  let originalStarsBalance = null;
 
   try {
     const body = await request.json();
@@ -174,10 +192,13 @@ export async function POST({ request, platform }) {
       return json({ success: false, error: 'Thiếu thông tin học sinh hoặc mức học phí gốc' }, { status: 400 });
     }
 
-    const studentId = body.student_id ? String(body.student_id).trim() : 'student_1';
-    if (!studentId) {
+    // Strict validation: student_id MUST be explicitly provided, non-empty string.
+    // NEVER fall back to 'student_1' in financial transactions!
+    const rawStudentId = body.student_id;
+    if (!rawStudentId || typeof rawStudentId !== 'string' || !rawStudentId.trim()) {
       return json({ success: false, error: 'Thiếu student_id của học sinh' }, { status: 400 });
     }
+    studentId = rawStudentId.trim();
 
     // 1. Strict Validation of stars_deducted: must be non-negative integer & finite
     const rawStarsDeducted = body.stars_deducted !== undefined ? body.stars_deducted : 0;
@@ -206,95 +227,6 @@ export async function POST({ request, platform }) {
     const billId = body.id || `bill_${Date.now()}`;
     let availableStars = 0;
     let netStarsToDebit = starsDeducted;
-    let debitedInThisRequest = 0;
-
-    // 2. Strict Protection of Approved / Paid Bills & Server Star Ledger (D1)
-    if (platform?.env?.DB) {
-      const db = platform.env.DB;
-      await ensureStarLedgerTable(db);
-
-      // Check existing bill
-      if (body.id) {
-        const existing = await db.prepare('SELECT id, status, student_id, stars_deducted FROM tuition_bills WHERE id = ?').bind(body.id).first();
-        if (existing) {
-          if (existing.status !== 'draft' && !manager) {
-            return json({
-              success: false,
-              error: `Forbidden: Hóa đơn đã ở trạng thái '${existing.status}'. Giáo viên không được phép chỉnh sửa hóa đơn đã phê duyệt hoặc đã thanh toán. Vui lòng liên hệ Ban Quản Lý.`
-            }, { status: 403 });
-          }
-          if (existing.student_id && existing.student_id !== studentId) {
-            return json({
-              success: false,
-              error: 'Forbidden: Không được phép chuyển đổi hóa đơn sang học sinh khác.'
-            }, { status: 400 });
-          }
-          const previousDeducted = Number(existing.stars_deducted) || 0;
-          netStarsToDebit = starsDeducted - previousDeducted;
-        }
-      }
-
-      // Query true verified student star balance from DB (NEVER trust body.stars_available)
-      const starRow = await db.prepare('SELECT stars_balance FROM student_stars WHERE student_id = ?').bind(studentId).first();
-      availableStars = starRow ? Number(starRow.stars_balance) : 0;
-
-      // Handle Star Debit / Refund
-      if (netStarsToDebit > 0) {
-        if (availableStars < netStarsToDebit) {
-          return json({
-            success: false,
-            error: `Số dư sao không đủ: Học sinh chỉ có ${availableStars} sao khả dụng trong hệ thống, không đủ để khấu trừ thêm ${netStarsToDebit} sao (yêu cầu tổng: ${starsDeducted} sao).`
-          }, { status: 400 });
-        }
-
-        // Atomic CAS Debit from student_stars
-        const debitRes = await db.prepare(`
-          UPDATE student_stars
-          SET stars_balance = stars_balance - ?,
-              stars_redeemed = stars_redeemed + ?,
-              last_updated = CURRENT_TIMESTAMP
-          WHERE student_id = ? AND stars_balance >= ?;
-        `).bind(netStarsToDebit, netStarsToDebit, studentId, netStarsToDebit).run();
-
-        if (!debitRes || debitRes.meta?.changes !== 1) {
-          return json({
-            success: false,
-            error: 'Xung đột số dư sao: Số dư sao của học sinh đã bị thay đổi đồng thời bởi giao dịch khác (changes = 0). Vui lòng thử lại.'
-          }, { status: 409 });
-        }
-
-        debitedInThisRequest = netStarsToDebit;
-
-        // Record in student_star_ledger
-        const ledgerId = `stl_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
-        const balanceAfter = availableStars - netStarsToDebit;
-        await db.prepare(`
-          INSERT INTO student_star_ledger (id, student_id, bill_id, delta_stars, balance_after, action_type, reason)
-          VALUES (?, ?, ?, ?, ?, 'deduct', ?);
-        `).bind(ledgerId, studentId, billId, -netStarsToDebit, balanceAfter, `Khấu trừ ${netStarsToDebit} sao cho phiếu học phí ${billId}`).run();
-
-        availableStars = balanceAfter;
-      } else if (netStarsToDebit < 0) {
-        // Refund delta stars if bill was revised to deduct fewer stars
-        const refundAmount = -netStarsToDebit;
-        await db.prepare(`
-          UPDATE student_stars
-          SET stars_balance = stars_balance + ?,
-              stars_redeemed = MAX(0, stars_redeemed - ?),
-              last_updated = CURRENT_TIMESTAMP
-          WHERE student_id = ?;
-        `).bind(refundAmount, refundAmount, studentId).run();
-
-        const ledgerId = `stl_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
-        const balanceAfter = availableStars + refundAmount;
-        await db.prepare(`
-          INSERT INTO student_star_ledger (id, student_id, bill_id, delta_stars, balance_after, action_type, reason)
-          VALUES (?, ?, ?, ?, ?, 'refund', ?);
-        `).bind(ledgerId, studentId, billId, refundAmount, balanceAfter, `Hoàn ${refundAmount} sao do giảm khấu trừ trên phiếu học phí ${billId}`).run();
-
-        availableStars = balanceAfter;
-      }
-    }
 
     // 3. Calculate discount with formula: 100 stars = 1,000 VND
     const discountVnd = Math.floor(starsDeducted / 100) * 1000;
@@ -316,7 +248,7 @@ export async function POST({ request, platform }) {
       ...body,
       id: billId,
       student_id: studentId,
-      stars_available: availableStars, // Server authoritative balance
+      stars_available: 0,
       stars_deducted: starsDeducted,
       discount_vnd: discountVnd,
       final_amount_vnd: finalAmount,
@@ -324,39 +256,255 @@ export async function POST({ request, platform }) {
       approved_by: approverName
     };
 
-    // 5. Save to Cloudflare D1 (Strict Fail-Closed)
+    // 2. Strict Protection of Approved / Paid Bills & Server Star Ledger (D1)
     if (platform?.env?.DB) {
       const db = platform.env.DB;
-      const d1Sql = `
-        INSERT INTO tuition_bills (
-          id, student_id, student_name, age, grade_level, program_name,
-          billing_period, base_tuition_vnd, attendance_total_sessions,
-          attendance_attended_sessions, stars_available, stars_deducted,
-          discount_vnd, final_amount_vnd, vietqr_url, bank_name,
-          bank_account, account_holder, growth_status, growth_percentage,
-          growth_notes, eval_listening, eval_reading, eval_writing,
-          eval_speaking, eval_grammar, test_score_15m, test_score_45m,
-          template_id, status, superadmin_notes, approved_by,
-          parent_name, parent_phone, parent_zalo_id
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ON CONFLICT(id) DO UPDATE SET
-          base_tuition_vnd = excluded.base_tuition_vnd,
-          stars_deducted = excluded.stars_deducted,
-          discount_vnd = excluded.discount_vnd,
-          final_amount_vnd = excluded.final_amount_vnd,
-          status = excluded.status,
-          approved_by = excluded.approved_by,
-          updated_at = CURRENT_TIMESTAMP
-        WHERE (tuition_bills.status = 'draft' OR ? = 1);
-      `;
+      await ensureStarLedgerTable(db);
 
-      let runRes;
-      try {
-        runRes = await db.prepare(d1Sql).bind(
-          billData.id, billData.student_id, billData.student_name, billData.age || 13, billData.grade_level || 'Lớp 7',
+      // Validate student exists before touching balance
+      const studentRecord = await db.prepare('SELECT id, status, role FROM users WHERE id = ?').bind(studentId).first();
+      const starRecord = await db.prepare('SELECT student_id, stars_balance FROM student_stars WHERE student_id = ?').bind(studentId).first();
+
+      if (!studentRecord && !starRecord) {
+        return json({
+          success: false,
+          error: `Học sinh với ID '${studentId}' không tồn tại trong hệ thống.`
+        }, { status: 400 });
+      }
+
+      if (studentRecord && studentRecord.status !== 'active') {
+        return json({
+          success: false,
+          error: `Tài khoản học sinh '${studentId}' không ở trạng thái hoạt động (${studentRecord.status}).`
+        }, { status: 403 });
+      }
+
+      // Check existing bill
+      let existing = null;
+      let previousDeducted = 0;
+      let existingVersion = 1;
+
+      if (body.id) {
+        existing = await db.prepare('SELECT id, status, student_id, stars_deducted, version FROM tuition_bills WHERE id = ?').bind(body.id).first();
+        if (existing) {
+          if (existing.status !== 'draft' && !manager) {
+            return json({
+              success: false,
+              error: `Forbidden: Hóa đơn đã ở trạng thái '${existing.status}'. Giáo viên không được phép chỉnh sửa hóa đơn đã phê duyệt hoặc đã thanh toán. Vui lòng liên hệ Ban Quản Lý.`
+            }, { status: 403 });
+          }
+          if (existing.student_id && existing.student_id !== studentId) {
+            return json({
+              success: false,
+              error: 'Forbidden: Không được phép chuyển đổi hóa đơn sang học sinh khác.'
+            }, { status: 400 });
+          }
+          previousDeducted = Number(existing.stars_deducted) || 0;
+          existingVersion = Number(existing.version) || 1;
+          netStarsToDebit = starsDeducted - previousDeducted;
+        }
+      }
+
+      // Query true verified student star balance from DB (NEVER trust client body.stars_available)
+      const starRow = await db.prepare('SELECT stars_balance FROM student_stars WHERE student_id = ?').bind(studentId).first();
+      availableStars = starRow ? Number(starRow.stars_balance) : 0;
+      originalStarsBalance = availableStars;
+      billData.stars_available = availableStars;
+
+      if (netStarsToDebit > 0 && availableStars < netStarsToDebit) {
+        return json({
+          success: false,
+          error: `Số dư sao không đủ: Học sinh chỉ có ${availableStars} sao khả dụng trong hệ thống, không đủ để khấu trừ thêm ${netStarsToDebit} sao (yêu cầu tổng: ${starsDeducted} sao).`
+        }, { status: 400 });
+      }
+
+      // 5. Construct Unified Atomic Batch Statements
+      const statements = [];
+      const ledgerId = `stl_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+
+      if (netStarsToDebit > 0) {
+        // Debit stars
+        if (existing) {
+          // Revision debit: guarded by existing version & previous stars_deducted
+          const stmtStars = db.prepare(`
+            UPDATE student_stars
+            SET stars_balance = stars_balance - ?,
+                stars_redeemed = stars_redeemed + ?,
+                last_updated = CURRENT_TIMESTAMP
+            WHERE student_id = ? AND stars_balance >= ?
+              AND EXISTS (SELECT 1 FROM tuition_bills WHERE id = ? AND version = ? AND stars_deducted = ?);
+          `).bind(netStarsToDebit, netStarsToDebit, studentId, netStarsToDebit, billId, existingVersion, previousDeducted);
+
+          const stmtLedger = db.prepare(`
+            INSERT INTO student_star_ledger (id, student_id, bill_id, delta_stars, balance_after, action_type, reason)
+            SELECT ?, ?, ?, ?, stars_balance, 'deduct', ?
+            FROM student_stars
+            WHERE student_id = ?
+              AND EXISTS (SELECT 1 FROM tuition_bills WHERE id = ? AND version = ? AND stars_deducted = ?);
+          `).bind(ledgerId, studentId, billId, -netStarsToDebit, `Khấu trừ ${netStarsToDebit} sao cho phiếu học phí ${billId}`, studentId, billId, existingVersion, previousDeducted);
+
+          const stmtBill = db.prepare(`
+            UPDATE tuition_bills SET
+              version = version + 1,
+              student_name = ?,
+              age = ?,
+              grade_level = ?,
+              program_name = ?,
+              billing_period = ?,
+              base_tuition_vnd = ?,
+              attendance_total_sessions = ?,
+              attendance_attended_sessions = ?,
+              stars_available = (SELECT stars_balance FROM student_stars WHERE student_id = ?),
+              stars_deducted = ?,
+              discount_vnd = ?,
+              final_amount_vnd = ?,
+              vietqr_url = ?,
+              bank_name = ?,
+              bank_account = ?,
+              account_holder = ?,
+              growth_status = ?,
+              growth_percentage = ?,
+              growth_notes = ?,
+              eval_listening = ?,
+              eval_reading = ?,
+              eval_writing = ?,
+              eval_speaking = ?,
+              eval_grammar = ?,
+              test_score_15m = ?,
+              test_score_45m = ?,
+              template_id = ?,
+              status = ?,
+              superadmin_notes = ?,
+              approved_by = ?,
+              parent_name = ?,
+              parent_phone = ?,
+              parent_zalo_id = ?,
+              updated_at = CURRENT_TIMESTAMP
+            WHERE id = ? AND version = ? AND stars_deducted = ? AND (status = 'draft' OR ? = 1);
+          `).bind(
+            billData.student_name, billData.age || 13, billData.grade_level || 'Lớp 7',
+            billData.program_name || 'Tiếng Anh K12', billData.billing_period || 'Tháng 10/2026',
+            billData.base_tuition_vnd, billData.attendance_total_sessions || 12, billData.attendance_attended_sessions || 12,
+            studentId, billData.stars_deducted, billData.discount_vnd,
+            billData.final_amount_vnd, billData.vietqr_url || '', billData.bank_name || 'MBBank',
+            billData.bank_account || '0901234567', billData.account_holder || 'NGUYEN MINH VU',
+            billData.growth_status || 'normal', billData.growth_percentage || 0, billData.growth_notes || '',
+            billData.eval_listening || 8.0, billData.eval_reading || 8.0, billData.eval_writing || 8.0,
+            billData.eval_speaking || 8.0, billData.eval_grammar || 8.0, billData.test_score_15m || 8.0,
+            billData.test_score_45m || 8.5, billData.template_id || 1, billData.status,
+            billData.superadmin_notes || '', billData.approved_by,
+            billData.parent_name || '', billData.parent_phone || '', billData.parent_zalo_id || '',
+            billId, existingVersion, previousDeducted, manager ? 1 : 0
+          );
+
+          statements.push(stmtStars, stmtLedger, stmtBill);
+        } else {
+          // New bill creation debit
+          const stmtStars = db.prepare(`
+            UPDATE student_stars
+            SET stars_balance = stars_balance - ?,
+                stars_redeemed = stars_redeemed + ?,
+                last_updated = CURRENT_TIMESTAMP
+            WHERE student_id = ? AND stars_balance >= ?;
+          `).bind(netStarsToDebit, netStarsToDebit, studentId, netStarsToDebit);
+
+          const stmtLedger = db.prepare(`
+            INSERT INTO student_star_ledger (id, student_id, bill_id, delta_stars, balance_after, action_type, reason)
+            VALUES (?, ?, ?, ?, (SELECT stars_balance FROM student_stars WHERE student_id = ?), 'deduct', ?);
+          `).bind(ledgerId, studentId, billId, -netStarsToDebit, studentId, `Khấu trừ ${netStarsToDebit} sao cho phiếu học phí ${billId}`);
+
+          const stmtBill = db.prepare(`
+            INSERT INTO tuition_bills (
+              id, version, student_id, student_name, age, grade_level, program_name,
+              billing_period, base_tuition_vnd, attendance_total_sessions,
+              attendance_attended_sessions, stars_available, stars_deducted,
+              discount_vnd, final_amount_vnd, vietqr_url, bank_name,
+              bank_account, account_holder, growth_status, growth_percentage,
+              growth_notes, eval_listening, eval_reading, eval_writing,
+              eval_speaking, eval_grammar, test_score_15m, test_score_45m,
+              template_id, status, superadmin_notes, approved_by,
+              parent_name, parent_phone, parent_zalo_id
+            ) VALUES (?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, (SELECT stars_balance FROM student_stars WHERE student_id = ?), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+          `).bind(
+            billData.id, billData.student_id, billData.student_name, billData.age || 13, billData.grade_level || 'Lớp 7',
+            billData.program_name || 'Tiếng Anh K12', billData.billing_period || 'Tháng 10/2026',
+            billData.base_tuition_vnd, billData.attendance_total_sessions || 12, billData.attendance_attended_sessions || 12,
+            studentId, billData.stars_deducted, billData.discount_vnd,
+            billData.final_amount_vnd, billData.vietqr_url || '', billData.bank_name || 'MBBank',
+            billData.bank_account || '0901234567', billData.account_holder || 'NGUYEN MINH VU',
+            billData.growth_status || 'normal', billData.growth_percentage || 0, billData.growth_notes || '',
+            billData.eval_listening || 8.0, billData.eval_reading || 8.0, billData.eval_writing || 8.0,
+            billData.eval_speaking || 8.0, billData.eval_grammar || 8.0, billData.test_score_15m || 8.0,
+            billData.test_score_45m || 8.5, billData.template_id || 1, billData.status,
+            billData.superadmin_notes || '', billData.approved_by,
+            billData.parent_name || '', billData.parent_phone || '', billData.parent_zalo_id || ''
+          );
+
+          statements.push(stmtStars, stmtLedger, stmtBill);
+        }
+      } else if (netStarsToDebit < 0) {
+        // Bill revised to deduct fewer stars: refund difference
+        const refundAmount = -netStarsToDebit;
+        const stmtStars = db.prepare(`
+          UPDATE student_stars
+          SET stars_balance = stars_balance + ?,
+              stars_redeemed = MAX(0, stars_redeemed - ?),
+              last_updated = CURRENT_TIMESTAMP
+          WHERE student_id = ?
+            AND EXISTS (SELECT 1 FROM tuition_bills WHERE id = ? AND version = ? AND stars_deducted = ?);
+        `).bind(refundAmount, refundAmount, studentId, billId, existingVersion, previousDeducted);
+
+        const stmtLedger = db.prepare(`
+          INSERT INTO student_star_ledger (id, student_id, bill_id, delta_stars, balance_after, action_type, reason)
+          SELECT ?, ?, ?, ?, stars_balance, 'refund', ?
+          FROM student_stars
+          WHERE student_id = ?
+            AND EXISTS (SELECT 1 FROM tuition_bills WHERE id = ? AND version = ? AND stars_deducted = ?);
+        `).bind(ledgerId, studentId, billId, refundAmount, `Hoàn ${refundAmount} sao do giảm khấu trừ trên phiếu học phí ${billId}`, studentId, billId, existingVersion, previousDeducted);
+
+        const stmtBill = db.prepare(`
+          UPDATE tuition_bills SET
+            version = version + 1,
+            student_name = ?,
+            age = ?,
+            grade_level = ?,
+            program_name = ?,
+            billing_period = ?,
+            base_tuition_vnd = ?,
+            attendance_total_sessions = ?,
+            attendance_attended_sessions = ?,
+            stars_available = (SELECT stars_balance FROM student_stars WHERE student_id = ?),
+            stars_deducted = ?,
+            discount_vnd = ?,
+            final_amount_vnd = ?,
+            vietqr_url = ?,
+            bank_name = ?,
+            bank_account = ?,
+            account_holder = ?,
+            growth_status = ?,
+            growth_percentage = ?,
+            growth_notes = ?,
+            eval_listening = ?,
+            eval_reading = ?,
+            eval_writing = ?,
+            eval_speaking = ?,
+            eval_grammar = ?,
+            test_score_15m = ?,
+            test_score_45m = ?,
+            template_id = ?,
+            status = ?,
+            superadmin_notes = ?,
+            approved_by = ?,
+            parent_name = ?,
+            parent_phone = ?,
+            parent_zalo_id = ?,
+            updated_at = CURRENT_TIMESTAMP
+          WHERE id = ? AND version = ? AND stars_deducted = ? AND (status = 'draft' OR ? = 1);
+        `).bind(
+          billData.student_name, billData.age || 13, billData.grade_level || 'Lớp 7',
           billData.program_name || 'Tiếng Anh K12', billData.billing_period || 'Tháng 10/2026',
           billData.base_tuition_vnd, billData.attendance_total_sessions || 12, billData.attendance_attended_sessions || 12,
-          billData.stars_available, billData.stars_deducted, billData.discount_vnd,
+          studentId, billData.stars_deducted, billData.discount_vnd,
           billData.final_amount_vnd, billData.vietqr_url || '', billData.bank_name || 'MBBank',
           billData.bank_account || '0901234567', billData.account_holder || 'NGUYEN MINH VU',
           billData.growth_status || 'normal', billData.growth_percentage || 0, billData.growth_notes || '',
@@ -365,48 +513,121 @@ export async function POST({ request, platform }) {
           billData.test_score_45m || 8.5, billData.template_id || 1, billData.status,
           billData.superadmin_notes || '', billData.approved_by,
           billData.parent_name || '', billData.parent_phone || '', billData.parent_zalo_id || '',
-          manager ? 1 : 0
-        ).run();
-      } catch (insertErr) {
-        // Rollback debited stars if D1 insert threw
-        if (debitedInThisRequest > 0) {
-          await db.prepare(`
-            UPDATE student_stars
-            SET stars_balance = stars_balance + ?,
-                stars_redeemed = MAX(0, stars_redeemed - ?),
-                last_updated = CURRENT_TIMESTAMP
-            WHERE student_id = ?;
-          `).bind(debitedInThisRequest, debitedInThisRequest, studentId).run();
+          billId, existingVersion, previousDeducted, manager ? 1 : 0
+        );
 
-          await db.prepare(`
-            INSERT INTO student_star_ledger (id, student_id, bill_id, delta_stars, balance_after, action_type, reason)
-            VALUES (?, ?, ?, ?, ?, 'refund', 'Tự động hoàn sao do lỗi ghi phiếu học phí D1');
-          `).bind(`stl_rb_${Date.now()}`, studentId, billId, debitedInThisRequest, availableStars + debitedInThisRequest).run();
+        statements.push(stmtStars, stmtLedger, stmtBill);
+      } else {
+        // netStarsToDebit === 0: no star changes needed
+        if (existing) {
+          const stmtBill = db.prepare(`
+            UPDATE tuition_bills SET
+              version = version + 1,
+              student_name = ?,
+              age = ?,
+              grade_level = ?,
+              program_name = ?,
+              billing_period = ?,
+              base_tuition_vnd = ?,
+              attendance_total_sessions = ?,
+              attendance_attended_sessions = ?,
+              stars_available = (SELECT stars_balance FROM student_stars WHERE student_id = ?),
+              stars_deducted = ?,
+              discount_vnd = ?,
+              final_amount_vnd = ?,
+              vietqr_url = ?,
+              bank_name = ?,
+              bank_account = ?,
+              account_holder = ?,
+              growth_status = ?,
+              growth_percentage = ?,
+              growth_notes = ?,
+              eval_listening = ?,
+              eval_reading = ?,
+              eval_writing = ?,
+              eval_speaking = ?,
+              eval_grammar = ?,
+              test_score_15m = ?,
+              test_score_45m = ?,
+              template_id = ?,
+              status = ?,
+              superadmin_notes = ?,
+              approved_by = ?,
+              parent_name = ?,
+              parent_phone = ?,
+              parent_zalo_id = ?,
+              updated_at = CURRENT_TIMESTAMP
+            WHERE id = ? AND version = ? AND stars_deducted = ? AND (status = 'draft' OR ? = 1);
+          `).bind(
+            billData.student_name, billData.age || 13, billData.grade_level || 'Lớp 7',
+            billData.program_name || 'Tiếng Anh K12', billData.billing_period || 'Tháng 10/2026',
+            billData.base_tuition_vnd, billData.attendance_total_sessions || 12, billData.attendance_attended_sessions || 12,
+            studentId, billData.stars_deducted, billData.discount_vnd,
+            billData.final_amount_vnd, billData.vietqr_url || '', billData.bank_name || 'MBBank',
+            billData.bank_account || '0901234567', billData.account_holder || 'NGUYEN MINH VU',
+            billData.growth_status || 'normal', billData.growth_percentage || 0, billData.growth_notes || '',
+            billData.eval_listening || 8.0, billData.eval_reading || 8.0, billData.eval_writing || 8.0,
+            billData.eval_speaking || 8.0, billData.eval_grammar || 8.0, billData.test_score_15m || 8.0,
+            billData.test_score_45m || 8.5, billData.template_id || 1, billData.status,
+            billData.superadmin_notes || '', billData.approved_by,
+            billData.parent_name || '', billData.parent_phone || '', billData.parent_zalo_id || '',
+            billId, existingVersion, previousDeducted, manager ? 1 : 0
+          );
+          statements.push(stmtBill);
+        } else {
+          const stmtBill = db.prepare(`
+            INSERT INTO tuition_bills (
+              id, version, student_id, student_name, age, grade_level, program_name,
+              billing_period, base_tuition_vnd, attendance_total_sessions,
+              attendance_attended_sessions, stars_available, stars_deducted,
+              discount_vnd, final_amount_vnd, vietqr_url, bank_name,
+              bank_account, account_holder, growth_status, growth_percentage,
+              growth_notes, eval_listening, eval_reading, eval_writing,
+              eval_speaking, eval_grammar, test_score_15m, test_score_45m,
+              template_id, status, superadmin_notes, approved_by,
+              parent_name, parent_phone, parent_zalo_id
+            ) VALUES (?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, (SELECT stars_balance FROM student_stars WHERE student_id = ?), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+          `).bind(
+            billData.id, billData.student_id, billData.student_name, billData.age || 13, billData.grade_level || 'Lớp 7',
+            billData.program_name || 'Tiếng Anh K12', billData.billing_period || 'Tháng 10/2026',
+            billData.base_tuition_vnd, billData.attendance_total_sessions || 12, billData.attendance_attended_sessions || 12,
+            studentId, billData.stars_deducted, billData.discount_vnd,
+            billData.final_amount_vnd, billData.vietqr_url || '', billData.bank_name || 'MBBank',
+            billData.bank_account || '0901234567', billData.account_holder || 'NGUYEN MINH VU',
+            billData.growth_status || 'normal', billData.growth_percentage || 0, billData.growth_notes || '',
+            billData.eval_listening || 8.0, billData.eval_reading || 8.0, billData.eval_writing || 8.0,
+            billData.eval_speaking || 8.0, billData.eval_grammar || 8.0, billData.test_score_15m || 8.0,
+            billData.test_score_45m || 8.5, billData.template_id || 1, billData.status,
+            billData.superadmin_notes || '', billData.approved_by,
+            billData.parent_name || '', billData.parent_phone || '', billData.parent_zalo_id || ''
+          );
+          statements.push(stmtBill);
         }
-        throw insertErr;
       }
 
-      if (body.id && (!runRes || runRes.meta?.changes !== 1)) {
-        // Rollback debited stars if bill was locked and couldn't be updated
-        if (debitedInThisRequest > 0) {
-          await db.prepare(`
-            UPDATE student_stars
-            SET stars_balance = stars_balance + ?,
-                stars_redeemed = MAX(0, stars_redeemed - ?),
-                last_updated = CURRENT_TIMESTAMP
-            WHERE student_id = ?;
-          `).bind(debitedInThisRequest, debitedInThisRequest, studentId).run();
-
-          await db.prepare(`
-            INSERT INTO student_star_ledger (id, student_id, bill_id, delta_stars, balance_after, action_type, reason)
-            VALUES (?, ?, ?, ?, ?, 'refund', 'Tự động hoàn sao do không thể ghi đè phiếu đã khóa');
-          `).bind(`stl_rb_${Date.now()}`, studentId, billId, debitedInThisRequest, availableStars + debitedInThisRequest).run();
+      // Execute transaction batch
+      let batchResults;
+      if (typeof db.batch === 'function') {
+        batchResults = await db.batch(statements);
+      } else {
+        batchResults = [];
+        for (const s of statements) {
+          batchResults.push(await s.run());
         }
+      }
+
+      // Check the bill statement result (always the last statement in the batch)
+      const billRunRes = batchResults[batchResults.length - 1];
+      if (existing && (!billRunRes || billRunRes.meta?.changes !== 1)) {
         return json({
           success: false,
           error: 'Forbidden: Hóa đơn đã được duyệt hoặc không còn ở trạng thái dự thảo (draft). Giáo viên không được phép ghi đè.'
         }, { status: 403 });
       }
+
+      // Fetch authoritative updated balance from DB
+      const finalStarRow = await db.prepare('SELECT stars_balance FROM student_stars WHERE student_id = ?').bind(studentId).first();
+      billData.stars_available = finalStarRow ? Number(finalStarRow.stars_balance) : availableStars;
     } else {
       saveTuitionBill(billData);
     }
@@ -434,6 +655,18 @@ export async function POST({ request, platform }) {
     });
   } catch (err) {
     console.error('Critical failure in POST tuition:', err);
+    // Dual defense: revert star balance deficit or surplus if partial write occurred
+    if (originalStarsBalance !== null && studentId && platform?.env?.DB) {
+      try {
+        const cur = await platform.env.DB.prepare('SELECT stars_balance FROM student_stars WHERE student_id = ?').bind(studentId).first();
+        if (cur && Number(cur.stars_balance) !== originalStarsBalance) {
+          const diff = originalStarsBalance - Number(cur.stars_balance);
+          await platform.env.DB.prepare('UPDATE student_stars SET stars_balance = stars_balance + ? WHERE student_id = ?').bind(diff, studentId).run();
+        }
+      } catch (rbErr) {
+        console.error('Dual defense POST rollback failed:', rbErr);
+      }
+    }
     return json({ success: false, error: `FailClosed: Không thể hoàn tất ghi nhận học phí (${err.message})` }, { status: 500 });
   }
 }
@@ -455,33 +688,100 @@ export async function DELETE({ url, request, platform }) {
   if (platform?.env?.DB) {
     const db = platform.env.DB;
     await ensureStarLedgerTable(db);
-    const bill = await db.prepare('SELECT id, student_id, stars_deducted FROM tuition_bills WHERE id = ?').bind(billId).first();
+    const bill = await db.prepare('SELECT id, student_id, stars_deducted, version FROM tuition_bills WHERE id = ?').bind(billId).first();
     if (!bill) {
       return json({ success: false, error: 'Không tìm thấy hóa đơn cần xóa' }, { status: 404 });
     }
 
+    const studentId = bill.student_id;
     const starsDeducted = Number(bill.stars_deducted) || 0;
-    if (starsDeducted > 0) {
-      // Refund deducted stars
-      await db.prepare(`
-        UPDATE student_stars
-        SET stars_balance = stars_balance + ?,
-            stars_redeemed = MAX(0, stars_redeemed - ?),
-            last_updated = CURRENT_TIMESTAMP
-        WHERE student_id = ?;
-      `).bind(starsDeducted, starsDeducted, bill.student_id).run();
+    const expectedVersion = Number(bill.version) || 1;
 
-      const starRow = await db.prepare('SELECT stars_balance FROM student_stars WHERE student_id = ?').bind(bill.student_id).first();
-      const balanceAfter = starRow ? Number(starRow.stars_balance) : starsDeducted;
-
-      await db.prepare(`
-        INSERT INTO student_star_ledger (id, student_id, bill_id, delta_stars, balance_after, action_type, reason)
-        VALUES (?, ?, ?, ?, ?, 'refund', ?);
-      `).bind(`stl_del_${Date.now()}`, bill.student_id, billId, starsDeducted, balanceAfter, `Hoàn lại ${starsDeducted} sao do xóa hóa đơn ${billId}`).run();
+    let originalStarsBalance = null;
+    const starRow = await db.prepare('SELECT stars_balance FROM student_stars WHERE student_id = ?').bind(studentId).first();
+    if (starRow) {
+      originalStarsBalance = Number(starRow.stars_balance);
     }
 
-    await db.prepare('DELETE FROM tuition_bills WHERE id = ?').bind(billId).run();
-    return json({ success: true, message: `Đã xóa hóa đơn ${billId} và hoàn lại ${starsDeducted} sao cho học sinh.` });
+    try {
+      if (starsDeducted > 0) {
+        const stmtStars = db.prepare(`
+          UPDATE student_stars
+          SET stars_balance = stars_balance + ?,
+              stars_redeemed = MAX(0, stars_redeemed - ?),
+              last_updated = CURRENT_TIMESTAMP
+          WHERE student_id = ?
+            AND EXISTS (SELECT 1 FROM tuition_bills WHERE id = ? AND version = ? AND stars_deducted = ?);
+        `).bind(starsDeducted, starsDeducted, studentId, billId, expectedVersion, starsDeducted);
+
+        const stmtLedger = db.prepare(`
+          INSERT INTO student_star_ledger (id, student_id, bill_id, delta_stars, balance_after, action_type, reason)
+          SELECT ?, ?, ?, ?, stars_balance, 'refund', ?
+          FROM student_stars
+          WHERE student_id = ?
+            AND EXISTS (SELECT 1 FROM tuition_bills WHERE id = ? AND version = ? AND stars_deducted = ?);
+        `).bind(`stl_del_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`, studentId, billId, starsDeducted, `Hoàn lại ${starsDeducted} sao do xóa hóa đơn ${billId}`, studentId, billId, expectedVersion, starsDeducted);
+
+        const stmtDelete = db.prepare(`
+          DELETE FROM tuition_bills WHERE id = ? AND version = ? AND stars_deducted = ?;
+        `).bind(billId, expectedVersion, starsDeducted);
+
+        let batchRes;
+        if (typeof db.batch === 'function') {
+          batchRes = await db.batch([stmtStars, stmtLedger, stmtDelete]);
+        } else {
+          await stmtStars.run();
+          await stmtLedger.run();
+          const delRes = await stmtDelete.run();
+          batchRes = [null, null, delRes];
+        }
+
+        const delResult = batchRes[2];
+        if (!delResult || delResult.meta?.changes !== 1) {
+          return json({
+            success: false,
+            error: 'Xung đột khi xóa hóa đơn: Hóa đơn đã bị xóa hoặc chỉnh sửa đồng thời bởi giao dịch khác (changes = 0).'
+          }, { status: 409 });
+        }
+      } else {
+        const stmtDelete = db.prepare('DELETE FROM tuition_bills WHERE id = ? AND version = ?;').bind(billId, expectedVersion);
+        let delRes;
+        if (typeof db.batch === 'function') {
+          const res = await db.batch([stmtDelete]);
+          delRes = res[0];
+        } else {
+          delRes = await stmtDelete.run();
+        }
+        if (!delRes || delRes.meta?.changes !== 1) {
+          return json({
+            success: false,
+            error: 'Xung đột khi xóa hóa đơn: Hóa đơn đã bị xóa hoặc chỉnh sửa đồng thời (changes = 0).'
+          }, { status: 409 });
+        }
+      }
+
+      return json({
+        success: true,
+        message: `Đã xóa hóa đơn ${billId} và hoàn lại ${starsDeducted} sao cho học sinh.`
+      });
+    } catch (err) {
+      console.error('Critical failure in DELETE tuition:', err);
+      if (originalStarsBalance !== null && studentId) {
+        try {
+          const cur = await db.prepare('SELECT stars_balance FROM student_stars WHERE student_id = ?').bind(studentId).first();
+          if (cur && Number(cur.stars_balance) !== originalStarsBalance) {
+            const diff = originalStarsBalance - Number(cur.stars_balance);
+            await db.prepare('UPDATE student_stars SET stars_balance = stars_balance + ? WHERE student_id = ?').bind(diff, studentId).run();
+          }
+        } catch (rbErr) {
+          console.error('Dual defense DELETE rollback failed:', rbErr);
+        }
+      }
+      return json({
+        success: false,
+        error: `FailClosed: Lỗi xóa hóa đơn (${err.message})`
+      }, { status: 500 });
+    }
   }
 
   return json({ success: true, message: `Đã xóa hóa đơn ${billId} (local dev).` });
