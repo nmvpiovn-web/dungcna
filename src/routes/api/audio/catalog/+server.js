@@ -1,5 +1,5 @@
 import { json } from '@sveltejs/kit';
-import audioCatalog from '../../../../lib/data/audio_catalog.json' with { type: 'json' };
+import audioManifest from '../../../../lib/data/audio_manifest.json' with { type: 'json' };
 
 export const prerender = false;
 
@@ -9,7 +9,7 @@ export async function GET({ url }) {
   const curriculum = url.searchParams.get('curriculum');
   const q = (url.searchParams.get('q') || '').toLowerCase().trim();
 
-  let results = [...audioCatalog];
+  let results = [...audioManifest.tracks];
 
   if (grade !== null && grade !== '') {
     const grNum = parseInt(grade, 10);
@@ -37,7 +37,8 @@ export async function GET({ url }) {
   return json({
     success: true,
     total: results.length,
-    catalog_total_drive_items: 2254, // Official Drive mapping count
+    catalog_total_drive_items: audioManifest.summary.total_discovered_gdrive,
+    manifest_summary: audioManifest.summary,
     tracks: results
   });
 }

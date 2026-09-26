@@ -14,7 +14,7 @@ import { GET as getParentChildren, POST as postParentChildren } from '../src/rou
 import { GET as getHomework } from '../src/routes/api/homework/+server.js';
 import { GET as getAudioStream } from '../src/routes/api/audio/stream/+server.js';
 import { GET as getAudioCatalog } from '../src/routes/api/audio/catalog/+server.js';
-import { GET as getExams } from '../src/routes/api/exams/+server.js';
+import { GET as getExams, POST as postExams } from '../src/routes/api/exams/+server.js';
 import { createSignedToken } from '../src/lib/server/auth.js';
 
 function createD1Adapter(sqliteDb) {
@@ -138,6 +138,7 @@ describe('PARENT MULTI-CHILD, AUDIO STREAMING & EXAM BANK AUDIT SUITE', () => {
         ('usr_parent_1', 'parent1', 'parent', 'Bác Nguyễn Văn Thành', 'active', NULL),
         ('usr_child_1', 'minhquan7a', 'student', 'Nguyễn Minh Quân', 'active', 'Lớp 7'),
         ('usr_child_2', 'baokhiem', 'student', 'Nguyễn Bảo Khiêm', 'active', 'Lớp 7'),
+        ('usr_teacher_1', 'teacher1', 'teacher', 'Cô Như Quỳnh', 'active', NULL),
         ('usr_student_unlinked', 'stranger', 'student', 'Trần Văn Lạ', 'active', 'Lớp 8');
 
       INSERT INTO parent_student_links (id, parent_user_id, student_user_id) VALUES
@@ -279,32 +280,29 @@ describe('PARENT MULTI-CHILD, AUDIO STREAMING & EXAM BANK AUDIT SUITE', () => {
       assert.ok(json.track.key_vocabulary.includes('patient'));
     });
 
-    test('AUD-04: Full audio stream returns 200 with audio/mpeg and Accept-Ranges', async () => {
+    test('AUD-04: Unsynced Drive track returns HTTP 503 source_pending_download (fail-closed, strictly no synthetic faking)', async () => {
       const url = new URL('http://localhost/api/audio/stream?id=aud_g7_u1_track01');
       const req = new Request(url);
       const res = await getAudioStream({ url, request: req });
-      assert.strictEqual(res.status, 200);
-      assert.strictEqual(res.headers.get('Content-Type'), 'audio/mpeg');
-      assert.strictEqual(res.headers.get('Accept-Ranges'), 'bytes');
-      assert.ok(Number(res.headers.get('Content-Length')) > 0);
-      const buffer = await res.arrayBuffer();
-      assert.ok(buffer.byteLength > 1000);
+      assert.strictEqual(res.status, 503, 'Must return 503 pending download instead of fake synthetic mp3');
+      const json = await res.json();
+      assert.strictEqual(json.success, false);
+      assert.strictEqual(json.status, 'source_pending_download');
+      assert.ok(json.drive_path.includes('Unit 1'));
+      assert.ok(json.transcript.includes('paper flowers'));
     });
 
-    test('AUD-05: HTTP 206 Partial Content Range streaming works for audio seeking', async () => {
+    test('AUD-05: Range header on unsynced audio track also fails closed with 503', async () => {
       const url = new URL('http://localhost/api/audio/stream?id=aud_g7_u1_track01');
       const req = new Request(url, {
         headers: {
-          'Range': 'bytes=0-416' // Request exactly first frame (417 bytes)
+          'Range': 'bytes=0-416'
         }
       });
       const res = await getAudioStream({ url, request: req });
-      assert.strictEqual(res.status, 206, 'Must return HTTP 206 Partial Content');
-      assert.strictEqual(res.headers.get('Content-Type'), 'audio/mpeg');
-      assert.strictEqual(res.headers.get('Content-Length'), '417');
-      assert.match(res.headers.get('Content-Range'), /^bytes 0-416\/\d+$/);
-      const chunk = await res.arrayBuffer();
-      assert.strictEqual(chunk.byteLength, 417);
+      assert.strictEqual(res.status, 503, 'Must fail-closed with 503 instead of faking 206 Partial Content');
+      const json = await res.json();
+      assert.strictEqual(json.status, 'source_pending_download');
     });
 
     test('AUD-06: Non-existent audio track returns 404', async () => {
@@ -331,6 +329,9 @@ describe('PARENT MULTI-CHILD, AUDIO STREAMING & EXAM BANK AUDIT SUITE', () => {
       assert.strictEqual(json.grade, 7);
       assert.strictEqual(json.total_questions, 10);
       assert.ok(json.questions.every(q => q.grade === 7));
+      // Answers MUST NOT be leaked in random exams
+      assert.strictEqual(json.questions[0].correct_answer, undefined);
+      assert.strictEqual(json.questions[0].explanation, undefined);
     });
 
     test('EX-02: Dynamic test generator produces 25 questions for Grade 12 (45m)', async () => {
@@ -344,7 +345,7 @@ describe('PARENT MULTI-CHILD, AUDIO STREAMING & EXAM BANK AUDIT SUITE', () => {
       assert.ok(json.questions.every(q => q.grade === 12));
     });
 
-    test('EX-03: Include questions flag returns pedagogical linkage for specific exam', async () => {
+    test('EX-03: Include questions flag strictly strips correct_answer & explanation for students', async () => {
       const url = new URL('http://localhost/api/exams?exam_id=ex_g7_quick_5m&include_questions=1');
       const res = await getExams({ url });
       assert.strictEqual(res.status, 200);
@@ -353,8 +354,68 @@ describe('PARENT MULTI-CHILD, AUDIO STREAMING & EXAM BANK AUDIT SUITE', () => {
       assert.ok(Array.isArray(json.questions));
       assert.ok(json.questions.length >= 5);
       assert.ok(json.questions[0].prompt);
-      assert.ok(json.questions[0].correct_answer);
-      assert.ok(json.questions[0].explanation);
+      // ANTI-LEAKAGE VERIFICATION: correct_answer and explanation MUST be undefined!
+      assert.strictEqual(json.questions[0].correct_answer, undefined, 'Must NOT leak correct_answer to students');
+      assert.strictEqual(json.questions[0].explanation, undefined, 'Must NOT leak explanation to students');
+    });
+
+    test('EX-04: Staff querying with include_answers=1 receives authoritative teacher answer key', async () => {
+      const teacherToken = await createSignedToken({ id: 'usr_teacher_1', username: 'teacher1', role: 'teacher', name: 'Cô Như Quỳnh' }, TEST_SECRET);
+      const url = new URL('http://localhost/api/exams?exam_id=ex_g7_quick_5m&include_questions=1&include_answers=1');
+      const req = new Request(url, {
+        headers: { 'Authorization': `Bearer ${teacherToken}` }
+      });
+      const res = await getExams({ url, request: req, platform: mockPlatform });
+      assert.strictEqual(res.status, 200);
+      const json = await res.json();
+      assert.strictEqual(json.success, true);
+      assert.ok(Array.isArray(json.questions));
+      assert.ok(json.questions[0].correct_answer !== undefined, 'Teacher key must include correct_answer');
+      assert.ok(json.questions[0].explanation !== undefined, 'Teacher key must include explanation');
+    });
+
+    test('EX-05: Server-side scoring evaluates answers from bank and strictly ignores client body.score', async () => {
+      const url = new URL('http://localhost/api/exams');
+      const req = new Request(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${studentToken}`
+        },
+        body: JSON.stringify({
+          exam_id: 'ex_g7_quick_5m',
+          score: 10.0, // MALICIOUS CLIENT ATTEMPT: Claims perfect score 10.0
+          answers: {
+            'q_g7_5m_01': 'A' // Submit answer (evaluated on server against question bank)
+          }
+        })
+      });
+      const res = await postExams({ request: req, platform: mockPlatform });
+      assert.strictEqual(res.status, 200);
+      const json = await res.json();
+      assert.strictEqual(json.success, true);
+      assert.ok(json.server_calculated_score !== undefined);
+      assert.strictEqual(json.attempt.user_id, 'usr_child_1');
+    });
+
+    test('EX-06: Anti-empty submission rejects attempts with empty answers with HTTP 400', async () => {
+      const url = new URL('http://localhost/api/exams');
+      const req = new Request(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${studentToken}`
+        },
+        body: JSON.stringify({
+          exam_id: 'ex_g7_quick_5m',
+          answers: {} // Empty submission
+        })
+      });
+      const res = await postExams({ request: req, platform: mockPlatform });
+      assert.strictEqual(res.status, 400);
+      const json = await res.json();
+      assert.strictEqual(json.success, false);
+      assert.ok(json.error.includes('EmptySubmission'));
     });
   });
 });
