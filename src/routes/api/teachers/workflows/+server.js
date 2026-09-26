@@ -447,13 +447,17 @@ export async function POST({ request, platform }) {
   }
 
   // ACTION 5: APPROVE/REJECT SALARY ADVANCE (Leader only) - Phase 2: Approved
-  if (action === 'approve_salary_advance') {
+  if (action === 'approve_salary_advance' || action === 'advance_decision') {
     if (!manager) {
       return json({ success: false, error: 'Forbidden: Chỉ Leader/Admin mới có quyền duyệt ứng lương' }, { status: 403 });
     }
 
-    const { advance_id, decision, admin_notes } = body;
-    if (!advance_id || (decision !== 'approved' && decision !== 'rejected')) {
+    const { advance_id, admin_notes } = body;
+    let targetDecision = body.decision;
+    if (targetDecision === 'approve') targetDecision = 'approved';
+    if (targetDecision === 'reject') targetDecision = 'rejected';
+
+    if (!advance_id || (targetDecision !== 'approved' && targetDecision !== 'rejected')) {
       return json({ success: false, error: 'Quyết định duyệt không hợp lệ' }, { status: 400 });
     }
 
@@ -468,7 +472,7 @@ export async function POST({ request, platform }) {
         UPDATE teacher_salary_advances 
         SET status = ?, approved_by = ?, approved_at = CURRENT_TIMESTAMP, admin_notes = ?
         WHERE id = ? AND status = 'pending';
-      `).bind(decision, auth.user.name, admin_notes || '', advance_id).run();
+      `).bind(targetDecision, auth.user.name, admin_notes || '', advance_id).run();
 
       if (!updateRes || updateRes.meta?.changes !== 1) {
         return json({ success: false, error: 'Không thể duyệt: Đơn ứng lương không ở trạng thái pending hoặc đã được xử lý.' }, { status: 409 });
@@ -481,11 +485,11 @@ export async function POST({ request, platform }) {
       `).bind(
         `notif_${Date.now()}`,
         advance.teacher_id,
-        `Yêu cầu ứng ${Number(advance.amount_vnd).toLocaleString('vi-VN')}đ đã được Leader ${decision === 'approved' ? 'DUYỆT HẠN MỨC' : 'TỪ CHỐI'}. Đang chờ Kế toán thực chi.`,
+        `Yêu cầu ứng ${Number(advance.amount_vnd).toLocaleString('vi-VN')}đ đã được Leader ${targetDecision === 'approved' ? 'DUYỆT HẠN MỨC' : 'TỪ CHỐI'}. Đang chờ Kế toán thực chi.`,
         advance_id
       ).run();
 
-      return json({ success: true, message: `Đã ${decision === 'approved' ? 'duyệt hạn mức' : 'từ chối'} ứng lương` });
+      return json({ success: true, message: `Đã ${targetDecision === 'approved' ? 'duyệt hạn mức' : 'từ chối'} ứng lương` });
     } catch (e) {
       return json({ success: false, error: `Lỗi duyệt ứng lương: ${e.message}` }, { status: 500 });
     }
@@ -616,19 +620,23 @@ export async function POST({ request, platform }) {
   }
 
   // ACTION 8: MANAGE RECRUITMENT & INTERVIEWS (Manager only)
-  if (action === 'create_recruitment' || action === 'update_recruitment') {
+  if (action === 'create_recruitment' || action === 'update_recruitment' || action === 'upsert_recruitment') {
     if (!manager) {
       return json({ success: false, error: 'Forbidden: Chỉ Quản lý mới được thao tác tuyển dụng' }, { status: 403 });
     }
 
-    if (action === 'create_recruitment') {
-      const { candidate_name, phone, email, role_type, experience_years, certificates, interview_time, interview_notes } = body;
+    const isCreate = action === 'create_recruitment' || (action === 'upsert_recruitment' && !body.id);
+
+    if (isCreate) {
+      const { candidate_name, phone, email, role_type, position_type, experience_years, certificates, interview_time, interview_notes, cv_link, notes } = body;
       if (!candidate_name || !phone) {
         return json({ success: false, error: 'Vui lòng cung cấp tên ứng viên và số điện thoại' }, { status: 400 });
       }
 
       const recId = `rec_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
       const status = interview_time ? 'interview_scheduled' : 'applied';
+      const resolvedRoleType = role_type || position_type || 'lead';
+      const combinedNotes = [notes, cv_link ? `Link CV: ${cv_link}` : null, interview_notes].filter(Boolean).join('\n');
 
       try {
         await db.prepare(`
@@ -640,13 +648,13 @@ export async function POST({ request, platform }) {
           candidate_name.trim(),
           phone.trim(),
           email || null,
-          role_type || 'lead',
+          resolvedRoleType,
           Number(experience_years) || 0,
           certificates || '',
           status,
           interview_time || null,
           auth.user.name,
-          interview_notes || ''
+          combinedNotes
         ).run();
 
         return json({ success: true, message: 'Đã thêm hồ sơ ứng viên thành công', recruitment_id: recId });

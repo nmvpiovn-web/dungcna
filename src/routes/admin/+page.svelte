@@ -2104,9 +2104,15 @@
                   <span>Ca Đã Dạy Tháng:</span>
                   <span class="font-bold text-indigo-400">{profile.total_sessions_taught || profile.monthly_completed_sessions || 0} ca</span>
                 </div>
-                <div class="flex justify-between items-center border-t border-slate-800 pt-1 text-slate-300">
+                <div class="flex justify-between items-center text-slate-300">
                   <span>Đánh Giá Leader:</span>
                   <span class="font-bold text-amber-400">{'⭐'.repeat(Math.min(5, Math.max(1, Math.round(profile.leader_rating || profile.rating_stars || 5))))} ({profile.leader_rating || profile.rating_stars || 5.0})</span>
+                </div>
+                <div class="flex justify-between items-center border-t border-slate-800/80 pt-1.5 text-xs font-bold">
+                  <span class="text-teal-300">💰 Tổng Thu Nhập Dự Kiến:</span>
+                  <span class="text-emerald-400 font-black text-sm">
+                    {((profile.base_salary_vnd || 5000000) + ((profile.total_sessions_taught || profile.monthly_completed_sessions || 0) * (profile.rate_per_session_vnd || profile.per_session_rate_vnd || 200000))).toLocaleString('vi-VN')} đ
+                  </span>
                 </div>
               </div>
 
