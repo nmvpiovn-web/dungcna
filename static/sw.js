@@ -33,6 +33,14 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 
+  const url = new URL(event.request.url);
+
+  // STRICT PRIVACY: NEVER cache any API endpoints or authenticated dynamic data
+  if (url.pathname.startsWith('/api/') || event.request.headers.has('Authorization')) {
+    // Direct network only - never intercept or persist in client CacheStorage
+    return;
+  }
+
   // Always bypass cache for HTML navigations to ensure instant deployments
   if (event.request.mode === 'navigate') {
     event.respondWith(
@@ -42,15 +50,18 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Network first with cache fallback for other assets
+  // Network first with cache fallback for static assets only (CSS, JS, images, fonts)
   event.respondWith(
     fetch(event.request)
       .then((response) => {
         if (response && response.status === 200 && response.type === 'basic') {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, clone);
-          });
+          // Double-check: Never cache API responses even if path rewrite occurred
+          if (!url.pathname.startsWith('/api/')) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, clone);
+            });
+          }
         }
         return response;
       })

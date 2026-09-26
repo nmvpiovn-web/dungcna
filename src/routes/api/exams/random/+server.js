@@ -345,19 +345,30 @@ async function handleSubmitExam({ body, platform, auth }) {
   const score = Number(((correctCount / totalQuestions) * 10).toFixed(2));
   const percentage = Math.round((correctCount / totalQuestions) * 100);
 
-  // 8. ATOMIC CONDITIONAL UPDATE: Prevents concurrent submission race condition
+  // 8. ATOMIC CONDITIONAL UPDATE: Enforces ownership, in_progress status AND deadline condition at write time
+  // duration_minutes * 60 + 300 seconds (5 min buffer)
   const updateRes = await db.prepare(`
     UPDATE exam_instances 
     SET status = 'completed', score = ?, answers_json = ?, submitted_at = CURRENT_TIMESTAMP
-    WHERE id = ? AND created_by = ? AND status = 'in_progress';
+    WHERE id = ? 
+      AND created_by = ? 
+      AND status = 'in_progress'
+      AND (strftime('%s', 'now') - strftime('%s', created_at)) <= (duration_minutes * 60 + 300);
   `).bind(score, JSON.stringify(answers), instance_id, auth.user.id).run();
 
-  // If 0 changes occurred, another concurrent request already updated it!
+  // If 0 changes occurred, determine whether it was a race collision or expired deadline
   if (!updateRes || updateRes.meta?.changes !== 1) {
+    const checkCurrent = await db.prepare(`SELECT status, created_at, duration_minutes FROM exam_instances WHERE id = ?`).bind(instance_id).first();
+    if (checkCurrent && checkCurrent.status === 'completed') {
+      return json({
+        success: false,
+        error: 'Bài thi này đã được nộp đồng thời bởi một phiên khác.'
+      }, { status: 409 });
+    }
     return json({
       success: false,
-      error: 'Bài thi này đã được nộp đồng thời bởi một phiên khác.'
-    }, { status: 409 });
+      error: 'ExamExpired: Hết thời gian làm bài cho phép (bao gồm 5 phút gia hạn nộp bài). Bài thi không còn hiệu lực ghi điểm.'
+    }, { status: 400 });
   }
 
   return json({

@@ -1,6 +1,6 @@
 import { json } from '@sveltejs/kit';
 import { verifyServerAuth, isStaffUser, SUPERADMIN_USERNAMES } from '$lib/server/auth.js';
-import { getAllTuitionBills, saveTuitionBill, getStudentStars, dispatchBotReport, getAllUsers } from '$lib/unifiedStore';
+import { getAllTuitionBills, saveTuitionBill, dispatchBotReport } from '$lib/unifiedStore';
 
 export const prerender = false;
 
@@ -22,98 +22,110 @@ export async function GET({ url, request, platform }) {
   const user = auth.user;
   const requestedStudentId = url.searchParams.get('student_id');
 
-  // 2. Record-Level Authorization
-  let allowedStudentId = null;
+  // 2. Cloudflare D1 Authoritative Path (Fail-Closed)
+  if (platform?.env?.DB) {
+    const db = platform.env.DB;
+    try {
+      let allowedStudentId = null;
 
-  if (isStaffUser(user)) {
-    // Staff can inspect any student or all students
-    allowedStudentId = requestedStudentId;
-  } else if (user.role === 'student') {
-    // Student can ONLY access their own bills
-    if (requestedStudentId && requestedStudentId !== user.id) {
-      return json({
-        success: false,
-        error: 'Forbidden: Học sinh chỉ có quyền xem phiếu báo học phí của chính mình'
-      }, { status: 403 });
-    }
-    allowedStudentId = user.id;
-  } else if (user.role === 'parent') {
-    // Parent can only inspect bills tied to their registered phone or their verified children
-    const allUsers = getAllUsers();
-    const myChildren = allUsers.filter(u => 
-      u.role === 'student' && 
-      ((user.phone && (u.parent_phone === user.phone || u.phone === user.phone)) || (user.name && u.parent_name === user.name))
-    );
-    const myChildIds = myChildren.map(c => c.id);
+      if (isStaffUser(user)) {
+        // Staff can inspect any student or all students
+        allowedStudentId = requestedStudentId;
+      } else if (user.role === 'student') {
+        // Student can ONLY access their own bills
+        if (requestedStudentId && requestedStudentId !== user.id) {
+          return json({
+            success: false,
+            error: 'Forbidden: Học sinh chỉ có quyền xem phiếu báo học phí của chính mình'
+          }, { status: 403 });
+        }
+        allowedStudentId = user.id;
+      } else if (user.role === 'parent') {
+        // Parent: Validate authorized children strictly from D1 parent_student_links / users
+        const linksRes = await db.prepare(`
+          SELECT student_user_id FROM parent_student_links 
+          WHERE parent_user_id = ? OR (parent_phone = ? AND parent_phone IS NOT NULL AND parent_phone != '');
+        `).bind(user.id, user.phone || '').all();
 
-    if (requestedStudentId) {
-      if (!myChildIds.includes(requestedStudentId) && requestedStudentId !== user.id) {
-        return json({
-          success: false,
-          error: 'Forbidden: Quý phụ huynh chỉ có quyền xem học phí của con em mình'
-        }, { status: 403 });
-      }
-      allowedStudentId = requestedStudentId;
-    } else if (!user.phone && myChildIds.length === 0) {
-      // Fail-closed: parent without phone and without linked child sees nothing
-      return json({ success: true, total: 0, bills: [], source: 'fail_closed_unlinked_parent' });
-    }
-  }
+        const studentUsersRes = await db.prepare(`
+          SELECT id FROM users 
+          WHERE role = 'student' AND (parent_phone = ? OR parent_name = ?);
+        `).bind(user.phone || 'NONE', user.name || 'NONE').all();
 
-  try {
-    // 3. Query Cloudflare D1
-    if (platform?.env?.DB) {
-      try {
-        let query = 'SELECT * FROM tuition_bills';
-        let params = [];
-        if (allowedStudentId) {
-          query += ' WHERE student_id = ?';
-          params.push(allowedStudentId);
-        } else if (user.role === 'parent') {
-          if (user.phone) {
-            query += ' WHERE parent_phone = ?';
-            params.push(user.phone);
-          } else {
-            query += ' WHERE 1 = 0'; // Fail-closed
+        const linkedStudentIds = new Set();
+        (linksRes?.results || []).forEach(r => linkedStudentIds.add(r.student_user_id));
+        (studentUsersRes?.results || []).forEach(r => linkedStudentIds.add(r.id));
+
+        if (requestedStudentId) {
+          if (!linkedStudentIds.has(requestedStudentId) && requestedStudentId !== user.id) {
+            return json({
+              success: false,
+              error: 'Forbidden: Quý phụ huynh chỉ có quyền xem học phí của con em mình'
+            }, { status: 403 });
+          }
+          allowedStudentId = requestedStudentId;
+        } else {
+          // If no specific child requested, verify if parent has any verified child links
+          if (linkedStudentIds.size === 0 && !user.phone) {
+            // Strict Fail-Closed: Unlinked parent with no phone sees nothing
+            return json({ success: true, total: 0, bills: [], source: 'fail_closed_unlinked_parent' });
           }
         }
-        query += ' ORDER BY created_at DESC';
+      }
 
-        const d1Res = await platform.env.DB.prepare(query).bind(...params).all();
-        if (d1Res?.results) {
-          return json({
-            success: true,
-            total: d1Res.results.length,
-            bills: d1Res.results,
-            source: 'cloudflare_d1'
-          });
+      // Query D1 tuition_bills
+      let query = 'SELECT * FROM tuition_bills';
+      let params = [];
+
+      if (allowedStudentId) {
+        query += ' WHERE student_id = ?';
+        params.push(allowedStudentId);
+      } else if (user.role === 'parent') {
+        if (user.phone) {
+          query += ' WHERE parent_phone = ?';
+          params.push(user.phone);
+        } else {
+          query += ' WHERE 1 = 0'; // Fail-closed
         }
-      } catch (d1Err) {
-        console.error('D1 tuition query error:', d1Err);
       }
-    }
 
-    // 4. Fallback to unifiedStore
-    let bills = getAllTuitionBills();
-    if (allowedStudentId) {
-      bills = bills.filter(b => b.student_id === allowedStudentId);
-    } else if (user.role === 'parent') {
-      if (user.phone) {
-        bills = bills.filter(b => b.parent_phone === user.phone);
-      } else {
-        bills = [];
-      }
-    }
+      query += ' ORDER BY created_at DESC';
 
-    return json({
-      success: true,
-      total: bills.length,
-      bills,
-      source: 'local_store'
-    });
-  } catch (err) {
-    return json({ success: false, error: err.message }, { status: 500 });
+      const d1Res = await db.prepare(query).bind(...params).all();
+      return json({
+        success: true,
+        total: (d1Res?.results || []).length,
+        bills: d1Res?.results || [],
+        source: 'cloudflare_d1'
+      });
+    } catch (d1Err) {
+      console.error('Critical D1 Tuition Query Error:', d1Err);
+      // STRICT FAIL-CLOSED: No fallback to mock/local store in production environment
+      return json({
+        success: false,
+        error: `DatabaseError: Lỗi truy vấn cơ sở dữ liệu học phí D1 (${d1Err.message})`
+      }, { status: 500 });
+    }
   }
+
+  // 3. Development Fallback (Only active when platform.env.DB is completely missing in local dev)
+  let bills = getAllTuitionBills();
+  if (requestedStudentId) {
+    bills = bills.filter(b => b.student_id === requestedStudentId);
+  } else if (user.role === 'parent') {
+    if (user.phone) {
+      bills = bills.filter(b => b.parent_phone === user.phone);
+    } else {
+      bills = [];
+    }
+  }
+
+  return json({
+    success: true,
+    total: bills.length,
+    bills,
+    source: 'local_store_dev'
+  });
 }
 
 export async function POST({ request, platform }) {
@@ -133,86 +145,112 @@ export async function POST({ request, platform }) {
     }, { status: 403 });
   }
 
+  const manager = isManager(auth.user);
+
   try {
     const body = await request.json();
     if (!body.student_name || !body.base_tuition_vnd) {
       return json({ success: false, error: 'Thiếu thông tin học sinh hoặc mức học phí gốc' }, { status: 400 });
     }
 
-    // 1. Calculate discount with formula: 100 stars = 1,000 VND
+    // 2. Calculate discount with formula: 100 stars = 1,000 VND
     const starsDeducted = Number(body.stars_deducted) || 0;
     const discountVnd = Math.floor(starsDeducted / 100) * 1000;
     const baseTuition = Number(body.base_tuition_vnd) || 0;
     const finalAmount = Math.max(0, baseTuition - discountVnd);
     const billId = body.id || `bill_${Date.now()}`;
 
-    // 2. Save in unifiedStore
-    const saved = saveTuitionBill({
+    // 3. Strict Financial Separation of Duties:
+    // Only Manager (Leader Cô Dung / SuperAdmin) can approve or mark paid.
+    // Regular teachers can ONLY create or update 'draft' bills.
+    let targetStatus = 'draft';
+    let approverName = null;
+
+    if (manager) {
+      targetStatus = body.status === 'paid' ? 'paid' : (body.status === 'draft' ? 'draft' : 'approved');
+      approverName = auth.user.name || 'Ban Quản Lý';
+    } else {
+      // Normal teacher creating bill
+      targetStatus = 'draft';
+      approverName = null;
+    }
+
+    const billData = {
       ...body,
       id: billId,
       discount_vnd: discountVnd,
-      final_amount_vnd: finalAmount
-    });
+      final_amount_vnd: finalAmount,
+      status: targetStatus,
+      approved_by: approverName
+    };
 
-    // 3. Write directly to Cloudflare D1 if present
+    // 4. Save to Cloudflare D1 (Strict Fail-Closed)
     if (platform?.env?.DB) {
-      try {
-        const d1Sql = `
-          INSERT INTO tuition_bills (
-            id, student_id, student_name, age, grade_level, program_name,
-            billing_period, base_tuition_vnd, attendance_total_sessions,
-            attendance_attended_sessions, stars_available, stars_deducted,
-            discount_vnd, final_amount_vnd, vietqr_url, bank_name,
-            bank_account, account_holder, growth_status, growth_percentage,
-            growth_notes, eval_listening, eval_reading, eval_writing,
-            eval_speaking, eval_grammar, test_score_15m, test_score_45m,
-            template_id, status, superadmin_notes, approved_by,
-            parent_name, parent_phone, parent_zalo_id
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-          ON CONFLICT(id) DO UPDATE SET
-            base_tuition_vnd = excluded.base_tuition_vnd,
-            stars_deducted = excluded.stars_deducted,
-            discount_vnd = excluded.discount_vnd,
-            final_amount_vnd = excluded.final_amount_vnd,
-            status = excluded.status,
-            updated_at = CURRENT_TIMESTAMP;
-        `;
-        await platform.env.DB.prepare(d1Sql).bind(
-          saved.id, saved.student_id, saved.student_name, saved.age || 13, saved.grade_level || 'Lớp 7',
-          saved.program_name || 'Tiếng Anh K12', saved.billing_period || 'Tháng 10/2026',
-          saved.base_tuition_vnd, saved.attendance_total_sessions || 12, saved.attendance_attended_sessions || 12,
-          saved.stars_available || 0, saved.stars_deducted || 0, saved.discount_vnd || 0,
-          saved.final_amount_vnd, saved.vietqr_url || '', saved.bank_name || 'MBBank',
-          saved.bank_account || '0901234567', saved.account_holder || 'NGUYEN MINH VU',
-          saved.growth_status || 'normal', saved.growth_percentage || 0, saved.growth_notes || '',
-          saved.eval_listening || 8.0, saved.eval_reading || 8.0, saved.eval_writing || 8.0,
-          saved.eval_speaking || 8.0, saved.eval_grammar || 8.0, saved.test_score_15m || 8.0,
-          saved.test_score_45m || 8.5, saved.template_id || 1, saved.status || 'approved',
-          saved.superadmin_notes || '', saved.approved_by || 'Cô Dung & SuperAdmin',
-          saved.parent_name || '', saved.parent_phone || '', saved.parent_zalo_id || ''
-        ).run();
-      } catch (d1SaveErr) {
-        console.error('D1 tuition save error:', d1SaveErr);
-      }
+      const db = platform.env.DB;
+      const d1Sql = `
+        INSERT INTO tuition_bills (
+          id, student_id, student_name, age, grade_level, program_name,
+          billing_period, base_tuition_vnd, attendance_total_sessions,
+          attendance_attended_sessions, stars_available, stars_deducted,
+          discount_vnd, final_amount_vnd, vietqr_url, bank_name,
+          bank_account, account_holder, growth_status, growth_percentage,
+          growth_notes, eval_listening, eval_reading, eval_writing,
+          eval_speaking, eval_grammar, test_score_15m, test_score_45m,
+          template_id, status, superadmin_notes, approved_by,
+          parent_name, parent_phone, parent_zalo_id
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(id) DO UPDATE SET
+          base_tuition_vnd = excluded.base_tuition_vnd,
+          stars_deducted = excluded.stars_deducted,
+          discount_vnd = excluded.discount_vnd,
+          final_amount_vnd = excluded.final_amount_vnd,
+          status = excluded.status,
+          approved_by = excluded.approved_by,
+          updated_at = CURRENT_TIMESTAMP;
+      `;
+
+      await db.prepare(d1Sql).bind(
+        billData.id, billData.student_id || 'student_1', billData.student_name, billData.age || 13, billData.grade_level || 'Lớp 7',
+        billData.program_name || 'Tiếng Anh K12', billData.billing_period || 'Tháng 10/2026',
+        billData.base_tuition_vnd, billData.attendance_total_sessions || 12, billData.attendance_attended_sessions || 12,
+        billData.stars_available || 0, billData.stars_deducted || 0, billData.discount_vnd || 0,
+        billData.final_amount_vnd, billData.vietqr_url || '', billData.bank_name || 'MBBank',
+        billData.bank_account || '0901234567', billData.account_holder || 'NGUYEN MINH VU',
+        billData.growth_status || 'normal', billData.growth_percentage || 0, billData.growth_notes || '',
+        billData.eval_listening || 8.0, billData.eval_reading || 8.0, billData.eval_writing || 8.0,
+        billData.eval_speaking || 8.0, billData.eval_grammar || 8.0, billData.test_score_15m || 8.0,
+        billData.test_score_45m || 8.5, billData.template_id || 1, billData.status,
+        billData.superadmin_notes || '', billData.approved_by,
+        billData.parent_name || '', billData.parent_phone || '', billData.parent_zalo_id || ''
+      ).run();
+    } else {
+      // Dev mode store sync
+      saveTuitionBill(billData);
     }
 
-    // 4. Trigger Webhook
-    dispatchBotReport('TUITION_BILL_APPROVED', {
-      bill_id: saved.id,
-      student_name: saved.student_name,
-      billing_period: saved.billing_period,
-      stars_deducted: saved.stars_deducted,
-      discount_vnd: saved.discount_vnd,
-      final_amount_vnd: saved.final_amount_vnd,
-      vietqr_url: saved.vietqr_url
-    });
+    // 5. Trigger Webhook on Approval
+    if (targetStatus === 'approved' || targetStatus === 'paid') {
+      dispatchBotReport('TUITION_BILL_APPROVED', {
+        bill_id: billData.id,
+        student_name: billData.student_name,
+        billing_period: billData.billing_period,
+        stars_deducted: billData.stars_deducted,
+        discount_vnd: billData.discount_vnd,
+        final_amount_vnd: billData.final_amount_vnd,
+        vietqr_url: billData.vietqr_url,
+        approved_by: billData.approved_by
+      });
+    }
 
     return json({
       success: true,
-      message: 'Lập và duyệt phiếu báo học phí thành công!',
-      bill: saved
+      message: manager 
+        ? `Lập và ${targetStatus === 'approved' ? 'duyệt' : targetStatus} phiếu báo học phí thành công!` 
+        : 'Đã lập dự thảo phiếu báo học phí thành công. Đang chờ Ban Quản Lý phê duyệt!',
+      bill: billData
     });
   } catch (err) {
-    return json({ success: false, error: err.message }, { status: 500 });
+    console.error('Critical failure in POST tuition:', err);
+    return json({ success: false, error: `FailClosed: Không thể hoàn tất ghi nhận học phí (${err.message})` }, { status: 500 });
   }
 }

@@ -1,7 +1,7 @@
 export const prerender = false;
 
-export async function GET({ url }) {
-  const origin = url.origin || 'https://tienganhcodung.edu.vn';
+export async function GET() {
+  const canonicalOrigin = 'https://timbk.io.vn';
   const currentDate = new Date().toISOString().slice(0, 10);
 
   // Strictly list public routes only (Omit private/authenticated routes: /admin, /schedule, /evaluations, /second-brain)
@@ -10,13 +10,16 @@ export async function GET({ url }) {
     { loc: '/courses', changefreq: 'weekly', priority: '0.9' },
     { loc: '/exam', changefreq: 'daily', priority: '0.9' },
     { loc: '/pedagogy', changefreq: 'weekly', priority: '0.8' },
-    { loc: '/vocabulary', changefreq: 'weekly', priority: '0.8' }
+    { loc: '/grammar', changefreq: 'weekly', priority: '0.8' },
+    { loc: '/dictionary', changefreq: 'weekly', priority: '0.8' },
+    { loc: '/flashcards', changefreq: 'weekly', priority: '0.7' },
+    { loc: '/quiz', changefreq: 'weekly', priority: '0.7' }
   ];
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${publicPages.map(page => `  <url>
-    <loc>${origin}${page.loc}</loc>
+    <loc>${canonicalOrigin}${page.loc}</loc>
     <lastmod>${currentDate}</lastmod>
     <changefreq>${page.changefreq}</changefreq>
     <priority>${page.priority}</priority>
