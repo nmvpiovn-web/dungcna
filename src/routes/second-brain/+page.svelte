@@ -56,8 +56,10 @@
       if (data.success) {
         vaultNotes = data.notes || [];
         vaultFolders = data.folders || [];
-        vaultVersion = data.version || '2.2.0';
+        vaultVersion = data.version || '2.5.0-D1';
         isForbidden = false;
+        // Fetch detailed content for active note
+        fetchNoteDetail(selectedNoteId);
       } else {
         errorMessage = data.error || 'Lỗi khi tải kho tri thức';
         isForbidden = true;
@@ -69,6 +71,32 @@
       vaultNotes = [];
     } finally {
       isLoading = false;
+    }
+  }
+
+  let isNoteLoading = $state(false);
+
+  async function fetchNoteDetail(noteId) {
+    if (!noteId) return;
+    const existing = vaultNotes.find(n => n.id === noteId);
+    if (existing && existing.content && existing.wikilinks) return;
+
+    const token = getAuthToken();
+    if (!token) return;
+
+    try {
+      isNoteLoading = true;
+      const res = await fetch(`/api/second-brain?id=${encodeURIComponent(noteId)}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success && data.note) {
+        vaultNotes = vaultNotes.map(n => n.id === noteId ? { ...n, ...data.note } : n);
+      }
+    } catch (e) {
+      console.error('Failed to load note content:', e);
+    } finally {
+      isNoteLoading = false;
     }
   }
 
@@ -131,6 +159,7 @@
   function selectNote(noteId, addToHistory = true) {
     selectedNoteId = noteId;
     isMobileSidebarOpen = false;
+    fetchNoteDetail(noteId);
     if (addToHistory) {
       historyStack = [...historyStack.slice(0, historyIndex + 1), noteId];
       historyIndex = historyStack.length - 1;
@@ -141,6 +170,7 @@
     if (historyIndex > 0) {
       historyIndex--;
       selectedNoteId = historyStack[historyIndex];
+      fetchNoteDetail(selectedNoteId);
     }
   }
 
@@ -148,6 +178,7 @@
     if (historyIndex < historyStack.length - 1) {
       historyIndex++;
       selectedNoteId = historyStack[historyIndex];
+      fetchNoteDetail(selectedNoteId);
     }
   }
 

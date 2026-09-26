@@ -3,6 +3,7 @@
   import { playAudioFeedback, speakWord } from '$lib/speech.js';
   import { 
     getCurrentUser, 
+    getAuthToken,
     saveExamAttempt, 
     saveBatchExamAttempts,
     logSnapshot,
@@ -288,14 +289,13 @@
   let activeExamCategory = $state('all'); // 'all' | 'my_grade' | 'primary' | 'g7' | 'g9' | 'highschool' | 'ielts' | 'toeic' | 'toefl' | 'quick_5m' | 'quick_15m' | 'standard_45m' | 'random_builder'
 
   // Random Test Generator State
-  let randomDuration = $state(15); // 5 | 15 | 45
+  let randomDuration = $state(15); // 5 | 15 | 45 | 50
   let randomGrade = $state(7);
-  let randomSkill = $state('all'); // 'all' | 'grammar_vocab' | 'phonics' | 'reading'
+  let randomSkill = $state('all'); // 'all' | 'grammar' | 'vocabulary' | 'phonics' | 'reading'
   let randomSuccessNotice = $state('');
+  let isGeneratingRandom = $state(false);
 
-  function generateRandomExam() {
-    let pool = [...data.allQuestions];
-
+  async function generateRandomExam() {
     // Check user role permission for selected grade
     if (currentUser?.role === 'student') {
       const enrolledGrades = getUserEnrolledGrades(currentUser);
@@ -304,6 +304,7 @@
         const match = clean.match(/lớp\s*([0-9]+)/i);
         if (match && Number(match[1]) === Number(randomGrade)) return true;
         if (randomGrade === 0 && (clean.includes('ielts') || clean.includes('ket') || clean.includes('pet'))) return true;
+        if (randomDuration === 50 && (clean.includes('12') || clean.includes('thpt'))) return true;
         return false;
       });
       if (!isAllowed) {
@@ -314,50 +315,84 @@
       }
     }
 
-    // Filter by grade
+    isGeneratingRandom = true;
+    try {
+      let apiType = '15m';
+      if (randomDuration === 50) apiType = 'thpt_qg';
+      else if (randomDuration === 45) apiType = '45m';
+      else if (randomDuration === 5) apiType = '15m';
+
+      const gradeQuery = randomGrade > 0 ? `lop_${randomGrade}` : 'all';
+      const token = getAuthToken();
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      const res = await fetch(`/api/exams/random?type=${apiType}&grade=${gradeQuery}`, { headers });
+      const dataJson = await res.json();
+
+      if (dataJson.success && dataJson.items && dataJson.items.length > 0) {
+        const gradeLabel = randomGrade > 0 ? `Lớp ${randomGrade}` : 'Quốc Tế (Cambridge & IELTS)';
+        const dynId = dataJson.instance_id;
+        dynamicExam = {
+          id: dynId,
+          instance_id: dynId,
+          curriculum_id: randomGrade > 0 ? `curr_g${randomGrade}` : 'curr_thptqg',
+          title: dataJson.title || `🎲 Đề Thi Ngẫu Nhiên D1 (${dataJson.total_questions} câu)`,
+          description: `Đề thi trắc nghiệm được Cloudflare D1 sinh tự động theo ma trận năng lực GDPT 2025. Bản chụp lưu máy chủ: #${dynId.slice(-6)}.`,
+          grade: randomDuration === 50 ? 12 : randomGrade,
+          format_type: apiType === 'thpt_qg' ? 'standard_45m' : (apiType === '45m' ? 'standard_45m' : 'quick_15m'),
+          skill_category: randomSkill,
+          duration_minutes: dataJson.duration_minutes || randomDuration,
+          total_questions: dataJson.total_questions || dataJson.items.length,
+          pass_percentage: 70,
+          created_by: 'Cloudflare D1 AI Engine',
+          is_published: 1,
+          is_random: true,
+          created_at: new Date().toISOString()
+        };
+
+        dynamicQuestions = dataJson.items.map((item, idx) => ({
+          id: item.question_id,
+          exam_id: dynId,
+          question_index: item.item_order || idx + 1,
+          prompt: item.question_text,
+          options_json: JSON.stringify(item.options.map(o => `${o.id}. ${o.text}`)),
+          skill: 'random_d1',
+          type: 'multiple_choice',
+          reading_passage: item.reading_passage
+        }));
+
+        selectedExamId = dynId;
+        lockedExamAlert = '';
+        resetExamState();
+        startExam();
+        randomSuccessNotice = `🎉 Đã tạo đề ngẫu nhiên D1 (${dataJson.items.length} câu) thành công! Mã đề: #${dynId.slice(-6)}.`;
+        setTimeout(() => randomSuccessNotice = '', 6000);
+        return;
+      }
+    } catch (apiErr) {
+      console.warn('API /api/exams/random unavailable, using client-side fallback:', apiErr);
+    } finally {
+      isGeneratingRandom = false;
+    }
+
+    // Client-side fallback if offline
+    let pool = [...data.allQuestions];
     if (randomGrade > 0) {
       pool = pool.filter(q => Number(q.grade) === Number(randomGrade));
-    } else {
-      pool = pool.filter(q => Number(q.grade) === 0 || (q.cambridge_level && ['KET_A2', 'PET_B1', 'IELTS_7'].includes(q.cambridge_level)));
     }
-
-    // Filter by skill if not 'all'
-    if (randomSkill !== 'all') {
-      const skillFiltered = pool.filter(q => (q.skill || '').toLowerCase().includes(randomSkill.toLowerCase()));
-      if (skillFiltered.length >= 5) {
-        pool = skillFiltered;
-      }
-    }
-
-    if (pool.length === 0) {
-      pool = data.allQuestions.slice(0, 30);
-    }
-
-    // Determine target question count based on duration
-    const targetCount = randomDuration === 5 ? 5 : (randomDuration === 15 ? 10 : Math.min(25, pool.length));
-
-    // Fisher-Yates shuffle
-    const shuffled = [...pool];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-
-    const chosen = shuffled.slice(0, targetCount).map((q, idx) => ({
+    if (pool.length === 0) pool = data.allQuestions.slice(0, 30);
+    const targetCount = randomDuration === 5 ? 5 : (randomDuration === 15 ? 15 : (randomDuration === 50 ? 40 : 25));
+    const shuffled = [...pool].sort(() => Math.random() - 0.5);
+    const chosen = shuffled.slice(0, Math.min(targetCount, shuffled.length)).map((q, idx) => ({
       ...q,
       question_index: idx + 1
     }));
-
-    const gradeLabel = randomGrade > 0 ? `Lớp ${randomGrade}` : 'Quốc Tế (Cambridge & IELTS)';
-    const dynId = `dyn_random_${Date.now()}`;
-    const dynExam = {
+    const dynId = `dyn_local_${Date.now()}`;
+    dynamicExam = {
       id: dynId,
-      curriculum_id: randomGrade > 0 ? `curr_g${randomGrade}` : 'curr_general',
-      title: `🎲 Đề Thi Ngẫu Nhiên ${randomDuration} Phút - ${gradeLabel} (#${Math.floor(Math.random() * 900 + 100)})`,
-      description: `Đề thi trắc nghiệm được hệ thống xáo trộn ngẫu nhiên từ ngân hàng 570+ câu hỏi chuẩn Bộ GD&ĐT & Cambridge. Thời gian: ${randomDuration} phút, gồm ${chosen.length} câu hỏi.`,
+      title: `🎲 Đề Ngẫu Nhiên Offline (#${Math.floor(Math.random() * 900 + 100)})`,
+      description: `Đề thi trắc nghiệm ngẫu nhiên từ ngân hàng offline (${chosen.length} câu).`,
       grade: randomGrade,
-      format_type: randomDuration === 5 ? 'quick_5m' : (randomDuration === 15 ? 'quick_15m' : 'standard_45m'),
-      skill_category: randomSkill,
+      format_type: 'quick_15m',
       duration_minutes: randomDuration,
       total_questions: chosen.length,
       pass_percentage: 70,
@@ -366,15 +401,11 @@
       is_random: true,
       created_at: new Date().toISOString()
     };
-
-    dynamicExam = dynExam;
     dynamicQuestions = chosen;
     selectedExamId = dynId;
     lockedExamAlert = '';
     resetExamState();
     startExam();
-    randomSuccessNotice = `🎉 Đã tạo đề ngẫu nhiên ${randomDuration} phút thành công! Thời gian làm bài bắt đầu đếm ngược.`;
-    setTimeout(() => randomSuccessNotice = '', 5000);
   }
 
   let enrolledExamsCount = $derived(
@@ -506,6 +537,36 @@
       class_name: currentSession?.class_name || 'Lớp Tiếng Anh Cô Dung',
       stars_reward: earnedStars
     });
+
+    // If dynamic exam created by D1 server, submit to /api/exams/random for server-side evaluation & explanations
+    if (currentExam?.instance_id) {
+      fetch('/api/exams/random', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(getAuthToken() ? { 'Authorization': `Bearer ${getAuthToken()}` } : {})
+        },
+        body: JSON.stringify({
+          instance_id: currentExam.instance_id,
+          answers: userAnswers,
+          duration_seconds: (currentExam.duration_minutes * 60) - timeLeftSeconds
+        })
+      }).then(r => r.json()).then(res => {
+        if (res.success && res.detailed_results) {
+          dynamicQuestions = dynamicQuestions.map(q => {
+            const found = res.detailed_results.find(d => d.item_order === q.question_index);
+            if (found) {
+              return {
+                ...q,
+                correct_answer: found.correct_option_id,
+                explanation: found.explanation
+              };
+            }
+            return q;
+          });
+        }
+      }).catch(err => console.error('Server grading error:', err));
+    }
 
     if (parseFloat(calculatedScore) >= 7.0) {
       playAudioFeedback(true);
@@ -854,11 +915,11 @@
           <!-- 1. Duration Choice -->
           <div class="space-y-2">
             <span class="block font-bold text-slate-300">1. Thời Lượng Làm Bài:</span>
-            <div class="grid grid-cols-3 gap-1.5">
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
               <button
                 type="button"
                 onclick={() => randomDuration = 5}
-                class="py-2.5 px-2 rounded-xl font-bold text-xs text-center border transition-all {randomDuration === 5 ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-md shadow-amber-500/30 font-black' : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700'}"
+                class="py-2 px-1.5 rounded-xl font-bold text-xs text-center border transition-all {randomDuration === 5 ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-md shadow-amber-500/30 font-black' : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700'}"
               >
                 <div>⚡ 5 Phút</div>
                 <div class="text-[10px] opacity-80 font-normal">5 câu</div>
@@ -866,18 +927,26 @@
               <button
                 type="button"
                 onclick={() => randomDuration = 15}
-                class="py-2.5 px-2 rounded-xl font-bold text-xs text-center border transition-all {randomDuration === 15 ? 'bg-indigo-600 text-white border-indigo-400 shadow-md shadow-indigo-600/30 font-black' : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700'}"
+                class="py-2 px-1.5 rounded-xl font-bold text-xs text-center border transition-all {randomDuration === 15 ? 'bg-indigo-600 text-white border-indigo-400 shadow-md shadow-indigo-600/30 font-black' : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700'}"
               >
                 <div>⏱️ 15 Phút</div>
-                <div class="text-[10px] opacity-80 font-normal">10 câu</div>
+                <div class="text-[10px] opacity-80 font-normal">15 câu</div>
               </button>
               <button
                 type="button"
                 onclick={() => randomDuration = 45}
-                class="py-2.5 px-2 rounded-xl font-bold text-xs text-center border transition-all {randomDuration === 45 ? 'bg-emerald-600 text-white border-emerald-400 shadow-md shadow-emerald-600/30 font-black' : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700'}"
+                class="py-2 px-1.5 rounded-xl font-bold text-xs text-center border transition-all {randomDuration === 45 ? 'bg-emerald-600 text-white border-emerald-400 shadow-md shadow-emerald-600/30 font-black' : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700'}"
               >
                 <div>📝 45 Phút</div>
-                <div class="text-[10px] opacity-80 font-normal">25 câu</div>
+                <div class="text-[10px] opacity-80 font-normal">30 câu</div>
+              </button>
+              <button
+                type="button"
+                onclick={() => randomDuration = 50}
+                class="py-2 px-1.5 rounded-xl font-bold text-xs text-center border transition-all {randomDuration === 50 ? 'bg-rose-600 text-white border-rose-400 shadow-md shadow-rose-600/30 font-black ring-1 ring-rose-400' : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700'}"
+              >
+                <div>🎯 50 Phút</div>
+                <div class="text-[10px] opacity-80 font-normal">40 câu (2025)</div>
               </button>
             </div>
           </div>
@@ -935,15 +1004,21 @@
         <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
           <div class="text-xs text-slate-400 flex items-center gap-2">
             <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
-            <span>Đề sẽ được tạo ngẫu nhiên, tự động chuyển sang chế độ làm bài thi ngay tức thì.</span>
+            <span>Sinh đề ngẫu nhiên chuẩn ma trận nhận thức D1 (Nhận biết • Thông hiểu • Vận dụng).</span>
           </div>
 
           <button
             type="button"
             onclick={generateRandomExam}
-            class="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-amber-500 via-rose-500 to-indigo-600 hover:from-amber-400 hover:to-indigo-500 text-white font-black text-sm shadow-xl shadow-rose-600/30 flex items-center justify-center gap-2 transition-all hover:scale-105"
+            disabled={isGeneratingRandom}
+            class="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-amber-500 via-rose-500 to-indigo-600 hover:from-amber-400 hover:to-indigo-500 text-white font-black text-sm shadow-xl shadow-rose-600/30 flex items-center justify-center gap-2 transition-all hover:scale-105 disabled:opacity-50"
           >
-            <span>🚀 Bắt Đầu Làm Đề Ngẫu Nhiên {randomDuration} Phút</span>
+            {#if isGeneratingRandom}
+              <span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+              <span>Đang Lấy Mẫu Ngẫu Nhiên Từ D1...</span>
+            {:else}
+              <span>🚀 Bắt Đầu Làm Đề Ngẫu Nhiên {randomDuration} Phút</span>
+            {/if}
           </button>
         </div>
       </div>
