@@ -135,14 +135,14 @@
       <!-- Left: Logo & Portal Badge -->
       <div class="flex items-center gap-3">
         <a href="/" class="flex items-center gap-2 group">
-          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center text-white font-black text-lg shadow-md shadow-sky-500/20 group-hover:scale-105 transition-transform">
+          <div class="w-9 h-9 rounded-lg bg-sky-700 dark:bg-sky-600 flex items-center justify-center text-white font-bold text-base shadow-sm group-hover:bg-sky-800 dark:group-hover:bg-sky-500 transition-colors">
             D
           </div>
           <div>
-            <div class="text-xs uppercase tracking-wider font-extrabold text-sky-600 dark:text-sky-400">Tiếng Anh Cô Dung</div>
+            <div class="text-xs uppercase tracking-wider font-bold text-sky-600 dark:text-sky-400">Tiếng Anh Cô Dung</div>
             <div class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
               <span>Hệ Thống Cpanel</span>
-              <span class="text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wide bg-sky-100 dark:bg-sky-950/80 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800">
+              <span class="text-[11px] px-2 py-0.5 rounded-md font-semibold tracking-wide bg-sky-50 dark:bg-sky-950/80 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800">
                 {currentRoleKey}
               </span>
             </div>
@@ -154,7 +154,7 @@
           <span class="text-xs text-slate-400 font-medium">📍 Điểm học:</span>
           <select 
             bind:value={selectedCampus}
-            class="text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-2.5 py-1 rounded-lg border border-slate-300 dark:border-slate-700 focus:outline-none focus:ring-1 focus:ring-sky-500"
+            class="text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-2.5 py-1 rounded-md border border-slate-300 dark:border-slate-700 focus:outline-none focus:ring-1 focus:ring-sky-500"
           >
             <option value="all">🌐 Toàn bộ cơ sở</option>
             {#each campuses as c}
@@ -167,7 +167,7 @@
       <!-- Right: User Quick Info, Stars, Notifications -->
       <div class="flex items-center gap-3">
         {#if currentUser?.role === 'student' && studentStars}
-          <div class="flex items-center gap-1 px-3 py-1 rounded-full bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400 font-bold text-xs shadow-sm">
+          <div class="flex items-center gap-1 px-2.5 py-1 rounded-md bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400 font-semibold text-xs shadow-sm">
             <span>⭐</span>
             <span>{studentStars.stars_balance || 0}</span>
             <span class="text-[10px] opacity-80 hidden sm:inline">sao</span>
@@ -177,7 +177,7 @@
         <!-- Language Toggle Button -->
         <button 
           onclick={toggleLanguage}
-          class="flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors border border-slate-200 dark:border-slate-700"
+          class="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors border border-slate-200 dark:border-slate-700"
           title="Chuyển đổi ngôn ngữ / Switch Language"
         >
           <span>{lang === 'vi' ? '🇻🇳 VI' : '🇬🇧 EN'}</span>
@@ -186,7 +186,7 @@
         <!-- Notification Bell -->
         <a 
           href="/cpanel/notifications" 
-          class="relative p-2 rounded-xl text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          class="relative p-2 rounded-md text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           title="Thông báo"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -199,17 +199,17 @@
 
         <!-- User Chip & Role Switch for Superadmin -->
         <div class="flex items-center gap-2 pl-2 border-l border-slate-200 dark:border-slate-800">
-          <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-sky-400 to-indigo-500 text-white flex items-center justify-center font-bold text-xs shadow-sm">
+          <div class="w-8 h-8 rounded-md bg-slate-700 dark:bg-slate-600 text-white flex items-center justify-center font-semibold text-xs shadow-sm">
             {currentUser?.name?.[0] || currentUser?.username?.[0] || 'U'}
           </div>
           <div class="hidden sm:block text-left text-xs">
-            <div class="font-bold text-slate-800 dark:text-slate-200 line-clamp-1">{currentUser?.name || currentUser?.username || 'Khách'}</div>
+            <div class="font-semibold text-slate-800 dark:text-slate-200 line-clamp-1">{currentUser?.name || currentUser?.username || 'Khách'}</div>
             <div class="text-[10px] text-slate-500 dark:text-slate-400">{currentUser?.role || 'User'}</div>
           </div>
         </div>
 
         {#if isSuperAdmin(currentUser)}
-          <a href="/admincp" class="hidden sm:inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-md shadow-rose-600/20 transition-all">
+          <a href="/admincp" class="hidden sm:inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-rose-700 hover:bg-rose-800 text-white text-xs font-semibold shadow-sm transition-all">
             <span>⚡ AdminCP Tổng</span>
           </a>
         {/if}
