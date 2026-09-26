@@ -163,12 +163,6 @@
     }
   }
 
-  function fillQuickLogin(id, pass) {
-    identifier = id;
-    password = pass;
-    activeTab = 'login';
-    handleLogin();
-  }
 
   function resetRegisterFlow() {
     regStep = 'role';
@@ -286,80 +280,9 @@
             </div>
           </form>
 
-          <!-- Quick 1-Tap Fill Credentials (For Testing Convenience) -->
-          <div class="pt-3 border-t border-slate-200 dark:border-slate-800 space-y-2">
-            <div class="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center justify-between">
-              <span>Tài khoản mẫu 1 chạm:</span>
-              <span class="text-emerald-600 dark:text-emerald-400 font-semibold">Tự động điền</span>
+            <div class="pt-2 text-center text-[11px] text-slate-500 dark:text-slate-400">
+              Chưa có tài khoản? Hãy chuyển sang tab <strong>Đăng Ký</strong> ở phía trên để tạo tài khoản mới.
             </div>
-            <div class="grid grid-cols-2 gap-2 text-xs">
-              <button
-                type="button"
-                onclick={() => fillQuickLogin('baokhiem', '123')}
-                class="p-2 rounded-xl bg-teal-50 dark:bg-teal-950/40 hover:bg-teal-100 dark:hover:bg-teal-900/50 border border-teal-300 dark:border-teal-700 text-left transition-all hover:scale-[1.02]"
-              >
-                <div class="font-black text-teal-700 dark:text-teal-300 flex items-center gap-1">
-                  <span>🎒</span> <span>baokhiem</span>
-                </div>
-                <div class="text-[10px] text-teal-800 dark:text-teal-200 font-semibold">Bảo Khiêm (Học sinh Lớp 7)</div>
-              </button>
-
-              <button
-                type="button"
-                onclick={() => fillQuickLogin('admin', 'admin')}
-                class="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 text-left transition-all hover:border-amber-400"
-              >
-                <div class="font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1">
-                  <span>👑</span> <span>admin</span>
-                </div>
-                <div class="text-[10px] text-slate-500 dark:text-slate-400">Minh Vũ (SuperAdmin)</div>
-              </button>
-
-              <button
-                type="button"
-                onclick={() => fillQuickLogin('msdung', 'msdung')}
-                class="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 text-left transition-all hover:border-emerald-400"
-              >
-                <div class="font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                  <span>👩‍🏫</span> <span>msdung</span>
-                </div>
-                <div class="text-[10px] text-slate-500 dark:text-slate-400">Cô Dung (SuperAdmin)</div>
-              </button>
-
-              <button
-                type="button"
-                onclick={() => fillQuickLogin('baonhi', '123')}
-                class="p-2 rounded-xl bg-amber-50/60 dark:bg-slate-800/80 hover:bg-amber-100/60 dark:hover:bg-slate-800 border border-amber-200 dark:border-slate-700 text-left transition-all hover:border-amber-400"
-              >
-                <div class="font-bold text-amber-700 dark:text-amber-300 flex items-center gap-1">
-                  <span>🎒</span> <span>baonhi</span>
-                </div>
-                <div class="text-[10px] text-slate-500 dark:text-slate-400">Bảo Nhi (Học sinh Lớp 1)</div>
-              </button>
-
-              <button
-                type="button"
-                onclick={() => fillQuickLogin('phuhuynh', '123')}
-                class="p-2 rounded-xl bg-purple-50/60 dark:bg-slate-800/80 hover:bg-purple-100/60 dark:hover:bg-slate-800 border border-purple-200 dark:border-slate-700 text-left transition-all hover:border-purple-400"
-              >
-                <div class="font-bold text-purple-700 dark:text-purple-300 flex items-center gap-1">
-                  <span>👨‍👩‍👧</span> <span>phuhuynh</span>
-                </div>
-                <div class="text-[10px] text-slate-500 dark:text-slate-400">Chị Mai Lan (Phụ Huynh)</div>
-              </button>
-
-              <button
-                type="button"
-                onclick={() => fillQuickLogin('teacher.john', '123')}
-                class="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 text-left transition-all hover:border-slate-400"
-              >
-                <div class="font-bold text-teal-600 dark:text-teal-400 flex items-center gap-1">
-                  <span>👨‍🏫</span> <span>teacher.john</span>
-                </div>
-                <div class="text-[10px] text-slate-500 dark:text-slate-400">GV Bản Ngữ John</div>
-              </button>
-            </div>
-          </div>
 
         <!-- ================= TAB: REGISTER (REBUILT 3 STEPS) ================= -->
         {:else}

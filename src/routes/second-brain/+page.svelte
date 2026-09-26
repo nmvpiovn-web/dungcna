@@ -334,6 +334,7 @@
 <svelte:head>
   <title>Second Brain Tri Thức - Tiếng Anh Cô Dung (Obsidian Knowledge Vault)</title>
   <meta name="description" content="Lớp tri thức thứ hai (Second Brain) chuẩn hóa 12 năm GDPT và CEFR quốc tế, liên kết đồ thị WikiLinks đa chiều." />
+  <meta name="robots" content="noindex, nofollow" />
 </svelte:head>
 
 <div class="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-800 dark:text-slate-100 flex flex-col">

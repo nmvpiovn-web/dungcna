@@ -13,6 +13,22 @@ function sanitizeFtsQuery(q) {
           .trim();
 }
 
+// Safely escape raw text to prevent XSS while allowing styled highlight tags
+function sanitizeFtsSnippet(rawSnippet) {
+  if (!rawSnippet) return '';
+  // 1. First escape all raw HTML characters to neutralize scripts/HTML tags
+  const escaped = rawSnippet
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+  // 2. Safely transform our sentinel markers into trusted HTML <mark> tags
+  return escaped
+    .replace(/\[\[_FTS_HL_START_\]\]/g, '<mark class="bg-amber-200 dark:bg-amber-800 text-slate-900 dark:text-amber-100 font-bold px-1 rounded">')
+    .replace(/\[\[_FTS_HL_END_\]\]/g, '</mark>');
+}
+
 export async function GET({ request, url, platform }) {
   // 1. Strict Server Authentication (Fail-Closed)
   const auth = await verifyServerAuth(request, platform);
@@ -115,7 +131,7 @@ export async function GET({ request, url, platform }) {
         // Query FTS5 joined with folder filter and pagination in SQL
         let sql = `
           SELECT kv.id, kv.title, kv.folder, kv.category, kv.tags, kv.source_path, kv.updated_at,
-                 snippet(knowledge_fts, 2, '<mark class="bg-amber-200 dark:bg-amber-800">', '</mark>', '...', 15) as snippet
+                 snippet(knowledge_fts, 2, '[[_FTS_HL_START_]]', '[[_FTS_HL_END_]]', '...', 15) as snippet
           FROM knowledge_fts kf
           JOIN knowledge_vault kv ON kf.id = kv.id
           WHERE knowledge_fts MATCH ?
@@ -164,7 +180,7 @@ export async function GET({ request, url, platform }) {
           category: r.category,
           tags: tags,
           source_path: r.source_path,
-          snippet: r.snippet || '',
+          snippet: sanitizeFtsSnippet(r.snippet),
           updated_at: r.updated_at
         };
       });

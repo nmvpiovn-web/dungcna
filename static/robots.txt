@@ -1,3 +1,33 @@
-# allow crawling everything by default
+# Robots.txt for Tieng Anh Co Dung Academy (tienganhcodung.edu.vn)
+# Enforce privacy for internal student, payroll, and administration portals
+
 User-agent: *
-Disallow:
+Disallow: /admin
+Disallow: /schedule
+Disallow: /evaluations
+Disallow: /second-brain
+Disallow: /api/
+Allow: /
+Allow: /courses
+Allow: /exam
+Allow: /pedagogy
+Allow: /vocabulary
+
+# LLM Crawlers & Search Engines
+User-agent: Googlebot
+Disallow: /admin
+Disallow: /schedule
+Disallow: /evaluations
+Disallow: /second-brain
+Disallow: /api/
+Allow: /
+
+User-agent: GPTBot
+Disallow: /admin
+Disallow: /schedule
+Disallow: /evaluations
+Disallow: /second-brain
+Disallow: /api/
+Allow: /
+
+Sitemap: https://tienganhcodung.edu.vn/sitemap.xml

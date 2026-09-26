@@ -1,3 +1,8 @@
+<svelte:head>
+  <title>Bảng Điều Hành Admin CP &amp; Leader • Tiếng Anh Cô Dung</title>
+  <meta name="robots" content="noindex, nofollow" />
+</svelte:head>
+
 <script>
   import { onMount } from 'svelte';
   import { page } from '$app/stores';
@@ -206,7 +211,7 @@
     }
 
     const queryTab = $page.url.searchParams.get('tab');
-    if (queryTab && ['leader_notifications', 'students', 'teachers', 'schedule', 'tuition', 'teacher_cp', 'games', 'webhooks', 'snapshots'].includes(queryTab)) {
+    if (queryTab && ['leader_notifications', 'workflows', 'students', 'teachers', 'schedule', 'tuition', 'teacher_cp', 'games', 'webhooks', 'snapshots'].includes(queryTab)) {
       activeTab = queryTab;
     }
 
@@ -230,6 +235,132 @@
     };
   });
 
+  // Manager Workflows State
+  let adminWorkflows = $state({ leaves: [], advances: [], recruitment: [] });
+  let workflowLoading = $state(false);
+  let showAddRecruitModal = $state(false);
+  let newRecruit = $state({
+    candidate_name: '',
+    phone: '',
+    email: '',
+    position_type: 'contractor',
+    interview_time: '',
+    cv_link: '',
+    notes: ''
+  });
+
+  async function loadAdminWorkflows() {
+    if (typeof window === 'undefined') return;
+    const token = localStorage.getItem('tienganh_token');
+    if (!token) return;
+    workflowLoading = true;
+    try {
+      const res = await fetch('/api/teachers/workflows?type=all', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        adminWorkflows = {
+          leaves: data.leaves || [],
+          advances: data.advances || [],
+          recruitment: data.recruitment || []
+        };
+      }
+    } catch {}
+    finally {
+      workflowLoading = false;
+    }
+  }
+
+  async function handleAdminLeaveDecision(leaveId, decision) {
+    const token = localStorage.getItem('tienganh_token');
+    if (!token) return;
+    try {
+      const res = await fetch('/api/teachers/workflows', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          action: 'admin_decision',
+          leave_id: leaveId,
+          decision
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(decision === 'approve' ? '✅ Đã phê duyệt đơn nghỉ và xác nhận ca dạy thay!' : 'Đã từ chối đơn xin nghỉ.');
+        loadAdminWorkflows();
+      } else {
+        showToast('Lỗi: ' + data.error);
+      }
+    } catch (e) {
+      showToast('Lỗi kết nối: ' + e.message);
+    }
+  }
+
+  async function handleAdminAdvanceDecision(advanceId, decision) {
+    const token = localStorage.getItem('tienganh_token');
+    if (!token) return;
+    try {
+      const res = await fetch('/api/teachers/workflows', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          action: 'advance_decision',
+          advance_id: advanceId,
+          decision
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(decision === 'approve' ? '✅ Đã phê duyệt ứng lương và ghi nhận vào bảng đối trừ!' : 'Đã từ chối đơn ứng lương.');
+        loadAdminWorkflows();
+      } else {
+        showToast('Lỗi: ' + data.error);
+      }
+    } catch (e) {
+      showToast('Lỗi kết nối: ' + e.message);
+    }
+  }
+
+  async function handleSaveRecruitment() {
+    const token = localStorage.getItem('tienganh_token');
+    if (!token) return;
+    if (!newRecruit.candidate_name.trim()) {
+      alert('Vui lòng nhập họ tên ứng viên');
+      return;
+    }
+    try {
+      const res = await fetch('/api/teachers/workflows', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          action: 'upsert_recruitment',
+          ...newRecruit
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast('✅ Đã lưu hồ sơ ứng viên tuyển dụng & lịch phỏng vấn!');
+        showAddRecruitModal = false;
+        newRecruit = { candidate_name: '', phone: '', email: '', position_type: 'contractor', interview_time: '', cv_link: '', notes: '' };
+        loadAdminWorkflows();
+      } else {
+        showToast('Lỗi: ' + data.error);
+      }
+    } catch (e) {
+      showToast('Lỗi kết nối: ' + e.message);
+    }
+  }
+
   function loadData() {
     currentUser = getCurrentUser();
     allUsers = getAllUsers();
@@ -243,6 +374,7 @@
     if (webhooks.length > 0) {
       webhookForm = { ...webhooks[0] };
     }
+    loadAdminWorkflows();
   }
 
   async function handleAdminRequestPwa() {
@@ -918,6 +1050,18 @@
       </button>
 
       <button
+        onclick={() => activeTab = 'workflows'}
+        class="px-3.5 py-2 rounded-xl transition-all whitespace-nowrap flex items-center gap-2 {activeTab === 'workflows' ? 'bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-lg shadow-amber-600/30' : 'bg-slate-950 text-slate-400 hover:text-white hover:bg-slate-800'}"
+      >
+        <span>📋 Hàng Đợi Duyệt &amp; Tuyển Dụng</span>
+        {#if (adminWorkflows.leaves.filter(l => l.admin_status === 'pending').length + adminWorkflows.advances.filter(a => a.status === 'pending').length) > 0}
+          <span class="px-1.5 py-0.5 rounded-full bg-rose-500 text-white text-[10px] animate-pulse">
+            {adminWorkflows.leaves.filter(l => l.admin_status === 'pending').length + adminWorkflows.advances.filter(a => a.status === 'pending').length} chờ
+          </span>
+        {/if}
+      </button>
+
+      <button
         onclick={() => activeTab = 'students'}
         class="px-3.5 py-2 rounded-xl transition-all whitespace-nowrap flex items-center gap-2 {activeTab === 'students' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30' : 'bg-slate-950 text-slate-400 hover:text-white hover:bg-slate-800'}"
       >
@@ -1351,10 +1495,337 @@
         {/if}
       </div>
     </div>
-  {/if}
+
+  <!-- ================= TAB WORKFLOWS: HÀNG ĐỢI DUYỆT & TUYỂN DỤNG ================= -->
+  {:else if activeTab === 'workflows'}
+    <div class="space-y-6 animate-in fade-in duration-200">
+      <!-- Header Deck -->
+      <div class="p-6 rounded-3xl bg-gradient-to-r from-slate-900 via-amber-950/40 to-slate-900 border border-amber-500/30 shadow-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div class="space-y-1">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/30">
+            <span>📋 HÀNG ĐỢI NGHIỆP VỤ NHÂN SỰ &amp; ĐIỀU HÀNH GIẢNG DẠY</span>
+          </div>
+          <h2 class="text-xl sm:text-2xl font-black text-white">
+            Phê Duyệt Dạy Thay, Ứng Lương &amp; Tuyển Dụng Giáo Viên 👩‍🏫
+          </h2>
+          <p class="text-xs text-slate-300 max-w-2xl leading-relaxed">
+            Quy trình dạy thay 2 bước chuẩn hóa (Đồng nghiệp nhận ca → Leader Cô Dung duyệt). Ứng lương tự động đối trừ vào kỳ tính lương cuối tháng. Quản lý ứng viên tuyển dụng giáo viên thời vụ/cố định và lịch phỏng vấn.
+          </p>
+        </div>
+        <div class="flex items-center gap-2.5">
+          <button
+            type="button"
+            onclick={() => showAddRecruitModal = true}
+            class="px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs shadow-lg shadow-amber-600/20 transition-all flex items-center gap-1.5"
+          >
+            <span>➕ Thêm Ứng Viên Tuyển Dụng</span>
+          </button>
+          <button
+            type="button"
+            onclick={loadAdminWorkflows}
+            class="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs border border-slate-700 transition-all"
+            title="Tải lại dữ liệu hàng đợi"
+          >
+            🔄
+          </button>
+        </div>
+      </div>
+
+      <!-- SECTION 1: PHÊ DUYỆT NGHỈ & DẠY THAY (2 BƯỚC) -->
+      <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <span class="text-lg">📝</span>
+            <div>
+              <h3 class="font-black text-sm text-white">Đơn Xin Nghỉ &amp; Đề Nghị Dạy Thay ({adminWorkflows.leaves.length})</h3>
+              <p class="text-[11px] text-slate-400">Yêu cầu giáo viên thay thế đồng ý trước khi Leader phê duyệt chính thức</p>
+            </div>
+          </div>
+          <span class="text-xs px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">
+            {adminWorkflows.leaves.filter(l => l.admin_status === 'pending').length} đơn chờ duyệt
+          </span>
+        </div>
+
+        {#if adminWorkflows.leaves.length === 0}
+          <div class="p-8 text-center text-xs text-slate-500 bg-slate-950/50 rounded-2xl border border-slate-800/80">
+            Hiện không có đơn xin nghỉ hoặc đề nghị dạy thay nào.
+          </div>
+        {:else}
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {#each adminWorkflows.leaves as req}
+              <div class="p-4 rounded-2xl bg-slate-950 border {req.admin_status === 'approved' ? 'border-emerald-500/40' : req.admin_status === 'rejected' ? 'border-rose-500/30' : 'border-amber-500/40'} space-y-3">
+                <div class="flex items-start justify-between gap-2">
+                  <div>
+                    <div class="font-bold text-xs text-white flex items-center gap-1.5">
+                      <span>👨‍🏫 {req.teacher_name}</span>
+                      <span class="text-[10px] text-slate-400">xin nghỉ ca dạy</span>
+                    </div>
+                    <div class="text-[11px] text-amber-300 font-semibold mt-0.5">
+                      Ca học: {req.session_date} ({req.start_time} - {req.end_time}) • Lớp {req.class_id}
+                    </div>
+                  </div>
+                  <span class="text-[10px] px-2 py-0.5 rounded-full font-black uppercase tracking-wider {req.admin_status === 'approved' ? 'bg-emerald-500/20 text-emerald-400' : req.admin_status === 'rejected' ? 'bg-rose-500/20 text-rose-400' : 'bg-amber-500/20 text-amber-400'}">
+                    {req.admin_status === 'approved' ? '✓ Đã Duyệt' : req.admin_status === 'rejected' ? '✕ Từ Chối' : '⏳ Chờ Duyệt'}
+                  </span>
+                </div>
+
+                <div class="text-xs text-slate-300 bg-slate-900/60 p-2.5 rounded-xl border border-slate-800 italic">
+                  "{req.reason}"
+                </div>
+
+                <!-- 2-Step Substitute Status -->
+                <div class="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800 text-xs flex items-center justify-between">
+                  <div>
+                    <span class="text-slate-400 text-[10px]">Giáo viên dạy thay:</span>
+                    <div class="font-bold text-slate-200">
+                      {req.substitute_teacher_name || 'Chưa chỉ định'}
+                    </div>
+                  </div>
+                  <div>
+                    {#if req.substitute_status === 'accepted'}
+                      <span class="px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 font-bold text-[10px]">
+                        ✓ Đồng nghiệp đã đồng ý
+                      </span>
+                    {:else if req.substitute_status === 'rejected'}
+                      <span class="px-2 py-0.5 rounded-md bg-rose-500/20 text-rose-300 font-bold text-[10px]">
+                        ✕ Đồng nghiệp từ chối
+                      </span>
+                    {:else}
+                      <span class="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold text-[10px]">
+                        ⏳ Chờ đồng nghiệp xác nhận
+                      </span>
+                    {/if}
+                  </div>
+                </div>
+
+                <!-- Admin Action Buttons -->
+                {#if req.admin_status === 'pending'}
+                  <div class="flex items-center gap-2 pt-1">
+                    <button
+                      type="button"
+                      disabled={req.substitute_status !== 'accepted'}
+                      onclick={() => handleAdminLeaveDecision(req.id, 'approve')}
+                      class="flex-1 py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:hover:bg-emerald-600 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-1"
+                    >
+                      <span>✓ Phê Duyệt Ca Dạy Thay</span>
+                    </button>
+                    <button
+                      type="button"
+                      onclick={() => handleAdminLeaveDecision(req.id, 'reject')}
+                      class="py-2 px-3 rounded-xl bg-slate-800 hover:bg-rose-600 hover:text-white text-slate-300 font-bold text-xs transition-all"
+                    >
+                      Từ Chối
+                    </button>
+                  </div>
+                  {#if req.substitute_status !== 'accepted'}
+                    <p class="text-[10px] text-amber-400/80 italic text-center">
+                      * Cần giáo viên dạy thay bấm đồng ý nhận ca trước khi Leader duyệt
+                    </p>
+                  {/if}
+                {/if}
+              </div>
+            {/each}
+          </div>
+        {/if}
+      </div>
+
+      <!-- SECTION 2: DUYỆT ỨNG LƯƠNG & ĐỐI TRỪ KỲ LƯƠNG -->
+      <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <span class="text-lg">💰</span>
+            <div>
+              <h3 class="font-black text-sm text-white">Đơn Xin Ứng Lương &amp; Khấu Trừ Kỳ Lương ({adminWorkflows.advances.length})</h3>
+              <p class="text-[11px] text-slate-400">Số tiền được duyệt sẽ tự động đối trừ vào bảng tính lương cuối tháng</p>
+            </div>
+          </div>
+          <span class="text-xs px-2.5 py-0.5 rounded-full bg-teal-500/20 text-teal-300 font-bold border border-teal-500/30">
+            {adminWorkflows.advances.filter(a => a.status === 'pending').length} đơn chờ duyệt
+          </span>
+        </div>
+
+        {#if adminWorkflows.advances.length === 0}
+          <div class="p-8 text-center text-xs text-slate-500 bg-slate-950/50 rounded-2xl border border-slate-800/80">
+            Chưa có yêu cầu ứng lương nào trong hệ thống.
+          </div>
+        {:else}
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {#each adminWorkflows.advances as adv}
+              <div class="p-4 rounded-2xl bg-slate-950 border {adv.status === 'approved' ? 'border-emerald-500/40' : adv.status === 'rejected' ? 'border-rose-500/30' : 'border-teal-500/40'} space-y-3">
+                <div class="flex items-start justify-between gap-2">
+                  <div>
+                    <div class="font-bold text-xs text-white">
+                      👨‍🏫 {adv.teacher_name}
+                    </div>
+                    <div class="text-base font-black text-emerald-400 mt-0.5">
+                      {Number(adv.amount_vnd).toLocaleString('vi-VN')} đ
+                    </div>
+                    <div class="text-[10px] text-slate-400">
+                      Kỳ lương đối trừ: <strong class="text-slate-200">{adv.billing_cycle}</strong>
+                    </div>
+                  </div>
+                  <span class="text-[10px] px-2 py-0.5 rounded-full font-black uppercase tracking-wider {adv.status === 'approved' ? 'bg-emerald-500/20 text-emerald-400' : adv.status === 'rejected' ? 'bg-rose-500/20 text-rose-400' : 'bg-amber-500/20 text-amber-400'}">
+                    {adv.status === 'approved' ? '✓ Đã Chi Ứng' : adv.status === 'rejected' ? '✕ Từ Chối' : '⏳ Chờ Duyệt'}
+                  </span>
+                </div>
+
+                <div class="text-xs text-slate-300 bg-slate-900/60 p-2.5 rounded-xl border border-slate-800 italic">
+                  Lý do: "{adv.reason}"
+                </div>
+
+                {#if adv.status === 'pending'}
+                  <div class="flex items-center gap-2 pt-1">
+                    <button
+                      type="button"
+                      onclick={() => handleAdminAdvanceDecision(adv.id, 'approve')}
+                      class="flex-1 py-2 px-3 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-1"
+                    >
+                      <span>✓ Duyệt Ứng Lương &amp; Ghi Đối Trừ</span>
+                    </button>
+                    <button
+                      type="button"
+                      onclick={() => handleAdminAdvanceDecision(adv.id, 'reject')}
+                      class="py-2 px-3 rounded-xl bg-slate-800 hover:bg-rose-600 hover:text-white text-slate-300 font-bold text-xs transition-all"
+                    >
+                      Từ Chối
+                    </button>
+                  </div>
+                {/if}
+              </div>
+            {/each}
+          </div>
+        {/if}
+      </div>
+
+      <!-- SECTION 3: TUYỂN DỤNG GIÁO VIÊN & LỊCH PHỎNG VẤN -->
+      <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <span class="text-lg">🎯</span>
+            <div>
+              <h3 class="font-black text-sm text-white">Quản Lý Tuyển Dụng Giáo Viên Thời Vụ / Cố Định ({adminWorkflows.recruitment.length})</h3>
+              <p class="text-[11px] text-slate-400">Theo dõi hồ sơ ứng viên, lịch phỏng vấn và kết quả tuyển chọn đội ngũ</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onclick={() => showAddRecruitModal = true}
+            class="text-xs px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold shadow-sm transition-all"
+          >
+            ➕ Thêm Ứng Viên
+          </button>
+        </div>
+
+        {#if adminWorkflows.recruitment.length === 0}
+          <div class="p-8 text-center text-xs text-slate-500 bg-slate-950/50 rounded-2xl border border-slate-800/80">
+            Chưa có hồ sơ ứng viên tuyển dụng nào.
+          </div>
+        {:else}
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-950/80 text-slate-400 text-[10px] uppercase font-bold tracking-wider">
+                <tr>
+                  <th class="p-3 rounded-l-xl">Ứng Viên</th>
+                  <th class="p-3">Vị Trí</th>
+                  <th class="p-3">Liên Hệ</th>
+                  <th class="p-3">Lịch Phỏng Vấn</th>
+                  <th class="p-3">Hồ Sơ / Ghi Chú</th>
+                  <th class="p-3 rounded-r-xl text-right">Trạng Thái</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-800/60">
+                {#each adminWorkflows.recruitment as rec}
+                  <tr class="hover:bg-slate-800/30 transition-all">
+                    <td class="p-3 font-bold text-white">
+                      {rec.candidate_name}
+                    </td>
+                    <td class="p-3">
+                      <span class="px-2 py-0.5 rounded-md font-bold text-[10px] {rec.position_type === 'permanent' ? 'bg-indigo-500/20 text-indigo-300' : 'bg-amber-500/20 text-amber-300'}">
+                        {rec.position_type === 'permanent' ? 'Cố Định (Full-time)' : 'Thời Vụ (Contractor)'}
+                      </span>
+                    </td>
+                    <td class="p-3 text-slate-300">
+                      <div>📞 {rec.phone || 'Chưa có'}</div>
+                      <div class="text-[10px] text-slate-400">✉️ {rec.email || 'Chưa có'}</div>
+                    </td>
+                    <td class="p-3 text-amber-300 font-semibold">
+                      {rec.interview_time || 'Chưa xếp lịch'}
+                    </td>
+                    <td class="p-3 text-slate-300 max-w-[200px] truncate">
+                      {#if rec.cv_link}
+                        <a href={rec.cv_link} target="_blank" class="text-sky-400 hover:underline">📄 Xem CV</a>
+                      {/if}
+                      <div class="text-[11px] text-slate-400 italic truncate">{rec.notes || 'Không có ghi chú'}</div>
+                    </td>
+                    <td class="p-3 text-right">
+                      <span class="px-2.5 py-1 rounded-full text-[10px] font-bold {rec.status === 'accepted' ? 'bg-emerald-500/20 text-emerald-400' : rec.status === 'rejected' ? 'bg-rose-500/20 text-rose-400' : 'bg-slate-800 text-slate-300'}">
+                        {rec.status === 'accepted' ? '✓ Trúng Tuyển' : rec.status === 'rejected' ? '✕ Không Đạt' : '⏳ Đang Phỏng Vấn'}
+                      </span>
+                    </td>
+                  </tr>
+                {/each}
+              </tbody>
+            </table>
+          </div>
+        {/if}
+      </div>
+    </div>
+
+    <!-- Modal Thêm Ứng Viên Tuyển Dụng -->
+    {#if showAddRecruitModal}
+      <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in">
+        <div class="w-full max-w-lg rounded-3xl bg-slate-900 border border-slate-800 p-6 space-y-4 shadow-2xl text-xs">
+          <div class="flex items-center justify-between">
+            <h3 class="font-black text-base text-white">Thêm Hồ Sơ Ứng Viên Tuyển Dụng</h3>
+            <button onclick={() => showAddRecruitModal = false} class="text-slate-400 hover:text-white">✕</button>
+          </div>
+
+          <div class="space-y-3">
+            <div>
+              <label class="block text-slate-400 font-bold mb-1">Họ và tên ứng viên *</label>
+              <input type="text" bind:value={newRecruit.candidate_name} placeholder="VD: Thầy Nguyễn Hoàng Nam" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white" />
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-slate-400 font-bold mb-1">Số điện thoại</label>
+                <input type="text" bind:value={newRecruit.phone} placeholder="0912345678" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white" />
+              </div>
+              <div>
+                <label class="block text-slate-400 font-bold mb-1">Loại hợp đồng</label>
+                <select bind:value={newRecruit.position_type} class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white">
+                  <option value="contractor">Thời Vụ (Contractor)</option>
+                  <option value="permanent">Cố Định (Full-time)</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-slate-400 font-bold mb-1">Lịch phỏng vấn dự kiến</label>
+              <input type="datetime-local" bind:value={newRecruit.interview_time} class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white" />
+            </div>
+
+            <div>
+              <label class="block text-slate-400 font-bold mb-1">Link CV / Google Drive</label>
+              <input type="url" bind:value={newRecruit.cv_link} placeholder="https://drive.google.com/..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white" />
+            </div>
+
+            <div>
+              <label class="block text-slate-400 font-bold mb-1">Ghi chú bằng cấp / kinh nghiệm</label>
+              <textarea bind:value={newRecruit.notes} rows="2" placeholder="IELTS 8.0, 3 năm kinh nghiệm dạy GDPT Lớp 10-12..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white"></textarea>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-end gap-2 pt-2">
+            <button type="button" onclick={() => showAddRecruitModal = false} class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 font-bold">Hủy</button>
+            <button type="button" onclick={handleSaveRecruitment} class="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold">Lưu Hồ Sơ</button>
+          </div>
+        </div>
+      </div>
+    {/if}
 
   <!-- ================= TAB 1: QUẢN LÝ HỌC SINH & DUYỆT TRIAL ================= -->
-  {#if activeTab === 'students'}
+  {:else if activeTab === 'students'}
     <div class="space-y-4">
       <!-- Action & Filter Ribbon -->
       <div class="p-4 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 text-xs">

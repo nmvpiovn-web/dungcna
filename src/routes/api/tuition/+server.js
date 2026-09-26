@@ -1,20 +1,77 @@
 import { json } from '@sveltejs/kit';
-import { getAllTuitionBills, saveTuitionBill, getStudentStars, dispatchBotReport } from '$lib/unifiedStore';
+import { verifyServerAuth, isStaffUser, SUPERADMIN_USERNAMES } from '$lib/server/auth.js';
+import { getAllTuitionBills, saveTuitionBill, getStudentStars, dispatchBotReport, getAllUsers } from '$lib/unifiedStore';
 
 export const prerender = false;
 
-export async function GET({ url, platform }) {
+function isManager(user) {
+  if (!user) return false;
+  return user.role === 'superadmin' || user.role === 'leader' || SUPERADMIN_USERNAMES.includes(user.username);
+}
+
+export async function GET({ url, request, platform }) {
+  // 1. Verify Authentication
+  const auth = await verifyServerAuth(request, platform);
+  if (!auth.authenticated) {
+    return json({
+      success: false,
+      error: auth.error || 'Unauthorized: Vui lòng đăng nhập để tra cứu học phí'
+    }, { status: auth.status || 401 });
+  }
+
+  const user = auth.user;
+  const requestedStudentId = url.searchParams.get('student_id');
+
+  // 2. Record-Level Authorization
+  let allowedStudentId = null;
+
+  if (isStaffUser(user)) {
+    // Staff can inspect any student or all students
+    allowedStudentId = requestedStudentId;
+  } else if (user.role === 'student') {
+    // Student can ONLY access their own bills
+    if (requestedStudentId && requestedStudentId !== user.id) {
+      return json({
+        success: false,
+        error: 'Forbidden: Học sinh chỉ có quyền xem phiếu báo học phí của chính mình'
+      }, { status: 403 });
+    }
+    allowedStudentId = user.id;
+  } else if (user.role === 'parent') {
+    // Parent can only inspect bills tied to their registered phone or their child's id
+    if (requestedStudentId) {
+      // Find all students linked to this parent
+      const allUsers = getAllUsers();
+      const myChildren = allUsers.filter(u => 
+        u.role === 'student' && 
+        (u.parent_phone === user.phone || u.parent_name === user.name || u.phone === user.phone)
+      );
+      const isMyChild = myChildren.some(c => c.id === requestedStudentId || c.username === requestedStudentId);
+      if (!isMyChild && user.phone) {
+        return json({
+          success: false,
+          error: 'Forbidden: Quý phụ huynh chỉ có quyền xem học phí của con em mình'
+        }, { status: 403 });
+      }
+      allowedStudentId = requestedStudentId;
+    }
+  }
+
   try {
-    // 1. Check if Cloudflare D1 is available
+    // 3. Query Cloudflare D1
     if (platform?.env?.DB) {
       try {
-        const studentId = url.searchParams.get('student_id');
-        let query = 'SELECT * FROM tuition_bills ORDER BY created_at DESC';
+        let query = 'SELECT * FROM tuition_bills';
         let params = [];
-        if (studentId) {
-          query = 'SELECT * FROM tuition_bills WHERE student_id = ? ORDER BY created_at DESC';
-          params = [studentId];
+        if (allowedStudentId) {
+          query += ' WHERE student_id = ?';
+          params.push(allowedStudentId);
+        } else if (user.role === 'parent' && user.phone) {
+          query += ' WHERE parent_phone = ?';
+          params.push(user.phone);
         }
+        query += ' ORDER BY created_at DESC';
+
         const d1Res = await platform.env.DB.prepare(query).bind(...params).all();
         if (d1Res?.results) {
           return json({
@@ -29,8 +86,14 @@ export async function GET({ url, platform }) {
       }
     }
 
-    // 2. Fallback to unifiedStore
-    const bills = getAllTuitionBills();
+    // 4. Fallback to unifiedStore
+    let bills = getAllTuitionBills();
+    if (allowedStudentId) {
+      bills = bills.filter(b => b.student_id === allowedStudentId);
+    } else if (user.role === 'parent' && user.phone) {
+      bills = bills.filter(b => b.parent_phone === user.phone);
+    }
+
     return json({
       success: true,
       total: bills.length,
@@ -43,6 +106,22 @@ export async function GET({ url, platform }) {
 }
 
 export async function POST({ request, platform }) {
+  // 1. Verify Authentication & Role
+  const auth = await verifyServerAuth(request, platform);
+  if (!auth.authenticated) {
+    return json({
+      success: false,
+      error: auth.error || 'Unauthorized: Vui lòng đăng nhập để lập phiếu học phí'
+    }, { status: auth.status || 401 });
+  }
+
+  if (!isStaffUser(auth.user)) {
+    return json({
+      success: false,
+      error: 'Forbidden: Chỉ Giáo viên hoặc Ban Quản Lý mới có quyền lập hoặc chỉnh sửa phiếu học phí'
+    }, { status: 403 });
+  }
+
   try {
     const body = await request.json();
     if (!body.student_name || !body.base_tuition_vnd) {

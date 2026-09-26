@@ -25,6 +25,7 @@
   import ProfileEditModal from '$lib/components/ProfileEditModal.svelte';
   import ApkOtaUpdater from '$lib/components/ApkOtaUpdater.svelte';
   import LeaderNotificationDrawer from '$lib/components/LeaderNotificationDrawer.svelte';
+  import NotificationCenterModal from '$lib/components/NotificationCenterModal.svelte';
 
   let { children } = $props();
 
@@ -32,14 +33,16 @@
 
   let currentUser = $state(null);
   let allUsers = $state([]);
-  let currentTheme = $state('light');
+  let currentTheme = $state('sky');
   let showUserDropdown = $state(false);
   let activeDropdown = $state(null); // 'courses' | 'exams' | 'tools' | 'admin' | null
   let mobileMenuOpen = $state(false);
   let showAuthModal = $state(false);
   let showProfileModal = $state(false);
   let showLeaderDrawer = $state(false);
+  let showNotificationModal = $state(false);
   let leaderUnreadCount = $state(0);
+  let userUnreadCount = $state(0);
   let canDismiss = $state(false);
   let studentStars = $state(null);
 
@@ -62,6 +65,24 @@
     if (currentUser.role === 'student') return currentUserGrade ? `Học Sinh • ${currentUserGrade}` : 'Học Sinh';
     return 'Học Sinh';
   });
+
+  async function loadUserNotificationsCount() {
+    if (typeof window === 'undefined') return;
+    const token = localStorage.getItem('tienganh_token');
+    if (!token) {
+      userUnreadCount = 0;
+      return;
+    }
+    try {
+      const res = await fetch('/api/notifications', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        userUnreadCount = data.unread_count || 0;
+      }
+    } catch {}
+  }
 
   onMount(() => {
     allUsers = getAllUsers();
@@ -88,6 +109,7 @@
       scanScheduleAndAttendanceForLeader();
       scanTuitionDueAlerts();
       leaderUnreadCount = getUnreadLeaderNotificationCount();
+      loadUserNotificationsCount();
     }, 2000);
 
     // Verify session integrity with server on startup / reload
@@ -100,6 +122,7 @@
         } else {
           currentUser = res.user;
           showAuthModal = false;
+          loadUserNotificationsCount();
         }
       });
     } else {
@@ -114,8 +137,12 @@
         showAuthModal = true;
         canDismiss = false;
         studentStars = null;
-      } else if (currentUser.role === 'student') {
-        studentStars = getStudentStars(currentUser.id);
+        userUnreadCount = 0;
+      } else {
+        if (currentUser.role === 'student') {
+          studentStars = getStudentStars(currentUser.id);
+        }
+        loadUserNotificationsCount();
       }
       leaderUnreadCount = getUnreadLeaderNotificationCount();
     };
@@ -454,15 +481,26 @@
             <span>Thời Khóa Biểu</span>
           </a>
 
-          <!-- Item 5: Sổ Liên Lạc Phụ Huynh (Direct Link) -->
-          <a
-            href="/?tab=parent"
-            onclick={closeAllDropdowns}
-            class="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold tracking-wide transition-all {currentUser?.role === 'parent' ? 'bg-purple-100 text-purple-800 border border-purple-300 dark:bg-purple-500/20 dark:text-purple-300 dark:border-purple-500/30' : 'text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'}"
-          >
-            <span>👨‍👩‍👧</span>
-            <span>Sổ Phụ Huynh</span>
-          </a>
+          <!-- Role-based Portal Link: Sổ Phụ Huynh (parent only) / Sổ Giáo Viên (teacher only) -->
+          {#if currentUser?.role === 'parent'}
+            <a
+              href="/?tab=parent"
+              onclick={closeAllDropdowns}
+              class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold tracking-wide transition-all bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300 border border-purple-200 dark:border-purple-800 shadow-xs"
+            >
+              <span>👨‍👩‍👧</span>
+              <span>Sổ Phụ Huynh</span>
+            </a>
+          {:else if currentUser?.role === 'teacher'}
+            <a
+              href="/schedule"
+              onclick={closeAllDropdowns}
+              class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold tracking-wide transition-all bg-teal-50 text-teal-700 dark:bg-teal-950/40 dark:text-teal-300 border border-teal-200 dark:border-teal-800 shadow-xs"
+            >
+              <span>👨‍🏫</span>
+              <span>Sổ Giáo Viên</span>
+            </a>
+          {/if}
 
           <!-- Item 6: Admin CP Dropdown (Only for Teacher / SuperAdmin - Contains Second Brain) -->
           {#if isTeacherOrAdmin(currentUser)}
@@ -561,17 +599,34 @@
             {/if}
           </button>
 
+          <!-- Universal Notification Bell (Cho mọi Role: Parent, Student, Teacher, Leader) -->
+          {#if currentUser}
+            <button
+              onclick={() => showNotificationModal = true}
+              class="relative w-9 h-9 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:text-sky-600 dark:hover:text-sky-400 flex items-center justify-center text-sm transition-all hover:scale-105"
+              title="Thông Báo Học Vụ & Hoạt Động"
+              aria-label="Thông Báo Học Vụ"
+            >
+              <span>🔔</span>
+              {#if userUnreadCount > 0}
+                <span class="absolute -top-1 -right-1 px-1.5 py-0.2 rounded-full bg-rose-600 text-[10px] font-black text-white shadow-sm ring-2 ring-white dark:ring-slate-900 animate-pulse">
+                  {userUnreadCount > 9 ? '9+' : userUnreadCount}
+                </span>
+              {/if}
+            </button>
+          {/if}
+
           <!-- Leader PWA Notification Bell (Cô Dung & Ban Quản Lý) -->
           {#if isTeacherOrAdmin(currentUser)}
             <button
               onclick={() => showLeaderDrawer = true}
-              class="relative w-9 h-9 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 flex items-center justify-center text-sm transition-all hover:scale-105"
+              class="relative w-9 h-9 rounded-xl border border-emerald-200 dark:border-emerald-800/60 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 hover:text-emerald-800 flex items-center justify-center text-sm transition-all hover:scale-105"
               title="Trung Tâm Báo Cáo Leader (Cô Dung)"
               aria-label="Thông Báo Leader"
             >
-              <span>🔔</span>
+              <span>🛡️</span>
               {#if leaderUnreadCount > 0}
-                <span class="absolute -top-1 -right-1 px-1.5 py-0.2 rounded-full bg-rose-600 text-[10px] font-black text-white shadow-sm ring-2 ring-white dark:ring-slate-900 animate-pulse">
+                <span class="absolute -top-1 -right-1 px-1.5 py-0.2 rounded-full bg-emerald-600 text-[10px] font-black text-white shadow-sm ring-2 ring-white dark:ring-slate-900 animate-pulse">
                   {leaderUnreadCount > 9 ? '9+' : leaderUnreadCount}
                 </span>
               {/if}
@@ -827,13 +882,23 @@
               >
                 <span>📅</span> <span>Thời Khóa Biểu</span>
               </a>
-              <a
-                href="/?tab=parent"
-                onclick={() => mobileMenuOpen = false}
-                class="flex items-center gap-2 p-2.5 rounded-xl bg-purple-50 dark:bg-purple-950/50 text-purple-800 dark:text-purple-300 text-xs font-bold"
-              >
-                <span>👨‍👩‍👧</span> <span>Sổ Phụ Huynh</span>
-              </a>
+              {#if currentUser?.role === 'parent' || isSuperAdmin(currentUser)}
+                <a
+                  href="/?tab=parent"
+                  onclick={() => mobileMenuOpen = false}
+                  class="flex items-center gap-2 p-2.5 rounded-xl bg-purple-50 dark:bg-purple-950/50 text-purple-800 dark:text-purple-300 text-xs font-bold"
+                >
+                  <span>👨‍👩‍👧</span> <span>Sổ Phụ Huynh</span>
+                </a>
+              {:else if currentUser?.role === 'teacher'}
+                <a
+                  href="/schedule"
+                  onclick={() => mobileMenuOpen = false}
+                  class="flex items-center gap-2 p-2.5 rounded-xl bg-teal-50 dark:bg-teal-950/50 text-teal-800 dark:text-teal-300 text-xs font-bold"
+                >
+                  <span>👨‍🏫</span> <span>Sổ Giáo Viên</span>
+                </a>
+              {/if}
             </div>
           </div>
 
@@ -976,6 +1041,9 @@
 
   <!-- Leader Notification Drawer (Cô Dung) -->
   <LeaderNotificationDrawer bind:isOpen={showLeaderDrawer} onClose={() => showLeaderDrawer = false} />
+
+  <!-- Universal Role-based Notification Center Modal -->
+  <NotificationCenterModal bind:isOpen={showNotificationModal} on:read={() => loadUserNotificationsCount()} />
 </div>
 
 

@@ -3,7 +3,9 @@ import { verifyServerAuth } from '$lib/server/auth.js';
 
 export const prerender = false;
 
-// Exam Matrices with verified references
+// Exam Matrices: Standardized Exam Blueprints
+// Note: Total 40 questions in 50 minutes strictly follows Ministry of Education & Training (MoET) High School Graduation Exam format from 2025 (Decision 764/QD-BGDDT).
+// The cognitive level breakdown (14 Nhan biet, 14 Thong hieu, 8 Van dung, 4 Van dung cao) is the internal standardized matrix specification of Tieng Anh Co Dung Academy.
 const EXAM_MATRICES = {
   '15m': {
     title: 'Bài Kiểm Tra 15 Phút Nhanh (Quy chuẩn nội bộ Cô Dung)',
@@ -28,7 +30,7 @@ const EXAM_MATRICES = {
     }
   },
   'thpt_qg': {
-    title: 'Đề Thi Thử Tốt Nghiệp THPT (Quy định Bộ GD&ĐT 2025: 40 câu - 50 phút)',
+    title: 'Đề Thi Thử Tốt Nghiệp THPT (Chuẩn Bộ GD&ĐT 2025: 40 câu - 50 phút; Ma trận nội bộ 14/14/8/4)',
     duration_minutes: 50,
     total_questions: 40,
     distribution: {

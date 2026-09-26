@@ -1,3 +1,8 @@
+<svelte:head>
+  <title>Thời Khóa Biểu &amp; Sổ Điểm Danh • Tiếng Anh Cô Dung</title>
+  <meta name="robots" content="noindex, nofollow" />
+</svelte:head>
+
 <script>
   import { onMount } from 'svelte';
   import { 
@@ -15,6 +20,8 @@
   import SessionRollCallModal from '$lib/components/SessionRollCallModal.svelte';
   import SessionEditModal from '$lib/components/SessionEditModal.svelte';
   import TeacherStaffModal from '$lib/components/TeacherStaffModal.svelte';
+  import TeacherLeaveModal from '$lib/components/TeacherLeaveModal.svelte';
+  import TeacherAdvanceModal from '$lib/components/TeacherAdvanceModal.svelte';
 
   let currentUser = $state(null);
   let sessions = $state([]);
@@ -26,8 +33,14 @@
   let showRollCallModal = $state(false);
   let showEditModal = $state(false);
   let showStaffModal = $state(false);
+  let showLeaveModal = $state(false);
+  let showAdvanceModal = $state(false);
   let selectedSession = $state(null);
   let selectedTeacherId = $state(null);
+
+  // Teacher Workflows
+  let mySubstituteRequests = $state([]);
+  let myRecentWorkflows = $state({ leaves: [], advances: [] });
 
   // Filters
   let activeTabFilter = $state('all'); // 'all' | 'my_schedule' | 'primary' | 'secondary' | 'high_school'
@@ -46,6 +59,56 @@
     teacherProfiles = getAllTeacherProfiles();
     if (currentUser?.role === 'student' || currentUser?.role === 'parent') {
       activeTabFilter = 'my_schedule';
+    }
+    loadTeacherWorkflows();
+  }
+
+  async function loadTeacherWorkflows() {
+    if (typeof window === 'undefined') return;
+    const token = localStorage.getItem('tienganh_token');
+    if (!token || !currentUser || !isTeacherOrAdmin(currentUser)) return;
+    try {
+      const res = await fetch('/api/teachers/workflows', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        mySubstituteRequests = (data.leaves || []).filter(l => 
+          l.substitute_teacher_id === currentUser.id && l.substitute_status === 'pending'
+        );
+        myRecentWorkflows = {
+          leaves: data.leaves || [],
+          advances: data.advances || []
+        };
+      }
+    } catch {}
+  }
+
+  async function handleRespondSubstitute(leaveId, decision) {
+    const token = localStorage.getItem('tienganh_token');
+    if (!token) return;
+    try {
+      const res = await fetch('/api/teachers/workflows', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          action: 'respond_substitute',
+          leave_id: leaveId,
+          decision
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(decision === 'accept' ? '✅ Bạn đã đồng ý dạy thay! Đơn đã chuyển sang hàng đợi Leader duyệt.' : 'Đã từ chối lời mời dạy thay.');
+        loadTeacherWorkflows();
+      } else {
+        showToast('Lỗi: ' + data.error);
+      }
+    } catch (e) {
+      showToast('Lỗi kết nối: ' + e.message);
     }
   }
 
@@ -197,8 +260,26 @@
         {#if currentUser && isTeacherOrAdmin(currentUser)}
           <button
             type="button"
+            onclick={() => showLeaveModal = true}
+            class="px-3.5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs shadow-md transition-all flex items-center gap-1.5"
+            title="Đăng ký xin nghỉ và đề nghị đồng nghiệp dạy thay 2 bước"
+          >
+            <span>📝</span> <span>Xin Nghỉ &amp; Dạy Thay</span>
+          </button>
+
+          <button
+            type="button"
+            onclick={() => showAdvanceModal = true}
+            class="px-3.5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs shadow-md transition-all flex items-center gap-1.5"
+            title="Đề nghị ứng lương cho kỳ hiện tại"
+          >
+            <span>💰</span> <span>Đề Nghị Ứng Lương</span>
+          </button>
+
+          <button
+            type="button"
             onclick={() => openStaffManagement()}
-            class="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs shadow-md transition-all flex items-center gap-1.5"
+            class="px-3.5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs shadow-md transition-all flex items-center gap-1.5"
           >
             <span>👨‍🏫 Phân Quyền Leader &amp; Lương</span>
           </button>
@@ -206,7 +287,7 @@
           <button
             type="button"
             onclick={() => handleOpenEdit(null)}
-            class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-md shadow-emerald-600/20 transition-all flex items-center gap-1.5"
+            class="px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-md shadow-emerald-600/20 transition-all flex items-center gap-1.5"
           >
             <span>➕ Thêm Buổi Học Mới</span>
           </button>
@@ -214,6 +295,50 @@
       </div>
     </div>
   </div>
+
+  <!-- Substitute Requests Alert Deck (If Teacher has pending substitute requests) -->
+  {#if mySubstituteRequests.length > 0}
+    <div class="p-4 sm:p-5 rounded-2xl bg-amber-500/10 border-2 border-amber-500/40 space-y-3 shadow-lg animate-in slide-in-from-top-2">
+      <div class="flex items-center gap-2 text-amber-800 dark:text-amber-300 font-black text-sm">
+        <span class="text-xl">⚠️</span>
+        <span>BẠN CÓ {mySubstituteRequests.length} ĐỀ NGHỊ DẠY THAY CẦN PHẢN HỒI (QUY TRÌNH 2 BƯỚC)</span>
+      </div>
+      <div class="space-y-2">
+        {#each mySubstituteRequests as req}
+          <div class="p-3 rounded-xl bg-white dark:bg-slate-900 border border-amber-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+            <div class="space-y-1">
+              <div class="font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <span>Giáo viên: <strong class="text-emerald-600 dark:text-emerald-400">{req.teacher_name}</strong></span>
+                <span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold">Chờ bạn xác nhận</span>
+              </div>
+              <div class="text-slate-600 dark:text-slate-300">
+                Ca học: <strong>{req.session_date} ({req.start_time} - {req.end_time})</strong> • Lớp: <strong>{req.class_id}</strong>
+              </div>
+              <div class="text-slate-500 text-[11px] italic">
+                Lý do nghỉ: "{req.reason}"
+              </div>
+            </div>
+            <div class="flex items-center gap-2 flex-shrink-0">
+              <button
+                type="button"
+                onclick={() => handleRespondSubstitute(req.id, 'accept')}
+                class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-sm transition-all"
+              >
+                ✓ Đồng Ý Dạy Thay
+              </button>
+              <button
+                type="button"
+                onclick={() => handleRespondSubstitute(req.id, 'reject')}
+                class="px-3 py-1.5 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-rose-600 hover:text-white text-slate-700 dark:text-slate-300 font-bold text-xs transition-all"
+              >
+                ✕ Từ Chối
+              </button>
+            </div>
+          </div>
+        {/each}
+      </div>
+    </div>
+  {/if}
 
   <!-- Role Notification Callout (Example: 6h học -> 5h50 thông báo) -->
   <div class="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/40 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
@@ -480,4 +605,16 @@
   bind:isOpen={showStaffModal}
   teacherId={selectedTeacherId}
   onUpdated={loadData}
+/>
+
+<!-- Teacher Leave & Substitute Modal (2-Step Workflow) -->
+<TeacherLeaveModal
+  bind:isOpen={showLeaveModal}
+  on:success={loadTeacherWorkflows}
+/>
+
+<!-- Teacher Salary Advance Modal -->
+<TeacherAdvanceModal
+  bind:isOpen={showAdvanceModal}
+  on:success={loadTeacherWorkflows}
 />

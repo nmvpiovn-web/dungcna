@@ -53,11 +53,12 @@
 		<script>
 			(function() {
 				try {
-					const savedTheme = localStorage.getItem('tienganh_theme');
-					if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+					const savedTheme = localStorage.getItem('tienganh_theme') || 'sky';
+					document.documentElement.classList.remove('dark', 'theme-sky');
+					if (savedTheme === 'dark') {
 						document.documentElement.classList.add('dark');
-					} else {
-						document.documentElement.classList.remove('dark');
+					} else if (savedTheme === 'sky') {
+						document.documentElement.classList.add('theme-sky');
 					}
 				} catch (e) {}
 			})();

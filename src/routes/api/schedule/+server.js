@@ -1,4 +1,5 @@
 import { json } from '@sveltejs/kit';
+import { verifyServerAuth, isStaffUser } from '$lib/server/auth.js';
 import { getAllClassSessions, saveClassSession, deleteClassSession, assignStudentsToClassSession, logSnapshot } from '$lib/unifiedStore';
 
 export const prerender = false;
@@ -23,7 +24,23 @@ export async function GET({ url }) {
   }
 }
 
-export async function POST({ request }) {
+export async function POST({ request, platform }) {
+  // 1. Strict Server Authentication & Staff check
+  const auth = await verifyServerAuth(request, platform);
+  if (!auth.authenticated) {
+    return json({
+      success: false,
+      error: auth.error || 'Unauthorized: Vui lòng đăng nhập tài khoản hợp lệ'
+    }, { status: auth.status || 401 });
+  }
+
+  if (!isStaffUser(auth.user)) {
+    return json({
+      success: false,
+      error: 'Forbidden: Chỉ Giáo viên hoặc Quản trị viên mới có quyền cập nhật thời khóa biểu'
+    }, { status: 403 });
+  }
+
   try {
     const body = await request.json();
     const action = body.action || 'save_session';
@@ -48,7 +65,23 @@ export async function POST({ request }) {
   }
 }
 
-export async function DELETE({ url }) {
+export async function DELETE({ url, request, platform }) {
+  // 1. Strict Server Authentication & Staff check
+  const auth = await verifyServerAuth(request, platform);
+  if (!auth.authenticated) {
+    return json({
+      success: false,
+      error: auth.error || 'Unauthorized: Vui lòng đăng nhập tài khoản hợp lệ'
+    }, { status: auth.status || 401 });
+  }
+
+  if (!isStaffUser(auth.user)) {
+    return json({
+      success: false,
+      error: 'Forbidden: Chỉ Giáo viên hoặc Quản trị viên mới có quyền xóa buổi học'
+    }, { status: 403 });
+  }
+
   try {
     const id = url.searchParams.get('id');
     if (!id) return json({ success: false, error: 'Thiếu session ID' }, { status: 400 });
