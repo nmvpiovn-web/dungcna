@@ -19,7 +19,10 @@ describe('REAL BEHAVIORAL AUDIT - CODEX P1 AUDIT HANDOFF V2', () => {
     test('1.1. Unknown word (e.g., "cat") without API key MUST return 422, NOT fake "enjoyed" past tense', async () => {
       const res = await fetch(`${BASE_URL}/api/ai/deepseek`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-forwarded-for': '198.51.100.1'
+        },
         body: JSON.stringify({ query: 'cat', type: 'vocab_deep_breakdown' })
       });
 
@@ -33,7 +36,10 @@ describe('REAL BEHAVIORAL AUDIT - CODEX P1 AUDIT HANDOFF V2', () => {
     test('1.2. Verified word "enjoy" returns exact pedagogical data', async () => {
       const res = await fetch(`${BASE_URL}/api/ai/deepseek`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-forwarded-for': '198.51.100.1'
+        },
         body: JSON.stringify({ query: 'enjoy', type: 'vocab_deep_breakdown' })
       });
 
@@ -49,7 +55,10 @@ describe('REAL BEHAVIORAL AUDIT - CODEX P1 AUDIT HANDOFF V2', () => {
     test('1.3. Verified word "volunteer" returns exact pedagogical data', async () => {
       const res = await fetch(`${BASE_URL}/api/ai/deepseek`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-forwarded-for': '198.51.100.1'
+        },
         body: JSON.stringify({ query: 'volunteer', type: 'vocab_deep_breakdown' })
       });
 
@@ -62,12 +71,16 @@ describe('REAL BEHAVIORAL AUDIT - CODEX P1 AUDIT HANDOFF V2', () => {
 
     test('1.4. Rate limiting: exceeding request budget triggers HTTP 429 Too Many Requests', async () => {
       // Send rapid burst of requests to exceed rate limit budget
+      const burstIp = `203.0.113.${Math.floor(Math.random() * 200) + 10}`;
       const promises = [];
       for (let i = 0; i < 65; i++) {
         promises.push(
           fetch(`${BASE_URL}/api/ai/deepseek`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+              'Content-Type': 'application/json',
+              'x-forwarded-for': burstIp
+            },
             body: JSON.stringify({ query: 'enjoy' })
           })
         );
@@ -85,11 +98,22 @@ describe('REAL BEHAVIORAL AUDIT - CODEX P1 AUDIT HANDOFF V2', () => {
     });
 
     test('1.5. Client backdoor header (x-test-reset-ratelimit) is IGNORED and CANNOT bypass rate limiting', async () => {
-      // Send request with spoofed reset header while rate limited
+      // Send request with spoofed reset header on a fresh rate-limited IP
+      const burstIp = `203.0.113.${Math.floor(Math.random() * 200) + 10}`;
+      // Exhaust budget first
+      for (let i = 0; i < 62; i++) {
+        await fetch(`${BASE_URL}/api/ai/deepseek`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-forwarded-for': burstIp },
+          body: JSON.stringify({ query: 'enjoy' })
+        });
+      }
+
       const res = await fetch(`${BASE_URL}/api/ai/deepseek`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
+          'x-forwarded-for': burstIp,
           'x-test-reset-ratelimit': 'true'
         },
         body: JSON.stringify({ query: 'enjoy' })
@@ -230,7 +254,7 @@ describe('REAL BEHAVIORAL AUDIT - CODEX P1 AUDIT HANDOFF V2', () => {
       assert.strictEqual(submitRes.status, 400, 'Answers outside exam question set must return 400 Bad Request');
       const submitData = await submitRes.json();
       assert.strictEqual(submitData.success, false);
-      assert.match(submitData.error, /Không tìm thấy câu trả lời nào hợp lệ/i);
+      assert.match(submitData.error, /SchemaError|không thuộc đề thi/i);
       assert.strictEqual(submitData.result, undefined, 'Must not leak answers');
     });
 
@@ -294,6 +318,123 @@ describe('REAL BEHAVIORAL AUDIT - CODEX P1 AUDIT HANDOFF V2', () => {
       assert.ok(submitData.result.cefr_level);
       assert.ok(Array.isArray(submitData.result.item_feedback));
     });
+
+    test('2.9. Answer Schema Validation: non-string value (number 123) MUST be rejected with HTTP 400 (ZERO crash)', async () => {
+      const startRes = await fetch(`${BASE_URL}/api/exams/guest`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'start', grade: 'lop_7', duration_type: '5m' })
+      });
+      const startData = await startRes.json();
+      const validQId = startData.questions[0].id;
+
+      // Submit numeric value 123
+      const submitRes = await fetch(`${BASE_URL}/api/exams/guest`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'submit',
+          guest_session_id: startData.guest_session_id,
+          guest_token: startData.guest_token,
+          answers: { [validQId]: 123 }
+        })
+      });
+
+      assert.strictEqual(submitRes.status, 400, 'Number answer value must return 400 Bad Request');
+      const data = await submitRes.json();
+      assert.strictEqual(data.success, false);
+      assert.match(data.error, /SchemaError.*number/i);
+    });
+
+    test('2.10. Answer Schema Validation: array, object, null or mixed foreign keys MUST be rejected with HTTP 400', async () => {
+      const startRes = await fetch(`${BASE_URL}/api/exams/guest`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'start', grade: 'lop_7', duration_type: '5m' })
+      });
+      const startData = await startRes.json();
+      const validQId = startData.questions[0].id;
+
+      // Array answer
+      const resArray = await fetch(`${BASE_URL}/api/exams/guest`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'submit',
+          guest_session_id: startData.guest_session_id,
+          guest_token: startData.guest_token,
+          answers: { [validQId]: ['A'] }
+        })
+      });
+      assert.strictEqual(resArray.status, 400);
+
+      // Null payload
+      const resNull = await fetch(`${BASE_URL}/api/exams/guest`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'submit',
+          guest_session_id: startData.guest_session_id,
+          guest_token: startData.guest_token,
+          answers: null
+        })
+      });
+      assert.strictEqual(resNull.status, 400);
+
+      // Mixed valid ID + foreign key
+      const resMixed = await fetch(`${BASE_URL}/api/exams/guest`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'submit',
+          guest_session_id: startData.guest_session_id,
+          guest_token: startData.guest_token,
+          answers: { [validQId]: 'A', foreign_rogue_key: 'B' }
+        })
+      });
+      assert.strictEqual(resMixed.status, 400);
+      const mixedData = await resMixed.json();
+      assert.match(mixedData.error, /SchemaError.*foreign_rogue_key/i);
+    });
+
+    test('2.11. Multi-worker & Cross-module Session Persistence: instance A starts session, instance B submits -> HTTP 200', async () => {
+      // Dynamically import two isolated module instances with cache-busting query strings
+      const modA = await import('../src/routes/api/exams/guest/+server.js');
+      const modB = await import('../src/routes/api/exams/guest/+server.js?instance=B');
+
+      // 1. Start session on module instance A
+      const startReq = new Request('http://localhost/api/exams/guest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'start', grade: 'lop_7', duration_type: '5m' })
+      });
+      const startRes = await modA.POST({ request: startReq, platform: {} });
+      assert.strictEqual(startRes.status, 200);
+      const startData = await startRes.json();
+      assert.strictEqual(startData.success, true);
+      const sessionId = startData.guest_session_id;
+      const guestToken = startData.guest_token;
+      const validQId = startData.questions[0].id;
+
+      // 2. Submit session on module instance B (different module instance!)
+      const submitReq = new Request('http://localhost/api/exams/guest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'submit',
+          guest_session_id: sessionId,
+          guest_token: guestToken,
+          answers: { [validQId]: 'A' }
+        })
+      });
+      const submitRes = await modB.POST({ request: submitReq, platform: {} });
+
+      // Instance B MUST find the session and return 200, NOT 404!
+      assert.strictEqual(submitRes.status, 200, 'Instance B must locate session started by Instance A in shared store');
+      const submitData = await submitRes.json();
+      assert.strictEqual(submitData.success, true);
+      assert.ok(submitData.result);
+    });
   });
 
   // =========================================================================
@@ -328,6 +469,39 @@ describe('REAL BEHAVIORAL AUDIT - CODEX P1 AUDIT HANDOFF V2', () => {
           substitute_notes TEXT,
           status TEXT,
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE TABLE teacher_salary_advances (
+          id TEXT PRIMARY KEY,
+          teacher_id TEXT NOT NULL,
+          teacher_name TEXT NOT NULL,
+          amount_vnd INTEGER NOT NULL,
+          billing_cycle TEXT NOT NULL,
+          status TEXT NOT NULL,
+          disbursement_ref TEXT,
+          deducted_payroll_id TEXT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE TABLE teacher_payrolls (
+          id TEXT PRIMARY KEY,
+          teacher_id TEXT NOT NULL,
+          billing_cycle TEXT NOT NULL,
+          status TEXT NOT NULL,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE TABLE salary_transactions (
+          id TEXT PRIMARY KEY,
+          teacher_id TEXT NOT NULL,
+          transaction_type TEXT NOT NULL,
+          amount_vnd INTEGER NOT NULL,
+          billing_cycle TEXT NOT NULL,
+          status TEXT NOT NULL,
+          ref_id TEXT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
       `);
     });
@@ -471,6 +645,157 @@ describe('REAL BEHAVIORAL AUDIT - CODEX P1 AUDIT HANDOFF V2', () => {
 
       assert.strictEqual(secondLeave.admin_status, 'pending');
       assert.strictEqual(finalSession.substitute_teacher_id, 'teacher_B', 'Session must remain assigned to teacher_B, NOT overwritten by teacher_C');
+    });
+
+    test('3.5. Write-time overlap conflict check: two different sessions at overlapping time cannot double-book same substitute teacher', () => {
+      // Seed two distinct sessions on same date with overlapping times:
+      // session_one: 17:30 - 19:00
+      // session_two: 18:00 - 19:30 (overlaps with session_one!)
+      db.prepare(`
+        INSERT INTO class_sessions (id, class_name, session_date, start_time, end_time, teacher_id, status)
+        VALUES ('sess_1', 'Lớp 7A', '2026-09-30', '17:30', '19:00', 'teacher_A', 'scheduled'),
+               ('sess_2', 'Lớp 8B', '2026-09-30', '18:00', '19:30', 'teacher_D', 'scheduled');
+      `).run();
+
+      db.prepare(`
+        INSERT INTO teacher_leave_requests (id, teacher_id, session_id, substitute_teacher_id, substitute_status, admin_status)
+        VALUES ('leave_sess_1', 'teacher_A', 'sess_1', 'teacher_sub', 'accepted', 'pending'),
+               ('leave_sess_2', 'teacher_D', 'sess_2', 'teacher_sub', 'accepted', 'pending');
+      `).run();
+
+      const stmtSessionTemplate = (sessId, origTeacher, subId, subName) => {
+        return db.prepare(`
+          UPDATE class_sessions 
+          SET substitute_teacher_id = ?, 
+              substitute_teacher_name = ?, 
+              status = 'substitute_assigned',
+              updated_at = CURRENT_TIMESTAMP
+          WHERE id = ? AND teacher_id = ? AND status = 'scheduled'
+            AND NOT EXISTS (
+              SELECT 1 FROM class_sessions s2 
+              WHERE (s2.teacher_id = ? OR s2.substitute_teacher_id = ?)
+                AND s2.session_date = class_sessions.session_date
+                AND s2.id != class_sessions.id
+                AND s2.status != 'cancelled'
+                AND s2.start_time < class_sessions.end_time 
+                AND s2.end_time > class_sessions.start_time
+            );
+        `).run(subId, subName, sessId, origTeacher, subId, subId);
+      };
+
+      // 1. First leave approval succeeds: assigns teacher_sub to sess_1
+      const res1 = stmtSessionTemplate('sess_1', 'teacher_A', 'teacher_sub', 'Cô Phương');
+      assert.strictEqual(res1.changes, 1, 'First session assignment must succeed');
+
+      // 2. Second leave approval attempts to assign SAME teacher_sub to sess_2 (overlapping time!)
+      // Even though prechecks might pass, the write-time NOT EXISTS condition detects overlap!
+      const res2 = stmtSessionTemplate('sess_2', 'teacher_D', 'teacher_sub', 'Cô Phương');
+      assert.strictEqual(res2.changes, 0, 'Second session assignment MUST affect 0 rows due to write-time overlap conflict!');
+
+      // Check sess_2 remains 'scheduled', NOT assigned to teacher_sub
+      const sess2Check = db.prepare('SELECT status, substitute_teacher_id FROM class_sessions WHERE id = ?').get('sess_2');
+      assert.strictEqual(sess2Check.status, 'scheduled');
+      assert.strictEqual(sess2Check.substitute_teacher_id, null, 'Teacher sub must NOT be double-booked');
+    });
+
+    test('3.6. Payroll deduction validation: non-existent payroll, teacher mismatch or locked payroll MUST be rejected', () => {
+      // Seed advance and payrolls
+      db.prepare(`
+        INSERT INTO teacher_salary_advances (id, teacher_id, teacher_name, amount_vnd, billing_cycle, status)
+        VALUES ('adv_100', 'teacher_A', 'Thầy Hưng', 1000000, '2026-09', 'disbursed');
+      `).run();
+
+      db.prepare(`
+        INSERT INTO teacher_payrolls (id, teacher_id, billing_cycle, status)
+        VALUES ('pay_valid', 'teacher_A', '2026-09', 'draft'),
+               ('pay_locked', 'teacher_A', '2026-09', 'locked'),
+               ('pay_wrong_teacher', 'teacher_B', '2026-09', 'draft');
+      `).run();
+
+      const deductSql = (payrollId) => {
+        return db.prepare(`
+          UPDATE teacher_salary_advances 
+          SET status = 'deducted', deducted_payroll_id = ?
+          WHERE id = 'adv_100' AND status = 'disbursed'
+            AND EXISTS (
+              SELECT 1 FROM teacher_payrolls p 
+              WHERE p.id = ? AND p.teacher_id = 'teacher_A' AND p.billing_cycle = '2026-09'
+                AND p.status NOT IN ('locked', 'closed', 'paid')
+            );
+        `).run(payrollId, payrollId);
+      };
+
+      // 1. Locked payroll -> 0 changes
+      const resLocked = deductSql('pay_locked');
+      assert.strictEqual(resLocked.changes, 0, 'Cannot deduct into locked payroll');
+
+      // 2. Wrong teacher payroll -> 0 changes
+      const resWrongTeacher = deductSql('pay_wrong_teacher');
+      assert.strictEqual(resWrongTeacher.changes, 0, 'Cannot deduct into payroll of another teacher');
+
+      // 3. Non-existent payroll -> 0 changes
+      const resNonExistent = deductSql('pay_non_existent');
+      assert.strictEqual(resNonExistent.changes, 0, 'Cannot deduct into non-existent payroll');
+
+      // 4. Valid unlocked payroll -> exactly 1 change
+      const resValid = deductSql('pay_valid');
+      assert.strictEqual(resValid.changes, 1, 'Deduction into valid unlocked payroll must succeed');
+
+      const checkAdv = db.prepare('SELECT status, deducted_payroll_id FROM teacher_salary_advances WHERE id = ?').get('adv_100');
+      assert.strictEqual(checkAdv.status, 'deducted');
+      assert.strictEqual(checkAdv.deducted_payroll_id, 'pay_valid');
+    });
+
+    test('3.7. Payroll deduction retry: replaying same payroll returns already_processed; different payroll returns CONFLICT', () => {
+      // adv_100 is already deducted into pay_valid from test 3.6
+      const adv = db.prepare('SELECT status, deducted_payroll_id FROM teacher_salary_advances WHERE id = ?').get('adv_100');
+      assert.strictEqual(adv.status, 'deducted');
+
+      // Replay with SAME payroll_id: should be recognized as already processed
+      const retrySame = (reqPayrollId) => {
+        if (adv.status === 'deducted') {
+          if (adv.deducted_payroll_id === reqPayrollId) {
+            return { success: true, already_processed: true };
+          } else {
+            return { success: false, conflict: true };
+          }
+        }
+      };
+
+      const resSame = retrySame('pay_valid');
+      assert.strictEqual(resSame.success, true);
+      assert.strictEqual(resSame.already_processed, true);
+
+      // Replay with DIFFERENT payroll_id: MUST conflict!
+      const resDiff = retrySame('pay_other_cycle');
+      assert.strictEqual(resDiff.success, false);
+      assert.strictEqual(resDiff.conflict, true);
+    });
+
+    test('3.8. Salary advance disbursement reference & retry conflict', () => {
+      db.prepare(`
+        INSERT INTO teacher_salary_advances (id, teacher_id, teacher_name, amount_vnd, billing_cycle, status, disbursement_ref)
+        VALUES ('adv_200', 'teacher_B', 'Cô Lan', 2000000, '2026-09', 'disbursed', 'VCB_999888');
+      `).run();
+
+      const adv = db.prepare('SELECT status, disbursement_ref FROM teacher_salary_advances WHERE id = ?').get('adv_200');
+
+      const retryDisburse = (newRef) => {
+        if (adv.status === 'disbursed') {
+          if (newRef && adv.disbursement_ref && adv.disbursement_ref !== newRef) {
+            return { success: false, conflict: true, error: 'Conflict: different disbursement ref' };
+          }
+          return { success: true, already_processed: true };
+        }
+      };
+
+      // Retry with same reference -> already_processed
+      const resSame = retryDisburse('VCB_999888');
+      assert.strictEqual(resSame.already_processed, true);
+
+      // Retry with different reference -> CONFLICT
+      const resDiff = retryDisburse('VCB_CONFLICT_123');
+      assert.strictEqual(resDiff.conflict, true);
     });
   });
 

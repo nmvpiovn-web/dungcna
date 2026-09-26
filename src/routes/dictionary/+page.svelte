@@ -20,9 +20,13 @@
   let selectedCefr = $state('all'); // 'all' | 'A1' | 'A2' | 'B1' | 'B2' | 'C1'
   let viewMode = $state('active'); // 'active' | 'review_due' | 'mastered'
 
-  // Spaced Repetition & Mastered Words Storage
+  // Spaced Repetition & Mastered Words Storage (Client-side self-study aid)
+  // GHI CHÚ PHÂN QUYỀN & TÀI CHÍNH: Thao tác thuộc từ (SRS) là sổ tay ghi nhớ cá nhân của học sinh,
+  // TUYỆT ĐỐI KHÔNG tự cấp phát sao ở client và KHÔNG liên kết trực tiếp với chiết khấu học phí.
+  // Điểm sao thưởng chính thức được ghi nhận và lưu trữ độc quyền trên Cloudflare D1 Ledger
+  // qua kết quả làm bài tập (Homework) và bài kiểm tra (Exams) được giáo viên phê duyệt.
   let masteredWordsMap = $state({}); // { term: { stage: 1, lastMastered: Date, nextReviewDate: Date, bestScore: 95 } }
-  let userStars = $state(150);
+  let officialStars = $derived(currentUser?.stars || 0);
 
   // Deep Breakdown Modal State
   let showDeepModal = $state(false);
@@ -57,10 +61,6 @@
       if (stored) {
         masteredWordsMap = JSON.parse(stored);
       }
-      const storedStars = localStorage.getItem('tienganh_user_stars');
-      if (storedStars) {
-        userStars = parseInt(storedStars, 10);
-      }
     } catch (e) {
       console.error('Failed loading local SRS data:', e);
     }
@@ -69,7 +69,6 @@
   function saveSrsData() {
     try {
       localStorage.setItem('tienganh_mastered_words', JSON.stringify(masteredWordsMap));
-      localStorage.setItem('tienganh_user_stars', userStars.toString());
     } catch (e) {
       console.error('Failed saving SRS data:', e);
     }
@@ -172,7 +171,6 @@
       bestScore: 100
     };
     masteredWordsMap = { ...masteredWordsMap };
-    userStars += 10;
     saveSrsData();
     playAudioFeedback(true);
   }
@@ -446,7 +444,7 @@
       <div class="bg-slate-800/80 border border-slate-700/60 rounded-md p-4 min-w-[260px] space-y-2">
         <div class="flex items-center justify-between text-xs">
           <span class="text-slate-400 font-medium">Danh hiệu hiện tại:</span>
-          <span class="text-amber-400 font-semibold tabular-nums">⭐ {userStars} sao</span>
+          <span class="text-amber-400 font-semibold tabular-nums" title="Điểm sao thưởng chính thức được ghi nhận qua bài kiểm tra & bài tập chính khóa">⭐ {officialStars} sao</span>
         </div>
         <div class="flex items-center gap-2.5">
           <div class="text-2xl">{userBadge.icon}</div>

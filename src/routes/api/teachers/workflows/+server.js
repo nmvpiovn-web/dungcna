@@ -8,6 +8,26 @@ function isManager(user) {
   return user.role === 'superadmin' || user.role === 'leader' || SUPERADMIN_USERNAMES.includes(user.username);
 }
 
+async function ensurePayrollTable(db) {
+  if (!db) return;
+  try {
+    await db.prepare(`
+      CREATE TABLE IF NOT EXISTS teacher_payrolls (
+        id TEXT PRIMARY KEY,
+        teacher_id TEXT NOT NULL,
+        billing_cycle TEXT NOT NULL,
+        gross_amount INTEGER NOT NULL DEFAULT 0,
+        net_amount INTEGER NOT NULL DEFAULT 0,
+        status TEXT NOT NULL DEFAULT 'draft',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
+    `).run();
+  } catch (e) {
+    console.warn('Could not ensure teacher_payrolls table:', e);
+  }
+}
+
 export async function GET({ url, request, platform }) {
   const auth = await verifyServerAuth(request, platform);
   if (!auth.authenticated) {
@@ -410,18 +430,40 @@ export async function POST({ request, platform }) {
             );
         `).bind(targetDecision, admin_notes || '', leave_id, leave.session_id, leave.teacher_id);
 
-        const stmtSession = db.prepare(`
+        const subId = leave.substitute_teacher_id || '';
+        const stmtSession = subId ? db.prepare(`
           UPDATE class_sessions 
           SET substitute_teacher_id = ?, 
               substitute_teacher_name = ?, 
               substitute_notes = ?,
               status = 'substitute_assigned',
               updated_at = CURRENT_TIMESTAMP
-          WHERE id = ? AND teacher_id = ? AND status = 'scheduled';
+          WHERE id = ? AND teacher_id = ? AND status = 'scheduled'
+            AND NOT EXISTS (
+              SELECT 1 FROM class_sessions s2 
+              WHERE (s2.teacher_id = ? OR s2.substitute_teacher_id = ?)
+                AND s2.session_date = class_sessions.session_date
+                AND s2.id != class_sessions.id
+                AND s2.status != 'cancelled'
+                AND s2.start_time < class_sessions.end_time 
+                AND s2.end_time > class_sessions.start_time
+            );
         `).bind(
           leave.substitute_teacher_id,
           leave.substitute_teacher_name,
           `Dạy thay cho ${leave.teacher_name} theo đơn ${leave_id}`,
+          leave.session_id,
+          leave.teacher_id,
+          subId,
+          subId
+        ) : db.prepare(`
+          UPDATE class_sessions 
+          SET status = 'cancelled', 
+              substitute_notes = ?,
+              updated_at = CURRENT_TIMESTAMP
+          WHERE id = ? AND teacher_id = ? AND status = 'scheduled';
+        `).bind(
+          `Nghỉ dạy theo đơn ${leave_id} (không có giáo viên thay)`,
           leave.session_id,
           leave.teacher_id
         );
@@ -578,6 +620,12 @@ export async function POST({ request, platform }) {
 
     // STRICT IDEMPOTENCY & STATUS CHECK:
     if (advance.status === 'disbursed') {
+      if (disbursement_ref && advance.disbursement_ref && advance.disbursement_ref !== disbursement_ref.trim()) {
+        return json({
+          success: false,
+          error: `Conflict: Khoản ứng lương này đã được thực chi với mã tham chiếu '${advance.disbursement_ref}', không thể thực chi lại với mã khác '${disbursement_ref.trim()}'.`
+        }, { status: 409 });
+      }
       return json({ success: true, message: 'Đơn ứng lương này đã được thực chi trước đó.', already_processed: true });
     }
     if (advance.status !== 'approved') {
@@ -585,7 +633,9 @@ export async function POST({ request, platform }) {
     }
 
     const txId = `tx_disb_${advance_id}`;
-    const refCode = disbursement_ref || `UNC_${Date.now().toString().slice(-6)}`;
+    const hasRealBankProof = Boolean(disbursement_ref && disbursement_ref.trim() !== '');
+    const refCode = hasRealBankProof ? disbursement_ref.trim() : `SYS_INTERNAL_${Date.now().toString().slice(-6)}`;
+    const voucherType = hasRealBankProof ? 'bank_transfer_receipt' : 'internal_system_memo';
 
     try {
       const stmt1 = db.prepare(`
@@ -640,7 +690,14 @@ export async function POST({ request, platform }) {
         advance_id
       ).run();
 
-      return json({ success: true, message: 'Đã thực hiện chi ứng lương và ghi sổ kế toán thành công', transaction_id: txId, disbursement_ref: refCode });
+      return json({
+        success: true,
+        message: 'Đã thực hiện chi ứng lương và ghi sổ kế toán thành công',
+        transaction_id: txId,
+        disbursement_ref: refCode,
+        voucher_type: voucherType,
+        is_bank_voucher: hasRealBankProof
+      });
     } catch (e) {
       return json({ success: false, error: `Lỗi thực chi: ${e.message}` }, { status: 500 });
     }
@@ -662,9 +719,31 @@ export async function POST({ request, platform }) {
       return json({ success: false, error: 'Không tìm thấy yêu cầu ứng lương' }, { status: 404 });
     }
 
+    await ensurePayrollTable(db);
+    const payroll = await db.prepare('SELECT id, teacher_id, billing_cycle, status FROM teacher_payrolls WHERE id = ?').bind(payroll_id).first();
+    if (!payroll) {
+      return json({ success: false, error: `NotFound: Không tìm thấy bảng lương '${payroll_id}'.` }, { status: 404 });
+    }
+    if (payroll.teacher_id !== advance.teacher_id) {
+      return json({ success: false, error: `Forbidden: Bảng lương '${payroll_id}' thuộc về giáo viên '${payroll.teacher_id}', không khớp với giáo viên của khoản ứng '${advance.teacher_id}'.` }, { status: 400 });
+    }
+    if (payroll.billing_cycle !== advance.billing_cycle) {
+      return json({ success: false, error: `Mismatch: Kỳ lương của bảng lương (${payroll.billing_cycle}) không khớp với kỳ lương của khoản ứng (${advance.billing_cycle}).` }, { status: 400 });
+    }
+    if (payroll.status === 'locked' || payroll.status === 'closed' || payroll.status === 'paid') {
+      return json({ success: false, error: `Forbidden: Bảng lương '${payroll_id}' đã bị khóa hoặc thanh toán (${payroll.status}), không thể đối trừ thêm khoản tạm ứng.` }, { status: 409 });
+    }
+
     // STRICT IDEMPOTENCY & STATUS CHECK:
     if (advance.status === 'deducted') {
-      return json({ success: true, message: 'Khoản ứng lương này đã được đối trừ trước đó.', already_processed: true });
+      if (advance.deducted_payroll_id === payroll_id) {
+        return json({ success: true, message: 'Khoản ứng lương này đã được đối trừ vào bảng lương này trước đó.', already_processed: true });
+      } else {
+        return json({
+          success: false,
+          error: `Conflict: Khoản ứng lương này đã được đối trừ trước đó vào bảng lương '${advance.deducted_payroll_id}', không thể đối trừ vào bảng lương khác '${payroll_id}'.`
+        }, { status: 409 });
+      }
     }
     if (advance.status !== 'disbursed') {
       return json({ success: false, error: `Khoản ứng lương đang ở trạng thái '${advance.status}', chỉ có thể đối trừ khi đã 'disbursed'.` }, { status: 409 });
@@ -677,8 +756,13 @@ export async function POST({ request, platform }) {
         UPDATE teacher_salary_advances 
         SET status = 'deducted', deducted_at = CURRENT_TIMESTAMP, deducted_payroll_id = ?
         WHERE id = ? AND status = 'disbursed'
+          AND EXISTS (
+            SELECT 1 FROM teacher_payrolls p 
+            WHERE p.id = ? AND p.teacher_id = ? AND p.billing_cycle = ? 
+              AND p.status NOT IN ('locked', 'closed', 'paid')
+          )
           AND (SELECT COUNT(*) FROM salary_transactions WHERE transaction_type = 'advance_deduction' AND ref_id = ?) = 0;
-      `).bind(payroll_id, advance_id, advance_id);
+      `).bind(payroll_id, advance_id, payroll_id, advance.teacher_id, advance.billing_cycle, advance_id);
 
       const stmt2 = db.prepare(`
         INSERT INTO salary_transactions 

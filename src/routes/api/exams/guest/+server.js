@@ -3,8 +3,120 @@ import { randomUUID } from 'node:crypto';
 
 export const prerender = false;
 
-// In-memory or D1-backed guest sessions store with TTL expiration
-const GUEST_SESSIONS = new Map();
+// Persistent storage across multi-worker isolates and module instances
+// 1. Shared global store for single-process / multi-module instances in Node/test
+if (!globalThis.__GUEST_EXAM_SESSIONS__) {
+  globalThis.__GUEST_EXAM_SESSIONS__ = new Map();
+}
+const GUEST_SESSIONS = globalThis.__GUEST_EXAM_SESSIONS__;
+
+// Helper to ensure D1 table exists for true multi-worker Cloudflare persistence
+async function ensureD1SessionTable(db) {
+  if (!db) return;
+  try {
+    await db.prepare(`
+      CREATE TABLE IF NOT EXISTS guest_exam_sessions (
+        id TEXT PRIMARY KEY,
+        token TEXT NOT NULL,
+        grade TEXT NOT NULL,
+        candidate_name TEXT,
+        duration_minutes INTEGER NOT NULL,
+        start_time INTEGER NOT NULL,
+        expires_at INTEGER NOT NULL,
+        questions_json TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'in_progress',
+        answers_json TEXT,
+        result_json TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
+    `).run();
+  } catch (err) {
+    console.warn('Could not create guest_exam_sessions table:', err);
+  }
+}
+
+async function saveGuestSession(db, session) {
+  GUEST_SESSIONS.set(session.id, session);
+  if (db) {
+    await ensureD1SessionTable(db);
+    try {
+      await db.prepare(`
+        INSERT OR REPLACE INTO guest_exam_sessions 
+        (id, token, grade, candidate_name, duration_minutes, start_time, expires_at, questions_json, status, answers_json, result_json)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+      `).bind(
+        session.id,
+        session.token,
+        session.grade,
+        session.candidate_name || '',
+        session.duration_minutes,
+        session.startTime,
+        session.expiresAt,
+        JSON.stringify(session.questions),
+        session.status,
+        session.answers ? JSON.stringify(session.answers) : null,
+        session.result ? JSON.stringify(session.result) : null
+      ).run();
+    } catch (e) {
+      console.warn('Error saving session to D1:', e);
+    }
+  }
+}
+
+async function getGuestSession(db, sessionId) {
+  let session = GUEST_SESSIONS.get(sessionId);
+  if (session) return session;
+
+  if (db) {
+    await ensureD1SessionTable(db);
+    try {
+      const row = await db.prepare('SELECT * FROM guest_exam_sessions WHERE id = ?').bind(sessionId).first();
+      if (row) {
+        session = {
+          id: row.id,
+          token: row.token,
+          grade: row.grade,
+          candidate_name: row.candidate_name,
+          duration_minutes: row.duration_minutes,
+          startTime: row.start_time,
+          expiresAt: row.expires_at,
+          questions: JSON.parse(row.questions_json),
+          status: row.status,
+          answers: row.answers_json ? JSON.parse(row.answers_json) : null,
+          result: row.result_json ? JSON.parse(row.result_json) : null
+        };
+        GUEST_SESSIONS.set(sessionId, session);
+        return session;
+      }
+    } catch (e) {
+      console.warn('Error querying session from D1:', e);
+    }
+  }
+  return null;
+}
+
+async function completeGuestSession(db, sessionId, answers, result) {
+  const session = GUEST_SESSIONS.get(sessionId);
+  if (session) {
+    session.status = 'completed';
+    session.answers = answers;
+    session.result = result;
+  }
+  if (db) {
+    try {
+      const res = await db.prepare(`
+        UPDATE guest_exam_sessions 
+        SET status = 'completed', answers_json = ?, result_json = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE id = ? AND status = 'in_progress';
+      `).bind(JSON.stringify(answers), JSON.stringify(result), sessionId).run();
+      return res?.meta?.changes ?? 1;
+    } catch (e) {
+      console.warn('Error updating session in D1:', e);
+    }
+  }
+  return 1;
+}
 
 // Supported Curated Grade & Duration Matrix
 // Strictly declare what is verified. ZERO cloning, ZERO fake looping.
@@ -220,17 +332,22 @@ const GUEST_QUESTION_BANK = {
 };
 
 // Automatic cleanup of expired guest sessions
-function pruneExpiredSessions() {
+async function pruneExpiredSessions(db) {
   const now = Date.now();
   for (const [id, s] of GUEST_SESSIONS.entries()) {
     if (now > s.expiresAt) {
       GUEST_SESSIONS.delete(id);
     }
   }
+  if (db) {
+    try {
+      await db.prepare('DELETE FROM guest_exam_sessions WHERE expires_at < ?').bind(now).run();
+    } catch {}
+  }
 }
 
 export async function POST({ request, platform }) {
-  pruneExpiredSessions();
+  await pruneExpiredSessions(platform?.env?.DB);
 
   let body = {};
   try {
@@ -291,7 +408,7 @@ export async function POST({ request, platform }) {
       score: null
     };
 
-    GUEST_SESSIONS.set(guestSessionId, sessionRecord);
+    await saveGuestSession(platform?.env?.DB, sessionRecord);
 
     // Build client payload: STRICTLY OMIT correct_id, correct_text, and explanation!
     const clientQuestions = selectedQuestions.map((q, idx) => ({
@@ -326,7 +443,7 @@ export async function POST({ request, platform }) {
       return json({ success: false, error: 'Thiếu guest_session_id lượt thi.' }, { status: 400 });
     }
 
-    const session = GUEST_SESSIONS.get(guest_session_id);
+    const session = await getGuestSession(platform?.env?.DB, guest_session_id);
     if (!session) {
       return json({ success: false, error: 'Phiên thi thử không tồn tại hoặc đã hết hạn (2h TTL).' }, { status: 404 });
     }
@@ -341,16 +458,49 @@ export async function POST({ request, platform }) {
       return json({ success: false, error: 'Hết giờ làm bài: Bài thi đã quá thời gian quy định.' }, { status: 403 });
     }
 
-    // VALIDATE ANSWERS: Must contain at least one question ID genuinely belonging to this session
-    const sessionQuestionIds = new Set(session.questions.map(q => q.id));
-    const validSubmittedEntries = Object.entries(answers || {}).filter(([k, v]) => 
-      sessionQuestionIds.has(k) && v !== null && v !== undefined && String(v).trim() !== ''
-    );
-
-    if (validSubmittedEntries.length === 0) {
+    // 1. Check if answers is a plain non-array object
+    if (!answers || typeof answers !== 'object' || Array.isArray(answers)) {
       return json({
         success: false,
-        error: 'Bài nộp không hợp lệ: Không tìm thấy câu trả lời nào hợp lệ thuộc danh sách câu hỏi của đề thi này.'
+        error: 'SchemaError: answers phải là một JSON object với format { question_id: answer_string }.'
+      }, { status: 400 });
+    }
+
+    const sessionQuestionMap = new Map(session.questions.map(q => [q.id, q]));
+    const submittedKeys = Object.keys(answers);
+
+    if (submittedKeys.length === 0) {
+      return json({
+        success: false,
+        error: 'Bài nộp không hợp lệ: Thí sinh chưa làm bất kỳ câu hỏi nào. Vui lòng hoàn thành ít nhất một câu trước khi nộp bài.'
+      }, { status: 400 });
+    }
+
+    // 2. Validate every key and value type: strict checking on foreign keys & non-string values
+    for (const qId of submittedKeys) {
+      if (!sessionQuestionMap.has(qId)) {
+        return json({
+          success: false,
+          error: `SchemaError: Mã câu hỏi '${qId}' không thuộc đề thi của phiên này.`
+        }, { status: 400 });
+      }
+
+      const val = answers[qId];
+      if (val === null || val === undefined || typeof val !== 'string') {
+        const valType = Array.isArray(val) ? 'array' : (val === null ? 'null' : typeof val);
+        return json({
+          success: false,
+          error: `SchemaError: Giá trị câu trả lời cho câu '${qId}' không hợp lệ (phải là chuỗi ký tự string, nhận được kiểu ${valType}).`
+        }, { status: 400 });
+      }
+    }
+
+    // 3. Ensure at least one non-empty string answer
+    const nonEmptyEntries = submittedKeys.filter(k => answers[k].trim() !== '');
+    if (nonEmptyEntries.length === 0) {
+      return json({
+        success: false,
+        error: 'Bài nộp không hợp lệ: Không tìm thấy câu trả lời nào có nội dung hợp lệ.'
       }, { status: 400 });
     }
 
@@ -424,9 +574,7 @@ export async function POST({ request, platform }) {
       item_feedback: itemFeedback
     };
 
-    session.status = 'completed';
-    session.result = result;
-    GUEST_SESSIONS.set(guest_session_id, session);
+    await completeGuestSession(platform?.env?.DB, guest_session_id, answers, result);
 
     return json({
       success: true,
