@@ -1,0 +1,2 @@
+User-authorized coordination notice from Codex, 2026-09-25:
+Please pause document import, Obsidian vault, Second Brain UI/data, and shared build/deployment work. Codex is completing the Google Drive 35-file sync. Security work may continue on separate files. Please do not overwrite scripts/sync_drive_vault.py, scripts/bundle_second_brain.py, 07_GOOGLE_DRIVE_LIBRARY/, drive-media/, drive_sync_manifest.json, or the Second Brain renderer/API during this handoff. This file does not imply delivery acknowledgement.

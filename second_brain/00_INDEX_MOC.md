@@ -12,7 +12,7 @@ updated: "2026-09-25"
 Chào mừng bạn đến với **Second Brain Tiếng Anh Cô Dung** — hệ thống tri thức số hóa thế hệ mới liên kết đa chiều, chuẩn hóa theo khung chương trình GDPT 2018 của Bộ Giáo dục & Đào tạo Việt Nam và Khung tham chiếu Ngôn ngữ Chung Châu Âu (CEFR: Pre-A1 đến C1).
 
 > [!abstract] Kiến Trúc Second Brain 6 Trụ Cột (Hexagonal Knowledge Engine)
-> Vault tri thức này được thiết kế theo phương pháp **Zettelkasten** kết hợp với **Map of Content (MOC)**. Mọi quy tắc ngữ pháp, rễ từ vựng và câu hỏi thi đều có liên kết hai chiều `[[WikiLinks]]`, giúp người học và giáo viên truy xuất kiến thức tức thì.
+> Vault tri thức này được thiết kế theo phương pháp **Zettelkasten** kết hợp với **Map of Content (MOC)**. Mọi quy tắc ngữ pháp, rễ từ vựng và câu hỏi thi đều có liên kết hai chiều (WikiLinks), giúp người học và giáo viên truy xuất kiến thức tức thì.
 
 ---
 
@@ -112,3 +112,50 @@ graph TD
 - [[Mindmap_Grammar_Syntactic_Trees|🌳 Cây Cú Pháp Ngữ Pháp & Sơ Đồ Tư Duy]]
 - [[Spaced_Repetition_and_Active_Recall_System|⏰ Hệ Thống Lặp Lại Ngắt Quãng (Spaced Repetition) & Trí Nhớ Vĩnh Cửu]]
 - [[Multi_Source_Knowledge_Crawl_Matrix|🌐 Ma Trận Cào Dữ Liệu 15 Nguồn Giáo Dục Hàng Đầu]]
+
+
+## 📥 Kho 35 Tài Liệu Giáo Án & Đề Thi Mới Đồng Bộ (Google Drive)
+- [[00_GOOGLE_DRIVE_INDEX|📁 Thư Mục Trung Tâm: Mục Lục Toàn Bộ 35 Tài Liệu Google Drive]]
+
+### Nhóm Tài Liệu Phân Hệ GDPT
+- [[drive-nhom-7-chuyen-e-phoi-hop-thi-thpt-huong-khe-d9cc7ef9|Nhóm 7. Chuyên Đề Phối Hợp Thì Thpt Hương Khê]]
+- [[drive-photo-quiz-reading-giaoandethitienganh-info-6433023a|Photo Quiz Reading-Giaoandethitienganh.Info]]
+- [[drive-unit-5-lesson-5d-speaking-page-73-e4725c58|Unit 5 - Lesson 5D - Speaking - Page 73]]
+- [[drive-unit-5-lesson-5f-skills-reading-page-76-56753164|Unit 5 - Lesson 5F - Skills Reading - Page 76]]
+- [[drive-although-despite-key-39982d3b|Although Despite Key]]
+- [[drive-because-because-of-key-e15b69cf|Because Because Of Key]]
+- [[drive-so-that-in-order-to-key-b1ded2bc|So That In Order To Key]]
+- [[drive-viet-lai-cau-1-100-b72ba5fe|Viet Lai Cau 1 100]]
+- [[drive-yen-lap-g7-ea81ca75|Yen Lap G7]]
+- [[drive-grade-6-u8-global-success-84c3528b|Grade 6 - U8 - Global Success]]
+
+### Nhóm Tài Liệu Chuyên Đề Ngữ Pháp
+- [[drive-phrasal-verbs-ab32816d|Phrasal Verbs]]
+- [[drive-conditional-sentences-key-fe8b7273|Conditional Sentences Key]]
+- [[drive-phrasal-verbs-key-debcaeec|Phrasal Verbs Key (Bản trùng)]]
+- [[drive-relative-clause-key-ca933f8f|Relative Clause Key]]
+- [[drive-reported-speech-key-35c13cb9|Reported Speech Key]]
+
+### Nhóm Tài Liệu Từ Vựng & Phonics
+- [[drive-1000-word-formation-cd360c3f|1000 Word Formation]]
+- [[drive-22000-tu-toefl-ielts-harold-levine-b48772e8|22000 Tu Toefl Ielts Harold Levine]]
+- [[drive-becoming-independent-vocab-972b3e6a|Becoming Independent Vocab]]
+- [[drive-cities-urbanisation-vocab-73d9904c|Cities Urbanisation Vocab]]
+- [[drive-our-heritage-vocab-d749c408|Our Heritage Vocab]]
+
+### Nhóm Tài Liệu Đề Thi & Ngân Hàng Câu Hỏi
+- [[drive-1000-cau-trac-nghiem-ngu-phap-hsg-268c76ae|1000 Cau Trac Nghiem Ngu Phap Hsg]]
+- [[drive-31-viet-lai-cau-thi-hsg-lop-10-11-12-223fbdc9|Viet Lai Cau - Thi Hsg Lop 10 11 12]]
+- [[drive-chuyen-de-so-1-viet-lai-cau-thi-hsg-lop-10-11-12-045c09d3|Chuyen De So 1 Viet Lai Cau - Thi Hsg Lop 10 11 12 (Bản trùng)]]
+- [[drive-ioe-lop-5-tron-bo-3d9eda8c|Ioe Lop 5 Tron Bo]]
+- [[drive-key-chuyen-de-so-1-viet-lai-cau-thi-hsg-10-11-12-371e03a0|Key- Chuyen De So 1 Viet Lai Cau Thi Hsg 10 11 12]]
+- [[drive-speaking-test-4-units-9-10-26d51a71|Speaking Test 4 Units 9-10]]
+- [[drive-chuyen-de-ngu-phap-18444328|Chuyen De Ngu Phap]]
+- [[drive-g3-ck1-test-eb751cc4|G3 Ck1 Test]]
+- [[drive-g4-ck1-test-f16f49cc|G4 Ck1 Test]]
+- [[drive-g5-ck1-test-9ab6f4b1|G5 Ck1 Test]]
+- [[drive-g7-hsg-de2-7c5b41f9|G7 Hsg De2]]
+- [[drive-hsg-lop-11-6fed2b0b|Hsg Lop 11]]
+- [[drive-hsg-lop-12-quang-nam-437fe0cf|Hsg Lop 12 Quang Nam]]
+- [[drive-e-hsg-anh-8-so-23-801e422c|Đề Hsg Anh 8 Số 23]]
+- [[drive-e-hsg-anh-8-so-24-af2d9e46|Đề Hsg Anh 8 Số 24]]

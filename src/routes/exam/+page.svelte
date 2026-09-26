@@ -749,81 +749,81 @@
         {#if currentUser?.role === 'student'}
           <button
             onclick={() => activeExamCategory = 'my_grade'}
-            class="px-3 py-1.5 rounded-xl transition-all whitespace-nowrap {activeExamCategory === 'my_grade' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-white'}"
+            class="px-3 py-1.5 rounded-xl transition-all whitespace-nowrap {activeExamCategory === 'my_grade' ? 'bg-sky-600 text-white shadow-sm font-bold' : 'bg-sky-50/70 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-sky-100 dark:hover:bg-slate-700'}"
           >
             🎯 Đề Khối Của Em ({enrolledExamsCount})
           </button>
         {/if}
         <button
           onclick={() => activeExamCategory = 'random_builder'}
-          class="px-3.5 py-1.5 rounded-xl transition-all whitespace-nowrap flex items-center gap-1.5 {activeExamCategory === 'random_builder' ? 'bg-gradient-to-r from-amber-500 to-rose-500 text-white shadow-md shadow-rose-500/30 ring-2 ring-amber-400' : 'bg-gradient-to-r from-amber-500/20 to-rose-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30'}"
+          class="px-3.5 py-1.5 rounded-xl transition-all whitespace-nowrap flex items-center gap-1.5 {activeExamCategory === 'random_builder' ? 'bg-gradient-to-r from-sky-500 to-blue-600 text-white shadow-md shadow-sky-500/25 ring-2 ring-sky-300 font-bold' : 'bg-sky-100/70 text-sky-800 dark:bg-sky-950/60 dark:text-sky-300 border border-sky-200 dark:border-sky-800 hover:bg-sky-200/70'}"
         >
           <span>🎲 Tạo Đề Random (5p • 15p • 45p)</span>
           <span class="px-1.5 py-0.2 rounded-full bg-white/20 text-[9px]">Mới</span>
         </button>
         <button
           onclick={() => activeExamCategory = 'quick_5m'}
-          class="px-3 py-1.5 rounded-xl transition-all whitespace-nowrap {activeExamCategory === 'quick_5m' ? 'bg-amber-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-white'}"
+          class="px-3 py-1.5 rounded-xl transition-all whitespace-nowrap {activeExamCategory === 'quick_5m' ? 'bg-sky-600 text-white shadow-sm font-bold' : 'bg-sky-50/70 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-sky-100 dark:hover:bg-slate-700'}"
         >
           ⚡ Đề 5 Phút (Khởi Động)
         </button>
         <button
           onclick={() => activeExamCategory = 'quick_15m'}
-          class="px-3 py-1.5 rounded-xl transition-all whitespace-nowrap {activeExamCategory === 'quick_15m' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-white'}"
+          class="px-3 py-1.5 rounded-xl transition-all whitespace-nowrap {activeExamCategory === 'quick_15m' ? 'bg-sky-600 text-white shadow-sm font-bold' : 'bg-sky-50/70 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-sky-100 dark:hover:bg-slate-700'}"
         >
           ⏱️ Đề 15 Phút (Thường Xuyên)
         </button>
         <button
           onclick={() => activeExamCategory = 'standard_45m'}
-          class="px-3 py-1.5 rounded-xl transition-all whitespace-nowrap {activeExamCategory === 'standard_45m' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-white'}"
+          class="px-3 py-1.5 rounded-xl transition-all whitespace-nowrap {activeExamCategory === 'standard_45m' ? 'bg-sky-600 text-white shadow-sm font-bold' : 'bg-sky-50/70 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-sky-100 dark:hover:bg-slate-700'}"
         >
           📝 Đề 45 Phút (1 Tiết Chuẩn)
         </button>
         <button
           onclick={() => activeExamCategory = 'all'}
-          class="px-3 py-1.5 rounded-xl transition-all whitespace-nowrap {activeExamCategory === 'all' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-white'}"
+          class="px-3 py-1.5 rounded-xl transition-all whitespace-nowrap {activeExamCategory === 'all' ? 'bg-sky-600 text-white shadow-sm font-bold' : 'bg-sky-50/70 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-sky-100 dark:hover:bg-slate-700'}"
         >
           🌟 Tất Cả ({data.exams.length})
         </button>
         <button
           onclick={() => activeExamCategory = 'primary'}
-          class="px-3 py-1.5 rounded-xl transition-all whitespace-nowrap {activeExamCategory === 'primary' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-white'}"
+          class="px-3 py-1.5 rounded-xl transition-all whitespace-nowrap {activeExamCategory === 'primary' ? 'bg-sky-600 text-white shadow-sm font-bold' : 'bg-sky-50/70 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-sky-100 dark:hover:bg-slate-700'}"
         >
           🎒 Tiểu Học (L1-5)
         </button>
         <button
           onclick={() => activeExamCategory = 'g7'}
-          class="px-3 py-1.5 rounded-xl transition-all whitespace-nowrap {activeExamCategory === 'g7' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-white'}"
+          class="px-3 py-1.5 rounded-xl transition-all whitespace-nowrap {activeExamCategory === 'g7' ? 'bg-sky-600 text-white shadow-sm font-bold' : 'bg-sky-50/70 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-sky-100 dark:hover:bg-slate-700'}"
         >
           🌱 Lớp 7 (HSG &amp; KET)
         </button>
         <button
           onclick={() => activeExamCategory = 'g9'}
-          class="px-3 py-1.5 rounded-xl transition-all whitespace-nowrap {activeExamCategory === 'g9' ? 'bg-amber-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-white'}"
+          class="px-3 py-1.5 rounded-xl transition-all whitespace-nowrap {activeExamCategory === 'g9' ? 'bg-sky-600 text-white shadow-sm font-bold' : 'bg-sky-50/70 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-sky-100 dark:hover:bg-slate-700'}"
         >
           🎯 Vào 10 (Lớp 9)
         </button>
         <button
           onclick={() => activeExamCategory = 'highschool'}
-          class="px-3 py-1.5 rounded-xl transition-all whitespace-nowrap {activeExamCategory === 'highschool' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-white'}"
+          class="px-3 py-1.5 rounded-xl transition-all whitespace-nowrap {activeExamCategory === 'highschool' ? 'bg-sky-600 text-white shadow-sm font-bold' : 'bg-sky-50/70 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-sky-100 dark:hover:bg-slate-700'}"
         >
           🏢 THPT &amp; ĐH (L10-12)
         </button>
         <button
           onclick={() => activeExamCategory = 'ielts'}
-          class="px-3 py-1.5 rounded-xl transition-all whitespace-nowrap {activeExamCategory === 'ielts' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-white'}"
+          class="px-3 py-1.5 rounded-xl transition-all whitespace-nowrap {activeExamCategory === 'ielts' ? 'bg-sky-600 text-white shadow-sm font-bold' : 'bg-sky-50/70 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-sky-100 dark:hover:bg-slate-700'}"
         >
           🌍 IELTS
         </button>
         <button
           onclick={() => activeExamCategory = 'toeic'}
-          class="px-3 py-1.5 rounded-xl transition-all whitespace-nowrap {activeExamCategory === 'toeic' ? 'bg-teal-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-white'}"
+          class="px-3 py-1.5 rounded-xl transition-all whitespace-nowrap {activeExamCategory === 'toeic' ? 'bg-sky-600 text-white shadow-sm font-bold' : 'bg-sky-50/70 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-sky-100 dark:hover:bg-slate-700'}"
         >
           💼 TOEIC
         </button>
         <button
           onclick={() => activeExamCategory = 'toefl'}
-          class="px-3 py-1.5 rounded-xl transition-all whitespace-nowrap {activeExamCategory === 'toefl' ? 'bg-purple-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-white'}"
+          class="px-3 py-1.5 rounded-xl transition-all whitespace-nowrap {activeExamCategory === 'toefl' ? 'bg-sky-600 text-white shadow-sm font-bold' : 'bg-sky-50/70 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-sky-100 dark:hover:bg-slate-700'}"
         >
           🎓 TOEFL iBT
         </button>
@@ -976,25 +976,25 @@
         {@const is45m = ex.format_type === 'standard_45m' || ex.duration_minutes === 45}
         <button
           onclick={() => handleSelectExam(ex)}
-          class="p-3 rounded-2xl border text-left transition-all duration-150 flex flex-col justify-between {isSelected ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg shadow-indigo-600/30 ring-2 ring-indigo-400/50' : (isEnrolled ? 'bg-slate-50 dark:bg-slate-950/80 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/80' : 'bg-slate-100/70 dark:bg-slate-950/40 border-slate-200/80 dark:border-slate-800/60 text-slate-400 opacity-60 hover:opacity-90')}"
+          class="p-3.5 rounded-2xl border text-left transition-all duration-200 hover-lift flex flex-col justify-between {isSelected ? 'bg-gradient-to-br from-sky-600 to-blue-600 border-sky-400 text-white shadow-lg shadow-sky-600/25 ring-2 ring-sky-300/80 font-semibold' : (isEnrolled ? 'bg-white/90 dark:bg-slate-900/90 border-sky-100 dark:border-slate-800 text-slate-800 dark:text-slate-200 hover:border-sky-300 dark:hover:border-sky-700 hover:shadow-md' : 'bg-slate-100/60 dark:bg-slate-950/40 border-slate-200/60 dark:border-slate-800/40 text-slate-400 opacity-60 hover:opacity-85')}"
         >
           <div>
-            <div class="flex items-center justify-between text-[10px] font-bold uppercase mb-1">
-              <span class="{isSelected ? 'text-indigo-200' : (isEnrolled ? (is5m ? 'text-amber-500 font-extrabold' : (is15m ? 'text-indigo-500 dark:text-indigo-400 font-extrabold' : 'text-emerald-500 font-extrabold')) : 'text-slate-400')}">
+            <div class="flex items-center justify-between text-[10px] font-bold uppercase mb-1.5">
+              <span class="{isSelected ? 'text-sky-100' : (isEnrolled ? (is5m ? 'text-amber-500 font-extrabold' : (is15m ? 'text-sky-600 dark:text-sky-400 font-extrabold' : 'text-blue-600 dark:text-blue-400 font-extrabold')) : 'text-slate-400')}">
                 {#if !isEnrolled}🔒 {/if}
                 {is5m ? '⚡ 5 Phút' : (is15m ? '⏱️ 15 Phút' : (is45m ? '📝 45 Phút' : (ex.format_type === 'ielts_academic' ? '🌍 IELTS' : (ex.format_type === 'toeic_lr' ? '💼 TOEIC' : (ex.format_type === 'toefl_ibt' ? '🎓 TOEFL' : '📜 Khảo Thí')))))}
               </span>
               {#if !isEnrolled}
                 <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold border border-amber-500/20">Khóa</span>
               {:else}
-                <span class="opacity-80 font-mono">{ex.duration_minutes}'</span>
+                <span class="opacity-80 font-mono text-[10px] px-1.5 py-0.2 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">{ex.duration_minutes}'</span>
               {/if}
             </div>
             <div class="font-bold text-xs line-clamp-2 leading-snug">{ex.title}</div>
           </div>
-          <div class="mt-2 text-[10px] opacity-75 flex items-center justify-between">
+          <div class="mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-800/80 text-[10px] opacity-75 flex items-center justify-between">
             <span>{ex.total_questions} câu</span>
-            <span class="uppercase">{ex.skill_category}</span>
+            <span class="uppercase font-semibold">{ex.skill_category}</span>
           </div>
         </button>
       {/each}

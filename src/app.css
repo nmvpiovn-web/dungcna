@@ -39,6 +39,30 @@
   --shadow-card: 0 12px 30px -10px rgba(16, 185, 129, 0.15);
 }
 
+/* ========================================================================= */
+/* THEME XANH NHẸ / XANH NHẠT (PASTEL SKY BLUE - THÂN THIỆN & DỊU MẮT) */
+/* ========================================================================= */
+html.theme-sky {
+  --primary: #0284c7;
+  --primary-hover: #0369a1;
+  --primary-light: #e0f2fe;
+  --primary-border: #bae6fd;
+  
+  --secondary: #2563eb;
+  --secondary-hover: #1d4ed8;
+  --secondary-light: #eff6ff;
+  
+  --accent: #0ea5e9;
+  --accent-light: #f0f9ff;
+  
+  --bg-page: #f0f7ff;
+  --bg-card: #ffffff;
+  --bg-surface: #e0f2fe;
+  --border-color: #bae6fd;
+  
+  --shadow-card: 0 12px 28px -6px rgba(14, 165, 233, 0.18), 0 8px 12px -6px rgba(2, 132, 199, 0.08);
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -51,17 +75,99 @@ body {
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition: background-color 0.25s ease, color 0.25s ease;
 }
 
-html:not(.dark) body {
+html:not(.dark):not(.theme-sky) body {
   color: #0f172a;
   background-color: #f8fafc;
+}
+
+html.theme-sky body {
+  color: #0c2b4e;
+  background: radial-gradient(at 0% 0%, rgba(224, 242, 254, 0.8) 0px, transparent 50%),
+              radial-gradient(at 100% 100%, rgba(240, 249, 255, 0.9) 0px, transparent 50%),
+              #f0f7ff;
+  background-attachment: fixed;
 }
 
 html.dark body {
   color: #f8fafc;
   background-color: #020617;
+}
+
+/* ========================================================================= */
+/* UNIFIED SOFT CARD & HOVER DESIGN SYSTEM */
+/* ========================================================================= */
+.card-soft {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 1.25rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.card-soft:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgba(2, 132, 199, 0.12), 0 8px 10px -6px rgba(2, 132, 199, 0.08);
+  border-color: #7dd3fc;
+}
+
+html.theme-sky .card-soft {
+  background-color: rgba(255, 255, 255, 0.94);
+  border-color: #e0f2fe;
+  backdrop-filter: blur(10px);
+}
+
+html.theme-sky .card-soft:hover {
+  border-color: #38bdf8;
+  box-shadow: 0 12px 28px -6px rgba(14, 165, 233, 0.22);
+}
+
+html.dark .card-soft {
+  background-color: rgba(15, 23, 42, 0.85);
+  border-color: rgba(30, 41, 59, 0.8);
+  backdrop-filter: blur(10px);
+}
+
+html.dark .card-soft:hover {
+  border-color: #0369a1;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.45);
+}
+
+/* Unified Hover Lift Utility */
+.hover-lift {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.hover-lift:hover {
+  transform: translateY(-2px);
+}
+
+/* Soft Badges & Pills */
+.pill-sky {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+  border-radius: 9999px;
+  padding: 3px 10px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  transition: all 0.2s ease;
+}
+
+html.theme-sky .pill-sky {
+  background: #e0f2fe;
+  color: #0284c7;
+  border-color: #7dd3fc;
+}
+
+html.dark .pill-sky {
+  background: rgba(12, 74, 110, 0.4);
+  color: #7dd3fc;
+  border-color: rgba(14, 165, 233, 0.3);
 }
 
 h1, h2, h3, h4, .font-heading {

@@ -1,11 +1,13 @@
 import os
 import json
 import re
+from datetime import date
 
 vault_dir = 'second_brain'
 notes = []
 
 for root, dirs, files in os.walk(vault_dir):
+    dirs.sort()
     if '.obsidian' in root:
         continue
     for f in sorted(files):
@@ -58,5 +60,5 @@ for root, dirs, files in os.walk(vault_dir):
 
 print(f'Total notes cataloged: {len(notes)}')
 with open('src/lib/data/second_brain_vault.json', 'w', encoding='utf-8') as out:
-    json.dump({'notes': notes, 'total': len(notes), 'version': '2.4.0', 'updated_at': '2026-09-25'}, out, ensure_ascii=False, indent=2)
+    json.dump({'notes': notes, 'total': len(notes), 'version': '2.5.0', 'updated_at': date.today().isoformat()}, out, ensure_ascii=False, indent=2)
 print('Saved to src/lib/data/second_brain_vault.json')

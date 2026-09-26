@@ -10,6 +10,7 @@
   let isMobileSidebarOpen = $state(false);
 
   const folders = [
+    { id: '07_GOOGLE_DRIVE_LIBRARY', name: '📄 07. Tài liệu Google Drive', count: vaultData.notes.filter(n => n.folder === '07_GOOGLE_DRIVE_LIBRARY').length },
     { id: 'all', name: '📂 Toàn Bộ Tri Thức', count: vaultData.notes.length },
     { id: 'Root', name: '🏠 Bản Đồ Tổng (MOC)', count: vaultData.notes.filter(n => n.folder === 'Root').length },
     { id: '01_CURRICULUM_GDPT', name: '📚 01. Chương Trình GDPT', count: vaultData.notes.filter(n => n.folder.includes('01')).length },
@@ -75,7 +76,9 @@
   function formatMarkdown(content) {
     if (!content) return '';
 
-    let html = content;
+    let html = content.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    // Restore only the Markdown quote marker used by the callout parser.
+    html = html.replace(/^&gt;/gm, '>');
 
     // 1. Process Obsidian Callouts: > [!type] Title
     html = html.replace(/>\s*\[!(important|tip|note|abstract|warning|danger)\]\s*(.*?)\n((?:>.*(?:\n|$))*)/gi, (match, type, title, body) => {
@@ -126,7 +129,18 @@
     html = html.replace(/\*\*(.*?)\*\*/g, '<strong class="font-extrabold text-slate-900 dark:text-white">$1</strong>');
     html = html.replace(/\*(.*?)\*/g, '<em class="italic">$1</em>');
 
-    // 6. Process Paragraph breaks
+    // Imported images use generated, content-addressed local asset paths.
+    html = html.replace(/!\[([^\]]*)\]\((?:\.\.\/|\/)?drive-media\/([a-f0-9]{24}\.(?:png|jpe?g|gif|webp))\)/g,
+      '<img src="/drive-media/$2" alt="$1" loading="lazy" class="max-w-full h-auto rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 my-4" />');
+
+    // 6. Process table/box lines
+    html = html.replace(/^\|(.*)$/gim, (m, content) => {
+      const trimmed = content.trim();
+      if (!trimmed || trimmed === '---' || /^[-| :]+$/.test(trimmed)) return '';
+      return `<div class="my-1.5 px-3.5 py-2 bg-slate-100/90 dark:bg-slate-800/60 rounded-lg border-l-4 border-teal-500 text-xs text-slate-800 dark:text-slate-200 shadow-xs font-mono">${trimmed}</div>`;
+    });
+
+    // 7. Process Paragraph breaks
     html = html.replace(/\n\n+/g, '<div class="h-3"></div>');
 
     return html;

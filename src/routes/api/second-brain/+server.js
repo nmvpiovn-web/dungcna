@@ -46,6 +46,7 @@ export async function GET({ url }) {
     total: filtered.length,
     notes: filtered,
     folders: [
+      { id: '07_GOOGLE_DRIVE_LIBRARY', name: '📄 07. Tài liệu Google Drive', count: vaultData.notes.filter(n => n.folder === '07_GOOGLE_DRIVE_LIBRARY').length },
       { id: 'all', name: '📂 Toàn Bộ Tri Thức', count: vaultData.notes.length },
       { id: 'Root', name: '🏠 Bản Đồ Tổng MOC', count: vaultData.notes.filter(n => n.folder === 'Root').length },
       { id: '01_CURRICULUM_GDPT', name: '📚 01. Chương Trình GDPT', count: vaultData.notes.filter(n => n.folder && n.folder.includes('01')).length },

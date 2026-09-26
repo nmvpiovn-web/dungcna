@@ -1,0 +1,321 @@
+{
+  "files": [
+    {
+      "source": "1000_cau_trac_nghiem_ngu_phap_hsg.docx",
+      "sha256": "268c76ae1a53b9eabc6aa16cffdde8587a327611a2c2f1192abf14ad29fc9b81",
+      "note_id": "drive-1000-cau-trac-nghiem-ngu-phap-hsg-268c76ae",
+      "characters": 187504,
+      "images": 1,
+      "unsupported_images": [],
+      "duplicate_of": null
+    },
+    {
+      "source": "1000_word_formation.docx",
+      "sha256": "cd360c3f123a6428ed93a09d52f1e4be84709cee05adcb663f9efa0831db6c09",
+      "note_id": "drive-1000-word-formation-cd360c3f",
+      "characters": 63798,
+      "images": 1,
+      "unsupported_images": [],
+      "duplicate_of": null
+    },
+    {
+      "source": "22000_tu_toefl_ielts_harold_levine.docx",
+      "sha256": "b48772e8a6cead7029fde1f46d65435df316df8b131e5c741c2657fb69f7a7d0",
+      "note_id": "drive-22000-tu-toefl-ielts-harold-levine-b48772e8",
+      "characters": 452923,
+      "images": 21,
+      "unsupported_images": [],
+      "duplicate_of": null
+    },
+    {
+      "source": "31. VIET LAI CAU - THI HSG LOP 10_11_12.docx",
+      "sha256": "223fbdc9049600671e8b7efe489a27f1042a54fcbaa642de2c72f89e60ee6b23",
+      "note_id": "drive-31-viet-lai-cau-thi-hsg-lop-10-11-12-223fbdc9",
+      "characters": 267022,
+      "images": 0,
+      "unsupported_images": [],
+      "duplicate_of": null
+    },
+    {
+      "source": "although_despite_key.docx",
+      "sha256": "39982d3b8a843de4e8c28728d43368c6c48787440c7981f26cfa91c3212b71ed",
+      "note_id": "drive-although-despite-key-39982d3b",
+      "characters": 6954,
+      "images": 0,
+      "unsupported_images": [],
+      "duplicate_of": null
+    },
+    {
+      "source": "because_because_of_key.docx",
+      "sha256": "e15b69cfc27e6167207937ac8c95fc88bbaa29d28ce363381de6d6a8d9cfb26c",
+      "note_id": "drive-because-because-of-key-e15b69cf",
+      "characters": 3017,
+      "images": 0,
+      "unsupported_images": [],
+      "duplicate_of": null
+    },
+    {
+      "source": "becoming_independent_vocab.docx",
+      "sha256": "972b3e6a1f3253d7df7370bf6028f20d5cbb94307f8c4dde7799a5492199f831",
+      "note_id": "drive-becoming-independent-vocab-972b3e6a",
+      "characters": 25133,
+      "images": 0,
+      "unsupported_images": [],
+      "duplicate_of": null
+    },
+    {
+      "source": "CHUYEN DE SO 1 VIET LAI CAU - THI HSG LOP 10_11_12.docx",
+      "sha256": "045c09d32eb4fde72ebddbdbfdbc9640b5a7195bbd81d328c9994dafffe961bb",
+      "note_id": "drive-chuyen-de-so-1-viet-lai-cau-thi-hsg-lop-10-11-12-045c09d3",
+      "characters": 267022,
+      "images": 0,
+      "unsupported_images": [],
+      "duplicate_of": "drive-31-viet-lai-cau-thi-hsg-lop-10-11-12-223fbdc9"
+    },
+    {
+      "source": "chuyen_de_ngu_phap.docx",
+      "sha256": "18444328973198a71b1f3ea8a79c3eaa3c2bc5f3642fb47f7bbc4e9bb69792fd",
+      "note_id": "drive-chuyen-de-ngu-phap-18444328",
+      "characters": 286121,
+      "images": 0,
+      "unsupported_images": [],
+      "duplicate_of": null
+    },
+    {
+      "source": "cities_urbanisation_vocab.docx",
+      "sha256": "73d9904c5542e2710feb0ed5f6441ce97dda212bb40350c8ff89293b1b97a9d2",
+      "note_id": "drive-cities-urbanisation-vocab-73d9904c",
+      "characters": 38138,
+      "images": 0,
+      "unsupported_images": [],
+      "duplicate_of": null
+    },
+    {
+      "source": "conditional_sentences_key.docx",
+      "sha256": "fe8b7273a626ebdde9acb97abdced6835d40cd4bde598bd8918b2f0e9fb8d1b7",
+      "note_id": "drive-conditional-sentences-key-fe8b7273",
+      "characters": 12360,
+      "images": 0,
+      "unsupported_images": [],
+      "duplicate_of": null
+    },
+    {
+      "source": "g3_ck1_test.docx",
+      "sha256": "eb751cc42386fe263c2f82ff6eb02491c04aa82442d064b7b3864089f8c601b6",
+      "note_id": "drive-g3-ck1-test-eb751cc4",
+      "characters": 4863,
+      "images": 24,
+      "unsupported_images": [],
+      "duplicate_of": null
+    },
+    {
+      "source": "g4_ck1_test.docx",
+      "sha256": "f16f49cccd7bc3734a14d9bf4cdbe071b869e65e3c7baa75db729208ee7f723d",
+      "note_id": "drive-g4-ck1-test-f16f49cc",
+      "characters": 6135,
+      "images": 26,
+      "unsupported_images": [],
+      "duplicate_of": null
+    },
+    {
+      "source": "g5_ck1_test.docx",
+      "sha256": "9ab6f4b17f55a0ba0e48ae32605f5517abaf0918829ead4ef55aca0c1a6dce84",
+      "note_id": "drive-g5-ck1-test-9ab6f4b1",
+      "characters": 5891,
+      "images": 18,
+      "unsupported_images": [],
+      "duplicate_of": null
+    },
+    {
+      "source": "g7_hsg_de2.docx",
+      "sha256": "7c5b41f9ec4f75ea31f1dd0eeab7c1549a7d4d5258e48d7b27527c7eee35ce87",
+      "note_id": "drive-g7-hsg-de2-7c5b41f9",
+      "characters": 10298,
+      "images": 0,
+      "unsupported_images": [],
+      "duplicate_of": null
+    },
+    {
+      "source": "GRADE 6- U8- GLOBAL SUCCESS.doc",
+      "sha256": "84c3528b692d7a437a609f1e8fa93d7876e52daf33c07afebaf83549dd483480",
+      "note_id": "drive-grade-6-u8-global-success-84c3528b",
+      "characters": 26523,
+      "images": 0,
+      "unsupported_images": [],
+      "duplicate_of": null
+    },
+    {
+      "source": "hsg_lop_11.docx",
+      "sha256": "6fed2b0b4c8ecce21e53d9ab4d9be80fd649212c6d5a013f59469fe969e12a88",
+      "note_id": "drive-hsg-lop-11-6fed2b0b",
+      "characters": 17612,
+      "images": 0,
+      "unsupported_images": [],
+      "duplicate_of": null
+    },
+    {
+      "source": "hsg_lop_12_quang_nam.docx",
+      "sha256": "437fe0cfb760f7c552d3dcbfeac02dbc10b36c6a0432e49d4d671926eddcf3c5",
+      "note_id": "drive-hsg-lop-12-quang-nam-437fe0cf",
+      "characters": 28828,
+      "images": 0,
+      "unsupported_images": [],
+      "duplicate_of": null
+    },
+    {
+      "source": "IOE LOP 5 TRON BO.docx",
+      "sha256": "3d9eda8cfd783bb521578a308e36ee23f97b9a2ffcdf4edb3a4c94eb96346fb9",
+      "note_id": "drive-ioe-lop-5-tron-bo-3d9eda8c",
+      "characters": 20833,
+      "images": 14,
+      "unsupported_images": [],
+      "duplicate_of": null
+    },
+    {
+      "source": "KEY- CHUYEN DE SO 1 VIET LAI CAU THI HSG 10_11_12.docx",
+      "sha256": "371e03a0eecdb4aeee98e4df5db8fc80827b42471809d5096b7273da16903e5c",
+      "note_id": "drive-key-chuyen-de-so-1-viet-lai-cau-thi-hsg-10-11-12-371e03a0",
+      "characters": 68200,
+      "images": 0,
+      "unsupported_images": [],
+      "duplicate_of": null
+    },
+    {
+      "source": "NHÓM  7. CHUYÊN ĐỀ PHỐI HỢP THÌ THPT Hương Khê.docx",
+      "sha256": "d9cc7ef999916561263c7a1be1ca706d2dacea4e7f0780b80a678f8d8af3ac89",
+      "note_id": "drive-nhom-7-chuyen-e-phoi-hop-thi-thpt-huong-khe-d9cc7ef9",
+      "characters": 4320,
+      "images": 0,
+      "unsupported_images": [],
+      "duplicate_of": null
+    },
+    {
+      "source": "our_heritage_vocab.docx",
+      "sha256": "d749c408ef36b8c7cf25488992c26e6e11cba39e7f1b5431681a45b8394c2927",
+      "note_id": "drive-our-heritage-vocab-d749c408",
+      "characters": 25950,
+      "images": 0,
+      "unsupported_images": [],
+      "duplicate_of": null
+    },
+    {
+      "source": "Photo Quiz Reading-giaoandethitienganh.info.docx",
+      "sha256": "6433023aceaa678b49fd999cef60efaf9ea201f6d2ffd565cdf40e5226e9b7e2",
+      "note_id": "drive-photo-quiz-reading-giaoandethitienganh-info-6433023a",
+      "characters": 38921,
+      "images": 201,
+      "unsupported_images": [],
+      "duplicate_of": null
+    },
+    {
+      "source": "PHRASAL VERBS.docx",
+      "sha256": "ab32816d568d064cecff15acc2c55542914360eb7ecc42c829ebf3ba82859a90",
+      "note_id": "drive-phrasal-verbs-ab32816d",
+      "characters": 11785,
+      "images": 0,
+      "unsupported_images": [],
+      "duplicate_of": null
+    },
+    {
+      "source": "phrasal_verbs_key.docx",
+      "sha256": "debcaeec61f29c61fe5881c4da0669870efb9e60fac0438ec28ba9794c96e030",
+      "note_id": "drive-phrasal-verbs-key-debcaeec",
+      "characters": 11785,
+      "images": 0,
+      "unsupported_images": [],
+      "duplicate_of": "drive-phrasal-verbs-ab32816d"
+    },
+    {
+      "source": "relative_clause_key.docx",
+      "sha256": "ca933f8fc8d6b453dadfade68a7b27d4199bd103745f5a7792b75ea34c87f7df",
+      "note_id": "drive-relative-clause-key-ca933f8f",
+      "characters": 18149,
+      "images": 0,
+      "unsupported_images": [],
+      "duplicate_of": null
+    },
+    {
+      "source": "reported_speech_key.docx",
+      "sha256": "35c13cb95039d92bd0c23cf7676b975f71f1f23e6f88ec371ea402bbc7fa1208",
+      "note_id": "drive-reported-speech-key-35c13cb9",
+      "characters": 4249,
+      "images": 0,
+      "unsupported_images": [],
+      "duplicate_of": null
+    },
+    {
+      "source": "so_that_in_order_to_key.docx",
+      "sha256": "b1ded2bcb1ec443119b1dffa92ac80cde167e4706620136dadc0867a4442e9bd",
+      "note_id": "drive-so-that-in-order-to-key-b1ded2bc",
+      "characters": 8115,
+      "images": 0,
+      "unsupported_images": [],
+      "duplicate_of": null
+    },
+    {
+      "source": "Speaking Test 4 _Units 9-10_.docx",
+      "sha256": "26d51a7138d770a0e1603c004f73f46f347ca661778fc1a043f10085ca71ad1a",
+      "note_id": "drive-speaking-test-4-units-9-10-26d51a71",
+      "characters": 1570,
+      "images": 2,
+      "unsupported_images": [],
+      "duplicate_of": null
+    },
+    {
+      "source": "Unit 5 - Lesson 5d - Speaking - Page 73.docx",
+      "sha256": "e4725c58b0ca6f4b70409f13d2b21e7e26b547f1319b51edc74dbffe1ada21c4",
+      "note_id": "drive-unit-5-lesson-5d-speaking-page-73-e4725c58",
+      "characters": 5679,
+      "images": 0,
+      "unsupported_images": [],
+      "duplicate_of": null
+    },
+    {
+      "source": "Unit 5 - Lesson 5f - Skills Reading - Page 76.docx",
+      "sha256": "567531642f529591567ed14b7e518e619ed8f13646f521170487a7154137109b",
+      "note_id": "drive-unit-5-lesson-5f-skills-reading-page-76-56753164",
+      "characters": 5809,
+      "images": 0,
+      "unsupported_images": [],
+      "duplicate_of": null
+    },
+    {
+      "source": "viet_lai_cau_1_100.docx",
+      "sha256": "b72ba5fe1e089a18585ab728e162b13d5b6e289b3e236d7ff68c24b33fa21e51",
+      "note_id": "drive-viet-lai-cau-1-100-b72ba5fe",
+      "characters": 17113,
+      "images": 0,
+      "unsupported_images": [],
+      "duplicate_of": null
+    },
+    {
+      "source": "yen_lap_g7.docx",
+      "sha256": "ea81ca75a3b7f4c47e9cf3d768ac209b94155bc023c1c7d921e709eaca02aceb",
+      "note_id": "drive-yen-lap-g7-ea81ca75",
+      "characters": 18309,
+      "images": 0,
+      "unsupported_images": [],
+      "duplicate_of": null
+    },
+    {
+      "source": "ĐỀ HSG ANH 8 SỐ 23.docx",
+      "sha256": "801e422c2d1dc737015c9ceb243fc1c26c8ba64ba00ef70cf8bd6ef2011b117f",
+      "note_id": "drive-e-hsg-anh-8-so-23-801e422c",
+      "characters": 11674,
+      "images": 0,
+      "unsupported_images": [],
+      "duplicate_of": null
+    },
+    {
+      "source": "ĐỀ HSG ANH 8 SỐ 24.docx",
+      "sha256": "af2d9e466423abaf0f510e8ff03d95365b73a5647f023d5b635eabe44e34a70c",
+      "note_id": "drive-e-hsg-anh-8-so-24-af2d9e46",
+      "characters": 11955,
+      "images": 0,
+      "unsupported_images": [],
+      "duplicate_of": null
+    }
+  ],
+  "total": 35,
+  "unique": 33
+}

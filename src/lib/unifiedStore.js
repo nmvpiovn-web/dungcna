@@ -1,18 +1,18 @@
-import usersData from './data/users.json';
-import curriculaData from './data/curricula.json';
-import examsData from './data/exams.json';
-import questionsData from './data/questions.json';
-import evaluationsData from './data/student_evaluations.json';
-import cambridgeVocabData from './data/cambridge_vocabulary.json';
-import pedagogyData from './data/teaching_resources.json';
-import snapshotsData from './data/snapshots.json';
-import webhooksData from './data/webhooks.json';
-import tuitionBillsData from './data/tuition_bills.json';
-import studentStarsData from './data/student_stars.json';
-import classSessionsData from './data/class_sessions.json';
-import attendanceRecordsData from './data/attendance_records.json';
-import evaluationDiscussionsData from './data/evaluation_discussions.json';
-import teacherProfilesData from './data/teacher_profiles.json';
+import usersData from './data/users.json' with { type: 'json' };
+import curriculaData from './data/curricula.json' with { type: 'json' };
+import examsData from './data/exams.json' with { type: 'json' };
+import questionsData from './data/questions.json' with { type: 'json' };
+import evaluationsData from './data/student_evaluations.json' with { type: 'json' };
+import cambridgeVocabData from './data/cambridge_vocabulary.json' with { type: 'json' };
+import pedagogyData from './data/teaching_resources.json' with { type: 'json' };
+import snapshotsData from './data/snapshots.json' with { type: 'json' };
+import webhooksData from './data/webhooks.json' with { type: 'json' };
+import tuitionBillsData from './data/tuition_bills.json' with { type: 'json' };
+import studentStarsData from './data/student_stars.json' with { type: 'json' };
+import classSessionsData from './data/class_sessions.json' with { type: 'json' };
+import attendanceRecordsData from './data/attendance_records.json' with { type: 'json' };
+import evaluationDiscussionsData from './data/evaluation_discussions.json' with { type: 'json' };
+import teacherProfilesData from './data/teacher_profiles.json' with { type: 'json' };
 
 
 const STORAGE_KEY_USER = 'tienganh_active_user';
@@ -113,12 +113,15 @@ export function setCurrentUser(user) {
 export function logoutUser() {
   if (typeof window !== 'undefined') {
     sessionStorage.removeItem(STORAGE_KEY_SESSION);
+    sessionStorage.removeItem('tienganh_auth_token');
     localStorage.removeItem(STORAGE_KEY_USER);
+    localStorage.removeItem('tienganh_auth_token');
+    document.cookie = 'session_token=; path=/; max-age=0; SameSite=Lax';
     window.dispatchEvent(new CustomEvent('tienganh:auth-change', { detail: null }));
   }
 }
 
-export function loginUser(identifier, password) {
+export async function loginUser(identifier, password) {
   if (!identifier || !identifier.trim()) {
     return { success: false, error: 'Vui lòng nhập Tên đăng nhập hoặc Số điện thoại!' };
   }
@@ -126,55 +129,59 @@ export function loginUser(identifier, password) {
     return { success: false, error: 'Vui lòng nhập Mật khẩu!' };
   }
 
-  const cleanId = identifier.trim().toLowerCase();
-  const cleanPhone = identifier.trim().replace(/[^0-9+]/g, '');
+  const cleanId = identifier.trim();
   const cleanPass = password.trim();
 
-  const users = getAllUsers();
-  const user = users.find(u => {
-    const uUsername = (u.username || '').toLowerCase();
-    const uPhone = (u.phone || '').replace(/[^0-9+]/g, '');
-    const uEmail = (u.email || '').toLowerCase();
-    return (
-      uUsername === cleanId ||
-      (cleanPhone && uPhone === cleanPhone) ||
-      uEmail === cleanId
-    );
-  });
+  // Authenticate exclusively via server-side API to obtain cryptographically signed token
+  try {
+    const apiRes = await fetch('/api/auth/token', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ username: cleanId, password: cleanPass })
+    });
 
-  if (!user) {
-    return { success: false, error: 'Không tìm thấy tài khoản với Tên đăng nhập hoặc Số điện thoại này!' };
+    let apiData;
+    try {
+      apiData = await apiRes.json();
+    } catch (parseErr) {
+      return { success: false, error: 'Máy chủ phản hồi không đúng định dạng. Vui lòng thử lại!' };
+    }
+
+    if (apiRes.ok && apiData?.success && apiData.token && apiData.user) {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('tienganh_auth_token', apiData.token);
+        sessionStorage.setItem('tienganh_auth_token', apiData.token);
+        document.cookie = `session_token=${encodeURIComponent(apiData.token)}; path=/; max-age=${7 * 86400}; SameSite=Lax`;
+      }
+      setCurrentUser(apiData.user);
+      return { success: true, user: apiData.user, token: apiData.token };
+    } else {
+      return { success: false, error: apiData?.error || 'Tên đăng nhập hoặc mật khẩu không chính xác!' };
+    }
+  } catch (netErr) {
+    console.error('Lỗi kết nối máy chủ xác thực:', netErr);
+    return { success: false, error: 'Không thể kết nối đến máy chủ xác thực. Vui lòng kiểm tra kết nối mạng và thử lại!' };
   }
-
-  // Lenient password comparison
-  const userPass = user.password || '123';
-  if (userPass !== cleanPass && cleanPass !== 'admin' && cleanPass !== 'msdung' && cleanPass !== '123' && cleanPass !== '123456') {
-    return { success: false, error: 'Mật khẩu chưa chính xác! Vui lòng thử lại.' };
-  }
-
-  setCurrentUser(user);
-  return { success: true, user };
 }
 
 export function getTheme() {
-  if (typeof window === 'undefined') return 'light';
+  if (typeof window === 'undefined') return 'sky';
   try {
     const saved = localStorage.getItem('tienganh_theme');
     if (saved) return saved;
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      return 'dark';
-    }
+    return 'sky'; // Mặc định giao diện Xanh Nhẹ thanh thoát, thân thiện
   } catch {}
-  return 'light';
+  return 'sky';
 }
 
 export function setTheme(theme) {
   if (typeof window !== 'undefined') {
     localStorage.setItem('tienganh_theme', theme);
+    document.documentElement.classList.remove('dark', 'theme-sky');
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
+    } else if (theme === 'sky') {
+      document.documentElement.classList.add('theme-sky');
     }
     window.dispatchEvent(new CustomEvent('tienganh:theme-change', { detail: theme }));
   }
@@ -183,7 +190,8 @@ export function setTheme(theme) {
 
 export function toggleTheme() {
   const current = getTheme();
-  const next = current === 'dark' ? 'light' : 'dark';
+  // Vòng lặp: sky (Xanh Nhẹ) -> light (Sáng Tối Giản) -> dark (Tối Dịu Mắt) -> sky
+  const next = current === 'sky' ? 'light' : (current === 'light' ? 'dark' : 'sky');
   return setTheme(next);
 }
 

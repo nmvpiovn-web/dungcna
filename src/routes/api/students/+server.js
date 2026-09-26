@@ -25,7 +25,7 @@ export async function GET({ url, request, platform }) {
     return json({ 
       success: false, 
       error: auth.error || 'Unauthorized: Vui lòng đăng nhập để truy cập dữ liệu học sinh.' 
-    }, { status: 401 });
+    }, { status: auth.status || 401 });
   }
 
   const requestedStudentId = url.searchParams.get('id');
@@ -78,31 +78,37 @@ export async function GET({ url, request, platform }) {
       }
     } catch (e) {
       console.error('D1 students query error:', e);
+      return json({ success: false, error: 'Lỗi truy vấn cơ sở dữ liệu Cloudflare D1: ' + (e.message || String(e)) }, { status: 500 });
     }
-  }
+  } else if (platform?.env?.ENABLE_LOCAL_MOCK === 'true' || process.env.ENABLE_LOCAL_MOCK === 'true') {
+    // 2. Fallback to local store with strict password sanitization (Mock environment only)
+    const users = getAllUsers();
+    const students = users.filter(u => u.role === 'student');
 
-  // 2. Fallback to local store with strict password sanitization
-  const users = getAllUsers();
-  const students = users.filter(u => u.role === 'student');
-
-  if (requestedStudentId) {
-    const single = students.find(s => s.id === requestedStudentId || s.username === requestedStudentId);
-    if (!single) {
-      return json({ success: false, error: 'Không tìm thấy thông tin học sinh' }, { status: 404 });
+    if (requestedStudentId) {
+      const single = students.find(s => s.id === requestedStudentId || s.username === requestedStudentId);
+      if (!single) {
+        return json({ success: false, error: 'Không tìm thấy thông tin học sinh' }, { status: 404 });
+      }
+      return json({
+        success: true,
+        student: sanitizeUser(single),
+        source: 'local_store'
+      });
     }
+
     return json({
       success: true,
-      student: sanitizeUser(single),
+      total: students.length,
+      students: sanitizeUserList(students),
       source: 'local_store'
     });
+  } else {
+    return json({
+      success: false,
+      error: 'Lỗi cấu hình hệ thống: Thiếu binding cơ sở dữ liệu Cloudflare D1 (DB) trên môi trường production (Fail-Closed).'
+    }, { status: 500 });
   }
-
-  return json({
-    success: true,
-    total: students.length,
-    students: sanitizeUserList(students),
-    source: 'local_store'
-  });
 }
 
 /**
@@ -113,7 +119,7 @@ export async function POST({ request, platform }) {
   try {
     const auth = await verifyServerAuth(request, platform);
     if (!auth.authenticated) {
-      return json({ success: false, error: auth.error || 'Unauthorized: Vui lòng đăng nhập.' }, { status: 401 });
+      return json({ success: false, error: auth.error || 'Unauthorized: Vui lòng đăng nhập.' }, { status: auth.status || 401 });
     }
 
     if (!isStaffUser(auth.user)) {
@@ -153,6 +159,10 @@ export async function POST({ request, platform }) {
         ).run();
       } catch (d1Err) {
         console.error('D1 insert error:', d1Err);
+        return json({
+          success: false,
+          error: 'Lỗi ghi cơ sở dữ liệu Cloudflare D1: ' + (d1Err.message || String(d1Err))
+        }, { status: 500 });
       }
     }
 
@@ -174,7 +184,7 @@ export async function PATCH({ request, platform }) {
   try {
     const auth = await verifyServerAuth(request, platform);
     if (!auth.authenticated) {
-      return json({ success: false, error: auth.error || 'Unauthorized: Vui lòng đăng nhập.' }, { status: 401 });
+      return json({ success: false, error: auth.error || 'Unauthorized: Vui lòng đăng nhập.' }, { status: auth.status || 401 });
     }
 
     const body = await request.json();

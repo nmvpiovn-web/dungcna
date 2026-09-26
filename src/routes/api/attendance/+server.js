@@ -5,25 +5,42 @@ import {
   getAttendanceForSession, 
   saveSessionAttendanceBatch, 
   getAttendanceStatsForStudent,
-  getAttendedStudentsForSession,
-  getAllClassSessions,
-  dispatchBotReport,
-  addLeaderNotification
+  getAttendedStudentsForSession
 } from '../../../lib/unifiedStore.js';
+import { verifyServerAuth, isStaffUser } from '../../../lib/server/auth.js';
 
 export const prerender = false;
 
 /**
  * GET /api/attendance
- * Retrieves attendance records with multi-criteria filtering.
+ * Retrieves attendance records with strict authentication and role-scoping.
  * Queries Cloudflare D1 first, falling back to local unifiedStore.
  */
-export async function GET({ url, platform }) {
+export async function GET({ url, request, platform }) {
   try {
+    const auth = await verifyServerAuth(request, platform);
+    if (!auth.authenticated) {
+      return json({ 
+        success: false, 
+        error: auth.error || 'Unauthorized: Vui lòng đăng nhập để xem thông tin điểm danh.' 
+      }, { status: auth.status || 401 });
+    }
+
     const sessionId = url.searchParams.get('session_id');
     const date = url.searchParams.get('date') || url.searchParams.get('session_date');
     const studentId = url.searchParams.get('student_id');
     const attendedOnly = url.searchParams.get('attended_only') === 'true';
+    const isStaff = isStaffUser(auth.user);
+
+    // Privacy isolation: Students can only view their own attendance history
+    if (!isStaff) {
+      if (!studentId || studentId !== auth.user.id) {
+        return json({ 
+          success: false, 
+          error: 'Forbidden: Học sinh chỉ có quyền xem nhật ký điểm danh của chính mình.' 
+        }, { status: 403 });
+      }
+    }
 
     // 1. Try Cloudflare D1 Database
     if (platform?.env?.DB) {
@@ -54,8 +71,7 @@ export async function GET({ url, platform }) {
         query += ' ORDER BY session_date DESC, created_at DESC LIMIT 500';
 
         const d1Res = await platform.env.DB.prepare(query).bind(...params).all();
-        if (d1Res?.results && d1Res.results.length > 0) {
-          // If specific student stats requested
+        if (d1Res?.results) {
           if (studentId) {
             const list = d1Res.results;
             const present = list.filter(r => r.status === 'present').length;
@@ -106,27 +122,36 @@ export async function GET({ url, platform }) {
         }
       } catch (d1Err) {
         console.error('D1 attendance GET error:', d1Err);
+        return json({
+          success: false,
+          error: 'Lỗi truy vấn cơ sở dữ liệu Cloudflare D1: ' + (d1Err.message || String(d1Err))
+        }, { status: 500 });
       }
-    }
+    } else if (platform?.env?.ENABLE_LOCAL_MOCK === 'true' || process.env.ENABLE_LOCAL_MOCK === 'true') {
+      // 2. Fallback to unifiedStore ONLY when ENABLE_LOCAL_MOCK is explicitly enabled
+      if (sessionId && attendedOnly) {
+        const students = getAttendedStudentsForSession(sessionId, date);
+        return json({ success: true, total: students.length, students, source: 'local_store' });
+      }
 
-    // 2. Fallback to unifiedStore
-    if (sessionId && attendedOnly) {
-      const students = getAttendedStudentsForSession(sessionId, date);
-      return json({ success: true, total: students.length, students, source: 'local_store' });
-    }
+      if (studentId) {
+        const stats = getAttendanceStatsForStudent(studentId);
+        return json({ success: true, stats, source: 'local_store' });
+      }
 
-    if (studentId) {
-      const stats = getAttendanceStatsForStudent(studentId);
-      return json({ success: true, stats, source: 'local_store' });
-    }
+      if (sessionId) {
+        const records = getAttendanceForSession(sessionId, date);
+        return json({ success: true, total: records.length, records, source: 'local_store' });
+      }
 
-    if (sessionId) {
-      const records = getAttendanceForSession(sessionId, date);
-      return json({ success: true, total: records.length, records, source: 'local_store' });
+      const all = getAllAttendanceRecords();
+      return json({ success: true, total: all.length, records: all, source: 'local_store' });
+    } else {
+      return json({
+        success: false,
+        error: 'Lỗi cấu hình hệ thống: Thiếu binding cơ sở dữ liệu Cloudflare D1 (DB) trên môi trường production (Fail-Closed).'
+      }, { status: 500 });
     }
-
-    const all = getAllAttendanceRecords();
-    return json({ success: true, total: all.length, records: all, source: 'local_store' });
   } catch (err) {
     return json({ success: false, error: err.message }, { status: 500 });
   }
@@ -134,15 +159,30 @@ export async function GET({ url, platform }) {
 
 /**
  * POST /api/attendance
- * Saves attendance roll-call batch directly into Cloudflare D1 and updates notification/bot systems.
+ * Saves attendance roll-call batch directly into Cloudflare D1 with strict auth.
  */
 export async function POST({ request, platform }) {
   try {
+    const auth = await verifyServerAuth(request, platform);
+    if (!auth.authenticated) {
+      return json({ 
+        success: false, 
+        error: auth.error || 'Unauthorized: Vui lòng đăng nhập.' 
+      }, { status: auth.status || 401 });
+    }
+
+    if (!isStaffUser(auth.user)) {
+      return json({ 
+        success: false, 
+        error: 'Forbidden: Chỉ giáo viên hoặc quản trị viên mới có quyền lưu điểm danh.' 
+      }, { status: 403 });
+    }
+
     const body = await request.json();
     const sessionId = body.session_id;
     const sessionDate = body.session_date || new Date().toISOString().slice(0, 10);
-    const attendanceList = body.students || []; // [{ student_id, student_name, class_id, status, notes, in_class_attitude, instant_stars_rewarded }]
-    const teacherUser = body.teacher || null;
+    const attendanceList = body.students || [];
+    const teacherUser = body.teacher || auth.user;
 
     if (!sessionId || !Array.isArray(attendanceList) || attendanceList.length === 0) {
       return json({ 
@@ -151,18 +191,18 @@ export async function POST({ request, platform }) {
       }, { status: 400 });
     }
 
-    const teacherId = teacherUser?.id || 'usr_super_2';
-    const teacherName = teacherUser?.name || 'Ms. Dung';
+    const teacherId = teacherUser?.id || auth.user.id || 'usr_super_2';
+    const teacherName = teacherUser?.name || auth.user.name || 'Ms. Dung';
     const nowIso = new Date().toISOString();
 
-    // Prepare standardized records
+    // Prepare standardized records with strict NaN defense
     const preparedRecords = attendanceList.map(item => {
       const studentId = item.student_id || item.id;
       const studentName = item.student_name || item.name || 'Học sinh';
       const status = item.status || 'present';
-      const instantStars = Number(item.instant_stars_rewarded) !== undefined 
-        ? Number(item.instant_stars_rewarded) 
-        : (status === 'present' ? 5 : 0);
+      
+      const rawStars = item.instant_stars_rewarded !== undefined && item.instant_stars_rewarded !== null ? Number(item.instant_stars_rewarded) : NaN;
+      const instantStars = Number.isFinite(rawStars) && rawStars >= 0 ? Math.floor(rawStars) : (status === 'present' ? 5 : 0);
 
       return {
         id: item.id || `att_${sessionId}_${sessionDate}_${studentId}`,
@@ -181,7 +221,7 @@ export async function POST({ request, platform }) {
       };
     });
 
-    // 1. Persist directly to Cloudflare D1 Database when running on server / edge
+    // 1. Persist directly to Cloudflare D1 Database
     let d1SavedCount = 0;
     if (platform?.env?.DB) {
       try {
@@ -210,6 +250,10 @@ export async function POST({ request, platform }) {
         d1SavedCount = preparedRecords.length;
       } catch (d1Err) {
         console.error('D1 attendance batch insert error:', d1Err);
+        return json({
+          success: false,
+          error: 'Lỗi ghi cơ sở dữ liệu Cloudflare D1: ' + (d1Err.message || String(d1Err))
+        }, { status: 500 });
       }
     }
 

@@ -68,14 +68,14 @@
     }
   ];
 
-  function handleLogin(e) {
+  async function handleLogin(e) {
     if (e) e.preventDefault();
     errorMessage = '';
     successMessage = '';
     isLoading = true;
 
     try {
-      const res = loginUser(identifier, password);
+      const res = await loginUser(identifier, password);
       if (res.success) {
         successMessage = `Xin chào ${res.user.name}! Đăng nhập thành công.`;
         playAudioFeedback(true);

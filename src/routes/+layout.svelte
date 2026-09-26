@@ -11,6 +11,7 @@
     isSuperAdmin, 
     isTeacherOrAdmin,
     getTheme,
+    setTheme,
     toggleTheme,
     getStudentStars,
     getUnreadLeaderNotificationCount,
@@ -64,6 +65,7 @@
     allUsers = getAllUsers();
     currentUser = getCurrentUser();
     currentTheme = getTheme();
+    setTheme(currentTheme);
 
     if (currentUser?.role === 'student') {
       studentStars = getStudentStars(currentUser.id);
@@ -173,15 +175,15 @@
   ></button>
 {/if}
 
-<div class="min-h-screen flex flex-col bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 font-sans transition-colors duration-200">
+<div class="min-h-screen flex flex-col bg-transparent text-slate-800 dark:text-slate-100 font-sans transition-colors duration-250">
   <!-- Top Navigation Header -->
-  <header class="sticky top-0 z-40 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800/80 shadow-sm transition-colors duration-200">
+  <header class="sticky top-0 z-40 bg-white/85 dark:bg-slate-900/85 backdrop-blur-md border-b border-sky-100/80 dark:border-slate-800/80 shadow-sm transition-colors duration-250">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex items-center justify-between h-16 gap-3">
         
         <!-- Brand Logo -->
         <a href="/" onclick={closeAllDropdowns} class="flex items-center gap-3 group flex-shrink-0">
-          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white text-xl shadow-md shadow-emerald-500/20 group-hover:scale-105 transition-transform duration-200">
+          <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-sky-500 via-teal-500 to-blue-600 flex items-center justify-center text-white text-xl shadow-md shadow-sky-500/20 group-hover:scale-105 transition-transform duration-200">
             👩‍🏫
           </div>
           <div>
@@ -189,11 +191,11 @@
               <span class="font-extrabold text-base sm:text-lg tracking-tight text-slate-900 dark:text-white">
                 Tiếng Anh Cô Dung
               </span>
-              <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-300 dark:border-emerald-500/30">
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-50 text-sky-700 border border-sky-200 dark:bg-sky-500/20 dark:text-sky-300 dark:border-sky-500/30">
                 2026 CTGDPT
               </span>
             </div>
-            <span class="text-[11px] text-slate-500 dark:text-slate-400 block -mt-0.5">K12 &amp; Khảo Thí Quốc Tế</span>
+            <span class="text-[11px] text-slate-500 dark:text-slate-400 block -mt-0.5">K12 &amp; Khảo Thí Chuẩn Quốc Tế</span>
           </div>
         </a>
 
@@ -533,17 +535,22 @@
 
         <!-- Right Side Controls: Theme Switcher, Star Counter & User Avatar -->
         <div class="flex items-center gap-2">
-          <!-- Light / Dark Theme Toggle Button -->
+          <!-- Theme Switcher: Xanh Nhẹ / Sáng / Tối -->
           <button
             onclick={handleThemeToggle}
-            class="w-9 h-9 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white flex items-center justify-center text-sm transition-all hover:scale-105"
-            title="Chuyển chế độ Sáng / Tối"
+            class="h-9 px-2.5 rounded-xl border border-sky-200/80 dark:border-slate-800 bg-white/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 hover:text-sky-600 dark:hover:text-sky-400 flex items-center gap-1.5 text-xs font-bold transition-all hover:scale-105 shadow-sm"
+            title="Đổi Giao diện: Xanh Nhẹ (Sky) / Sáng / Tối"
             aria-label="Toggle Theme"
           >
-            {#if currentTheme === 'dark'}
-              <span>☀️</span>
-            {:else}
+            {#if currentTheme === 'sky'}
+              <span>🩵</span>
+              <span class="hidden sm:inline text-[11px] text-sky-600 font-extrabold">Xanh Nhẹ</span>
+            {:else if currentTheme === 'dark'}
               <span>🌙</span>
+              <span class="hidden sm:inline text-[11px] text-slate-400">Tối</span>
+            {:else}
+              <span>☀️</span>
+              <span class="hidden sm:inline text-[11px] text-amber-500">Sáng</span>
             {/if}
           </button>
 
