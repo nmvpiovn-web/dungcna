@@ -7,29 +7,50 @@ export const prerender = false;
 const FALLBACK_CAMPUSES = [
   {
     id: 'loc_codung',
-    name: 'Nhà Cô Dung (Trụ Sở Chính)',
+    name: 'Nhà Cô Dung (Trụ Sở Chính - Linh Xuân)',
     short_code: 'CODUNG',
-    address: 'Số 18, Ngõ 42, Phố Triều Khúc, Thanh Xuân, Hà Nội',
+    address: 'Khu phố 3, Phường Linh Xuân, TP. Thủ Đức, TP. Hồ Chí Minh',
     hotline: '0912345678',
     manager_user_id: 'user_msdung',
+    latitude: 10.8735,
+    longitude: 106.7710,
+    distance_to_daosontay_m: 350,
     is_active: 1
   },
   {
     id: 'loc_sunshine',
     name: 'Trung Tâm Tiếng Anh Sunshine Academy',
     short_code: 'SUNSHINE',
-    address: 'Tòa Sunshine Riverside, Phú Thượng, Tây Hồ, Hà Nội',
+    address: 'Khu dân cư Sunshine, Linh Trung, TP. Thủ Đức, TP. Hồ Chí Minh',
     hotline: '0987654321',
     manager_user_id: 'user_teacher_quynh',
+    latitude: 10.8780,
+    longitude: 106.7760,
+    distance_to_daosontay_m: 650,
     is_active: 1
   },
   {
     id: 'loc_thayvu',
     name: 'Trung Tâm Học Liệu & Luyện Thi Thầy Vũ',
     short_code: 'THAYVU',
-    address: 'Số 105, Đường Cầu Giấy, Quan Hoa, Cầu Giấy, Hà Nội',
+    address: 'Đường Kha Vạn Cân, Linh Chiểu, TP. Thủ Đức, TP. Hồ Chí Minh',
     hotline: '0901234567',
     manager_user_id: 'user_thayvu',
+    latitude: 10.8690,
+    longitude: 106.7680,
+    distance_to_daosontay_m: 900,
+    is_active: 1
+  },
+  {
+    id: 'center_daosontay',
+    name: 'Trường Tiểu Học Đào Sơn Tây (Cụm Vệ Tinh Trọng Tâm)',
+    short_code: 'DAOSONTAY',
+    address: 'Đường số 8, Phường Linh Xuân, TP. Thủ Đức, TP. Hồ Chí Minh',
+    hotline: '02837241234',
+    manager_user_id: 'user_msdung',
+    latitude: 10.8753,
+    longitude: 106.7725,
+    distance_to_daosontay_m: 0,
     is_active: 1
   }
 ];

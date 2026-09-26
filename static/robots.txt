@@ -3,6 +3,8 @@
 
 User-agent: *
 Disallow: /admin
+Disallow: /admincp
+Disallow: /cpanel/
 Disallow: /schedule
 Disallow: /evaluations
 Disallow: /second-brain

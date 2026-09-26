@@ -16,10 +16,12 @@
     getUserEnrolledGrades,
     requestUnlockClass
   } from '$lib/unifiedStore';
+  import GuestExamModal from '$lib/components/GuestExamModal.svelte';
 
   let { data } = $props();
 
   let currentUser = $state(typeof window !== 'undefined' ? getCurrentUser() : null);
+  let showGuestModal = $state(false);
   let lockedExamAlert = $state('');
   let isRequestingUnlock = $state(false);
   let selectedExamId = $state(data.exams[0]?.id || 'ex_quick_15m_g7');
@@ -815,6 +817,14 @@
 
       <!-- Category Filter Tabs -->
       <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs font-bold">
+        <button
+          type="button"
+          onclick={() => showGuestModal = true}
+          class="px-3.5 py-1.5 rounded-xl transition-all whitespace-nowrap flex items-center gap-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold shadow-md shadow-emerald-500/20"
+        >
+          <span>🎓 Thi Thử Cho Khách</span>
+          <span class="px-1.5 py-0.2 rounded-full bg-white/20 text-[9px]">Tự Do</span>
+        </button>
         {#if currentUser?.role === 'student'}
           <button
             onclick={() => activeExamCategory = 'my_grade'}
@@ -1514,4 +1524,7 @@
       </div>
     </div>
   {/if}
+
+  <!-- Guest Exam Modal -->
+  <GuestExamModal bind:isOpen={showGuestModal} />
 </div>

@@ -86,8 +86,9 @@
       studentStars = getStudentStars(currentUser.id);
     }
 
-    // Role-based routing redirect if on root /cpanel
-    if ($page.url.pathname === '/cpanel' || $page.url.pathname === '/cpanel/') {
+    // Strict Role-Based Routing & Book Isolation
+    const pathname = $page.url.pathname;
+    if (pathname === '/cpanel' || pathname === '/cpanel/') {
       if (!currentUser) {
         goto('/courses');
       } else if (currentUser.role === 'student') {
@@ -100,6 +101,20 @@
         goto('/cpanel/leader');
       } else if (isSuperAdmin(currentUser)) {
         goto('/admincp');
+      }
+    } else if (pathname.startsWith('/cpanel/parent')) {
+      // Sổ Phụ Huynh: Visible only to Parent (Leader/Admin manage)
+      if (currentUser && currentUser.role !== 'parent' && !isSuperAdmin(currentUser) && currentUser.role !== 'leader') {
+        goto(currentUser.role === 'teacher' ? '/cpanel/teacher' : '/cpanel/student');
+      }
+    } else if (pathname.startsWith('/cpanel/teacher')) {
+      // Sổ Giáo Viên: Visible only to Teacher (Leader/Admin manage)
+      if (currentUser && currentUser.role !== 'teacher' && !isSuperAdmin(currentUser) && currentUser.role !== 'leader') {
+        goto(currentUser.role === 'parent' ? '/cpanel/parent' : '/cpanel/student');
+      }
+    } else if (pathname.startsWith('/cpanel/leader')) {
+      if (currentUser && currentUser.role !== 'leader' && !isSuperAdmin(currentUser)) {
+        goto(currentUser.role === 'teacher' ? '/cpanel/teacher' : (currentUser.role === 'parent' ? '/cpanel/parent' : '/cpanel/student'));
       }
     }
   });

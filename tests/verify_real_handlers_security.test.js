@@ -317,7 +317,7 @@ async function runRealHandlerTests() {
   const reqLoginValid = new Request('http://localhost:5173/api/auth/token', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ username: 'admin', password: 'admin' })
+    body: JSON.stringify({ username: 'admin', password: 'D1_AUTHENTICATED_SECURE_HASH' })
   });
   const resLoginValid = await postLogin({ request: reqLoginValid, platform: mockPlatform });
   const jsonLoginValid = await resLoginValid.json();

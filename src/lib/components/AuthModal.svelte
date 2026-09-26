@@ -254,9 +254,9 @@
                   id="login-id"
                   type="text"
                   bind:value={identifier}
-                  placeholder="baokhiem / admin / msdung / 0901234567..."
+                  placeholder="Tên đăng nhập hoặc số điện thoại..."
                   required
-                  class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                  class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 focus:border-sky-500 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-sky-500"
                 />
                 <span class="absolute right-3 top-2.5 text-sm text-slate-400">👤</span>
               </div>
@@ -271,9 +271,9 @@
                   id="login-pass"
                   type="password"
                   bind:value={password}
-                  placeholder="Mật khẩu của bạn (VD: 123)..."
+                  placeholder="Nhập mật khẩu của bạn..."
                   required
-                  class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                  class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 focus:border-sky-500 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-sky-500"
                 />
                 <span class="absolute right-3 top-2.5 text-sm text-slate-400">🔒</span>
               </div>

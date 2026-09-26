@@ -7,6 +7,17 @@ export const prerender = false;
 // Note: Total 40 questions in 50 minutes strictly follows Ministry of Education & Training (MoET) High School Graduation Exam format from 2025 (Decision 764/QD-BGDDT).
 // The cognitive level breakdown (14 Nhan biet, 14 Thong hieu, 8 Van dung, 4 Van dung cao) is the internal standardized matrix specification of Tieng Anh Co Dung Academy.
 const EXAM_MATRICES = {
+  '5m': {
+    title: 'Bài Kiểm Tra Nhanh 5 Phút (Khởi động đầu giờ)',
+    duration_minutes: 5,
+    total_questions: 5,
+    distribution: {
+      'nhan_biet': 3,
+      'thong_hieu': 2,
+      'van_dung': 0,
+      'van_dung_cao': 0
+    }
+  },
   '15m': {
     title: 'Bài Kiểm Tra 15 Phút Nhanh (Quy chuẩn nội bộ Cô Dung)',
     duration_minutes: 15,
@@ -16,6 +27,17 @@ const EXAM_MATRICES = {
       'thong_hieu': 5,
       'van_dung': 4,
       'van_dung_cao': 0
+    }
+  },
+  '30m': {
+    title: 'Bài Kiểm Tra Giữa Kỳ 30 Phút (Quy chuẩn nội bộ Cô Dung)',
+    duration_minutes: 30,
+    total_questions: 20,
+    distribution: {
+      'nhan_biet': 8,
+      'thong_hieu': 6,
+      'van_dung': 4,
+      'van_dung_cao': 2
     }
   },
   '45m': {

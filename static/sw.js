@@ -67,3 +67,64 @@ self.addEventListener('fetch', (event) => {
     })
   );
 });
+
+// PWA Background Push Event Listener
+self.addEventListener('push', (event) => {
+  let data = {};
+  if (event.data) {
+    try {
+      data = event.data.json();
+    } catch {
+      data = { title: 'Thông Báo Mới', body: event.data.text() };
+    }
+  }
+
+  const title = data.title || 'Tiếng Anh Cô Dung';
+  const options = {
+    body: data.body || 'Bạn có thông báo mới trong hệ thống.',
+    icon: '/icon.svg',
+    badge: '/icon.svg',
+    data: {
+      url: data.url || '/cpanel/notifications',
+      referenceId: data.referenceId
+    }
+  };
+
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+// PWA Notification Click Handler (Deep Link navigation)
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const targetUrl = event.notification.data?.url || '/cpanel/notifications';
+
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if (client.url.includes(targetUrl) && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      if (self.clients.openWindow) {
+        return self.clients.openWindow(targetUrl);
+      }
+    })
+  );
+});
+
+// Message Listener for Leader in-app push simulation (SHOW_LEADER_NOTIFICATION)
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SHOW_LEADER_NOTIFICATION') {
+    const payload = event.data.payload || {};
+    const title = payload.title || 'Báo Cáo Leader';
+    const options = {
+      body: payload.body || 'Cập nhật lịch học và điểm danh mới.',
+      icon: '/icon.svg',
+      badge: '/icon.svg',
+      data: {
+        url: payload.url || '/admin?tab=leader_notifications'
+      }
+    };
+    self.registration.showNotification(title, options);
+  }
+});

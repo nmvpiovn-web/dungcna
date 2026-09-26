@@ -289,3 +289,97 @@ input:focus, select:focus, textarea:focus {
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
+
+
+/* ========================================================================= */
+/* ACADEMIC LEDGER SHARED STATES & ACCESSIBILITY (Primer & GOV.UK Standards) */
+/* ========================================================================= */
+
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.tabular-nums, .tabular-money, .tabular-score {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+/* Skeleton Loading State */
+.academic-loading-skeleton {
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: academicSkeleton 1.5s infinite;
+  border-radius: var(--border-radius-sm);
+}
+
+@keyframes academicSkeleton {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Empty State */
+.academic-empty-state {
+  padding: 3rem 1.5rem;
+  text-align: center;
+  border: 1px dashed var(--border-color);
+  border-radius: var(--border-radius-md);
+  background-color: #ffffff;
+}
+
+.academic-empty-title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text-main);
+  margin-bottom: 0.25rem;
+}
+
+.academic-empty-desc {
+  font-size: 0.8125rem;
+  color: var(--text-sub);
+  max-width: 24rem;
+  margin: 0 auto;
+}
+
+/* Error & Retry State */
+.academic-error-state {
+  padding: 1.5rem;
+  border: 1px solid var(--danger-border);
+  background-color: var(--danger-light);
+  border-radius: var(--border-radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.academic-error-msg {
+  font-size: 0.8125rem;
+  color: var(--danger);
+  font-weight: 500;
+}
+
+.btn-retry {
+  padding: 6px 12px;
+  background-color: #ffffff;
+  border: 1px solid var(--danger-border);
+  border-radius: var(--border-radius-sm);
+  color: var(--danger);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.btn-retry:hover {
+  background-color: #fee2e2;
+}
+
+/* 200% Zoom and High Contrast Safeguards */
+@media (max-width: 640px) {
+  .academic-table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
