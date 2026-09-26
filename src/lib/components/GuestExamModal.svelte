@@ -220,14 +220,10 @@
                   bind:value={selectedGrade}
                   class="w-full p-2.5 rounded-md bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-semibold"
                 >
-                  <option value="lop_6">Lớp 6 (Khởi đầu THCS)</option>
-                  <option value="lop_7">Lớp 7 (Nền tảng THCS)</option>
-                  <option value="lop_8">Lớp 8 (Nâng cao THCS)</option>
-                  <option value="lop_9">Lớp 9 (Luyện thi vào 10)</option>
-                  <option value="lop_10">Lớp 10 (Khởi đầu THPT)</option>
-                  <option value="lop_11">Lớp 11 (Chuyên đề THPT)</option>
+                  <option value="lop_7">Lớp 7 (Nền Tảng THCS - Chuẩn K12)</option>
                   <option value="lop_12">Lớp 12 &amp; Luyện Thi THPT QG / IELTS</option>
                 </select>
+                <p class="text-[10px] text-slate-500 mt-1">Các khối lớp 1–6 và 8–11 đang trong lộ trình thẩm định đề.</p>
               </div>
 
               <div>
@@ -238,10 +234,11 @@
                   class="w-full p-2.5 rounded-md bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-semibold"
                 >
                   <option value="5m">⚡ Khảo Sát Nhanh (5 phút - 5 câu)</option>
-                  <option value="15m">⏱️ Kiểm Tra Cơ Bản (15 phút - 10 câu)</option>
-                  <option value="30m">📋 Đánh Giá Toàn Diện (30 phút - 20 câu)</option>
-                  <option value="45m">🎯 Đề Thi Chuyên Sâu (45 phút - 30 câu)</option>
+                  {#if selectedGrade === 'lop_7'}
+                    <option value="15m">⏱️ Kiểm Tra Toàn Diện (15 phút - 10 câu)</option>
+                  {/if}
                 </select>
+                <p class="text-[10px] text-slate-500 mt-1">Mốc 30m &amp; 45m cần ngân hàng mở rộng đang được biên soạn.</p>
               </div>
             </div>
 

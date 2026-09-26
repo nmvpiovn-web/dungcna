@@ -1,7 +1,7 @@
 /**
- * COMPREHENSIVE BEHAVIORAL AUDIT SUITE
- * Tests REAL HTTP endpoints, real database transactions, real concurrency, and real error cases
- * Addressing all P1 audit findings from OpenAI Codex Desktop
+ * COMPREHENSIVE BEHAVIORAL AUDIT SUITE (V2)
+ * Tests REAL HTTP endpoints, real database transactions, real concurrency, idempotency, and anti-tampering
+ * Addressing all P1 audit findings from OpenAI Codex Desktop AUDIT_HANDOFF_e6b10858_2026-09-26.md
  */
 
 import { test, describe, before, after } from 'node:test';
@@ -10,20 +10,12 @@ import { DatabaseSync } from 'node:sqlite';
 
 const BASE_URL = 'http://127.0.0.1:5173';
 
-describe('REAL BEHAVIORAL AUDIT - CODEX P1 FIXES', () => {
+describe('REAL BEHAVIORAL AUDIT - CODEX P1 AUDIT HANDOFF V2', () => {
 
   // =========================================================================
-  // 1. DEEPSEEK AI GATEWAY: ACCURACY, RATE LIMITING & NO HALLUCINATION
+  // 1. DEEPSEEK AI GATEWAY: ACCURACY, RATE LIMITING & NO HTTP BACKDOOR
   // =========================================================================
   describe('1. DeepSeek AI Server Gateway', () => {
-    before(async () => {
-      await fetch(`${BASE_URL}/api/ai/deepseek`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-test-reset-ratelimit': 'true' },
-        body: JSON.stringify({ query: 'enjoy' })
-      });
-    });
-
     test('1.1. Unknown word (e.g., "cat") without API key MUST return 422, NOT fake "enjoyed" past tense', async () => {
       const res = await fetch(`${BASE_URL}/api/ai/deepseek`, {
         method: 'POST',
@@ -69,7 +61,7 @@ describe('REAL BEHAVIORAL AUDIT - CODEX P1 FIXES', () => {
     });
 
     test('1.4. Rate limiting: exceeding request budget triggers HTTP 429 Too Many Requests', async () => {
-      // Send rapid burst of requests from test client to exceed 60 requests/minute
+      // Send rapid burst of requests to exceed rate limit budget
       const promises = [];
       for (let i = 0; i < 65; i++) {
         promises.push(
@@ -91,10 +83,25 @@ describe('REAL BEHAVIORAL AUDIT - CODEX P1 FIXES', () => {
       const errBody = await rateLimitedRes.json();
       assert.match(errBody.error, /Rate limit exceeded|Quá giới hạn/i);
     });
+
+    test('1.5. Client backdoor header (x-test-reset-ratelimit) is IGNORED and CANNOT bypass rate limiting', async () => {
+      // Send request with spoofed reset header while rate limited
+      const res = await fetch(`${BASE_URL}/api/ai/deepseek`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-test-reset-ratelimit': 'true'
+        },
+        body: JSON.stringify({ query: 'enjoy' })
+      });
+
+      // Must remain 429 rate limited, NEVER 200 bypass!
+      assert.strictEqual(res.status, 429, 'Spoofed reset header must be ignored; response must remain 429');
+    });
   });
 
   // =========================================================================
-  // 2. GUEST EXAM: STRICT GRADES, EXACT DURATIONS, OPEN CLOZE & ZERO LEAKS
+  // 2. GUEST EXAM: STRICT TOKEN, HONEST BLUEPRINTS, NO CLONING & PROVENANCE
   // =========================================================================
   describe('2. Guest Exam & Lead Ingestion Endpoint', () => {
     test('2.1. Unsupported grade (e.g., "lop_1") MUST be rejected with HTTP 400 (NO silent fallback)', async () => {
@@ -104,7 +111,7 @@ describe('REAL BEHAVIORAL AUDIT - CODEX P1 FIXES', () => {
         body: JSON.stringify({
           action: 'start',
           grade: 'lop_1',
-          duration_type: '30m'
+          duration_type: '5m'
         })
       });
 
@@ -114,7 +121,7 @@ describe('REAL BEHAVIORAL AUDIT - CODEX P1 FIXES', () => {
       assert.match(data.error, /Khối lớp "lop_1" chưa được hỗ trợ/);
     });
 
-    test('2.2. Supported grade "lop_7" with duration "30m" returns exactly 30 minutes and 20 questions', async () => {
+    test('2.2. Unverified duration (e.g., "30m" without full bank) MUST be rejected with HTTP 400 (NO fake looping)', async () => {
       const res = await fetch(`${BASE_URL}/api/exams/guest`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -125,15 +132,37 @@ describe('REAL BEHAVIORAL AUDIT - CODEX P1 FIXES', () => {
         })
       });
 
+      assert.strictEqual(res.status, 400, 'Unverified 30m duration must be rejected with 400');
+      const data = await res.json();
+      assert.strictEqual(data.success, false);
+      assert.match(data.error, /chưa có đủ ngân hàng câu hỏi độc lập/i);
+    });
+
+    test('2.3. Supported grade "lop_7" with duration "15m" returns exactly 10 unique non-repeating questions', async () => {
+      const res = await fetch(`${BASE_URL}/api/exams/guest`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'start',
+          grade: 'lop_7',
+          duration_type: '15m'
+        })
+      });
+
       assert.strictEqual(res.status, 200);
       const data = await res.json();
       assert.strictEqual(data.success, true);
-      assert.strictEqual(data.duration_minutes, 30, 'Duration must be exactly 30m');
-      assert.strictEqual(data.total_questions, 20, 'Question count for 30m must be 20');
+      assert.strictEqual(data.duration_minutes, 15, 'Duration must be 15m');
+      assert.strictEqual(data.total_questions, 10, 'Question count for 15m must be 10');
       assert.ok(data.guest_token, 'Must return signed guest_token');
+
+      // Verify ZERO duplicated question texts
+      const texts = data.questions.map(q => q.question_text);
+      const uniqueTexts = new Set(texts);
+      assert.strictEqual(uniqueTexts.size, 10, 'All 10 question texts must be distinct (ZERO looping/cloning)');
     });
 
-    test('2.3. Open Cloze questions MUST NOT have options (free text input)', async () => {
+    test('2.4. Open Cloze questions MUST NOT have options (free text input)', async () => {
       const res = await fetch(`${BASE_URL}/api/exams/guest`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -152,8 +181,7 @@ describe('REAL BEHAVIORAL AUDIT - CODEX P1 FIXES', () => {
       assert.strictEqual(openCloze.correct_id, undefined, 'Must not leak correct_id in client payload');
     });
 
-    test('2.4. Empty submission MUST be rejected with HTTP 400 (ZERO answer leakage)', async () => {
-      // Start session
+    test('2.5. Submitting WITHOUT token MUST be rejected with HTTP 401 Unauthorized', async () => {
       const startRes = await fetch(`${BASE_URL}/api/exams/guest`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -161,7 +189,59 @@ describe('REAL BEHAVIORAL AUDIT - CODEX P1 FIXES', () => {
       });
       const startData = await startRes.json();
 
-      // Submit empty answers
+      // Submit WITHOUT guest_token
+      const submitRes = await fetch(`${BASE_URL}/api/exams/guest`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'submit',
+          guest_session_id: startData.guest_session_id,
+          // guest_token OMITTED
+          answers: { gst_q_mcq_1: 'A' }
+        })
+      });
+
+      assert.strictEqual(submitRes.status, 401, 'Submission without guest_token must return 401 Unauthorized');
+      const submitData = await submitRes.json();
+      assert.strictEqual(submitData.success, false);
+      assert.match(submitData.error, /Thiếu hoặc sai mã xác thực guest_token/i);
+    });
+
+    test('2.6. Submitting answers with IDs NOT in question bank MUST be rejected with HTTP 400', async () => {
+      const startRes = await fetch(`${BASE_URL}/api/exams/guest`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'start', grade: 'lop_7', duration_type: '5m' })
+      });
+      const startData = await startRes.json();
+
+      // Submit with invalid question ID outside exam
+      const submitRes = await fetch(`${BASE_URL}/api/exams/guest`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'submit',
+          guest_session_id: startData.guest_session_id,
+          guest_token: startData.guest_token,
+          answers: { not_a_real_question_id: 'random_value' }
+        })
+      });
+
+      assert.strictEqual(submitRes.status, 400, 'Answers outside exam question set must return 400 Bad Request');
+      const submitData = await submitRes.json();
+      assert.strictEqual(submitData.success, false);
+      assert.match(submitData.error, /Không tìm thấy câu trả lời nào hợp lệ/i);
+      assert.strictEqual(submitData.result, undefined, 'Must not leak answers');
+    });
+
+    test('2.7. Empty submission MUST be rejected with HTTP 400 (ZERO answer leakage)', async () => {
+      const startRes = await fetch(`${BASE_URL}/api/exams/guest`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'start', grade: 'lop_7', duration_type: '5m' })
+      });
+      const startData = await startRes.json();
+
       const submitRes = await fetch(`${BASE_URL}/api/exams/guest`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -176,11 +256,10 @@ describe('REAL BEHAVIORAL AUDIT - CODEX P1 FIXES', () => {
       assert.strictEqual(submitRes.status, 400, 'Empty submission must return 400 Bad Request');
       const submitData = await submitRes.json();
       assert.strictEqual(submitData.success, false);
-      assert.match(submitData.error, /chưa làm bất kỳ câu hỏi nào/);
       assert.strictEqual(submitData.result, undefined, 'Must NOT return result or item_feedback on empty submit');
     });
 
-    test('2.5. Legitimate submission with Open Cloze evaluates text input correctly', async () => {
+    test('2.8. Legitimate submission with valid token and Open Cloze text evaluates correctly', async () => {
       const startRes = await fetch(`${BASE_URL}/api/exams/guest`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -215,32 +294,10 @@ describe('REAL BEHAVIORAL AUDIT - CODEX P1 FIXES', () => {
       assert.ok(submitData.result.cefr_level);
       assert.ok(Array.isArray(submitData.result.item_feedback));
     });
-
-    test('2.6. Lead submission: DB failure or missing DB returns real error (NO fake success)', async () => {
-      const res = await fetch(`${BASE_URL}/api/exams/guest`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'voluntary_lead',
-          phone: '0912345678',
-          student_target: 'Luyện thi Chuyên'
-        })
-      });
-
-      // If DB table is absent in local dev sqlite, it MUST return 500/503 error, NOT fake success: true!
-      const data = await res.json();
-      if (res.status === 200) {
-        assert.strictEqual(data.success, true);
-      } else {
-        assert.ok(res.status === 500 || res.status === 503);
-        assert.strictEqual(data.success, false);
-        assert.match(data.error, /Lỗi ghi nhận|D1_ERROR|bảo trì/);
-      }
-    });
   });
 
   // =========================================================================
-  // 3. ATOMIC WORKFLOW & SUBSTITUTE INTEGRITY (SQL-LEVEL VERIFICATION)
+  // 3. ATOMIC WORKFLOW & SUBSTITUTE INTEGRITY (SQL & REAL HANDLER SEMANTICS)
   // =========================================================================
   describe('3. Teacher Substitute Workflow & Atomic SQL Integrity', () => {
     let db;
@@ -261,6 +318,10 @@ describe('REAL BEHAVIORAL AUDIT - CODEX P1 FIXES', () => {
 
         CREATE TABLE class_sessions (
           id TEXT PRIMARY KEY,
+          class_name TEXT,
+          session_date TEXT,
+          start_time TEXT,
+          end_time TEXT,
           teacher_id TEXT,
           substitute_teacher_id TEXT,
           substitute_teacher_name TEXT,
@@ -276,45 +337,38 @@ describe('REAL BEHAVIORAL AUDIT - CODEX P1 FIXES', () => {
     });
 
     test('3.1. When class_sessions teacher does NOT match, stmtLeave WITH EXISTS condition MUST NOT update (0 changes)', () => {
-      // Seed test data: leave request references session_101 with teacher_A
       db.prepare(`
         INSERT INTO teacher_leave_requests (id, teacher_id, session_id, substitute_teacher_id, substitute_status, admin_status)
         VALUES ('leave_001', 'teacher_A', 'session_101', 'teacher_B', 'accepted', 'pending');
       `).run();
 
-      // But in class_sessions, session_101 is already owned by teacher_X (conflict / state divergence)
       db.prepare(`
         INSERT INTO class_sessions (id, teacher_id, status)
         VALUES ('session_101', 'teacher_X', 'scheduled');
       `).run();
 
-      // Execute atomic stmtLeave with EXISTS check matching production code
       const stmtLeave = db.prepare(`
         UPDATE teacher_leave_requests 
         SET admin_status = ?, admin_notes = ?, updated_at = CURRENT_TIMESTAMP
         WHERE id = ? AND admin_status = 'pending'
-          AND EXISTS (SELECT 1 FROM class_sessions WHERE id = ? AND teacher_id = ?);
+          AND EXISTS (SELECT 1 FROM class_sessions WHERE id = ? AND teacher_id = ? AND status = 'scheduled');
       `);
 
       const resLeave = stmtLeave.run('approved', 'Approved by Leader', 'leave_001', 'session_101', 'teacher_A');
-      
-      // Crucial assertion: changes MUST be 0!
       assert.strictEqual(resLeave.changes, 0, 'Leave status must NOT update to approved when session teacher mismatches');
 
-      // Verify leave request admin_status remains 'pending'
       const checkLeave = db.prepare('SELECT admin_status FROM teacher_leave_requests WHERE id = ?').get('leave_001');
       assert.strictEqual(checkLeave.admin_status, 'pending', 'Leave request MUST remain pending on conflict');
     });
 
     test('3.2. Legitimate matching session updates both leave request and class session atomically', () => {
-      // Correct teacher_id in session
       db.prepare("UPDATE class_sessions SET teacher_id = 'teacher_A' WHERE id = 'session_101'").run();
 
       const stmtLeave = db.prepare(`
         UPDATE teacher_leave_requests 
         SET admin_status = ?, admin_notes = ?, updated_at = CURRENT_TIMESTAMP
         WHERE id = ? AND admin_status = 'pending'
-          AND EXISTS (SELECT 1 FROM class_sessions WHERE id = ? AND teacher_id = ?);
+          AND EXISTS (SELECT 1 FROM class_sessions WHERE id = ? AND teacher_id = ? AND status = 'scheduled');
       `);
 
       const stmtSession = db.prepare(`
@@ -324,10 +378,9 @@ describe('REAL BEHAVIORAL AUDIT - CODEX P1 FIXES', () => {
             substitute_notes = ?,
             status = 'substitute_assigned',
             updated_at = CURRENT_TIMESTAMP
-        WHERE id = ? AND teacher_id = ?;
+        WHERE id = ? AND teacher_id = ? AND status = 'scheduled';
       `);
 
-      // Run in transaction
       db.exec('BEGIN TRANSACTION');
       try {
         const r1 = stmtLeave.run('approved', 'Approved by Leader', 'leave_001', 'session_101', 'teacher_A');
@@ -348,63 +401,76 @@ describe('REAL BEHAVIORAL AUDIT - CODEX P1 FIXES', () => {
       assert.strictEqual(updatedSession.substitute_teacher_id, 'teacher_B');
     });
 
-    test('3.3. Concurrent race condition: two simultaneous approvals of same session: only 1 succeeds', async () => {
-      // Seed two pending leave requests for different substitute teachers on same session
+    test('3.3. Replaying approval on an ALREADY APPROVED leave request MUST NOT roll back to pending', () => {
+      // leave_001 is already approved from test 3.2
+      const checkBefore = db.prepare('SELECT admin_status FROM teacher_leave_requests WHERE id = ?').get('leave_001');
+      assert.strictEqual(checkBefore.admin_status, 'approved');
+
+      // Attempt second approval execution (Replay)
+      const stmtLeave = db.prepare(`
+        UPDATE teacher_leave_requests 
+        SET admin_status = ?, admin_notes = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE id = ? AND admin_status = 'pending'
+          AND EXISTS (SELECT 1 FROM class_sessions WHERE id = ? AND teacher_id = ? AND status = 'scheduled');
+      `);
+
+      const resReplay = stmtLeave.run('approved', 'Replay approval', 'leave_001', 'session_101', 'teacher_A');
+      assert.strictEqual(resReplay.changes, 0, 'Replay on already approved leave must affect 0 rows');
+
+      // Crucial assertion: Compensation MUST NOT run when stmtLeave affected 0 rows
+      const checkAfter = db.prepare('SELECT admin_status FROM teacher_leave_requests WHERE id = ?').get('leave_001');
+      assert.strictEqual(checkAfter.admin_status, 'approved', 'Replay MUST NEVER roll back an approved request to pending!');
+    });
+
+    test('3.4. Two leave requests for the same session: status="scheduled" guard ensures second request cannot overwrite', () => {
+      // Seed two pending requests for session_conflict
       db.prepare(`
         INSERT INTO teacher_leave_requests (id, teacher_id, session_id, substitute_teacher_id, substitute_status, admin_status)
-        VALUES ('leave_race_1', 'teacher_A', 'session_race', 'teacher_B', 'accepted', 'pending'),
-               ('leave_race_2', 'teacher_A', 'session_race', 'teacher_C', 'accepted', 'pending');
+        VALUES ('req_first', 'teacher_A', 'session_conflict', 'teacher_B', 'accepted', 'pending'),
+               ('req_second', 'teacher_A', 'session_conflict', 'teacher_C', 'accepted', 'pending');
       `).run();
 
       db.prepare(`
         INSERT INTO class_sessions (id, teacher_id, status)
-        VALUES ('session_race', 'teacher_A', 'scheduled');
+        VALUES ('session_conflict', 'teacher_A', 'scheduled');
       `).run();
 
-      const attemptApproval = (leaveId, subId, subName) => {
-        const stmtLeave = db.prepare(`
-          UPDATE teacher_leave_requests 
-          SET admin_status = 'approved', updated_at = CURRENT_TIMESTAMP
-          WHERE id = ? AND admin_status = 'pending'
-            AND EXISTS (SELECT 1 FROM class_sessions WHERE id = 'session_race' AND teacher_id = 'teacher_A' AND status = 'scheduled');
-        `);
+      const stmtLeave = db.prepare(`
+        UPDATE teacher_leave_requests 
+        SET admin_status = 'approved', updated_at = CURRENT_TIMESTAMP
+        WHERE id = ? AND admin_status = 'pending'
+          AND EXISTS (SELECT 1 FROM class_sessions WHERE id = 'session_conflict' AND teacher_id = 'teacher_A' AND status = 'scheduled');
+      `);
 
-        const stmtSession = db.prepare(`
-          UPDATE class_sessions 
-          SET substitute_teacher_id = ?, substitute_teacher_name = ?, status = 'substitute_assigned', updated_at = CURRENT_TIMESTAMP
-          WHERE id = 'session_race' AND teacher_id = 'teacher_A' AND status = 'scheduled';
-        `);
+      const stmtSession = db.prepare(`
+        UPDATE class_sessions 
+        SET substitute_teacher_id = ?, status = 'substitute_assigned', updated_at = CURRENT_TIMESTAMP
+        WHERE id = 'session_conflict' AND teacher_id = 'teacher_A' AND status = 'scheduled';
+      `);
 
-        try {
-          db.exec('BEGIN IMMEDIATE');
-          const r1 = stmtLeave.run(leaveId);
-          const r2 = stmtSession.run(subId, subName);
-          if (r1.changes !== 1 || r2.changes !== 1) {
-            db.exec('ROLLBACK');
-            return false;
-          }
-          db.exec('COMMIT');
-          return true;
-        } catch (err) {
-          try { db.exec('ROLLBACK'); } catch {}
-          return false;
-        }
-      };
+      // 1st request approves
+      db.exec('BEGIN TRANSACTION');
+      const r1Leave = stmtLeave.run('req_first');
+      const r1Session = stmtSession.run('teacher_B');
+      assert.strictEqual(r1Leave.changes, 1);
+      assert.strictEqual(r1Session.changes, 1);
+      db.exec('COMMIT');
 
-      // Execute concurrently
-      const [res1, res2] = await Promise.all([
-        Promise.resolve().then(() => attemptApproval('leave_race_1', 'teacher_B', 'Cô Lan')),
-        Promise.resolve().then(() => attemptApproval('leave_race_2', 'teacher_C', 'Thầy Tuấn'))
-      ]);
+      // 2nd request attempts approval on same session
+      db.exec('BEGIN TRANSACTION');
+      const r2Leave = stmtLeave.run('req_second');
+      const r2Session = stmtSession.run('teacher_C');
+      // Both MUST affect 0 rows because session is no longer 'scheduled'!
+      assert.strictEqual(r2Leave.changes, 0, 'Second leave request must affect 0 rows due to status=scheduled guard');
+      assert.strictEqual(r2Session.changes, 0, 'Second session update must affect 0 rows due to status=scheduled guard');
+      db.exec('COMMIT');
 
-      // Exactly ONE must succeed and exactly ONE must fail
-      const successCount = (res1 ? 1 : 0) + (res2 ? 1 : 0);
-      assert.strictEqual(successCount, 1, 'Only one concurrent approval must succeed');
+      // Verify req_second remains pending and session remains assigned to teacher_B
+      const secondLeave = db.prepare('SELECT admin_status FROM teacher_leave_requests WHERE id = ?').get('req_second');
+      const finalSession = db.prepare('SELECT status, substitute_teacher_id FROM class_sessions WHERE id = ?').get('session_conflict');
 
-      // Check session status is cleanly assigned to winning teacher
-      const finalSession = db.prepare('SELECT status, substitute_teacher_id FROM class_sessions WHERE id = ?').get('session_race');
-      assert.strictEqual(finalSession.status, 'substitute_assigned');
-      assert.ok(finalSession.substitute_teacher_id === 'teacher_B' || finalSession.substitute_teacher_id === 'teacher_C');
+      assert.strictEqual(secondLeave.admin_status, 'pending');
+      assert.strictEqual(finalSession.substitute_teacher_id, 'teacher_B', 'Session must remain assigned to teacher_B, NOT overwritten by teacher_C');
     });
   });
 

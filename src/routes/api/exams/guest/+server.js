@@ -3,21 +3,27 @@ import { randomUUID } from 'node:crypto';
 
 export const prerender = false;
 
-// In-memory or D1-backed guest sessions store with 2-hour TTL expiration
+// In-memory or D1-backed guest sessions store with TTL expiration
 const GUEST_SESSIONS = new Map();
 
-// Supported K12 Grades
+// Supported Curated Grade & Duration Matrix
+// Strictly declare what is verified. ZERO cloning, ZERO fake looping.
 const SUPPORTED_GRADES = {
-  lop_6: 'Lớp 6 (THCS)',
-  lop_7: 'Lớp 7 (THCS)',
-  lop_8: 'Lớp 8 (THCS)',
-  lop_9: 'Lớp 9 (Chuyển Cấp)',
-  lop_10: 'Lớp 10 (THPT)',
-  lop_11: 'Lớp 11 (THPT)',
+  lop_7: 'Lớp 7 (Nền Tảng THCS)',
   lop_12: 'Lớp 12 (Thi THPT QG / IELTS)'
 };
 
-// Rich question banks for supported grades with MCQ, Listening, and Open Cloze
+const SUPPORTED_CONFIGS = {
+  lop_7: {
+    '5m': 5,
+    '15m': 10
+  },
+  lop_12: {
+    '5m': 5
+  }
+};
+
+// Verified Question Banks with 100% Unique, Non-Duplicated Questions
 const GUEST_QUESTION_BANK = {
   lop_7: [
     {
@@ -213,17 +219,19 @@ const GUEST_QUESTION_BANK = {
   ]
 };
 
-// Replicate question banks for other grades by tailoring levels
-['lop_6', 'lop_8', 'lop_9', 'lop_10', 'lop_11'].forEach(gradeKey => {
-  if (!GUEST_QUESTION_BANK[gradeKey]) {
-    GUEST_QUESTION_BANK[gradeKey] = GUEST_QUESTION_BANK['lop_7'].map((q, i) => ({
-      ...q,
-      id: `gst_q_${gradeKey}_${i + 1}`
-    }));
+// Automatic cleanup of expired guest sessions
+function pruneExpiredSessions() {
+  const now = Date.now();
+  for (const [id, s] of GUEST_SESSIONS.entries()) {
+    if (now > s.expiresAt) {
+      GUEST_SESSIONS.delete(id);
+    }
   }
-});
+}
 
 export async function POST({ request, platform }) {
+  pruneExpiredSessions();
+
   let body = {};
   try {
     body = await request.json();
@@ -237,54 +245,35 @@ export async function POST({ request, platform }) {
   if (action === 'start') {
     const { grade = 'lop_7', duration_type = '5m', guest_role = 'student', candidate_name = 'Khách Trải Nghiệm' } = body;
 
-    // Strict validation of grade - ZERO silent wrong grade fallback!
+    // Strict validation of grade
     if (!SUPPORTED_GRADES[grade]) {
       return json({
         success: false,
-        error: `Khối lớp "${grade}" chưa được hỗ trợ đề thi thử chuẩn hóa. Hiện hệ thống hỗ trợ các khối từ Lớp 6 đến Lớp 12.`,
+        error: `Khối lớp "${grade}" chưa được hỗ trợ đề thi thử chuẩn hóa. Hiện hệ thống đã phát hành đề cho: Lớp 7 (THCS) và Lớp 12 (THPT). Các khối khác đang trong lộ trình thẩm định chuyên môn.`,
         supported_grades: SUPPORTED_GRADES
       }, { status: 400 });
     }
 
-    // Strict validation of duration
-    let durationMinutes = 5;
-    let targetQuestionCount = 5;
+    // Strict validation of duration for this grade - ZERO question looping or cloning!
+    const availableDurations = SUPPORTED_CONFIGS[grade];
+    const targetQuestionCount = availableDurations ? availableDurations[duration_type] : null;
 
-    if (duration_type === '45m') {
-      durationMinutes = 45;
-      targetQuestionCount = 30;
-    } else if (duration_type === '30m') {
-      durationMinutes = 30;
-      targetQuestionCount = 20;
-    } else if (duration_type === '15m') {
-      durationMinutes = 15;
-      targetQuestionCount = 10;
-    } else if (duration_type === '5m') {
-      durationMinutes = 5;
-      targetQuestionCount = 5;
-    } else {
+    if (!targetQuestionCount) {
       return json({
         success: false,
-        error: `Thời lượng "${duration_type}" không hợp lệ. Hệ thống hỗ trợ các mốc 5m, 15m, 30m, 45m.`
+        error: `Khối lớp ${SUPPORTED_GRADES[grade]} hiện hỗ trợ các mốc thời lượng: ${Object.keys(availableDurations || {}).join(', ')}. Mốc "${duration_type}" chưa có đủ ngân hàng câu hỏi độc lập được phê duyệt.`
       }, { status: 400 });
     }
 
+    const durationMinutes = duration_type === '15m' ? 15 : 5;
     const guestSessionId = `gst_${Date.now()}_${randomUUID().substring(0, 8)}`;
     const guestToken = `gtok_${randomUUID()}`;
     const startTime = Date.now();
     const expiresAt = startTime + (durationMinutes + 10) * 60 * 1000; // duration + 10m buffer
 
-    // Select questions
+    // Select exact non-repeating unique questions
     const questionPool = GUEST_QUESTION_BANK[grade];
-    // Fill up to target count if pool has fewer by looping cleanly
-    const selectedQuestions = [];
-    for (let i = 0; i < targetQuestionCount; i++) {
-      const q = questionPool[i % questionPool.length];
-      selectedQuestions.push({
-        ...q,
-        id: `${q.id}_idx${i + 1}`
-      });
-    }
+    const selectedQuestions = questionPool.slice(0, targetQuestionCount);
 
     // Save server-side session (strictly storing answers and token on server only!)
     const sessionRecord = {
@@ -342,9 +331,9 @@ export async function POST({ request, platform }) {
       return json({ success: false, error: 'Phiên thi thử không tồn tại hoặc đã hết hạn (2h TTL).' }, { status: 404 });
     }
 
-    // Token binding check (prevent unauthorized submission or answer sniffing)
-    if (session.token && guest_token && session.token !== guest_token) {
-      return json({ success: false, error: 'Mã xác thực phiên thi (guest_token) không khớp.' }, { status: 403 });
+    // MANDATORY TOKEN AUTHENTICATION (Strict matching, never bypass if token missing)
+    if (!guest_token || !session.token || session.token !== guest_token) {
+      return json({ success: false, error: 'Unauthorized: Thiếu hoặc sai mã xác thực guest_token của phiên thi.' }, { status: 401 });
     }
 
     // Deadline check (Reject submissions after expiry)
@@ -352,16 +341,16 @@ export async function POST({ request, platform }) {
       return json({ success: false, error: 'Hết giờ làm bài: Bài thi đã quá thời gian quy định.' }, { status: 403 });
     }
 
-    // Reject empty submission (Prevent answer leakage by submitting empty payload)
-    const submittedKeys = Object.keys(answers || {}).filter(k => {
-      const val = answers[k];
-      return val !== null && val !== undefined && String(val).trim() !== '';
-    });
+    // VALIDATE ANSWERS: Must contain at least one question ID genuinely belonging to this session
+    const sessionQuestionIds = new Set(session.questions.map(q => q.id));
+    const validSubmittedEntries = Object.entries(answers || {}).filter(([k, v]) => 
+      sessionQuestionIds.has(k) && v !== null && v !== undefined && String(v).trim() !== ''
+    );
 
-    if (submittedKeys.length === 0) {
+    if (validSubmittedEntries.length === 0) {
       return json({
         success: false,
-        error: 'Bài nộp không hợp lệ: Thí sinh chưa làm bất kỳ câu hỏi nào. Vui lòng hoàn thành ít nhất một câu trước khi nộp bài.'
+        error: 'Bài nộp không hợp lệ: Không tìm thấy câu trả lời nào hợp lệ thuộc danh sách câu hỏi của đề thi này.'
       }, { status: 400 });
     }
 

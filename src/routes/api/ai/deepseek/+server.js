@@ -184,10 +184,6 @@ export async function POST({ request, platform, getClientAddress }) {
     clientIp = '127.0.0.1';
   }
 
-  if (request.headers.get('x-test-reset-ratelimit') === 'true') {
-    ipRequestCounts.delete(clientIp);
-  }
-
   const rateCheck = checkRateLimit(clientIp);
   if (!rateCheck.allowed) {
     return json({

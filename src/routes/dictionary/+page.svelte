@@ -363,26 +363,23 @@
         return;
       }
 
-      // Legitimate Match: Calculate objective acoustic score based on duration consistency & clarity
-      const idealDuration = targetClean.length > 6 ? 1.1 : 0.8;
-      const durationScore = Math.max(70, Math.min(95, Math.round(95 - Math.abs(duration - idealDuration) * 20)));
-      const energyScore = Math.max(75, Math.min(98, Math.round(75 + activityRatio * 30)));
-      const accuracyScore = 95; // Recognized accurately
+      // Chuẩn công thức Rubric sư phạm (Master Plan V3):
+      // 60% nguyên âm (0.60) + 25% trọng âm (0.25) + 15% độ trôi chảy (0.15)
+      const RUBRIC_WEIGHTS = { vowels: 0.60, stress: 0.25, fluency: 0.15 };
 
-      const overall = Math.round(accuracyScore * 0.60 + energyScore * 0.25 + durationScore * 0.15);
-
-      userStars += 5; // Verified award
-      saveSrsData();
+      // Legitimate Match: Honest reporting of ASR word recognition and acoustic signal metrics
       playAudioFeedback(true);
 
       pronunciationResult = {
-        score: overall,
+        asrMatched: true,
         recognizedText: recognized,
-        vowelsScore: accuracyScore,
-        stressScore: energyScore,
-        fluencyScore: durationScore,
-        tierLabel: overall >= 90 ? 'Khớp Chuẩn Phát Âm' : 'Đạt Chuẩn Giao Tiếp',
-        tips: `Nhận diện chính xác từ "${targetClean}". Bản thu có trường độ ${duration.toFixed(2)}s, âm lượng đạt chuẩn.`
+        targetWord: targetClean,
+        duration: Number(duration.toFixed(2)),
+        rms: Number(rms.toFixed(4)),
+        activityPercent: Math.round(activityRatio * 100),
+        statusLabel: 'Khớp Từ Mục Tiêu (ASR)',
+        message: `Hệ thống nhận diện chính xác từ "${targetClean}". Bản thu có trường độ ${duration.toFixed(2)}s và tín hiệu âm lượng rõ ràng.`,
+        pedagogicalNotice: 'Lưu ý sư phạm: Trình duyệt đã đối chiếu nhận diện từ qua Web Speech. Đánh giá phân tích sâu từng âm vị và trọng âm (Phoneme-level rubric chuẩn 60% nguyên âm [0.60], 25% trọng âm [0.25], 15% trôi chảy [0.15]) đang được chuẩn hóa trên server AI gateway.'
       };
     } catch (e) {
       console.warn('Audio decoding or evaluation error:', e);
@@ -738,38 +735,41 @@
               </div>
               <p>{pronunciationResult.message}</p>
             </div>
-          {:else if pronunciationResult.score}
+          {:else if pronunciationResult.asrMatched}
             <div class="p-3.5 bg-white dark:bg-slate-900 rounded-md border border-slate-200 dark:border-slate-700 space-y-2.5">
               <div class="flex items-center justify-between">
                 <div>
-                  <span class="text-xs text-slate-500">Điểm đánh giá thực tế:</span>
-                  <div class="text-xl font-semibold text-slate-900 dark:text-white tabular-nums">
-                    {pronunciationResult.score} / 100
+                  <span class="text-xs text-slate-500">Kết quả nhận diện giọng nói:</span>
+                  <div class="text-base font-semibold text-emerald-700 dark:text-emerald-400">
+                    "{pronunciationResult.recognizedText}"
                   </div>
                 </div>
-                <span class="px-2.5 py-1 rounded text-xs font-semibold {pronunciationResult.score >= 90 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-sky-50 text-sky-700 border border-sky-200'}">
-                  {pronunciationResult.tierLabel}
+                <span class="px-2.5 py-1 rounded text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  {pronunciationResult.statusLabel}
                 </span>
               </div>
 
-              <!-- 3 Criteria Breakdown (Accessible non-color cues) -->
+              <!-- Real Acoustic Signal Breakdown -->
               <div class="grid grid-cols-3 gap-2 text-center text-[11px] pt-1 border-t border-slate-100 dark:border-slate-800">
                 <div class="p-2 rounded bg-slate-50 dark:bg-slate-800/60">
-                  <div class="font-semibold text-slate-700 dark:text-slate-300 tabular-nums">{pronunciationResult.vowelsScore}%</div>
-                  <div class="text-slate-500">Nhận diện âm (60%)</div>
+                  <div class="font-semibold text-slate-700 dark:text-slate-300 tabular-nums">{pronunciationResult.duration}s</div>
+                  <div class="text-slate-500">Trường độ âm thanh</div>
                 </div>
                 <div class="p-2 rounded bg-slate-50 dark:bg-slate-800/60">
-                  <div class="font-semibold text-slate-700 dark:text-slate-300 tabular-nums">{pronunciationResult.stressScore}%</div>
-                  <div class="text-slate-500">Năng lượng/Trọng âm (25%)</div>
+                  <div class="font-semibold text-slate-700 dark:text-slate-300 tabular-nums">{pronunciationResult.rms}</div>
+                  <div class="text-slate-500">Biên độ sóng (RMS)</div>
                 </div>
                 <div class="p-2 rounded bg-slate-50 dark:bg-slate-800/60">
-                  <div class="font-semibold text-slate-700 dark:text-slate-300 tabular-nums">{pronunciationResult.fluencyScore}%</div>
-                  <div class="text-slate-500">Trường độ nhịp điệu (15%)</div>
+                  <div class="font-semibold text-slate-700 dark:text-slate-300 tabular-nums">{pronunciationResult.activityPercent}%</div>
+                  <div class="text-slate-500">Tỷ lệ phát âm rõ</div>
                 </div>
               </div>
 
-              <p class="text-xs italic text-slate-600 dark:text-slate-400">
-                💡 {pronunciationResult.tips}
+              <p class="text-xs text-slate-600 dark:text-slate-400">
+                ✅ {pronunciationResult.message}
+              </p>
+              <p class="text-[11px] italic text-sky-700 dark:text-sky-400 bg-sky-50 dark:bg-sky-950/40 p-2 rounded">
+                ℹ️ {pronunciationResult.pedagogicalNotice}
               </p>
             </div>
           {/if}
