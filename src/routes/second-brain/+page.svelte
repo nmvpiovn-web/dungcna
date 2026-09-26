@@ -75,11 +75,54 @@
   }
 
   let isNoteLoading = $state(false);
+  let isSearching = $state(false);
+  let searchTimer = null;
+
+  function onSearchChange(e) {
+    searchQuery = e.target.value;
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => {
+      fetchVaultList();
+    }, 300);
+  }
+
+  function setFolder(folderId) {
+    selectedFolder = folderId;
+    fetchVaultList();
+  }
+
+  async function fetchVaultList() {
+    const token = getAuthToken();
+    if (!token) return;
+    try {
+      isSearching = true;
+      let url = `/api/second-brain?limit=200`;
+      const q = searchQuery.trim();
+      if (q) url += `&q=${encodeURIComponent(q)}`;
+      if (selectedFolder !== 'all') url += `&folder=${encodeURIComponent(selectedFolder)}`;
+
+      const res = await fetch(url, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success && Array.isArray(data.notes)) {
+        // Merge notes preserving already fetched full content
+        vaultNotes = data.notes.map(n => {
+          const cached = vaultNotes.find(c => c.id === n.id);
+          return cached && cached.content ? { ...n, ...cached, snippet: n.snippet } : n;
+        });
+      }
+    } catch (err) {
+      console.error('Error querying vault from server:', err);
+    } finally {
+      isSearching = false;
+    }
+  }
 
   async function fetchNoteDetail(noteId) {
     if (!noteId) return;
     const existing = vaultNotes.find(n => n.id === noteId);
-    if (existing && existing.content && existing.wikilinks) return;
+    if (existing && existing.content && existing.wikilinks && existing.backlinks) return;
 
     const token = getAuthToken();
     if (!token) return;
@@ -91,7 +134,13 @@
       });
       const data = await res.json();
       if (data.success && data.note) {
-        vaultNotes = vaultNotes.map(n => n.id === noteId ? { ...n, ...data.note } : n);
+        const found = vaultNotes.some(n => n.id === data.note.id);
+        if (found) {
+          vaultNotes = vaultNotes.map(n => n.id === data.note.id ? { ...n, ...data.note } : n);
+        } else {
+          // Prepend newly fetched note if it was outside initial list
+          vaultNotes = [data.note, ...vaultNotes];
+        }
       }
     } catch (e) {
       console.error('Failed to load note content:', e);
@@ -115,7 +164,6 @@
   let folders = $derived.by(() => {
     if (vaultFolders.length > 0) return vaultFolders;
     return [
-      { id: '07_GOOGLE_DRIVE_LIBRARY', name: '📄 07. Tài liệu Google Drive', count: vaultNotes.filter(n => n.folder === '07_GOOGLE_DRIVE_LIBRARY').length },
       { id: 'all', name: '📂 Toàn Bộ Tri Thức', count: vaultNotes.length },
       { id: 'Root', name: '🏠 Bản Đồ Tổng (MOC)', count: vaultNotes.filter(n => n.folder === 'Root').length },
       { id: '01_CURRICULUM_GDPT', name: '📚 01. Chương Trình GDPT', count: vaultNotes.filter(n => n.folder && n.folder.includes('01')).length },
@@ -123,24 +171,13 @@
       { id: '03_VOCABULARY_ATLAS', name: '🔤 03. Từ Vựng & Phonics', count: vaultNotes.filter(n => n.folder && n.folder.includes('03')).length },
       { id: '04_EXAMS_AND_QUESTION_BANK', name: '📝 04. Ngân Hàng Đề Thi', count: vaultNotes.filter(n => n.folder && n.folder.includes('04')).length },
       { id: '05_TEACHING_SOP_AND_PEDAGOGY', name: '👩‍🏫 05. Sư Phạm & SOP', count: vaultNotes.filter(n => n.folder && n.folder.includes('05')).length },
-      { id: '06_CROSS_DISCIPLINARY_SYNAPSES', name: '⚡ 06. Mạng Nơ-ron & Synapses', count: vaultNotes.filter(n => n.folder && n.folder.includes('06')).length }
+      { id: '06_CROSS_DISCIPLINARY_SYNAPSES', name: '⚡ 06. Mạng Nơ-ron & Synapses', count: vaultNotes.filter(n => n.folder && n.folder.includes('06')).length },
+      { id: '07_GOOGLE_DRIVE_LIBRARY', name: '📄 07. Tài liệu Google Drive', count: vaultNotes.filter(n => n.folder === '07_GOOGLE_DRIVE_LIBRARY').length }
     ];
   });
 
   let filteredNotes = $derived.by(() => {
-    let list = vaultNotes;
-    if (selectedFolder !== 'all') {
-      list = list.filter(n => n.folder === selectedFolder || n.folder.includes(selectedFolder));
-    }
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase().trim();
-      list = list.filter(n => 
-        (n.title || '').toLowerCase().includes(q) ||
-        (n.content || '').toLowerCase().includes(q) ||
-        (Array.isArray(n.tags) && n.tags.some(t => t.toLowerCase().includes(q)))
-      );
-    }
-    return list;
+    return vaultNotes;
   });
 
   let currentNote = $derived.by(() => {
@@ -150,6 +187,9 @@
 
   let currentBacklinks = $derived.by(() => {
     if (!currentNote) return [];
+    if (currentNote.backlinks && currentNote.backlinks.length > 0) {
+      return currentNote.backlinks;
+    }
     return vaultNotes.filter(n => 
       n.id !== currentNote.id && 
       Array.isArray(n.wikilinks) && n.wikilinks.some(wl => wl.target === currentNote.id || wl.target === currentNote.title)
@@ -374,14 +414,21 @@
       <div class="relative">
         <input
           type="text"
-          bind:value={searchQuery}
-          placeholder="Tìm khái niệm, ngữ pháp, đề thi..."
+          value={searchQuery}
+          oninput={onSearchChange}
+          placeholder="Tìm khái niệm, ngữ pháp, đề thi (FTS5)..."
           class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-2xl pl-10 pr-8 py-2.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-teal-500 shadow-sm"
         />
-        <span class="absolute left-3.5 top-2.5 text-sm text-slate-400">🔍</span>
+        <span class="absolute left-3.5 top-2.5 text-sm text-slate-400">
+          {#if isSearching}
+            <span class="inline-block animate-spin">⏳</span>
+          {:else}
+            🔍
+          {/if}
+        </span>
         {#if searchQuery}
           <button
-            onclick={() => searchQuery = ''}
+            onclick={() => { searchQuery = ''; fetchVaultList(); }}
             class="absolute right-3 top-2.5 text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
           >
             ✕
@@ -394,7 +441,7 @@
         {#each folders as f}
           <button
             type="button"
-            onclick={() => selectedFolder = f.id}
+            onclick={() => setFolder(f.id)}
             class="px-2.5 py-1.5 rounded-xl text-[11px] font-bold whitespace-nowrap transition-all flex items-center gap-1 border {selectedFolder === f.id ? 'bg-teal-600 text-white border-teal-500 shadow-sm' : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800'}"
           >
             <span>{f.name}</span>
@@ -437,10 +484,16 @@
               <div class="flex items-center gap-2 text-[10px] text-slate-500 dark:text-slate-400">
                 <span class="truncate">📁 {note.folder}</span>
                 <span>•</span>
-                <span>{note.wikilinks.length} liên kết</span>
+                <span>{note.wikilinks ? note.wikilinks.length : 0} liên kết</span>
               </div>
 
-              {#if note.tags.length > 0}
+              {#if note.snippet}
+                <div class="text-[11px] text-slate-600 dark:text-slate-300 mt-1.5 line-clamp-2 bg-amber-500/10 dark:bg-amber-950/30 p-1.5 rounded-lg border border-amber-500/20 leading-relaxed font-mono">
+                  {@html note.snippet}
+                </div>
+              {/if}
+
+              {#if note.tags && note.tags.length > 0}
                 <div class="flex items-center gap-1 mt-2 flex-wrap">
                   {#each note.tags.slice(0, 3) as tag}
                     <span class="text-[9px] px-1.5 py-0.5 rounded-md bg-slate-200/60 dark:bg-slate-800 text-slate-600 dark:text-slate-400">

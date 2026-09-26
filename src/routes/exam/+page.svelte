@@ -322,10 +322,17 @@
       else if (randomDuration === 45) apiType = '45m';
       else if (randomDuration === 5) apiType = '15m';
 
-      const gradeQuery = randomGrade > 0 ? `lop_${randomGrade}` : 'all';
+      const gradeQuery = randomGrade > 0 ? `lop_${randomGrade}` : (apiType === 'thpt_qg' ? 'lop_12' : 'lop_7');
       const token = getAuthToken();
-      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-      const res = await fetch(`/api/exams/random?type=${apiType}&grade=${gradeQuery}`, { headers });
+      const headers = {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      };
+      const res = await fetch(`/api/exams/random?action=create`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ action: 'create', exam_type: apiType, grade: gradeQuery })
+      });
       const dataJson = await res.json();
 
       if (dataJson.success && dataJson.items && dataJson.items.length > 0) {
@@ -547,6 +554,7 @@
           ...(getAuthToken() ? { 'Authorization': `Bearer ${getAuthToken()}` } : {})
         },
         body: JSON.stringify({
+          action: 'submit',
           instance_id: currentExam.instance_id,
           answers: userAnswers,
           duration_seconds: (currentExam.duration_minutes * 60) - timeLeftSeconds

@@ -34,7 +34,7 @@ export async function GET({ request, url, platform }) {
   const query = (url.searchParams.get('q') || '').trim();
   const folder = url.searchParams.get('folder') || 'all';
   const noteId = url.searchParams.get('id') || '';
-  const limit = Math.min(100, Math.max(1, parseInt(url.searchParams.get('limit') || '50', 10)));
+  const limit = Math.min(500, Math.max(1, parseInt(url.searchParams.get('limit') || '200', 10)));
   const offset = Math.max(0, parseInt(url.searchParams.get('offset') || '0', 10));
 
   // 3. Cloudflare D1 Query
