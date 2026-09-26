@@ -34,49 +34,45 @@ function parseD1Profile(row) {
 let tableEnsured = false;
 async function ensureTeacherProfilesTable(db) {
   if (!db || tableEnsured) return;
-  try {
-    await db.prepare(`
-      CREATE TABLE IF NOT EXISTS teacher_profiles (
-        teacher_id TEXT PRIMARY KEY,
-        teacher_name TEXT NOT NULL,
-        username TEXT NOT NULL,
-        role_type TEXT NOT NULL,
-        role_title TEXT NOT NULL,
-        salary_type TEXT NOT NULL,
-        base_salary_vnd REAL DEFAULT 0,
-        rate_per_session_vnd REAL DEFAULT 0,
-        total_sessions_taught INTEGER DEFAULT 0,
-        leader_rating REAL DEFAULT 5.0,
-        leader_appraisal TEXT,
-        bonuses TEXT,
-        private_reminders TEXT,
-        updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-      )
-    `).run();
+  await db.prepare(`
+    CREATE TABLE IF NOT EXISTS teacher_profiles (
+      teacher_id TEXT PRIMARY KEY,
+      teacher_name TEXT NOT NULL,
+      username TEXT NOT NULL,
+      role_type TEXT NOT NULL,
+      role_title TEXT NOT NULL,
+      salary_type TEXT NOT NULL,
+      base_salary_vnd REAL DEFAULT 0,
+      rate_per_session_vnd REAL DEFAULT 0,
+      total_sessions_taught INTEGER DEFAULT 0,
+      leader_rating REAL DEFAULT 5.0,
+      leader_appraisal TEXT,
+      bonuses TEXT,
+      private_reminders TEXT,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+  `).run();
 
-    // Check if table has records, if not seed initial profiles
-    const countRow = await db.prepare('SELECT COUNT(*) as cnt FROM teacher_profiles').first();
-    if (!countRow || countRow.cnt === 0) {
-      const initial = getAllTeacherProfiles();
-      for (const p of initial) {
-        await db.prepare(`
-          INSERT INTO teacher_profiles (
-            teacher_id, teacher_name, username, role_type, role_title,
-            salary_type, base_salary_vnd, rate_per_session_vnd, total_sessions_taught,
-            leader_rating, leader_appraisal, bonuses, private_reminders
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `).bind(
-          p.teacher_id, p.teacher_name, p.username, p.role_type, p.role_title,
-          p.salary_type, p.base_salary_vnd || 0, p.rate_per_session_vnd || 0, p.total_sessions_taught || 0,
-          p.leader_rating || 5.0, p.leader_appraisal || '',
-          JSON.stringify(p.bonuses || []), JSON.stringify(p.private_reminders || [])
-        ).run();
-      }
+  // Check if table has records, if not seed initial profiles
+  const countRow = await db.prepare('SELECT COUNT(*) as cnt FROM teacher_profiles').first();
+  if (!countRow || countRow.cnt === 0) {
+    const initial = getAllTeacherProfiles();
+    for (const p of initial) {
+      await db.prepare(`
+        INSERT INTO teacher_profiles (
+          teacher_id, teacher_name, username, role_type, role_title,
+          salary_type, base_salary_vnd, rate_per_session_vnd, total_sessions_taught,
+          leader_rating, leader_appraisal, bonuses, private_reminders
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).bind(
+        p.teacher_id, p.teacher_name, p.username, p.role_type, p.role_title,
+        p.salary_type, p.base_salary_vnd || 0, p.rate_per_session_vnd || 0, p.total_sessions_taught || 0,
+        p.leader_rating || 5.0, p.leader_appraisal || '',
+        JSON.stringify(p.bonuses || []), JSON.stringify(p.private_reminders || [])
+      ).run();
     }
-    tableEnsured = true;
-  } catch (e) {
-    console.error('Error ensuring teacher_profiles table:', e);
   }
+  tableEnsured = true;
 }
 
 function isManager(user) {

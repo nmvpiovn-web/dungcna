@@ -18,7 +18,8 @@
     scanScheduleAndAttendanceForLeader,
     scanTuitionDueAlerts,
     SUPERADMIN_EMAILS,
-    verifySessionWithServer
+    verifySessionWithServer,
+    hasPersistedToken
   } from '$lib/unifiedStore';
   import AuthModal from '$lib/components/AuthModal.svelte';
   import ProfileEditModal from '$lib/components/ProfileEditModal.svelte';
@@ -89,11 +90,8 @@
       leaderUnreadCount = getUnreadLeaderNotificationCount();
     }, 2000);
 
-    // Enforce login and verify session integrity with server
-    if (!isLoggedIn()) {
-      showAuthModal = true;
-      canDismiss = false;
-    } else {
+    // Verify session integrity with server on startup / reload
+    if (hasPersistedToken()) {
       verifySessionWithServer().then(res => {
         if (!res.valid) {
           currentUser = null;
@@ -101,8 +99,13 @@
           canDismiss = false;
         } else {
           currentUser = res.user;
+          showAuthModal = false;
         }
       });
+    } else {
+      currentUser = null;
+      showAuthModal = true;
+      canDismiss = false;
     }
 
     const handleAuthEvent = (e) => {

@@ -143,6 +143,7 @@ export async function verifySessionWithServer() {
       inMemorySessionVerified = true;
       inMemoryVerifiedUser = data.user;
       localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(data.user));
+      window.dispatchEvent(new CustomEvent('tienganh:auth-change', { detail: data.user }));
       return { valid: true, user: data.user };
     } else {
       logoutUser();
@@ -154,17 +155,31 @@ export async function verifySessionWithServer() {
   }
 }
 
+export function hasPersistedToken() {
+  if (typeof window === 'undefined') return false;
+  const token = getAuthToken();
+  if (!token) return false;
+  const parts = token.split('.');
+  return parts.length === 2 && /^[0-9a-f]{64}$/i.test(parts[1]);
+}
+
 export function setCurrentUser(user, token = null) {
   if (typeof window !== 'undefined') {
-    if (user && token) {
+    const effectiveToken = token || getAuthToken();
+    const parts = effectiveToken ? effectiveToken.split('.') : [];
+    const isValidToken = parts.length === 2 && /^[0-9a-f]{64}$/i.test(parts[1]);
+
+    if (user && isValidToken) {
       inMemorySessionVerified = true;
       inMemoryVerifiedUser = user;
       localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(user));
-      localStorage.setItem('tienganh_auth_token', token);
+      if (token) {
+        localStorage.setItem('tienganh_auth_token', token);
+      }
     } else {
       logoutUser();
     }
-    window.dispatchEvent(new CustomEvent('tienganh:auth-change', { detail: user }));
+    window.dispatchEvent(new CustomEvent('tienganh:auth-change', { detail: inMemoryVerifiedUser }));
   }
   return user;
 }
@@ -215,7 +230,7 @@ export async function loginUser(identifier, password) {
         sessionStorage.setItem('tienganh_auth_token', apiData.token);
         document.cookie = `session_token=${encodeURIComponent(apiData.token)}; path=/; max-age=${7 * 86400}; SameSite=Lax`;
       }
-      setCurrentUser(apiData.user);
+      setCurrentUser(apiData.user, apiData.token);
       return { success: true, user: apiData.user, token: apiData.token };
     } else {
       return { success: false, error: apiData?.error || 'Tên đăng nhập hoặc mật khẩu không chính xác!' };
