@@ -1,5 +1,5 @@
 import { json } from '@sveltejs/kit';
-import { verifyServerAuth, isStaffUser, SUPERADMIN_USERNAMES } from '$lib/server/auth';
+import { verifyServerAuth, isStaffUser, SUPERADMIN_USERNAMES } from '../../../../lib/server/auth.js';
 
 export const prerender = false;
 
@@ -419,8 +419,35 @@ export async function POST({ request, platform }) {
         }
 
         // ATOMIC BATCH: Both leave request status and class session must update together in a single transaction
-        // Both statements strictly guard on status = 'scheduled' to prevent race overwrites
-        const stmtLeave = db.prepare(`
+        // Both statements strictly guard on status = 'scheduled' and NOT EXISTS time overlap to eliminate post-commit compensation
+        const subId = leave.substitute_teacher_id || '';
+
+        const stmtLeave = subId ? db.prepare(`
+          UPDATE teacher_leave_requests 
+          SET admin_status = ?, admin_notes = ?, updated_at = CURRENT_TIMESTAMP
+          WHERE id = ? AND admin_status = 'pending'
+            AND EXISTS (
+              SELECT 1 FROM class_sessions 
+              WHERE id = ? AND teacher_id = ? AND status = 'scheduled'
+                AND NOT EXISTS (
+                  SELECT 1 FROM class_sessions s2 
+                  WHERE (s2.teacher_id = ? OR s2.substitute_teacher_id = ?)
+                    AND s2.session_date = class_sessions.session_date
+                    AND s2.id != class_sessions.id
+                    AND s2.status != 'cancelled'
+                    AND s2.start_time < class_sessions.end_time 
+                    AND s2.end_time > class_sessions.start_time
+                )
+            );
+        `).bind(
+          targetDecision, 
+          admin_notes || '', 
+          leave_id, 
+          leave.session_id, 
+          leave.teacher_id,
+          subId,
+          subId
+        ) : db.prepare(`
           UPDATE teacher_leave_requests 
           SET admin_status = ?, admin_notes = ?, updated_at = CURRENT_TIMESTAMP
           WHERE id = ? AND admin_status = 'pending'
@@ -429,8 +456,6 @@ export async function POST({ request, platform }) {
               WHERE id = ? AND teacher_id = ? AND status = 'scheduled'
             );
         `).bind(targetDecision, admin_notes || '', leave_id, leave.session_id, leave.teacher_id);
-
-        const subId = leave.substitute_teacher_id || '';
         const stmtSession = subId ? db.prepare(`
           UPDATE class_sessions 
           SET substitute_teacher_id = ?, 

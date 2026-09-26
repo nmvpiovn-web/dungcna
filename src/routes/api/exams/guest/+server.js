@@ -13,109 +13,116 @@ const GUEST_SESSIONS = globalThis.__GUEST_EXAM_SESSIONS__;
 // Helper to ensure D1 table exists for true multi-worker Cloudflare persistence
 async function ensureD1SessionTable(db) {
   if (!db) return;
-  try {
-    await db.prepare(`
-      CREATE TABLE IF NOT EXISTS guest_exam_sessions (
-        id TEXT PRIMARY KEY,
-        token TEXT NOT NULL,
-        grade TEXT NOT NULL,
-        candidate_name TEXT,
-        duration_minutes INTEGER NOT NULL,
-        start_time INTEGER NOT NULL,
-        expires_at INTEGER NOT NULL,
-        questions_json TEXT NOT NULL,
-        status TEXT NOT NULL DEFAULT 'in_progress',
-        answers_json TEXT,
-        result_json TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-      );
-    `).run();
-  } catch (err) {
-    console.warn('Could not create guest_exam_sessions table:', err);
-  }
+  await db.prepare(`
+    CREATE TABLE IF NOT EXISTS guest_exam_sessions (
+      id TEXT PRIMARY KEY,
+      token TEXT NOT NULL,
+      grade TEXT NOT NULL,
+      candidate_name TEXT,
+      duration_minutes INTEGER NOT NULL,
+      start_time INTEGER NOT NULL,
+      expires_at INTEGER NOT NULL,
+      questions_json TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'in_progress',
+      answers_json TEXT,
+      result_json TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+  `).run();
 }
 
 async function saveGuestSession(db, session) {
-  GUEST_SESSIONS.set(session.id, session);
   if (db) {
     await ensureD1SessionTable(db);
-    try {
-      await db.prepare(`
-        INSERT OR REPLACE INTO guest_exam_sessions 
-        (id, token, grade, candidate_name, duration_minutes, start_time, expires_at, questions_json, status, answers_json, result_json)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
-      `).bind(
-        session.id,
-        session.token,
-        session.grade,
-        session.candidate_name || '',
-        session.duration_minutes,
-        session.startTime,
-        session.expiresAt,
-        JSON.stringify(session.questions),
-        session.status,
-        session.answers ? JSON.stringify(session.answers) : null,
-        session.result ? JSON.stringify(session.result) : null
-      ).run();
-    } catch (e) {
-      console.warn('Error saving session to D1:', e);
+    const dbRes = await db.prepare(`
+      INSERT OR REPLACE INTO guest_exam_sessions 
+      (id, token, grade, candidate_name, duration_minutes, start_time, expires_at, questions_json, status, answers_json, result_json)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+    `).bind(
+      session.id,
+      session.token,
+      session.grade,
+      session.candidate_name || '',
+      session.duration_minutes,
+      session.startTime,
+      session.expiresAt,
+      JSON.stringify(session.questions),
+      session.status,
+      session.answers ? JSON.stringify(session.answers) : null,
+      session.result ? JSON.stringify(session.result) : null
+    ).run();
+
+    if (dbRes && dbRes.meta && typeof dbRes.meta.changes === 'number' && dbRes.meta.changes < 1) {
+      throw new Error('D1 session insert failed: 0 rows changed');
     }
+    // Only update memory cache AFTER durable database write succeeds
+    GUEST_SESSIONS.set(session.id, session);
+  } else {
+    // Only in local development environment without DB binding
+    GUEST_SESSIONS.set(session.id, session);
   }
 }
 
 async function getGuestSession(db, sessionId) {
-  let session = GUEST_SESSIONS.get(sessionId);
-  if (session) return session;
-
   if (db) {
+    // Authoritative primary source: query D1 database first
     await ensureD1SessionTable(db);
-    try {
-      const row = await db.prepare('SELECT * FROM guest_exam_sessions WHERE id = ?').bind(sessionId).first();
-      if (row) {
-        session = {
-          id: row.id,
-          token: row.token,
-          grade: row.grade,
-          candidate_name: row.candidate_name,
-          duration_minutes: row.duration_minutes,
-          startTime: row.start_time,
-          expiresAt: row.expires_at,
-          questions: JSON.parse(row.questions_json),
-          status: row.status,
-          answers: row.answers_json ? JSON.parse(row.answers_json) : null,
-          result: row.result_json ? JSON.parse(row.result_json) : null
-        };
-        GUEST_SESSIONS.set(sessionId, session);
-        return session;
-      }
-    } catch (e) {
-      console.warn('Error querying session from D1:', e);
+    const row = await db.prepare('SELECT * FROM guest_exam_sessions WHERE id = ?').bind(sessionId).first();
+    if (row) {
+      const session = {
+        id: row.id,
+        token: row.token,
+        grade: row.grade,
+        candidate_name: row.candidate_name,
+        duration_minutes: row.duration_minutes,
+        startTime: row.start_time,
+        expiresAt: row.expires_at,
+        questions: JSON.parse(row.questions_json),
+        status: row.status,
+        answers: row.answers_json ? JSON.parse(row.answers_json) : null,
+        result: row.result_json ? JSON.parse(row.result_json) : null
+      };
+      GUEST_SESSIONS.set(sessionId, session);
+      return session;
     }
+    // Not found in DB -> return null (fail-closed, never fallback to stale in-memory state)
+    return null;
   }
-  return null;
+  return GUEST_SESSIONS.get(sessionId) || null;
 }
 
-async function completeGuestSession(db, sessionId, answers, result) {
+async function completeGuestSession(db, sessionId, answers, result, now = Date.now()) {
+  if (db) {
+    // Atomic CAS Update with deadline check in WHERE condition
+    const res = await db.prepare(`
+      UPDATE guest_exam_sessions 
+      SET status = 'completed', answers_json = ?, result_json = ?, updated_at = CURRENT_TIMESTAMP
+      WHERE id = ? AND status = 'in_progress' AND expires_at >= ?;
+    `).bind(JSON.stringify(answers), JSON.stringify(result), sessionId, now).run();
+
+    const changes = res?.meta?.changes ?? 0;
+    if (changes === 1) {
+      // Only commit to local memory cache if database write strictly won the CAS race
+      const session = GUEST_SESSIONS.get(sessionId);
+      if (session) {
+        session.status = 'completed';
+        session.answers = answers;
+        session.result = result;
+      }
+    }
+    return changes;
+  }
+
+  // Development environment without DB binding
   const session = GUEST_SESSIONS.get(sessionId);
-  if (session) {
+  if (session && session.status === 'in_progress' && session.expiresAt >= now) {
     session.status = 'completed';
     session.answers = answers;
     session.result = result;
+    return 1;
   }
-  if (db) {
-    try {
-      const res = await db.prepare(`
-        UPDATE guest_exam_sessions 
-        SET status = 'completed', answers_json = ?, result_json = ?, updated_at = CURRENT_TIMESTAMP
-        WHERE id = ? AND status = 'in_progress';
-      `).bind(JSON.stringify(answers), JSON.stringify(result), sessionId).run();
-      return res?.meta?.changes ?? 1;
-    } catch (e) {
-      console.warn('Error updating session in D1:', e);
-    }
-  }
-  return 1;
+  return 0;
 }
 
 // Supported Curated Grade & Duration Matrix
@@ -331,17 +338,18 @@ const GUEST_QUESTION_BANK = {
   ]
 };
 
-// Automatic cleanup of expired guest sessions
+// Automatic cleanup of expired guest sessions (Retention TTL: 2 hours after exam expiry)
 async function pruneExpiredSessions(db) {
-  const now = Date.now();
+  const RETENTION_TTL_MS = 2 * 60 * 60 * 1000; // 2 hours
+  const cutoff = Date.now() - RETENTION_TTL_MS;
   for (const [id, s] of GUEST_SESSIONS.entries()) {
-    if (now > s.expiresAt) {
+    if (cutoff > s.expiresAt) {
       GUEST_SESSIONS.delete(id);
     }
   }
   if (db) {
     try {
-      await db.prepare('DELETE FROM guest_exam_sessions WHERE expires_at < ?').bind(now).run();
+      await db.prepare('DELETE FROM guest_exam_sessions WHERE expires_at < ?').bind(cutoff).run();
     } catch {}
   }
 }
@@ -408,7 +416,15 @@ export async function POST({ request, platform }) {
       score: null
     };
 
-    await saveGuestSession(platform?.env?.DB, sessionRecord);
+    try {
+      await saveGuestSession(platform?.env?.DB, sessionRecord);
+    } catch (saveErr) {
+      console.error('Failed to persist guest session to D1:', saveErr);
+      return json({
+        success: false,
+        error: `Lỗi khởi tạo phiên thi (Fail-Closed): Không thể lưu trữ phiên làm bài vào cơ sở dữ liệu (${saveErr.message}). Vui lòng thử lại.`
+      }, { status: 500 });
+    }
 
     // Build client payload: STRICTLY OMIT correct_id, correct_text, and explanation!
     const clientQuestions = selectedQuestions.map((q, idx) => ({
@@ -443,7 +459,17 @@ export async function POST({ request, platform }) {
       return json({ success: false, error: 'Thiếu guest_session_id lượt thi.' }, { status: 400 });
     }
 
-    const session = await getGuestSession(platform?.env?.DB, guest_session_id);
+    let session;
+    try {
+      session = await getGuestSession(platform?.env?.DB, guest_session_id);
+    } catch (dbReadErr) {
+      console.error('Failed to read guest session from D1:', dbReadErr);
+      return json({
+        success: false,
+        error: `Lỗi truy vấn phiên thi (Fail-Closed): Không thể đọc dữ liệu từ cơ sở dữ liệu (${dbReadErr.message}).`
+      }, { status: 500 });
+    }
+
     if (!session) {
       return json({ success: false, error: 'Phiên thi thử không tồn tại hoặc đã hết hạn (2h TTL).' }, { status: 404 });
     }
@@ -574,13 +600,55 @@ export async function POST({ request, platform }) {
       item_feedback: itemFeedback
     };
 
-    await completeGuestSession(platform?.env?.DB, guest_session_id, answers, result);
+    let changes = 0;
+    try {
+      changes = await completeGuestSession(platform?.env?.DB, guest_session_id, answers, result, Date.now());
+    } catch (dbWriteErr) {
+      console.error('Failed to complete guest session in D1:', dbWriteErr);
+      return json({
+        success: false,
+        error: `Lỗi ghi nhận kết quả thi (Fail-Closed): Cơ sở dữ liệu không thể hoàn tất lưu điểm (${dbWriteErr.message}).`
+      }, { status: 500 });
+    }
+
+    if (changes === 1) {
+      return json({
+        success: true,
+        message: 'Chấm điểm bài test hoàn tất!',
+        result
+      });
+    }
+
+    // CAS Update returned 0 changes:
+    // Either another concurrent worker completed it, or it expired at write-time.
+    // Query authoritative state from database:
+    try {
+      const winningSession = await getGuestSession(platform?.env?.DB, guest_session_id);
+      if (winningSession) {
+        if (winningSession.status === 'completed' && winningSession.result) {
+          // Return the committed winning result, NEVER return our local different result!
+          return json({
+            success: true,
+            message: 'Bài thi đã được ghi nhận hoàn tất bởi lượt nộp trước đó.',
+            result: winningSession.result,
+            concurrent_resolution: true
+          });
+        }
+        if (Date.now() > winningSession.expiresAt) {
+          return json({
+            success: false,
+            error: 'Hết giờ làm bài: Bài thi đã quá thời gian quy định tại thời điểm ghi nhận.'
+          }, { status: 403 });
+        }
+      }
+    } catch (recheckErr) {
+      console.warn('Could not recheck winning session:', recheckErr);
+    }
 
     return json({
-      success: true,
-      message: 'Chấm điểm bài test hoàn tất!',
-      result
-    });
+      success: false,
+      error: 'Xung đột ghi nhận bài thi: Phiên thi đã được hoàn thành hoặc không thể cập nhật (changes = 0).'
+    }, { status: 409 });
   }
 
   // 3. ACTION: VOLUNTARY LEAD SUBMISSION (Strictly verifies DB write)
