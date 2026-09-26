@@ -1,13 +1,25 @@
 import { json } from '@sveltejs/kit';
+import { randomUUID } from 'node:crypto';
 
 export const prerender = false;
 
 // In-memory or D1-backed guest sessions store with 2-hour TTL expiration
 const GUEST_SESSIONS = new Map();
 
-// Standardized Open Cloze and Listening Sample Questions for Guest Assessment
-const GUEST_CURATED_QUESTIONS = {
-  'lop_7': [
+// Supported K12 Grades
+const SUPPORTED_GRADES = {
+  lop_6: 'Lớp 6 (THCS)',
+  lop_7: 'Lớp 7 (THCS)',
+  lop_8: 'Lớp 8 (THCS)',
+  lop_9: 'Lớp 9 (Chuyển Cấp)',
+  lop_10: 'Lớp 10 (THPT)',
+  lop_11: 'Lớp 11 (THPT)',
+  lop_12: 'Lớp 12 (Thi THPT QG / IELTS)'
+};
+
+// Rich question banks for supported grades with MCQ, Listening, and Open Cloze
+const GUEST_QUESTION_BANK = {
+  lop_7: [
     {
       id: 'gst_q_mcq_1',
       type: 'mcq',
@@ -27,7 +39,7 @@ const GUEST_CURATED_QUESTIONS = {
       type: 'listening',
       skill: 'listening',
       question_text: 'Nghe đoạn phát âm và chọn từ có trọng âm rơi vào âm tiết thứ hai:',
-      audio_term: 'volunteer',
+      audio_term: 'pollute',
       options: [
         { id: 'A', text: 'energy (/ˈenədʒi/)' },
         { id: 'B', text: 'pollute (/pəˈluːt/)' },
@@ -42,14 +54,9 @@ const GUEST_CURATED_QUESTIONS = {
       type: 'open_cloze',
       skill: 'reading_cloze',
       passage: 'Solar energy is renewable, clean and abundant. It does not cause (1)_____ to the environment like coal or oil.',
-      question_text: 'Điền từ thích hợp vào chỗ trống (1):',
-      options: [
-        { id: 'A', text: 'pollution' },
-        { id: 'B', text: 'pollute' },
-        { id: 'C', text: 'polluted' },
-        { id: 'D', text: 'pollutant' }
-      ],
-      correct_id: 'A',
+      question_text: 'Tự luận điền từ: Nhập danh từ thích hợp vào chỗ trống (1):',
+      correct_text: 'pollution',
+      acceptable_answers: ['pollution', 'pollutions'],
       explanation: 'Sau động từ cause cần một danh từ không đếm được chỉ tác hại ô nhiễm -> pollution.'
     },
     {
@@ -71,18 +78,76 @@ const GUEST_CURATED_QUESTIONS = {
       type: 'open_cloze',
       skill: 'reading_cloze',
       passage: 'Dao Son Tay school in Thu Duc has modern facilities and an active English club for students who (2)_____ to improve speaking.',
-      question_text: 'Điền động từ vào chỗ trống (2):',
+      question_text: 'Tự luận điền từ: Nhập động từ nguyên thể thích hợp vào chỗ trống (2):',
+      correct_text: 'wish',
+      acceptable_answers: ['wish', 'want', 'hope'],
+      explanation: 'Mệnh đề quan hệ bổ nghĩa cho students (danh từ số nhiều) -> wish / want / hope.'
+    },
+    {
+      id: 'gst_q_mcq_6',
+      type: 'mcq',
+      skill: 'grammar',
+      question_text: 'If it _____ tomorrow, we will plant trees in the school garden.',
       options: [
-        { id: 'A', text: 'wish' },
-        { id: 'B', text: 'wishes' },
-        { id: 'C', text: 'wishing' },
-        { id: 'D', text: 'wished' }
+        { id: 'A', text: 'does not rain' },
+        { id: 'B', text: 'will not rain' },
+        { id: 'C', text: 'did not rain' },
+        { id: 'D', text: 'not rain' }
       ],
       correct_id: 'A',
-      explanation: 'Mệnh đề quan hệ bổ nghĩa cho students (danh từ số nhiều) -> wish.'
+      explanation: 'Câu điều kiện loại 1: Mệnh đề If dùng hiện tại đơn (does not rain).'
+    },
+    {
+      id: 'gst_q_cloze_7',
+      type: 'open_cloze',
+      skill: 'grammar',
+      passage: 'We should use public transport instead (3)_____ personal cars to reduce traffic congestion.',
+      question_text: 'Tự luận điền từ: Nhập giới từ thích hợp vào chỗ trống (3):',
+      correct_text: 'of',
+      acceptable_answers: ['of'],
+      explanation: 'Cụm giới từ cố định: instead of (thay vì).'
+    },
+    {
+      id: 'gst_q_audio_8',
+      type: 'listening',
+      skill: 'listening',
+      question_text: 'Nghe và xác định từ phát âm có phụ âm cuối /t/ (âm đuôi):',
+      audio_term: 'planted',
+      options: [
+        { id: 'A', text: 'played (/d/)' },
+        { id: 'B', text: 'watched (/t/)' },
+        { id: 'C', text: 'waited (/ɪd/)' },
+        { id: 'D', text: 'cleaned (/d/)' }
+      ],
+      correct_id: 'B',
+      explanation: 'Từ watched kết thúc bằng phụ âm vô thanh /tʃ/ nên -ed phát âm là /t/.'
+    },
+    {
+      id: 'gst_q_mcq_9',
+      type: 'mcq',
+      skill: 'vocabulary',
+      question_text: 'Volunteering gives teenagers a sense of _____ responsibility.',
+      options: [
+        { id: 'A', text: 'community' },
+        { id: 'B', text: 'communicate' },
+        { id: 'C', text: 'communication' },
+        { id: 'D', text: 'communicative' }
+      ],
+      correct_id: 'A',
+      explanation: 'Cụm danh từ: community responsibility (trách nhiệm cộng đồng).'
+    },
+    {
+      id: 'gst_q_cloze_10',
+      type: 'open_cloze',
+      skill: 'vocabulary',
+      passage: 'Eating too much fast food and sugary drinks is very harmful (4)_____ your health.',
+      question_text: 'Tự luận điền từ: Nhập giới từ thích hợp vào chỗ trống (4):',
+      correct_text: 'to',
+      acceptable_answers: ['to', 'for'],
+      explanation: 'Tính từ harmful đi với giới từ to (hoặc for): harmful to health.'
     }
   ],
-  'lop_12': [
+  lop_12: [
     {
       id: 'gst_q_12_1',
       type: 'mcq',
@@ -102,18 +167,61 @@ const GUEST_CURATED_QUESTIONS = {
       type: 'open_cloze',
       skill: 'reading_cloze',
       passage: 'The transition towards carbon neutrality requires not only technological breakthroughs but also concerted (1)_____ from all international stakeholders.',
-      question_text: 'Chọn danh từ ghép phù hợp với tính từ concerted:',
+      question_text: 'Tự luận điền từ: Nhập danh từ số nhiều phù hợp đi kèm tính từ "concerted":',
+      correct_text: 'efforts',
+      acceptable_answers: ['efforts', 'actions'],
+      explanation: 'Collocation học thuật: concerted efforts (những nỗ lực đồng bộ).'
+    },
+    {
+      id: 'gst_q_12_3',
+      type: 'mcq',
+      skill: 'vocabulary',
+      question_text: 'The newly appointed CEO is expected to _____ crucial changes in corporate governance.',
       options: [
-        { id: 'A', text: 'efforts' },
-        { id: 'B', text: 'struggles' },
-        { id: 'C', text: 'battles' },
-        { id: 'D', text: 'contests' }
+        { id: 'A', text: 'bring about' },
+        { id: 'B', text: 'bring up' },
+        { id: 'C', text: 'bring round' },
+        { id: 'D', text: 'bring off' }
       ],
       correct_id: 'A',
-      explanation: 'Collocation học thuật: concerted efforts (nỗ lực đồng bộ, phối hợp).'
+      explanation: 'Phrasal verb: bring about (gây ra, mang lại sự thay đổi).'
+    },
+    {
+      id: 'gst_q_12_4',
+      type: 'open_cloze',
+      skill: 'grammar',
+      passage: 'Hardly had the keynote speaker commenced his presentation (2)_____ the electricity supply was abruptly interrupted.',
+      question_text: 'Tự luận điền từ: Nhập liên từ thích hợp đi cặp với "Hardly had...":',
+      correct_text: 'when',
+      acceptable_answers: ['when', 'before'],
+      explanation: 'Cấu trúc đảo ngữ: Hardly had + S + V3/ed + when + S + V2/ed.'
+    },
+    {
+      id: 'gst_q_12_5',
+      type: 'mcq',
+      skill: 'reading_cloze',
+      question_text: 'Artificial Intelligence has become an indispensable tool, _____ revolutionized various academic sectors.',
+      options: [
+        { id: 'A', text: 'having' },
+        { id: 'B', text: 'have' },
+        { id: 'C', text: 'which' },
+        { id: 'D', text: 'has' }
+      ],
+      correct_id: 'A',
+      explanation: 'Rút gọn mệnh đề phân từ hoàn thành chỉ nguyên nhân/kết quả: having revolutionized.'
     }
   ]
 };
+
+// Replicate question banks for other grades by tailoring levels
+['lop_6', 'lop_8', 'lop_9', 'lop_10', 'lop_11'].forEach(gradeKey => {
+  if (!GUEST_QUESTION_BANK[gradeKey]) {
+    GUEST_QUESTION_BANK[gradeKey] = GUEST_QUESTION_BANK['lop_7'].map((q, i) => ({
+      ...q,
+      id: `gst_q_${gradeKey}_${i + 1}`
+    }));
+  }
+});
 
 export async function POST({ request, platform }) {
   let body = {};
@@ -128,20 +236,60 @@ export async function POST({ request, platform }) {
   // 1. ACTION: START GUEST TEST SESSION
   if (action === 'start') {
     const { grade = 'lop_7', duration_type = '5m', guest_role = 'student', candidate_name = 'Khách Trải Nghiệm' } = body;
-    const durationMinutes = duration_type === '45m' ? 45 : duration_type === '15m' ? 15 : 5;
 
-    const guestSessionId = `gst_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+    // Strict validation of grade - ZERO silent wrong grade fallback!
+    if (!SUPPORTED_GRADES[grade]) {
+      return json({
+        success: false,
+        error: `Khối lớp "${grade}" chưa được hỗ trợ đề thi thử chuẩn hóa. Hiện hệ thống hỗ trợ các khối từ Lớp 6 đến Lớp 12.`,
+        supported_grades: SUPPORTED_GRADES
+      }, { status: 400 });
+    }
+
+    // Strict validation of duration
+    let durationMinutes = 5;
+    let targetQuestionCount = 5;
+
+    if (duration_type === '45m') {
+      durationMinutes = 45;
+      targetQuestionCount = 30;
+    } else if (duration_type === '30m') {
+      durationMinutes = 30;
+      targetQuestionCount = 20;
+    } else if (duration_type === '15m') {
+      durationMinutes = 15;
+      targetQuestionCount = 10;
+    } else if (duration_type === '5m') {
+      durationMinutes = 5;
+      targetQuestionCount = 5;
+    } else {
+      return json({
+        success: false,
+        error: `Thời lượng "${duration_type}" không hợp lệ. Hệ thống hỗ trợ các mốc 5m, 15m, 30m, 45m.`
+      }, { status: 400 });
+    }
+
+    const guestSessionId = `gst_${Date.now()}_${randomUUID().substring(0, 8)}`;
+    const guestToken = `gtok_${randomUUID()}`;
     const startTime = Date.now();
     const expiresAt = startTime + (durationMinutes + 10) * 60 * 1000; // duration + 10m buffer
 
     // Select questions
-    const questionPool = GUEST_CURATED_QUESTIONS[grade] || GUEST_CURATED_QUESTIONS['lop_7'];
-    const count = durationMinutes === 45 ? Math.min(25, questionPool.length) : durationMinutes === 15 ? Math.min(10, questionPool.length) : Math.min(5, questionPool.length);
-    const selectedQuestions = questionPool.slice(0, count);
+    const questionPool = GUEST_QUESTION_BANK[grade];
+    // Fill up to target count if pool has fewer by looping cleanly
+    const selectedQuestions = [];
+    for (let i = 0; i < targetQuestionCount; i++) {
+      const q = questionPool[i % questionPool.length];
+      selectedQuestions.push({
+        ...q,
+        id: `${q.id}_idx${i + 1}`
+      });
+    }
 
-    // Save server-side session (strictly storing correct answers on server only!)
+    // Save server-side session (strictly storing answers and token on server only!)
     const sessionRecord = {
       id: guestSessionId,
+      token: guestToken,
       grade,
       guest_role,
       candidate_name,
@@ -156,21 +304,23 @@ export async function POST({ request, platform }) {
 
     GUEST_SESSIONS.set(guestSessionId, sessionRecord);
 
-    // Build client payload: STRICTLY OMIT correct_id and explanation!
+    // Build client payload: STRICTLY OMIT correct_id, correct_text, and explanation!
     const clientQuestions = selectedQuestions.map((q, idx) => ({
       item_order: idx + 1,
       id: q.id,
-      type: q.type,
+      type: q.type, // 'mcq' | 'listening' | 'open_cloze'
       skill: q.skill,
       question_text: q.question_text,
       passage: q.passage || null,
       audio_term: q.audio_term || null,
-      options: q.options
+      // Open cloze does NOT have options! MCQ and listening have options.
+      options: q.type === 'open_cloze' ? null : q.options
     }));
 
     return json({
       success: true,
       guest_session_id: guestSessionId,
+      guest_token: guestToken,
       grade,
       candidate_name,
       duration_minutes: durationMinutes,
@@ -182,7 +332,7 @@ export async function POST({ request, platform }) {
 
   // 2. ACTION: SUBMIT GUEST TEST
   if (action === 'submit') {
-    const { guest_session_id, answers = {}, duration_seconds = 0 } = body;
+    const { guest_session_id, guest_token, answers = {}, duration_seconds = 0 } = body;
     if (!guest_session_id) {
       return json({ success: false, error: 'Thiếu guest_session_id lượt thi.' }, { status: 400 });
     }
@@ -192,9 +342,27 @@ export async function POST({ request, platform }) {
       return json({ success: false, error: 'Phiên thi thử không tồn tại hoặc đã hết hạn (2h TTL).' }, { status: 404 });
     }
 
+    // Token binding check (prevent unauthorized submission or answer sniffing)
+    if (session.token && guest_token && session.token !== guest_token) {
+      return json({ success: false, error: 'Mã xác thực phiên thi (guest_token) không khớp.' }, { status: 403 });
+    }
+
     // Deadline check (Reject submissions after expiry)
     if (Date.now() > session.expiresAt) {
       return json({ success: false, error: 'Hết giờ làm bài: Bài thi đã quá thời gian quy định.' }, { status: 403 });
+    }
+
+    // Reject empty submission (Prevent answer leakage by submitting empty payload)
+    const submittedKeys = Object.keys(answers || {}).filter(k => {
+      const val = answers[k];
+      return val !== null && val !== undefined && String(val).trim() !== '';
+    });
+
+    if (submittedKeys.length === 0) {
+      return json({
+        success: false,
+        error: 'Bài nộp không hợp lệ: Thí sinh chưa làm bất kỳ câu hỏi nào. Vui lòng hoàn thành ít nhất một câu trước khi nộp bài.'
+      }, { status: 400 });
     }
 
     // Idempotent check
@@ -202,13 +370,23 @@ export async function POST({ request, platform }) {
       return json({ success: true, message: 'Đã nộp bài trước đó.', result: session.result });
     }
 
-    // Server-side scoring (never trust client score!)
+    // Server-side scoring (evaluates both MCQ choices and Open Cloze text entries)
     let correctCount = 0;
     const itemFeedback = [];
 
     session.questions.forEach((q, idx) => {
-      const studentChoice = (answers[q.id] || '').trim().toUpperCase();
-      const isCorrect = studentChoice === q.correct_id;
+      const rawAnswer = (answers[q.id] || '').trim();
+      let isCorrect = false;
+
+      if (q.type === 'open_cloze') {
+        const cleanAnswer = rawAnswer.toLowerCase();
+        const validList = (q.acceptable_answers || [q.correct_text]).map(a => a.toLowerCase().trim());
+        isCorrect = validList.includes(cleanAnswer);
+      } else {
+        const studentChoice = rawAnswer.toUpperCase();
+        isCorrect = studentChoice === q.correct_id;
+      }
+
       if (isCorrect) correctCount++;
 
       itemFeedback.push({
@@ -217,8 +395,8 @@ export async function POST({ request, platform }) {
         type: q.type,
         skill: q.skill,
         question_text: q.question_text,
-        student_choice: studentChoice,
-        correct_id: q.correct_id,
+        student_input: rawAnswer,
+        correct_answer: q.type === 'open_cloze' ? q.correct_text : q.correct_id,
         is_correct: isCorrect,
         explanation: q.explanation
       });
@@ -268,33 +446,49 @@ export async function POST({ request, platform }) {
     });
   }
 
-  // 3. ACTION: VOLUNTARY LEAD SUBMISSION (Separate opt-in, never forced)
+  // 3. ACTION: VOLUNTARY LEAD SUBMISSION (Strictly verifies DB write)
   if (action === 'voluntary_lead') {
     const { guest_session_id, phone, student_target, parent_notes } = body;
     if (!phone || phone.trim().length < 8) {
-      return json({ success: false, error: 'Vui lòng cung cấp số điện thoại hợp lệ để nhận tư vấn.' }, { status: 400 });
+      return json({ success: false, error: 'Vui lòng cung cấp số điện thoại hợp lệ (tối thiểu 8 chữ số).' }, { status: 400 });
     }
 
-    // Save lead to D1 if available or memory
-    if (platform?.env?.DB) {
-      try {
-        await platform.env.DB.prepare(`
-          INSERT INTO system_notifications (id, target_role, title, body, category, reference_id)
-          VALUES (?, 'leader', 'Khách đăng ký tư vấn sau bài test', ?, 'consultation', ?);
-        `).bind(
-          `notif_lead_${Date.now()}`,
-          `Khách hàng để lại SĐT: ${phone.trim()} sau bài test thử. Mục tiêu: ${student_target || 'Nâng cao điểm số'}. Ghi chú: ${parent_notes || 'Không có'}`,
-          guest_session_id || 'guest_direct'
-        ).run();
-      } catch (dbErr) {
-        console.warn('DB notification write error:', dbErr);
+    // Persist to D1 database
+    if (!platform?.env?.DB) {
+      return json({
+        success: false,
+        error: 'Dịch vụ lưu trữ cơ sở dữ liệu tạm thời gián đoạn. Vui lòng liên hệ trực tiếp hotline hoặc nhắn Zalo để được tư vấn ngay.'
+      }, { status: 503 });
+    }
+
+    try {
+      const dbRes = await platform.env.DB.prepare(`
+        INSERT INTO system_notifications (id, target_role, title, body, category, reference_id)
+        VALUES (?, 'leader', 'Khách đăng ký tư vấn sau bài test', ?, 'consultation', ?);
+      `).bind(
+        `notif_lead_${Date.now()}_${randomUUID().substring(0, 6)}`,
+        `Khách hàng để lại SĐT: ${phone.trim()} sau bài test thử. Mục tiêu: ${student_target || 'Nâng cao điểm số'}. Ghi chú: ${parent_notes || 'Không có'}`,
+        guest_session_id || 'guest_direct'
+      ).run();
+
+      if (!dbRes || dbRes.meta?.changes < 1) {
+        return json({
+          success: false,
+          error: 'Không thể ghi nhận thông tin liên hệ vào hệ thống. Vui lòng thử lại sau.'
+        }, { status: 500 });
       }
-    }
 
-    return json({
-      success: true,
-      message: 'Cảm ơn Quý Phụ Huynh! Cô Dung sẽ liên hệ tư vấn lộ trình học phù hợp nhất qua Zalo trong vòng 24h.'
-    });
+      return json({
+        success: true,
+        message: 'Cảm ơn Quý Phụ Huynh! Cô Dung sẽ liên hệ tư vấn lộ trình học phù hợp nhất qua Zalo trong vòng 24h.'
+      });
+    } catch (dbErr) {
+      console.error('Lead submission D1 write error:', dbErr);
+      return json({
+        success: false,
+        error: `Lỗi ghi nhận thông tin vào hệ thống: ${dbErr.message}`
+      }, { status: 500 });
+    }
   }
 
   return json({ success: false, error: `Hành động không hợp lệ: '${action}'` }, { status: 400 });

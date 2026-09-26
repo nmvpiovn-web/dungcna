@@ -82,7 +82,7 @@ with open(deepseek_api_path, 'r', encoding='utf-8') as f:
 assert_test("Gateway enforces token budget cap (MAX_OUTPUT_TOKENS <= 800)", "MAX_OUTPUT_TOKENS" in deepseek_content and "800" in deepseek_content)
 assert_test("Gateway enforces input query limit (MAX_QUERY_LEN <= 500)", "MAX_QUERY_LEN" in deepseek_content and "500" in deepseek_content)
 assert_test("Gateway includes timeout protection (TIMEOUT_MS = 15000)", "TIMEOUT_MS" in deepseek_content and "15000" in deepseek_content)
-assert_test("Gateway provides pedagogical fallback for 'enjoy'", "generatePedagogicalFallback" in deepseek_content and "/ɪnˈdʒɔɪ/" in deepseek_content and "en-joy" in deepseek_content)
+assert_test("Gateway provides pedagogical fallback for 'enjoy'", ("VERIFIED_OFFLINE_DICTIONARY" in deepseek_content or "generatePedagogicalFallback" in deepseek_content) and "/ɪnˈdʒɔɪ/" in deepseek_content and "en-joy" in deepseek_content)
 assert_test("Gateway grammar rule enforces 'enjoy + V-ing'", "enjoy + V-ing" in deepseek_content)
 assert_test("Gateway strictly disclaims TTS audio generation (audio via Web Audio/Speech only)", "Web Audio" in deepseek_content and "KHÔNG tạo file âm thanh" in deepseek_content)
 

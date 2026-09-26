@@ -16,6 +16,7 @@
 
   // Step 2 Testing State
   let guestSessionId = $state('');
+  let guestToken = $state('');
   let questions = $state([]);
   let answers = $state({});
   let timeLeftSeconds = $state(300);
@@ -55,6 +56,7 @@
       const data = await res.json();
       if (data.success) {
         guestSessionId = data.guest_session_id;
+        guestToken = data.guest_token;
         questions = data.questions || [];
         answers = {};
         timeLeftSeconds = data.duration_minutes * 60;
@@ -94,13 +96,15 @@
     isSubmitting = true;
 
     try {
-      const durationSeconds = (selectedDuration === '45m' ? 45 : selectedDuration === '15m' ? 15 : 5) * 60 - timeLeftSeconds;
+      const durMins = selectedDuration === '45m' ? 45 : selectedDuration === '30m' ? 30 : selectedDuration === '15m' ? 15 : 5;
+      const durationSeconds = durMins * 60 - timeLeftSeconds;
       const res = await fetch('/api/exams/guest', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'submit',
           guest_session_id: guestSessionId,
+          guest_token: guestToken,
           answers: answers,
           duration_seconds: Math.max(10, durationSeconds)
         })
@@ -216,8 +220,13 @@
                   bind:value={selectedGrade}
                   class="w-full p-2.5 rounded-md bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-semibold"
                 >
-                  <option value="lop_7">Khối 6 - 9 (THCS Chuyên Sâu)</option>
-                  <option value="lop_12">Khối 10 - 12 &amp; Luyện Thi THPT / IELTS</option>
+                  <option value="lop_6">Lớp 6 (Khởi đầu THCS)</option>
+                  <option value="lop_7">Lớp 7 (Nền tảng THCS)</option>
+                  <option value="lop_8">Lớp 8 (Nâng cao THCS)</option>
+                  <option value="lop_9">Lớp 9 (Luyện thi vào 10)</option>
+                  <option value="lop_10">Lớp 10 (Khởi đầu THPT)</option>
+                  <option value="lop_11">Lớp 11 (Chuyên đề THPT)</option>
+                  <option value="lop_12">Lớp 12 &amp; Luyện Thi THPT QG / IELTS</option>
                 </select>
               </div>
 
@@ -229,8 +238,9 @@
                   class="w-full p-2.5 rounded-md bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-semibold"
                 >
                   <option value="5m">⚡ Khảo Sát Nhanh (5 phút - 5 câu)</option>
-                  <option value="15m">⏱️ Kiểm Tra Toàn Diện (15 phút - 10 câu)</option>
-                  <option value="45m">🎯 Đề Thi Chuyên Sâu (45 phút - 25 câu)</option>
+                  <option value="15m">⏱️ Kiểm Tra Cơ Bản (15 phút - 10 câu)</option>
+                  <option value="30m">📋 Đánh Giá Toàn Diện (30 phút - 20 câu)</option>
+                  <option value="45m">🎯 Đề Thi Chuyên Sâu (45 phút - 30 câu)</option>
                 </select>
               </div>
             </div>
@@ -254,7 +264,7 @@
           <div class="flex items-center justify-between bg-slate-900 text-white p-3 rounded-md">
             <div>
               <span class="text-xs text-sky-400 font-semibold">{candidateName}</span>
-              <span class="text-slate-400 text-xs">• Khối: {selectedGrade === 'lop_12' ? 'THPT' : 'THCS'}</span>
+              <span class="text-slate-400 text-xs">• Khối: {selectedGrade.replace('lop_', 'Lớp ')}</span>
             </div>
             <div class="flex items-center gap-2">
               <span class="text-xs text-slate-400">Thời gian còn lại:</span>
@@ -271,7 +281,7 @@
                     Câu {idx + 1} / {questions.length}
                   </span>
                   <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
-                    {q.type === 'listening' ? '🎧 Bài Nghe' : q.type === 'open_cloze' ? '📖 Điền Từ Đoạn Văn' : '✍️ Trắc Nghiệm'}
+                    {q.type === 'listening' ? '🎧 Bài Nghe' : q.type === 'open_cloze' ? '📖 Tự Luận Điền Từ' : '✍️ Trắc Nghiệm'}
                   </span>
                 </div>
 
@@ -301,22 +311,38 @@
                   {q.question_text}
                 </div>
 
-                <!-- Options -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-                  {#each q.options as opt}
-                    {@const isSelected = answers[q.id] === opt.id}
-                    <button 
-                      type="button"
-                      onclick={() => answers[q.id] = opt.id}
-                      class="p-2.5 rounded-md text-left transition-colors font-medium border flex items-center gap-2.5 {isSelected ? 'bg-sky-600 text-white border-sky-600 shadow-sm' : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700/60'}"
-                    >
-                      <span class="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold {isSelected ? 'bg-white text-sky-600' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}">
-                        {opt.id}
-                      </span>
-                      <span>{opt.text}</span>
-                    </button>
-                  {/each}
-                </div>
+                <!-- Options for MCQ / Listening -->
+                {#if q.options && q.options.length > 0}
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                    {#each q.options as opt}
+                      {@const isSelected = answers[q.id] === opt.id}
+                      <button 
+                        type="button"
+                        onclick={() => answers[q.id] = opt.id}
+                        class="p-2.5 rounded-md text-left transition-colors font-medium border flex items-center gap-2.5 {isSelected ? 'bg-sky-600 text-white border-sky-600 shadow-sm' : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700/60'}"
+                      >
+                        <span class="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold {isSelected ? 'bg-white text-sky-600' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}">
+                          {opt.id}
+                        </span>
+                        <span>{opt.text}</span>
+                      </button>
+                    {/each}
+                  </div>
+                {:else if q.type === 'open_cloze'}
+                  <!-- Open Cloze: Free-text fill in the blank without ABCD -->
+                  <div class="space-y-1.5 pt-1">
+                    <label for="cloze-input-{q.id}" class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400">
+                      Tự luận: Nhập từ chính xác điền vào chỗ trống:
+                    </label>
+                    <input 
+                      id="cloze-input-{q.id}"
+                      type="text" 
+                      bind:value={answers[q.id]}
+                      placeholder="Ví dụ: pollution, wish, of..."
+                      class="w-full p-2.5 rounded-md bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-medium focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                    />
+                  </div>
+                {/if}
               </div>
             {/each}
           </div>

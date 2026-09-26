@@ -347,11 +347,13 @@ export async function POST({ request, platform }) {
     try {
       if (targetDecision === 'approved' && leave.session_id && leave.substitute_teacher_id) {
         // ATOMIC BATCH: Both leave request status and class session must update together in a single transaction
+        // stmtLeave is conditioned with EXISTS on class_sessions to guarantee zero update if session is invalid
         const stmtLeave = db.prepare(`
           UPDATE teacher_leave_requests 
           SET admin_status = ?, admin_notes = ?, updated_at = CURRENT_TIMESTAMP
-          WHERE id = ? AND admin_status = 'pending';
-        `).bind(targetDecision, admin_notes || '', leave_id);
+          WHERE id = ? AND admin_status = 'pending'
+            AND EXISTS (SELECT 1 FROM class_sessions WHERE id = ? AND teacher_id = ?);
+        `).bind(targetDecision, admin_notes || '', leave_id, leave.session_id, leave.teacher_id);
 
         const stmtSession = db.prepare(`
           UPDATE class_sessions 
@@ -373,9 +375,16 @@ export async function POST({ request, platform }) {
 
         const batchRes = await db.batch([stmtLeave, stmtSession]);
         if (!batchRes || batchRes[0].meta?.changes !== 1 || batchRes[1].meta?.changes !== 1) {
+          // Compensatory reversal: Ensure leave request is rolled back to pending if session update failed
+          await db.prepare(`
+            UPDATE teacher_leave_requests 
+            SET admin_status = 'pending', admin_notes = 'Tự động hoàn tác: Lỗi phân công ca học', updated_at = CURRENT_TIMESTAMP
+            WHERE id = ? AND admin_status = ?;
+          `).bind(leave_id, targetDecision).run();
+
           return json({
             success: false,
-            error: 'Không thể phân công ca học: Ca học không tồn tại, đã thay đổi giáo viên hoặc đơn nghỉ đã được xử lý (changes = 0).'
+            error: 'Không thể phân công ca học: Ca học không tồn tại hoặc đã thay đổi giáo viên trước đó (changes = 0). Đơn nghỉ đã được tự động giữ nguyên trạng thái chờ duyệt.'
           }, { status: 409 });
         }
       } else {
@@ -519,8 +528,9 @@ export async function POST({ request, platform }) {
       const stmt1 = db.prepare(`
         UPDATE teacher_salary_advances 
         SET status = 'disbursed', disbursed_at = CURRENT_TIMESTAMP, disbursed_by = ?, disbursement_ref = ?
-        WHERE id = ? AND status = 'approved';
-      `).bind(auth.user.name, refCode, advance_id);
+        WHERE id = ? AND status = 'approved'
+          AND (SELECT COUNT(*) FROM salary_transactions WHERE transaction_type = 'advance_disbursed' AND ref_id = ?) = 0;
+      `).bind(auth.user.name, refCode, advance_id, advance_id);
 
       const stmt2 = db.prepare(`
         INSERT INTO salary_transactions 
@@ -541,9 +551,16 @@ export async function POST({ request, platform }) {
       const batchRes = await db.batch([stmt1, stmt2]);
 
       if (!batchRes || batchRes[0].meta?.changes !== 1 || batchRes[1].meta?.changes !== 1) {
+        // Compensatory rollback: Restore advance status to approved if transaction insert was not recorded
+        await db.prepare(`
+          UPDATE teacher_salary_advances 
+          SET status = 'approved', disbursed_at = NULL, disbursed_by = NULL, disbursement_ref = NULL, updated_at = CURRENT_TIMESTAMP
+          WHERE id = ? AND status = 'disbursed';
+        `).bind(advance_id).run();
+
         return json({
           success: false,
-          error: `Thực chi thất bại: Đơn ứng lương đang ở trạng thái '${advance.status}', chỉ có thể chi khi đã 'approved' và chưa từng thực chi (changes = 0).`
+          error: `Thực chi thất bại: Đơn ứng lương đang ở trạng thái '${advance.status}', chỉ có thể chi khi đã 'approved' và chưa từng thực chi (changes = 0). Đã tự động hoàn tác.`
         }, { status: 409 });
       }
 
@@ -586,8 +603,9 @@ export async function POST({ request, platform }) {
       const stmt1 = db.prepare(`
         UPDATE teacher_salary_advances 
         SET status = 'deducted', deducted_at = CURRENT_TIMESTAMP, deducted_payroll_id = ?
-        WHERE id = ? AND status = 'disbursed';
-      `).bind(payroll_id, advance_id);
+        WHERE id = ? AND status = 'disbursed'
+          AND (SELECT COUNT(*) FROM salary_transactions WHERE transaction_type = 'advance_deduction' AND ref_id = ?) = 0;
+      `).bind(payroll_id, advance_id, advance_id);
 
       const stmt2 = db.prepare(`
         INSERT INTO salary_transactions 
@@ -609,9 +627,16 @@ export async function POST({ request, platform }) {
       const batchRes = await db.batch([stmt1, stmt2]);
 
       if (!batchRes || batchRes[0].meta?.changes !== 1 || batchRes[1].meta?.changes !== 1) {
+        // Compensatory rollback: Restore advance status to disbursed if transaction insert failed
+        await db.prepare(`
+          UPDATE teacher_salary_advances 
+          SET status = 'disbursed', deducted_at = NULL, deducted_payroll_id = NULL, updated_at = CURRENT_TIMESTAMP
+          WHERE id = ? AND status = 'deducted';
+        `).bind(advance_id).run();
+
         return json({
           success: false,
-          error: 'Không thể đối trừ: Khoản ứng lương này đã được đối trừ trước đó hoặc chưa được thực chi (changes = 0).'
+          error: 'Không thể đối trừ: Khoản ứng lương này đã được đối trừ trước đó hoặc chưa được thực chi (changes = 0). Đã tự động hoàn tác.'
         }, { status: 409 });
       }
 
