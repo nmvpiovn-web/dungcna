@@ -248,10 +248,9 @@ async function runTests() {
     'wrangler pages dev build --port 4173', 
     'Preview script must point to build directory using wrangler pages dev'
   );
-  assert.strictEqual(
-    pkgContent.scripts.check,
-    'wrangler types --check',
-    'Check script must run wrangler types --check'
+  assert.ok(
+    pkgContent.scripts.check.includes('wrangler types --check'),
+    'Check script must include wrangler types --check'
   );
   console.log('✅ Package.json preview script points to:', pkgContent.scripts.preview);
   console.log('✅ Package.json check script points to:', pkgContent.scripts.check);

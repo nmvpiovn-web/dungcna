@@ -8,18 +8,61 @@
 
   let currentUser = $state(null);
   let assignments = $state([]);
-  let submissions = $state([]);
+  let rawSubmissions = $state([]);
   let loading = $state(true);
   let errorMessage = $state('');
-  let activeTab = $state('homework'); // 'homework' | 'tuition' | 'attendance'
+  let activeTab = $state('homework'); // 'homework' | 'tuition'
   let selectedStudentId = $state('all');
   let linkedStudents = $state([
-    { id: 'all', name: 'Tất cả học sinh liên kết' },
-    { id: 'stu_01', name: 'Học sinh: Nguyễn Hoàng Nam (Lớp 7A)' }
+    { id: 'all', name: 'Tất cả học sinh liên kết' }
   ]);
 
   // Audio player preview for parent
   let currentAudioPlaying = $state(null);
+
+  // Filter submissions by selected student
+  let filteredSubmissions = $derived.by(() => {
+    if (selectedStudentId === 'all') {
+      return rawSubmissions;
+    }
+    return rawSubmissions.filter(s => s.student_id === selectedStudentId);
+  });
+
+  // Calculate stats based on active child selection
+  let totalSubmitted = $derived(filteredSubmissions.length);
+  let totalGraded = $derived(filteredSubmissions.filter(s => s.status === 'graded').length);
+  let totalStarsEarned = $derived(filteredSubmissions.reduce((acc, s) => acc + (s.stars_awarded || 0), 0));
+  let avgScore = $derived.by(() => {
+    const graded = filteredSubmissions.filter(s => s.status === 'graded' && s.score !== null);
+    if (graded.length === 0) return '0.0';
+    const sum = graded.reduce((acc, s) => acc + Number(s.score), 0);
+    return (sum / graded.length).toFixed(1);
+  });
+
+  let tuitionDiscountVnd = $derived(Math.floor(totalStarsEarned / 100) * 1000);
+
+  async function loadLinkedChildren() {
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('tienganh_token') : '';
+      const res = await fetch('/api/parents/children', {
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.children && data.children.length > 0) {
+          linkedStudents = [
+            { id: 'all', name: 'Tất cả học sinh liên kết' },
+            ...data.children.map(c => ({
+              id: c.id,
+              name: `${c.name} (${c.grade || 'Lớp 7'})`
+            }))
+          ];
+        }
+      }
+    } catch (err) {
+      console.warn('Could not load linked children dynamically:', err);
+    }
+  }
 
   async function loadData() {
     loading = true;
@@ -28,7 +71,8 @@
 
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('tienganh_token') : '';
-      const res = await fetch('/api/homework', {
+      const queryParam = selectedStudentId !== 'all' ? `?child_id=${encodeURIComponent(selectedStudentId)}` : '';
+      const res = await fetch(`/api/homework${queryParam}`, {
         headers: token ? { 'Authorization': `Bearer ${token}` } : {}
       });
 
@@ -39,7 +83,7 @@
       const data = await res.json();
       if (data.success) {
         assignments = data.assignments || [];
-        submissions = data.submissions || [];
+        rawSubmissions = data.submissions || [];
       } else {
         errorMessage = data.error || 'Không thể tải dữ liệu học tập của con.';
       }
@@ -51,53 +95,48 @@
     }
   }
 
-  onMount(() => {
+  function handleChildChange() {
     loadData();
-  });
+  }
 
-  // Calculate stats
-  let totalSubmitted = $derived(submissions.length);
-  let totalGraded = $derived(submissions.filter(s => s.status === 'graded').length);
-  let totalStarsEarned = $derived(submissions.reduce((acc, s) => acc + (s.stars_awarded || 0), 0));
-  let avgScore = $derived.by(() => {
-    const graded = submissions.filter(s => s.status === 'graded' && s.score !== null);
-    if (graded.length === 0) return '0.0';
-    const sum = graded.reduce((acc, s) => acc + Number(s.score), 0);
-    return (sum / graded.length).toFixed(1);
+  onMount(async () => {
+    await loadLinkedChildren();
+    await loadData();
   });
-
-  let tuitionDiscountVnd = $derived(Math.floor(totalStarsEarned / 100) * 1000);
 </script>
 
-<div class="space-y-6">
-  <!-- Parent Header Banner (Academic Ledger Style: Firm Navy, Restrained 8px radius, Clean Typography) -->
-  <header class="bg-slate-900 border border-slate-800 rounded-lg p-6 text-slate-100 shadow-sm relative">
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
-      <div class="space-y-2">
+<div class="space-y-6 max-w-7xl mx-auto">
+  <!-- Parent Header Banner (Academic Ledger Style: Firm Navy, Restrained borders, 390px responsive) -->
+  <header class="bg-slate-900 border border-slate-800 rounded-lg p-4 sm:p-6 text-slate-100 shadow-sm relative overflow-hidden">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
+      <div class="space-y-2 min-w-0">
         <div class="flex items-center gap-2 text-sky-400 text-xs font-semibold uppercase tracking-wider">
+          <svg class="w-4 h-4 text-sky-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
           <span>Sổ Phụ Huynh</span>
           <span>•</span>
           <span>Cổng Thông Tin Học Vụ Gia Đình</span>
         </div>
-        <h1 class="text-2xl font-semibold text-white">Báo Cáo Tiến Độ Học Tập &amp; Học Phí</h1>
-        <p class="text-slate-300 text-sm max-w-2xl leading-relaxed">
+        <h1 class="text-xl sm:text-2xl font-semibold text-white tracking-tight">Báo Cáo Tiến Độ Học Tập &amp; Học Phí</h1>
+        <p class="text-slate-300 text-xs sm:text-sm max-w-2xl leading-relaxed">
           Theo dõi trực tiếp kết quả bài tập về nhà, bài viết tay, file ghi âm giọng nói của con và chi tiết đối trừ sao thưởng vào học phí định kỳ.
         </p>
       </div>
 
-      <!-- Quick Metrics (Academic Ledger: Tabular Numbers, Restrained Borders) -->
-      <div class="grid grid-cols-3 gap-3 self-stretch md:self-auto min-w-[300px]">
-        <div class="bg-slate-800/80 border border-slate-700/60 rounded-md p-3 text-center">
-          <div class="text-xl font-semibold text-amber-400 tabular-nums">{totalStarsEarned}</div>
-          <div class="text-xs text-slate-400 mt-0.5">Sao Tích Lũy</div>
+      <!-- Quick Metrics (Academic Ledger: Tabular Numbers, Restrained Borders, Non-overflowing 390px) -->
+      <div class="grid grid-cols-3 gap-2 sm:gap-3 w-full md:w-auto min-w-0">
+        <div class="bg-slate-800/80 border border-slate-700/60 rounded-md p-2.5 sm:p-3 text-center min-w-0">
+          <div class="text-lg sm:text-xl font-semibold text-amber-400 tabular-nums truncate">{totalStarsEarned}</div>
+          <div class="text-[11px] sm:text-xs text-slate-400 mt-0.5 truncate">Sao Tích Lũy</div>
         </div>
-        <div class="bg-slate-800/80 border border-slate-700/60 rounded-md p-3 text-center">
-          <div class="text-xl font-semibold text-white tabular-nums">{totalGraded}/{assignments.length}</div>
-          <div class="text-xs text-slate-400 mt-0.5">Đã Chấm</div>
+        <div class="bg-slate-800/80 border border-slate-700/60 rounded-md p-2.5 sm:p-3 text-center min-w-0">
+          <div class="text-lg sm:text-xl font-semibold text-white tabular-nums truncate">{totalGraded}/{assignments.length}</div>
+          <div class="text-[11px] sm:text-xs text-slate-400 mt-0.5 truncate">Đã Chấm</div>
         </div>
-        <div class="bg-slate-800/80 border border-slate-700/60 rounded-md p-3 text-center">
-          <div class="text-xl font-semibold text-sky-400 tabular-nums">{avgScore}</div>
-          <div class="text-xs text-slate-400 mt-0.5">Điểm Trung Bình</div>
+        <div class="bg-slate-800/80 border border-slate-700/60 rounded-md p-2.5 sm:p-3 text-center min-w-0">
+          <div class="text-lg sm:text-xl font-semibold text-sky-400 tabular-nums truncate">{avgScore}</div>
+          <div class="text-[11px] sm:text-xs text-slate-400 mt-0.5 truncate">Điểm TB</div>
         </div>
       </div>
     </div>
@@ -105,28 +144,29 @@
 
   <!-- Navigation Tabs & Verified Child Selector -->
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-3">
-    <nav class="flex items-center gap-2" aria-label="Các mục sổ phụ huynh">
+    <nav class="flex items-center gap-2 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0" aria-label="Các mục sổ phụ huynh">
       <button 
         onclick={() => activeTab = 'homework'}
-        class="px-4 py-2 rounded-md text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 {activeTab === 'homework' ? 'bg-sky-600 text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}"
+        class="whitespace-nowrap px-3 sm:px-4 py-2 rounded-md text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 {activeTab === 'homework' ? 'bg-sky-600 text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}"
       >
-        Bài Tập Về Nhà ({submissions.length}/{assignments.length})
+        Bài Tập Về Nhà ({filteredSubmissions.length}/{assignments.length})
       </button>
       <button 
         onclick={() => activeTab = 'tuition'}
-        class="px-4 py-2 rounded-md text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 {activeTab === 'tuition' ? 'bg-sky-600 text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}"
+        class="whitespace-nowrap px-3 sm:px-4 py-2 rounded-md text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 {activeTab === 'tuition' ? 'bg-sky-600 text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}"
       >
         Sổ Học Phí &amp; Đối Trừ Sao
       </button>
     </nav>
 
-    <!-- Child Selector -->
-    <div class="flex items-center gap-2">
-      <label for="child-select" class="text-xs font-medium text-slate-500 dark:text-slate-400">Học sinh:</label>
+    <!-- Child Selector with activeChildId -->
+    <div class="flex items-center gap-2 w-full sm:w-auto min-w-0">
+      <label for="child-select" class="text-xs font-medium text-slate-500 dark:text-slate-400 shrink-0">Học sinh:</label>
       <select 
         id="child-select"
         bind:value={selectedStudentId}
-        class="text-xs font-medium px-3 py-1.5 rounded-md bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
+        onchange={handleChildChange}
+        class="flex-1 sm:flex-none text-xs font-medium px-3 py-1.5 rounded-md bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 truncate"
       >
         {#each linkedStudents as stu}
           <option value={stu.id}>{stu.name}</option>
@@ -182,29 +222,29 @@
     {:else}
       <div class="space-y-4">
         {#each assignments as assignment}
-          {@const sub = submissions.find(s => s.assignment_id === assignment.id)}
+          {@const sub = filteredSubmissions.find(s => s.assignment_id === assignment.id)}
           {@const isGraded = sub?.status === 'graded'}
           {@const isSubmitted = !!sub}
           {@const skillLabel = assignment.skill_type === 'writing' ? 'Viết Luận' : assignment.skill_type === 'reading' ? 'Đọc Hiểu' : 'Phát Âm & Nói'}
 
-          <article class="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 p-5 shadow-sm space-y-4">
+          <article class="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 p-4 sm:p-5 shadow-sm space-y-4 min-w-0">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800/80 pb-3">
-              <div>
-                <div class="flex items-center gap-2">
-                  <span class="px-2 py-0.5 rounded text-[11px] font-medium bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800">
+              <div class="min-w-0">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="px-2 py-0.5 rounded text-[11px] font-medium bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800 shrink-0">
                     {skillLabel}
                   </span>
-                  <h2 class="text-base font-semibold text-slate-900 dark:text-white">{assignment.title}</h2>
+                  <h2 class="text-sm sm:text-base font-semibold text-slate-900 dark:text-white break-words">{assignment.title}</h2>
                 </div>
-                <div class="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2 mt-1">
-                  <span>Giáo viên phụ trách: <strong>{assignment.teacher_name}</strong></span>
+                <div class="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2 mt-1 flex-wrap">
+                  <span>Giáo viên: <strong>{assignment.teacher_name}</strong></span>
                   <span>•</span>
                   <span>Hạn nộp: <span class="text-rose-600 dark:text-rose-400 font-medium tabular-nums">{assignment.deadline_time} • {assignment.deadline_date}</span></span>
                 </div>
               </div>
 
               <!-- Status Badge (Restrained 4px rounded badge, non-gradient) -->
-              <div>
+              <div class="shrink-0">
                 {#if isGraded}
                   <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
                     <span class="tabular-nums">Điểm: {sub.score}/10</span>
@@ -225,21 +265,21 @@
             </div>
 
             <!-- Details & Content Box -->
-            <div class="bg-slate-50 dark:bg-slate-800/40 rounded-md p-4 text-xs space-y-3">
+            <div class="bg-slate-50 dark:bg-slate-800/40 rounded-md p-3.5 sm:p-4 text-xs space-y-3 min-w-0">
               <div>
                 <span class="font-semibold text-slate-700 dark:text-slate-300">Yêu cầu buổi học:</span>
-                <p class="text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">{assignment.description}</p>
+                <p class="text-slate-600 dark:text-slate-400 mt-1 leading-relaxed break-words">{assignment.description}</p>
               </div>
 
               {#if isSubmitted}
                 <div class="pt-3 border-t border-slate-200 dark:border-slate-700 space-y-2">
-                  <div class="flex items-center justify-between text-slate-500">
+                  <div class="flex flex-col sm:flex-row sm:items-center justify-between text-slate-500 gap-1">
                     <span class="font-semibold text-slate-700 dark:text-slate-300">Bài làm nộp:</span>
-                    <span class="tabular-nums">Thời gian: {new Date(sub.submitted_at).toLocaleString('vi-VN')} ({sub.is_on_time ? 'Đúng hạn' : 'Nộp muộn'})</span>
+                    <span class="tabular-nums text-[11px] sm:text-xs">Thời gian: {new Date(sub.submitted_at).toLocaleString('vi-VN')} ({sub.is_on_time ? 'Đúng hạn' : 'Nộp muộn'})</span>
                   </div>
 
                   {#if sub.content_text}
-                    <div class="p-3 bg-white dark:bg-slate-900 rounded border border-slate-200 dark:border-slate-700 font-mono text-slate-800 dark:text-slate-200 text-xs">
+                    <div class="p-3 bg-white dark:bg-slate-900 rounded border border-slate-200 dark:border-slate-700 font-mono text-slate-800 dark:text-slate-200 text-xs break-words whitespace-pre-wrap">
                       {sub.content_text}
                     </div>
                   {/if}
@@ -266,11 +306,11 @@
               <!-- Teacher Evaluation Box -->
               {#if isGraded}
                 <div class="p-3 bg-emerald-50/70 dark:bg-emerald-950/30 rounded border border-emerald-200 dark:border-emerald-800/80 space-y-1">
-                  <div class="font-semibold text-emerald-800 dark:text-emerald-300 flex items-center justify-between">
+                  <div class="font-semibold text-emerald-800 dark:text-emerald-300 flex items-center justify-between flex-wrap gap-1">
                     <span>Nhận xét sư phạm của {assignment.teacher_name}:</span>
                     <span class="text-amber-700 dark:text-amber-400 font-medium tabular-nums">Thưởng: +{sub.stars_awarded} sao</span>
                   </div>
-                  <p class="text-emerald-700 dark:text-emerald-400 italic">"{sub.teacher_feedback || 'Học sinh hoàn thành tốt bài tập.'}"</p>
+                  <p class="text-emerald-700 dark:text-emerald-400 italic break-words">"{sub.teacher_feedback || 'Học sinh hoàn thành tốt bài tập.'}"</p>
                 </div>
               {/if}
             </div>
@@ -281,13 +321,13 @@
 
   <!-- TAB 2: TUITION & STAR DISCOUNT -->
   {:else if activeTab === 'tuition'}
-    <div class="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 p-6 space-y-6 shadow-sm">
+    <div class="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 p-4 sm:p-6 space-y-6 shadow-sm min-w-0">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
         <div>
-          <h2 class="text-lg font-semibold text-slate-900 dark:text-white">Sổ Học Phí &amp; Đối Trừ Sao Thưởng</h2>
+          <h2 class="text-base sm:text-lg font-semibold text-slate-900 dark:text-white">Sổ Học Phí &amp; Đối Trừ Sao Thưởng</h2>
           <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Cơ chế quy đổi sao tích lũy từ BTVN đúng hạn và bài kiểm tra xuất sắc.</p>
         </div>
-        <div class="p-3 bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 rounded-md text-right">
+        <div class="p-3 bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 rounded-md sm:text-right">
           <div class="text-xs text-slate-500 dark:text-slate-400">Sao khả dụng kỳ này</div>
           <div class="text-xl font-semibold text-amber-500 tabular-nums">{totalStarsEarned} sao</div>
           <div class="text-xs text-slate-600 dark:text-slate-300 mt-0.5">
@@ -299,6 +339,9 @@
       <!-- CRITICAL RECONCILIATION POLICY NOTICE (VietQR is facilitator, not settlement proof) -->
       <div class="p-4 rounded-md bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-xs space-y-2">
         <div class="font-semibold text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
+          <svg class="w-4 h-4 text-amber-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
           <span>Quy Định Quyết Toán &amp; Đối Trừ Minh Bạch</span>
         </div>
         <p class="text-amber-700 dark:text-amber-400 leading-relaxed">

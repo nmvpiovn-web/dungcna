@@ -1,5 +1,5 @@
 import { json } from '@sveltejs/kit';
-import { verifyServerAuth, isStaffUser, SUPERADMIN_USERNAMES } from '$lib/server/auth.js';
+import { verifyServerAuth, isStaffUser, SUPERADMIN_USERNAMES } from '../../../lib/server/auth.js';
 
 export const prerender = false;
 
@@ -155,6 +155,7 @@ export async function GET({ request, url, platform }) {
   const skillFilter = url.searchParams.get('skill') || 'all';
   const campusFilter = url.searchParams.get('campus_id') || 'all';
   const assignmentId = url.searchParams.get('id');
+  const requestedChildId = url.searchParams.get('child_id') || url.searchParams.get('student_id');
 
   const db = platform?.env?.DB;
 
@@ -195,14 +196,32 @@ export async function GET({ request, url, platform }) {
 
       // Fetch submissions based on role
       let submissions = [];
+      let linkedChildren = [];
       if (role === 'student') {
         const subRes = await db.prepare('SELECT * FROM homework_submissions WHERE student_id = ?').bind(user.id).all();
         submissions = subRes.results || [];
       } else if (role === 'parent') {
         // Find linked students
-        const linksRes = await db.prepare('SELECT student_user_id FROM parent_student_links WHERE parent_user_id = ?').bind(user.id).all();
-        const studentIds = (linksRes.results || []).map(r => r.student_user_id).filter(Boolean);
-        if (studentIds.length > 0) {
+        const linksRes = await db.prepare(`
+          SELECT psl.student_user_id, u.name as student_name, u.grade, u.avatar
+          FROM parent_student_links psl
+          LEFT JOIN users u ON psl.student_user_id = u.id
+          WHERE psl.parent_user_id = ?
+        `).bind(user.id).all();
+        linkedChildren = linksRes.results || [];
+        const studentIds = linkedChildren.map(r => r.student_user_id).filter(Boolean);
+
+        if (studentIds.length === 0) {
+          return json({ success: true, assignments, submissions: [], linked_children: [], total: assignments.length });
+        }
+
+        if (requestedChildId && requestedChildId !== 'all') {
+          if (!studentIds.includes(requestedChildId)) {
+            return json({ success: false, error: 'Forbidden: Quý phụ huynh chỉ có quyền xem bài tập của con em mình' }, { status: 403 });
+          }
+          const subRes = await db.prepare('SELECT * FROM homework_submissions WHERE student_id = ?').bind(requestedChildId).all();
+          submissions = subRes.results || [];
+        } else {
           const placeholders = studentIds.map(() => '?').join(',');
           const subRes = await db.prepare(`SELECT * FROM homework_submissions WHERE student_id IN (${placeholders})`).bind(...studentIds).all();
           submissions = subRes.results || [];
@@ -217,6 +236,7 @@ export async function GET({ request, url, platform }) {
         success: true,
         assignments,
         submissions,
+        linked_children: linkedChildren,
         total: assignments.length
       });
     } catch (e) {
@@ -239,6 +259,10 @@ export async function GET({ request, url, platform }) {
   let submissions = inMemorySubmissions;
   if (role === 'student') {
     submissions = submissions.filter(s => s.student_id === user.id);
+  } else if (role === 'parent') {
+    if (requestedChildId && requestedChildId !== 'all') {
+      submissions = submissions.filter(s => s.student_id === requestedChildId);
+    }
   }
 
   return json({

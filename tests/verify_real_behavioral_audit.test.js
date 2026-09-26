@@ -16,12 +16,14 @@ describe('REAL BEHAVIORAL AUDIT - CODEX P1 AUDIT HANDOFF V2', () => {
   // 1. DEEPSEEK AI GATEWAY: ACCURACY, RATE LIMITING & NO HTTP BACKDOOR
   // =========================================================================
   describe('1. DeepSeek AI Server Gateway', () => {
+    const freshClientIp = `198.51.100.${Math.floor(Date.now() / 1000) % 200 + 1}`;
+
     test('1.1. Unknown word (e.g., "cat") without API key MUST return 422, NOT fake "enjoyed" past tense', async () => {
       const res = await fetch(`${BASE_URL}/api/ai/deepseek`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'x-forwarded-for': '198.51.100.1'
+          'x-forwarded-for': freshClientIp
         },
         body: JSON.stringify({ query: 'cat', type: 'vocab_deep_breakdown' })
       });
@@ -38,7 +40,7 @@ describe('REAL BEHAVIORAL AUDIT - CODEX P1 AUDIT HANDOFF V2', () => {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'x-forwarded-for': '198.51.100.1'
+          'x-forwarded-for': freshClientIp
         },
         body: JSON.stringify({ query: 'enjoy', type: 'vocab_deep_breakdown' })
       });
@@ -57,7 +59,7 @@ describe('REAL BEHAVIORAL AUDIT - CODEX P1 AUDIT HANDOFF V2', () => {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'x-forwarded-for': '198.51.100.1'
+          'x-forwarded-for': freshClientIp
         },
         body: JSON.stringify({ query: 'volunteer', type: 'vocab_deep_breakdown' })
       });

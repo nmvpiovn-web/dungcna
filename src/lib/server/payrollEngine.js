@@ -3,10 +3,11 @@
  * Requirements per Codex Audit Master Plan:
  * 1. Rate model: Base hourly rate, session duration, role multipliers (main, sub, co-teach)
  * 2. Timesheet calculation: Hours taught, substitute coverage, co-teaching allocations
- * 3. Salary advance deduction integration
- * 4. Locked period protection (cannot alter locked payroll records)
- * 5. Deterministic currency rounding (VND integer rounding, zero float leaks)
- * 6. Audit trail generation
+ * 3. Salary advance deduction integration: Only deduct DISBURSED advances for this teacher/cycle
+ * 4. Carried-over debt policy: NO Math.max(0) masking. Explicitly track carried-over debt to next cycle
+ * 5. Locked period protection: Cannot alter locked payroll records
+ * 6. Deterministic currency rounding: VND integer rounding, zero float leaks
+ * 7. Audit trail generation
  */
 
 export const DEFAULT_RATE_MODEL = {
@@ -21,9 +22,14 @@ export const DEFAULT_RATE_MODEL = {
 };
 
 /**
- * Calculates pay for a single session based on rate model and role
+ * Calculates pay for a single completed session based on rate model and role
  */
 export function calculateSessionPay(session, rateModel = DEFAULT_RATE_MODEL) {
+  // Only completed/confirmed sessions are payable
+  if (session.status !== 'completed' && session.status !== 'confirmed') {
+    return 0;
+  }
+
   const durationMinutes = session.duration_minutes || rateModel.standard_session_minutes;
   const hours = durationMinutes / 60;
   const role = session.role || 'main_teacher';
@@ -40,7 +46,10 @@ export function calculateSessionPay(session, rateModel = DEFAULT_RATE_MODEL) {
  * @param {string} params.teacherId
  * @param {string} params.billingCycle (e.g. "2026-09")
  * @param {Array} params.sessions - Completed teaching sessions
- * @param {Array} params.advances - Disbursed salary advances
+ * @param {Array} params.advances - Salary advances (only 'disbursed' are deducted)
+ * @param {number} params.previousDebtBalance - Unrecovered debt carried over from prior cycle
+ * @param {number} params.bonusAmount - Performance or special bonus
+ * @param {number} params.penaltyAmount - Discipline or unexcused absence penalty
  * @param {Object} params.existingPeriod - Existing payroll period record (if any)
  * @param {Object} params.customRateModel - Optional custom rate overrides
  */
@@ -49,6 +58,9 @@ export function calculateTeacherMonthlyPayroll({
   billingCycle,
   sessions = [],
   advances = [],
+  previousDebtBalance = 0,
+  bonusAmount = 0,
+  penaltyAmount = 0,
   existingPeriod = null,
   customRateModel = null
 }) {
@@ -67,8 +79,9 @@ export function calculateTeacherMonthlyPayroll({
   const sessionDetails = [];
 
   for (const s of sessions) {
-    if (s.status === 'cancelled' || s.status === 'unexcused_absent') {
-      continue; // Unexcused absence does not receive pay
+    // Strictly filter: only completed or confirmed sessions are payable
+    if (s.status !== 'completed' && s.status !== 'confirmed') {
+      continue;
     }
 
     const pay = calculateSessionPay(s, rateModel);
@@ -91,23 +104,49 @@ export function calculateTeacherMonthlyPayroll({
     });
   }
 
-  // 2. Calculate Total Advance Deductions
-  let totalAdvanceDeductions = 0;
+  // 2. Gross Total = Teaching Pay + Bonuses - Penalties
+  const sanitizedBonus = Math.round(Math.max(0, Number(bonusAmount || 0)));
+  const sanitizedPenalty = Math.round(Math.max(0, Number(penaltyAmount || 0)));
+  const totalGrossIncome = Math.round(grossTeachingPay + sanitizedBonus - sanitizedPenalty);
+
+  // 3. Advances: Strictly deduct DISBURSED advances matching teacher & cycle
+  let totalDisbursedAdvances = 0;
   const advanceDetails = [];
 
   for (const adv of advances) {
-    if (adv.status === 'approved' || adv.status === 'disbursed') {
-      totalAdvanceDeductions += Math.round(Number(adv.amount || 0));
+    // Only deduct if actually disbursed to the teacher
+    if (adv.status === 'disbursed') {
+      const advAmount = Math.round(Number(adv.amount || 0));
+      totalDisbursedAdvances += advAmount;
       advanceDetails.push({
         advance_id: adv.id,
-        amount: Math.round(Number(adv.amount || 0)),
+        amount: advAmount,
         disbursed_date: adv.disbursed_date || null
       });
     }
   }
 
-  // 3. Net Pay Calculation (Prevent negative net pay)
-  const netPay = Math.max(0, grossTeachingPay - totalAdvanceDeductions);
+  // 4. Carried-over Debt Reconciliation (NO Math.max(0) masking!)
+  const sanitizedPriorDebt = Math.round(Math.max(0, Number(previousDebtBalance || 0)));
+  const totalObligationsToDeduct = totalDisbursedAdvances + sanitizedPriorDebt;
+
+  let netPay = 0;
+  let actualDeductionsApplied = 0;
+  let carriedOverDebtToNextCycle = 0;
+
+  if (totalGrossIncome >= totalObligationsToDeduct) {
+    // Full recovery: earnings exceed deductions
+    netPay = totalGrossIncome - totalObligationsToDeduct;
+    actualDeductionsApplied = totalObligationsToDeduct;
+    carriedOverDebtToNextCycle = 0;
+  } else {
+    // Partial recovery / Negative balance:
+    // Net cash payout cannot be negative (cannot demand teacher pay back cash on payroll day),
+    // so netPay is 0, and unrecovered balance is carried forward as debt to next month.
+    netPay = 0;
+    actualDeductionsApplied = totalGrossIncome;
+    carriedOverDebtToNextCycle = totalObligationsToDeduct - totalGrossIncome;
+  }
 
   return {
     teacher_id: teacherId,
@@ -119,8 +158,14 @@ export function calculateTeacherMonthlyPayroll({
       main_sessions: mainSessionsCount,
       substitute_sessions: substituteSessionsCount,
       co_teach_sessions: coTeachSessionsCount,
-      gross_pay: grossTeachingPay,
-      total_advances_deducted: totalAdvanceDeductions,
+      teaching_pay: grossTeachingPay,
+      bonus_amount: sanitizedBonus,
+      penalty_amount: sanitizedPenalty,
+      gross_income: totalGrossIncome,
+      disbursed_advances_deducted: totalDisbursedAdvances,
+      prior_debt_deducted: sanitizedPriorDebt,
+      total_deductions_applied: actualDeductionsApplied,
+      carried_over_debt: carriedOverDebtToNextCycle,
       net_pay: netPay,
       currency: 'VND'
     },
@@ -129,7 +174,8 @@ export function calculateTeacherMonthlyPayroll({
     audit_trail: {
       calculated_at: new Date().toISOString(),
       base_hourly_rate: rateModel.base_hourly_rate,
-      rounding_method: 'Math.round(VND)'
+      rounding_method: 'Math.round(VND)',
+      debt_policy: 'carried_over_to_next_billing_cycle'
     }
   };
 }

@@ -151,12 +151,16 @@
 
         <!-- Location Filter Dropdown -->
         <div class="hidden md:flex items-center gap-1.5 ml-4 pl-4 border-l border-slate-200 dark:border-slate-800">
-          <span class="text-xs text-slate-400 font-medium">📍 Điểm học:</span>
+          <svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          <span class="text-xs text-slate-400 font-medium">Điểm học:</span>
           <select 
             bind:value={selectedCampus}
             class="text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-2.5 py-1 rounded-md border border-slate-300 dark:border-slate-700 focus:outline-none focus:ring-1 focus:ring-sky-500"
           >
-            <option value="all">🌐 Toàn bộ cơ sở</option>
+            <option value="all">Tất cả cơ sở</option>
             {#each campuses as c}
               <option value={c.id}>{c.name}</option>
             {/each}
@@ -167,8 +171,10 @@
       <!-- Right: User Quick Info, Stars, Notifications -->
       <div class="flex items-center gap-3">
         {#if currentUser?.role === 'student' && studentStars}
-          <div class="flex items-center gap-1 px-2.5 py-1 rounded-md bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400 font-semibold text-xs shadow-xs">
-            <span>⭐</span>
+          <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400 font-semibold text-xs shadow-xs">
+            <svg class="w-3.5 h-3.5 text-amber-500 fill-current" viewBox="0 0 20 20">
+              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+            </svg>
             <span>{studentStars.stars_balance || 0}</span>
             <span class="text-[11px] opacity-80 hidden sm:inline">sao</span>
           </div>
@@ -180,7 +186,7 @@
           class="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors border border-slate-200 dark:border-slate-700"
           title="Chuyển đổi ngôn ngữ / Switch Language"
         >
-          <span>{lang === 'vi' ? '🇻🇳 VI' : '🇬🇧 EN'}</span>
+          <span>{lang === 'vi' ? 'VI' : 'EN'}</span>
         </button>
 
         <!-- Notification Bell -->
@@ -209,8 +215,11 @@
         </div>
 
         {#if isSuperAdmin(currentUser)}
-          <a href="/admincp" class="hidden sm:inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-rose-700 hover:bg-rose-800 text-white text-xs font-semibold shadow-xs transition-all">
-            <span>⚡ AdminCP Tổng</span>
+          <a href="/admincp" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-rose-700 hover:bg-rose-800 text-white text-xs font-semibold shadow-xs transition-all">
+            <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd" />
+            </svg>
+            <span>AdminCP Tổng</span>
           </a>
         {/if}
       </div>
@@ -224,7 +233,6 @@
           href={item.path}
           class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold whitespace-nowrap transition-all {isActive ? 'bg-sky-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}"
         >
-          <span>{item.icon}</span>
           <span>{item.label}</span>
         </a>
       {/each}

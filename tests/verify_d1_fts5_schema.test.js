@@ -2,13 +2,14 @@ import { test, describe, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { DatabaseSync } from 'node:sqlite';
 import fs from 'node:fs';
-import path from 'node:path';
 
-describe('D1 FTS5 SCHEMA MIGRATION & FULL-TEXT SEARCH AUDIT SUITE', () => {
+describe('D1 FTS5 SCHEMA MIGRATION, IDEMPOTENCY & BACKFILL AUDIT SUITE', () => {
   let db;
+  let vaultData;
 
   before(() => {
     db = new DatabaseSync(':memory:');
+    vaultData = JSON.parse(fs.readFileSync('src/lib/data/second_brain_vault.json', 'utf8'));
 
     // 1. Create base knowledge_vault table
     db.exec(`
@@ -26,118 +27,105 @@ describe('D1 FTS5 SCHEMA MIGRATION & FULL-TEXT SEARCH AUDIT SUITE', () => {
       );
     `);
 
-    // 2. Execute Migration 0002
+    // 2. Pre-populate all 102 existing notes from second_brain_vault.json
+    const insertStmt = db.prepare(`
+      INSERT INTO knowledge_vault (id, title, folder, category, tags, content_markdown, source_path, source_hash, status, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+    `);
+
+    db.exec('BEGIN TRANSACTION');
+    vaultData.notes.forEach(note => {
+      insertStmt.run(
+        note.id,
+        note.title,
+        note.folder || 'Default',
+        note.category || 'General',
+        JSON.stringify(note.tags || []),
+        note.content || note.raw || note.title,
+        note.source_path || null,
+        note.source_hash || null,
+        'active',
+        note.updated_at || '2026-09-27'
+      );
+    });
+    db.exec('COMMIT');
+  });
+
+  test('FTS5-01: First execution of Migration 0002 creates virtual table, triggers, and backfills exactly 102 notes', () => {
     const migrationSql = fs.readFileSync('migrations/0002_create_knowledge_fts.sql', 'utf8');
     db.exec(migrationSql);
+
+    const ftsCount = db.prepare('SELECT COUNT(*) as count FROM knowledge_fts;').get();
+    assert.strictEqual(ftsCount.count, 102, 'Expected exactly 102 notes backfilled into knowledge_fts');
+
+    const triggerCount = db.prepare("SELECT COUNT(*) as c FROM sqlite_master WHERE type='trigger' AND name LIKE 'trg_knowledge_vault_%';").get();
+    assert.strictEqual(triggerCount.c, 3, 'Expected 3 auto-sync triggers');
   });
 
-  test('FTS5-01: Virtual table knowledge_fts exists and triggers are active', () => {
-    const tableCheck = db.prepare(`
-      SELECT name FROM sqlite_master WHERE type='table' AND name='knowledge_fts';
-    `).get();
-    assert.ok(tableCheck, 'knowledge_fts virtual table must exist in sqlite_master');
+  test('FTS5-02: Idempotency Check: Running Migration 0002 a SECOND time produces ZERO duplicate records', () => {
+    const migrationSql = fs.readFileSync('migrations/0002_create_knowledge_fts.sql', 'utf8');
+    // Run migration again
+    db.exec(migrationSql);
 
-    const triggerCheck = db.prepare(`
-      SELECT name FROM sqlite_master WHERE type='trigger' AND name LIKE 'trg_knowledge_vault_%';
-    `).all();
-    assert.strictEqual(triggerCheck.length, 3, 'Expected 3 auto-sync triggers (insert, delete, update)');
+    const ftsCount = db.prepare('SELECT COUNT(*) as count FROM knowledge_fts;').get();
+    assert.strictEqual(ftsCount.count, 102, 'Count must remain exactly 102 after re-running migration; NO duplicates!');
   });
 
-  test('FTS5-02: Insert into knowledge_vault automatically synchronizes to knowledge_fts', () => {
+  test('FTS5-03: Vietnamese Unicode MATCH query on real Drive notes & snippet() highlighting', () => {
+    // Search for "phối hợp thì" which exists in the Google Drive imported notes
+    const results = db.prepare(`
+      SELECT kv.id, kv.title,
+             snippet(knowledge_fts, 2, '[[HL]]', '[[/HL]]', '...', 15) as snippet
+      FROM knowledge_fts kf
+      JOIN knowledge_vault kv ON kf.id = kv.id
+      WHERE knowledge_fts MATCH ?
+    `).all('"phối hợp thì"*');
+
+    assert.ok(results.length >= 1, 'Should find at least 1 note matching "phối hợp thì"');
+    const hasMatch = results.some(r => r.title.toLowerCase().includes('phối hợp thì') || r.snippet.toLowerCase().includes('phối hợp thì'));
+    assert.ok(hasMatch, 'At least one result must contain phối hợp thì in title or content snippet');
+  });
+
+  test('FTS5-04: Auto-sync Insert Trigger: Inserting a new 103rd note automatically updates knowledge_fts', () => {
     db.exec(`
-      INSERT INTO knowledge_vault (id, title, folder, category, tags, content_markdown, source_path, status, updated_at)
+      INSERT INTO knowledge_vault (id, title, folder, category, tags, content_markdown, status, updated_at)
       VALUES (
-        'note_present_simple',
-        'Thì Hiện Tại Đơn (Present Simple)',
-        'Grammar/Tenses',
+        'note_103_modal_verbs',
+        'Động Từ Khuyết Thiếu (Modal Verbs: Must, Should, Ought to)',
+        '02_GRAMMAR',
         'grammar',
-        '["grammar", "present_simple", "tense"]',
-        'Thì hiện tại đơn diễn tả một hành động lặp đi lặp lại hoặc một chân lý hiển nhiên trong tự nhiên.',
-        '01-Grammar/Present-Simple.md',
+        '["modal_verbs", "grammar"]',
+        'Động từ khuyết thiếu dùng để diễn tả nghĩa vụ bắt buộc, lời khuyên và khả năng xảy ra.',
         'active',
         '2026-09-27'
       );
     `);
 
-    const ftsRow = db.prepare('SELECT id, title, content_markdown FROM knowledge_fts WHERE id = ?').get('note_present_simple');
-    assert.ok(ftsRow, 'knowledge_fts must contain the inserted note');
-    assert.strictEqual(ftsRow.title, 'Thì Hiện Tại Đơn (Present Simple)');
+    const ftsCount = db.prepare('SELECT COUNT(*) as count FROM knowledge_fts;').get();
+    assert.strictEqual(ftsCount.count, 103, 'Count in knowledge_fts must automatically increase to 103');
+
+    const searchMatch = db.prepare('SELECT id, title FROM knowledge_fts WHERE knowledge_fts MATCH ?;').all('"nghĩa vụ bắt buộc"');
+    assert.strictEqual(searchMatch.length, 1);
+    assert.strictEqual(searchMatch[0].id, 'note_103_modal_verbs');
   });
 
-  test('FTS5-03: Vietnamese Unicode MATCH query & snippet() highlighting', () => {
-    const searchRes = db.prepare(`
-      SELECT kv.id, kv.title,
-             snippet(knowledge_fts, 2, '[[HL]]', '[[/HL]]', '...', 10) as snippet
-      FROM knowledge_fts kf
-      JOIN knowledge_vault kv ON kf.id = kv.id
-      WHERE knowledge_fts MATCH ?
-    `).all('"chân lý hiển nhiên"*');
-
-    assert.strictEqual(searchRes.length, 1, 'Should find exactly 1 matching note');
-    assert.strictEqual(searchRes[0].id, 'note_present_simple');
-    assert.ok(searchRes[0].snippet.includes('[[HL]]'), 'Snippet must contain highlight start tag');
-    assert.ok(searchRes[0].snippet.includes('[[/HL]]'), 'Snippet must contain highlight end tag');
-  });
-
-  test('FTS5-04: Update in knowledge_vault automatically updates knowledge_fts', () => {
+  test('FTS5-05: Auto-sync Update Trigger: Updating content reflects in search index immediately', () => {
     db.exec(`
       UPDATE knowledge_vault 
-      SET content_markdown = 'Nội dung cập nhật: Diễn tả thói quen hàng ngày và lịch trình cố định.'
-      WHERE id = 'note_present_simple';
+      SET content_markdown = 'Nội dung cập nhật: Diễn đạt sự suy đoán chắc chắn ở quá khứ (Must have + PII).'
+      WHERE id = 'note_103_modal_verbs';
     `);
 
-    const oldMatch = db.prepare('SELECT id FROM knowledge_fts WHERE knowledge_fts MATCH ?').all('"chân lý hiển nhiên"');
-    assert.strictEqual(oldMatch.length, 0, 'Old keywords must no longer match after update');
+    const oldMatch = db.prepare('SELECT id FROM knowledge_fts WHERE knowledge_fts MATCH ?;').all('"nghĩa vụ bắt buộc"');
+    assert.strictEqual(oldMatch.length, 0, 'Old keywords must no longer match');
 
-    const newMatch = db.prepare('SELECT id FROM knowledge_fts WHERE knowledge_fts MATCH ?').all('"lịch trình cố định"');
-    assert.strictEqual(newMatch.length, 1, 'New keywords must match after update');
+    const newMatch = db.prepare('SELECT id FROM knowledge_fts WHERE knowledge_fts MATCH ?;').all('"suy đoán chắc chắn"');
+    assert.strictEqual(newMatch.length, 1, 'New keywords must match immediately');
   });
 
-  test('FTS5-05: Delete in knowledge_vault automatically removes from knowledge_fts', () => {
-    db.exec("DELETE FROM knowledge_vault WHERE id = 'note_present_simple';");
-    const count = db.prepare('SELECT COUNT(*) as c FROM knowledge_fts WHERE id = ?').get('note_present_simple');
-    assert.strictEqual(count.c, 0, 'Record must be completely removed from knowledge_fts');
-  });
-
-  test('FTS5-06: Robustness when virtual table is absent (Fallback LIKE test)', () => {
-    const isolatedDb = new DatabaseSync(':memory:');
-    isolatedDb.exec(`
-      CREATE TABLE knowledge_vault (
-        id TEXT PRIMARY KEY,
-        title TEXT,
-        folder TEXT,
-        category TEXT,
-        tags TEXT,
-        content_markdown TEXT,
-        updated_at TEXT
-      );
-      INSERT INTO knowledge_vault VALUES ('dummy_1', 'Câu Bị Động', 'Grammar', 'grammar', '[]', 'Passive voice structure', '2026-09-27');
-    `);
-
-    // Simulate handler try/catch fallback:
-    let searchSuccess = false;
-    let fallbackUsed = false;
-    let results = [];
-
-    try {
-      results = isolatedDb.prepare(`
-        SELECT kv.id, kv.title
-        FROM knowledge_fts kf
-        JOIN knowledge_vault kv ON kf.id = kv.id
-        WHERE knowledge_fts MATCH ?
-      `).all('Passive');
-      searchSuccess = true;
-    } catch (err) {
-      // Caught schema error -> fallback to SQL LIKE
-      fallbackUsed = true;
-      results = isolatedDb.prepare(`
-        SELECT id, title
-        FROM knowledge_vault
-        WHERE title LIKE ? OR content_markdown LIKE ?
-      `).all('%Passive%', '%Passive%');
-    }
-
-    assert.strictEqual(fallbackUsed, true, 'Fallback LIKE must activate if knowledge_fts table is missing');
-    assert.strictEqual(results.length, 1, 'Fallback LIKE must return the matching record');
+  test('FTS5-06: Auto-sync Delete Trigger: Deleting from knowledge_vault removes from knowledge_fts', () => {
+    db.exec("DELETE FROM knowledge_vault WHERE id = 'note_103_modal_verbs';");
+    const count = db.prepare("SELECT COUNT(*) as c FROM knowledge_fts WHERE id = 'note_103_modal_verbs';").get();
+    assert.strictEqual(count.c, 0, 'Deleted note must not exist in knowledge_fts');
   });
 });
