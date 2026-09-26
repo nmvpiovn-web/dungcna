@@ -308,7 +308,6 @@ export async function POST({ request, platform }) {
       // Query true verified student star balance from DB (NEVER trust client body.stars_available)
       const starRow = await db.prepare('SELECT stars_balance FROM student_stars WHERE student_id = ?').bind(studentId).first();
       availableStars = starRow ? Number(starRow.stars_balance) : 0;
-      originalStarsBalance = availableStars;
       billData.stars_available = availableStars;
 
       if (netStarsToDebit > 0 && availableStars < netStarsToDebit) {
@@ -331,17 +330,17 @@ export async function POST({ request, platform }) {
             SET stars_balance = stars_balance - ?,
                 stars_redeemed = stars_redeemed + ?,
                 last_updated = CURRENT_TIMESTAMP
-            WHERE student_id = ? AND stars_balance >= ?
-              AND EXISTS (SELECT 1 FROM tuition_bills WHERE id = ? AND version = ? AND stars_deducted = ?);
-          `).bind(netStarsToDebit, netStarsToDebit, studentId, netStarsToDebit, billId, existingVersion, previousDeducted);
+            WHERE student_id = ?
+              AND EXISTS (SELECT 1 FROM tuition_bills WHERE id = ? AND student_id = ? AND version = ? AND stars_deducted = ? AND (status = 'draft' OR ? = 1));
+          `).bind(netStarsToDebit, netStarsToDebit, studentId, billId, studentId, existingVersion, previousDeducted, manager ? 1 : 0);
 
           const stmtLedger = db.prepare(`
             INSERT INTO student_star_ledger (id, student_id, bill_id, delta_stars, balance_after, action_type, reason)
             SELECT ?, ?, ?, ?, stars_balance, 'deduct', ?
             FROM student_stars
             WHERE student_id = ?
-              AND EXISTS (SELECT 1 FROM tuition_bills WHERE id = ? AND version = ? AND stars_deducted = ?);
-          `).bind(ledgerId, studentId, billId, -netStarsToDebit, `Khấu trừ ${netStarsToDebit} sao cho phiếu học phí ${billId}`, studentId, billId, existingVersion, previousDeducted);
+              AND EXISTS (SELECT 1 FROM tuition_bills WHERE id = ? AND student_id = ? AND version = ? AND stars_deducted = ? AND (status = 'draft' OR ? = 1));
+          `).bind(ledgerId, studentId, billId, -netStarsToDebit, `Khấu trừ ${netStarsToDebit} sao cho phiếu học phí ${billId}`, studentId, billId, studentId, existingVersion, previousDeducted, manager ? 1 : 0);
 
           const stmtBill = db.prepare(`
             UPDATE tuition_bills SET
@@ -405,8 +404,8 @@ export async function POST({ request, platform }) {
             SET stars_balance = stars_balance - ?,
                 stars_redeemed = stars_redeemed + ?,
                 last_updated = CURRENT_TIMESTAMP
-            WHERE student_id = ? AND stars_balance >= ?;
-          `).bind(netStarsToDebit, netStarsToDebit, studentId, netStarsToDebit);
+            WHERE student_id = ?;
+          `).bind(netStarsToDebit, netStarsToDebit, studentId);
 
           const stmtLedger = db.prepare(`
             INSERT INTO student_star_ledger (id, student_id, bill_id, delta_stars, balance_after, action_type, reason)
@@ -451,16 +450,16 @@ export async function POST({ request, platform }) {
               stars_redeemed = MAX(0, stars_redeemed - ?),
               last_updated = CURRENT_TIMESTAMP
           WHERE student_id = ?
-            AND EXISTS (SELECT 1 FROM tuition_bills WHERE id = ? AND version = ? AND stars_deducted = ?);
-        `).bind(refundAmount, refundAmount, studentId, billId, existingVersion, previousDeducted);
+            AND EXISTS (SELECT 1 FROM tuition_bills WHERE id = ? AND student_id = ? AND version = ? AND stars_deducted = ? AND (status = 'draft' OR ? = 1));
+        `).bind(refundAmount, refundAmount, studentId, billId, studentId, existingVersion, previousDeducted, manager ? 1 : 0);
 
         const stmtLedger = db.prepare(`
           INSERT INTO student_star_ledger (id, student_id, bill_id, delta_stars, balance_after, action_type, reason)
           SELECT ?, ?, ?, ?, stars_balance, 'refund', ?
           FROM student_stars
           WHERE student_id = ?
-            AND EXISTS (SELECT 1 FROM tuition_bills WHERE id = ? AND version = ? AND stars_deducted = ?);
-        `).bind(ledgerId, studentId, billId, refundAmount, `Hoàn ${refundAmount} sao do giảm khấu trừ trên phiếu học phí ${billId}`, studentId, billId, existingVersion, previousDeducted);
+            AND EXISTS (SELECT 1 FROM tuition_bills WHERE id = ? AND student_id = ? AND version = ? AND stars_deducted = ? AND (status = 'draft' OR ? = 1));
+        `).bind(ledgerId, studentId, billId, refundAmount, `Hoàn ${refundAmount} sao do giảm khấu trừ trên phiếu học phí ${billId}`, studentId, billId, studentId, existingVersion, previousDeducted, manager ? 1 : 0);
 
         const stmtBill = db.prepare(`
           UPDATE tuition_bills SET
@@ -625,6 +624,14 @@ export async function POST({ request, platform }) {
         }, { status: 403 });
       }
 
+      // If net stars changed, verify stars statement succeeded (always first statement)
+      if (netStarsToDebit !== 0 && (!batchResults[0] || batchResults[0].meta?.changes !== 1)) {
+        return json({
+          success: false,
+          error: 'Không thể khấu trừ/hoàn sao: Số dư sao không đủ hoặc thông tin học sinh không hợp lệ (changes = 0).'
+        }, { status: 400 });
+      }
+
       // Fetch authoritative updated balance from DB
       const finalStarRow = await db.prepare('SELECT stars_balance FROM student_stars WHERE student_id = ?').bind(studentId).first();
       billData.stars_available = finalStarRow ? Number(finalStarRow.stars_balance) : availableStars;
@@ -655,17 +662,11 @@ export async function POST({ request, platform }) {
     });
   } catch (err) {
     console.error('Critical failure in POST tuition:', err);
-    // Dual defense: revert star balance deficit or surplus if partial write occurred
-    if (originalStarsBalance !== null && studentId && platform?.env?.DB) {
-      try {
-        const cur = await platform.env.DB.prepare('SELECT stars_balance FROM student_stars WHERE student_id = ?').bind(studentId).first();
-        if (cur && Number(cur.stars_balance) !== originalStarsBalance) {
-          const diff = originalStarsBalance - Number(cur.stars_balance);
-          await platform.env.DB.prepare('UPDATE student_stars SET stars_balance = stars_balance + ? WHERE student_id = ?').bind(diff, studentId).run();
-        }
-      } catch (rbErr) {
-        console.error('Dual defense POST rollback failed:', rbErr);
-      }
+    if (err?.message && (err.message.includes('INSUFFICIENT_STARS') || err.message.includes('cannot be negative'))) {
+      return json({
+        success: false,
+        error: 'Số dư sao của học sinh không đủ để áp dụng khấu trừ học phí'
+      }, { status: 400 });
     }
     return json({ success: false, error: `FailClosed: Không thể hoàn tất ghi nhận học phí (${err.message})` }, { status: 500 });
   }
@@ -696,12 +697,6 @@ export async function DELETE({ url, request, platform }) {
     const studentId = bill.student_id;
     const starsDeducted = Number(bill.stars_deducted) || 0;
     const expectedVersion = Number(bill.version) || 1;
-
-    let originalStarsBalance = null;
-    const starRow = await db.prepare('SELECT stars_balance FROM student_stars WHERE student_id = ?').bind(studentId).first();
-    if (starRow) {
-      originalStarsBalance = Number(starRow.stars_balance);
-    }
 
     try {
       if (starsDeducted > 0) {
@@ -766,17 +761,6 @@ export async function DELETE({ url, request, platform }) {
       });
     } catch (err) {
       console.error('Critical failure in DELETE tuition:', err);
-      if (originalStarsBalance !== null && studentId) {
-        try {
-          const cur = await db.prepare('SELECT stars_balance FROM student_stars WHERE student_id = ?').bind(studentId).first();
-          if (cur && Number(cur.stars_balance) !== originalStarsBalance) {
-            const diff = originalStarsBalance - Number(cur.stars_balance);
-            await db.prepare('UPDATE student_stars SET stars_balance = stars_balance + ? WHERE student_id = ?').bind(diff, studentId).run();
-          }
-        } catch (rbErr) {
-          console.error('Dual defense DELETE rollback failed:', rbErr);
-        }
-      }
       return json({
         success: false,
         error: `FailClosed: Lỗi xóa hóa đơn (${err.message})`
