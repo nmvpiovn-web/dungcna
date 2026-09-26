@@ -145,7 +145,7 @@ export async function GET({ url, request, platform }) {
 
     return json({ success: true, total: mockProfiles.length, profiles: mockProfiles, source: 'local_dev_mock' });
   } catch (err) {
-    return json({ success: false, error: err.message }, { status: 500 });
+    return json({ success: false, persisted: false, error: err.message }, { status: 500 });
   }
 }
 
@@ -345,6 +345,6 @@ export async function POST({ request, platform }) {
 
     return json({ success: false, error: 'Hành động không hợp lệ' }, { status: 400 });
   } catch (err) {
-    return json({ success: false, error: err.message }, { status: 500 });
+    return json({ success: false, persisted: false, error: err.message }, { status: 500 });
   }
 }
