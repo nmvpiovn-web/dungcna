@@ -41,23 +41,23 @@ export async function GET({ url, request, platform }) {
         }
         allowedStudentId = user.id;
       } else if (user.role === 'parent') {
-        // Parent: Validate authorized children strictly from D1 parent_student_links / users
+        // STRICT ID-ONLY PARENT VERIFICATION:
+        // Exclusively query parent_student_links based on parent_user_id.
+        // Names and phone numbers are NEVER used to establish parental access rights.
         const linksRes = await db.prepare(`
           SELECT student_user_id FROM parent_student_links 
-          WHERE parent_user_id = ? OR (parent_phone = ? AND parent_phone IS NOT NULL AND parent_phone != '');
-        `).bind(user.id, user.phone || '').all();
+          WHERE parent_user_id = ?;
+        `).bind(user.id).all();
 
-        const studentUsersRes = await db.prepare(`
-          SELECT id FROM users 
-          WHERE role = 'student' AND (parent_phone = ? OR parent_name = ?);
-        `).bind(user.phone || 'NONE', user.name || 'NONE').all();
+        const linkedStudentIds = (linksRes?.results || []).map(r => r.student_user_id);
 
-        const linkedStudentIds = new Set();
-        (linksRes?.results || []).forEach(r => linkedStudentIds.add(r.student_user_id));
-        (studentUsersRes?.results || []).forEach(r => linkedStudentIds.add(r.id));
+        if (linkedStudentIds.length === 0) {
+          // Fail-closed: Unlinked parent has zero access
+          return json({ success: true, total: 0, bills: [], source: 'fail_closed_unlinked_parent' });
+        }
 
         if (requestedStudentId) {
-          if (!linkedStudentIds.has(requestedStudentId) && requestedStudentId !== user.id) {
+          if (!linkedStudentIds.includes(requestedStudentId)) {
             return json({
               success: false,
               error: 'Forbidden: Quý phụ huynh chỉ có quyền xem học phí của con em mình'
@@ -65,30 +65,31 @@ export async function GET({ url, request, platform }) {
           }
           allowedStudentId = requestedStudentId;
         } else {
-          // If no specific child requested, verify if parent has any verified child links
-          if (linkedStudentIds.size === 0 && !user.phone) {
-            // Strict Fail-Closed: Unlinked parent with no phone sees nothing
-            return json({ success: true, total: 0, bills: [], source: 'fail_closed_unlinked_parent' });
-          }
+          // If no specific child is requested, query ONLY the set of verified child IDs
+          const placeholders = linkedStudentIds.map(() => '?').join(',');
+          const d1Res = await db.prepare(`
+            SELECT * FROM tuition_bills 
+            WHERE student_id IN (${placeholders}) 
+            ORDER BY created_at DESC;
+          `).bind(...linkedStudentIds).all();
+
+          return json({
+            success: true,
+            total: (d1Res?.results || []).length,
+            bills: d1Res?.results || [],
+            source: 'cloudflare_d1'
+          });
         }
       }
 
-      // Query D1 tuition_bills
+      // Query D1 tuition_bills for staff or single student
       let query = 'SELECT * FROM tuition_bills';
       let params = [];
 
       if (allowedStudentId) {
         query += ' WHERE student_id = ?';
         params.push(allowedStudentId);
-      } else if (user.role === 'parent') {
-        if (user.phone) {
-          query += ' WHERE parent_phone = ?';
-          params.push(user.phone);
-        } else {
-          query += ' WHERE 1 = 0'; // Fail-closed
-        }
       }
-
       query += ' ORDER BY created_at DESC';
 
       const d1Res = await db.prepare(query).bind(...params).all();
@@ -112,12 +113,6 @@ export async function GET({ url, request, platform }) {
   let bills = getAllTuitionBills();
   if (requestedStudentId) {
     bills = bills.filter(b => b.student_id === requestedStudentId);
-  } else if (user.role === 'parent') {
-    if (user.phone) {
-      bills = bills.filter(b => b.parent_phone === user.phone);
-    } else {
-      bills = [];
-    }
   }
 
   return json({
@@ -153,14 +148,27 @@ export async function POST({ request, platform }) {
       return json({ success: false, error: 'Thiếu thông tin học sinh hoặc mức học phí gốc' }, { status: 400 });
     }
 
-    // 2. Calculate discount with formula: 100 stars = 1,000 VND
+    const billId = body.id || `bill_${Date.now()}`;
+
+    // 2. Strict Protection of Approved / Paid Bills:
+    // Regular teachers CANNOT modify any existing bill that is already approved or paid!
+    if (platform?.env?.DB && body.id) {
+      const existing = await platform.env.DB.prepare('SELECT id, status FROM tuition_bills WHERE id = ?').bind(body.id).first();
+      if (existing && existing.status !== 'draft' && !manager) {
+        return json({
+          success: false,
+          error: `Forbidden: Hóa đơn đã ở trạng thái '${existing.status}'. Giáo viên không được phép chỉnh sửa hóa đơn đã phê duyệt hoặc đã thanh toán. Vui lòng liên hệ Ban Quản Lý.`
+        }, { status: 403 });
+      }
+    }
+
+    // 3. Calculate discount with formula: 100 stars = 1,000 VND
     const starsDeducted = Number(body.stars_deducted) || 0;
     const discountVnd = Math.floor(starsDeducted / 100) * 1000;
     const baseTuition = Number(body.base_tuition_vnd) || 0;
     const finalAmount = Math.max(0, baseTuition - discountVnd);
-    const billId = body.id || `bill_${Date.now()}`;
 
-    // 3. Strict Financial Separation of Duties:
+    // 4. Strict Financial Separation of Duties:
     // Only Manager (Leader Cô Dung / SuperAdmin) can approve or mark paid.
     // Regular teachers can ONLY create or update 'draft' bills.
     let targetStatus = 'draft';
@@ -184,7 +192,7 @@ export async function POST({ request, platform }) {
       approved_by: approverName
     };
 
-    // 4. Save to Cloudflare D1 (Strict Fail-Closed)
+    // 5. Save to Cloudflare D1 (Strict Fail-Closed)
     if (platform?.env?.DB) {
       const db = platform.env.DB;
       const d1Sql = `
@@ -224,11 +232,10 @@ export async function POST({ request, platform }) {
         billData.parent_name || '', billData.parent_phone || '', billData.parent_zalo_id || ''
       ).run();
     } else {
-      // Dev mode store sync
       saveTuitionBill(billData);
     }
 
-    // 5. Trigger Webhook on Approval
+    // 6. Trigger Webhook on Approval
     if (targetStatus === 'approved' || targetStatus === 'paid') {
       dispatchBotReport('TUITION_BILL_APPROVED', {
         bill_id: billData.id,

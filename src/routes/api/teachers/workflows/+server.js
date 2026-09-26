@@ -191,25 +191,40 @@ export async function POST({ request, platform }) {
 
   const manager = isManager(auth.user);
 
-  // ACTION 1: REQUEST LEAVE (Teacher or Manager)
+  // ACTION 1: REQUEST LEAVE (Single Session Bound & Time Overlap Check)
   if (action === 'request_leave') {
-    const { session_id, session_date, reason, substitute_teacher_id, substitute_teacher_name } = body;
-    if (!session_date || !reason) {
-      return json({ success: false, error: 'Vui lòng cung cấp ngày nghỉ và lý do cụ thể' }, { status: 400 });
+    const { session_id, reason, substitute_teacher_id, substitute_teacher_name } = body;
+    if (!session_id || !reason) {
+      return json({ success: false, error: 'Vui lòng chọn ca học cụ thể (session_id) và nêu rõ lý do' }, { status: 400 });
     }
 
-    // Conflict Check: If substitute teacher is chosen, check if they already have a scheduled session on this date!
+    // Verify session existence and teacher ownership
+    const session = await db.prepare('SELECT id, class_name, teacher_id, teacher_name, session_date, start_time, end_time FROM class_sessions WHERE id = ?').bind(session_id).first();
+    if (!session) {
+      return json({ success: false, error: 'NotFound: Không tìm thấy ca học tương ứng' }, { status: 404 });
+    }
+    if (session.teacher_id !== auth.user.id && !manager) {
+      return json({ success: false, error: 'Forbidden: Bạn chỉ có thể làm đơn xin nghỉ ca dạy của chính mình' }, { status: 403 });
+    }
+
+    const sessionDate = session.session_date;
+
+    // Time-Interval Conflict Check: Overlap occurs if startA < endB AND endA > startB
     if (substitute_teacher_id) {
       const conflictRes = await db.prepare(`
         SELECT id, class_name, start_time, end_time FROM class_sessions 
-        WHERE (teacher_id = ? OR substitute_teacher_id = ?) AND session_date = ? AND status != 'cancelled';
-      `).bind(substitute_teacher_id, substitute_teacher_id, session_date).all();
+        WHERE (teacher_id = ? OR substitute_teacher_id = ?) 
+          AND session_date = ? 
+          AND status != 'cancelled'
+          AND start_time < ? 
+          AND end_time > ?;
+      `).bind(substitute_teacher_id, substitute_teacher_id, sessionDate, session.end_time, session.start_time).all();
 
       if (conflictRes?.results && conflictRes.results.length > 0) {
         const c = conflictRes.results[0];
         return json({
           success: false,
-          error: `Trùng lịch: Giáo viên ${substitute_teacher_name || 'được chọn'} đã có lịch dạy lớp '${c.class_name}' vào ngày ${session_date} (${c.start_time} - ${c.end_time}).`
+          error: `Trùng lịch: Giáo viên ${substitute_teacher_name || 'được chọn'} đã có lịch dạy lớp '${c.class_name}' trùng giờ (${c.start_time} - ${c.end_time}) vào ngày ${sessionDate}.`
         }, { status: 409 });
       }
     }
@@ -224,10 +239,10 @@ export async function POST({ request, platform }) {
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending');
       `).bind(
         leaveId,
-        auth.user.id,
-        auth.user.name,
-        session_id || null,
-        session_date,
+        session.teacher_id,
+        session.teacher_name,
+        session_id,
+        sessionDate,
         reason,
         substitute_teacher_id || null,
         substitute_teacher_name || null,
@@ -242,7 +257,7 @@ export async function POST({ request, platform }) {
         `).bind(
           `notif_${Date.now()}`,
           substitute_teacher_id,
-          `Thầy/Cô ${auth.user.name} đề nghị bạn dạy thay vào ca ngày ${session_date}.`,
+          `Thầy/Cô ${session.teacher_name} đề nghị bạn dạy thay lớp ${session.class_name} vào ca ngày ${sessionDate} (${session.start_time} - ${session.end_time}).`,
           leaveId
         ).run();
       }
@@ -253,7 +268,7 @@ export async function POST({ request, platform }) {
         VALUES (?, 'leader', 'Đơn xin nghỉ ca mới', ?, 'leave', ?);
       `).bind(
         `notif_l_${Date.now()}`,
-        `Giáo viên ${auth.user.name} vừa nộp đơn xin nghỉ ngày ${session_date}.`,
+        `Giáo viên ${session.teacher_name} vừa nộp đơn xin nghỉ ca ${session.class_name} ngày ${sessionDate}.`,
         leaveId
       ).run();
 
@@ -303,7 +318,7 @@ export async function POST({ request, platform }) {
     }
   }
 
-  // ACTION 3: APPROVE/REJECT LEAVE (Leader only - Enforces substitute status & updates actual session roster)
+  // ACTION 3: APPROVE/REJECT LEAVE (Atomic Batch Update of Leave & Single Class Session)
   if (action === 'approve_leave' || action === 'admin_decision') {
     if (!manager) {
       return json({ success: false, error: 'Forbidden: Chỉ Leader Cô Dung và Superadmin mới có quyền phê duyệt' }, { status: 403 });
@@ -321,7 +336,7 @@ export async function POST({ request, platform }) {
       return json({ success: false, error: 'Không tìm thấy đơn nghỉ' }, { status: 404 });
     }
 
-    // STRICT 2-STEP WORKFLOW: If substitute was specified, they MUST have accepted
+    // STRICT 2-STEP WORKFLOW ENFORCEMENT:
     if (targetDecision === 'approved' && leave.substitute_teacher_id && leave.substitute_status !== 'accepted') {
       return json({ 
         success: false, 
@@ -330,34 +345,41 @@ export async function POST({ request, platform }) {
     }
 
     try {
-      // 1. Update leave request status
-      await db.prepare(`
-        UPDATE teacher_leave_requests 
-        SET admin_status = ?, admin_notes = ?, updated_at = CURRENT_TIMESTAMP
-        WHERE id = ?;
-      `).bind(targetDecision, admin_notes || '', leave_id).run();
+      const batchStmts = [
+        db.prepare(`
+          UPDATE teacher_leave_requests 
+          SET admin_status = ?, admin_notes = ?, updated_at = CURRENT_TIMESTAMP
+          WHERE id = ? AND admin_status = 'pending';
+        `).bind(targetDecision, admin_notes || '', leave_id)
+      ];
 
-      // 2. If approved and substitute is accepted, update class_sessions roster!
-      if (targetDecision === 'approved' && leave.substitute_teacher_id) {
-        await db.prepare(`
-          UPDATE class_sessions 
-          SET substitute_teacher_id = ?, 
-              substitute_teacher_name = ?, 
-              substitute_notes = ?,
-              status = 'substitute_assigned',
-              updated_at = CURRENT_TIMESTAMP
-          WHERE (id = ? OR (teacher_id = ? AND session_date = ?));
-        `).bind(
-          leave.substitute_teacher_id,
-          leave.substitute_teacher_name,
-          `Dạy thay cho ${leave.teacher_name} theo đơn ${leave_id}`,
-          leave.session_id || 'NONE',
-          leave.teacher_id,
-          leave.session_date
-        ).run();
+      // Update EXACT single class session bound to this leave request
+      if (targetDecision === 'approved' && leave.session_id && leave.substitute_teacher_id) {
+        batchStmts.push(
+          db.prepare(`
+            UPDATE class_sessions 
+            SET substitute_teacher_id = ?, 
+                substitute_teacher_name = ?, 
+                substitute_notes = ?,
+                status = 'substitute_assigned',
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = ? AND teacher_id = ?;
+          `).bind(
+            leave.substitute_teacher_id,
+            leave.substitute_teacher_name,
+            `Dạy thay cho ${leave.teacher_name} theo đơn ${leave_id}`,
+            leave.session_id,
+            leave.teacher_id
+          )
+        );
       }
 
-      // 3. Notify teacher
+      const batchRes = await db.batch(batchStmts);
+      if (!batchRes || batchRes[0].meta?.changes !== 1) {
+        return json({ success: false, error: 'Đơn xin nghỉ này đã được xử lý trước đó.' }, { status: 409 });
+      }
+
+      // Notify teacher
       await db.prepare(`
         INSERT INTO system_notifications (id, target_role, target_user_id, title, body, category, reference_id)
         VALUES (?, 'teacher', ?, 'Kết quả duyệt đơn nghỉ phép', ?, 'leave', ?);
@@ -431,11 +453,16 @@ export async function POST({ request, platform }) {
     }
 
     try {
-      await db.prepare(`
+      // Must be pending! Cannot approve an already disbursed or deducted advance!
+      const updateRes = await db.prepare(`
         UPDATE teacher_salary_advances 
         SET status = ?, approved_by = ?, approved_at = CURRENT_TIMESTAMP, admin_notes = ?
-        WHERE id = ?;
+        WHERE id = ? AND status = 'pending';
       `).bind(decision, auth.user.name, admin_notes || '', advance_id).run();
+
+      if (!updateRes || updateRes.meta?.changes !== 1) {
+        return json({ success: false, error: 'Không thể duyệt: Đơn ứng lương không ở trạng thái pending hoặc đã được xử lý.' }, { status: 409 });
+      }
 
       // Notify teacher
       await db.prepare(`
@@ -454,7 +481,7 @@ export async function POST({ request, platform }) {
     }
   }
 
-  // ACTION 6: DISBURSE SALARY ADVANCE (Manager / Finance) - Phase 3: Disbursed (Thực chi)
+  // ACTION 6: DISBURSE SALARY ADVANCE (Manager / Finance) - Phase 3: Disbursed (Thực chi) - ATOMIC BATCH
   if (action === 'disburse_salary_advance') {
     if (!manager) {
       return json({ success: false, error: 'Forbidden: Chỉ Ban Quản Lý / Kế toán mới có quyền thực chi' }, { status: 403 });
@@ -469,23 +496,21 @@ export async function POST({ request, platform }) {
     if (!advance) {
       return json({ success: false, error: 'Không tìm thấy yêu cầu ứng lương' }, { status: 404 });
     }
-    if (advance.status !== 'approved') {
-      return json({ success: false, error: `Không thể thực chi: Đơn ứng lương đang ở trạng thái '${advance.status}', chỉ có thể chi khi đã 'approved'.` }, { status: 400 });
-    }
 
-    const txId = `tx_disb_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+    const txId = `tx_disb_${advance_id}`;
     const refCode = disbursement_ref || `UNC_${Date.now().toString().slice(-6)}`;
 
     try {
-      // 1. Update advance to 'disbursed'
-      await db.prepare(`
+      // ATOMIC TRANSACTION BATCH:
+      // 1. Advance MUST be in 'approved' status to be disbursed!
+      const updateStmt = db.prepare(`
         UPDATE teacher_salary_advances 
         SET status = 'disbursed', disbursed_at = CURRENT_TIMESTAMP, disbursed_by = ?, disbursement_ref = ?
-        WHERE id = ?;
-      `).bind(auth.user.name, refCode, advance_id).run();
+        WHERE id = ? AND status = 'approved';
+      `).bind(auth.user.name, refCode, advance_id);
 
       // 2. Append to financial transactions ledger
-      await db.prepare(`
+      const ledgerStmt = db.prepare(`
         INSERT INTO salary_transactions 
         (id, teacher_id, teacher_name, transaction_type, amount_vnd, billing_cycle, status, ref_id, notes, created_by)
         VALUES (?, ?, ?, 'advance_disbursed', ?, ?, 'completed', ?, ?, ?);
@@ -498,7 +523,15 @@ export async function POST({ request, platform }) {
         advance_id,
         notes || `Thực chi chuyển khoản mã ${refCode}`,
         auth.user.name
-      ).run();
+      );
+
+      const batchRes = await db.batch([updateStmt, ledgerStmt]);
+      if (!batchRes || batchRes[0].meta?.changes !== 1) {
+        return json({
+          success: false,
+          error: `Thực chi thất bại: Đơn ứng lương đang ở trạng thái '${advance.status}', chỉ có thể chi khi đã 'approved' và chưa từng thực chi.`
+        }, { status: 409 });
+      }
 
       // 3. Notify teacher
       await db.prepare(`
@@ -517,7 +550,7 @@ export async function POST({ request, platform }) {
     }
   }
 
-  // ACTION 7: DEDUCT SALARY ADVANCE (Payroll Engine / Manager) - Phase 4: Deducted (Đối trừ)
+  // ACTION 7: DEDUCT SALARY ADVANCE (Payroll Engine / Manager) - Phase 4: Deducted (Đối trừ) - ATOMIC BATCH
   if (action === 'deduct_salary_advance') {
     if (!manager) {
       return json({ success: false, error: 'Forbidden: Thao tác quyết toán chỉ dành cho Ban Quản Lý' }, { status: 403 });
@@ -533,25 +566,19 @@ export async function POST({ request, platform }) {
       return json({ success: false, error: 'Không tìm thấy yêu cầu ứng lương' }, { status: 404 });
     }
 
-    // STRICT ANTI-DOUBLE-DEDUCTION: Only disbursed advances can be deducted, and only once!
-    if (advance.status === 'deducted') {
-      return json({ success: false, error: 'Khoản ứng lương này đã được đối trừ trước đó. Chống đối trừ 2 lần!' }, { status: 409 });
-    }
-    if (advance.status !== 'disbursed') {
-      return json({ success: false, error: `Không thể đối trừ: Đơn chưa được thực chi (Trạng thái hiện tại: ${advance.status}).` }, { status: 400 });
-    }
-
-    const txId = `tx_ded_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+    const txId = `tx_ded_${advance_id}_${payroll_id}`;
 
     try {
-      await db.prepare(`
+      // ATOMIC TRANSACTION BATCH:
+      // 1. Advance MUST be in 'disbursed' status! If changes !== 1, fail closed!
+      const updateStmt = db.prepare(`
         UPDATE teacher_salary_advances 
         SET status = 'deducted', deducted_at = CURRENT_TIMESTAMP, deducted_payroll_id = ?
         WHERE id = ? AND status = 'disbursed';
-      `).bind(payroll_id, advance_id).run();
+      `).bind(payroll_id, advance_id);
 
-      // Record in ledger
-      await db.prepare(`
+      // 2. Insert into ledger (has UNIQUE constraint on transaction_type, ref_id)
+      const ledgerStmt = db.prepare(`
         INSERT INTO salary_transactions 
         (id, teacher_id, teacher_name, transaction_type, amount_vnd, billing_cycle, status, ref_id, notes, created_by)
         VALUES (?, ?, ?, 'advance_deducted', ?, ?, 'completed', ?, ?, ?);
@@ -564,7 +591,16 @@ export async function POST({ request, platform }) {
         advance_id,
         `Đối trừ quyết toán vào bảng lương ${payroll_id}`,
         auth.user.name
-      ).run();
+      );
+
+      const batchRes = await db.batch([updateStmt, ledgerStmt]);
+      // STRICT CHECK: Ensure update statement actually changed 1 row!
+      if (!batchRes || batchRes[0].meta?.changes !== 1) {
+        return json({
+          success: false,
+          error: 'Không thể đối trừ: Khoản ứng lương này đã được đối trừ trước đó hoặc chưa được thực chi (changes = 0).'
+        }, { status: 409 });
+      }
 
       return json({ success: true, message: 'Đã đối trừ khoản ứng lương thành công', transaction_id: txId });
     } catch (e) {

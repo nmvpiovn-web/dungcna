@@ -123,14 +123,20 @@ export async function POST({ request, platform }) {
 
         return json({ success: true, message: 'Đã đánh dấu tất cả thông báo là đã đọc' });
       } else if (notification_id) {
-        // Enforce ownership: Check target_user_id
+        // Enforce strict ownership: Check target_user_id and target_role
         const notif = await db.prepare('SELECT id, target_user_id, target_role FROM system_notifications WHERE id = ?').bind(notification_id).first();
         if (!notif) {
           return json({ success: false, error: 'NotFound: Không tìm thấy thông báo' }, { status: 404 });
         }
 
-        if (notif.target_user_id && notif.target_user_id !== auth.user.id && !isLeader) {
-          return json({ success: false, error: 'Forbidden: Bạn không có quyền đánh dấu thông báo của người dùng khác' }, { status: 403 });
+        // Strict Personal Privacy: ONLY the recipient can mark their own personal notification
+        if (notif.target_user_id && notif.target_user_id !== auth.user.id) {
+          return json({ success: false, error: 'Forbidden: Bạn không có quyền đánh dấu thông báo cá nhân của người khác' }, { status: 403 });
+        }
+
+        // Role-based notification: User must belong to the target role (or 'all', or isLeader)
+        if (notif.target_role && notif.target_role !== 'all' && notif.target_role !== auth.user.role && !isLeader) {
+          return json({ success: false, error: 'Forbidden: Thông báo này không thuộc nhóm vai trò được phân quyền của bạn' }, { status: 403 });
         }
 
         // Record per-user read state

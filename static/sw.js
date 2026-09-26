@@ -1,33 +1,26 @@
-const CACHE_NAME = 'tienganh-pro-v5';
-const STATIC_ASSETS = [
-  '/manifest.webmanifest',
-  '/icon.svg',
-  '/favicon.png',
-  '/apk_version.json'
-];
+// Service Worker for Tieng Anh Co Dung PWA
+// Architecture: Strict Network-Only for dynamic data/APIs; Cache-First for static immutable assets
+
+const CACHE_NAME = 'tienganh-academic-v2';
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(STATIC_ASSETS).catch(() => {});
-    })
-  );
   self.skipWaiting();
 });
 
+// Clean up all obsolete caches from previous deployments (including tienganh-pro-v5)
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) => {
+    caches.keys().then((cacheNames) => {
       return Promise.all(
-        keys.map((key) => {
-          if (key !== CACHE_NAME) {
-            return caches.delete(key);
+        cacheNames.map((name) => {
+          if (name !== CACHE_NAME) {
+            console.log('[SW] Purging obsolete cache:', name);
+            return caches.delete(name);
           }
         })
       );
-    })
+    }).then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
 self.addEventListener('fetch', (event) => {
@@ -35,109 +28,42 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(event.request.url);
 
-  // STRICT PRIVACY: NEVER cache any API endpoints or authenticated dynamic data
+  // 1. STRICT PRIVACY & FAIL-CLOSED:
+  // NEVER intercept or persist any API endpoints, auth tokens, or private user requests in CacheStorage
   if (url.pathname.startsWith('/api/') || event.request.headers.has('Authorization')) {
-    // Direct network only - never intercept or persist in client CacheStorage
+    // Direct network only
     return;
   }
 
-  // Always bypass cache for HTML navigations to ensure instant deployments
+  // 2. Navigation requests: Network only to guarantee immediate reflection of deployments
   if (event.request.mode === 'navigate') {
-    event.respondWith(
-      fetch(event.request)
-        .catch(() => caches.match(event.request))
-    );
     return;
   }
 
-  // Network first with cache fallback for static assets only (CSS, JS, images, fonts)
+  // 3. Static Assets Only: Strictly restrict caching to recognized immutable media & bundle assets
+  const isStaticAsset = /\.(css|js|woff2?|png|jpe?g|gif|svg|ico|webp)$/i.test(url.pathname);
+  if (!isStaticAsset) {
+    return;
+  }
+
+  // Cache-First with Network fallback for static assets only
   event.respondWith(
-    fetch(event.request)
-      .then((response) => {
-        if (response && response.status === 200 && response.type === 'basic') {
-          // Double-check: Never cache API responses even if path rewrite occurred
+    caches.match(event.request).then((cachedResponse) => {
+      if (cachedResponse) {
+        return cachedResponse;
+      }
+      return fetch(event.request).then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+          // Double check URL does not touch /api/
           if (!url.pathname.startsWith('/api/')) {
-            const clone = response.clone();
+            const clone = networkResponse.clone();
             caches.open(CACHE_NAME).then((cache) => {
               cache.put(event.request, clone);
             });
           }
         }
-        return response;
-      })
-      .catch(() => caches.match(event.request))
-  );
-});
-
-// PWA Background Push Notification Handler
-self.addEventListener('push', (event) => {
-  let data = {
-    title: 'Tiếng Anh Cô Dung',
-    body: 'Bạn có thông báo mới từ hệ thống đào tạo.',
-    data: { url: '/admin?tab=leader_notifications' }
-  };
-
-  if (event.data) {
-    try {
-      data = event.data.json();
-    } catch {
-      data = { ...data, body: event.data.text() };
-    }
-  }
-
-  const title = data.title || 'Tiếng Anh Cô Dung';
-  const options = {
-    body: data.body || '',
-    icon: data.icon || '/icon.svg',
-    badge: data.badge || '/icon.svg',
-    tag: data.tag || `tienganh_notif_${Date.now()}`,
-    data: data.data || { url: '/admin?tab=leader_notifications' },
-    vibrate: [200, 100, 200, 100, 200],
-    requireInteraction: data.priority === 'urgent',
-    actions: data.actions || [
-      { action: 'open', title: '👁️ Xem Chi Tiết' },
-      { action: 'close', title: '✖️ Đóng' }
-    ]
-  };
-
-  event.waitUntil(self.registration.showNotification(title, options));
-});
-
-// PWA Notification Click Routing
-self.addEventListener('notificationclick', (event) => {
-  event.notification.close();
-
-  if (event.action === 'close') return;
-
-  const targetUrl = event.notification.data?.url || '/admin?tab=leader_notifications';
-
-  event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
-      for (const client of windowClients) {
-        if (client.url.includes(targetUrl) && 'focus' in client) {
-          return client.focus();
-        }
-      }
-      if (clients.openWindow) {
-        return clients.openWindow(targetUrl);
-      }
+        return networkResponse;
+      });
     })
   );
-});
-
-// Client-triggered Notification Bridge (postMessage)
-self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SHOW_LEADER_NOTIFICATION') {
-    const { title, body, tag, url, priority } = event.data;
-    const options = {
-      body: body || '',
-      icon: '/icon.svg',
-      badge: '/icon.svg',
-      tag: tag || `tienganh_leader_${Date.now()}`,
-      data: { url: url || '/admin?tab=leader_notifications' },
-      vibrate: priority === 'urgent' ? [300, 150, 300, 150, 300] : [200, 100, 200],
-      requireInteraction: priority === 'urgent'
-    };
-    self.registration.showNotification(title || 'Tiếng Anh Cô Dung - Báo Cáo Leader', options);
-  }
 });
