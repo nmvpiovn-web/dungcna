@@ -248,6 +248,72 @@
       isProcessing = false;
     }
   }
+
+  // Leader Payroll Management state
+  let payrollTeacherId = $state('teacher_01');
+  let payrollCycle = $state('2026-09');
+  let leaderPayrollData = $state(null);
+  let isFetchingPayroll = $state(false);
+  let isLockingPayroll = $state(false);
+
+  const knownTeachers = [
+    { id: 'teacher_01', name: 'Cô Đỗ Hương (teacher_01)' },
+    { id: 'teacher_02', name: 'Thầy Minh Tuấn (teacher_02)' },
+    { id: 'teacher_dung', name: 'Cô Dung (teacher_dung)' },
+    { id: 'teacher_huong', name: 'Cô Hương (teacher_huong)' },
+    { id: 'substitute_teacher_99', name: 'Dạy Thay 99 (substitute_teacher_99)' }
+  ];
+
+  async function fetchLeaderPayroll() {
+    isFetchingPayroll = true;
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('tienganh_token') : '';
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      const res = await fetch(`/api/teachers/payroll?teacher_id=${encodeURIComponent(payrollTeacherId)}&billing_cycle=${encodeURIComponent(payrollCycle)}`, { headers });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        leaderPayrollData = data.payroll;
+      } else {
+        showMessage(data.error || 'Lỗi tải thông tin bảng lương', false);
+      }
+    } catch (e) {
+      showMessage('Lỗi: ' + e.message, false);
+    } finally {
+      isFetchingPayroll = false;
+    }
+  }
+
+  async function handlePayrollAction(action) {
+    if (!payrollTeacherId || !payrollCycle) return;
+    isLockingPayroll = true;
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('tienganh_token') : '';
+      const headers = {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      };
+      const res = await fetch('/api/teachers/payroll', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          action,
+          teacher_id: payrollTeacherId,
+          billing_cycle: payrollCycle
+        })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showMessage(data.message || `Thực hiện ${action} thành công!`);
+        leaderPayrollData = data.payroll;
+      } else {
+        showMessage(data.error || `Lỗi: Không thể thực hiện thao tác ${action}`, false);
+      }
+    } catch (e) {
+      showMessage('Lỗi kết nối: ' + e.message, false);
+    } finally {
+      isLockingPayroll = false;
+    }
+  }
 </script>
 
 <div class="space-y-6">
@@ -322,6 +388,12 @@
       <span class="px-1.5 py-0.2 rounded bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 text-[11px] font-semibold tabular-nums">
         {recruitment.length}
       </span>
+    </button>
+    <button 
+      onclick={() => { activeTab = 'payroll'; if (!leaderPayrollData) fetchLeaderPayroll(); }}
+      class="flex items-center gap-1.5 px-4 py-2 rounded-md text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 {activeTab === 'payroll' ? 'bg-sky-600 text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}"
+    >
+      <span>Khóa Sổ &amp; Bảng Lương</span>
     </button>
   </div>
 
@@ -626,6 +698,245 @@
               </div>
             </div>
           {/each}
+        </div>
+      {/if}
+    </div>
+
+  <!-- TAB 5: PAYROLL REVIEW & SETTLEMENT -->
+  {:else if activeTab === 'payroll'}
+    <div class="space-y-6">
+      <!-- Filter & Selection Bar -->
+      <div class="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 p-5 shadow-sm space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-800 pb-3">
+          <div>
+            <h2 class="text-base font-semibold text-slate-900 dark:text-white">Kiểm Duyệt &amp; Khóa Sổ Bảng Lương Giáo Viên</h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Thẩm quyền Ban Quản Lý: Tính toán thù lao, đối soát tạm ứng thực chi, kết chuyển nợ âm và khóa sổ kỳ bảo vệ.
+            </p>
+          </div>
+          <div class="text-xs text-slate-500 dark:text-slate-400 font-mono">
+            ENGINE: D1 PAYROLL v2026.09
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+          <!-- Select Teacher -->
+          <div>
+            <label for="leader-payroll-teacher-select" class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Giáo viên thụ hưởng:</label>
+            <select
+              id="leader-payroll-teacher-select"
+              bind:value={payrollTeacherId}
+              class="w-full p-2.5 rounded-md bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 font-medium text-slate-800 dark:text-slate-200"
+            >
+              {#each knownTeachers as t}
+                <option value={t.id}>{t.name}</option>
+              {/each}
+            </select>
+          </div>
+
+          <!-- Select Cycle -->
+          <div>
+            <label for="leader-payroll-cycle-select" class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Kỳ tính lương (Billing Cycle):</label>
+            <select
+              id="leader-payroll-cycle-select"
+              bind:value={payrollCycle}
+              class="w-full p-2.5 rounded-md bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 font-medium text-slate-800 dark:text-slate-200"
+            >
+              <option value="2026-07">Kỳ 07/2026</option>
+              <option value="2026-08">Kỳ 08/2026</option>
+              <option value="2026-09">Kỳ 09/2026 (Hiện tại)</option>
+              <option value="2026-10">Kỳ 10/2026</option>
+              <option value="2026-11">Kỳ 11/2026</option>
+              <option value="2026-12">Kỳ 12/2026</option>
+            </select>
+          </div>
+
+          <!-- Trigger Fetch Button -->
+          <div class="flex items-end">
+            <button
+              onclick={fetchLeaderPayroll}
+              disabled={isFetchingPayroll}
+              class="w-full py-2.5 px-4 rounded-md font-semibold bg-sky-600 hover:bg-sky-700 text-white disabled:opacity-50 transition-colors shadow-sm"
+            >
+              {isFetchingPayroll ? 'Đang tính toán...' : 'Đối Soát &amp; Tính Bảng Lương'}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAYROLL COMPUTATION RESULT -->
+      {#if leaderPayrollData}
+        <div class="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden space-y-0">
+          <!-- Card Header & Status Badge -->
+          <div class="p-5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-semibold text-sky-600 uppercase tracking-wider">Hồ Sơ Lương Học Vụ</span>
+                <span class="text-xs text-slate-400">•</span>
+                <span class="text-xs font-bold text-slate-800 dark:text-slate-200">Kỳ: {leaderPayrollData.billing_cycle}</span>
+                <span class="text-xs text-slate-400">•</span>
+                <span class="text-xs font-mono text-slate-600 dark:text-slate-400">{leaderPayrollData.teacher_id}</span>
+              </div>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                Chế độ tính: <strong>{leaderPayrollData.rate_mode === 'per_session' ? 'Theo ca dạy' : (leaderPayrollData.rate_mode === 'hourly' ? 'Theo giờ' : leaderPayrollData.rate_mode)}</strong> • Đơn giá: <span class="tabular-nums font-semibold">{Number(leaderPayrollData.base_rate).toLocaleString('vi-VN')} đ</span>
+              </p>
+            </div>
+
+            <div class="flex items-center gap-2">
+              {#if leaderPayrollData.is_locked || leaderPayrollData.status === 'locked' || leaderPayrollData.status === 'paid'}
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
+                  <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                  </svg>
+                  ĐÃ KHÓA SỔ BẢO VỆ ({leaderPayrollData.status.toUpperCase()})
+                </span>
+              {:else if leaderPayrollData.status === 'approved'}
+                <span class="inline-flex items-center gap-1 px-3 py-1 rounded text-xs font-bold bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300 border border-sky-300 dark:border-sky-800">
+                  ĐÃ PHÊ DUYỆT (CHỜ KHÓA SỔ)
+                </span>
+              {:else}
+                <span class="inline-flex items-center gap-1 px-3 py-1 rounded text-xs font-bold bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-300 dark:border-amber-800">
+                  DỰ THẢO HỌC VỤ (DRAFT)
+                </span>
+              {/if}
+            </div>
+          </div>
+
+          <!-- Financial 4-Box Grid -->
+          <div class="p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- Box 1 -->
+            <div class="bg-slate-50 dark:bg-slate-800/40 rounded-lg p-3.5 border border-slate-200/80 dark:border-slate-800">
+              <div class="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Ca Học Hợp Lệ</div>
+              <div class="text-xl font-bold text-slate-900 dark:text-white mt-1 tabular-nums">
+                {leaderPayrollData.summary.total_sessions} <span class="text-xs font-normal text-slate-500">ca</span>
+              </div>
+              <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 tabular-nums">
+                Thời lượng: <strong>{leaderPayrollData.summary.total_hours}</strong> giờ
+              </div>
+            </div>
+
+            <!-- Box 2 -->
+            <div class="bg-slate-50 dark:bg-slate-800/40 rounded-lg p-3.5 border border-slate-200/80 dark:border-slate-800">
+              <div class="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Thu Nhập Gộp (Gross)</div>
+              <div class="text-xl font-bold text-slate-900 dark:text-white mt-1 tabular-nums">
+                {Number(leaderPayrollData.summary.gross_income).toLocaleString('vi-VN')} <span class="text-xs font-normal text-slate-500">đ</span>
+              </div>
+              <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                Chưa khấu trừ các khoản
+              </div>
+            </div>
+
+            <!-- Box 3 -->
+            <div class="bg-slate-50 dark:bg-slate-800/40 rounded-lg p-3.5 border border-slate-200/80 dark:border-slate-800">
+              <div class="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Khấu Trừ Ứng &amp; Nợ Cũ</div>
+              <div class="text-xl font-bold text-rose-600 dark:text-rose-400 mt-1 tabular-nums">
+                - {Number(leaderPayrollData.summary.disbursed_advances_deducted + leaderPayrollData.summary.prior_debt_deducted).toLocaleString('vi-VN')} <span class="text-xs font-normal text-slate-500">đ</span>
+              </div>
+              <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 tabular-nums">
+                Ứng: {Number(leaderPayrollData.summary.disbursed_advances_deducted).toLocaleString('vi-VN')}đ | Nợ: {Number(leaderPayrollData.summary.prior_debt_deducted).toLocaleString('vi-VN')}đ
+              </div>
+            </div>
+
+            <!-- Box 4 -->
+            <div class="bg-slate-50 dark:bg-slate-800/40 rounded-lg p-3.5 border border-slate-200/80 dark:border-slate-800">
+              <div class="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Thực Lĩnh (Net Pay)</div>
+              <div class="text-xl font-bold text-emerald-600 dark:text-emerald-400 mt-1 tabular-nums">
+                {Number(leaderPayrollData.summary.net_pay).toLocaleString('vi-VN')} <span class="text-xs font-normal text-slate-500">đ</span>
+              </div>
+              <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                Chuyển khoản cuối kỳ
+              </div>
+            </div>
+          </div>
+
+          <!-- Carried-Over Debt Alert -->
+          {#if leaderPayrollData.summary.carried_over_debt > 0}
+            <div class="mx-5 mb-5 p-3.5 rounded-md bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 text-xs flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <svg class="w-4 h-4 text-amber-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+                <span>Tạm ứng đã chi vượt quá thu nhập ca dạy trong kỳ. Số dư nợ <strong>{Number(leaderPayrollData.summary.carried_over_debt).toLocaleString('vi-VN')} đ</strong> đã được ghi nhận vào D1 để tự động kết chuyển khấu trừ vào kỳ kế tiếp.</span>
+              </div>
+              <span class="font-bold tabular-nums">Carried-Over Debt</span>
+            </div>
+          {/if}
+
+          <!-- Leader Action Toolbar -->
+          <div class="p-5 border-t border-slate-200 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-800/10 flex flex-wrap items-center justify-between gap-4">
+            <div class="text-xs text-slate-500 dark:text-slate-400">
+              {#if leaderPayrollData.is_locked || ['locked', 'closed', 'paid'].includes(leaderPayrollData.status)}
+                <span class="text-emerald-700 dark:text-emerald-400 font-semibold">🔒 Kỳ lương đã khóa sổ. Không thể điều chỉnh hay tính lại.</span>
+              {:else}
+                <span>Bấm <strong>Phê Duyệt</strong> hoặc <strong>Khóa Sổ</strong> để chốt số liệu học vụ lên D1 Cloudflare.</span>
+              {/if}
+            </div>
+
+            <div class="flex items-center gap-2">
+              {#if !leaderPayrollData.is_locked && !['locked', 'closed', 'paid'].includes(leaderPayrollData.status)}
+                <button
+                  onclick={() => handlePayrollAction('approve')}
+                  disabled={isLockingPayroll}
+                  class="px-3.5 py-2 rounded-md text-xs font-semibold bg-sky-600 hover:bg-sky-700 text-white disabled:opacity-50 transition-colors shadow-sm"
+                >
+                  Phê Duyệt Bảng Lương
+                </button>
+                <button
+                  onclick={() => handlePayrollAction('lock')}
+                  disabled={isLockingPayroll}
+                  class="px-3.5 py-2 rounded-md text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white disabled:opacity-50 transition-colors shadow-sm"
+                >
+                  Khóa Sổ Kỳ Này (Lock)
+                </button>
+                <button
+                  onclick={() => handlePayrollAction('disburse')}
+                  disabled={isLockingPayroll}
+                  class="px-3.5 py-2 rounded-md text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-50 transition-colors shadow-sm"
+                >
+                  Xác Nhận Đã Chi Trả (Paid)
+                </button>
+              {:else}
+                <span class="text-xs font-semibold px-3 py-1.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-300 dark:border-slate-700">
+                  Thao Tác Đã Bị Vô Hiệu Hóa (Locked)
+                </span>
+              {/if}
+            </div>
+          </div>
+
+          <!-- Sessions Detail Table -->
+          <div class="p-5 border-t border-slate-200 dark:border-slate-800">
+            <h3 class="text-xs font-semibold text-slate-900 dark:text-white uppercase tracking-wider mb-3">Danh Sách Ca Dạy Tính Lương ({leaderPayrollData.payable_sessions.length} ca)</h3>
+            {#if leaderPayrollData.payable_sessions.length === 0}
+              <div class="text-center py-6 text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/30 rounded border border-slate-200 dark:border-slate-800">
+                Không có ca dạy nào hoàn thành trong kỳ này cho giáo viên {leaderPayrollData.teacher_id}.
+              </div>
+            {:else}
+              <div class="overflow-x-auto rounded border border-slate-200 dark:border-slate-800">
+                <table class="w-full text-xs text-left">
+                  <thead class="bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-800">
+                    <tr>
+                      <th class="py-2.5 px-3 font-semibold">Mã Ca</th>
+                      <th class="py-2.5 px-3 font-semibold">Lớp Học</th>
+                      <th class="py-2.5 px-3 font-semibold">Ngày Giảng Dạy</th>
+                      <th class="py-2.5 px-3 font-semibold text-center">Thời Lượng</th>
+                      <th class="py-2.5 px-3 font-semibold text-right">Thù Lao Dự Tính</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
+                    {#each leaderPayrollData.payable_sessions as s}
+                      <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
+                        <td class="py-2 px-3 font-mono text-[11px] text-slate-500">{s.session_id}</td>
+                        <td class="py-2 px-3 font-medium text-slate-800 dark:text-slate-200">{s.class_name}</td>
+                        <td class="py-2 px-3 text-slate-600 dark:text-slate-400">{s.session_date}</td>
+                        <td class="py-2 px-3 text-center tabular-nums">{s.duration_hours} giờ</td>
+                        <td class="py-2 px-3 text-right font-semibold text-slate-900 dark:text-white tabular-nums">{Number(s.session_pay_vnd).toLocaleString('vi-VN')} đ</td>
+                      </tr>
+                    {/each}
+                  </tbody>
+                </table>
+              </div>
+            {/if}
+          </div>
         </div>
       {/if}
     </div>
