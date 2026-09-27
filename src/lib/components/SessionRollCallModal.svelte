@@ -154,19 +154,19 @@
 
               <!-- Status Radio Buttons -->
               <div class="flex items-center gap-1.5 flex-wrap">
-                <label class="px-2.5 py-1.5 rounded-xl border text-[11px] font-bold cursor-pointer transition-all flex items-center gap-1 {item.status === 'present' ? 'bg-emerald-600 border-emerald-500 text-white shadow-sm' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'}">
+                <label class="px-2.5 py-1.5 rounded-xl border text-[11px] font-bold cursor-pointer transition-all flex items-center gap-1 {item.status === 'present' ? 'bg-emerald-600 border-emerald-500 text-white shadow-sm' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}">
                   <input type="radio" bind:group={item.status} value="present" class="hidden" />
                   <span>✓ Có Mặt</span>
                 </label>
-                <label class="px-2.5 py-1.5 rounded-xl border text-[11px] font-bold cursor-pointer transition-all flex items-center gap-1 {item.status === 'late' ? 'bg-amber-600 border-amber-500 text-white shadow-sm' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'}">
+                <label class="px-2.5 py-1.5 rounded-xl border text-[11px] font-bold cursor-pointer transition-all flex items-center gap-1 {item.status === 'late' ? 'bg-amber-600 border-amber-500 text-white shadow-sm' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}">
                   <input type="radio" bind:group={item.status} value="late" class="hidden" />
                   <span>⏱️ Đi Muộn</span>
                 </label>
-                <label class="px-2.5 py-1.5 rounded-xl border text-[11px] font-bold cursor-pointer transition-all flex items-center gap-1 {item.status === 'absent_excused' ? 'bg-blue-600 border-blue-500 text-white shadow-sm' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'}">
+                <label class="px-2.5 py-1.5 rounded-xl border text-[11px] font-bold cursor-pointer transition-all flex items-center gap-1 {item.status === 'absent_excused' ? 'bg-blue-600 border-blue-500 text-white shadow-sm' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}">
                   <input type="radio" bind:group={item.status} value="absent_excused" class="hidden" />
                   <span>✉️ Có Phép</span>
                 </label>
-                <label class="px-2.5 py-1.5 rounded-xl border text-[11px] font-bold cursor-pointer transition-all flex items-center gap-1 {item.status === 'absent_unexcused' ? 'bg-rose-600 border-rose-500 text-white shadow-sm' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'}">
+                <label class="px-2.5 py-1.5 rounded-xl border text-[11px] font-bold cursor-pointer transition-all flex items-center gap-1 {item.status === 'absent_unexcused' ? 'bg-rose-600 border-rose-500 text-white shadow-sm' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}">
                   <input type="radio" bind:group={item.status} value="absent_unexcused" class="hidden" />
                   <span>✕ Không Phép</span>
                 </label>

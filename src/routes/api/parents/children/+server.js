@@ -51,9 +51,9 @@ export async function GET({ request, platform }) {
   const db = platform?.env?.DB;
   if (db) {
     try {
-      // Query verified parent_student_links from Cloudflare D1
+      // Query parent_student_links from Cloudflare D1 with explicit verification_status
       const linksRes = await db.prepare(`
-        SELECT psl.student_user_id, u.id, u.name, u.username, u.avatar, u.grade, u.status
+        SELECT psl.student_user_id, psl.verification_status, u.id, u.name, u.username, u.avatar, u.grade, u.status
         FROM parent_student_links psl
         LEFT JOIN users u ON psl.student_user_id = u.id
         WHERE psl.parent_user_id = ?;
@@ -66,6 +66,8 @@ export async function GET({ request, platform }) {
         grade: r.grade || 'Lớp 7',
         avatar: r.avatar || '',
         status: r.status || 'active',
+        verification_status: r.verification_status || 'pending',
+        is_verified: r.verification_status === 'verified',
         stars_total: 0
       }));
 
@@ -117,27 +119,41 @@ export async function POST({ request, platform }) {
   const db = platform?.env?.DB;
   if (db) {
     try {
-      // Verify target student exists
-      const targetUser = await db.prepare('SELECT id, name FROM users WHERE id = ? OR username = ?').bind(targetId, targetId).first();
+      // Verify target student exists AND has role = 'student' (P1-REG-02)
+      const targetUser = await db.prepare('SELECT id, name, role FROM users WHERE id = ? OR username = ?').bind(targetId, targetId).first();
       if (!targetUser) {
         return json({ success: false, error: 'Không tìm thấy hồ sơ học sinh với mã này' }, { status: 404 });
       }
 
-      // Check if already linked
-      const existing = await db.prepare('SELECT id FROM parent_student_links WHERE parent_user_id = ? AND student_user_id = ?')
-        .bind(user.id, targetUser.id).first();
-      if (existing) {
-        return json({ success: true, message: 'Học sinh đã được liên kết từ trước', student_id: targetUser.id });
+      if (targetUser.role !== 'student') {
+        return json({ success: false, error: 'Không thể liên kết: Tài khoản đích không phải là học sinh' }, { status: 400 });
       }
 
-      // Insert link
+      // Check if already linked
+      const existing = await db.prepare('SELECT id, verification_status FROM parent_student_links WHERE parent_user_id = ? AND student_user_id = ?')
+        .bind(user.id, targetUser.id).first();
+      if (existing) {
+        return json({ 
+          success: true, 
+          verification_status: existing.verification_status || 'pending',
+          message: existing.verification_status === 'verified' 
+            ? 'Học sinh đã được xác minh liên kết từ trước' 
+            : 'Yêu cầu liên kết đang chờ xét duyệt từ nhà trường/giáo viên (pending)', 
+          student_id: targetUser.id 
+        });
+      }
+
+      // Insert link with default PENDING status (P1-REG-02)
       const linkId = `link_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-      await db.prepare('INSERT INTO parent_student_links (id, parent_user_id, student_user_id, created_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)')
-        .bind(linkId, user.id, targetUser.id).run();
+      await db.prepare(`
+        INSERT INTO parent_student_links (id, parent_user_id, student_user_id, verification_status, created_at) 
+        VALUES (?, ?, ?, 'pending', CURRENT_TIMESTAMP)
+      `).bind(linkId, user.id, targetUser.id).run();
 
       return json({
         success: true,
-        message: `Đã liên kết thành công học sinh ${targetUser.name}`,
+        verification_status: 'pending',
+        message: `Yêu cầu liên kết học sinh ${targetUser.name} đã được ghi nhận. Đang chờ nhà trường xác minh (pending).`,
         student_id: targetUser.id
       });
     } catch (e) {

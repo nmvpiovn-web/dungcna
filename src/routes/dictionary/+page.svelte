@@ -4,7 +4,7 @@
 </svelte:head>
 
 <script>
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
   import { speakWord, playAudioFeedback } from '$lib/speech.js';
   import { addCustomWordLocally } from '$lib/staticDb.js';
   import { getCurrentUser } from '$lib/unifiedStore';
@@ -260,6 +260,10 @@
 
       mediaRecorder.start();
       isRecording = true;
+      if (typeof window !== 'undefined') {
+        window.__isRecordingActive = true;
+        window.registerBusyState?.('dictionary_audio_recording');
+      }
     } catch (err) {
       recordError = 'Không thể truy cập microphone. Vui lòng cấp quyền ghi âm trong cài đặt trình duyệt.';
       console.error(err);
@@ -270,11 +274,28 @@
     if (mediaRecorder && isRecording) {
       mediaRecorder.stop();
       isRecording = false;
+      if (typeof window !== 'undefined') {
+        window.__isRecordingActive = false;
+        window.unregisterBusyState?.('dictionary_audio_recording');
+      }
     }
     if (speechRecognizer) {
       try { speechRecognizer.stop(); } catch {}
     }
   }
+
+  onDestroy(() => {
+    if (mediaRecorder && isRecording) {
+      try {
+        mediaRecorder.stop();
+        mediaRecorder.stream.getTracks().forEach(t => t.stop());
+      } catch {}
+    }
+    if (typeof window !== 'undefined') {
+      window.__isRecordingActive = false;
+      window.unregisterBusyState?.('dictionary_audio_recording');
+    }
+  });
 
   // Real Web Audio Acoustic Analysis & Speech Recognition Rubric
   async function evaluatePronunciationRubric(blob) {

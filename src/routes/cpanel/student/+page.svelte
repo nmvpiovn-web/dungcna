@@ -3,7 +3,7 @@
 </svelte:head>
 
 <script>
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
   import { getCurrentUser, getStudentStars } from '$lib/unifiedStore';
   import { playAudioFeedback } from '$lib/speech';
 
@@ -147,6 +147,10 @@
       };
       mediaRecorder.start();
       isRecording = true;
+      if (typeof window !== 'undefined') {
+        window.__isRecordingActive = true;
+        window.registerBusyState?.('cpanel_audio_recording');
+      }
       recordingSeconds = 0;
       recordingTimer = setInterval(() => {
         recordingSeconds += 1;
@@ -162,8 +166,26 @@
       mediaRecorder.stream.getTracks().forEach(track => track.stop());
       isRecording = false;
       clearInterval(recordingTimer);
+      if (typeof window !== 'undefined') {
+        window.__isRecordingActive = false;
+        window.unregisterBusyState?.('cpanel_audio_recording');
+      }
     }
   }
+
+  onDestroy(() => {
+    if (recordingTimer) clearInterval(recordingTimer);
+    if (mediaRecorder && isRecording) {
+      try {
+        mediaRecorder.stop();
+        mediaRecorder.stream.getTracks().forEach(track => track.stop());
+      } catch {}
+    }
+    if (typeof window !== 'undefined') {
+      window.__isRecordingActive = false;
+      window.unregisterBusyState?.('cpanel_audio_recording');
+    }
+  });
 
   async function submitHomework() {
     if (!selectedAssignment) return;

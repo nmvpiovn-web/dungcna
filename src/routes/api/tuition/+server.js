@@ -90,7 +90,7 @@ export async function GET({ url, request, platform }) {
         // Names and phone numbers are NEVER used to establish parental access rights.
         const linksRes = await db.prepare(`
           SELECT student_user_id FROM parent_student_links 
-          WHERE parent_user_id = ?;
+          WHERE parent_user_id = ? AND verification_status = 'verified';
         `).bind(user.id).all();
 
         const linkedStudentIds = (linksRes?.results || []).map(r => r.student_user_id);

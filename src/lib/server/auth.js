@@ -116,6 +116,68 @@ export async function verifySignedToken(token, secret) {
 }
 
 /**
+ * Hash a plaintext password with Web Crypto PBKDF2 and a cryptographically random salt.
+ */
+export async function hashPassword(password) {
+  if (!password || typeof password !== 'string') {
+    throw new Error('Password must be a non-empty string');
+  }
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const saltHex = Array.from(salt).map(b => b.toString(16).padStart(2, '0')).join('');
+  const keyMaterial = await crypto.subtle.importKey(
+    'raw',
+    enc.encode(password),
+    { name: 'PBKDF2' },
+    false,
+    ['deriveBits']
+  );
+  const derivedKey = await crypto.subtle.deriveBits(
+    { name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' },
+    keyMaterial,
+    256
+  );
+  const hashHex = Array.from(new Uint8Array(derivedKey)).map(b => b.toString(16).padStart(2, '0')).join('');
+  return `pbkdf2:100000:${saltHex}:${hashHex}`;
+}
+
+/**
+ * Verify a plaintext password against a stored hash (PBKDF2 or legacy migration fallback).
+ */
+export async function verifyPassword(password, storedHash) {
+  if (!password || typeof password !== 'string' || !storedHash || typeof storedHash !== 'string') {
+    return false;
+  }
+  if (storedHash.startsWith('pbkdf2:')) {
+    const parts = storedHash.split(':');
+    if (parts.length !== 4) return false;
+    const [, iterStr, saltHex, expectedHashHex] = parts;
+    const iterations = parseInt(iterStr, 10);
+    if (isNaN(iterations) || iterations <= 0 || !saltHex || !expectedHashHex) return false;
+    try {
+      const salt = new Uint8Array(saltHex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
+      const keyMaterial = await crypto.subtle.importKey(
+        'raw',
+        enc.encode(password),
+        { name: 'PBKDF2' },
+        false,
+        ['deriveBits']
+      );
+      const derivedKey = await crypto.subtle.deriveBits(
+        { name: 'PBKDF2', salt, iterations, hash: 'SHA-256' },
+        keyMaterial,
+        256
+      );
+      const derivedHashHex = Array.from(new Uint8Array(derivedKey)).map(b => b.toString(16).padStart(2, '0')).join('');
+      return derivedHashHex === expectedHashHex;
+    } catch {
+      return false;
+    }
+  }
+  // Migration fallback: legacy plaintext equality
+  return storedHash === password;
+}
+
+/**
  * Remove sensitive password and credential fields from a user object
  */
 export function sanitizeUser(user) {

@@ -333,7 +333,7 @@
         </div>
 
         {#if parentTestRecords.length === 0}
-          <div class="p-6 text-center rounded-xl bg-white/70 dark:bg-slate-900/60 border border-purple-100 dark:border-purple-900 text-xs text-slate-500 dark:text-slate-400">
+          <div class="p-6 text-center rounded-xl bg-white/70 dark:bg-slate-900/60 border border-purple-100 dark:border-purple-900 text-xs text-slate-700 dark:text-slate-300 font-medium">
             Chưa có bài kiểm tra nào được lưu. Bấm nút <strong>"Chụp Ảnh Bài Thi (OCR)"</strong> ở trên để cập nhật bài thi đầu tiên của con!
           </div>
         {:else}

@@ -228,14 +228,37 @@
     resetExamState();
   });
 
+  let activeSessionId = $state(null);
+  let activeServerDeadline = $state(null);
+  let isSubmitting = $state(false);
+  let submitError = $state('');
+  let serverCalculatedScoreOverride = $state(null);
+
   onDestroy(() => {
     if (timerInterval) clearInterval(timerInterval);
+    if (mediaRecorder && isRecording) {
+      try {
+        mediaRecorder.stop();
+        mediaRecorder.stream.getTracks().forEach(track => track.stop());
+      } catch {}
+    }
+    if (typeof window !== 'undefined') {
+      window.__isExamActive = false;
+      window.__isRecordingActive = false;
+      window.unregisterBusyState?.('active_exam');
+      window.unregisterBusyState?.('exam_audio_recording');
+    }
   });
 
   function resetExamState() {
     if (timerInterval) clearInterval(timerInterval);
     isStarted = false;
     isSubmitted = false;
+    isSubmitting = false;
+    submitError = '';
+    serverCalculatedScoreOverride = null;
+    activeSessionId = null;
+    activeServerDeadline = null;
     userAnswers = {};
     essayText = '';
     speechTranscript = '';
@@ -267,16 +290,24 @@
         const data = JSON.parse(raw);
         if (data.exam_id === targetId && data.userAnswers && Object.keys(data.userAnswers).length > 0) {
           const now = Date.now();
-          const remaining = data.deadline ? Math.floor((data.deadline - now) / 1000) : data.timeLeftSeconds;
+          const deadline = data.server_deadline || data.deadline;
+          const remaining = deadline ? Math.floor((deadline - now) / 1000) : data.timeLeftSeconds;
           if (remaining > 0) {
             userAnswers = { ...data.userAnswers };
+            activeSessionId = data.session_id || null;
+            activeServerDeadline = deadline;
             timeLeftSeconds = remaining;
             isStarted = true;
             isSubmitted = false;
             window.__isExamActive = true;
+            window.registerBusyState?.('active_exam');
             if (timerInterval) clearInterval(timerInterval);
             timerInterval = setInterval(() => {
-              timeLeftSeconds--;
+              if (activeServerDeadline) {
+                timeLeftSeconds = Math.max(0, Math.floor((activeServerDeadline - Date.now()) / 1000));
+              } else {
+                timeLeftSeconds--;
+              }
               if (timeLeftSeconds <= 0) {
                 clearInterval(timerInterval);
                 submitExam();
@@ -307,7 +338,7 @@
     }
   }
 
-  function startExam() {
+  async function startExam() {
     if (currentUser?.role === 'student' && !isExamEnrolledForUser(currentUser, currentExam)) {
       playAudioFeedback(false);
       lockedExamAlert = `🔒 Không thể làm bài: Đề thi này chưa được mở cho khối lớp của em (${currentUser.grade || 'Lớp 7'}).`;
@@ -315,19 +346,56 @@
     }
     isStarted = true;
     isSubmitted = false;
+    isSubmitting = false;
+    submitError = '';
+    serverCalculatedScoreOverride = null;
     userAnswers = {};
-    timeLeftSeconds = (currentExam?.duration_minutes || 15) * 60;
-    const deadline = Date.now() + (timeLeftSeconds * 1000);
+
+    const durationMins = currentExam?.duration_minutes || 15;
+    timeLeftSeconds = durationMins * 60;
+    activeServerDeadline = Date.now() + (timeLeftSeconds * 1000);
+
+    // Call server API to initiate authoritative exam session (P1-EXAM-04)
+    try {
+      const res = await fetch('/api/exams', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(getAuthToken() ? { 'Authorization': `Bearer ${getAuthToken()}` } : {})
+        },
+        body: JSON.stringify({
+          action: 'start_session',
+          exam_id: currentExam?.id,
+          duration_minutes: durationMins
+        })
+      });
+      if (res.ok) {
+        const resData = await res.json();
+        if (resData.success && resData.session_instance) {
+          activeSessionId = resData.session_instance.instance_id;
+          if (resData.session_instance.deadline_at) {
+            activeServerDeadline = new Date(resData.session_instance.deadline_at).getTime();
+            timeLeftSeconds = Math.max(0, Math.floor((activeServerDeadline - Date.now()) / 1000));
+          }
+        }
+      }
+    } catch (apiErr) {
+      console.warn('Exam server session initiation notice:', apiErr);
+    }
+
     if (typeof window !== 'undefined') {
       window.__isExamActive = true;
       window.__isExamSubmitted = false;
+      window.registerBusyState?.('active_exam');
       try {
         const backupData = {
+          session_id: activeSessionId,
           exam_id: currentExam?.id,
           user_id: currentUser?.id || 'guest',
           userAnswers: {},
           timeLeftSeconds,
-          deadline,
+          server_deadline: activeServerDeadline,
+          deadline: activeServerDeadline,
           updated_at: Date.now()
         };
         localStorage.setItem(getExamBackupKey(currentExam?.id), JSON.stringify(backupData));
@@ -337,7 +405,11 @@
     
     if (timerInterval) clearInterval(timerInterval);
     timerInterval = setInterval(() => {
-      timeLeftSeconds--;
+      if (activeServerDeadline) {
+        timeLeftSeconds = Math.max(0, Math.floor((activeServerDeadline - Date.now()) / 1000));
+      } else {
+        timeLeftSeconds--;
+      }
       if (timeLeftSeconds <= 0) {
         clearInterval(timerInterval);
         submitExam();
@@ -346,18 +418,19 @@
   }
 
   function selectOption(qIdx, option) {
-    if (isSubmitted) return;
+    if (isSubmitted || isSubmitting) return;
     userAnswers[qIdx] = option;
     if (typeof window !== 'undefined') {
       try {
         const key = getExamBackupKey(currentExam?.id);
-        const deadline = Date.now() + (timeLeftSeconds * 1000);
         const backupData = {
+          session_id: activeSessionId,
           exam_id: currentExam?.id,
           user_id: currentUser?.id || 'guest',
           userAnswers: { ...userAnswers },
           timeLeftSeconds,
-          deadline,
+          server_deadline: activeServerDeadline,
+          deadline: activeServerDeadline,
           updated_at: Date.now()
         };
         localStorage.setItem(key, JSON.stringify(backupData));
@@ -538,6 +611,9 @@
   });
 
   let calculatedScore = $derived.by(() => {
+    if (serverCalculatedScoreOverride !== null) {
+      return Number(serverCalculatedScoreOverride).toFixed(1);
+    }
     if (activeQuestions.length === 0) return 0;
     // If writing exam
     if (currentExam.skill_category === 'writing') {
@@ -601,80 +677,98 @@
     return 0;
   });
 
-  function submitExam() {
+  async function submitExam() {
     if (timerInterval) clearInterval(timerInterval);
-    isSubmitted = true;
-    if (typeof window !== 'undefined') {
-      window.__isExamActive = false;
-      window.__isExamSubmitted = true;
-    }
+    if (isSubmitting) return;
+    isSubmitting = true;
+    submitError = '';
 
     const studentUser = (data.users || []).find(u => u.id === selectedStudentId) || currentUser;
+    const finalAnswers = { ...userAnswers, essay: essayText, transcript: speechTranscript };
+    const durationSecs = (currentExam.duration_minutes * 60) - timeLeftSeconds;
 
-    // Save attempt
-    const attempt = saveExamAttempt({
-      user_id: selectedStudentId || currentUser?.id || 'usr_guest',
-      user_name: studentName,
-      user_email: studentUser?.email || currentUser?.email || 'guest@timbk.io.vn',
-      exam_id: currentExam.id,
-      exam_title: currentExam.title,
-      score: parseFloat(calculatedScore),
-      max_score: 10,
-      answers: { ...userAnswers, essay: essayText, transcript: speechTranscript },
-      duration_seconds: (currentExam.duration_minutes * 60) - timeLeftSeconds,
-      session_id: selectedSessionId,
-      class_id: currentSession?.class_id || ''
-    });
+    let serverCommitSuccess = false;
+    let committedAttempt = null;
 
-    if (attempt) {
-      clearActiveExamBackup(currentExam?.id);
-    }
-
-    // Dispatch bot alert
-    dispatchBotReport('EXAM_SUBMITTED', {
-      student_name: studentName,
-      exam_title: currentExam.title,
-      score: calculatedScore,
-      duration: `${Math.floor(((currentExam.duration_minutes * 60) - timeLeftSeconds) / 60)} phút`,
-      class_name: currentSession?.class_name || 'Lớp Tiếng Anh Cô Dung',
-      stars_reward: earnedStars
-    });
-
-    // If dynamic exam created by D1 server, submit to /api/exams/random for server-side evaluation & explanations
-    if (currentExam?.instance_id) {
-      fetch('/api/exams/random', {
+    // Authoritative Server Submission to D1 (P1-EXAM-04)
+    try {
+      const res = await fetch('/api/exams', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           ...(getAuthToken() ? { 'Authorization': `Bearer ${getAuthToken()}` } : {})
         },
         body: JSON.stringify({
-          action: 'submit',
-          instance_id: currentExam.instance_id,
-          answers: userAnswers,
-          duration_seconds: (currentExam.duration_minutes * 60) - timeLeftSeconds
+          exam_id: currentExam.id,
+          instance_id: activeSessionId,
+          session_id: activeSessionId,
+          user_id: selectedStudentId || currentUser?.id,
+          answers: finalAnswers,
+          duration_seconds: durationSecs
         })
-      }).then(r => r.json()).then(res => {
-        if (res.success && res.detailed_results) {
-          dynamicQuestions = dynamicQuestions.map(q => {
-            const found = res.detailed_results.find(d => d.item_order === q.question_index);
-            if (found) {
-              return {
-                ...q,
-                correct_answer: found.correct_option_id,
-                explanation: found.explanation
-              };
-            }
-            return q;
-          });
+      });
+
+      const resData = await res.json();
+      if (res.ok && resData.success) {
+        serverCommitSuccess = true;
+        committedAttempt = resData.attempt;
+        if (resData.server_calculated_score !== undefined) {
+          serverCalculatedScoreOverride = resData.server_calculated_score;
         }
-      }).catch(err => console.error('Server grading error:', err));
+      } else {
+        submitError = resData.error || 'Máy chủ không tiếp nhận bài thi.';
+      }
+    } catch (netErr) {
+      console.error('Submit exam network error:', netErr);
+      submitError = 'Lỗi kết nối mạng: Không thể xác nhận lưu bài thi trên máy chủ D1. Bài làm đã được bảo lưu an toàn trong thiết bị.';
     }
 
-    if (parseFloat(calculatedScore) >= 7.0) {
-      playAudioFeedback(true);
+    // Only finalize exam and clear backup if server commit succeeds or in unauthenticated guest mode
+    if (serverCommitSuccess || (!getAuthToken() && currentUser?.role !== 'student')) {
+      isSubmitted = true;
+      isSubmitting = false;
+      if (typeof window !== 'undefined') {
+        window.__isExamActive = false;
+        window.__isExamSubmitted = true;
+        window.unregisterBusyState?.('active_exam');
+      }
+
+      // Save to local unifiedStore cache
+      const attempt = saveExamAttempt(committedAttempt || {
+        user_id: selectedStudentId || currentUser?.id || 'usr_guest',
+        user_name: studentName,
+        user_email: studentUser?.email || currentUser?.email || 'guest@timbk.io.vn',
+        exam_id: currentExam.id,
+        exam_title: currentExam.title,
+        score: serverCalculatedScoreOverride !== null ? serverCalculatedScoreOverride : parseFloat(calculatedScore),
+        max_score: 10,
+        answers: finalAnswers,
+        duration_seconds: durationSecs,
+        session_id: activeSessionId || selectedSessionId,
+        class_id: currentSession?.class_id || ''
+      });
+
+      // Clear backup ONLY after verified commit
+      clearActiveExamBackup(currentExam?.id);
+
+      // Dispatch bot alert
+      dispatchBotReport('EXAM_SUBMITTED', {
+        student_name: studentName,
+        exam_title: currentExam.title,
+        score: serverCalculatedScoreOverride !== null ? serverCalculatedScoreOverride : calculatedScore,
+        duration: `${Math.floor(durationSecs / 60)} phút`,
+        class_name: currentSession?.class_name || 'Lớp Tiếng Anh Cô Dung',
+        stars_reward: earnedStars
+      });
+
+      if (parseFloat(calculatedScore) >= 7.0) {
+        playAudioFeedback(true);
+      } else {
+        playAudioFeedback(false);
+      }
     } else {
-      playAudioFeedback(false);
+      isSubmitting = false;
+      console.warn('Exam submit held: backup preserved for retry:', submitError);
     }
   }
 
@@ -708,10 +802,18 @@
         const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
         recordedAudioUrl = URL.createObjectURL(audioBlob);
         speechTranscript = "Recorded voice sample successfully captured. Fluency and pronunciation are ready for evaluation.";
+        if (typeof window !== 'undefined') {
+          window.__isRecordingActive = false;
+          window.unregisterBusyState?.('exam_audio_recording');
+        }
       };
 
       mediaRecorder.start();
       isRecording = true;
+      if (typeof window !== 'undefined') {
+        window.__isRecordingActive = true;
+        window.registerBusyState?.('exam_audio_recording');
+      }
     } catch (err) {
       alert('Không thể truy cập Microphone: ' + err.message);
     }
@@ -721,7 +823,10 @@
     if (mediaRecorder && isRecording) {
       mediaRecorder.stop();
       isRecording = false;
-      // Stop tracks
+      if (typeof window !== 'undefined') {
+        window.__isRecordingActive = false;
+        window.unregisterBusyState?.('exam_audio_recording');
+      }
       mediaRecorder.stream.getTracks().forEach(track => track.stop());
     }
   }
@@ -1162,11 +1267,11 @@
         {@const is45m = ex.format_type === 'standard_45m' || ex.duration_minutes === 45}
         <button
           onclick={() => handleSelectExam(ex)}
-          class="p-3.5 rounded-2xl border text-left transition-all duration-200 hover-lift flex flex-col justify-between {isSelected ? 'bg-gradient-to-br from-sky-600 to-blue-600 border-sky-400 text-white shadow-lg shadow-sky-600/25 ring-2 ring-sky-300/80 font-semibold' : (isEnrolled ? 'bg-white/90 dark:bg-slate-900/90 border-sky-100 dark:border-slate-800 text-slate-800 dark:text-slate-200 hover:border-sky-300 dark:hover:border-sky-700 hover:shadow-md' : 'bg-slate-100/60 dark:bg-slate-950/40 border-slate-200/60 dark:border-slate-800/40 text-slate-400 opacity-60 hover:opacity-85')}"
+          class="p-3.5 rounded-2xl border text-left transition-all duration-200 hover-lift flex flex-col justify-between {isSelected ? 'bg-gradient-to-br from-sky-600 to-blue-600 border-sky-400 text-white shadow-lg shadow-sky-600/25 ring-2 ring-sky-300/80 font-semibold' : (isEnrolled ? 'bg-white/90 dark:bg-slate-900/90 border-sky-100 dark:border-slate-800 text-slate-800 dark:text-slate-200 hover:border-sky-300 dark:hover:border-sky-700 hover:shadow-md' : 'bg-slate-50 dark:bg-slate-950/60 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-slate-400 dark:hover:border-slate-700')}"
         >
           <div>
             <div class="flex items-center justify-between text-[10px] font-bold uppercase mb-1.5">
-              <span class="{isSelected ? 'text-sky-100' : (isEnrolled ? (is5m ? 'text-amber-500 font-extrabold' : (is15m ? 'text-sky-600 dark:text-sky-400 font-extrabold' : 'text-blue-600 dark:text-blue-400 font-extrabold')) : 'text-slate-400')}">
+              <span class="{isSelected ? 'text-sky-100' : (isEnrolled ? (is5m ? 'text-amber-500 font-extrabold' : (is15m ? 'text-sky-600 dark:text-sky-400 font-extrabold' : 'text-blue-600 dark:text-blue-400 font-extrabold')) : 'text-slate-600 dark:text-slate-400 font-semibold')}">
                 {#if !isEnrolled}🔒 {/if}
                 {is5m ? '⚡ 5 Phút' : (is15m ? '⏱️ 15 Phút' : (is45m ? '📝 45 Phút' : (ex.format_type === 'ielts_academic' ? '🌍 IELTS' : (ex.format_type === 'toeic_lr' ? '💼 TOEIC' : (ex.format_type === 'toefl_ibt' ? '🎓 TOEFL' : '📜 Khảo Thí')))))}
               </span>
@@ -1217,12 +1322,27 @@
           🚀 Bắt Đầu Làm Bài
         </button>
       {:else if !isSubmitted}
-        <button
-          onclick={submitExam}
-          class="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white font-bold text-sm shadow-xl shadow-rose-600/30 transition-all hover:scale-105"
-        >
-          🏁 Nộp Bài &amp; Chấm Điểm
-        </button>
+        <div class="flex flex-col items-end gap-2">
+          {#if submitError}
+            <div class="p-3 bg-rose-950/90 border border-rose-500 rounded-xl text-rose-300 text-xs flex items-center justify-between gap-3 max-w-md">
+              <span>⚠️ {submitError}</span>
+              <button 
+                onclick={submitExam} 
+                disabled={isSubmitting} 
+                class="px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded font-bold text-xs shrink-0 shadow"
+              >
+                {isSubmitting ? 'Đang gửi...' : 'Thử Nộp Lại'}
+              </button>
+            </div>
+          {/if}
+          <button
+            onclick={submitExam}
+            disabled={isSubmitting}
+            class="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white font-bold text-sm shadow-xl shadow-rose-600/30 transition-all hover:scale-105 disabled:opacity-50"
+          >
+            {isSubmitting ? '⏳ Đang Nộp & Lưu D1...' : '🏁 Nộp Bài & Chấm Điểm'}
+          </button>
+        </div>
       {:else}
         <button
           onclick={startExam}
@@ -1239,7 +1359,7 @@
     <div class="p-6 md:p-8 rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl space-y-4 animate-in zoom-in-95 duration-200">
       <div class="flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-slate-800 pb-4">
         <div>
-          <span class="text-xs font-bold text-emerald-400 uppercase tracking-wider">KẾT QUẢ KHẢO THÍ CHÍNH THỨC</span>
+          <span class="text-xs font-bold text-emerald-400 uppercase tracking-wider">KẾT QUẢ ĐÁNH GIÁ LỘ TRÌNH CHÍNH THỨC</span>
           <h2 class="text-2xl font-black text-white mt-1">Thí Sinh: {studentName}</h2>
           <div class="text-xs text-slate-400 mt-0.5">Thời gian hoàn thành: {Math.floor(((currentExam.duration_minutes * 60) - timeLeftSeconds) / 60)} phút {((currentExam.duration_minutes * 60) - timeLeftSeconds) % 60} giây</div>
         </div>

@@ -74,6 +74,9 @@ async function ensureExamSchemaInternal(db) {
       );
     `).run();
     try {
+      await db.prepare(`ALTER TABLE exam_sessions ADD COLUMN questions_snapshot_json TEXT;`).run();
+    } catch {}
+    try {
       await db.prepare(`ALTER TABLE exam_sessions ADD COLUMN answer_key_snapshot_json TEXT;`).run();
     } catch (alterErr) {
       const msg = (alterErr?.message || '').toLowerCase();
@@ -579,7 +582,9 @@ export async function POST({ request, platform }) {
       const validQuestionKeys = new Set(questionKeys);
 
       // Validate submitted answers against snapshot
+      const nonQuestionKeys = new Set(['essay', 'transcript', 'notes']);
       for (const [key, val] of Object.entries(userAnswers)) {
+        if (nonQuestionKeys.has(key)) continue;
         if (!validQuestionKeys.has(String(key))) {
           return json({ 
             success: false, 
@@ -611,7 +616,9 @@ export async function POST({ request, platform }) {
       const examQuestions = questionsData.filter(q => q.exam_id === examId);
       if (examQuestions.length > 0) {
         const validQuestionKeys = new Set(examQuestions.map(q => q.id !== undefined ? String(q.id) : String(q.question_index)));
+        const nonQuestionKeys = new Set(['essay', 'transcript', 'notes']);
         for (const [key, val] of Object.entries(userAnswers)) {
+          if (nonQuestionKeys.has(key)) continue;
           if (!validQuestionKeys.has(String(key))) {
             return json({ 
               success: false, 

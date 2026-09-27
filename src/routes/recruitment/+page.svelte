@@ -4,7 +4,7 @@
 </svelte:head>
 
 <script>
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
   import { playAudioFeedback } from '$lib/speech';
 
   let candidateName = $state('');
@@ -39,6 +39,22 @@
   let submitSuccess = $state(false);
   let errorMessage = $state('');
 
+  function markFormDirty() {
+    if (typeof window !== 'undefined') {
+      window.__hasUnsavedChanges = true;
+      window.registerBusyState?.('dirty_form_recruitment');
+      const formEl = document.querySelector('form');
+      if (formEl) formEl.classList.add('dirty');
+    }
+  }
+
+  onDestroy(() => {
+    if (submitSuccess && typeof window !== 'undefined') {
+      window.__hasUnsavedChanges = false;
+      window.unregisterBusyState?.('dirty_form_recruitment');
+    }
+  });
+
   onMount(() => {
     try {
       const saved = localStorage.getItem('tienganh_recruitment_draft');
@@ -61,6 +77,7 @@
   });
 
   function saveDraft() {
+    markFormDirty();
     try {
       localStorage.setItem('tienganh_recruitment_draft', JSON.stringify({
         candidateName,
@@ -148,6 +165,12 @@
       const data = await res.json();
       if (data.success) {
         submitSuccess = true;
+        if (typeof window !== 'undefined') {
+          window.__hasUnsavedChanges = false;
+          window.unregisterBusyState?.('dirty_form_recruitment');
+          const formEl = document.querySelector('form');
+          if (formEl) formEl.classList.remove('dirty');
+        }
         try { localStorage.removeItem('tienganh_recruitment_draft'); } catch {}
         playAudioFeedback(true);
       } else {
@@ -270,7 +293,7 @@
               <button
                 type="button"
                 onclick={() => toggleGrade(gr)}
-                class="flex items-center gap-2 p-2 rounded-md border text-left transition-colors {isChecked ? 'bg-sky-50 dark:bg-sky-950/60 border-sky-400 dark:border-sky-600 text-sky-800 dark:text-sky-200 font-semibold' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'}"
+                class="flex items-center gap-2 p-2 rounded-md border text-left transition-colors {isChecked ? 'bg-sky-50 dark:bg-sky-950/60 border-sky-400 dark:border-sky-600 text-sky-800 dark:text-sky-200 font-semibold' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-medium hover:bg-slate-50 dark:hover:bg-slate-700'}"
               >
                 <span>{isChecked ? '☑' : '☐'}</span>
                 <span>{gr}</span>
@@ -290,7 +313,7 @@
               <button
                 type="button"
                 onclick={() => toggleSubject(subj)}
-                class="flex items-center gap-2 p-2 rounded-md border text-left transition-colors {isChecked ? 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-400 dark:border-emerald-600 text-emerald-800 dark:text-emerald-200 font-semibold' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'}"
+                class="flex items-center gap-2 p-2 rounded-md border text-left transition-colors {isChecked ? 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-400 dark:border-emerald-600 text-emerald-800 dark:text-emerald-200 font-semibold' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-medium hover:bg-slate-50 dark:hover:bg-slate-700'}"
               >
                 <span>{isChecked ? '☑' : '☐'}</span>
                 <span>{subj}</span>

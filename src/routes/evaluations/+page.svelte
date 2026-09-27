@@ -687,34 +687,34 @@
       <!-- Filter Bar for Teachers -->
       <div class="p-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 flex flex-wrap items-center justify-between gap-3 text-xs">
         <div class="flex items-center gap-1.5 overflow-x-auto">
-          <span class="font-bold text-slate-500 uppercase text-[10px]">Phân Luồng Học Sinh:</span>
+          <span class="font-bold text-slate-700 dark:text-slate-300 uppercase text-[10px]">Phân Luồng Học Sinh:</span>
           <button
             onclick={() => teacherRoleFilter = 'all'}
-            class="px-2.5 py-1 rounded-lg font-bold transition-all {teacherRoleFilter === 'all' ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400'}"
+            class="px-2.5 py-1 rounded-lg font-bold border transition-all {teacherRoleFilter === 'all' ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'}"
           >
             Tất Cả ({students.length})
           </button>
           <button
             onclick={() => teacherRoleFilter = 'my_students'}
-            class="px-2.5 py-1 rounded-lg font-bold transition-all {teacherRoleFilter === 'my_students' ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400'}"
+            class="px-2.5 py-1 rounded-lg font-bold border transition-all {teacherRoleFilter === 'my_students' ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'}"
           >
             🎯 Thuộc Quản Lý Của Tôi
           </button>
           <button
             onclick={() => teacherRoleFilter = 'lead'}
-            class="px-2.5 py-1 rounded-lg font-bold transition-all {teacherRoleFilter === 'lead' ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400'}"
+            class="px-2.5 py-1 rounded-lg font-bold border transition-all {teacherRoleFilter === 'lead' ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'}"
           >
             👑 Phụ Trách Chính (Lead)
           </button>
           <button
             onclick={() => teacherRoleFilter = 'native'}
-            class="px-2.5 py-1 rounded-lg font-bold transition-all {teacherRoleFilter === 'native' ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400'}"
+            class="px-2.5 py-1 rounded-lg font-bold border transition-all {teacherRoleFilter === 'native' ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'}"
           >
             🗣️ Bản Ngữ (Native)
           </button>
           <button
             onclick={() => teacherRoleFilter = 'assistant'}
-            class="px-2.5 py-1 rounded-lg font-bold transition-all {teacherRoleFilter === 'assistant' ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400'}"
+            class="px-2.5 py-1 rounded-lg font-bold border transition-all {teacherRoleFilter === 'assistant' ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'}"
           >
             🤝 Trợ Giảng / Hỗ Trợ
           </button>

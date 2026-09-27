@@ -206,7 +206,7 @@ export async function GET({ request, url, platform }) {
           SELECT psl.student_user_id, u.name as student_name, u.grade, u.avatar
           FROM parent_student_links psl
           LEFT JOIN users u ON psl.student_user_id = u.id
-          WHERE psl.parent_user_id = ?
+          WHERE psl.parent_user_id = ? AND psl.verification_status = 'verified'
         `).bind(user.id).all();
         linkedChildren = linksRes.results || [];
         const studentIds = linkedChildren.map(r => r.student_user_id).filter(Boolean);

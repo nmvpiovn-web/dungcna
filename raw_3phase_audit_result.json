@@ -1,0 +1,130 @@
+{
+  "timestamp": "2026-09-27T19:29:00+07:00",
+  "phase1_code_and_build": {
+    "header_overflow_visible": {
+      "status": "PASS",
+      "detail": "Header must NOT contain overflow-hidden so flyout dropdowns are visible"
+    },
+    "nav_direct_routes_linked": {
+      "status": "PASS",
+      "detail": "Dropdowns & mobile drawer must contain direct routes to /courses, /exam, /tools"
+    },
+    "tools_route_exists": {
+      "status": "PASS",
+      "detail": "Dedicated /tools hub page created and exists"
+    },
+    "homepage_tab_query_sync": {
+      "status": "PASS",
+      "detail": "Homepage $effect reacts to ?tab= parameter and scrolls to #curriculum-section"
+    },
+    "build_prerender_tools": {
+      "status": "PASS",
+      "detail": "Prerendered build/tools/index.html exists (26355 bytes)"
+    }
+  },
+  "phase2_live_endpoints": {
+    "endpoint_homepage": {
+      "status": "PASS",
+      "detail": "HTTP 200 (5593 bytes)"
+    },
+    "endpoint_courses": {
+      "status": "PASS",
+      "detail": "HTTP 200 (30184 bytes)"
+    },
+    "endpoint_exam": {
+      "status": "PASS",
+      "detail": "HTTP 200 (5597 bytes)"
+    },
+    "endpoint_tools": {
+      "status": "PASS",
+      "detail": "HTTP 200 (26722 bytes)"
+    },
+    "endpoint_tab_primary": {
+      "status": "PASS",
+      "detail": "HTTP 200 (5593 bytes)"
+    },
+    "endpoint_tab_secondary": {
+      "status": "PASS",
+      "detail": "HTTP 200 (5593 bytes)"
+    },
+    "endpoint_tab_high_school": {
+      "status": "PASS",
+      "detail": "HTTP 200 (5593 bytes)"
+    },
+    "endpoint_tab_certificate": {
+      "status": "PASS",
+      "detail": "HTTP 200 (5593 bytes)"
+    },
+    "endpoint_dictionary": {
+      "status": "PASS",
+      "detail": "HTTP 200 (142188 bytes)"
+    },
+    "endpoint_flashcards": {
+      "status": "PASS",
+      "detail": "HTTP 200 (21503 bytes)"
+    },
+    "endpoint_games": {
+      "status": "PASS",
+      "detail": "HTTP 200 (16447 bytes)"
+    },
+    "endpoint_grammar": {
+      "status": "PASS",
+      "detail": "HTTP 200 (82740 bytes)"
+    },
+    "endpoint_pedagogy": {
+      "status": "PASS",
+      "detail": "HTTP 200 (5597 bytes)"
+    },
+    "endpoint_schedule": {
+      "status": "PASS",
+      "detail": "HTTP 200 (18213 bytes)"
+    },
+    "endpoint_evaluations": {
+      "status": "PASS",
+      "detail": "HTTP 200 (5597 bytes)"
+    },
+    "endpoint_second_brain": {
+      "status": "PASS",
+      "detail": "HTTP 200 (15693 bytes)"
+    },
+    "endpoint_apk_version_json": {
+      "status": "PASS",
+      "detail": "HTTP 200 (422 bytes)"
+    },
+    "endpoint_apk_binary_download": {
+      "status": "PASS",
+      "detail": "HTTP 200 (2975961 bytes)"
+    },
+    "endpoint_robots_txt": {
+      "status": "PASS",
+      "detail": "HTTP 200 (751 bytes)"
+    },
+    "endpoint_sitemap_xml": {
+      "status": "PASS",
+      "detail": "HTTP 200 (1356 bytes)"
+    }
+  },
+  "phase3_contrast_and_apk": {
+    "layout_dropdown_contrast": {
+      "status": "PASS",
+      "detail": "Dropdown descriptions upgraded from low-contrast slate-500 to text-slate-600 dark:text-slate-300"
+    },
+    "courses_high_contrast": {
+      "status": "PASS",
+      "detail": "Courses page uses WCAG compliant text-slate-700 / dark:text-slate-300 and dark:bg-slate-900"
+    },
+    "apk_file_sha256": {
+      "status": "PASS",
+      "detail": "SHA-256 match: 075F297219F174C8FFA679FCEE8A6BA230E9A347B883B97D2FCDBBE036F42C97 at android/app/build/outputs/apk/debug/app-debug.apk (Size: 2975961 bytes)"
+    },
+    "server_apk_metadata_match": {
+      "status": "PASS",
+      "detail": "Server reports version 2.2.0, hash matches verified build"
+    }
+  },
+  "summary": {
+    "total": 29,
+    "passed": 29,
+    "failed": 0
+  }
+}

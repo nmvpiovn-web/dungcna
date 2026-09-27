@@ -294,18 +294,18 @@
         {:else}
           <!-- Visual Step Breadcrumb Indicator -->
           <div class="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800 text-[11px] font-semibold uppercase tracking-wider">
-            <span class="flex items-center gap-1.5 {regStep === 'role' ? 'text-sky-700 dark:text-sky-400' : 'text-slate-400'}">
-              <span class="w-5 h-5 rounded flex items-center justify-center text-xs font-semibold {regStep === 'role' ? 'bg-sky-700 text-white' : 'bg-slate-200 dark:bg-slate-800'}">1</span>
+            <span class="flex items-center gap-1.5 {regStep === 'role' ? 'text-sky-700 dark:text-sky-400 font-bold' : 'text-slate-600 dark:text-slate-400'}">
+              <span class="w-5 h-5 rounded flex items-center justify-center text-xs font-semibold {regStep === 'role' ? 'bg-sky-700 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300'}">1</span>
               <span>Chọn Role</span>
             </span>
-            <span class="text-slate-300 dark:text-slate-700">➔</span>
-            <span class="flex items-center gap-1.5 {regStep === 'credentials' ? 'text-sky-700 dark:text-sky-400' : 'text-slate-400'}">
-              <span class="w-5 h-5 rounded flex items-center justify-center text-xs font-semibold {regStep === 'credentials' ? 'bg-sky-700 text-white' : 'bg-slate-200 dark:bg-slate-800'}">2</span>
+            <span class="text-slate-400 dark:text-slate-600">➔</span>
+            <span class="flex items-center gap-1.5 {regStep === 'credentials' ? 'text-sky-700 dark:text-sky-400 font-bold' : 'text-slate-600 dark:text-slate-400'}">
+              <span class="w-5 h-5 rounded flex items-center justify-center text-xs font-semibold {regStep === 'credentials' ? 'bg-sky-700 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300'}">2</span>
               <span>Tài Khoản</span>
             </span>
-            <span class="text-slate-300 dark:text-slate-700">➔</span>
-            <span class="flex items-center gap-1.5 {regStep === 'class_popup' ? 'text-sky-700 dark:text-sky-400' : 'text-slate-400'}">
-              <span class="w-5 h-5 rounded flex items-center justify-center text-xs font-semibold {regStep === 'class_popup' ? 'bg-sky-700 text-white' : 'bg-slate-200 dark:bg-slate-800'}">3</span>
+            <span class="text-slate-400 dark:text-slate-600">➔</span>
+            <span class="flex items-center gap-1.5 {regStep === 'class_popup' ? 'text-sky-700 dark:text-sky-400 font-bold' : 'text-slate-600 dark:text-slate-400'}">
+              <span class="w-5 h-5 rounded flex items-center justify-center text-xs font-semibold {regStep === 'class_popup' ? 'bg-sky-700 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300'}">3</span>
               <span>Chọn Lớp (*)</span>
             </span>
           </div>
@@ -357,7 +357,7 @@
                       Xem sổ theo dõi con, thông báo đón 10 phút, bảng điểm, chuyên cần và học phí trừ Sao.
                     </div>
                   </div>
-                  <div class="text-slate-400 group-hover:text-purple-500 font-semibold">➔</div>
+                  <div class="text-slate-500 dark:text-slate-400 group-hover:text-purple-600 font-semibold">➔</div>
                 </button>
 
                 <!-- Role Card 3: Giáo viên -->
@@ -374,10 +374,10 @@
                       Tôi Là Giáo Viên / Trợ Giảng
                     </div>
                     <div class="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">
-                      Giảng dạy, quản lý thời khóa biểu, điểm danh, ghi nhận xét sổ đầu bài và khảo thí học sinh.
+                       Giảng dạy, quản lý thời khóa biểu, điểm danh, ghi nhận xét sổ đầu bài và khảo thí học sinh.
                     </div>
                   </div>
-                  <div class="text-slate-400 group-hover:text-teal-500 font-semibold">➔</div>
+                  <div class="text-slate-500 dark:text-slate-400 group-hover:text-teal-600 font-semibold">➔</div>
                 </button>
               </div>
             </div>
@@ -417,9 +417,9 @@
                     required
                     class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 focus:border-sky-500 rounded-md px-3.5 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-sky-500"
                   />
-                  <span class="absolute right-3 top-2 text-xs text-slate-400">🏷️</span>
+                  <span class="absolute right-3 top-2 text-xs text-slate-500 dark:text-slate-400">🏷️</span>
                 </div>
-                <span class="text-[11px] text-slate-400 mt-0.5 block">Viết liền không dấu, dùng để đăng nhập vào app.</span>
+                <span class="text-[11px] text-slate-600 dark:text-slate-300 font-medium mt-0.5 block">Viết liền không dấu, dùng để đăng nhập vào app.</span>
               </div>
 
               <!-- 2. PASSWORD -->
@@ -572,7 +572,7 @@
                 {/each}
               </div>
 
-              <div class="text-[11px] text-center text-slate-400 pt-1 pb-2">
+              <div class="text-[11px] text-center text-slate-600 dark:text-slate-300 font-medium pt-1 pb-2">
                 🔒 Tài khoản sau khi đăng ký sẽ hoạt động ở mức <strong>Dùng Thử (Trial)</strong>, sau khi Admin CP hoặc Cô Dung Leader duyệt sẽ kích hoạt chính thức.
               </div>
             </div>

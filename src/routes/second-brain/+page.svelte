@@ -443,10 +443,10 @@
           <button
             type="button"
             onclick={() => setFolder(f.id)}
-            class="px-2.5 py-1.5 rounded-xl text-[11px] font-bold whitespace-nowrap transition-all flex items-center gap-1 border {selectedFolder === f.id ? 'bg-teal-600 text-white border-teal-500 shadow-sm' : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800'}"
+            class="px-2.5 py-1.5 rounded-xl text-[11px] font-bold whitespace-nowrap transition-all flex items-center gap-1 border {selectedFolder === f.id ? 'bg-teal-600 text-white border-teal-500 shadow-sm' : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 font-semibold border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800'}"
           >
             <span>{f.name}</span>
-            <span class="px-1.5 py-0.2 rounded-full text-[9px] {selectedFolder === f.id ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'}">
+            <span class="px-1.5 py-0.2 rounded-full text-[9px] {selectedFolder === f.id ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'}">
               {f.count}
             </span>
           </button>
@@ -455,7 +455,7 @@
 
       <!-- Notes List -->
       <div class="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-3 shadow-sm flex flex-col max-h-[68vh] overflow-y-auto space-y-2">
-        <div class="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 px-2 py-1 flex items-center justify-between">
+        <div class="text-[10px] uppercase font-bold text-slate-600 dark:text-slate-400 px-2 py-1 flex items-center justify-between">
           <span>Ghi Chú ({filteredNotes.length})</span>
           <span>Vault: second_brain</span>
         </div>
