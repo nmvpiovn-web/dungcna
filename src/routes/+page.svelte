@@ -1,5 +1,6 @@
 <script>
   import { onMount } from 'svelte';
+  import { page } from '$app/state';
   import { speakWord, playAudioFeedback } from '$lib/speech.js';
   import { 
     getCurrentUser, 
@@ -24,6 +25,20 @@
   let childRecommendations = $state([]);
   let studentStars = $state(850);
   let activeCurriculumTab = $state('all');
+
+  // Reactively sync with URL ?tab= from navigation menu (Lộ trình dropdown)
+  $effect(() => {
+    const tabParam = page.url.searchParams.get('tab');
+    if (tabParam) {
+      activeCurriculumTab = tabParam;
+      if (typeof window !== 'undefined') {
+        const target = document.getElementById('curriculum-section');
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth' });
+        }
+      }
+    }
+  });
   let selectedPrimaryWord = $state(null);
   let starRewardNotice = $state(false);
   let showOcrModal = $state(false);
@@ -233,7 +248,7 @@
             <div>
               <div class="text-xs text-purple-600 dark:text-purple-300 font-bold uppercase">Học Viên Liên Kết</div>
               <div class="text-base font-heading font-black text-slate-900 dark:text-white">{linkedChild.name}</div>
-              <div class="text-xs text-slate-500 dark:text-slate-400">
+              <div class="text-xs text-slate-700 dark:text-slate-300 font-medium">
                 {(() => {
                   try {
                     const m = typeof linkedChild.metadata === 'string' ? JSON.parse(linkedChild.metadata) : linkedChild.metadata;
@@ -253,9 +268,9 @@
             ⭐
           </div>
           <div>
-            <div class="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase">Sao Thưởng Hiện Có</div>
+            <div class="text-xs text-slate-700 dark:text-slate-300 font-bold uppercase">Sao Thưởng Hiện Có</div>
             <div class="text-xl font-heading font-black text-slate-900 dark:text-white">{studentStars} Sao</div>
-            <div class="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold">
+            <div class="text-[11px] text-emerald-700 dark:text-emerald-400 font-bold">
               Đổi được {(studentStars * 10).toLocaleString('vi-VN')} VNĐ trừ học phí
             </div>
           </div>
@@ -266,9 +281,9 @@
             📈
           </div>
           <div>
-            <div class="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase">Chuyên Cần &amp; Kỷ Luật</div>
+            <div class="text-xs text-slate-700 dark:text-slate-300 font-bold uppercase">Chuyên Cần &amp; Kỷ Luật</div>
             <div class="text-xl font-heading font-black text-emerald-600 dark:text-emerald-400">100%</div>
-            <div class="text-[11px] text-slate-500 dark:text-slate-400">Đầy đủ tất cả buổi học &amp; BTVN</div>
+            <div class="text-[11px] text-slate-700 dark:text-slate-300 font-medium">Đầy đủ tất cả buổi học &amp; BTVN</div>
           </div>
         </div>
 
@@ -277,9 +292,9 @@
             🧠
           </div>
           <div>
-            <div class="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase">Thiên Hướng Năng Khiếu</div>
+            <div class="text-xs text-slate-700 dark:text-slate-300 font-bold uppercase">Thiên Hướng Năng Khiếu</div>
             <div class="text-base font-heading font-black text-purple-700 dark:text-purple-300">Phản Xạ &amp; Phát Âm Chuẩn</div>
-            <div class="text-[11px] text-slate-500 dark:text-slate-400">Đánh giá bởi GV Bản Ngữ &amp; Cô Dung</div>
+            <div class="text-[11px] text-slate-700 dark:text-slate-300 font-medium">Đánh giá bởi GV Bản Ngữ &amp; Cô Dung</div>
           </div>
         </div>
       </div>
@@ -331,7 +346,7 @@
                       <span class="text-[10px] font-bold px-2 py-0.5 rounded-full {record.ocr_status === 'ocr_verified' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300/40' : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'}">
                         {record.ocr_status === 'ocr_verified' ? '📸 OCR Đã Quét' : '✍️ Nhập Tay'}
                       </span>
-                      <span class="text-[11px] text-slate-400">{record.test_date}</span>
+                      <span class="text-[11px] text-slate-600 dark:text-slate-300 font-medium">{record.test_date}</span>
                     </div>
                     <h4 class="font-bold text-sm text-slate-900 dark:text-white leading-tight">
                       {record.test_name}
@@ -340,18 +355,18 @@
 
                   <div class="text-right">
                     <div class="text-xl font-heading font-black text-purple-700 dark:text-purple-300">
-                      {record.score}<span class="text-xs text-slate-400 font-normal">/{record.max_score}</span>
+                      {record.score}<span class="text-xs text-slate-600 dark:text-slate-400 font-medium">/{record.max_score}</span>
                     </div>
                   </div>
                 </div>
 
                 {#if record.teacher_feedback}
-                  <div class="p-2 rounded-lg bg-slate-50 dark:bg-slate-800/80 text-[11px] text-slate-600 dark:text-slate-300 italic border-l-2 border-purple-500">
+                  <div class="p-2 rounded-lg bg-slate-50 dark:bg-slate-800/80 text-[11px] text-slate-700 dark:text-slate-300 italic border-l-2 border-purple-500">
                     "{record.teacher_feedback}"
                   </div>
                 {/if}
 
-                <div class="flex items-center justify-between pt-1 text-[10px] text-slate-400">
+                <div class="flex items-center justify-between pt-1 text-[11px] text-slate-600 dark:text-slate-300 font-medium">
                   <span>Học sinh: {record.student_name}</span>
                   <button
                     type="button"
@@ -463,9 +478,9 @@
             ⏱️
           </div>
           <div>
-            <div class="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase">Ca Dạy &amp; Lịch Học</div>
+            <div class="text-xs text-slate-700 dark:text-slate-300 font-bold uppercase">Ca Dạy &amp; Lịch Học</div>
             <div class="text-base font-heading font-black text-slate-900 dark:text-white">Điểm danh 1 chạm</div>
-            <div class="text-[11px] text-teal-600 dark:text-teal-400 font-semibold">Tự động báo phụ huynh đón 10p</div>
+            <div class="text-[11px] text-teal-700 dark:text-teal-400 font-bold">Tự động báo phụ huynh đón 10p</div>
           </div>
         </a>
 
@@ -477,9 +492,9 @@
             📝
           </div>
           <div>
-            <div class="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase">Đánh Giá Năng Lực</div>
+            <div class="text-xs text-slate-700 dark:text-slate-300 font-bold uppercase">Đánh Giá Năng Lực</div>
             <div class="text-base font-heading font-black text-slate-900 dark:text-white">Nhận xét học viên</div>
-            <div class="text-[11px] text-purple-600 dark:text-purple-400 font-semibold">Đồng bộ Zalo Bot &amp; Leader</div>
+            <div class="text-[11px] text-purple-700 dark:text-purple-400 font-bold">Đồng bộ Zalo Bot &amp; Leader</div>
           </div>
         </a>
 
@@ -491,9 +506,9 @@
             📚
           </div>
           <div>
-            <div class="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase">Giáo Án 5512 &amp; Bản Ngữ</div>
+            <div class="text-xs text-slate-700 dark:text-slate-300 font-bold uppercase">Giáo Án 5512 &amp; Bản Ngữ</div>
             <div class="text-base font-heading font-black text-slate-900 dark:text-white">Kho Học Liệu Chuẩn</div>
-            <div class="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">Phương pháp Co-Teaching 2026</div>
+            <div class="text-[11px] text-emerald-700 dark:text-emerald-400 font-bold">Phương pháp Co-Teaching 2026</div>
           </div>
         </a>
       </div>
@@ -624,9 +639,9 @@
         <div class="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-teal-200 dark:border-teal-700 shadow-sm flex items-center gap-4">
           <div class="text-3xl">⭐</div>
           <div>
-            <div class="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase">Sao Thưởng &amp; Giảm Học Phí</div>
+            <div class="text-xs text-slate-700 dark:text-slate-300 font-bold uppercase">Sao Thưởng &amp; Giảm Học Phí</div>
             <div class="text-xl font-heading font-black text-emerald-600 dark:text-emerald-400">{studentStars} Sao</div>
-            <div class="text-[11px] text-slate-500 dark:text-slate-400">={(studentStars * 10).toLocaleString('vi-VN')} VNĐ trừ học phí</div>
+            <div class="text-[11px] text-emerald-700 dark:text-emerald-300 font-bold">={(studentStars * 10).toLocaleString('vi-VN')} VNĐ trừ học phí</div>
           </div>
         </div>
       </div>
@@ -642,7 +657,7 @@
           </div>
           <div>
             <div class="font-bold text-sm text-slate-900 dark:text-white">Kiểm Tra Nhanh 15 Phút</div>
-            <div class="text-xs text-slate-500 dark:text-slate-400">10 câu trắc nghiệm ngữ pháp Unit</div>
+            <div class="text-xs text-slate-700 dark:text-slate-300 font-medium">10 câu trắc nghiệm ngữ pháp Unit</div>
           </div>
         </a>
 
@@ -655,7 +670,7 @@
           </div>
           <div>
             <div class="font-bold text-sm text-slate-900 dark:text-white">Đề Thi 1 Tiết 45 Phút</div>
-            <div class="text-xs text-slate-500 dark:text-slate-400">Chuẩn ma trận Giữa kỳ / Cuối kỳ Bộ GD</div>
+            <div class="text-xs text-slate-700 dark:text-slate-300 font-medium">Chuẩn ma trận Giữa kỳ / Cuối kỳ Bộ GD</div>
           </div>
         </a>
 
@@ -668,7 +683,7 @@
           </div>
           <div>
             <div class="font-bold text-sm text-slate-900 dark:text-white">Từ Vựng Cambridge KET/PET</div>
-            <div class="text-xs text-slate-500 dark:text-slate-400">Tra cứu nhanh &amp; nội suy câu ví dụ</div>
+            <div class="text-xs text-slate-700 dark:text-slate-300 font-medium">Tra cứu nhanh &amp; nội suy câu ví dụ</div>
           </div>
         </a>
       </div>
@@ -751,9 +766,9 @@
         <div class="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-emerald-200 dark:border-emerald-700 shadow-sm flex items-center gap-4 flex-shrink-0">
           <div class="text-3xl animate-bounce">⭐</div>
           <div>
-            <div class="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase">Sao Thưởng Của Bạn</div>
+            <div class="text-xs text-slate-700 dark:text-slate-300 font-bold uppercase">Sao Thưởng Của Bạn</div>
             <div class="text-xl font-heading font-black text-emerald-600 dark:text-emerald-400">{studentStars} Sao</div>
-            <div class="text-[11px] text-slate-500 dark:text-slate-400">={(studentStars * 10).toLocaleString('vi-VN')} VNĐ trừ học phí</div>
+            <div class="text-[11px] text-emerald-700 dark:text-emerald-300 font-bold">={(studentStars * 10).toLocaleString('vi-VN')} VNĐ trừ học phí</div>
           </div>
         </div>
       </div>
@@ -769,7 +784,7 @@
           </div>
           <div>
             <div class="font-bold text-sm text-slate-900 dark:text-white">Khảo Thí 15 Phút Có Thưởng</div>
-            <div class="text-xs text-slate-500 dark:text-slate-400">Kiểm tra từ vựng &amp; phản xạ nhận sao</div>
+            <div class="text-xs text-slate-700 dark:text-slate-300 font-medium">Kiểm tra từ vựng &amp; phản xạ nhận sao</div>
           </div>
         </a>
 
@@ -782,7 +797,7 @@
           </div>
           <div>
             <div class="font-bold text-sm text-slate-900 dark:text-white">Đề Thi 1 Tiết 45 Phút</div>
-            <div class="text-xs text-slate-500 dark:text-slate-400">Chuẩn khung năng lực Cambridge &amp; BGD</div>
+            <div class="text-xs text-slate-700 dark:text-slate-300 font-medium">Chuẩn khung năng lực Cambridge &amp; BGD</div>
           </div>
         </a>
 
@@ -795,7 +810,7 @@
           </div>
           <div>
             <div class="font-bold text-sm text-slate-900 dark:text-white">Từ Điển Phát Âm Phonics</div>
-            <div class="text-xs text-slate-500 dark:text-slate-400">Tra cứu nhanh &amp; luyện phát âm bản ngữ</div>
+            <div class="text-xs text-slate-700 dark:text-slate-300 font-medium">Tra cứu nhanh &amp; luyện phát âm bản ngữ</div>
           </div>
         </a>
       </div>
@@ -877,7 +892,7 @@
       </div>
       <div>
         <div class="text-2xl font-heading font-black text-slate-900 dark:text-white">{data.curricula.length}</div>
-        <div class="text-[11px] text-slate-500 dark:text-slate-400 font-bold uppercase">Cấp Bậc &amp; Chương Trình</div>
+        <div class="text-[11px] text-slate-700 dark:text-slate-300 font-extrabold uppercase">Cấp Bậc &amp; Chương Trình</div>
       </div>
     </div>
 
@@ -887,7 +902,7 @@
       </div>
       <div>
         <div class="text-2xl font-heading font-black text-slate-900 dark:text-white">{data.exams.length}</div>
-        <div class="text-[11px] text-slate-500 dark:text-slate-400 font-bold uppercase">Bộ Đề Thi 15p - 45p</div>
+        <div class="text-[11px] text-slate-700 dark:text-slate-300 font-extrabold uppercase">Bộ Đề Thi 15p - 45p</div>
       </div>
     </div>
 
@@ -897,7 +912,7 @@
       </div>
       <div>
         <div class="text-2xl font-heading font-black text-slate-900 dark:text-white">{data.evaluations.length}</div>
-        <div class="text-[11px] text-slate-500 dark:text-slate-400 font-bold uppercase">Hồ Sơ Năng Khiếu</div>
+        <div class="text-[11px] text-slate-700 dark:text-slate-300 font-extrabold uppercase">Hồ Sơ Năng Khiếu</div>
       </div>
     </div>
 
@@ -907,7 +922,7 @@
       </div>
       <div>
         <div class="text-2xl font-heading font-black text-amber-600 dark:text-amber-400">100 : 1.000</div>
-        <div class="text-[11px] text-slate-500 dark:text-slate-400 font-bold uppercase">Tỷ Lệ Đổi Học Phí</div>
+        <div class="text-[11px] text-slate-700 dark:text-slate-300 font-extrabold uppercase">Tỷ Lệ Đổi Học Phí</div>
       </div>
     </div>
   </div>
@@ -1092,7 +1107,7 @@
     </div>
   {:else}
     <!-- ================= TEACHER / ADMIN / GUEST VIEW: FULL CATALOG EXPLORER ================= -->
-    <div class="space-y-6">
+    <div id="curriculum-section" class="space-y-6 scroll-mt-20">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div class="flex items-center gap-2">
@@ -1111,7 +1126,7 @@
           {#each categoryLabels as tab}
             <button
               onclick={() => activeCurriculumTab = tab.key}
-              class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap {activeCurriculumTab === tab.key ? 'bg-emerald-600 text-white shadow-md' : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-800'}"
+              class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap {activeCurriculumTab === tab.key ? 'bg-emerald-600 text-white shadow-md' : 'bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 hover:text-emerald-700 dark:hover:text-white border border-slate-300 dark:border-slate-700'}"
             >
               <span>{tab.icon}</span>
               <span class="ml-1">{tab.label}</span>
@@ -1138,7 +1153,7 @@
                 <h3 class="font-heading font-extrabold text-base text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
                   {curr.title}
                 </h3>
-                <p class="text-xs text-slate-600 dark:text-slate-400 mt-1 leading-relaxed line-clamp-3">
+                <p class="text-xs text-slate-700 dark:text-slate-300 mt-1 leading-relaxed line-clamp-3 font-normal">
                   {curr.description}
                 </p>
               </div>
@@ -1152,7 +1167,7 @@
                 <span>Vào Làm Bài Test</span>
                 <span>➔</span>
               </a>
-              <span class="text-[10px] text-slate-400 dark:text-slate-500 font-mono">Mã: {curr.code}</span>
+              <span class="text-[11px] text-slate-600 dark:text-slate-400 font-mono font-medium">Mã: {curr.code}</span>
             </div>
           </div>
         {/each}

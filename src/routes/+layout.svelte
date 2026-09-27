@@ -233,7 +233,7 @@
 
 <div class="min-h-screen flex flex-col bg-transparent text-slate-800 dark:text-slate-100 font-sans transition-colors duration-250">
   <!-- Top Navigation Header -->
-  <header class="sticky top-0 z-40 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 shadow-xs transition-colors duration-250 w-full max-w-full overflow-hidden">
+  <header class="sticky top-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 shadow-xs transition-colors duration-250 w-full">
     <div class="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
       <div class="flex items-center justify-between h-16 gap-2 sm:gap-3 min-w-0">
         
@@ -290,7 +290,7 @@
                     </div>
                     <div>
                       <div class="font-semibold text-xs text-slate-900 dark:text-white group-hover:text-sky-600 dark:group-hover:text-sky-400">Tiểu Học (Lớp 1 - 5)</div>
-                      <div class="text-[11px] text-slate-500 dark:text-slate-400">Global Success, Phonics &amp; Âm Nhạc</div>
+                      <div class="text-[11px] text-slate-600 dark:text-slate-300">Global Success, Phonics &amp; Âm Nhạc</div>
                     </div>
                   </a>
 
@@ -304,7 +304,7 @@
                     </div>
                     <div>
                       <div class="font-semibold text-xs text-slate-900 dark:text-white group-hover:text-sky-600 dark:group-hover:text-sky-400">THCS (Lớp 6 - 9)</div>
-                      <div class="text-[11px] text-slate-500 dark:text-slate-400">Ngữ pháp cốt lõi, Cambridge KET/PET</div>
+                      <div class="text-[11px] text-slate-600 dark:text-slate-300">Ngữ pháp cốt lõi, Cambridge KET/PET</div>
                     </div>
                   </a>
 
@@ -318,7 +318,7 @@
                     </div>
                     <div>
                       <div class="font-semibold text-xs text-slate-900 dark:text-white group-hover:text-sky-600 dark:group-hover:text-sky-400">THPT &amp; Ôn Thi ĐH (Lớp 10 - 12)</div>
-                      <div class="text-[11px] text-slate-500 dark:text-slate-400">Bám sát cấu trúc đề thi 2026</div>
+                      <div class="text-[11px] text-slate-600 dark:text-slate-300">Bám sát cấu trúc đề thi 2026</div>
                     </div>
                   </a>
 
@@ -332,9 +332,20 @@
                     </div>
                     <div>
                       <div class="font-semibold text-xs text-slate-900 dark:text-white group-hover:text-sky-600 dark:group-hover:text-sky-400">IELTS • TOEIC • VSTEP</div>
-                      <div class="text-[11px] text-slate-500 dark:text-slate-400">Khảo thí chuẩn Cambridge quốc tế</div>
+                      <div class="text-[11px] text-slate-600 dark:text-slate-300">Khảo thí chuẩn Cambridge quốc tế</div>
                     </div>
                   </a>
+
+                  <div class="pt-1.5 border-t border-slate-100 dark:border-slate-800/80 mt-1">
+                    <a
+                      href="/courses"
+                      onclick={closeAllDropdowns}
+                      class="flex items-center justify-between p-2 rounded-md bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 text-xs font-bold hover:bg-sky-100 dark:hover:bg-sky-900/60 transition-colors"
+                    >
+                      <span>Xem Toàn Bộ 19 Khóa Học K12</span>
+                      <span>➔</span>
+                    </a>
+                  </div>
                 </div>
               {/if}
             </div>
@@ -363,7 +374,7 @@
                   </div>
                   <div>
                     <div class="font-semibold text-xs text-slate-900 dark:text-white group-hover:text-sky-600 dark:group-hover:text-sky-400">Test Nhanh 15 Phút</div>
-                    <div class="text-[11px] text-slate-500 dark:text-slate-400">Kiểm tra miệng, từ vựng và phản xạ</div>
+                    <div class="text-[11px] text-slate-600 dark:text-slate-300">Kiểm tra miệng, từ vựng và phản xạ</div>
                   </div>
                 </a>
 
@@ -377,7 +388,7 @@
                   </div>
                   <div>
                     <div class="font-semibold text-xs text-slate-900 dark:text-white group-hover:text-sky-600 dark:group-hover:text-sky-400">Đề 1 Tiết 45 Phút Chuẩn Bộ</div>
-                    <div class="text-[11px] text-slate-500 dark:text-slate-400">Ma trận đề thi học kỳ 2026</div>
+                    <div class="text-[11px] text-slate-600 dark:text-slate-300">Ma trận đề thi học kỳ 2026</div>
                   </div>
                 </a>
 
@@ -391,9 +402,20 @@
                   </div>
                   <div>
                     <div class="font-semibold text-xs text-slate-900 dark:text-white group-hover:text-sky-600 dark:group-hover:text-sky-400">Phòng Thi IELTS 4 Kỹ Năng</div>
-                    <div class="text-[11px] text-slate-500 dark:text-slate-400">Nghe, Đọc, Viết &amp; Ghi âm Nói trực tiếp</div>
+                    <div class="text-[11px] text-slate-600 dark:text-slate-300">Nghe, Đọc, Viết &amp; Ghi âm Nói trực tiếp</div>
                   </div>
                 </a>
+
+                <div class="pt-1.5 border-t border-slate-100 dark:border-slate-800/80 mt-1">
+                  <a
+                    href="/exam"
+                    onclick={closeAllDropdowns}
+                    class="flex items-center justify-between p-2 rounded-md bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 text-xs font-bold hover:bg-sky-100 dark:hover:bg-sky-900/60 transition-colors"
+                  >
+                    <span>Xem Tất Cả Bộ Đề Khảo Thí</span>
+                    <span>➔</span>
+                  </a>
+                </div>
               </div>
             {/if}
           </div>
@@ -421,7 +443,7 @@
                   </div>
                   <div>
                     <div class="font-semibold text-xs text-slate-900 dark:text-white group-hover:text-sky-600 dark:group-hover:text-sky-400">Từ Điển Cambridge &amp; Phonics</div>
-                    <div class="text-[11px] text-slate-500 dark:text-slate-400">Tra cứu phát âm IPA, nguyên âm &amp; phụ âm</div>
+                    <div class="text-[11px] text-slate-600 dark:text-slate-300">Tra cứu phát âm IPA, nguyên âm &amp; phụ âm</div>
                   </div>
                 </a>
 
@@ -435,7 +457,7 @@
                   </div>
                   <div>
                     <div class="font-semibold text-xs text-slate-900 dark:text-white group-hover:text-sky-600 dark:group-hover:text-sky-400">Flashcard Ngữ Âm 3D</div>
-                    <div class="text-[11px] text-slate-500 dark:text-slate-400">Ghi nhớ từ vựng đa giác quan</div>
+                    <div class="text-[11px] text-slate-600 dark:text-slate-300">Ghi nhớ từ vựng đa giác quan</div>
                   </div>
                 </a>
 
@@ -449,7 +471,7 @@
                   </div>
                   <div>
                     <div class="font-semibold text-xs text-slate-900 dark:text-white group-hover:text-sky-600 dark:group-hover:text-sky-400">Đấu Trường Trò Chơi</div>
-                    <div class="text-[11px] text-slate-500 dark:text-slate-400">Speed Match &amp; Meteor Rush phản xạ</div>
+                    <div class="text-[11px] text-slate-600 dark:text-slate-300">Speed Match &amp; Meteor Rush phản xạ</div>
                   </div>
                 </a>
 
@@ -463,7 +485,7 @@
                   </div>
                   <div>
                     <div class="font-semibold text-xs text-slate-900 dark:text-white group-hover:text-sky-600 dark:group-hover:text-sky-400">Chuyên Đề Ngữ Pháp &amp; Công Thức</div>
-                    <div class="text-[11px] text-slate-500 dark:text-slate-400">14 chuyên đề toàn cấp K12, cạm bẫy &amp; bài tập</div>
+                    <div class="text-[11px] text-slate-600 dark:text-slate-300">14 chuyên đề toàn cấp K12, cạm bẫy &amp; bài tập</div>
                   </div>
                 </a>
 
@@ -478,10 +500,21 @@
                     </div>
                     <div>
                       <div class="font-semibold text-xs text-slate-900 dark:text-white group-hover:text-sky-600 dark:group-hover:text-sky-400">Giáo Án 5512 &amp; Bản Ngữ</div>
-                      <div class="text-[11px] text-slate-500 dark:text-slate-400">Mô hình Co-Teaching &amp; Học liệu nội bộ</div>
+                      <div class="text-[11px] text-slate-600 dark:text-slate-300">Mô hình Co-Teaching &amp; Học liệu nội bộ</div>
                     </div>
                   </a>
                 {/if}
+
+                <div class="pt-1.5 border-t border-slate-100 dark:border-slate-800/80 mt-1">
+                  <a
+                    href="/tools"
+                    onclick={closeAllDropdowns}
+                    class="flex items-center justify-between p-2 rounded-md bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 text-xs font-bold hover:bg-sky-100 dark:hover:bg-sky-900/60 transition-colors"
+                  >
+                    <span>Xem Tất Cả Công Cụ Học Tập</span>
+                    <span>➔</span>
+                  </a>
+                </div>
               </div>
             {/if}
           </div>
@@ -541,7 +574,7 @@
                     </div>
                     <div>
                       <div class="font-semibold text-xs text-slate-900 dark:text-white group-hover:text-sky-600 dark:group-hover:text-sky-400">Báo Học Phí &amp; Đổi Sao</div>
-                      <div class="text-[11px] text-slate-500 dark:text-slate-400">Khấu trừ 100 sao = 1.000đ, in PDF VietQR</div>
+                      <div class="text-[11px] text-slate-600 dark:text-slate-300 font-medium">Khấu trừ 100 sao = 1.000đ, in PDF VietQR</div>
                     </div>
                   </a>
 
@@ -556,7 +589,7 @@
                     </div>
                     <div>
                       <div class="font-semibold text-xs text-slate-900 dark:text-white group-hover:text-sky-600 dark:group-hover:text-sky-400">Obsidian Second Brain</div>
-                      <div class="text-[11px] text-slate-500 dark:text-slate-400">Kho tri thức &amp; WikiLinks Vault local</div>
+                      <div class="text-[11px] text-slate-600 dark:text-slate-300 font-medium">Kho tri thức &amp; WikiLinks Vault local</div>
                     </div>
                   </a>
 
@@ -570,7 +603,7 @@
                     </div>
                     <div>
                       <div class="font-semibold text-xs text-slate-900 dark:text-white group-hover:text-sky-600 dark:group-hover:text-sky-400">Đánh Giá Năng Lực Học Viên</div>
-                      <div class="text-[11px] text-slate-500 dark:text-slate-400">Phân tích 5 kỹ năng, báo cáo Zalo Bot</div>
+                      <div class="text-[11px] text-slate-600 dark:text-slate-300 font-medium">Phân tích 5 kỹ năng, báo cáo Zalo Bot</div>
                     </div>
                   </a>
 
@@ -584,7 +617,7 @@
                     </div>
                     <div>
                       <div class="font-semibold text-xs text-slate-900 dark:text-white group-hover:text-sky-600 dark:group-hover:text-sky-400">Thời Khóa Biểu &amp; Điểm Danh</div>
-                      <div class="text-[11px] text-slate-500 dark:text-slate-400">Sổ đầu bài, thông báo đón con, phân quyền giáo viên</div>
+                      <div class="text-[11px] text-slate-600 dark:text-slate-300 font-medium">Sổ đầu bài, thông báo đón con, phân quyền giáo viên</div>
                     </div>
                   </a>
                 </div>
@@ -788,7 +821,7 @@
         <div class="lg:hidden py-4 border-t border-slate-200 dark:border-slate-800 space-y-4 animate-in slide-in-from-top-2 duration-150 max-h-[82vh] overflow-y-auto">
           <!-- Section 1: Khóa Học & Lộ Trình -->
           <div class="space-y-1.5">
-            <div class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-1">
+            <div class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 px-1">
               📚 Lộ Trình &amp; Khóa Học
             </div>
             {#if currentUser?.role === 'student'}
@@ -834,12 +867,23 @@
                   <span>🌍</span> <span>IELTS / TOEIC</span>
                 </a>
               </div>
+
+              <div class="pt-1">
+                <a
+                  href="/courses"
+                  onclick={() => mobileMenuOpen = false}
+                  class="flex items-center justify-between p-2 rounded-md bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 text-xs font-bold hover:bg-sky-100 dark:hover:bg-sky-900/60 transition-colors"
+                >
+                  <span>📚 Xem Toàn Bộ 19 Khóa Học K12</span>
+                  <span>➔</span>
+                </a>
+              </div>
             {/if}
           </div>
 
           <!-- Section 2: Khảo Thí & Học Tập -->
           <div class="space-y-1.5">
-            <div class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-1">
+            <div class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 px-1">
               ⏱️ Phòng Thi &amp; Học Tập Đa Giác Quan
             </div>
             <div class="grid grid-cols-2 gap-2">
@@ -882,11 +926,22 @@
                 <span class="text-[11px] px-2 py-0.5 rounded bg-purple-200 dark:bg-purple-900/60 uppercase font-semibold">Speed Match</span>
               </a>
             </div>
+
+            <div class="pt-1">
+              <a
+                href="/tools"
+                onclick={() => mobileMenuOpen = false}
+                class="flex items-center justify-between p-2 rounded-md bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 text-xs font-bold hover:bg-sky-100 dark:hover:bg-sky-900/60 transition-colors"
+              >
+                <span>🛠️ Xem Tất Cả Công Cụ Học Tập</span>
+                <span>➔</span>
+              </a>
+            </div>
           </div>
 
           <!-- Section 3: Tiện Ích & Liên Lạc -->
           <div class="space-y-1.5">
-            <div class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-1">
+            <div class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 px-1">
               📅 Lịch Học &amp; Gia Đình
             </div>
             <div class="grid grid-cols-2 gap-2">
