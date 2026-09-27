@@ -63,8 +63,12 @@ export async function GET({ request, platform }) {
       `;
       params = [user.id, user.id, user.id, user.role];
     } else if (user.role === 'parent') {
-      // P1 Fix: For parents, homework-category notifications require the link to still be verified.
-      // Non-homework notifications (target_user_id) are allowed normally.
+      // P1 Fix (v2): For parents, homework notifications are only shown if:
+      //   - The notification is a SYSTEM/non-sensitive broadcast (target_user_id IS NULL, role parent/all)
+      //   - OR it is personally addressed (target_user_id = user.id) AND category != 'homework'
+      //   - OR it is homework but the link between this parent and the referenced student is STILL VERIFIED
+      //     (reference_id matches a homework submission/assignment tied to a verified child)
+      // This correctly denies revoked-child notifications while keeping verified-child ones.
       sql = `
         SELECT n.id, n.target_role, n.target_user_id, n.title, n.body, n.category, n.reference_id, n.created_at,
                CASE 
@@ -75,17 +79,40 @@ export async function GET({ request, platform }) {
         FROM system_notifications n
         LEFT JOIN system_notification_reads nr 
           ON n.id = nr.notification_id AND nr.user_id = ?
-        WHERE n.target_user_id = ?
+        WHERE (
+          -- System/role broadcasts (non-sensitive)
+          (n.target_user_id IS NULL AND (n.target_role = 'parent' OR n.target_role = 'all'))
+        ) OR (
+          -- Personal notifications addressed to this parent
+          n.target_user_id = ?
           AND (
+            -- Non-homework: always show
             n.category != 'homework'
-            OR EXISTS (
+            OR
+            -- Homework: only show if this parent still has an active verified link
+            -- that could have generated this notification (verified at READ time)
+            EXISTS (
               SELECT 1 FROM parent_student_links psl
+              JOIN homework_assignments ha ON ha.id = n.reference_id
+              JOIN users su ON su.id = psl.student_user_id
               WHERE psl.parent_user_id = ?
+                AND psl.verification_status = 'verified'
+                AND (su.metadata LIKE '%"class_id":"' || ha.class_id || '"%'
+                     OR su.metadata LIKE '%"class_id": "' || ha.class_id || '"%')
+            )
+            OR
+            -- Grading notifications: reference_id is submission_id; find student via attempt/submission
+            EXISTS (
+              SELECT 1 FROM parent_student_links psl
+              JOIN homework_submissions hs ON hs.id = n.reference_id
+              WHERE psl.parent_user_id = ?
+                AND psl.student_user_id = hs.student_id
                 AND psl.verification_status = 'verified'
             )
           )
+        )
       `;
-      params = [user.id, user.id, user.id, user.id];
+      params = [user.id, user.id, user.id, user.id, user.id];
     } else {
       sql = `
         SELECT n.id, n.target_role, n.target_user_id, n.title, n.body, n.category, n.reference_id, n.created_at,

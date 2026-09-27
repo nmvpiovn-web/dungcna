@@ -423,12 +423,24 @@ export async function POST({ request, platform }) {
           }
         } // end if(targetClassId)
 
-        // Send general broadcast to students
-        const notifIdStudent = `notif_hw_s_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
-        await db.prepare(`
-          INSERT INTO system_notifications (id, target_role, target_user_id, title, body, category, reference_id)
-          VALUES (?, 'student', NULL, ?, ?, 'homework', ?);
-        `).bind(notifIdStudent, `📚 BTVN Mới: ${title}`, `Giáo viên ${newAssignment.teacher_name} vừa giao BTVN lớp ${newAssignment.class_name}.`, assignmentId).run();
+        // Send class-scoped notifications to students in this class (NOT a global NULL broadcast)
+        // Codex P1/P2: homework for a specific class must NOT broadcast to all students system-wide
+        if (targetClassId) {
+          const studentRes = await db.prepare(`
+            SELECT id FROM users
+            WHERE role = 'student'
+              AND (metadata LIKE '%"class_id":"' || ? || '"%'
+                   OR metadata LIKE '%"class_id": "' || ? || '"%');
+          `).bind(targetClassId, targetClassId).all();
+          const classStudents = (studentRes.results || []).map(r => r.id).filter(Boolean);
+          for (const studentId of classStudents) {
+            const notifIdStudent = `notif_hw_s_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+            await db.prepare(`
+              INSERT INTO system_notifications (id, target_role, target_user_id, title, body, category, reference_id)
+              VALUES (?, 'student', ?, ?, ?, 'homework', ?);
+            `).bind(notifIdStudent, studentId, `📚 BTVN Mới: ${title}`, `Giáo viên ${newAssignment.teacher_name} vừa giao BTVN lớp ${newAssignment.class_name}.`, assignmentId).run();
+          }
+        }
 
         // Log to activity stream
         const streamId = `stm_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
