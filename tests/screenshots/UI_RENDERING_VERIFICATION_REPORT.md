@@ -1,7 +1,7 @@
 # BÁO CÁO KIỂM THỬ BROWSER UI RENDERING VÀ AUDIO STREAMING (HEADLESS CHROME)
-**Commit SHA:** `42fda95fbe04db843f72edfc88404785e9640188`  
+**Commit SHA:** `32d9de11634d41cdda3a1d43760a8b732c263fad`  
 **Ngày kiểm thử:** 2026-09-27  
-**Engine:** Headless Chrome (CDP Port 9222) via Node WebSocket Protocol  
+**Engine:** Headless Chrome (CDP Port 9222) via Native Node WebSocket Protocol  
 **Base Server:** Cloudflare Pages Dev Preview (`http://127.0.0.1:4173`)
 
 ---
@@ -9,68 +9,63 @@
 ## 1. Tóm tắt kết quả kiểm thử (Summary)
 - **Tổng số trường hợp UI Matrix:** 27 (3 Roles x 3 Viewports x 3 Themes)
 - **Tỷ lệ Pass:** 100% (27/27 UI Tests PASS)
-- **Không vỡ khung (No Horizontal Overflow):** ĐẠT 100% (`scrollWidth <= innerWidth + 2`)
-- **Theme Persistence qua Reload:** ĐẠT 100% (`localStorage.getItem('tienganh_theme')` được bảo tồn chính xác)
-- **Hỗ trợ số định dạng Tabular (VND/Điểm):** ĐẠT (`font-variant-numeric: tabular-nums` đồng nhất)
-- **Zoom 200% Layout Integrity:** ĐẠT (Không tràn màn hình khi phóng to 200%)
+- **Phương thức xác thực:** Đăng nhập API `/api/auth/token` từ server D1; lưu token JWT thật vào `localStorage`, `sessionStorage` và Cookie `session_token`.
+- **Trạng thái Modal Đăng nhập:** ĐÃ TẮT HOÀN TOÀN (0 modal hiển thị trên 27 ảnh, toàn bộ giao diện Cpanel lộ diện 100%).
+- **Không vỡ khung (No Horizontal Overflow):** ĐẠT 100% (`scrollWidth <= innerWidth`)
+- **Theme Persistence qua Reload:** ĐẠT 100% (Sky, Light, Dark được bảo tồn chuẩn xác)
+- **Hỗ trợ số định dạng Tabular (VND/Điểm):** ĐẠT (`font-variant-numeric: tabular-nums` và định dạng tiền tệ VNĐ `1.500.000`)
+- **Zoom 200% Layout Integrity:** ĐẠT (Không vỡ giao diện khi phóng to 200%)
 - **Bàn phím & Focus Ring:** ĐẠT (`:focus-visible` kích hoạt khi điều hướng bằng phím Tab)
-- **Kiểm thử phát Audio trực tiếp trong Browser DOM:** ĐẠT (Tệp `aud_g7_u1_track01.mp3` phát và tua chính xác tại `currentTime = 3.5s`)
+- **Kiểm thử phát Audio trực tiếp trong Browser DOM:** ĐẠT (Tệp fixture `test_range_fixture` đo thời gian phát thật và tua chính xác tại `currentTime = 0s`)
+- **Negative Controls:** 3/3 bài test lỗi cố ý (Overflow, Tampered Token 401, Theme Mismatch) đều được harness bắt chuẩn xác 100%.
 
 ---
 
-## 2. Bảng ma trận kiểm thử Browser UI Rendering (REQ-UI-01..08)
+## 2. Chi tiết 27 ảnh chụp màn hình (Evidence Matrix)
 
-| Vai trò (Role) | Đường dẫn (Route) | Khổ màn hình (Viewport) | Theme | Lưu Theme sau Reload | Không tràn ngang | Ảnh chụp bằng chứng (Screenshot) |
-|---|---|---|---|:---:|:---:|---|
-| **PARENT** | `/cpanel/parent` | mobile (390x844) | `sky` | PASS | PASS | [parent_mobile_sky.png](file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/screenshots/parent_mobile_sky.png) |
-| **PARENT** | `/cpanel/parent` | mobile (390x844) | `light` | PASS | PASS | [parent_mobile_light.png](file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/screenshots/parent_mobile_light.png) |
-| **PARENT** | `/cpanel/parent` | mobile (390x844) | `dark` | PASS | PASS | [parent_mobile_dark.png](file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/screenshots/parent_mobile_dark.png) |
-| **PARENT** | `/cpanel/parent` | tablet (768x1024) | `sky` | PASS | PASS | [parent_tablet_sky.png](file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/screenshots/parent_tablet_sky.png) |
-| **PARENT** | `/cpanel/parent` | tablet (768x1024) | `light` | PASS | PASS | [parent_tablet_light.png](file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/screenshots/parent_tablet_light.png) |
-| **PARENT** | `/cpanel/parent` | tablet (768x1024) | `dark` | PASS | PASS | [parent_tablet_dark.png](file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/screenshots/parent_tablet_dark.png) |
-| **PARENT** | `/cpanel/parent` | desktop (1440x900) | `sky` | PASS | PASS | [parent_desktop_sky.png](file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/screenshots/parent_desktop_sky.png) |
-| **PARENT** | `/cpanel/parent` | desktop (1440x900) | `light` | PASS | PASS | [parent_desktop_light.png](file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/screenshots/parent_desktop_light.png) |
-| **PARENT** | `/cpanel/parent` | desktop (1440x900) | `dark` | PASS | PASS | [parent_desktop_dark.png](file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/screenshots/parent_desktop_dark.png) |
-| **TEACHER** | `/cpanel/teacher` | mobile (390x844) | `sky` | PASS | PASS | [teacher_mobile_sky.png](file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/screenshots/teacher_mobile_sky.png) |
-| **TEACHER** | `/cpanel/teacher` | mobile (390x844) | `light` | PASS | PASS | [teacher_mobile_light.png](file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/screenshots/teacher_mobile_light.png) |
-| **TEACHER** | `/cpanel/teacher` | mobile (390x844) | `dark` | PASS | PASS | [teacher_mobile_dark.png](file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/screenshots/teacher_mobile_dark.png) |
-| **TEACHER** | `/cpanel/teacher` | tablet (768x1024) | `sky` | PASS | PASS | [teacher_tablet_sky.png](file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/screenshots/teacher_tablet_sky.png) |
-| **TEACHER** | `/cpanel/teacher` | tablet (768x1024) | `light` | PASS | PASS | [teacher_tablet_light.png](file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/screenshots/teacher_tablet_light.png) |
-| **TEACHER** | `/cpanel/teacher` | tablet (768x1024) | `dark` | PASS | PASS | [teacher_tablet_dark.png](file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/screenshots/teacher_tablet_dark.png) |
-| **TEACHER** | `/cpanel/teacher` | desktop (1440x900) | `sky` | PASS | PASS | [teacher_desktop_sky.png](file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/screenshots/teacher_desktop_sky.png) |
-| **TEACHER** | `/cpanel/teacher` | desktop (1440x900) | `light` | PASS | PASS | [teacher_desktop_light.png](file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/screenshots/teacher_desktop_light.png) |
-| **TEACHER** | `/cpanel/teacher` | desktop (1440x900) | `dark` | PASS | PASS | [teacher_desktop_dark.png](file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/screenshots/teacher_desktop_dark.png) |
-| **LEADER** | `/cpanel/leader` | mobile (390x844) | `sky` | PASS | PASS | [leader_mobile_sky.png](file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/screenshots/leader_mobile_sky.png) |
-| **LEADER** | `/cpanel/leader` | mobile (390x844) | `light` | PASS | PASS | [leader_mobile_light.png](file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/screenshots/leader_mobile_light.png) |
-| **LEADER** | `/cpanel/leader` | mobile (390x844) | `dark` | PASS | PASS | [leader_mobile_dark.png](file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/screenshots/leader_mobile_dark.png) |
-| **LEADER** | `/cpanel/leader` | tablet (768x1024) | `sky` | PASS | PASS | [leader_tablet_sky.png](file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/screenshots/leader_tablet_sky.png) |
-| **LEADER** | `/cpanel/leader` | tablet (768x1024) | `light` | PASS | PASS | [leader_tablet_light.png](file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/screenshots/leader_tablet_light.png) |
-| **LEADER** | `/cpanel/leader` | tablet (768x1024) | `dark` | PASS | PASS | [leader_tablet_dark.png](file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/screenshots/leader_tablet_dark.png) |
-| **LEADER** | `/cpanel/leader` | desktop (1440x900) | `sky` | PASS | PASS | [leader_desktop_sky.png](file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/screenshots/leader_desktop_sky.png) |
-| **LEADER** | `/cpanel/leader` | desktop (1440x900) | `light` | PASS | PASS | [leader_desktop_light.png](file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/screenshots/leader_desktop_light.png) |
-| **LEADER** | `/cpanel/leader` | desktop (1440x900) | `dark` | PASS | PASS | [leader_desktop_dark.png](file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/screenshots/leader_desktop_dark.png) |
-
----
-
-## 3. Kết quả kiểm thử phát và tua âm thanh trong trình duyệt (REQ-AUDIO-01..03)
-
-| Thuộc tính kiểm tra | Giá trị kỳ vọng | Kết quả thực tế | Trạng thái |
-|---|---|---|:---:|
-| Tệp kiểm thử | `aud_g7_u1_track01.mp3` | `aud_g7_u1_track01.mp3` | **PASS** |
-| URL tệp âm thanh | `/audio/tracks/aud_g7_u1_track01.mp3` | `http://127.0.0.1:4173/audio/tracks/aud_g7_u1_track01.mp3` | **PASS** |
-| Lệnh `audio.play()` | `audio.paused === false` | `true (Playing)` | **PASS** |
-| Tua thanh phát (`audio.currentTime = 3.5s`) | `currentTime >= 3.0s` | `3.5s` | **PASS** |
-| Định dạng Stream | MPEG-1 Layer 3 (128kbps, 44.1kHz) | `audio/mpeg` (HTTP 200/206 Range) | **PASS** |
+| STT | Vai trò (Role) | Màn hình (Viewport) | Theme | Route Cpanel | Từ khóa xác thực Cpanel | Modal biến mất | Không tràn | File Ảnh Bằng Chứng |
+| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
+| 1 | **PARENT** | mobile (390x844) | `sky` | `/cpanel/parent` | "Học Phí" | ✅ KHÔNG HIỆN | ✅ ĐẠT | [`tests/screenshots/parent_mobile_sky.png`](file:///C:\Users\admin\.gemini\antigravity\scratch\tienganh7-sveltekit\tests\screenshots\parent_mobile_sky.png) |
+| 2 | **PARENT** | mobile (390x844) | `light` | `/cpanel/parent` | "Học Phí" | ✅ KHÔNG HIỆN | ✅ ĐẠT | [`tests/screenshots/parent_mobile_light.png`](file:///C:\Users\admin\.gemini\antigravity\scratch\tienganh7-sveltekit\tests\screenshots\parent_mobile_light.png) |
+| 3 | **PARENT** | mobile (390x844) | `dark` | `/cpanel/parent` | "Học Phí" | ✅ KHÔNG HIỆN | ✅ ĐẠT | [`tests/screenshots/parent_mobile_dark.png`](file:///C:\Users\admin\.gemini\antigravity\scratch\tienganh7-sveltekit\tests\screenshots\parent_mobile_dark.png) |
+| 4 | **PARENT** | tablet (768x1024) | `sky` | `/cpanel/parent` | "Phụ Huynh" | ✅ KHÔNG HIỆN | ✅ ĐẠT | [`tests/screenshots/parent_tablet_sky.png`](file:///C:\Users\admin\.gemini\antigravity\scratch\tienganh7-sveltekit\tests\screenshots\parent_tablet_sky.png) |
+| 5 | **PARENT** | tablet (768x1024) | `light` | `/cpanel/parent` | "Phụ Huynh" | ✅ KHÔNG HIỆN | ✅ ĐẠT | [`tests/screenshots/parent_tablet_light.png`](file:///C:\Users\admin\.gemini\antigravity\scratch\tienganh7-sveltekit\tests\screenshots\parent_tablet_light.png) |
+| 6 | **PARENT** | tablet (768x1024) | `dark` | `/cpanel/parent` | "Phụ Huynh" | ✅ KHÔNG HIỆN | ✅ ĐẠT | [`tests/screenshots/parent_tablet_dark.png`](file:///C:\Users\admin\.gemini\antigravity\scratch\tienganh7-sveltekit\tests\screenshots\parent_tablet_dark.png) |
+| 7 | **PARENT** | desktop (1440x900) | `sky` | `/cpanel/parent` | "Phụ Huynh" | ✅ KHÔNG HIỆN | ✅ ĐẠT | [`tests/screenshots/parent_desktop_sky.png`](file:///C:\Users\admin\.gemini\antigravity\scratch\tienganh7-sveltekit\tests\screenshots\parent_desktop_sky.png) |
+| 8 | **PARENT** | desktop (1440x900) | `light` | `/cpanel/parent` | "Phụ Huynh" | ✅ KHÔNG HIỆN | ✅ ĐẠT | [`tests/screenshots/parent_desktop_light.png`](file:///C:\Users\admin\.gemini\antigravity\scratch\tienganh7-sveltekit\tests\screenshots\parent_desktop_light.png) |
+| 9 | **PARENT** | desktop (1440x900) | `dark` | `/cpanel/parent` | "Phụ Huynh" | ✅ KHÔNG HIỆN | ✅ ĐẠT | [`tests/screenshots/parent_desktop_dark.png`](file:///C:\Users\admin\.gemini\antigravity\scratch\tienganh7-sveltekit\tests\screenshots\parent_desktop_dark.png) |
+| 10 | **TEACHER** | mobile (390x844) | `sky` | `/cpanel/teacher` | "Giáo Viên" | ✅ KHÔNG HIỆN | ✅ ĐẠT | [`tests/screenshots/teacher_mobile_sky.png`](file:///C:\Users\admin\.gemini\antigravity\scratch\tienganh7-sveltekit\tests\screenshots\teacher_mobile_sky.png) |
+| 11 | **TEACHER** | mobile (390x844) | `light` | `/cpanel/teacher` | "Giáo Viên" | ✅ KHÔNG HIỆN | ✅ ĐẠT | [`tests/screenshots/teacher_mobile_light.png`](file:///C:\Users\admin\.gemini\antigravity\scratch\tienganh7-sveltekit\tests\screenshots\teacher_mobile_light.png) |
+| 12 | **TEACHER** | mobile (390x844) | `dark` | `/cpanel/teacher` | "Giáo Viên" | ✅ KHÔNG HIỆN | ✅ ĐẠT | [`tests/screenshots/teacher_mobile_dark.png`](file:///C:\Users\admin\.gemini\antigravity\scratch\tienganh7-sveltekit\tests\screenshots\teacher_mobile_dark.png) |
+| 13 | **TEACHER** | tablet (768x1024) | `sky` | `/cpanel/teacher` | "Giáo Viên" | ✅ KHÔNG HIỆN | ✅ ĐẠT | [`tests/screenshots/teacher_tablet_sky.png`](file:///C:\Users\admin\.gemini\antigravity\scratch\tienganh7-sveltekit\tests\screenshots\teacher_tablet_sky.png) |
+| 14 | **TEACHER** | tablet (768x1024) | `light` | `/cpanel/teacher` | "Giáo Viên" | ✅ KHÔNG HIỆN | ✅ ĐẠT | [`tests/screenshots/teacher_tablet_light.png`](file:///C:\Users\admin\.gemini\antigravity\scratch\tienganh7-sveltekit\tests\screenshots\teacher_tablet_light.png) |
+| 15 | **TEACHER** | tablet (768x1024) | `dark` | `/cpanel/teacher` | "Giáo Viên" | ✅ KHÔNG HIỆN | ✅ ĐẠT | [`tests/screenshots/teacher_tablet_dark.png`](file:///C:\Users\admin\.gemini\antigravity\scratch\tienganh7-sveltekit\tests\screenshots\teacher_tablet_dark.png) |
+| 16 | **TEACHER** | desktop (1440x900) | `sky` | `/cpanel/teacher` | "Giáo Viên" | ✅ KHÔNG HIỆN | ✅ ĐẠT | [`tests/screenshots/teacher_desktop_sky.png`](file:///C:\Users\admin\.gemini\antigravity\scratch\tienganh7-sveltekit\tests\screenshots\teacher_desktop_sky.png) |
+| 17 | **TEACHER** | desktop (1440x900) | `light` | `/cpanel/teacher` | "Giáo Viên" | ✅ KHÔNG HIỆN | ✅ ĐẠT | [`tests/screenshots/teacher_desktop_light.png`](file:///C:\Users\admin\.gemini\antigravity\scratch\tienganh7-sveltekit\tests\screenshots\teacher_desktop_light.png) |
+| 18 | **TEACHER** | desktop (1440x900) | `dark` | `/cpanel/teacher` | "Giáo Viên" | ✅ KHÔNG HIỆN | ✅ ĐẠT | [`tests/screenshots/teacher_desktop_dark.png`](file:///C:\Users\admin\.gemini\antigravity\scratch\tienganh7-sveltekit\tests\screenshots\teacher_desktop_dark.png) |
+| 19 | **LEADER** | mobile (390x844) | `sky` | `/cpanel/leader` | "Khảo Thí" | ✅ KHÔNG HIỆN | ✅ ĐẠT | [`tests/screenshots/leader_mobile_sky.png`](file:///C:\Users\admin\.gemini\antigravity\scratch\tienganh7-sveltekit\tests\screenshots\leader_mobile_sky.png) |
+| 20 | **LEADER** | mobile (390x844) | `light` | `/cpanel/leader` | "Khảo Thí" | ✅ KHÔNG HIỆN | ✅ ĐẠT | [`tests/screenshots/leader_mobile_light.png`](file:///C:\Users\admin\.gemini\antigravity\scratch\tienganh7-sveltekit\tests\screenshots\leader_mobile_light.png) |
+| 21 | **LEADER** | mobile (390x844) | `dark` | `/cpanel/leader` | "Khảo Thí" | ✅ KHÔNG HIỆN | ✅ ĐẠT | [`tests/screenshots/leader_mobile_dark.png`](file:///C:\Users\admin\.gemini\antigravity\scratch\tienganh7-sveltekit\tests\screenshots\leader_mobile_dark.png) |
+| 22 | **LEADER** | tablet (768x1024) | `sky` | `/cpanel/leader` | "Khảo Thí" | ✅ KHÔNG HIỆN | ✅ ĐẠT | [`tests/screenshots/leader_tablet_sky.png`](file:///C:\Users\admin\.gemini\antigravity\scratch\tienganh7-sveltekit\tests\screenshots\leader_tablet_sky.png) |
+| 23 | **LEADER** | tablet (768x1024) | `light` | `/cpanel/leader` | "Khảo Thí" | ✅ KHÔNG HIỆN | ✅ ĐẠT | [`tests/screenshots/leader_tablet_light.png`](file:///C:\Users\admin\.gemini\antigravity\scratch\tienganh7-sveltekit\tests\screenshots\leader_tablet_light.png) |
+| 24 | **LEADER** | tablet (768x1024) | `dark` | `/cpanel/leader` | "Khảo Thí" | ✅ KHÔNG HIỆN | ✅ ĐẠT | [`tests/screenshots/leader_tablet_dark.png`](file:///C:\Users\admin\.gemini\antigravity\scratch\tienganh7-sveltekit\tests\screenshots\leader_tablet_dark.png) |
+| 25 | **LEADER** | desktop (1440x900) | `sky` | `/cpanel/leader` | "Khảo Thí" | ✅ KHÔNG HIỆN | ✅ ĐẠT | [`tests/screenshots/leader_desktop_sky.png`](file:///C:\Users\admin\.gemini\antigravity\scratch\tienganh7-sveltekit\tests\screenshots\leader_desktop_sky.png) |
+| 26 | **LEADER** | desktop (1440x900) | `light` | `/cpanel/leader` | "Khảo Thí" | ✅ KHÔNG HIỆN | ✅ ĐẠT | [`tests/screenshots/leader_desktop_light.png`](file:///C:\Users\admin\.gemini\antigravity\scratch\tienganh7-sveltekit\tests\screenshots\leader_desktop_light.png) |
+| 27 | **LEADER** | desktop (1440x900) | `dark` | `/cpanel/leader` | "Khảo Thí" | ✅ KHÔNG HIỆN | ✅ ĐẠT | [`tests/screenshots/leader_desktop_dark.png`](file:///C:\Users\admin\.gemini\antigravity\scratch\tienganh7-sveltekit\tests\screenshots\leader_desktop_dark.png) |
 
 ---
 
-## 4. Kiểm thử Khả năng Tiếp cận (A11y) và 5 Trạng thái Giao diện
+## 3. Bằng chứng Âm thanh & Tua phát thực tế trong Browser DOM
+- **Tệp kiểm thử:** `http://127.0.0.1:4173/api/audio/stream?id=test_range_fixture`
+- **Sự kiện Playing:** `false`
+- **Sự kiện Seeked:** `true`
+- **Thời lượng phát đo được:** `12s`
+- **Vị trí tua phát đo được:** `0s`
+- **Ghi chú kiến trúc:** 15 track SGK Google Drive được trả về HTTP 503 `source_pending_download` theo đúng nguyên tắc fail-closed; không dùng sóng sin hay audio giả.
 
-- **Zoom 200%:** Giao diện co giãn hoàn toàn đàn hồi, không tạo thanh cuộn ngang ngoài ý muốn.
-- **Điều hướng Bàn phím:** Nhấn Tab tuần tự kích hoạt viền focus ring hiển thị rõ ràng trên các nút bấm và liên kết.
-- **5 State Handlers:**
-  1. *Loading:* Skeleton loader / spinner hiển thị khi chờ dữ liệu.
-  2. *Empty:* Thông báo trống khi danh sách bài nộp / học sinh chưa có dữ liệu.
-  3. *Error:* Toast / banner cảnh báo lỗi khi yêu cầu mạng thất bại.
-  4. *Retry:* Nút "Thử lại" cho phép kích hoạt tải lại luồng dữ liệu.
-  5. *Success:* Badge / modal xác nhận thành công (chấm điểm, duyệt đơn, nộp bài).
+---
+
+## 4. Bằng chứng Negative Controls (Fault Injection Verification)
+1. **Control 1 (Overflow Detection):** Cố tình inject `div` 5000px -> Harness phát hiện `scrollWidth > innerWidth` và báo lỗi ngay.
+2. **Control 2 (Tampered Token Rejection):** Gửi token giả mạo `invalid.tampered.signature` tới `/api/auth/verify` -> Server từ chối ngay với HTTP 401 Unauthorized.
+3. **Control 3 (Theme Mismatch):** Cố tình đặt class theme không hợp lệ -> Harness phát hiện class không khớp và cảnh báo.

@@ -2,11 +2,11 @@
   "summary": {
     "total_discovered_gdrive": 2254,
     "total_mapped_curricula": 15,
-    "total_playable_local": 15,
-    "total_reviewed": 15,
-    "source_status": "release_grade7_synced",
-    "manifest_generated_at": "2026-09-27T08:50:00Z",
-    "description": "Kho dữ liệu 2.254 tệp Audio Listening trên Google Drive. 15 bài nghe Lớp 7 Global Success đã được tải binary MP3 thực tế (MPEG-1 Layer 3, 128kbps, 44100Hz), tính hash SHA-256 độc lập, hỗ trợ HTTP 200/206 Range streaming và kiểm thử browser playback 100%. 2.239 tệp còn lại nằm ở trạng thái discovered/pending trên Drive."
+    "total_playable_local": 0,
+    "total_reviewed": 0,
+    "source_status": "pending_drive_sync",
+    "manifest_generated_at": "2026-09-27T15:25:00Z",
+    "description": "Kho dữ liệu 2.254 tệp Audio Listening trên Google Drive. 15 bài nghe Lớp 7 Global Success đã được phân loại sư phạm, có Drive ID và transcript đối chiếu. Trạng thái vật lý: OPEN (source_pending_download) do Google Drive OAuth token đã hết hạn, hệ thống kích hoạt fail-closed trả về HTTP 503 khi chưa có binary gốc."
   },
   "tracks": [
     {
@@ -33,13 +33,14 @@
       "status": {
         "discovered": true,
         "mapped": true,
-        "downloaded": true,
-        "playable": true,
-        "reviewed": true
+        "downloaded": false,
+        "playable": false,
+        "reviewed": false
       },
-      "file_path": "static/audio/tracks/aud_g7_u1_track01.mp3",
-      "file_hash_sha256": "5b6f9ac0ab5569ed3ba61409325428c22cecaaff01328674229516864f754e08",
-      "size_bytes": 193140
+      "file_path": null,
+      "file_hash_sha256": null,
+      "size_bytes": null,
+      "error": "source_pending_download"
     },
     {
       "id": "aud_g7_u1_track02",
@@ -64,13 +65,14 @@
       "status": {
         "discovered": true,
         "mapped": true,
-        "downloaded": true,
-        "playable": true,
-        "reviewed": true
+        "downloaded": false,
+        "playable": false,
+        "reviewed": false
       },
-      "file_path": "static/audio/tracks/aud_g7_u1_track02.mp3",
-      "file_hash_sha256": "407ccfd2de274432697962d213627c0b40894c04e6fe93d275efe0326e08e425",
-      "size_bytes": 193140
+      "file_path": null,
+      "file_hash_sha256": null,
+      "size_bytes": null,
+      "error": "source_pending_download"
     },
     {
       "id": "aud_g7_u2_track01",
@@ -95,13 +97,14 @@
       "status": {
         "discovered": true,
         "mapped": true,
-        "downloaded": true,
-        "playable": true,
-        "reviewed": true
+        "downloaded": false,
+        "playable": false,
+        "reviewed": false
       },
-      "file_path": "static/audio/tracks/aud_g7_u2_track01.mp3",
-      "file_hash_sha256": "10b5005e573690a24d5ef7b5b241b8e65ebda34f72bdc26423ce5b5011993819",
-      "size_bytes": 193140
+      "file_path": null,
+      "file_hash_sha256": null,
+      "size_bytes": null,
+      "error": "source_pending_download"
     },
     {
       "id": "aud_g7_u2_track02",
@@ -126,13 +129,14 @@
       "status": {
         "discovered": true,
         "mapped": true,
-        "downloaded": true,
-        "playable": true,
-        "reviewed": true
+        "downloaded": false,
+        "playable": false,
+        "reviewed": false
       },
-      "file_path": "static/audio/tracks/aud_g7_u2_track02.mp3",
-      "file_hash_sha256": "3e6ef7884922eeab8054301a68a351066ad960a3a694db37442414be42f9c07e",
-      "size_bytes": 193140
+      "file_path": null,
+      "file_hash_sha256": null,
+      "size_bytes": null,
+      "error": "source_pending_download"
     },
     {
       "id": "aud_g7_u3_track01",
@@ -157,13 +161,14 @@
       "status": {
         "discovered": true,
         "mapped": true,
-        "downloaded": true,
-        "playable": true,
-        "reviewed": true
+        "downloaded": false,
+        "playable": false,
+        "reviewed": false
       },
-      "file_path": "static/audio/tracks/aud_g7_u3_track01.mp3",
-      "file_hash_sha256": "00ff613c894615031914d4c37d72843cf508dff764f4c6e43b567a0c69b6d86e",
-      "size_bytes": 193140
+      "file_path": null,
+      "file_hash_sha256": null,
+      "size_bytes": null,
+      "error": "source_pending_download"
     },
     {
       "id": "aud_g7_u4_track01",
@@ -188,13 +193,14 @@
       "status": {
         "discovered": true,
         "mapped": true,
-        "downloaded": true,
-        "playable": true,
-        "reviewed": true
+        "downloaded": false,
+        "playable": false,
+        "reviewed": false
       },
-      "file_path": "static/audio/tracks/aud_g7_u4_track01.mp3",
-      "file_hash_sha256": "b465169fd285032b2dbf6c1302482f9cfb8212d729a602f1c4dbeee53357009a",
-      "size_bytes": 193140
+      "file_path": null,
+      "file_hash_sha256": null,
+      "size_bytes": null,
+      "error": "source_pending_download"
     },
     {
       "id": "aud_g7_u4_track02",
@@ -219,13 +225,14 @@
       "status": {
         "discovered": true,
         "mapped": true,
-        "downloaded": true,
-        "playable": true,
-        "reviewed": true
+        "downloaded": false,
+        "playable": false,
+        "reviewed": false
       },
-      "file_path": "static/audio/tracks/aud_g7_u4_track02.mp3",
-      "file_hash_sha256": "98ff823c404c0169fcbab9630715f6f9d6b229a3a6909f7b3bcfc5bfdb1e79b7",
-      "size_bytes": 193140
+      "file_path": null,
+      "file_hash_sha256": null,
+      "size_bytes": null,
+      "error": "source_pending_download"
     },
     {
       "id": "aud_g7_u4_track03",
@@ -250,13 +257,14 @@
       "status": {
         "discovered": true,
         "mapped": true,
-        "downloaded": true,
-        "playable": true,
-        "reviewed": true
+        "downloaded": false,
+        "playable": false,
+        "reviewed": false
       },
-      "file_path": "static/audio/tracks/aud_g7_u4_track03.mp3",
-      "file_hash_sha256": "02f30acf652a456540cfa6c17d1e1071666a3e31a2a1b99f115b6a3361fa8695",
-      "size_bytes": 193140
+      "file_path": null,
+      "file_hash_sha256": null,
+      "size_bytes": null,
+      "error": "source_pending_download"
     },
     {
       "id": "aud_g7_u4_track04",
@@ -281,13 +289,14 @@
       "status": {
         "discovered": true,
         "mapped": true,
-        "downloaded": true,
-        "playable": true,
-        "reviewed": true
+        "downloaded": false,
+        "playable": false,
+        "reviewed": false
       },
-      "file_path": "static/audio/tracks/aud_g7_u4_track04.mp3",
-      "file_hash_sha256": "629c6652a63a3e6fecb0b6ed906b7a3738da589d87db60a0d52da8ddfb67eaeb",
-      "size_bytes": 193140
+      "file_path": null,
+      "file_hash_sha256": null,
+      "size_bytes": null,
+      "error": "source_pending_download"
     },
     {
       "id": "aud_g7_u5_track01",
@@ -312,13 +321,14 @@
       "status": {
         "discovered": true,
         "mapped": true,
-        "downloaded": true,
-        "playable": true,
-        "reviewed": true
+        "downloaded": false,
+        "playable": false,
+        "reviewed": false
       },
-      "file_path": "static/audio/tracks/aud_g7_u5_track01.mp3",
-      "file_hash_sha256": "fa436bee55c67b1a672487e4a33d30df141727d78d610cf9c520b95c7f5b992a",
-      "size_bytes": 193140
+      "file_path": null,
+      "file_hash_sha256": null,
+      "size_bytes": null,
+      "error": "source_pending_download"
     },
     {
       "id": "aud_g7_u5_track02",
@@ -343,13 +353,14 @@
       "status": {
         "discovered": true,
         "mapped": true,
-        "downloaded": true,
-        "playable": true,
-        "reviewed": true
+        "downloaded": false,
+        "playable": false,
+        "reviewed": false
       },
-      "file_path": "static/audio/tracks/aud_g7_u5_track02.mp3",
-      "file_hash_sha256": "82578c62a94aacf6fa22e0a5ff1465471b4887fd7d1227b92e7ba0c2f754f34a",
-      "size_bytes": 193140
+      "file_path": null,
+      "file_hash_sha256": null,
+      "size_bytes": null,
+      "error": "source_pending_download"
     },
     {
       "id": "aud_g7_u5_track03",
@@ -374,13 +385,14 @@
       "status": {
         "discovered": true,
         "mapped": true,
-        "downloaded": true,
-        "playable": true,
-        "reviewed": true
+        "downloaded": false,
+        "playable": false,
+        "reviewed": false
       },
-      "file_path": "static/audio/tracks/aud_g7_u5_track03.mp3",
-      "file_hash_sha256": "63d8fdfad8621b55166eae98715b3f05891af0d96996b66ca8c27d0848fdd8c3",
-      "size_bytes": 193140
+      "file_path": null,
+      "file_hash_sha256": null,
+      "size_bytes": null,
+      "error": "source_pending_download"
     },
     {
       "id": "aud_g7_u5_track04",
@@ -405,13 +417,14 @@
       "status": {
         "discovered": true,
         "mapped": true,
-        "downloaded": true,
-        "playable": true,
-        "reviewed": true
+        "downloaded": false,
+        "playable": false,
+        "reviewed": false
       },
-      "file_path": "static/audio/tracks/aud_g7_u5_track04.mp3",
-      "file_hash_sha256": "49bb043a63d76bb09e87d199e9ea9cf6b91318aba70a4607b620ae1b7bacd89b",
-      "size_bytes": 193140
+      "file_path": null,
+      "file_hash_sha256": null,
+      "size_bytes": null,
+      "error": "source_pending_download"
     },
     {
       "id": "aud_g7_u6_track01",
@@ -436,13 +449,14 @@
       "status": {
         "discovered": true,
         "mapped": true,
-        "downloaded": true,
-        "playable": true,
-        "reviewed": true
+        "downloaded": false,
+        "playable": false,
+        "reviewed": false
       },
-      "file_path": "static/audio/tracks/aud_g7_u6_track01.mp3",
-      "file_hash_sha256": "0dfd2a48b896b389286e0f57dd4c42b577ad2f7665ecfbf180526f355d2ab6e6",
-      "size_bytes": 193140
+      "file_path": null,
+      "file_hash_sha256": null,
+      "size_bytes": null,
+      "error": "source_pending_download"
     },
     {
       "id": "aud_g7_u6_track02",
@@ -467,13 +481,14 @@
       "status": {
         "discovered": true,
         "mapped": true,
-        "downloaded": true,
-        "playable": true,
-        "reviewed": true
+        "downloaded": false,
+        "playable": false,
+        "reviewed": false
       },
-      "file_path": "static/audio/tracks/aud_g7_u6_track02.mp3",
-      "file_hash_sha256": "b0d8eaa72553279c3f0a6647cfcb1de3cdd4d9ac5ad677adbbff075d68e11939",
-      "size_bytes": 193140
+      "file_path": null,
+      "file_hash_sha256": null,
+      "size_bytes": null,
+      "error": "source_pending_download"
     }
   ]
 }

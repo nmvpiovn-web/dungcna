@@ -218,18 +218,18 @@
 
 <div class="min-h-screen flex flex-col bg-transparent text-slate-800 dark:text-slate-100 font-sans transition-colors duration-250">
   <!-- Top Navigation Header -->
-  <header class="sticky top-0 z-40 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 shadow-xs transition-colors duration-250">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex items-center justify-between h-16 gap-3">
+  <header class="sticky top-0 z-40 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 shadow-xs transition-colors duration-250 w-full max-w-full overflow-hidden">
+    <div class="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16 gap-2 sm:gap-3 min-w-0">
         
         <!-- Brand Logo (Academic Ledger Style) -->
-        <a href="/" onclick={closeAllDropdowns} class="flex items-center gap-3 group flex-shrink-0">
-          <div class="w-10 h-10 rounded-lg bg-sky-700 flex items-center justify-center text-white text-xl border border-sky-800 shadow-xs group-hover:scale-105 transition-transform duration-200">
+        <a href="/" onclick={closeAllDropdowns} class="flex items-center gap-2 sm:gap-3 group shrink min-w-0">
+          <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-sky-700 flex items-center justify-center text-white text-base sm:text-xl border border-sky-800 shadow-xs group-hover:scale-105 transition-transform duration-200 shrink-0">
             👩‍🏫
           </div>
-          <div>
+          <div class="min-w-0">
             <div class="flex items-center gap-1.5">
-              <span class="font-semibold text-sm sm:text-base tracking-tight text-slate-900 dark:text-white whitespace-nowrap">
+              <span class="font-semibold text-xs sm:text-base tracking-tight text-slate-900 dark:text-white truncate">
                 Tiếng Anh Cô Dung
               </span>
               <span class="hidden 2xl:inline-block text-[11px] font-medium px-2 py-0.5 rounded bg-sky-50 text-sky-800 border border-sky-200 dark:bg-sky-950 dark:text-sky-300 dark:border-sky-800">
@@ -579,11 +579,11 @@
         </nav>
 
         <!-- Right Side Controls: Theme Switcher, Star Counter & User Avatar -->
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-1 sm:gap-2 shrink-0">
           <!-- Theme Switcher: Xanh Nhẹ / Sáng / Tối -->
           <button
             onclick={handleThemeToggle}
-            class="h-9 px-2.5 rounded-md border border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 hover:text-sky-600 dark:hover:text-sky-400 flex items-center gap-1.5 text-xs font-semibold transition-all shadow-xs"
+            class="h-8 w-8 sm:h-9 sm:w-auto p-1 sm:px-2.5 rounded-md border border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 hover:text-sky-600 dark:hover:text-sky-400 flex items-center justify-center gap-1.5 text-xs font-semibold transition-all shadow-xs"
             title="Đổi Giao diện: Xanh Nhẹ (Sky) / Sáng / Tối"
             aria-label="Toggle Theme"
           >
@@ -603,7 +603,7 @@
           {#if currentUser}
             <button
               onclick={() => showNotificationModal = true}
-              class="relative w-9 h-9 rounded-md border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:text-sky-600 dark:hover:text-sky-400 flex items-center justify-center text-sm transition-all"
+              class="relative w-8 h-8 sm:w-9 sm:h-9 rounded-md border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:text-sky-600 dark:hover:text-sky-400 flex items-center justify-center text-sm transition-all"
               title="Thông Báo Học Vụ & Hoạt Động"
               aria-label="Thông Báo Học Vụ"
             >
@@ -620,7 +620,7 @@
           {#if isTeacherOrAdmin(currentUser)}
             <button
               onclick={() => showLeaderDrawer = true}
-              class="relative w-9 h-9 rounded-md border border-emerald-300 dark:border-emerald-800/80 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 hover:text-emerald-900 flex items-center justify-center text-sm transition-all"
+              class="relative w-8 h-8 sm:w-9 sm:h-9 rounded-md border border-emerald-300 dark:border-emerald-800/80 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 hover:text-emerald-900 flex items-center justify-center text-sm transition-all"
               title="Trung Tâm Báo Cáo Leader (Cô Dung)"
               aria-label="Thông Báo Leader"
             >
@@ -647,12 +647,12 @@
             {#if currentUser}
               <button
                 onclick={() => { showUserDropdown = !showUserDropdown; activeDropdown = null; }}
-                class="flex items-center gap-2 px-2.5 py-1.5 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-sky-500 transition-all text-left text-xs"
+                class="flex items-center gap-1 sm:gap-2 p-1 sm:px-2.5 sm:py-1.5 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-sky-500 transition-all text-left text-xs"
               >
                 <img
                   src={currentUser.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80'}
                   alt="avatar"
-                  class="w-7 h-7 rounded-full object-cover ring-2 {isSuperAdmin(currentUser) ? 'ring-amber-400' : currentUser.role === 'teacher' ? 'ring-emerald-400' : currentUser.role === 'parent' ? 'ring-purple-400' : 'ring-sky-500'}"
+                  class="w-6 h-6 sm:w-7 sm:h-7 rounded-full object-cover ring-2 {isSuperAdmin(currentUser) ? 'ring-amber-400' : currentUser.role === 'teacher' ? 'ring-emerald-400' : currentUser.role === 'parent' ? 'ring-purple-400' : 'ring-sky-500'}"
                 />
                 <div class="hidden sm:block">
                   <div class="font-semibold text-slate-800 dark:text-slate-200 truncate max-w-[130px] leading-tight flex items-center gap-1">
@@ -671,15 +671,15 @@
                     {currentUserRoleLabel}
                   </div>
                 </div>
-                <span class="text-slate-400 text-[11px]">▼</span>
+                <span class="text-slate-400 text-[11px] hidden sm:inline">▼</span>
               </button>
             {:else}
               <button
                 onclick={openAuthModal}
-                class="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-sky-600 hover:bg-sky-500 text-white font-semibold text-xs shadow-xs transition-all"
+                class="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-md bg-sky-600 hover:bg-sky-500 text-white font-semibold text-xs shadow-xs transition-all"
               >
                 <span>🔑</span>
-                <span>Đăng Nhập</span>
+                <span class="hidden sm:inline">Đăng Nhập</span>
               </button>
             {/if}
 
@@ -759,7 +759,7 @@
           <!-- Mobile Menu Toggle Button -->
           <button
             onclick={() => mobileMenuOpen = !mobileMenuOpen}
-            class="lg:hidden p-2 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors"
+            class="lg:hidden p-1.5 sm:p-2 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors"
             aria-label="Toggle Menu"
           >
             <span class="text-base">{mobileMenuOpen ? '✕' : '☰'}</span>

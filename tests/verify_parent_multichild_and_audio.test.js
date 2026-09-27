@@ -281,23 +281,21 @@ describe('PARENT MULTI-CHILD, AUDIO STREAMING & EXAM BANK AUDIT SUITE', () => {
       assert.ok(json.track.key_vocabulary.includes('patient'));
     });
 
-    test('AUD-04: Synced Grade 7 audio track returns HTTP 200 with full binary MP3 content', async () => {
+    test('AUD-04: Unsynced Grade 7 audio track returns HTTP 503 source_pending_download (fail-closed, strictly no synthetic faking)', async () => {
       const url = new URL('http://localhost/api/audio/stream?id=aud_g7_u1_track01');
       const req = new Request(url);
       const res = await getAudioStream({ url, request: req });
-      assert.strictEqual(res.status, 200);
-      assert.strictEqual(res.headers.get('Content-Type'), 'audio/mpeg');
-      assert.strictEqual(res.headers.get('Accept-Ranges'), 'bytes');
-      const arrayBuffer = await res.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
-      assert.strictEqual(buffer.length, 193140);
-      const isId3 = buffer[0] === 0x49 && buffer[1] === 0x44 && buffer[2] === 0x33;
-      const isMpegSync = buffer[0] === 0xFF && (buffer[1] & 0xFE) === 0xFA;
-      assert.ok(isId3 || isMpegSync, 'Audio must have valid ID3 tag or MPEG sync header');
+      assert.strictEqual(res.status, 503, 'Must return HTTP 503 pending download for unsynced track');
+      const json = await res.json();
+      assert.strictEqual(json.success, false);
+      assert.strictEqual(json.status, 'source_pending_download');
+      assert.strictEqual(json.track_id, 'aud_g7_u1_track01');
+      assert.ok(json.transcript.includes('paper flowers'));
+      assert.ok(json.drive_path.includes('GLOBAL SUCCESS'));
     });
 
-    test('AUD-05: HTTP 206 Range request streams requested byte chunk for audio seeking', async () => {
-      const url = new URL('http://localhost/api/audio/stream?id=aud_g7_u1_track01');
+    test('AUD-05: HTTP 206 Range request streams requested byte chunk on test fixture', async () => {
+      const url = new URL('http://localhost/api/audio/stream?id=test_range_fixture');
       const req = new Request(url, {
         headers: {
           'Range': 'bytes=0-1023'
@@ -318,7 +316,7 @@ describe('PARENT MULTI-CHILD, AUDIO STREAMING & EXAM BANK AUDIT SUITE', () => {
     });
 
     test('AUD-05b: Out-of-bounds Range header returns HTTP 416 Requested Range Not Satisfiable', async () => {
-      const url = new URL('http://localhost/api/audio/stream?id=aud_g7_u1_track01');
+      const url = new URL('http://localhost/api/audio/stream?id=test_range_fixture');
       const req = new Request(url, {
         headers: {
           'Range': 'bytes=99999999-'
@@ -329,20 +327,12 @@ describe('PARENT MULTI-CHILD, AUDIO STREAMING & EXAM BANK AUDIT SUITE', () => {
       assert.strictEqual(res.headers.get('Content-Range'), 'bytes */193140');
     });
 
-    test('AUD-05c: Unsynced Drive track returns HTTP 503 source_pending_download (fail-closed, strictly no synthetic faking)', async () => {
-      const origPlayable = audioManifest.tracks[0].status.playable;
-      try {
-        audioManifest.tracks[0].status.playable = false;
-        const url = new URL('http://localhost/api/audio/stream?id=aud_g7_u1_track01');
-        const req = new Request(url);
-        const res = await getAudioStream({ url, request: req });
-        assert.strictEqual(res.status, 503, 'Must return 503 pending download instead of fake synthetic mp3');
-        const json = await res.json();
-        assert.strictEqual(json.success, false);
-        assert.strictEqual(json.status, 'source_pending_download');
-        assert.ok(json.drive_path.includes('Unit 1'));
-      } finally {
-        audioManifest.tracks[0].status.playable = origPlayable;
+    test('AUD-05c: Anti-tamper verification - zero synthetic sine waves in release curriculum tracks', () => {
+      for (const track of audioManifest.tracks) {
+        assert.strictEqual(track.status.downloaded, false, `Track ${track.id} must be marked downloaded=false until real Drive binary is downloaded`);
+        assert.strictEqual(track.status.playable, false, `Track ${track.id} must be marked playable=false until real Drive binary is downloaded`);
+        assert.strictEqual(track.status.reviewed, false, `Track ${track.id} must be marked reviewed=false until human review of real audio occurs`);
+        assert.strictEqual(track.file_path, null, `Track ${track.id} file_path must be null in release manifest`);
       }
     });
 

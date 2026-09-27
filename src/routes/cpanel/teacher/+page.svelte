@@ -235,49 +235,50 @@
   }
 </script>
 
-<div class="space-y-6">
+<div class="space-y-6 max-w-full overflow-x-hidden">
   <!-- Teacher Banner (Academic Ledger Style: Firm Navy, 8px radius, Restrained Borders) -->
-  <header class="bg-slate-900 border border-slate-800 rounded-lg p-6 text-slate-100 shadow-sm relative">
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
-      <div class="space-y-2">
+  <header class="bg-slate-900 border border-slate-800 rounded-lg p-4 sm:p-6 text-slate-100 shadow-sm relative overflow-hidden min-w-0">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
+      <div class="space-y-2 min-w-0">
         <div class="flex items-center gap-2 text-sky-400 text-xs font-semibold uppercase tracking-wider">
           <span>Sổ Giáo Viên</span>
           <span>•</span>
           <span>Không Gian Sư Phạm &amp; Nghiệp Vụ</span>
         </div>
-        <h1 class="text-2xl font-semibold text-white">
+        <h1 class="text-xl sm:text-2xl font-semibold text-white tracking-tight">
           Bàn Làm Việc Giảng Dạy — {currentUser?.name || currentUser?.username || 'Giáo Viên'}
         </h1>
-        <p class="text-slate-300 text-sm max-w-2xl leading-relaxed">
+        <p class="text-slate-300 text-xs sm:text-sm max-w-2xl leading-relaxed">
           Quản lý ca dạy thực tế, chấm bài tập về nhà (viết tay &amp; thu âm), gửi đề nghị dạy thay theo ca và theo dõi tạm ứng lương.
         </p>
       </div>
 
       <!-- Quick Actions & Metrics -->
-      <div class="flex flex-wrap items-center gap-3">
-        <div class="bg-slate-800/80 border border-slate-700/60 rounded-md p-3 text-center min-w-[110px]">
-          <div class="text-xl font-semibold text-amber-400 tabular-nums">{pendingSubmissions.length}</div>
-          <div class="text-xs text-slate-400 mt-0.5">Bài Chờ Chấm</div>
+      <div class="grid grid-cols-3 gap-2 sm:gap-3 w-full md:w-auto min-w-0">
+        <div class="bg-slate-800/80 border border-slate-700/60 rounded-md p-2.5 sm:p-3 text-center min-w-0">
+          <div class="text-lg sm:text-xl font-semibold text-amber-400 tabular-nums truncate">{pendingSubmissions.length}</div>
+          <div class="text-[11px] sm:text-xs text-slate-400 mt-0.5 truncate">Chờ Chấm</div>
         </div>
-        <div class="bg-slate-800/80 border border-slate-700/60 rounded-md p-3 text-center min-w-[110px]">
-          <div class="text-xl font-semibold text-sky-400 tabular-nums">{assignments.length}</div>
-          <div class="text-xs text-slate-400 mt-0.5">BTVN Đã Giao</div>
+        <div class="bg-slate-800/80 border border-slate-700/60 rounded-md p-2.5 sm:p-3 text-center min-w-0">
+          <div class="text-lg sm:text-xl font-semibold text-sky-400 tabular-nums truncate">{assignments.length}</div>
+          <div class="text-[11px] sm:text-xs text-slate-400 mt-0.5 truncate">Đã Giao</div>
         </div>
         <button 
           onclick={() => showAdvanceModal = true}
-          class="px-3.5 py-2.5 rounded-md text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-sky-300 border border-slate-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
+          class="p-2.5 sm:p-3 rounded-md text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-sky-300 border border-slate-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 flex flex-col items-center justify-center min-w-0"
         >
-          Ứng Lương
+          <span class="text-lg sm:text-xl font-semibold text-emerald-400">⚡</span>
+          <span class="text-[11px] sm:text-xs mt-0.5 truncate">Ứng Lương</span>
         </button>
       </div>
     </div>
   </header>
 
   <!-- Main Navigation Tabs -->
-  <div class="flex flex-wrap items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2">
+  <div class="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2 overflow-x-auto max-w-full">
     <button 
       onclick={() => activeTab = 'grading'}
-      class="flex items-center gap-1.5 px-4 py-2 rounded-md text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 {activeTab === 'grading' ? 'bg-sky-600 text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}"
+      class="whitespace-nowrap shrink-0 flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-md text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 {activeTab === 'grading' ? 'bg-sky-600 text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}"
     >
       <span>Chấm Điểm BTVN</span>
       {#if pendingSubmissions.length > 0}
@@ -288,21 +289,21 @@
     </button>
     <button 
       onclick={() => activeTab = 'assign'}
-      class="px-4 py-2 rounded-md text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 {activeTab === 'assign' ? 'bg-sky-600 text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}"
+      class="whitespace-nowrap shrink-0 px-3 sm:px-4 py-2 rounded-md text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 {activeTab === 'assign' ? 'bg-sky-600 text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}"
     >
-      Giao BTVN Mới (Theo Ca Học)
+      Giao BTVN Mới
     </button>
     <button 
       onclick={() => activeTab = 'sessions'}
-      class="px-4 py-2 rounded-md text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 {activeTab === 'sessions' ? 'bg-sky-600 text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}"
+      class="whitespace-nowrap shrink-0 px-3 sm:px-4 py-2 rounded-md text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 {activeTab === 'sessions' ? 'bg-sky-600 text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}"
     >
-      Lịch Ca Dạy &amp; Dạy Thay ({mySessions.length})
+      Lịch Ca Dạy ({mySessions.length})
     </button>
     <button 
       onclick={() => activeTab = 'salary'}
-      class="px-4 py-2 rounded-md text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 {activeTab === 'salary' ? 'bg-sky-600 text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}"
+      class="whitespace-nowrap shrink-0 px-3 sm:px-4 py-2 rounded-md text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 {activeTab === 'salary' ? 'bg-sky-600 text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}"
     >
-      Sổ Lương &amp; Đơn Ứng Lương ({myAdvances.length})
+      Sổ Lương ({myAdvances.length})
     </button>
   </div>
 

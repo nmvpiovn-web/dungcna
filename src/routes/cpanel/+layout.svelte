@@ -128,21 +128,21 @@
   let navItems = $derived(roleNavItems[currentRoleKey] || roleNavItems.student);
 </script>
 
-<div class="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 flex flex-col font-sans">
+<div class="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 flex flex-col font-sans max-w-full overflow-x-hidden">
   <!-- Cpanel Top Bar -->
-  <header class="sticky top-0 z-40 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 shadow-sm px-4 py-2.5">
-    <div class="max-w-7xl mx-auto flex items-center justify-between gap-3">
+  <header class="sticky top-0 z-40 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 shadow-sm px-3 sm:px-4 py-2 sm:py-2.5 max-w-full overflow-hidden">
+    <div class="max-w-7xl mx-auto flex items-center justify-between gap-2 sm:gap-3 min-w-0">
       <!-- Left: Logo & Portal Badge -->
-      <div class="flex items-center gap-3">
-        <a href="/" class="flex items-center gap-2 group">
-          <div class="w-9 h-9 rounded-lg bg-sky-700 dark:bg-sky-600 flex items-center justify-center text-white font-bold text-base shadow-sm group-hover:bg-sky-800 dark:group-hover:bg-sky-500 transition-colors">
+      <div class="flex items-center gap-2 sm:gap-3 shrink min-w-0">
+        <a href="/" class="flex items-center gap-2 group shrink min-w-0">
+          <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-sky-700 dark:bg-sky-600 flex items-center justify-center text-white font-bold text-base shadow-sm group-hover:bg-sky-800 dark:group-hover:bg-sky-500 transition-colors shrink-0">
             D
           </div>
-          <div>
-            <div class="text-xs uppercase tracking-wider font-bold text-sky-600 dark:text-sky-400">Tiếng Anh Cô Dung</div>
-            <div class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-              <span>Hệ Thống Cpanel</span>
-              <span class="text-[11px] px-2 py-0.5 rounded-md font-semibold tracking-wide bg-sky-50 dark:bg-sky-950/80 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800">
+          <div class="min-w-0">
+            <div class="text-[11px] sm:text-xs uppercase tracking-wider font-bold text-sky-600 dark:text-sky-400 truncate">Tiếng Anh Cô Dung</div>
+            <div class="text-xs sm:text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+              <span class="truncate">Hệ Thống Cpanel</span>
+              <span class="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 rounded-md font-semibold tracking-wide bg-sky-50 dark:bg-sky-950/80 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800 shrink-0">
                 {currentRoleKey}
               </span>
             </div>
@@ -169,7 +169,7 @@
       </div>
 
       <!-- Right: User Quick Info, Stars, Notifications -->
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-1.5 sm:gap-3 shrink-0">
         {#if currentUser?.role === 'student' && studentStars}
           <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400 font-semibold text-xs shadow-xs">
             <svg class="w-3.5 h-3.5 text-amber-500 fill-current" viewBox="0 0 20 20">
@@ -183,7 +183,7 @@
         <!-- Language Toggle Button -->
         <button 
           onclick={toggleLanguage}
-          class="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors border border-slate-200 dark:border-slate-700"
+          class="flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors border border-slate-200 dark:border-slate-700"
           title="Chuyển đổi ngôn ngữ / Switch Language"
         >
           <span>{lang === 'vi' ? 'VI' : 'EN'}</span>
@@ -192,7 +192,7 @@
         <!-- Notification Bell -->
         <a 
           href="/cpanel/notifications" 
-          class="relative p-2 rounded-md text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          class="relative p-1.5 sm:p-2 rounded-md text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           title="Thông báo"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -204,8 +204,8 @@
         </a>
 
         <!-- User Chip & Role Switch for Superadmin -->
-        <div class="flex items-center gap-2 pl-2 border-l border-slate-200 dark:border-slate-800">
-          <div class="w-8 h-8 rounded-md bg-slate-700 dark:bg-slate-600 text-white flex items-center justify-center font-semibold text-xs shadow-xs">
+        <div class="flex items-center gap-1.5 sm:gap-2 pl-1.5 sm:pl-2 border-l border-slate-200 dark:border-slate-800">
+          <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-md bg-slate-700 dark:bg-slate-600 text-white flex items-center justify-center font-semibold text-xs shadow-xs shrink-0">
             {currentUser?.name?.[0] || currentUser?.username?.[0] || 'U'}
           </div>
           <div class="hidden sm:block text-left text-xs">
@@ -226,12 +226,12 @@
     </div>
 
     <!-- Secondary Nav Tabs -->
-    <div class="max-w-7xl mx-auto flex items-center gap-2 overflow-x-auto pt-2 scrollbar-none">
+    <div class="max-w-7xl mx-auto flex items-center gap-2 overflow-x-auto pt-2 scrollbar-none w-full min-w-0">
       {#each navItems as item}
         {@const isActive = $page.url.pathname === item.path || ($page.url.hash && item.path.includes($page.url.hash))}
         <a 
           href={item.path}
-          class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold whitespace-nowrap transition-all {isActive ? 'bg-sky-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}"
+          class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold whitespace-nowrap transition-all shrink-0 {isActive ? 'bg-sky-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}"
         >
           <span>{item.label}</span>
         </a>
@@ -240,7 +240,7 @@
   </header>
 
   <!-- Main Cpanel Body -->
-  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+  <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 lg:p-8 min-w-0 overflow-x-hidden">
     {@render children()}
   </main>
 </div>

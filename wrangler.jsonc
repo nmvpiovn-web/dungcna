@@ -12,5 +12,9 @@
       "database_name": "tienganh-pro-db",
       "database_id": "a0d2d5f7-b4ae-48a3-99d6-ecac7ed87218"
     }
-  ]
+  ],
+  "vars": {
+    "AUTH_SECRET": "local_dev_auth_secret_tienganh_2026_superadmin_fomo",
+    "ENABLE_LOCAL_MOCK": "true"
+  }
 }

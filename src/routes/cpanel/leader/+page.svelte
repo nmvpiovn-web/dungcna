@@ -316,26 +316,26 @@
   }
 </script>
 
-<div class="space-y-6">
+<div class="space-y-6 max-w-full overflow-x-hidden">
   <!-- Leader Banner (Academic Ledger Style: Firm Navy, 8px radius, Restrained Borders) -->
-  <header class="bg-slate-900 border border-slate-800 rounded-lg p-6 text-slate-100 shadow-sm relative">
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
-      <div class="space-y-2">
+  <header class="bg-slate-900 border border-slate-800 rounded-lg p-4 sm:p-6 text-slate-100 shadow-sm relative overflow-hidden min-w-0">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
+      <div class="space-y-2 min-w-0">
         <div class="flex items-center gap-2 text-sky-400 text-xs font-semibold uppercase tracking-wider">
           <span>Trung Tâm Điều Hành Chuyên Môn</span>
           <span>•</span>
           <span>Ban Giám Sát Sư Phạm</span>
         </div>
-        <h1 class="text-2xl font-semibold text-white">Quản Trị Nghiệp Vụ Sư Phạm &amp; Nhân Sự</h1>
-        <p class="text-slate-300 text-sm max-w-2xl leading-relaxed">
+        <h1 class="text-xl sm:text-2xl font-semibold text-white tracking-tight">Quản Trị Nghiệp Vụ Sư Phạm &amp; Nhân Sự</h1>
+        <p class="text-slate-300 text-xs sm:text-sm max-w-2xl leading-relaxed">
           Kiểm soát lộ trình giảng dạy theo Obsidian Second-Brain, tỷ lệ hoàn thành BTVN, ngân hàng Bài Test / Kiểm Tra, phê duyệt đơn xin nghỉ &amp; phân công dạy thay, duyệt hạn mức ứng lương và quy trình tuyển dụng giáo viên.
         </p>
       </div>
 
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2 shrink-0">
         <a 
           href="/admincp" 
-          class="px-4 py-2.5 rounded-md bg-white text-slate-900 font-semibold text-xs hover:bg-slate-100 transition-colors shadow-sm"
+          class="px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-md bg-white text-slate-900 font-semibold text-xs hover:bg-slate-100 transition-colors shadow-sm"
         >
           Mở AdminCP Tổng
         </a>
@@ -351,16 +351,16 @@
   {/if}
 
   <!-- Navigation Tabs -->
-  <div class="flex flex-wrap items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2">
+  <div class="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2 overflow-x-auto max-w-full">
     <button 
       onclick={() => activeTab = 'overview'}
-      class="px-4 py-2 rounded-md text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 {activeTab === 'overview' ? 'bg-sky-600 text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}"
+      class="whitespace-nowrap shrink-0 px-3 sm:px-4 py-2 rounded-md text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 {activeTab === 'overview' ? 'bg-sky-600 text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}"
     >
       Tổng Quan Sư Phạm &amp; Sự Kiện
     </button>
     <button 
       onclick={() => activeTab = 'leaves'}
-      class="flex items-center gap-1.5 px-4 py-2 rounded-md text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 {activeTab === 'leaves' ? 'bg-sky-600 text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}"
+      class="whitespace-nowrap shrink-0 flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-md text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 {activeTab === 'leaves' ? 'bg-sky-600 text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}"
     >
       <span>Duyệt Nghỉ Phép &amp; Dạy Thay</span>
       {#if pendingLeaves.length > 0}
@@ -371,7 +371,7 @@
     </button>
     <button 
       onclick={() => activeTab = 'advances'}
-      class="flex items-center gap-1.5 px-4 py-2 rounded-md text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 {activeTab === 'advances' ? 'bg-sky-600 text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}"
+      class="whitespace-nowrap shrink-0 flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-md text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 {activeTab === 'advances' ? 'bg-sky-600 text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}"
     >
       <span>Duyệt &amp; Thực Chi Ứng Lương</span>
       {#if pendingAdvances.length > 0}
@@ -382,7 +382,7 @@
     </button>
     <button 
       onclick={() => activeTab = 'recruitment'}
-      class="flex items-center gap-1.5 px-4 py-2 rounded-md text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 {activeTab === 'recruitment' ? 'bg-sky-600 text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}"
+      class="whitespace-nowrap shrink-0 flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-md text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 {activeTab === 'recruitment' ? 'bg-sky-600 text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}"
     >
       <span>Tuyển Dụng &amp; Phỏng Vấn</span>
       <span class="px-1.5 py-0.2 rounded bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 text-[11px] font-semibold tabular-nums">
@@ -391,7 +391,7 @@
     </button>
     <button 
       onclick={() => { activeTab = 'payroll'; if (!leaderPayrollData) fetchLeaderPayroll(); }}
-      class="flex items-center gap-1.5 px-4 py-2 rounded-md text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 {activeTab === 'payroll' ? 'bg-sky-600 text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}"
+      class="whitespace-nowrap shrink-0 flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-md text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 {activeTab === 'payroll' ? 'bg-sky-600 text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}"
     >
       <span>Khóa Sổ &amp; Bảng Lương</span>
     </button>
