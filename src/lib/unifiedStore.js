@@ -156,6 +156,7 @@ export async function verifySessionWithServer() {
       inMemorySessionVerified = true;
       inMemoryVerifiedUser = data.user;
       localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(data.user));
+      localStorage.setItem('tienganh_user', JSON.stringify(data.user));
       window.dispatchEvent(new CustomEvent('tienganh:auth-change', { detail: data.user }));
       return { valid: true, user: data.user };
     } else {
@@ -186,6 +187,7 @@ export function setCurrentUser(user, token = null) {
       inMemorySessionVerified = true;
       inMemoryVerifiedUser = user;
       localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(user));
+      localStorage.setItem('tienganh_user', JSON.stringify(user));
       if (token) {
         localStorage.setItem('tienganh_auth_token', token);
       }
@@ -202,6 +204,7 @@ export function logoutUser() {
   inMemoryVerifiedUser = null;
   if (typeof window !== 'undefined') {
     localStorage.removeItem(STORAGE_KEY_USER);
+    localStorage.removeItem('tienganh_user');
     localStorage.removeItem('tienganh_auth_token');
     localStorage.removeItem('tienganh_session_verified');
     sessionStorage.removeItem('tienganh_auth_token');

@@ -144,8 +144,17 @@
   }
 </script>
 
+<svelte:window onkeydown={(e) => { if (e.key === 'Escape' && isOpen) isOpen = false; }} />
+
 {#if isOpen}
-  <div class="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md animate-in fade-in duration-200">
+  <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
+  <div
+    class="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md animate-in fade-in duration-200"
+    onclick={(e) => { if (e.target === e.currentTarget) isOpen = false; }}
+    role="dialog"
+    aria-modal="true"
+    tabindex="-1"
+  >
     <div class="w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl overflow-hidden relative font-sans text-slate-800 dark:text-slate-100 flex flex-col max-h-[92vh]">
       
       <!-- Modal Header (Academic Ledger Style) -->
