@@ -265,6 +265,10 @@
     isSubmitted = false;
     userAnswers = {};
     timeLeftSeconds = (currentExam?.duration_minutes || 15) * 60;
+    if (typeof window !== 'undefined') {
+      window.__isExamActive = true;
+      window.__isExamSubmitted = false;
+    }
     
     if (timerInterval) clearInterval(timerInterval);
     timerInterval = setInterval(() => {
@@ -279,6 +283,15 @@
   function selectOption(qIdx, option) {
     if (isSubmitted) return;
     userAnswers[qIdx] = option;
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('tienganh_active_exam_backup', JSON.stringify({
+          exam_id: currentExam?.id,
+          userAnswers,
+          timeLeftSeconds
+        }));
+      } catch {}
+    }
   }
 
   function formatTime(totalSeconds) {
@@ -519,6 +532,11 @@
   function submitExam() {
     if (timerInterval) clearInterval(timerInterval);
     isSubmitted = true;
+    if (typeof window !== 'undefined') {
+      window.__isExamActive = false;
+      window.__isExamSubmitted = true;
+      try { localStorage.removeItem('tienganh_active_exam_backup'); } catch {}
+    }
 
     const studentUser = (data.users || []).find(u => u.id === selectedStudentId) || currentUser;
 

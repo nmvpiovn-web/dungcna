@@ -26,6 +26,7 @@
   import ApkOtaUpdater from '$lib/components/ApkOtaUpdater.svelte';
   import LeaderNotificationDrawer from '$lib/components/LeaderNotificationDrawer.svelte';
   import NotificationCenterModal from '$lib/components/NotificationCenterModal.svelte';
+  import OnboardingTourModal from '$lib/components/OnboardingTourModal.svelte';
 
   let { children } = $props();
 
@@ -41,6 +42,7 @@
   let showProfileModal = $state(false);
   let showLeaderDrawer = $state(false);
   let showNotificationModal = $state(false);
+  let showTourModal = $state(false);
   let leaderUnreadCount = $state(0);
   let userUnreadCount = $state(0);
   let canDismiss = $state(false);
@@ -1090,6 +1092,14 @@
         <a href="/pedagogy" class="hover:text-sky-600 dark:hover:text-sky-400">Giáo án 5512</a>
         <span class="text-slate-300 dark:text-slate-700">•</span>
         <button
+          onclick={() => showTourModal = true}
+          class="hover:text-sky-600 dark:hover:text-sky-400 flex items-center gap-1 font-semibold text-slate-700 dark:text-slate-300 transition-colors"
+          title="Xem giới thiệu hệ thống và tầm nhìn sư phạm"
+        >
+          <span>❓</span> <span>Hướng Dẫn &amp; Tầm Nhìn</span>
+        </button>
+        <span class="text-slate-300 dark:text-slate-700">•</span>
+        <button
           onclick={() => apkUpdaterRef?.checkForUpdate(true)}
           class="hover:text-sky-600 dark:hover:text-sky-400 flex items-center gap-1 font-semibold text-sky-700 dark:text-sky-300"
           title="Kiểm tra bản cập nhật APK mới qua Wi-Fi"
@@ -1105,6 +1115,9 @@
 
   <!-- User Profile Edit Modal -->
   <ProfileEditModal bind:isOpen={showProfileModal} />
+
+  <!-- Pedagogical Vision & Role Tour Modal -->
+  <OnboardingTourModal bind:isOpen={showTourModal} {currentUser} />
 
   <!-- Direct In-App WiFi OTA APK Updater -->
   <ApkOtaUpdater bind:this={apkUpdaterRef} />
