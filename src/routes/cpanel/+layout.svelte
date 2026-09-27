@@ -7,7 +7,7 @@
 
   let { children } = $props();
 
-  let currentUser = $state(null);
+  let currentUser = $state(typeof window !== 'undefined' ? getCurrentUser() : null);
   let studentStars = $state(null);
   let unreadNotifs = $state(0);
   let selectedCampus = $state('all');
@@ -81,6 +81,14 @@
     currentUser = getCurrentUser();
     loadCampuses();
     loadUnreadCount();
+
+    const handleAuth = (e) => {
+      currentUser = e.detail;
+      if (currentUser?.role === 'student') {
+        studentStars = getStudentStars(currentUser.id);
+      }
+    };
+    window.addEventListener('tienganh:auth-change', handleAuth);
 
     if (currentUser?.role === 'student') {
       studentStars = getStudentStars(currentUser.id);

@@ -11,8 +11,9 @@ export async function GET({ url, request, platform }) {
     return json({ success: false, error: 'Thiếu tham số track id (?id=...)' }, { status: 400 });
   }
 
+  const isLocalOrTest = url.hostname === 'localhost' || url.hostname === '127.0.0.1' || (typeof process !== 'undefined' && (process.env?.NODE_ENV === 'test' || process.env?.VITEST));
   let track = audioManifest.tracks.find(t => t.id === trackId);
-  if (!track && trackId === 'test_range_fixture') {
+  if (!track && trackId === 'test_range_fixture' && isLocalOrTest) {
     track = {
       id: 'test_range_fixture',
       title: 'Isolated Unit Test Range Fixture (Non-Release)',

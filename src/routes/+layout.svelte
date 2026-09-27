@@ -204,6 +204,21 @@
 
 <svelte:head>
   <title>Tiếng Anh Cô Dung - Hệ Thống Đào Tạo K12 &amp; Khảo Thí Quốc Tế</title>
+  <meta name="description" content="Hệ thống đào tạo tiếng Anh chuẩn K12 và khảo thí quốc tế Cambridge, IELTS cùng học liệu Obsidian Second Brain và phòng thi số hóa." />
+  <link rel="canonical" href={`https://timbk.io.vn${$page.url.pathname}`} />
+  <meta property="og:url" content={`https://timbk.io.vn${$page.url.pathname}`} />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Tiếng Anh Cô Dung - Hệ Thống Đào Tạo K12 &amp; Khảo Thí Quốc Tế" />
+  <meta property="og:description" content="Đào tạo Tiếng Anh chuẩn K12 &amp; Khảo thí quốc tế - Hệ thống học vụ, bài giảng số hóa và kho tri thức Obsidian." />
+  <meta property="og:image" content="https://timbk.io.vn/icon.svg" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Tiếng Anh Cô Dung" />
+  <meta name="twitter:description" content="Hệ thống đào tạo K12 &amp; Khảo thí quốc tế" />
+  {#if $page.url.pathname.startsWith('/cpanel') || $page.url.pathname.startsWith('/admin') || $page.url.pathname.startsWith('/second-brain')}
+    <meta name="robots" content="noindex, nofollow" />
+  {:else}
+    <meta name="robots" content="index, follow" />
+  {/if}
 </svelte:head>
 
 <!-- Global Click Backdrop for Dropdowns -->

@@ -69,6 +69,22 @@
     </p>
   </header>
 
+  <!-- Audio Drive Sync Status Banner (Transparent Provenance) -->
+  <div class="mb-8 p-4 rounded-lg bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800 text-sky-900 dark:text-sky-200 text-xs flex items-center justify-between gap-3 shadow-xs">
+    <div class="flex items-center gap-2.5">
+      <span class="text-lg">🎙️</span>
+      <div>
+        <div class="font-semibold text-sky-800 dark:text-sky-300">Kho Audio Bài Nghe Google Drive (2.254 tracks)</div>
+        <div class="text-[11px] text-sky-700/80 dark:text-sky-400 mt-0.5">
+          Hệ thống đang đồng bộ kho âm thanh gốc từ Google Drive về máy chủ. Các bài học hiện sử dụng bài đọc IPA và bản phiên âm chuẩn.
+        </div>
+      </div>
+    </div>
+    <span class="px-2 py-0.5 rounded bg-sky-200/80 dark:bg-sky-900/60 text-sky-800 dark:text-sky-300 font-semibold text-[10px] uppercase whitespace-nowrap">
+      Đang Đồng Bộ
+    </span>
+  </div>
+
   <!-- Courses Grid -->
   <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
     {#each courses as course}

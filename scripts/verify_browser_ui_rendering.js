@@ -205,10 +205,14 @@ async function main() {
         if (!data.success || !data.token) {
           throw new Error('Server login failed: ' + (data.error || JSON.stringify(data)));
         }
-        // Store in localStorage, sessionStorage and cookie
+        // Store in localStorage, sessionStorage and cookie across all keys
         localStorage.setItem('tienganh_auth_token', data.token);
         sessionStorage.setItem('tienganh_auth_token', data.token);
+        localStorage.setItem('tienganh_token', data.token);
+        sessionStorage.setItem('tienganh_token', data.token);
         localStorage.setItem('tienganh_active_user', JSON.stringify(data.user));
+        localStorage.setItem('tienganh_user', JSON.stringify(data.user));
+        localStorage.setItem('tienganh_current_user', JSON.stringify(data.user));
         document.cookie = 'session_token=' + encodeURIComponent(data.token) + '; path=/; max-age=604800; SameSite=Lax';
         return { success: true, user: data.user, token: data.token };
       })()
@@ -249,7 +253,26 @@ async function main() {
 
         // Navigate to the role Cpanel page
         await cdp.navigate(`${BASE_URL}${roleConfig.path}`);
-        await sleep(600); // Allow SvelteKit server verification and client mounting
+        // Wait for SvelteKit client hydration, async data loading, and ensure skeleton is replaced by real content
+        await cdp.evaluate(`
+          new Promise((resolve) => {
+            const startTime = Date.now();
+            const check = () => {
+              const skeleton = document.querySelector('.academic-loading-skeleton, [aria-busy="true"]');
+              const bodyText = document.body.innerText;
+              const hasKeyword = bodyText.includes('${roleConfig.expectedKeywords[0]}');
+              if (!skeleton && hasKeyword) {
+                resolve(true);
+              } else if (Date.now() - startTime > 3500) {
+                resolve(false);
+              } else {
+                setTimeout(check, 100);
+              }
+            };
+            check();
+          })
+        `);
+        await sleep(500); // Allow complete paint
 
         // 1. Strict Modal Absence Assertion: Modal MUST NOT be visible
         const modalStatus = await cdp.evaluate(`
