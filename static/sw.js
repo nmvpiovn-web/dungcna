@@ -1,7 +1,7 @@
 // Service Worker for Tieng Anh Co Dung PWA
 // Architecture: Strict Network-Only for dynamic data/APIs; Cache-First for static immutable assets
 
-const CACHE_NAME = 'tienganh-academic-v2';
+const CACHE_NAME = 'tienganh-academic-v3';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
