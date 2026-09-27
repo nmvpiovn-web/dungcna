@@ -3,7 +3,7 @@
   import { loginUser, registerUser, getCurrentUser, isLoggedIn } from '$lib/unifiedStore';
   import { playAudioFeedback } from '$lib/speech.js';
 
-  let { isOpen = $bindable(false), canDismiss = false } = $props();
+  let { isOpen = $bindable(false), canDismiss = true } = $props();
 
   let activeTab = $state('login'); // 'login' | 'register'
   let identifier = $state('');
@@ -177,7 +177,14 @@
 </script>
 
 {#if isOpen}
-  <div class="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200">
+  <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
+  <div 
+    class="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200"
+    onclick={(e) => { if (e.target === e.currentTarget && canDismiss) isOpen = false; }}
+    role="dialog"
+    aria-modal="true"
+    tabindex="-1"
+  >
     <div class="w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl overflow-hidden relative font-sans text-slate-800 dark:text-slate-100 flex flex-col max-h-[92dvh] sm:max-h-[85vh]">
       
       <!-- Top Slim Header: Brand + Hotline (Academic Ledger: Firm Slate-900, Clean Border) -->
@@ -584,6 +591,17 @@
           >
             <span>{isLoading ? '⏳ Đang đăng nhập...' : '🚀 Đăng Nhập Vào Học'}</span>
           </button>
+
+          {#if canDismiss}
+            <button
+              type="button"
+              onclick={() => isOpen = false}
+              class="w-full mt-2 py-2 rounded-md bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-xs transition-colors flex items-center justify-center gap-1.5"
+            >
+              <span>👀</span>
+              <span>Khám Phá Với Tư Cách Khách (Xem Thử Lộ Trình &amp; Phòng Thi)</span>
+            </button>
+          {/if}
         {:else}
           {#if regStep === 'role'}
             <div class="text-center text-xs text-sky-700 dark:text-sky-400 font-semibold py-1">

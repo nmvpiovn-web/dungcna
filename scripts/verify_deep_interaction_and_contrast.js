@@ -239,6 +239,8 @@ async function main() {
         cx, cy,
         text: btn.textContent.trim(),
         topElementTag: topElement ? topElement.tagName : 'none',
+        topElementClass: topElement ? topElement.className : '',
+        topElementOuter: topElement ? topElement.outerHTML.slice(0, 200) : 'none',
         isUnobscured,
         rect: { x: rect.x, y: rect.y, width: rect.width, height: rect.height }
       };
@@ -361,12 +363,8 @@ async function main() {
   const mobileMenuBtn = await cdp.evaluate(`
     (() => {
       const buttons = Array.from(document.querySelectorAll('header button'));
-      const btn = buttons.find(b => b.getAttribute('aria-label') === 'Open menu' || b.textContent.includes('☰') || b.textContent.includes('Menu'));
-      if (!btn) {
-        // Last button on mobile header
-        const allBtns = Array.from(document.querySelectorAll('header button'));
-        return { cx: 340, cy: 32 };
-      }
+      const btn = buttons.find(b => (b.getAttribute('aria-label') || '').toLowerCase().includes('menu') || b.textContent.includes('☰') || b.textContent.includes('✕'));
+      if (!btn) return null;
       const rect = btn.getBoundingClientRect();
       return { cx: rect.x + rect.width / 2, cy: rect.y + rect.height / 2 };
     })()

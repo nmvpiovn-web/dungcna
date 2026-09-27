@@ -117,8 +117,8 @@
       verifySessionWithServer().then(res => {
         if (!res.valid) {
           currentUser = null;
-          showAuthModal = true;
-          canDismiss = false;
+          showAuthModal = false;
+          canDismiss = true;
         } else {
           currentUser = res.user;
           showAuthModal = false;
@@ -127,15 +127,15 @@
       });
     } else {
       currentUser = null;
-      showAuthModal = true;
-      canDismiss = false;
+      showAuthModal = false;
+      canDismiss = true;
     }
 
     const handleAuthEvent = (e) => {
       currentUser = e.detail;
       if (!currentUser) {
-        showAuthModal = true;
-        canDismiss = false;
+        showAuthModal = false;
+        canDismiss = true;
         studentStars = null;
         userUnreadCount = 0;
       } else {
@@ -177,14 +177,14 @@
     showUserDropdown = false;
     logoutUser();
     currentUser = null;
-    showAuthModal = true;
-    canDismiss = false;
+    showAuthModal = false;
+    canDismiss = true;
   }
 
   function openAuthModal() {
     showUserDropdown = false;
     showAuthModal = true;
-    canDismiss = !!currentUser;
+    canDismiss = true;
   }
 
   function toggleSubmenu(menu) {
