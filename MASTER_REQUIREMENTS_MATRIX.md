@@ -51,10 +51,10 @@
 | ID | Yêu cầu Kỹ thuật / Nghiệp vụ | Tiêu chí đạt (Acceptance Criteria) | Route / Source File | Test Verification File | Bằng chứng Thực thi | Worker Status | Auditor Status |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | **REQ-PAY-01** | Integer VND Rounding | Tính thù lao chuẩn xác theo số nguyên VND (zero fractional decimals), nhân theo hệ số vai trò và thời lượng ca dạy. | `src/lib/server/payrollEngine.js` | `tests/verify_payroll_engine.test.js` | Test PAY-01 & PAY-04 | WORKER_TESTED | PENDING_CODEX_AUDIT |
-| **REQ-PAY-02** | Locked Period Defense | Kỳ lương đã khóa (`locked`, `closed`, `paid`) bị chặn tuyệt đối (HTTP 409) không cho phép tính lại hoặc sửa đổi. | `payrollEngine.js`, `api/teachers/payroll` | `tests/verify_payroll_engine.test.js` | Test PAY-03 & PAY-07 | WORKER_TESTED | PENDING_CODEX_AUDIT |
+| **REQ-PAY-02** | Locked Period Defense | Kỳ lương đã khóa (`locked`, `closed`, `paid`, `approved`) được bảo toàn bất biến; payload snapshot đồng bộ tuyệt đối với `existing_record.status`; chặn tính lại khi giải ngân. | `payrollEngine.js`, `api/teachers/payroll` | `tests/verify_payroll_engine.test.js`, `tests/verify_phase1_audit_hardening.test.js` | Test PAY-03, PAY-07 & Phase 1 Suite | WORKER_TESTED | PENDING_CODEX_AUDIT |
 | **REQ-PAY-03** | Carried-Over Debt Recovery | Xóa bỏ `Math.max(0)` che nợ; tạm ứng vượt lương thì `net_pay = 0` và lưu nợ âm vào `carried_over_debt` chuyển nạp kỳ sau. | `payrollEngine.js`, `api/teachers/payroll` | `tests/verify_payroll_engine.test.js` | Test PAY-05 & PAY-08 | WORKER_TESTED | PENDING_CODEX_AUDIT |
 | **REQ-PAY-04** | Disbursed Advances Deduction | Chỉ các khoản tạm ứng có trạng thái `disbursed` mới được khấu trừ vào bảng lương; trạng thái `pending`/`approved` không trừ. | `payrollEngine.js`, `api/teachers/payroll` | `tests/verify_payroll_engine.test.js` | Test PAY-02 | WORKER_TESTED | PENDING_CODEX_AUDIT |
-| **REQ-PAY-05** | Production Payroll Endpoint & Cpanel UI | Endpoint `/api/teachers/payroll` kết nối D1 `teacher_payrolls`; tích hợp giao diện Cpanel Giáo viên (phiếu lương/đối soát nợ) & Cpanel Leader (khóa sổ/phê duyệt). | `api/teachers/payroll`, `cpanel/teacher`, `cpanel/leader` | `tests/verify_payroll_engine.test.js`, `svelte-check` | Tests PAY-06..08 & Commit `e9a38ee` | WORKER_TESTED | PENDING_CODEX_AUDIT |
+| **REQ-PAY-05** | Production Payroll Endpoint & Cpanel UI | Endpoint `/api/teachers/payroll` kết nối D1 `teacher_payrolls` & `finance_ledger`; hỗ trợ kiểm soát phiên bản lạc quan (optimistic concurrency guard `expected_status`), chứng từ thực chi và idempotency key. | `api/teachers/payroll`, `cpanel/teacher`, `cpanel/leader` | `tests/verify_phase1_audit_hardening.test.js`, `svelte-check` | Tests PAY-06..08 & Phase 1 Hardening | WORKER_TESTED | PENDING_CODEX_AUDIT |
 | **REQ-TUIT-01** | Star Discount Calculation | Công thức quy đổi sao thưởng: mỗi 100 sao tích lũy = giảm trừ 1.000 VND trực tiếp trên hóa đơn học phí. | `src/routes/api/tuition/+server.js` | `tests/homework_and_cpanel.test.py` | Tests Suite 3 (12..15) | WORKER_TESTED | PENDING_CODEX_AUDIT |
 | **REQ-TUIT-02** | VietQR Reconciliation Notice | Mã QR là công cụ hỗ trợ thanh toán, không cấu thành chứng từ quyết toán; trạng thái Paid chỉ cấp sau khi kế toán đối soát. | `cpanel/parent/+page.svelte` | `tests/homework_and_cpanel.test.py` | UI disclaimer label | WORKER_TESTED | PENDING_CODEX_AUDIT |
 | **REQ-TUIT-03** | Tuition Modes & Debt Lifecycle | Quản lý học phí tháng/ca/khóa; theo dõi nghỉ, bù, giảm, thu, hoàn và nợ học phí xuyên suốt. | `src/routes/api/tuition/+server.js` | `tests/homework_and_cpanel.test.py` | Tuition D1 schema | WORKER_TESTED | PENDING_CODEX_AUDIT |
@@ -68,8 +68,8 @@
 | **REQ-EXAM-02** | Zero Answer Leakage | Phục vụ đề cho thí sinh BẮT BUỘC loại bỏ triệt để `correct_answer`, `correct_option_id`, `explanation` khỏi client response. | `api/exams/+server.js`, `api/exams/random` | `tests/verify_parent_multichild_and_audio.test.js` | Tests EX-03 | WORKER_TESTED | PENDING_CODEX_AUDIT |
 | **REQ-EXAM-03** | Server-Side Score Computation | Điểm thi do Server tự động chấm dựa trên đối soát bài làm với DB snapshot; client-supplied `body.score` bị vứt bỏ. | `api/exams/+server.js`, `api/exams/random` | `tests/verify_parent_multichild_and_audio.test.js` | Tests EX-05 | WORKER_TESTED | PENDING_CODEX_AUDIT |
 | **REQ-EXAM-04** | Server Enforced Max Score | Client `body.max_score` bị chặn không cho phép phóng đại scale; thang điểm 10 chuẩn mực do Server quyết định. | `src/routes/api/exams/+server.js` | `tests/verify_parent_multichild_and_audio.test.js` | Test EX-05 assertion | WORKER_TESTED | PENDING_CODEX_AUDIT |
-| **REQ-EXAM-05** | D1 Exam Persistence | Kết quả thi lưu bền vững vào Cloudflare D1 `exam_attempts` hoặc `exam_instances`, đọc lại độc lập qua phiên. | `src/routes/api/exams/+server.js` | `tests/verify_parent_multichild_and_audio.test.js` | Test EX-05 D1 readback | WORKER_TESTED | PENDING_CODEX_AUDIT |
-| **REQ-EXAM-06** | CAS Deadline & Anti-Empty | Chặn nộp bài quá hạn (quá buffer 5 phút); chặn nộp bài rỗng; chống race-condition nộp bài 2 lần. | `src/routes/api/exams/random/+server.js` | `tests/verify_real_behavioral_audit.test.js` | CAS deadline logic | WORKER_TESTED | PENDING_CODEX_AUDIT |
+| **REQ-EXAM-05** | D1 Exam Persistence & Safe Migration | Lưu kết quả thi vào `exam_attempts` và phiên thi vào `exam_sessions`; migration 0003 lưu trữ an toàn các bản ghi trùng lặp vào `exam_attempts_archive` trước khi áp UNIQUE index. | `src/routes/api/exams/+server.js`, `migrations/0003_*.sql` | `tests/verify_phase1_audit_hardening.test.js` | Migration 0003 & Phase 1 Suite | WORKER_TESTED | PENDING_CODEX_AUDIT |
+| **REQ-EXAM-06** | Server-Owned Exam Lifecycle & CAS Deadline | Vòng đời phiên thi chuẩn mực: `start_session` tạo snapshot câu hỏi, gán hạn nộp server-side, hỗ trợ khôi phục phiên đang làm; chặn nộp quá hạn và nộp lặp. | `src/routes/api/exams/+server.js` | `tests/verify_phase1_audit_hardening.test.js` | Test session lifecycle & deadline | WORKER_TESTED | PENDING_CODEX_AUDIT |
 | **REQ-EXAM-07** | Bank Shortage Handling | Nếu ngân hàng câu hỏi thiếu số lượng cho mức nhận thức/khối lớp, báo lỗi thiếu câu hỏi cụ thể, không trộn sai khối/kỹ năng. | `api/exams/random`, `api/exams` | `tests/verify_real_behavioral_audit.test.js` | ShortageError 400 | WORKER_TESTED | PENDING_CODEX_AUDIT |
 
 ---
@@ -140,13 +140,15 @@
 
 ## TỔNG HỢP TIẾN ĐỘ THỰC TẾ (SỐ TUYỆT ĐỐI THEO 61 DÒNG MA TRẬN)
 
+- **Source Git SHA hiện tại:** `b1dc6afb70ebda88a47ba94cb7dc7cbbfadfeea5`
 - **Tổng số hạng mục yêu cầu (Total Requirements):** **61 IDs** (đối soát chính xác từng hàng của 11 gói)
-- **Worker đã triển khai & kiểm thử đạt (WORKER_TESTED):** **58 IDs** (95.1%)
+- **Worker đã triển khai & kiểm thử đạt (WORKER_TESTED):** **58 IDs** (95.1% Worker claim — KHÔNG thay thế quyết định release của Auditor)
 - **Hạng mục đang triển khai một phần (PARTIAL):** **2 IDs** (3.3%)
   - `REQ-AUDIO-01`: Manifest 15 audio tracks lớp 7 đã ánh xạ 100% ID thật từ Google Drive; 2.239 audio còn lại lưu trữ trong inventory chờ tải binary thực tế.
   - `REQ-AUDIO-03`: Streaming Range 206 đã hỗ trợ trong code API, sẵn sàng stream tệp âm thanh thực tế khi có binary.
 - **Hạng mục bị nghẽn (BLOCKED / PENDING MODEL):** **1 ID** (1.6%)
   - `REQ-PHON-01`: Phoneme-level acoustic model ASR (chưa có tệp weights mô hình âm học chuyên biệt chạy local).
 - **Auditor Độc Lập Xác Nhận (AUDITOR_VERIFIED):** **0 IDs** (Toàn bộ 61 IDs đang chờ thẩm định và ký duyệt độc lập của OpenAI Codex Desktop).
-- **Tổng số kiểm thử tự động toàn diện:** **185 bài test** (96 bài test Node.js / SvelteKit + 89 bài test Python), tỷ lệ đạt **100% PASS (0 thất bại)**.
+- **Tổng số kiểm thử tự động toàn diện:** **189 bài test** (100 bài test Node.js / SvelteKit + 89 bài test Python), tỷ lệ đạt **100% PASS (0 thất bại)**.
+- **Bộ kiểm thử hồi quy độc lập Codex (8 ca):** **8/8 PASS (100%)** (`audit_adc235a_approved_snapshot.mjs`).
 

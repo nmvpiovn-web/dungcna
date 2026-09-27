@@ -44,10 +44,10 @@ Bảng dẫn chiếu này cung cấp liên kết trực tiếp từ từng mã y
 | ID | File mã nguồn | File kiểm thử tự động | Dòng lệnh kiểm tra | Trạng thái |
 | :--- | :--- | :--- | :--- | :--- |
 | **REQ-PAY-01** | `src/lib/server/payrollEngine.js` | `tests/verify_payroll_engine.test.js` | `node --test tests/verify_payroll_engine.test.js` | WORKER_TESTED |
-| **REQ-PAY-02** | `api/teachers/payroll/+server.js` | `tests/verify_payroll_engine.test.js` | `node --test tests/verify_payroll_engine.test.js` | WORKER_TESTED |
+| **REQ-PAY-02** | `api/teachers/payroll/+server.js` | `tests/verify_payroll_engine.test.js`, `tests/verify_phase1_audit_hardening.test.js` | `node --test tests/verify_phase1_audit_hardening.test.js` | WORKER_TESTED |
 | **REQ-PAY-03** | `src/lib/server/payrollEngine.js` | `tests/verify_payroll_engine.test.js` | `node --test tests/verify_payroll_engine.test.js` | WORKER_TESTED |
 | **REQ-PAY-04** | `src/lib/server/payrollEngine.js` | `tests/verify_payroll_engine.test.js` | `node --test tests/verify_payroll_engine.test.js` | WORKER_TESTED |
-| **REQ-PAY-05** | `api/teachers/payroll`, `cpanel/teacher`, `cpanel/leader` | `tests/verify_payroll_engine.test.js`, `svelte-check` | `node --test tests/verify_payroll_engine.test.js` | WORKER_TESTED |
+| **REQ-PAY-05** | `api/teachers/payroll`, `cpanel/teacher`, `cpanel/leader` | `tests/verify_phase1_audit_hardening.test.js`, `svelte-check` | `node --test tests/verify_phase1_audit_hardening.test.js` | WORKER_TESTED |
 | **REQ-TUIT-01** | `api/tuition/+server.js` | `tests/homework_and_cpanel.test.py` | `python tests/homework_and_cpanel.test.py` | WORKER_TESTED |
 | **REQ-TUIT-02** | `cpanel/parent/+page.svelte` | `tests/homework_and_cpanel.test.py` | `python tests/homework_and_cpanel.test.py` | WORKER_TESTED |
 | **REQ-TUIT-03** | `api/tuition/+server.js` | `tests/homework_and_cpanel.test.py` | `python tests/homework_and_cpanel.test.py` | WORKER_TESTED |
@@ -59,8 +59,8 @@ Bảng dẫn chiếu này cung cấp liên kết trực tiếp từ từng mã y
 | **REQ-EXAM-02** | `api/exams/+server.js` | `tests/verify_parent_multichild_and_audio.test.js` | `node --test tests/verify_parent_multichild_and_audio.test.js` | WORKER_TESTED |
 | **REQ-EXAM-03** | `api/exams/+server.js` | `tests/verify_parent_multichild_and_audio.test.js` | `node --test tests/verify_parent_multichild_and_audio.test.js` | WORKER_TESTED |
 | **REQ-EXAM-04** | `api/exams/+server.js` | `tests/verify_parent_multichild_and_audio.test.js` | `node --test tests/verify_parent_multichild_and_audio.test.js` | WORKER_TESTED |
-| **REQ-EXAM-05** | `api/exams/+server.js` | `tests/verify_parent_multichild_and_audio.test.js` | `node --test tests/verify_parent_multichild_and_audio.test.js` | WORKER_TESTED |
-| **REQ-EXAM-06** | `api/exams/random/+server.js` | `tests/verify_real_behavioral_audit.test.js` | `node --test tests/verify_real_behavioral_audit.test.js` | WORKER_TESTED |
+| **REQ-EXAM-05** | `api/exams/+server.js`, `migrations/0003_*.sql` | `tests/verify_phase1_audit_hardening.test.js` | `node --test tests/verify_phase1_audit_hardening.test.js` | WORKER_TESTED |
+| **REQ-EXAM-06** | `api/exams/+server.js` | `tests/verify_phase1_audit_hardening.test.js` | `node --test tests/verify_phase1_audit_hardening.test.js` | WORKER_TESTED |
 | **REQ-EXAM-07** | `api/exams/random/+server.js` | `tests/verify_real_behavioral_audit.test.js` | `node --test tests/verify_real_behavioral_audit.test.js` | WORKER_TESTED |
 
 ### GÓI 6: SECOND BRAIN & KNOWLEDGE VAULT
@@ -119,8 +119,9 @@ Bảng dẫn chiếu này cung cấp liên kết trực tiếp từ từng mã y
 
 ## 2. TỔNG KẾT & RAW LOGS
 
-- **Node.js Test Run:** 16 suites, 96 tests, 96 passed, 0 failed, 0 skipped. Thời gian: ~7s.
-- **Python Test Run:** 6 suites, 89 tests, 89 passed, 0 failed.
-- **Tổng số automated tests:** **185 tests PASS 100%**.
+- **Node.js Test Run:** 17 suites, 100 tests, 100 passed, 0 failed, 0 skipped. Thời gian: ~5.3s.
+- **Python Test Run:** 7 suites, 89 tests, 89 passed, 0 failed.
+- **Tổng số automated tests:** **189 tests PASS 100%**.
+- **Codex Regression Suite (`audit_adc235a_approved_snapshot.mjs`):** 8/8 tests PASS 100%.
 - **Type Check (`npm run check`):** 0 errors, 70 warnings (a11y click-events, unused CSS).
-- **Production Build (`npm run build`):** Exit 0, thành công trong ~14.8s.
+- **Production Build (`npm run build`):** Exit 0, thành công trong ~12s (@sveltejs/adapter-cloudflare).
