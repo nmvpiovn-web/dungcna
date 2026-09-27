@@ -154,8 +154,8 @@ export async function POST({ request, platform }) {
 
         // Insert new user with hashed password and trial status
         await platform.env.DB.prepare(`
-          INSERT INTO users (id, username, phone, email, name, role, avatar, status, metadata, grade, password, approval_status, created_at, updated_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          INSERT INTO users (id, username, phone, email, name, role, avatar, status, metadata, password, created_at, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `).bind(
           newUser.id,
           newUser.username,
@@ -166,9 +166,7 @@ export async function POST({ request, platform }) {
           newUser.avatar,
           newUser.status,
           newUser.metadata,
-          newUser.grade,
           newUser.password,
-          newUser.approval_status,
           newUser.created_at,
           newUser.updated_at
         ).run();
