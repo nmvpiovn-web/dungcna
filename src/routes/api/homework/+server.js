@@ -391,38 +391,44 @@ export async function POST({ request, platform }) {
         ).run();
 
         // Broadcast notifications ONLY to verified parents of students in this class
+        // P1/P2 Fix: Use exact structured membership query; reject empty class_id (would broadcast to all)
         const targetClassId = newAssignment.class_id || '';
-        const linksRes = await db.prepare(`
-          SELECT DISTINCT psl.parent_user_id 
-          FROM parent_student_links psl
-          JOIN users u ON u.id = psl.student_user_id
-          WHERE psl.verification_status = 'verified'
-            AND psl.parent_user_id IS NOT NULL
-            AND (
-              u.metadata LIKE ? OR ? = ''
-            );
-        `).bind(`%"class_id":"${targetClassId}"%`, targetClassId).all();
+        if (!targetClassId) {
+          console.warn('[HW] Skipping parent notifications: class_id is empty, refusing broadcast-all');
+        } else {
+          const linksRes = await db.prepare(`
+            SELECT DISTINCT psl.parent_user_id 
+            FROM parent_student_links psl
+            JOIN users u ON u.id = psl.student_user_id
+            WHERE psl.verification_status = 'verified'
+              AND psl.parent_user_id IS NOT NULL
+              AND (
+                u.metadata LIKE '%"class_id":"' || ? || '"%'
+                OR u.metadata LIKE '%"class_id": "' || ? || '"%'
+              );
+          `).bind(targetClassId, targetClassId).all();
 
-        const notifSkillMap = { writing: 'Viết', reading: 'Đọc hiểu', speaking: 'Nói' };
-        const notifTitle = `📚 BTVN Mới (${notifSkillMap[skill_type]}): ${title}`;
-        const notifBody = `Giáo viên ${newAssignment.teacher_name} vừa giao BTVN lớp ${newAssignment.class_name}. Hạn nộp trước ${finalDeadlineTime} ngày ${finalDeadlineDate}.`;
+          const notifSkillMap = { writing: 'Viết', reading: 'Đọc hiểu', speaking: 'Nói' };
+          const notifTitle = `📚 BTVN Mới (${notifSkillMap[skill_type]}): ${title}`;
+          const notifBody = `Giáo viên ${newAssignment.teacher_name} vừa giao BTVN lớp ${newAssignment.class_name}. Hạn nộp trước ${finalDeadlineTime} ngày ${finalDeadlineDate}.`;
 
-        // Send strictly to verified parents
-        const uniqueParents = [...new Set((linksRes.results || []).map(r => r.parent_user_id).filter(Boolean))];
-        for (const parentId of uniqueParents) {
-          const notifId = `notif_hw_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
-          await db.prepare(`
-            INSERT INTO system_notifications (id, target_role, target_user_id, title, body, category, reference_id)
-            VALUES (?, 'parent', ?, ?, ?, 'homework', ?);
-          `).bind(notifId, parentId, notifTitle, notifBody, assignmentId).run();
-        }
+          // Send strictly to verified parents in the target class
+          const uniqueParents = [...new Set((linksRes.results || []).map(r => r.parent_user_id).filter(Boolean))];
+          for (const parentId of uniqueParents) {
+            const notifId = `notif_hw_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+            await db.prepare(`
+              INSERT INTO system_notifications (id, target_role, target_user_id, title, body, category, reference_id)
+              VALUES (?, 'parent', ?, ?, ?, 'homework', ?);
+            `).bind(notifId, parentId, notifTitle, notifBody, assignmentId).run();
+          }
+        } // end if(targetClassId)
 
         // Send general broadcast to students
         const notifIdStudent = `notif_hw_s_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
         await db.prepare(`
           INSERT INTO system_notifications (id, target_role, target_user_id, title, body, category, reference_id)
           VALUES (?, 'student', NULL, ?, ?, 'homework', ?);
-        `).bind(notifIdStudent, notifTitle, notifBody, assignmentId).run();
+        `).bind(notifIdStudent, `📚 BTVN Mới: ${title}`, `Giáo viên ${newAssignment.teacher_name} vừa giao BTVN lớp ${newAssignment.class_name}.`, assignmentId).run();
 
         // Log to activity stream
         const streamId = `stm_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
@@ -431,8 +437,8 @@ export async function POST({ request, platform }) {
           VALUES (?, ?, ?, ?, 'teacher', 'homework_assigned', ?, ?, ?);
         `).bind(
           streamId, campus_id, user.id, user.name || user.username,
-          `Giao BTVN ${notifSkillMap[skill_type]}: ${title}`,
-          `Lớp ${class_name} • Hạn nộp ${finalDeadlineTime} ${finalDeadlineDate}`,
+          `Giao BTVN: ${title}`,
+          `Lớp ${class_name}`,
           assignmentId
         ).run();
 

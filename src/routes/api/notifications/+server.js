@@ -45,20 +45,7 @@ export async function GET({ request, platform }) {
   try {
     await ensureNotificationSchema(db);
 
-    let sql = `
-      SELECT n.id, n.target_role, n.target_user_id, n.title, n.body, n.category, n.reference_id, n.created_at,
-             CASE 
-               WHEN nr.user_id IS NOT NULL THEN 1 
-               WHEN n.target_user_id = ? THEN n.is_read 
-               ELSE 0 
-             END AS is_read
-      FROM system_notifications n
-      LEFT JOIN system_notification_reads nr 
-        ON n.id = nr.notification_id AND nr.user_id = ?
-      WHERE (n.target_user_id = ?) 
-         OR (n.target_user_id IS NULL AND (n.target_role = ? OR n.target_role = 'all'))
-    `;
-    let params = [user.id, user.id, user.id, user.role];
+    let sql, params;
 
     if (isLeader) {
       sql = `
@@ -73,6 +60,45 @@ export async function GET({ request, platform }) {
           ON n.id = nr.notification_id AND nr.user_id = ?
         WHERE (n.target_user_id = ?)
            OR (n.target_user_id IS NULL AND (n.target_role = ? OR n.target_role = 'leader' OR n.target_role = 'all'))
+      `;
+      params = [user.id, user.id, user.id, user.role];
+    } else if (user.role === 'parent') {
+      // P1 Fix: For parents, homework-category notifications require the link to still be verified.
+      // Non-homework notifications (target_user_id) are allowed normally.
+      sql = `
+        SELECT n.id, n.target_role, n.target_user_id, n.title, n.body, n.category, n.reference_id, n.created_at,
+               CASE 
+                 WHEN nr.user_id IS NOT NULL THEN 1 
+                 WHEN n.target_user_id = ? THEN n.is_read 
+                 ELSE 0 
+               END AS is_read
+        FROM system_notifications n
+        LEFT JOIN system_notification_reads nr 
+          ON n.id = nr.notification_id AND nr.user_id = ?
+        WHERE n.target_user_id = ?
+          AND (
+            n.category != 'homework'
+            OR EXISTS (
+              SELECT 1 FROM parent_student_links psl
+              WHERE psl.parent_user_id = ?
+                AND psl.verification_status = 'verified'
+            )
+          )
+      `;
+      params = [user.id, user.id, user.id, user.id];
+    } else {
+      sql = `
+        SELECT n.id, n.target_role, n.target_user_id, n.title, n.body, n.category, n.reference_id, n.created_at,
+               CASE 
+                 WHEN nr.user_id IS NOT NULL THEN 1 
+                 WHEN n.target_user_id = ? THEN n.is_read 
+                 ELSE 0 
+               END AS is_read
+        FROM system_notifications n
+        LEFT JOIN system_notification_reads nr 
+          ON n.id = nr.notification_id AND nr.user_id = ?
+        WHERE (n.target_user_id = ?) 
+           OR (n.target_user_id IS NULL AND (n.target_role = ? OR n.target_role = 'all'))
       `;
       params = [user.id, user.id, user.id, user.role];
     }

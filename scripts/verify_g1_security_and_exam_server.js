@@ -198,26 +198,26 @@ async function runSuite() {
     });
     assert(childrenRes.status === 200 && childrenRes.data.success === true, 'GET /api/parents/children returns HTTP 200');
     
-    // Check pending status on newly linked child
+    // Check pending status on newly linked child — MANDATORY: link must exist (test fails if absent)
     const linked = (childrenRes.data.children || []).find(c => c.id === studentUser.id);
+    assert(Boolean(linked), 'Newly linked child record MUST appear in GET /api/parents/children (link exists)');
     if (linked) {
       assert(linked.verification_status === 'pending', 'Newly linked child has verification_status strictly equal to pending');
       assert(linked.is_verified === false, 'Newly linked child is_verified flag is false');
       assert(linked.username === null, 'Pending child link has private username redacted to null');
       assert(linked.grade === null, 'Pending child link has private grade redacted to null');
       assert(linked.avatar === null, 'Pending child link has private avatar redacted to null');
-    } else {
-      console.log('  (Note: child record query returned in-memory list or empty D1 links)');
     }
 
-    // Notifications check: unverified/pending parent must receive 0 homework assignment/grading notifications
+    // Notifications check: use category field (notifications schema uses 'category', not 'type')
+    // Pending parent must receive 0 homework-category notifications
     const notifRes = await request('/api/notifications', {
       method: 'GET',
       headers: { 'Authorization': `Bearer ${parentToken}` }
     });
-    assert(notifRes.status === 200 && notifRes.data.success === true, 'GET /api/notifications returns HTTP 200');
-    const homeworkNotifs = (notifRes.data.notifications || []).filter(n => n.type === 'homework_assigned' || n.type === 'homework_graded');
-    assert(homeworkNotifs.length === 0, 'Pending parent receives 0 homework notifications (Fail-Closed)');
+    assert(notifRes.status === 200 && notifRes.data.success === true, 'GET /api/notifications returns HTTP 200 for pending parent');
+    const homeworkNotifs = (notifRes.data.notifications || []).filter(n => n.category === 'homework');
+    assert(homeworkNotifs.length === 0, 'Pending parent receives 0 homework-category notifications (Fail-Closed; uses category field)');
 
     // Verify unverified parent CANNOT access private tuition data of student
     const tuitionRes = await request(`/api/tuition?student_id=${studentUser.id}`, {

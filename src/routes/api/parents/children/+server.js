@@ -87,16 +87,19 @@ export async function GET({ request, platform }) {
       });
     } catch (e) {
       console.error('Error fetching parent children from D1:', e);
+      // P2 Fix: D1 errors must surface as 503, not as empty success
+      return json({
+        success: false,
+        error: 'DatabaseError: Không thể lấy danh sách con liên kết. Vui lòng thử lại sau.'
+      }, { status: 503 });
     }
   }
 
-  // Fallback in-memory mode: Fail-closed (empty list for unverified parents)
+  // No DB available — return proper error, not fake empty success
   return json({
-    success: true,
-    children: [],
-    total: 0,
-    source: 'fail_closed_unlinked_parent'
-  });
+    success: false,
+    error: 'DatabaseUnavailable: Cloudflare D1 không khả dụng. Không thể xác minh quyền truy cập.'
+  }, { status: 503 });
 }
 
 export async function POST({ request, platform }) {
