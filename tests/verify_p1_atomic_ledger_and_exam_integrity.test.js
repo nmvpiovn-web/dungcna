@@ -103,7 +103,7 @@ test('P1-ATOMIC-01: Fault Injection - Trigger failure on finance_ledger causes f
   const disburseRes = await payrollPost({ request: disburseReq, platform });
   assert.equal(disburseRes.status, 500, 'Must fail-closed with 500 when ledger insert fails');
   const disburseBody = await disburseRes.json();
-  assert.match(disburseBody.error, /LedgerPersistenceError/);
+  assert.match(disburseBody.error, /DisbursementTransactionError|LedgerPersistenceError/);
 
   // 4. Verify DB state: payroll status MUST NOT be paid, MUST remain approved
   const payrollRow = rawDb.prepare("SELECT status FROM teacher_payrolls WHERE teacher_id = 'usr_teacher_t1' AND billing_cycle = '2026-09'").get();
@@ -111,6 +111,53 @@ test('P1-ATOMIC-01: Fault Injection - Trigger failure on finance_ledger causes f
 
   const ledgerCount = rawDb.prepare('SELECT COUNT(*) as n FROM finance_ledger').get();
   assert.equal(ledgerCount.n, 0, 'Zero rows must exist in finance_ledger');
+});
+
+test('P1-ATOMIC-03: Reverse Fault Injection - Trigger failure on teacher_payrolls rolls back finance_ledger (0 rows); retry does NOT return paid while payroll remains approved', async () => {
+  const { platform, rawDb } = createMockPlatform();
+  const leaderToken = await createSignedToken({ id: 'usr_leader_auditor', username: 'leader_auditor', role: 'leader' }, secret);
+
+  await payrollPost({
+    request: new Request('http://localhost/api/teachers/payroll', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${leaderToken}` },
+      body: JSON.stringify({ action: 'approve', teacher_id: 'usr_teacher_t1', billing_cycle: '2026-09' })
+    }),
+    platform
+  });
+
+  // Inject trigger on teacher_payrolls update to simulate reverse transaction failure
+  rawDb.exec("CREATE TRIGGER fail_paid_inject BEFORE UPDATE OF status ON teacher_payrolls WHEN NEW.status='paid' BEGIN SELECT RAISE(ABORT, 'injected payroll update failure'); END;");
+
+  // Attempt 1: Should fail closed with 500
+  const firstRes = await payrollPost({
+    request: new Request('http://localhost/api/teachers/payroll', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${leaderToken}` },
+      body: JSON.stringify({ action: 'disburse', teacher_id: 'usr_teacher_t1', billing_cycle: '2026-09', idempotency_key: 'test_reverse_key' })
+    }),
+    platform
+  });
+  assert.equal(firstRes.status, 500, 'Iteration 0 must fail-closed with 500');
+  const firstRow = rawDb.prepare("SELECT status FROM teacher_payrolls WHERE teacher_id = 'usr_teacher_t1'").get();
+  assert.equal(firstRow.status, 'approved');
+  const firstLedger = rawDb.prepare('SELECT COUNT(*) n FROM finance_ledger').get();
+  assert.equal(firstLedger.n, 0, 'Ledger must be rolled back to 0 rows');
+
+  // Attempt 2 (Retry with same idempotency key): Must NOT return 200 paid!
+  const retryRes = await payrollPost({
+    request: new Request('http://localhost/api/teachers/payroll', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${leaderToken}` },
+      body: JSON.stringify({ action: 'disburse', teacher_id: 'usr_teacher_t1', billing_cycle: '2026-09', idempotency_key: 'test_reverse_key' })
+    }),
+    platform
+  });
+  assert.equal(retryRes.status, 500, 'Iteration 1 must fail-closed with 500 while trigger is active');
+  const retryRow = rawDb.prepare("SELECT status FROM teacher_payrolls WHERE teacher_id = 'usr_teacher_t1'").get();
+  assert.equal(retryRow.status, 'approved');
+  const retryLedger = rawDb.prepare('SELECT COUNT(*) n FROM finance_ledger').get();
+  assert.equal(retryLedger.n, 0, 'Ledger must strictly remain 0 rows');
 });
 
 test('P1-ATOMIC-02: Idempotent replay returns existing voucher on re-disburse with identical key', async () => {

@@ -57,6 +57,7 @@ async function ensureExamSchema(db) {
         exam_id TEXT NOT NULL,
         attempt_number INTEGER DEFAULT 1,
         questions_snapshot_json TEXT NOT NULL,
+        answer_key_snapshot_json TEXT,
         time_limit_minutes INTEGER NOT NULL,
         started_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         deadline_at DATETIME NOT NULL,
@@ -66,6 +67,9 @@ async function ensureExamSchema(db) {
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       );
     `).run();
+    try {
+      await db.prepare(`ALTER TABLE exam_sessions ADD COLUMN answer_key_snapshot_json TEXT;`).run();
+    } catch {}
     await db.prepare(`
       CREATE UNIQUE INDEX IF NOT EXISTS idx_exam_attempts_user_exam ON exam_attempts (user_id, exam_id);
     `).run();
@@ -370,9 +374,14 @@ export async function POST({ request, platform }) {
         }
       }
 
-      // Create new session instance with sanitized questions snapshot
+      // Create new session instance with sanitized questions snapshot AND server-side answer key snapshot
       const rawQuestions = questionsData.filter(q => q.exam_id === examId);
       const sanitizedSnapshot = rawQuestions.map(({ correct_answer, explanation, ...rest }) => rest);
+      const answerKeySnapshot = {};
+      rawQuestions.forEach(q => {
+        const key = q.id !== undefined ? String(q.id) : String(q.question_index);
+        answerKeySnapshot[key] = q.correct_answer;
+      });
       const instanceId = `exm_sess_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
       const startedAt = new Date();
       const deadlineAt = new Date(startedAt.getTime() + (durationMinutes * 60 + 60) * 1000); // 60s network grace
@@ -380,14 +389,15 @@ export async function POST({ request, platform }) {
       if (platform?.env?.DB) {
         await platform.env.DB.prepare(`
           INSERT INTO exam_sessions (
-            id, user_id, exam_id, questions_snapshot_json,
+            id, user_id, exam_id, questions_snapshot_json, answer_key_snapshot_json,
             time_limit_minutes, started_at, deadline_at, status
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, 'in_progress');
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'in_progress');
         `).bind(
           instanceId,
           effectiveUserId,
           examId,
           JSON.stringify(sanitizedSnapshot),
+          JSON.stringify(answerKeySnapshot),
           durationMinutes,
           startedAt.toISOString(),
           deadlineAt.toISOString()
@@ -547,10 +557,10 @@ export async function POST({ request, platform }) {
 
     // D1 Persistence with fail-closed guarantee & Unique concurrency protection
     if (platform?.env?.DB) {
+      let activeSession = null;
       try {
         await ensureExamSchema(platform.env.DB);
 
-        let activeSession = null;
         if (body.instance_id) {
           activeSession = await platform.env.DB.prepare(`
             SELECT * FROM exam_sessions WHERE id = ? LIMIT 1;
@@ -595,13 +605,24 @@ export async function POST({ request, platform }) {
             }, { status: 409 });
           }
 
-          const deadline = new Date(activeSession.deadline_at);
-          // 60-second grace period for network latency
-          if (Date.now() > deadline.getTime() + 60000) {
-            await platform.env.DB.prepare(`UPDATE exam_sessions SET status = 'expired' WHERE id = ?;`).bind(activeSession.id).run();
+          // ATOMIC SESSION UPDATE:
+          // Check deadline directly at write-time in the SQL query!
+          const sessUpdateRes = await platform.env.DB.prepare(`
+            UPDATE exam_sessions
+            SET status = 'submitted', submitted_at = CURRENT_TIMESTAMP, score = ?
+            WHERE id = ? 
+              AND user_id = ? 
+              AND exam_id = ? 
+              AND status = 'in_progress'
+              AND datetime('now') <= datetime(deadline_at, '+60 seconds');
+          `).bind(saved.score, activeSession.id, effectiveUserId, examId).run();
+
+          if (sessUpdateRes.meta?.changes === 0) {
+            // Write-time check: deadline exceeded or session was concurrently submitted/expired
+            await platform.env.DB.prepare(`UPDATE exam_sessions SET status = 'expired' WHERE id = ? AND status = 'in_progress';`).bind(activeSession.id).run();
             return json({
               success: false,
-              error: `DeadlineExceededError: Phiên thi đã quá thời hạn nộp bài cho phép.`
+              error: `DeadlineExceededError: Phiên thi đã quá thời hạn nộp bài tại thời điểm ghi dữ liệu hoặc đã được nộp đồng thời.`
             }, { status: 400 });
           }
         }
@@ -625,17 +646,15 @@ export async function POST({ request, platform }) {
           saved.session_id,
           saved.class_id
         ).run();
-
+      } catch (dbErr) {
         if (activeSession) {
           try {
             await platform.env.DB.prepare(`
-              UPDATE exam_sessions
-              SET status = 'submitted', submitted_at = CURRENT_TIMESTAMP, score = ?
-              WHERE id = ? AND user_id = ? AND status = 'in_progress';
-            `).bind(saved.score, activeSession.id, effectiveUserId).run();
+              UPDATE exam_sessions SET status = 'in_progress', submitted_at = NULL, score = NULL
+              WHERE id = ? AND status = 'submitted';
+            `).bind(activeSession.id).run();
           } catch {}
         }
-      } catch (dbErr) {
         if (dbErr.message && (dbErr.message.includes('UNIQUE') || dbErr.message.includes('constraint'))) {
           return json({
             success: false,
