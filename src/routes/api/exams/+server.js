@@ -102,8 +102,10 @@ async function ensureExamSchema(db) {
           CREATE UNIQUE INDEX IF NOT EXISTS idx_exam_attempts_user_exam ON exam_attempts (user_id, exam_id);
         `).run();
       } catch (archErr) {
-        console.warn('exam_attempts_archive migration notice:', archErr.message);
+        throw new Error(`ExamAttemptsArchiveMigrationError: Lỗi khi xử lý dedup bản ghi thi cũ (${archErr.message})`);
       }
+    } else {
+      throw new Error(`ExamSchemaInitializationError: Không thể khởi tạo bảng thi trên D1 (${err.message})`);
     }
   }
 }
@@ -308,10 +310,15 @@ export async function POST({ request, platform }) {
 
       const effectiveUserId = isStaff ? (body.user_id || user.id) : user.id;
       const officialExam = getExams().find(e => e.id === examId);
-      const durationMinutes = Number(body.duration_minutes || officialExam?.duration_minutes || 45);
+      const officialDuration = officialExam?.duration_minutes ? Number(officialExam.duration_minutes) : 45;
+      const durationMinutes = isStaff && body.duration_minutes !== undefined
+        ? Math.min(180, Math.max(5, Number(body.duration_minutes)))
+        : officialDuration;
+
+      const allowRetake = isStaff && Boolean(body.allow_retake);
 
       // Check if student already submitted this exam
-      if (platform?.env?.DB && !isStaff && !body.allow_retake) {
+      if (platform?.env?.DB && !allowRetake) {
         const priorAttempt = await platform.env.DB.prepare(`
           SELECT id FROM exam_attempts WHERE user_id = ? AND exam_id = ? LIMIT 1;
         `).bind(effectiveUserId, examId).first();
@@ -543,26 +550,59 @@ export async function POST({ request, platform }) {
       try {
         await ensureExamSchema(platform.env.DB);
 
+        let activeSession = null;
         if (body.instance_id) {
-          const examSess = await platform.env.DB.prepare(`
+          activeSession = await platform.env.DB.prepare(`
             SELECT * FROM exam_sessions WHERE id = ? LIMIT 1;
           `).bind(body.instance_id).first();
 
-          if (examSess) {
-            if (examSess.status === 'submitted') {
-              return json({
-                success: false,
-                error: `DuplicateSubmissionError: Phiên thi này đã được hoàn tất trước đó.`
-              }, { status: 409 });
-            }
-            const deadline = new Date(examSess.deadline_at);
-            if (Date.now() > deadline.getTime() + 60000) {
-              await platform.env.DB.prepare(`UPDATE exam_sessions SET status = 'expired' WHERE id = ?;`).bind(body.instance_id).run();
-              return json({
-                success: false,
-                error: `DeadlineExceededError: Phiên thi đã quá thời hạn nộp bài cho phép.`
-              }, { status: 400 });
-            }
+          if (!activeSession) {
+            return json({
+              success: false,
+              error: `SessionNotFoundError: Không tìm thấy phiên thi '${body.instance_id}'.`
+            }, { status: 404 });
+          }
+        } else if (!isStaff) {
+          // If student has an active session for this exam, bind it automatically
+          activeSession = await platform.env.DB.prepare(`
+            SELECT * FROM exam_sessions
+            WHERE user_id = ? AND exam_id = ? AND status = 'in_progress'
+            ORDER BY started_at DESC LIMIT 1;
+          `).bind(effectiveUserId, examId).first();
+        }
+
+        if (activeSession) {
+          // STRICT OWNERSHIP CHECK: Instance must belong to submitting student (unless staff)
+          if (activeSession.user_id !== effectiveUserId && !isStaff) {
+            return json({
+              success: false,
+              error: `ForbiddenSessionAccess: Phiên thi '${activeSession.id}' không thuộc về tài khoản người dùng hiện tại.`
+            }, { status: 403 });
+          }
+
+          // STRICT EXAM BINDING CHECK: Instance must belong to the same exam
+          if (activeSession.exam_id !== examId) {
+            return json({
+              success: false,
+              error: `ExamMismatchError: Phiên thi '${activeSession.id}' thuộc đề '${activeSession.exam_id}', không khớp với đề thi nộp '${examId}'.`
+            }, { status: 400 });
+          }
+
+          if (activeSession.status === 'submitted') {
+            return json({
+              success: false,
+              error: `DuplicateSubmissionError: Phiên thi này đã được hoàn tất trước đó.`
+            }, { status: 409 });
+          }
+
+          const deadline = new Date(activeSession.deadline_at);
+          // 60-second grace period for network latency
+          if (Date.now() > deadline.getTime() + 60000) {
+            await platform.env.DB.prepare(`UPDATE exam_sessions SET status = 'expired' WHERE id = ?;`).bind(activeSession.id).run();
+            return json({
+              success: false,
+              error: `DeadlineExceededError: Phiên thi đã quá thời hạn nộp bài cho phép.`
+            }, { status: 400 });
           }
         }
 
@@ -586,13 +626,13 @@ export async function POST({ request, platform }) {
           saved.class_id
         ).run();
 
-        if (body.instance_id) {
+        if (activeSession) {
           try {
             await platform.env.DB.prepare(`
               UPDATE exam_sessions
               SET status = 'submitted', submitted_at = CURRENT_TIMESTAMP, score = ?
-              WHERE id = ?;
-            `).bind(saved.score, body.instance_id).run();
+              WHERE id = ? AND user_id = ? AND status = 'in_progress';
+            `).bind(saved.score, activeSession.id, effectiveUserId).run();
           } catch {}
         }
       } catch (dbErr) {
