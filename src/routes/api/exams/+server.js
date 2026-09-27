@@ -11,7 +11,13 @@ import { verifyServerAuth, isStaffUser } from '../../../lib/server/auth.js';
 
 export const prerender = false;
 
-async function ensureExamSchema(db) {
+export async function _ensureExamSchema(db) {
+  return ensureExamSchemaInternal(db);
+}
+
+const ensureExamSchema = ensureExamSchemaInternal;
+
+async function ensureExamSchemaInternal(db) {
   if (!db) return;
   try {
     await db.prepare(`
@@ -69,7 +75,12 @@ async function ensureExamSchema(db) {
     `).run();
     try {
       await db.prepare(`ALTER TABLE exam_sessions ADD COLUMN answer_key_snapshot_json TEXT;`).run();
-    } catch {}
+    } catch (alterErr) {
+      const msg = (alterErr?.message || '').toLowerCase();
+      if (!msg.includes('duplicate column') && !msg.includes('already exists')) {
+        throw alterErr;
+      }
+    }
     await db.prepare(`
       CREATE UNIQUE INDEX IF NOT EXISTS idx_exam_attempts_user_exam ON exam_attempts (user_id, exam_id);
     `).run();
@@ -435,21 +446,127 @@ export async function POST({ request, platform }) {
       return json({ success: false, error: 'EmptySubmission: Không thể nộp bài thi trống (chưa chọn câu trả lời)' }, { status: 400 });
     }
 
-    // SERVER-SIDE DETERMINED MAX SCORE:
-    // Never trust client-controlled body.max_score!
     const officialExam = getExams().find(e => e.id === examId);
     const maxScore = isStaff && body.max_score !== undefined
       ? Math.min(100, Math.max(1, Number(body.max_score)))
       : (officialExam?.max_score ? Number(officialExam.max_score) : 10.0);
 
-    // SERVER-SIDE SCORING: Calculate score from authoritative question bank
-    const examQuestions = questionsData.filter(q => q.exam_id === examId);
+    let activeSession = null;
+
+    // D1 Session Resolution & Prior Attempt Checks
+    if (platform?.env?.DB) {
+      await ensureExamSchema(platform.env.DB);
+
+      // ANTI-REPLAY & RETAKE LOCK:
+      if (!isStaff) {
+        const priorAttempt = await platform.env.DB.prepare(`
+          SELECT id FROM exam_attempts 
+          WHERE user_id = ? AND exam_id = ?
+          LIMIT 1;
+        `).bind(effectiveUserId, examId).first();
+
+        if (priorAttempt) {
+          return json({
+            success: false,
+            error: `DuplicateSubmissionError: Học sinh đã hoàn thành và nộp bài thi '${examId}'. Mỗi bài thi chỉ được nộp một lần (Anti-Replay / Retake Lock).`
+          }, { status: 409 });
+        }
+      } else {
+        const recentAttempt = await platform.env.DB.prepare(`
+          SELECT id FROM exam_attempts 
+          WHERE user_id = ? AND exam_id = ? AND created_at > datetime('now', '-3 seconds')
+          LIMIT 1;
+        `).bind(effectiveUserId, examId).first();
+
+        if (recentAttempt) {
+          return json({
+            success: false,
+            error: `DuplicateSubmissionError: Bài làm cho đề thi này vừa được tiếp nhận. Chống nộp lặp (Anti-Replay Guard).`
+          }, { status: 409 });
+        }
+      }
+
+      // Session Resolution
+      if (body.instance_id) {
+        activeSession = await platform.env.DB.prepare(`
+          SELECT * FROM exam_sessions WHERE id = ? LIMIT 1;
+        `).bind(body.instance_id).first();
+
+        if (!activeSession) {
+          return json({
+            success: false,
+            error: `SessionNotFoundError: Không tìm thấy phiên thi '${body.instance_id}'.`
+          }, { status: 404 });
+        }
+      } else if (!isStaff) {
+        activeSession = await platform.env.DB.prepare(`
+          SELECT * FROM exam_sessions
+          WHERE user_id = ? AND exam_id = ? AND status = 'in_progress'
+          ORDER BY started_at DESC LIMIT 1;
+        `).bind(effectiveUserId, examId).first();
+      }
+
+      if (activeSession) {
+        // STRICT OWNERSHIP CHECK
+        if (activeSession.user_id !== effectiveUserId && !isStaff) {
+          return json({
+            success: false,
+            error: `ForbiddenSessionAccess: Phiên thi '${activeSession.id}' không thuộc về tài khoản người dùng hiện tại.`
+          }, { status: 403 });
+        }
+
+        // STRICT EXAM BINDING CHECK
+        if (activeSession.exam_id !== examId) {
+          return json({
+            success: false,
+            error: `ExamMismatchError: Phiên thi '${activeSession.id}' thuộc đề '${activeSession.exam_id}', không khớp với đề thi nộp '${examId}'.`
+          }, { status: 400 });
+        }
+
+        if (activeSession.status === 'submitted') {
+          return json({
+            success: false,
+            error: `DuplicateSubmissionError: Phiên thi này đã được hoàn tất trước đó.`
+          }, { status: 409 });
+        }
+      }
+    }
+
+    // P1-04: SERVER-SIDE SCORING FROM AUTHORITATIVE ANSWER KEY SNAPSHOT
     let serverCalculatedScore = 0;
 
-    if (examQuestions.length > 0) {
-      const validQuestionKeys = new Set(examQuestions.map(q => q.id !== undefined ? String(q.id) : String(q.question_index)));
-      
-      // Foreign key & type validation: Ensure submitted answers belong to question bank and are valid primitives
+    if (activeSession) {
+      // Must score strictly against answer_key_snapshot_json frozen in this session record!
+      if (!activeSession.answer_key_snapshot_json) {
+        return json({
+          success: false,
+          error: 'MissingAnswerSnapshotError: Không tìm thấy snapshot đáp án của phiên thi, từ chối chấm điểm (fail-closed).'
+        }, { status: 500 });
+      }
+
+      let answerKeySnapshot = null;
+      try {
+        answerKeySnapshot = typeof activeSession.answer_key_snapshot_json === 'string'
+          ? JSON.parse(activeSession.answer_key_snapshot_json)
+          : activeSession.answer_key_snapshot_json;
+      } catch (parseErr) {
+        return json({
+          success: false,
+          error: `CorruptAnswerSnapshotError: Snapshot đáp án của phiên thi bị lỗi định dạng (${parseErr.message}) (fail-closed).`
+        }, { status: 500 });
+      }
+
+      if (!answerKeySnapshot || typeof answerKeySnapshot !== 'object' || Object.keys(answerKeySnapshot).length === 0) {
+        return json({
+          success: false,
+          error: 'EmptyAnswerSnapshotError: Snapshot đáp án của phiên thi rỗng, từ chối chấm điểm (fail-closed).'
+        }, { status: 500 });
+      }
+
+      const questionKeys = Object.keys(answerKeySnapshot);
+      const validQuestionKeys = new Set(questionKeys);
+
+      // Validate submitted answers against snapshot
       for (const [key, val] of Object.entries(userAnswers)) {
         if (!validQuestionKeys.has(String(key))) {
           return json({ 
@@ -466,75 +583,48 @@ export async function POST({ request, platform }) {
       }
 
       let correctCount = 0;
-      for (const q of examQuestions) {
-        const qKey = q.id !== undefined ? String(q.id) : String(q.question_index);
-        const givenAnswer = userAnswers[qKey] || userAnswers[String(q.question_index)];
-        if (givenAnswer && String(givenAnswer).trim().toUpperCase() === String(q.correct_answer).trim().toUpperCase()) {
+      for (const key of questionKeys) {
+        const expected = answerKeySnapshot[key];
+        const given = userAnswers[key];
+        if (given && String(given).trim().toUpperCase() === String(expected).trim().toUpperCase()) {
           correctCount++;
         }
       }
-      serverCalculatedScore = Number(((correctCount / examQuestions.length) * maxScore).toFixed(1));
+      serverCalculatedScore = Number(((correctCount / questionKeys.length) * maxScore).toFixed(1));
     } else if (isStaff && body.score !== undefined) {
       // Custom teacher manual evaluation
       serverCalculatedScore = Math.min(maxScore, Math.max(0, Number(body.score)));
     } else {
-      serverCalculatedScore = 0;
-    }
-
-    // ANTI-REPLAY & RETAKE LOCK:
-    // Students can submit an exam strictly once; staff is debounced against rapid double-clicks
-    if (platform?.env?.DB) {
-      try {
-        await platform.env.DB.prepare(`
-          CREATE TABLE IF NOT EXISTS exam_attempts (
-            id TEXT PRIMARY KEY,
-            user_id TEXT NOT NULL,
-            user_name TEXT,
-            user_email TEXT,
-            exam_id TEXT NOT NULL,
-            exam_title TEXT,
-            score REAL NOT NULL,
-            max_score REAL NOT NULL,
-            answers_json TEXT NOT NULL,
-            duration_seconds INTEGER DEFAULT 0,
-            session_id TEXT,
-            class_id TEXT,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-          );
-        `).run();
-        await platform.env.DB.prepare(`
-          CREATE UNIQUE INDEX IF NOT EXISTS idx_exam_attempts_user_exam ON exam_attempts (user_id, exam_id);
-        `).run();
-
-        if (!isStaff) {
-          const priorAttempt = await platform.env.DB.prepare(`
-            SELECT id FROM exam_attempts 
-            WHERE user_id = ? AND exam_id = ?
-            LIMIT 1;
-          `).bind(effectiveUserId, examId).first();
-
-          if (priorAttempt) {
-            return json({
-              success: false,
-              error: `DuplicateSubmissionError: Học sinh đã hoàn thành và nộp bài thi '${examId}'. Mỗi bài thi chỉ được nộp một lần (Anti-Replay / Retake Lock).`
-            }, { status: 409 });
+      // Legacy / direct attempt scoring from questionsData when no session instance is bound
+      const examQuestions = questionsData.filter(q => q.exam_id === examId);
+      if (examQuestions.length > 0) {
+        const validQuestionKeys = new Set(examQuestions.map(q => q.id !== undefined ? String(q.id) : String(q.question_index)));
+        for (const [key, val] of Object.entries(userAnswers)) {
+          if (!validQuestionKeys.has(String(key))) {
+            return json({ 
+              success: false, 
+              error: `ForeignKeyError: Câu hỏi '${key}' không thuộc đề thi này. Từ chối câu trả lời ngoài đề thi.` 
+            }, { status: 400 });
           }
-        } else {
-          const recentAttempt = await platform.env.DB.prepare(`
-            SELECT id FROM exam_attempts 
-            WHERE user_id = ? AND exam_id = ? AND created_at > datetime('now', '-3 seconds')
-            LIMIT 1;
-          `).bind(effectiveUserId, examId).first();
-
-          if (recentAttempt) {
-            return json({
-              success: false,
-              error: `DuplicateSubmissionError: Bài làm cho đề thi này vừa được tiếp nhận. Chống nộp lặp (Anti-Replay Guard).`
-            }, { status: 409 });
+          if (typeof val === 'object' && val !== null) {
+            return json({ 
+              success: false, 
+              error: `InvalidAnswerType: Câu trả lời cho '${key}' phải là chuỗi đáp án hợp lệ` 
+            }, { status: 400 });
           }
         }
-      } catch {
-        // Table or index may not exist yet, will be ensured below
+
+        let correctCount = 0;
+        for (const q of examQuestions) {
+          const qKey = q.id !== undefined ? String(q.id) : String(q.question_index);
+          const givenAnswer = userAnswers[qKey] || userAnswers[String(q.question_index)];
+          if (givenAnswer && String(givenAnswer).trim().toUpperCase() === String(q.correct_answer).trim().toUpperCase()) {
+            correctCount++;
+          }
+        }
+        serverCalculatedScore = Number(((correctCount / examQuestions.length) * maxScore).toFixed(1));
+      } else {
+        serverCalculatedScore = 0;
       }
     }
 
@@ -550,63 +640,75 @@ export async function POST({ request, platform }) {
       max_score: maxScore,
       answers: userAnswers,
       duration_seconds: body.duration_seconds || 0,
-      session_id: body.session_id || '',
+      session_id: activeSession ? activeSession.id : (body.session_id || ''),
       class_id: body.class_id || '',
       created_at: new Date().toISOString()
     };
 
-    // D1 Persistence with fail-closed guarantee & Unique concurrency protection
+    // P1-03: ATOMIC D1 PERSISTENCE
     if (platform?.env?.DB) {
-      let activeSession = null;
-      try {
-        await ensureExamSchema(platform.env.DB);
+      if (activeSession) {
+        if (typeof platform.env.DB.batch === 'function') {
+          const updateSessSql = `
+            UPDATE exam_sessions
+            SET status = 'submitted', submitted_at = CURRENT_TIMESTAMP, score = ?
+            WHERE id = ? 
+              AND user_id = ? 
+              AND exam_id = ? 
+              AND status = 'in_progress'
+              AND datetime('now') <= datetime(deadline_at, '+60 seconds');
+          `;
+          const insertAttemptSql = `
+            INSERT INTO exam_attempts (
+              id, user_id, user_name, user_email, exam_id, exam_title,
+              score, max_score, answers_json, duration_seconds, session_id, class_id
+            )
+            SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+            WHERE EXISTS (
+              SELECT 1 FROM exam_sessions WHERE id = ? AND status = 'submitted'
+            );
+          `;
+          try {
+            const batchRes = await platform.env.DB.batch([
+              platform.env.DB.prepare(updateSessSql).bind(saved.score, activeSession.id, effectiveUserId, examId),
+              platform.env.DB.prepare(insertAttemptSql).bind(
+                saved.id,
+                saved.user_id,
+                saved.user_name,
+                saved.user_email,
+                saved.exam_id,
+                saved.exam_title,
+                saved.score,
+                saved.max_score,
+                JSON.stringify(saved.answers),
+                saved.duration_seconds,
+                saved.session_id,
+                saved.class_id,
+                activeSession.id
+              )
+            ]);
 
-        if (body.instance_id) {
-          activeSession = await platform.env.DB.prepare(`
-            SELECT * FROM exam_sessions WHERE id = ? LIMIT 1;
-          `).bind(body.instance_id).first();
-
-          if (!activeSession) {
+            if (!batchRes || batchRes[0]?.meta?.changes === 0) {
+              return json({
+                success: false,
+                error: `DeadlineExceededError: Phiên thi đã quá thời hạn nộp bài tại thời điểm ghi dữ liệu hoặc đã được nộp đồng thời.`
+              }, { status: 400 });
+            }
+          } catch (batchErr) {
+            if (batchErr.message && (batchErr.message.includes('UNIQUE') || batchErr.message.includes('constraint'))) {
+              return json({
+                success: false,
+                error: `DuplicateSubmissionError: Bài làm cho đề thi này đã được tiếp nhận trong một phiên đồng thời. Chống nộp lặp (Unique Concurrency Guard).`
+              }, { status: 409 });
+            }
             return json({
               success: false,
-              error: `SessionNotFoundError: Không tìm thấy phiên thi '${body.instance_id}'.`
-            }, { status: 404 });
+              error: `DatabasePersistenceError: Không thể lưu kết quả thi vào D1 (${batchErr.message})`
+            }, { status: 500 });
           }
-        } else if (!isStaff) {
-          // If student has an active session for this exam, bind it automatically
-          activeSession = await platform.env.DB.prepare(`
-            SELECT * FROM exam_sessions
-            WHERE user_id = ? AND exam_id = ? AND status = 'in_progress'
-            ORDER BY started_at DESC LIMIT 1;
-          `).bind(effectiveUserId, examId).first();
-        }
-
-        if (activeSession) {
-          // STRICT OWNERSHIP CHECK: Instance must belong to submitting student (unless staff)
-          if (activeSession.user_id !== effectiveUserId && !isStaff) {
-            return json({
-              success: false,
-              error: `ForbiddenSessionAccess: Phiên thi '${activeSession.id}' không thuộc về tài khoản người dùng hiện tại.`
-            }, { status: 403 });
-          }
-
-          // STRICT EXAM BINDING CHECK: Instance must belong to the same exam
-          if (activeSession.exam_id !== examId) {
-            return json({
-              success: false,
-              error: `ExamMismatchError: Phiên thi '${activeSession.id}' thuộc đề '${activeSession.exam_id}', không khớp với đề thi nộp '${examId}'.`
-            }, { status: 400 });
-          }
-
-          if (activeSession.status === 'submitted') {
-            return json({
-              success: false,
-              error: `DuplicateSubmissionError: Phiên thi này đã được hoàn tất trước đó.`
-            }, { status: 409 });
-          }
-
-          // ATOMIC SESSION UPDATE:
-          // Check deadline directly at write-time in the SQL query!
+        } else {
+          // Sequential CAS fallback for non-batch environments (unit test adapters):
+          // Update session via CAS first; if changes === 0, abort immediately without touching attempts.
           const sessUpdateRes = await platform.env.DB.prepare(`
             UPDATE exam_sessions
             SET status = 'submitted', submitted_at = CURRENT_TIMESTAMP, score = ?
@@ -618,54 +720,80 @@ export async function POST({ request, platform }) {
           `).bind(saved.score, activeSession.id, effectiveUserId, examId).run();
 
           if (sessUpdateRes.meta?.changes === 0) {
-            // Write-time check: deadline exceeded or session was concurrently submitted/expired
-            await platform.env.DB.prepare(`UPDATE exam_sessions SET status = 'expired' WHERE id = ? AND status = 'in_progress';`).bind(activeSession.id).run();
             return json({
               success: false,
               error: `DeadlineExceededError: Phiên thi đã quá thời hạn nộp bài tại thời điểm ghi dữ liệu hoặc đã được nộp đồng thời.`
             }, { status: 400 });
           }
-        }
 
-        await platform.env.DB.prepare(`
-          INSERT INTO exam_attempts (
-            id, user_id, user_name, user_email, exam_id, exam_title,
-            score, max_score, answers_json, duration_seconds, session_id, class_id
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
-        `).bind(
-          saved.id,
-          saved.user_id,
-          saved.user_name,
-          saved.user_email,
-          saved.exam_id,
-          saved.exam_title,
-          saved.score,
-          saved.max_score,
-          JSON.stringify(saved.answers),
-          saved.duration_seconds,
-          saved.session_id,
-          saved.class_id
-        ).run();
-      } catch (dbErr) {
-        if (activeSession) {
           try {
             await platform.env.DB.prepare(`
-              UPDATE exam_sessions SET status = 'in_progress', submitted_at = NULL, score = NULL
-              WHERE id = ? AND status = 'submitted';
-            `).bind(activeSession.id).run();
-          } catch {}
+              INSERT INTO exam_attempts (
+                id, user_id, user_name, user_email, exam_id, exam_title,
+                score, max_score, answers_json, duration_seconds, session_id, class_id
+              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+            `).bind(
+              saved.id,
+              saved.user_id,
+              saved.user_name,
+              saved.user_email,
+              saved.exam_id,
+              saved.exam_title,
+              saved.score,
+              saved.max_score,
+              JSON.stringify(saved.answers),
+              saved.duration_seconds,
+              saved.session_id,
+              saved.class_id
+            ).run();
+          } catch (insertErr) {
+            // NEVER reset activeSession here! Do not execute compensating rollback.
+            if (insertErr.message && (insertErr.message.includes('UNIQUE') || insertErr.message.includes('constraint'))) {
+              return json({
+                success: false,
+                error: `DuplicateSubmissionError: Bài làm cho đề thi này đã được tiếp nhận trong một phiên đồng thời. Chống nộp lặp (Unique Concurrency Guard).`
+              }, { status: 409 });
+            }
+            return json({
+              success: false,
+              error: `DatabasePersistenceError: Không thể lưu kết quả thi vào D1 (${insertErr.message})`
+            }, { status: 500 });
+          }
         }
-        if (dbErr.message && (dbErr.message.includes('UNIQUE') || dbErr.message.includes('constraint'))) {
+      } else {
+        // Direct attempt submission without an active session (e.g. staff grading or quick test)
+        try {
+          await platform.env.DB.prepare(`
+            INSERT INTO exam_attempts (
+              id, user_id, user_name, user_email, exam_id, exam_title,
+              score, max_score, answers_json, duration_seconds, session_id, class_id
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+          `).bind(
+            saved.id,
+            saved.user_id,
+            saved.user_name,
+            saved.user_email,
+            saved.exam_id,
+            saved.exam_title,
+            saved.score,
+            saved.max_score,
+            JSON.stringify(saved.answers),
+            saved.duration_seconds,
+            saved.session_id,
+            saved.class_id
+          ).run();
+        } catch (insertErr) {
+          if (insertErr.message && (insertErr.message.includes('UNIQUE') || insertErr.message.includes('constraint'))) {
+            return json({
+              success: false,
+              error: `DuplicateSubmissionError: Bài làm cho đề thi này đã được tiếp nhận trong một phiên đồng thời. Chống nộp lặp (Unique Concurrency Guard).`
+            }, { status: 409 });
+          }
           return json({
             success: false,
-            error: `DuplicateSubmissionError: Bài làm cho đề thi này đã được tiếp nhận trong một phiên đồng thời. Chống nộp lặp (Unique Concurrency Guard).`
-          }, { status: 409 });
+            error: `DatabasePersistenceError: Không thể lưu kết quả thi vào D1 (${insertErr.message})`
+          }, { status: 500 });
         }
-        console.error('D1 exam_attempts write error:', dbErr);
-        return json({
-          success: false,
-          error: `DatabasePersistenceError: Không thể lưu kết quả thi vào D1 (${dbErr.message})`
-        }, { status: 500 });
       }
     }
 

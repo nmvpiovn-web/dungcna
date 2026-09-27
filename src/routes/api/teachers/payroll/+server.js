@@ -339,10 +339,42 @@ export async function POST({ request, platform }) {
         const voucherId = `vch_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
         const voucherNumber = `PC-${billingCycle.replace('-', '')}-${teacherId.slice(0, 4).toUpperCase()}-${Date.now().toString().slice(-4)}`;
 
-        // ATOMIC DISBURSEMENT TRANSACTION:
-        // Ensure BOTH finance_ledger insertion and teacher_payrolls status update commit together.
-        // If updating payroll fails (trigger, constraint, error) or yields 0 changes:
-        // IMMEDIATELY rollback the voucher from finance_ledger and fail closed!
+        // P1-01: ATOMIC DISBURSEMENT TRANSACTION
+        // Cloudflare D1 requires db.batch for atomic transactions.
+        // If db.batch is missing, fail-closed with HTTP 500 (DisbursementTransactionError).
+        if (typeof db.batch !== 'function') {
+          return json({
+            success: false,
+            error: 'DisbursementTransactionError: Hệ thống cơ sở dữ liệu yêu cầu hỗ trợ giao dịch nguyên tử (db.batch) để giải ngân.'
+          }, { status: 500 });
+        }
+
+        // Conditional INSERT: Only insert voucher if teacher_payrolls record is still in ('locked', 'approved')
+        let insertLedgerSql = `
+          INSERT INTO finance_ledger (
+            id, voucher_type, reference_id, teacher_id, actor_id,
+            amount, payment_method, billing_cycle, idempotency_key, voucher_number, status
+          )
+          SELECT ?, 'PAYROLL_DISBURSEMENT', id, teacher_id, ?, net_amount, ?, billing_cycle, ?, ?, 'completed'
+          FROM teacher_payrolls
+          WHERE id = ? AND status IN ('locked', 'approved')
+        `;
+        const ledgerParams = [
+          voucherId,
+          auth.user.id,
+          body.payment_method || 'bank_transfer',
+          effectiveIdemKey,
+          voucherNumber,
+          existing.id
+        ];
+        if (body.expected_status) {
+          insertLedgerSql += ` AND status = ?;`;
+          ledgerParams.push(body.expected_status);
+        } else {
+          insertLedgerSql += `;`;
+        }
+
+        // CAS UPDATE: Update status to 'paid' only if status is still ('locked', 'approved')
         let disburseSql = `
           UPDATE teacher_payrolls
           SET status = 'paid', updated_at = CURRENT_TIMESTAMP
@@ -356,58 +388,22 @@ export async function POST({ request, platform }) {
           disburseSql += `;`;
         }
 
-        const insertLedgerSql = `
-          INSERT INTO finance_ledger (
-            id, voucher_type, reference_id, teacher_id, actor_id,
-            amount, payment_method, billing_cycle, idempotency_key, voucher_number, status
-          ) VALUES (?, 'PAYROLL_DISBURSEMENT', ?, ?, ?, ?, ?, ?, ?, ?, 'completed');
-        `;
-        const ledgerParams = [
-          voucherId,
-          existing.id,
-          teacherId,
-          auth.user.id,
-          existing.net_amount,
-          body.payment_method || 'bank_transfer',
-          billingCycle,
-          effectiveIdemKey,
-          voucherNumber
-        ];
-
-        let voucherInserted = false;
         try {
-          if (typeof db.batch === 'function') {
-            const batchRes = await db.batch([
-              db.prepare(insertLedgerSql).bind(...ledgerParams),
-              db.prepare(disburseSql).bind(...disburseParams)
-            ]);
-            if (!batchRes || batchRes[1]?.meta?.changes === 0) {
-              try { await db.prepare(`DELETE FROM finance_ledger WHERE id = ?;`).bind(voucherId).run(); } catch {}
-              return json({
-                success: false,
-                error: `ConflictError: Kỳ lương ${billingCycle} không còn ở trạng thái 'locked' hoặc 'approved', không thể giải ngân.`
-              }, { status: 409 });
-            }
-          } else {
-            await db.prepare(insertLedgerSql).bind(...ledgerParams).run();
-            voucherInserted = true;
+          const batchRes = await db.batch([
+            db.prepare(insertLedgerSql).bind(...ledgerParams),
+            db.prepare(disburseSql).bind(...disburseParams)
+          ]);
 
-            const disburseRes = await db.prepare(disburseSql).bind(...disburseParams).run();
-            if (disburseRes.meta?.changes === 0) {
-              try { await db.prepare(`DELETE FROM finance_ledger WHERE id = ?;`).bind(voucherId).run(); } catch {}
-              return json({
-                success: false,
-                error: `ConflictError: Kỳ lương ${billingCycle} không còn ở trạng thái 'locked' hoặc 'approved', không thể giải ngân.`
-              }, { status: 409 });
-            }
+          if (!batchRes || batchRes[1]?.meta?.changes === 0) {
+            // CAS update matched 0 rows -> conditional insert also inserted 0 rows! Zero orphan voucher.
+            return json({
+              success: false,
+              error: `ConflictError: Kỳ lương ${billingCycle} không còn ở trạng thái 'locked' hoặc 'approved', không thể giải ngân.`
+            }, { status: 409 });
           }
         } catch (txnErr) {
-          // ATOMIC ROLLBACK: Purge the voucher if downstream update failed or aborted
-          if (voucherInserted) {
-            try {
-              await db.prepare(`DELETE FROM finance_ledger WHERE id = ?;`).bind(voucherId).run();
-            } catch {}
-          }
+          // D1 batch rolled back both statements automatically upon trigger/constraint/IO error.
+          // Zero rows in finance_ledger, status in teacher_payrolls remains unchanged.
           return json({
             success: false,
             error: `DisbursementTransactionError: Quá trình giải ngân thất bại (${txnErr.message})`
