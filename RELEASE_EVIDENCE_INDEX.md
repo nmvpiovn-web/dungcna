@@ -119,9 +119,14 @@ Bảng dẫn chiếu này cung cấp liên kết trực tiếp từ từng mã y
 
 ## 2. TỔNG KẾT & RAW LOGS
 
-- **Node.js Test Run:** 17 suites, 100 tests, 100 passed, 0 failed, 0 skipped. Thời gian: ~5.3s.
+- **Node.js Test Run:** 17 suites, 107 tests, 107 passed, 0 failed, 0 skipped (`npm test`). Thời gian: ~5.8s.
 - **Python Test Run:** 7 suites, 89 tests, 89 passed, 0 failed.
-- **Tổng số automated tests:** **189 tests PASS 100%**.
-- **Codex Regression Suite (`audit_adc235a_approved_snapshot.mjs`):** 8/8 tests PASS 100%.
-- **Type Check (`npm run check`):** 0 errors, 70 warnings (a11y click-events, unused CSS).
-- **Production Build (`npm run build`):** Exit 0, thành công trong ~12s (@sveltejs/adapter-cloudflare).
+- **Tổng số automated tests nội bộ:** **196 tests PASS 100%**.
+- **Codex Verification Suites:**
+  - `audit_6017fc6_reverse_failure.mjs`: PASS 100% (Dual-way atomic compensation & zero orphan replay).
+  - `audit_b1dc6af_integrity.mjs`: PASS 100% (Fail-closed ledger trigger & exam duration clamping).
+  - `audit_adc235a_approved_snapshot.mjs`: 8/8 regression cases PASS 100%.
+- **Type Check (`npx --yes svelte-check --threshold error`):** 0 errors.
+- **Production Build (`npm run build`):** Exit 0 (@sveltejs/adapter-cloudflare).
+- **Source Commit:** `94f88eac266e5d0a6f837f92e551d3af8afb00bd`
+
