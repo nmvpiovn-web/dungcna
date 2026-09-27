@@ -254,54 +254,69 @@ export async function POST({ request, platform }) {
       }, { status: 409 });
     }
 
-    // 2. Locked period handling: Only legitimate transition is locked -> paid via disburse
-    if (existing && existing.status === 'locked') {
+    // 2. Locked & Approved periods handling (Immutable financial snapshots):
+    // Once approved or locked, monetary amounts (gross, net, calculations) are immutable.
+    // Legitimate state transitions:
+    // - approved -> locked (via 'lock')
+    // - approved -> paid (via 'disburse')
+    // - locked -> paid (via 'disburse')
+    // All other actions (calculate, save_draft, preview) are strictly rejected with 409 Conflict.
+    if (existing && ['locked', 'approved'].includes(existing.status)) {
+      if (!manager) {
+        return json({
+          success: false,
+          error: `Forbidden: Bảng lương ${billingCycle} đã được phê duyệt/khóa sổ (${existing.approved_by || 'Leader'}). Giáo viên không có quyền can thiệp.`
+        }, { status: 403 });
+      }
+
       if (action === 'disburse') {
         const disburseRes = await db.prepare(`
           UPDATE teacher_payrolls
           SET status = 'paid', updated_at = CURRENT_TIMESTAMP
-          WHERE id = ? AND status = 'locked'
+          WHERE id = ? AND status IN ('locked', 'approved');
         `).bind(existing.id).run();
 
         if (disburseRes.meta?.changes === 0) {
           return json({
             success: false,
-            error: `ConflictError: Kỳ lương ${billingCycle} không còn ở trạng thái 'locked', không thể giải ngân.`
+            error: `ConflictError: Kỳ lương ${billingCycle} không còn ở trạng thái 'locked' hoặc 'approved', không thể giải ngân.`
           }, { status: 409 });
         }
 
         return json({
           success: true,
-          message: `Đã xác nhận thực chi trả thành công cho kỳ lương ${billingCycle}!`,
-          status: 'paid'
+          message: `Đã xác nhận thực chi trả thành công số tiền đã duyệt cho kỳ lương ${billingCycle}!`,
+          status: 'paid',
+          disbursed_net_amount: existing.net_amount
+        });
+      } else if (action === 'lock') {
+        const lockRes = await db.prepare(`
+          UPDATE teacher_payrolls
+          SET status = 'locked', updated_at = CURRENT_TIMESTAMP
+          WHERE id = ? AND status IN ('locked', 'approved');
+        `).bind(existing.id).run();
+
+        if (lockRes.meta?.changes === 0) {
+          return json({
+            success: false,
+            error: `ConflictError: Kỳ lương ${billingCycle} không còn ở trạng thái 'approved' hoặc 'locked', không thể khóa sổ.`
+          }, { status: 409 });
+        }
+
+        return json({
+          success: true,
+          message: `Đã khóa sổ kỳ lương ${billingCycle} thành công!`,
+          status: 'locked'
         });
       } else {
         return json({
           success: false,
-          error: `ConflictError: Kỳ lương ${billingCycle} của giáo viên ${teacherId} đã ở trạng thái 'locked', không thể sửa đổi.`
+          error: `ConflictError: Kỳ lương ${billingCycle} của giáo viên ${teacherId} đã ở trạng thái '${existing.status}'. Số tiền đã phê duyệt là bất biến, không thể tính lại hay ghi đè.`
         }, { status: 409 });
       }
     }
 
-    // 3. Approved period handling:
-    // Teachers cannot modify or downgrade an approved payroll.
-    // Managers can lock or disburse, but cannot demote back to draft.
-    if (existing && existing.status === 'approved') {
-      if (!manager) {
-        return json({
-          success: false,
-          error: `Forbidden: Bảng lương ${billingCycle} đã được phê duyệt bởi Ban Quản Lý (${existing.approved_by || 'Leader'}). Giáo viên không có quyền chỉnh sửa hoặc hạ cấp về bản nháp.`
-        }, { status: 403 });
-      }
-      if (['save_draft', 'calculate'].includes(action)) {
-        return json({
-          success: false,
-          error: `ConflictError: Bảng lương ${billingCycle} đã được phê duyệt ('approved'). Không thể ghi đè về bản nháp. Vui lòng thực hiện 'lock' hoặc 'disburse'.`
-        }, { status: 409 });
-      }
-    }
-
-    // 4. Disbursement pre-condition: Must be approved or locked before disbursement
+    // 3. Disbursement pre-condition: Must be approved or locked before disbursement
     if (action === 'disburse' && (!existing || existing.status === 'draft')) {
       return json({
         success: false,

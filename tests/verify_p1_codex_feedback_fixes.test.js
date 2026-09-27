@@ -140,7 +140,7 @@ test('P1-01: Payroll RBAC & Action Allowlist enforcement', async () => {
 });
 
 test('P1-02: Locked Payroll GET returns 200 snapshot and POST prevents overwrite with 409', async () => {
-  const { platform } = createMockPlatform();
+  const { platform, rawDb } = createMockPlatform();
   const leaderToken = await createSignedToken({ id: 'usr_leader_admin', username: 'leader_admin', role: 'leader' }, secret);
 
   // Leader locks payroll for teacher_a
@@ -205,6 +205,20 @@ test('P1-02: Locked Payroll GET returns 200 snapshot and POST prevents overwrite
   const payrollRow = await platform.env.DB.prepare("SELECT status, approved_by FROM teacher_payrolls WHERE teacher_id = 'usr_teacher_a'").first();
   assert.equal(payrollRow.status, 'approved', 'Status must remain approved in DB');
   assert.equal(payrollRow.approved_by, 'usr_leader_admin', 'Approved_by must remain intact');
+
+  // 6. Disbursing an approved payroll preserves approved monetary snapshot without recalculating added sessions
+  rawDb.exec("INSERT INTO class_sessions VALUES('sess_post_approval_test','usr_teacher_a','2026-09-20',60,'completed','main_teacher')");
+  const disburseApprovedReq = new Request('http://localhost/api/teachers/payroll', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${leaderToken}` },
+    body: JSON.stringify({ action: 'disburse', teacher_id: 'usr_teacher_a', billing_cycle: '2026-09' })
+  });
+  const disburseApprovedRes = await payrollPost({ request: disburseApprovedReq, platform });
+  assert.equal(disburseApprovedRes.status, 200, 'Disbursing approved payroll should succeed');
+  const disbursedRow = await platform.env.DB.prepare("SELECT gross_amount, net_amount, status FROM teacher_payrolls WHERE teacher_id = 'usr_teacher_a'").first();
+  assert.equal(disbursedRow.status, 'paid', 'Status must transition to paid');
+  assert.equal(disbursedRow.gross_amount, 0, 'Gross amount must remain what was approved (0 VND)');
+  assert.equal(disbursedRow.net_amount, 0, 'Net amount must remain what was approved (0 VND)');
 });
 
 test('P1-03: Exam validation rejects rogue question keys (400) and repeated submissions (409)', async () => {
