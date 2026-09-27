@@ -47,7 +47,7 @@ Bảng dẫn chiếu này cung cấp liên kết trực tiếp từ từng mã y
 | **REQ-PAY-02** | `api/teachers/payroll/+server.js` | `tests/verify_payroll_engine.test.js` | `node --test tests/verify_payroll_engine.test.js` | WORKER_TESTED |
 | **REQ-PAY-03** | `src/lib/server/payrollEngine.js` | `tests/verify_payroll_engine.test.js` | `node --test tests/verify_payroll_engine.test.js` | WORKER_TESTED |
 | **REQ-PAY-04** | `src/lib/server/payrollEngine.js` | `tests/verify_payroll_engine.test.js` | `node --test tests/verify_payroll_engine.test.js` | WORKER_TESTED |
-| **REQ-PAY-05** | `api/teachers/payroll/+server.js` | `tests/verify_payroll_engine.test.js` | `node --test tests/verify_payroll_engine.test.js` | WORKER_TESTED |
+| **REQ-PAY-05** | `api/teachers/payroll`, `cpanel/teacher`, `cpanel/leader` | `tests/verify_payroll_engine.test.js`, `svelte-check` | `node --test tests/verify_payroll_engine.test.js` | WORKER_TESTED |
 | **REQ-TUIT-01** | `api/tuition/+server.js` | `tests/homework_and_cpanel.test.py` | `python tests/homework_and_cpanel.test.py` | WORKER_TESTED |
 | **REQ-TUIT-02** | `cpanel/parent/+page.svelte` | `tests/homework_and_cpanel.test.py` | `python tests/homework_and_cpanel.test.py` | WORKER_TESTED |
 | **REQ-TUIT-03** | `api/tuition/+server.js` | `tests/homework_and_cpanel.test.py` | `python tests/homework_and_cpanel.test.py` | WORKER_TESTED |
