@@ -251,7 +251,7 @@
                 2026 CTGDPT
               </span>
             </div>
-            <span class="hidden xl:block text-[11px] text-slate-500 dark:text-slate-400 -mt-0.5">K12 &amp; Khảo Thí Chuẩn Quốc Tế</span>
+            <span class="hidden xl:block text-[11px] text-slate-700 dark:text-slate-300 font-medium -mt-0.5">K12 &amp; Khảo Thí Chuẩn Quốc Tế</span>
           </div>
         </a>
 
@@ -752,7 +752,7 @@
                       {/if}
                     </div>
                     {#if currentUser.phone}
-                      <div class="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1 mt-1">
+                      <div class="text-[11px] text-slate-600 dark:text-slate-300 font-medium flex items-center gap-1 mt-1">
                         <span>📞</span> <span>{currentUser.phone}</span>
                       </div>
                     {/if}
@@ -796,7 +796,7 @@
                   </button>
                 </div>
 
-                <div class="pt-2 border-t border-slate-100 dark:border-slate-800 px-1 text-[11px] text-slate-500 flex justify-between items-center">
+                <div class="pt-2 border-t border-slate-100 dark:border-slate-800 px-1 text-[11px] text-slate-600 dark:text-slate-300 font-medium flex justify-between items-center">
                   <span>Hệ Thống Tiếng Anh Cô Dung</span>
                   <span class="text-sky-600 dark:text-sky-400 font-semibold">PWA Active</span>
                 </div>
@@ -1066,15 +1066,15 @@
   </main>
 
   <!-- Footer -->
-  <footer class="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-8 mt-auto text-xs text-slate-500 dark:text-slate-400 transition-colors duration-200">
+  <footer class="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-8 mt-auto text-xs text-slate-700 dark:text-slate-300 transition-colors duration-200">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
       <div class="flex items-center gap-3">
         <div class="w-8 h-8 rounded-md bg-sky-700 flex items-center justify-center text-white font-semibold text-sm">
           CD
         </div>
         <div>
-          <div class="font-semibold text-slate-800 dark:text-slate-200">Tiếng Anh Cô Dung — Hệ Thống Khảo Thí &amp; Đào Tạo Toàn Diện 2026</div>
-          <div class="text-[11px] text-slate-500">
+          <div class="font-semibold text-slate-900 dark:text-white">Tiếng Anh Cô Dung — Hệ Thống Khảo Thí &amp; Đào Tạo Toàn Diện 2026</div>
+          <div class="text-[11px] text-slate-600 dark:text-slate-300 font-medium">
             Chương trình GDPT 2018 (Lớp 1-12) • Ôn thi THPT Quốc Gia • IELTS Cambridge • Co-Teaching Bản Ngữ
           </div>
         </div>
