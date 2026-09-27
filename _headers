@@ -1,8 +1,8 @@
-/sw.js
-  Cache-Control: no-cache, no-store, must-revalidate
+# Cloudflare Pages custom headers
+# Prevent edge-caching redirect responses from hooks.server.js
+# Reference: https://developers.cloudflare.com/pages/configuration/headers/
 
-/manifest.webmanifest
-  Cache-Control: no-cache, no-store, must-revalidate
-
-/apk_version.json
-  Cache-Control: no-cache, no-store, must-revalidate
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: SAMEORIGIN
+  Cache-Control: no-cache
