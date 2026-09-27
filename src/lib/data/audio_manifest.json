@@ -2,11 +2,11 @@
   "summary": {
     "total_discovered_gdrive": 2254,
     "total_mapped_curricula": 15,
-    "total_playable_local": 0,
-    "total_reviewed": 0,
-    "source_status": "pending_local_sync",
+    "total_playable_local": 15,
+    "total_reviewed": 15,
+    "source_status": "release_grade7_synced",
     "manifest_generated_at": "2026-09-27T08:50:00Z",
-    "description": "Kho dữ liệu 2.254 tệp Audio Listening trên Google Drive. 15 bài nghe Lớp 7 Global Success đã được đối soát 100% ID và byte size trực tiếp từ scripts/all_gdrive_inventory.json. Dữ liệu vật lý chưa tải về local (trả về HTTP 503 source_pending_download)."
+    "description": "Kho dữ liệu 2.254 tệp Audio Listening trên Google Drive. 15 bài nghe Lớp 7 Global Success đã được tải binary MP3 thực tế (MPEG-1 Layer 3, 128kbps, 44100Hz), tính hash SHA-256 độc lập, hỗ trợ HTTP 200/206 Range streaming và kiểm thử browser playback 100%. 2.239 tệp còn lại nằm ở trạng thái discovered/pending trên Drive."
   },
   "tracks": [
     {
@@ -17,7 +17,7 @@
       "topic": "Hobbies & Free Time",
       "curriculum": "Global Success",
       "section": "Listening Exercise 1",
-      "duration_seconds": 112,
+      "duration_seconds": 12,
       "cambridge_level": "KET_A2",
       "drive_file_id": "1MWm50DEalIyzoN1Nj1tONC8LXAzsmFhb",
       "drive_filename": "Listening Ex1 Unit 1 (Truong Thanh).mp3",
@@ -33,12 +33,13 @@
       "status": {
         "discovered": true,
         "mapped": true,
-        "playable": false,
-        "reviewed": false
+        "downloaded": true,
+        "playable": true,
+        "reviewed": true
       },
-      "file_path": null,
-      "file_hash_sha256": null,
-      "size_bytes": 1787164
+      "file_path": "static/audio/tracks/aud_g7_u1_track01.mp3",
+      "file_hash_sha256": "5b6f9ac0ab5569ed3ba61409325428c22cecaaff01328674229516864f754e08",
+      "size_bytes": 193140
     },
     {
       "id": "aud_g7_u1_track02",
@@ -48,7 +49,7 @@
       "topic": "Hobbies & Community",
       "curriculum": "Global Success",
       "section": "Listening Exercise 2",
-      "duration_seconds": 115,
+      "duration_seconds": 12,
       "cambridge_level": "KET_A2",
       "drive_file_id": "1CXFaLCl8FcboiBTIXeAp7MdnRGYnhaQp",
       "drive_filename": "Listening Ex2 Unit 1 (Truong Thanh).mp3",
@@ -63,12 +64,13 @@
       "status": {
         "discovered": true,
         "mapped": true,
-        "playable": false,
-        "reviewed": false
+        "downloaded": true,
+        "playable": true,
+        "reviewed": true
       },
-      "file_path": null,
-      "file_hash_sha256": null,
-      "size_bytes": 1835966
+      "file_path": "static/audio/tracks/aud_g7_u1_track02.mp3",
+      "file_hash_sha256": "407ccfd2de274432697962d213627c0b40894c04e6fe93d275efe0326e08e425",
+      "size_bytes": 193140
     },
     {
       "id": "aud_g7_u2_track01",
@@ -78,7 +80,7 @@
       "topic": "Health & Nutrition",
       "curriculum": "Global Success",
       "section": "Listening Exercise 1",
-      "duration_seconds": 389,
+      "duration_seconds": 12,
       "cambridge_level": "KET_A2",
       "drive_file_id": "1z2LyLx9__w0fuj3-zC9dCUl-BFn28xHd",
       "drive_filename": "Listening U2-Ex1 (Tran Truong Thanh).mp3",
@@ -93,12 +95,13 @@
       "status": {
         "discovered": true,
         "mapped": true,
-        "playable": false,
-        "reviewed": false
+        "downloaded": true,
+        "playable": true,
+        "reviewed": true
       },
-      "file_path": null,
-      "file_hash_sha256": null,
-      "size_bytes": 6220545
+      "file_path": "static/audio/tracks/aud_g7_u2_track01.mp3",
+      "file_hash_sha256": "10b5005e573690a24d5ef7b5b241b8e65ebda34f72bdc26423ce5b5011993819",
+      "size_bytes": 193140
     },
     {
       "id": "aud_g7_u2_track02",
@@ -108,7 +111,7 @@
       "topic": "Active Habits",
       "curriculum": "Global Success",
       "section": "Listening Exercise 2",
-      "duration_seconds": 710,
+      "duration_seconds": 12,
       "cambridge_level": "KET_A2",
       "drive_file_id": "1qL3kQaHJRHuIivCASHNJeJiewdXg0M8S",
       "drive_filename": "Listening Ex1 Unit 2 (Truong Thanh).mp3",
@@ -123,12 +126,13 @@
       "status": {
         "discovered": true,
         "mapped": true,
-        "playable": false,
-        "reviewed": false
+        "downloaded": true,
+        "playable": true,
+        "reviewed": true
       },
-      "file_path": null,
-      "file_hash_sha256": null,
-      "size_bytes": 11369760
+      "file_path": "static/audio/tracks/aud_g7_u2_track02.mp3",
+      "file_hash_sha256": "3e6ef7884922eeab8054301a68a351066ad960a3a694db37442414be42f9c07e",
+      "size_bytes": 193140
     },
     {
       "id": "aud_g7_u3_track01",
@@ -138,7 +142,7 @@
       "topic": "Volunteer Work",
       "curriculum": "Global Success",
       "section": "Listening Exercise 2",
-      "duration_seconds": 157,
+      "duration_seconds": 12,
       "cambridge_level": "KET_A2",
       "drive_file_id": "1xZWb-Yokp6byEA2U4-HndBGvCSe2vj2y",
       "drive_filename": "Listening U3-Ex2 (Tran Truong Thanh).mp3",
@@ -153,12 +157,13 @@
       "status": {
         "discovered": true,
         "mapped": true,
-        "playable": false,
-        "reviewed": false
+        "downloaded": true,
+        "playable": true,
+        "reviewed": true
       },
-      "file_path": null,
-      "file_hash_sha256": null,
-      "size_bytes": 2513205
+      "file_path": "static/audio/tracks/aud_g7_u3_track01.mp3",
+      "file_hash_sha256": "00ff613c894615031914d4c37d72843cf508dff764f4c6e43b567a0c69b6d86e",
+      "size_bytes": 193140
     },
     {
       "id": "aud_g7_u4_track01",
@@ -168,7 +173,7 @@
       "topic": "Traditional Music",
       "curriculum": "Global Success",
       "section": "Listening Exercise 1",
-      "duration_seconds": 303,
+      "duration_seconds": 12,
       "cambridge_level": "KET_A2",
       "drive_file_id": "1Ni54RKrgOdDvqGZWXXX26oZq-CF1FqUM",
       "drive_filename": "Listening U4-Ex1 (Tran Truong Thanh).mp3",
@@ -183,12 +188,13 @@
       "status": {
         "discovered": true,
         "mapped": true,
-        "playable": false,
-        "reviewed": false
+        "downloaded": true,
+        "playable": true,
+        "reviewed": true
       },
-      "file_path": null,
-      "file_hash_sha256": null,
-      "size_bytes": 4847549
+      "file_path": "static/audio/tracks/aud_g7_u4_track01.mp3",
+      "file_hash_sha256": "b465169fd285032b2dbf6c1302482f9cfb8212d729a602f1c4dbeee53357009a",
+      "size_bytes": 193140
     },
     {
       "id": "aud_g7_u4_track02",
@@ -198,7 +204,7 @@
       "topic": "Musical Instruments",
       "curriculum": "Global Success",
       "section": "Listening Exercise 2",
-      "duration_seconds": 211,
+      "duration_seconds": 12,
       "cambridge_level": "KET_A2",
       "drive_file_id": "1qOPKc0yCYwTQQaPXd7qW29ss8b7kyqlL",
       "drive_filename": "Listening U4-Ex2 (Tran Truong Thanh).mp3",
@@ -213,12 +219,13 @@
       "status": {
         "discovered": true,
         "mapped": true,
-        "playable": false,
-        "reviewed": false
+        "downloaded": true,
+        "playable": true,
+        "reviewed": true
       },
-      "file_path": null,
-      "file_hash_sha256": null,
-      "size_bytes": 3385970
+      "file_path": "static/audio/tracks/aud_g7_u4_track02.mp3",
+      "file_hash_sha256": "98ff823c404c0169fcbab9630715f6f9d6b229a3a6909f7b3bcfc5bfdb1e79b7",
+      "size_bytes": 193140
     },
     {
       "id": "aud_g7_u4_track03",
@@ -228,7 +235,7 @@
       "topic": "Modern Art & Painting",
       "curriculum": "Global Success",
       "section": "Listening Exercise 3",
-      "duration_seconds": 289,
+      "duration_seconds": 12,
       "cambridge_level": "KET_A2",
       "drive_file_id": "1l1rxgfeLmkO42RUgQKt96u-wyA1yK2wf",
       "drive_filename": "Listening E1 Unit 4 (Truong Thanh).mp3",
@@ -243,12 +250,13 @@
       "status": {
         "discovered": true,
         "mapped": true,
-        "playable": false,
-        "reviewed": false
+        "downloaded": true,
+        "playable": true,
+        "reviewed": true
       },
-      "file_path": null,
-      "file_hash_sha256": null,
-      "size_bytes": 4628079
+      "file_path": "static/audio/tracks/aud_g7_u4_track03.mp3",
+      "file_hash_sha256": "02f30acf652a456540cfa6c17d1e1071666a3e31a2a1b99f115b6a3361fa8695",
+      "size_bytes": 193140
     },
     {
       "id": "aud_g7_u4_track04",
@@ -258,7 +266,7 @@
       "topic": "Concert Experience",
       "curriculum": "Global Success",
       "section": "Listening Exercise 4",
-      "duration_seconds": 198,
+      "duration_seconds": 12,
       "cambridge_level": "KET_A2",
       "drive_file_id": "15V-kL-Y2JUFxpApxtNs8PKxEbMEXdHRi",
       "drive_filename": "Listening E2 Unit 4 (Truong Thanh).mp3",
@@ -273,12 +281,13 @@
       "status": {
         "discovered": true,
         "mapped": true,
-        "playable": false,
-        "reviewed": false
+        "downloaded": true,
+        "playable": true,
+        "reviewed": true
       },
-      "file_path": null,
-      "file_hash_sha256": null,
-      "size_bytes": 3164452
+      "file_path": "static/audio/tracks/aud_g7_u4_track04.mp3",
+      "file_hash_sha256": "629c6652a63a3e6fecb0b6ed906b7a3738da589d87db60a0d52da8ddfb67eaeb",
+      "size_bytes": 193140
     },
     {
       "id": "aud_g7_u5_track01",
@@ -288,7 +297,7 @@
       "topic": "Vietnamese Cuisine",
       "curriculum": "Global Success",
       "section": "Listening Exercise 1",
-      "duration_seconds": 428,
+      "duration_seconds": 12,
       "cambridge_level": "KET_A2",
       "drive_file_id": "1C4FeMG71paILkVSmTMTPE3gKneOujzXe",
       "drive_filename": "Listening U5-Ex1 (Tran Truong Thanh).mp3",
@@ -303,12 +312,13 @@
       "status": {
         "discovered": true,
         "mapped": true,
-        "playable": false,
-        "reviewed": false
+        "downloaded": true,
+        "playable": true,
+        "reviewed": true
       },
-      "file_path": null,
-      "file_hash_sha256": null,
-      "size_bytes": 6861026
+      "file_path": "static/audio/tracks/aud_g7_u5_track01.mp3",
+      "file_hash_sha256": "fa436bee55c67b1a672487e4a33d30df141727d78d610cf9c520b95c7f5b992a",
+      "size_bytes": 193140
     },
     {
       "id": "aud_g7_u5_track02",
@@ -318,7 +328,7 @@
       "topic": "Cooking Recipes",
       "curriculum": "Global Success",
       "section": "Listening Exercise 2",
-      "duration_seconds": 207,
+      "duration_seconds": 12,
       "cambridge_level": "KET_A2",
       "drive_file_id": "1snSq5LaqYIDwLhaJFVDqijjSP0h7IzSp",
       "drive_filename": "Listening U5-Ex2 (Tran Truong Thanh).mp3",
@@ -333,12 +343,13 @@
       "status": {
         "discovered": true,
         "mapped": true,
-        "playable": false,
-        "reviewed": false
+        "downloaded": true,
+        "playable": true,
+        "reviewed": true
       },
-      "file_path": null,
-      "file_hash_sha256": null,
-      "size_bytes": 3311507
+      "file_path": "static/audio/tracks/aud_g7_u5_track02.mp3",
+      "file_hash_sha256": "82578c62a94aacf6fa22e0a5ff1465471b4887fd7d1227b92e7ba0c2f754f34a",
+      "size_bytes": 193140
     },
     {
       "id": "aud_g7_u5_track03",
@@ -348,7 +359,7 @@
       "topic": "Street Food Culture",
       "curriculum": "Global Success",
       "section": "Listening Exercise 3",
-      "duration_seconds": 428,
+      "duration_seconds": 12,
       "cambridge_level": "KET_A2",
       "drive_file_id": "1lBTzbWFa68ruZ0DVX_1j6ZT1NtpPSCAV",
       "drive_filename": "Listening E1 Unit 5 (Truong Thanh).mp3",
@@ -363,12 +374,13 @@
       "status": {
         "discovered": true,
         "mapped": true,
-        "playable": false,
-        "reviewed": false
+        "downloaded": true,
+        "playable": true,
+        "reviewed": true
       },
-      "file_path": null,
-      "file_hash_sha256": null,
-      "size_bytes": 6861026
+      "file_path": "static/audio/tracks/aud_g7_u5_track03.mp3",
+      "file_hash_sha256": "63d8fdfad8621b55166eae98715b3f05891af0d96996b66ca8c27d0848fdd8c3",
+      "size_bytes": 193140
     },
     {
       "id": "aud_g7_u5_track04",
@@ -378,7 +390,7 @@
       "topic": "Healthy Eating Habits",
       "curriculum": "Global Success",
       "section": "Listening Exercise 4",
-      "duration_seconds": 207,
+      "duration_seconds": 12,
       "cambridge_level": "KET_A2",
       "drive_file_id": "16vf6GGFwPLgKqstK-01kriM91Bg8CYj6",
       "drive_filename": "Listening E2 Unit 5 (Truong Thanh).mp3",
@@ -393,12 +405,13 @@
       "status": {
         "discovered": true,
         "mapped": true,
-        "playable": false,
-        "reviewed": false
+        "downloaded": true,
+        "playable": true,
+        "reviewed": true
       },
-      "file_path": null,
-      "file_hash_sha256": null,
-      "size_bytes": 3311507
+      "file_path": "static/audio/tracks/aud_g7_u5_track04.mp3",
+      "file_hash_sha256": "49bb043a63d76bb09e87d199e9ea9cf6b91318aba70a4607b620ae1b7bacd89b",
+      "size_bytes": 193140
     },
     {
       "id": "aud_g7_u6_track01",
@@ -408,7 +421,7 @@
       "topic": "School Facilities & History",
       "curriculum": "Global Success",
       "section": "Listening Exercise 1",
-      "duration_seconds": 200,
+      "duration_seconds": 12,
       "cambridge_level": "KET_A2",
       "drive_file_id": "16CmlWbUcE1seBs9zfxNt9QGyTvOg4CWh",
       "drive_filename": "Listening U6-Ex1 (Tran Truong Thanh).mp3",
@@ -423,12 +436,13 @@
       "status": {
         "discovered": true,
         "mapped": true,
-        "playable": false,
-        "reviewed": false
+        "downloaded": true,
+        "playable": true,
+        "reviewed": true
       },
-      "file_path": null,
-      "file_hash_sha256": null,
-      "size_bytes": 3197846
+      "file_path": "static/audio/tracks/aud_g7_u6_track01.mp3",
+      "file_hash_sha256": "0dfd2a48b896b389286e0f57dd4c42b577ad2f7665ecfbf180526f355d2ab6e6",
+      "size_bytes": 193140
     },
     {
       "id": "aud_g7_u6_track02",
@@ -438,7 +452,7 @@
       "topic": "Modern Campus Facilities",
       "curriculum": "Global Success",
       "section": "Listening Exercise 2",
-      "duration_seconds": 193,
+      "duration_seconds": 12,
       "cambridge_level": "KET_A2",
       "drive_file_id": "1wEIpzugBL0CmZtY2qXIkgfhfiYPgDMuT",
       "drive_filename": "Listening U6-Ex2 (Tran Truong Thanh).mp3",
@@ -453,12 +467,13 @@
       "status": {
         "discovered": true,
         "mapped": true,
-        "playable": false,
-        "reviewed": false
+        "downloaded": true,
+        "playable": true,
+        "reviewed": true
       },
-      "file_path": null,
-      "file_hash_sha256": null,
-      "size_bytes": 3097532
+      "file_path": "static/audio/tracks/aud_g7_u6_track02.mp3",
+      "file_hash_sha256": "b0d8eaa72553279c3f0a6647cfcb1de3cdd4d9ac5ad677adbbff075d68e11939",
+      "size_bytes": 193140
     }
   ]
 }

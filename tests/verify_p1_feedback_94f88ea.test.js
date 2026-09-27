@@ -258,6 +258,79 @@ test('P1-03: Concurrent submits do not clobber winning worker and winning sessio
   assert.notEqual(session.score, null, 'Winning score must be recorded');
 });
 
+test('P1-03: Concurrent submits with different answers ensure losing worker (changes=0) records ZERO attempt and session.score matches winning attempt', async () => {
+  const { platform, rawDb } = createMockPlatform();
+  const studentToken = await createSignedToken({ id: 'usr_student_alpha', username: 'student_alpha', role: 'student' }, secret);
+
+  // 1. Start a session
+  const startRes = await examPost({
+    request: new Request('http://localhost/api/exams', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${studentToken}` },
+      body: JSON.stringify({ action: 'start_session', exam_id: 'ex_g7_hsg_yenlap' })
+    }),
+    platform
+  });
+  assert.equal(startRes.status, 200);
+  const startData = await startRes.json();
+  const instanceId = startData.session_instance.instance_id;
+
+  // 2. Submit concurrently with distinct answers:
+  // Worker 1: answers { '1': 'C' } (matches snapshot, positive score)
+  // Worker 2: answers { '1': 'B' } (wrong answer, score 0)
+  const submitCall1 = () => examPost({
+    request: new Request('http://localhost/api/exams', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${studentToken}` },
+      body: JSON.stringify({
+        exam_id: 'ex_g7_hsg_yenlap',
+        instance_id: instanceId,
+        answers: { '1': 'C' }
+      })
+    }),
+    platform
+  });
+
+  const submitCall2 = () => examPost({
+    request: new Request('http://localhost/api/exams', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${studentToken}` },
+      body: JSON.stringify({
+        exam_id: 'ex_g7_hsg_yenlap',
+        instance_id: instanceId,
+        answers: { '1': 'B' }
+      })
+    }),
+    platform
+  });
+
+  const [res1, res2] = await Promise.all([submitCall1(), submitCall2()]);
+  const winner = res1.status === 200 ? res1 : res2;
+  const loser = res1.status === 200 ? res2 : res1;
+
+  assert.equal(winner.status, 200, 'Winning submission must succeed with 200');
+  assert.ok([400, 409].includes(loser.status), 'Losing submission must fail with 400 or 409');
+
+  // Invariant 1: Exactly 1 row in exam_attempts
+  const attempts = rawDb.prepare('SELECT * FROM exam_attempts WHERE session_id = ?').all(instanceId);
+  assert.equal(attempts.length, 1, 'Losing worker (changes=0) must record ZERO attempt');
+
+  const attempt = attempts[0];
+  const session = rawDb.prepare('SELECT status, score FROM exam_sessions WHERE id = ?').get(instanceId);
+
+  // Invariant 2: Session status is 'submitted' and session.score matches attempt.score
+  assert.equal(session.status, 'submitted');
+  assert.equal(session.score, attempt.score, 'session.score must strictly match winning attempt.score');
+
+  // Invariant 3: attempt.answers_json matches winning worker payload, NOT losing worker payload
+  const recordedAnswers = JSON.parse(attempt.answers_json);
+  if (res1.status === 200) {
+    assert.equal(recordedAnswers['1'], 'C', 'Recorded answers must strictly match winning worker 1');
+  } else {
+    assert.equal(recordedAnswers['1'], 'B', 'Recorded answers must strictly match winning worker 2');
+  }
+});
+
 // =========================================================================
 // P1-04: SCORING FROM AUTHORITATIVE ANSWER KEY SNAPSHOT (FAIL-CLOSED)
 // =========================================================================

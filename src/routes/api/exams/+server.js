@@ -84,6 +84,9 @@ async function ensureExamSchemaInternal(db) {
     await db.prepare(`
       CREATE UNIQUE INDEX IF NOT EXISTS idx_exam_attempts_user_exam ON exam_attempts (user_id, exam_id);
     `).run();
+    await db.prepare(`
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_exam_attempts_session_id ON exam_attempts (session_id) WHERE session_id IS NOT NULL AND session_id != '';
+    `).run();
   } catch (err) {
     if (err.message && (err.message.includes('unique') || err.message.includes('indexed columns are not unique'))) {
       try {
@@ -664,6 +667,26 @@ export async function POST({ request, platform }) {
           }, { status: 500 });
         }
 
+        // P1-03: ATOMIC MUTUAL EXCLUSION
+        // Statement 1: Conditional INSERT attempt strictly requiring session to be 'in_progress' and within deadline.
+        // If another concurrent worker already submitted the session, this statement inserts ZERO rows.
+        const insertAttemptSql = `
+          INSERT INTO exam_attempts (
+            id, user_id, user_name, user_email, exam_id, exam_title,
+            score, max_score, answers_json, duration_seconds, session_id, class_id
+          )
+          SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+          WHERE EXISTS (
+            SELECT 1 FROM exam_sessions 
+            WHERE id = ? 
+              AND user_id = ? 
+              AND exam_id = ? 
+              AND status = 'in_progress'
+              AND datetime('now') <= datetime(deadline_at, '+60 seconds')
+          );
+        `;
+
+        // Statement 2: CAS UPDATE session to 'submitted' strictly requiring status = 'in_progress'.
         const updateSessSql = `
           UPDATE exam_sessions
           SET status = 'submitted', submitted_at = CURRENT_TIMESTAMP, score = ?
@@ -673,19 +696,9 @@ export async function POST({ request, platform }) {
             AND status = 'in_progress'
             AND datetime('now') <= datetime(deadline_at, '+60 seconds');
         `;
-        const insertAttemptSql = `
-          INSERT INTO exam_attempts (
-            id, user_id, user_name, user_email, exam_id, exam_title,
-            score, max_score, answers_json, duration_seconds, session_id, class_id
-          )
-          SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
-          WHERE EXISTS (
-            SELECT 1 FROM exam_sessions WHERE id = ? AND status = 'submitted'
-          );
-        `;
+
         try {
           const batchRes = await platform.env.DB.batch([
-            platform.env.DB.prepare(updateSessSql).bind(saved.score, activeSession.id, effectiveUserId, examId),
             platform.env.DB.prepare(insertAttemptSql).bind(
               saved.id,
               saved.user_id,
@@ -699,15 +712,18 @@ export async function POST({ request, platform }) {
               saved.duration_seconds,
               saved.session_id,
               saved.class_id,
-              activeSession.id
-            )
+              activeSession.id,
+              effectiveUserId,
+              examId
+            ),
+            platform.env.DB.prepare(updateSessSql).bind(saved.score, activeSession.id, effectiveUserId, examId)
           ]);
 
-          if (!batchRes || batchRes[0]?.meta?.changes === 0) {
+          if (!batchRes || batchRes[0]?.meta?.changes === 0 || batchRes[1]?.meta?.changes === 0) {
             return json({
               success: false,
-              error: `DeadlineExceededError: Phiên thi đã quá thời hạn nộp bài tại thời điểm ghi dữ liệu hoặc đã được nộp đồng thời.`
-            }, { status: 400 });
+              error: `DuplicateSubmissionError: Phiên thi này đã được hoàn tất trước đó hoặc đã được nộp đồng thời bởi tiến trình khác.`
+            }, { status: 409 });
           }
         } catch (batchErr) {
           if (batchErr.message && (batchErr.message.includes('UNIQUE') || batchErr.message.includes('constraint'))) {

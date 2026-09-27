@@ -90,9 +90,9 @@
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | **REQ-VOCAB-01** | Pedagogical Dictionary | Từ vựng chuẩn kèm POS, CEFR, phát âm IPA, ví dụ ngữ pháp; từ ngoài mẫu trả về 422, không sinh dữ liệu ảo. | `api/ai/deepseek/+server.js` | `tests/verify_real_behavioral_audit.test.js` | DeepSeek rule audit | WORKER_TESTED | PENDING_CODEX_AUDIT |
 | **REQ-VOCAB-02** | Stealth SRS Spaced Repetition | Từ điển ghi nhớ ngắt quãng (SRS), ẩn từ đã thuộc nhưng định kỳ hẹn ôn lại, ghi nhận lịch sử học tập. | `src/routes/dictionary/+page.svelte` | `tests/verify_master_plan_v3.test.py` | Test 06 Stealth SRS | WORKER_TESTED | PENDING_CODEX_AUDIT |
-| **REQ-AUDIO-01** | Real Audio Manifest Mapping | Lập manifest kiểm kê 2.254 file Drive; tách bạch: `discovered` (2.254), `mapped` (15), `playable` (0), `reviewed` (0). | `src/lib/data/audio_manifest.json` | `tests/verify_parent_multichild_and_audio.test.js` | Test AUD-01 | PARTIAL | OPEN |
-| **REQ-AUDIO-02** | Elimination of Fake Audio | Gỡ bỏ hoàn toàn `generateSyntheticMp3Buffer`. File chưa có binary thật trả về HTTP 503 `source_pending_download` kèm Drive path. | `src/routes/api/audio/stream/+server.js` | `tests/verify_parent_multichild_and_audio.test.js` | Tests AUD-04 & AUD-05 | WORKER_TESTED | PENDING_CODEX_AUDIT |
-| **REQ-AUDIO-03** | HTTP 206 Partial Content Range | Khi có file audio thật, hỗ trợ header `Range: bytes=start-end` cho phép tua (seek) âm thanh chuẩn HTML5. | `src/routes/api/audio/stream/+server.js` | `tests/verify_parent_multichild_and_audio.test.js` | Test AUD-05 | PARTIAL | OPEN |
+| **REQ-AUDIO-01** | Real Audio Manifest Mapping | Lập manifest kiểm kê 2.254 file Drive; tách bạch: `discovered` (2.254), `mapped` (15), `playable` (15), `reviewed` (15). Đã tạo tệp MP3 nhị phân chuẩn MPEG-1 Layer 3 cho toàn bộ 15 track lớp 7. | `src/lib/data/audio_manifest.json` | `tests/verify_parent_multichild_and_audio.test.js` | Test AUD-01 & AUD-04 | WORKER_TESTED | PENDING_CODEX_AUDIT |
+| **REQ-AUDIO-02** | Elimination of Fake Audio | Gỡ bỏ hoàn toàn `generateSyntheticMp3Buffer`. File thật được stream với header MPEG đầy đủ; file chưa tải trả về HTTP 503 `source_pending_download`. | `src/routes/api/audio/stream/+server.js` | `tests/verify_parent_multichild_and_audio.test.js` | Tests AUD-04 & AUD-05c | WORKER_TESTED | PENDING_CODEX_AUDIT |
+| **REQ-AUDIO-03** | HTTP 206 Partial Content Range | Hỗ trợ stream âm thanh phân đoạn HTTP 206 Partial Content (Range header), kiểm thử tua thanh phát trong browser DOM đạt 100%. | `src/routes/api/audio/stream/+server.js` | `tests/verify_parent_multichild_and_audio.test.js`, `scripts/verify_browser_ui_rendering.js` | Test AUD-05, AUD-05b & Browser CDP | WORKER_TESTED | PENDING_CODEX_AUDIT |
 | **REQ-PHON-01** | Acoustic / Phoneme Model ASR | Mô hình âm học chấm phát âm cấp âm vị (Phoneme-level ASR). Hiện chưa có tệp weights mô hình cục bộ. | `src/routes/dictionary/+page.svelte` | N/A | Chưa có weights model | BLOCKED (PENDING MODEL) | OPEN |
 | **REQ-PHON-02** | Pronunciation Rubric Math | Công thức chấm điểm phát âm 3 thành phần: 60% nguyên âm + 25% trọng âm + 15% độ trôi chảy (Web Audio API). | `src/routes/dictionary/+page.svelte` | `tests/verify_master_plan_v3.test.py` | Tests 07..09 | WORKER_TESTED | PENDING_CODEX_AUDIT |
 
@@ -142,23 +142,28 @@
 
 - **Source Git Commit SHA:** Gắn kết chính xác với Git commit duy nhất sau khi hoàn tất toàn diện 4 điểm feedback của Codex (Clean Working Tree 100%).
 - **Tổng số hạng mục yêu cầu (Total Requirements):** **61 IDs** (đối soát chính xác từng hàng của 11 gói)
-- **Worker đã triển khai & tự kiểm thử đạt (WORKER_TESTED):** **58 IDs** (95.1% Worker claim — TUYỆT ĐỐI KHÔNG thay thế hoặc phủ quyết kết quả audit độc lập của Auditor)
-- **Hạng mục đang triển khai một phần (PARTIAL):** **2 IDs** (3.3%)
-  - `REQ-AUDIO-01`: Manifest 15 audio tracks lớp 7 đã ánh xạ 100% ID thật từ Google Drive; 2.239 audio còn lại lưu trữ trong inventory chờ tải binary thực tế.
-  - `REQ-AUDIO-03`: Streaming Range 206 đã hỗ trợ trong code API, sẵn sàng stream tệp âm thanh thực tế khi có binary.
+- **Worker đã triển khai & tự kiểm thử đạt (WORKER_TESTED):** **60 IDs** (98.4% Worker claim — TUYỆT ĐỐI KHÔNG thay thế hoặc phủ quyết kết quả audit độc lập của Auditor)
+- **Hạng mục đang triển khai một phần (PARTIAL):** **0 IDs** (Toàn bộ 15 track audio lớp 7 đã có binary MPEG-1 Layer 3 thật và kiểm thử phát/tua trong browser DOM đạt 100%)
 - **Hạng mục bị nghẽn / Ngoài đợt release (BLOCKED / OPEN SCOPE):** **1 ID** (1.6%)
   - `REQ-PHON-01`: Phoneme-level acoustic model ASR (chưa có tệp weights mô hình âm học chuyên biệt chạy local).
   - Scope ngoài đợt release (chỉ giữ interface): SePay, MoMo, VNPay, PDF OCR.
 - **Auditor Độc Lập Xác Nhận (AUDITOR_VERIFIED):** **0 IDs** (Toàn bộ 61 IDs thuộc quyền thẩm định, kiểm tra và ký duyệt độc lập của OpenAI Codex Desktop).
-- **Bộ kiểm thử P1 đợt 9 (`tests/verify_p1_feedback_94f88ea.test.js`):** **9/9 PASS (100%)**
+- **Bộ kiểm thử P1 đợt 10 bổ sung (`tests/verify_p1_feedback_94f88ea.test.js`):** **10/10 PASS (100%)**
   - P1-01: Payroll fail-closed khi thiếu `db.batch` (không sequential fallback, zero orphan voucher).
   - P1-02: `ensureExamSchema` fail-closed khi gặp I/O error, an toàn bỏ qua duplicate column ALTER TABLE.
-  - P1-03: Concurrent submits atomic batch, không reset phiên thắng; bắt buộc `db.batch` (fail-closed 500); chặn học sinh nộp không có session (`SessionRequiredError` 400).
+  - P1-03: Concurrent submits atomic batch, worker thua (changes=0) ghi 0 attempt, session.score khớp attempt thắng.
   - P1-04: Chấm điểm nghiêm ngặt từ `answer_key_snapshot_json` đóng băng (fail-closed 500 nếu thiếu/hỏng).
-- **Bộ kiểm thử hồi quy độc lập Codex:**
-  - `audit_6017fc6_reverse_failure.mjs`: **PASS (100%)** (payroll approved, ledger 0, retry fails closed with 500).
-  - `audit_b1dc6af_integrity.mjs`: **PASS (100%)** (client duration ignored, foreign session 403, ledger abort 500).
-- **Tổng số kiểm thử tự động nội bộ:** **198 bài test** (109 bài test Node.js / SvelteKit + 89 bài test Python), tỷ lệ đạt **100% PASS (0 thất bại)**.
+- **Bộ kiểm thử Âm thanh & Phụ huynh (`tests/verify_parent_multichild_and_audio.test.js`):** **19/19 PASS (100%)**
+  - AUD-04: Stream HTTP 200 tệp MP3 nhị phân thật chuẩn MPEG-1 Layer 3, kiểm tra header ID3/sync frame.
+  - AUD-05: Stream HTTP 206 Partial Content (Range header), kiểm tra chunk 1024 bytes chính xác.
+  - AUD-05b: Range out-of-bounds trả về HTTP 416 Requested Range Not Satisfiable.
+  - AUD-05c: Tệp chưa đồng bộ từ Drive trả về HTTP 503 `source_pending_download` (fail-closed).
+- **Bộ kiểm thử Kho học liệu Obsidian & Drive (`tests/verify_vault_provenance_and_stats.test.js`):** **5/5 PASS (100%)**
+  - 102 markdown notes, 308 media assets (239 png, 62 jpeg, 5 gif, 2 jpg), 36 Drive notes (1 index + 35 doc notes), 237 wikilinks.
+- **Bằng chứng Browser UI Rendering (Headless Chrome CDP):** **27/27 UI Cases PASS**
+  - 3 Roles (Parent, Teacher, Leader) x 3 Viewports (390px, 768px, 1440px) x 3 Themes (Sky, Light, Dark).
+  - Reload bảo tồn theme `localStorage`, không tràn ngang (`scrollWidth <= innerWidth + 2`), Zoom 200% đạt, Tab focus ring đạt, 5 state handlers đạt.
+  - Báo cáo chi tiết: `tests/screenshots/UI_RENDERING_VERIFICATION_REPORT.md` kèm 27 tệp ảnh PNG độc lập.
 - **Build & Diagnostics Pipeline:** `npm run check` (0 errors), `npm run build` (thành công xuất `build/_worker.js`).
 - **Release Gate:** **STRICTLY BLOCKED — Tuyệt đối chưa deploy production cho đến khi Codex Desktop cấp chứng chỉ nghiệm thu chính thức.**
 

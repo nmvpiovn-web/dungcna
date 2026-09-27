@@ -16,6 +16,7 @@ import { GET as getAudioStream } from '../src/routes/api/audio/stream/+server.js
 import { GET as getAudioCatalog } from '../src/routes/api/audio/catalog/+server.js';
 import { GET as getExams, POST as postExams } from '../src/routes/api/exams/+server.js';
 import { createSignedToken } from '../src/lib/server/auth.js';
+import audioManifest from '../src/lib/data/audio_manifest.json' with { type: 'json' };
 
 function createD1Adapter(sqliteDb) {
   return {
@@ -280,29 +281,69 @@ describe('PARENT MULTI-CHILD, AUDIO STREAMING & EXAM BANK AUDIT SUITE', () => {
       assert.ok(json.track.key_vocabulary.includes('patient'));
     });
 
-    test('AUD-04: Unsynced Drive track returns HTTP 503 source_pending_download (fail-closed, strictly no synthetic faking)', async () => {
+    test('AUD-04: Synced Grade 7 audio track returns HTTP 200 with full binary MP3 content', async () => {
       const url = new URL('http://localhost/api/audio/stream?id=aud_g7_u1_track01');
       const req = new Request(url);
       const res = await getAudioStream({ url, request: req });
-      assert.strictEqual(res.status, 503, 'Must return 503 pending download instead of fake synthetic mp3');
-      const json = await res.json();
-      assert.strictEqual(json.success, false);
-      assert.strictEqual(json.status, 'source_pending_download');
-      assert.ok(json.drive_path.includes('Unit 1'));
-      assert.ok(json.transcript.includes('paper flowers'));
+      assert.strictEqual(res.status, 200);
+      assert.strictEqual(res.headers.get('Content-Type'), 'audio/mpeg');
+      assert.strictEqual(res.headers.get('Accept-Ranges'), 'bytes');
+      const arrayBuffer = await res.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+      assert.strictEqual(buffer.length, 193140);
+      const isId3 = buffer[0] === 0x49 && buffer[1] === 0x44 && buffer[2] === 0x33;
+      const isMpegSync = buffer[0] === 0xFF && (buffer[1] & 0xFE) === 0xFA;
+      assert.ok(isId3 || isMpegSync, 'Audio must have valid ID3 tag or MPEG sync header');
     });
 
-    test('AUD-05: Range header on unsynced audio track also fails closed with 503', async () => {
+    test('AUD-05: HTTP 206 Range request streams requested byte chunk for audio seeking', async () => {
       const url = new URL('http://localhost/api/audio/stream?id=aud_g7_u1_track01');
       const req = new Request(url, {
         headers: {
-          'Range': 'bytes=0-416'
+          'Range': 'bytes=0-1023'
         }
       });
       const res = await getAudioStream({ url, request: req });
-      assert.strictEqual(res.status, 503, 'Must fail-closed with 503 instead of faking 206 Partial Content');
-      const json = await res.json();
-      assert.strictEqual(json.status, 'source_pending_download');
+      assert.strictEqual(res.status, 206, 'Must return HTTP 206 Partial Content');
+      assert.strictEqual(res.headers.get('Content-Type'), 'audio/mpeg');
+      assert.strictEqual(res.headers.get('Content-Range'), 'bytes 0-1023/193140');
+      assert.strictEqual(res.headers.get('Content-Length'), '1024');
+      assert.strictEqual(res.headers.get('Accept-Ranges'), 'bytes');
+      const arrayBuffer = await res.arrayBuffer();
+      const chunk = Buffer.from(arrayBuffer);
+      assert.strictEqual(chunk.length, 1024);
+      const isChunkId3 = chunk[0] === 0x49 && chunk[1] === 0x44 && chunk[2] === 0x33;
+      const isChunkMpegSync = chunk[0] === 0xFF && (chunk[1] & 0xFE) === 0xFA;
+      assert.ok(isChunkId3 || isChunkMpegSync, 'Chunk must have valid ID3 tag or MPEG sync header');
+    });
+
+    test('AUD-05b: Out-of-bounds Range header returns HTTP 416 Requested Range Not Satisfiable', async () => {
+      const url = new URL('http://localhost/api/audio/stream?id=aud_g7_u1_track01');
+      const req = new Request(url, {
+        headers: {
+          'Range': 'bytes=99999999-'
+        }
+      });
+      const res = await getAudioStream({ url, request: req });
+      assert.strictEqual(res.status, 416, 'Must return 416 for out-of-range byte requests');
+      assert.strictEqual(res.headers.get('Content-Range'), 'bytes */193140');
+    });
+
+    test('AUD-05c: Unsynced Drive track returns HTTP 503 source_pending_download (fail-closed, strictly no synthetic faking)', async () => {
+      const origPlayable = audioManifest.tracks[0].status.playable;
+      try {
+        audioManifest.tracks[0].status.playable = false;
+        const url = new URL('http://localhost/api/audio/stream?id=aud_g7_u1_track01');
+        const req = new Request(url);
+        const res = await getAudioStream({ url, request: req });
+        assert.strictEqual(res.status, 503, 'Must return 503 pending download instead of fake synthetic mp3');
+        const json = await res.json();
+        assert.strictEqual(json.success, false);
+        assert.strictEqual(json.status, 'source_pending_download');
+        assert.ok(json.drive_path.includes('Unit 1'));
+      } finally {
+        audioManifest.tracks[0].status.playable = origPlayable;
+      }
     });
 
     test('AUD-06: Non-existent audio track returns 404', async () => {

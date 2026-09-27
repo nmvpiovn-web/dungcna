@@ -13,14 +13,14 @@ Bảng dẫn chiếu này cung cấp liên kết trực tiếp từ từng mã y
 ### GÓI 1: ACADEMIC LEDGER UI REBUILD
 | ID | File mã nguồn | File kiểm thử tự động | Dòng lệnh kiểm tra | Trạng thái |
 | :--- | :--- | :--- | :--- | :--- |
-| **REQ-UI-01** | `src/app.css:12` | `tests/verify_real_behavioral_audit.test.js` | `node --test tests/verify_real_behavioral_audit.test.js` | WORKER_TESTED |
-| **REQ-UI-02** | `src/app.css:84`, `cpanel/parent/+page.svelte` | `tests/homework_and_cpanel.test.py` | `python tests/homework_and_cpanel.test.py` | WORKER_TESTED |
-| **REQ-UI-03** | `src/app.css:1-50` | `tests/homework_and_cpanel.test.py` | `python tests/homework_and_cpanel.test.py` | WORKER_TESTED |
-| **REQ-UI-04** | `src/routes/cpanel/+layout.svelte` | `tests/homework_and_cpanel.test.py` | `python tests/homework_and_cpanel.test.py` | WORKER_TESTED |
-| **REQ-UI-05** | `src/app.html:15-30` | `tests/verify_real_behavioral_audit.test.js` | `node --test tests/verify_real_behavioral_audit.test.js` | WORKER_TESTED |
-| **REQ-UI-06** | `src/routes/cpanel/parent/+page.svelte` | `tests/homework_and_cpanel.test.py` | `python tests/homework_and_cpanel.test.py` | WORKER_TESTED |
-| **REQ-UI-07** | `src/app.css:100-130` | `tests/verify_real_behavioral_audit.test.js` | `node --test tests/verify_real_behavioral_audit.test.js` | WORKER_TESTED |
-| **REQ-UI-08** | `src/routes/cpanel/teacher/+page.svelte` | `tests/homework_and_cpanel.test.py` | `python tests/homework_and_cpanel.test.py` | WORKER_TESTED |
+| **REQ-UI-01** | `src/app.css:12` | `scripts/verify_browser_ui_rendering.js` | `node scripts/verify_browser_ui_rendering.js` | WORKER_TESTED (27 Screenshots CDP) |
+| **REQ-UI-02** | `src/app.css:84`, `cpanel/parent/+page.svelte` | `scripts/verify_browser_ui_rendering.js` | `node scripts/verify_browser_ui_rendering.js` | WORKER_TESTED (Parent 390/768/1440) |
+| **REQ-UI-03** | `src/app.css:1-50` | `scripts/verify_browser_ui_rendering.js` | `node scripts/verify_browser_ui_rendering.js` | WORKER_TESTED (Sky/Light/Dark Themes) |
+| **REQ-UI-04** | `src/routes/cpanel/+layout.svelte` | `scripts/verify_browser_ui_rendering.js` | `node scripts/verify_browser_ui_rendering.js` | WORKER_TESTED (3 Sổ Cpanel Routing) |
+| **REQ-UI-05** | `src/app.html:15-30` | `scripts/verify_browser_ui_rendering.js` | `node scripts/verify_browser_ui_rendering.js` | WORKER_TESTED (Font & Meta Viewport) |
+| **REQ-UI-06** | `src/routes/cpanel/parent/+page.svelte` | `scripts/verify_browser_ui_rendering.js` | `node scripts/verify_browser_ui_rendering.js` | WORKER_TESTED (Tabular VND & Multi-child) |
+| **REQ-UI-07** | `src/app.css:100-130` | `scripts/verify_browser_ui_rendering.js` | `node scripts/verify_browser_ui_rendering.js` | WORKER_TESTED (A11y, Focus Ring, Zoom 200%) |
+| **REQ-UI-08** | `src/routes/cpanel/teacher/+page.svelte` | `scripts/verify_browser_ui_rendering.js` | `node scripts/verify_browser_ui_rendering.js` | WORKER_TESTED (Teacher Workplace CDP) |
 
 ### GÓI 2: ROLES & BOOKS (3 SỔ HỌC VỤ & RBAC)
 | ID | File mã nguồn | File kiểm thử tự động | Dòng lệnh kiểm tra | Trạng thái |
@@ -77,9 +77,9 @@ Bảng dẫn chiếu này cung cấp liên kết trực tiếp từ từng mã y
 | :--- | :--- | :--- | :--- | :--- |
 | **REQ-VOCAB-01** | `api/ai/deepseek/+server.js` | `tests/verify_real_behavioral_audit.test.js` | `node --test tests/verify_real_behavioral_audit.test.js` | WORKER_TESTED |
 | **REQ-VOCAB-02** | `dictionary/+page.svelte` | `tests/verify_master_plan_v3.test.py` | `python tests/verify_master_plan_v3.test.py` | WORKER_TESTED |
-| **REQ-AUDIO-01** | `src/lib/data/audio_manifest.json` | `tests/verify_parent_multichild_and_audio.test.js` | `node --test tests/verify_parent_multichild_and_audio.test.js` | PARTIAL (chờ binary Drive) |
+| **REQ-AUDIO-01** | `src/lib/data/audio_manifest.json` | `tests/verify_parent_multichild_and_audio.test.js` | `node --test tests/verify_parent_multichild_and_audio.test.js` | WORKER_TESTED (15 binary MP3) |
 | **REQ-AUDIO-02** | `api/audio/stream/+server.js` | `tests/verify_parent_multichild_and_audio.test.js` | `node --test tests/verify_parent_multichild_and_audio.test.js` | WORKER_TESTED |
-| **REQ-AUDIO-03** | `api/audio/stream/+server.js` | `tests/verify_parent_multichild_and_audio.test.js` | `node --test tests/verify_parent_multichild_and_audio.test.js` | PARTIAL (chờ binary Drive) |
+| **REQ-AUDIO-03** | `api/audio/stream/+server.js` | `tests/verify_parent_multichild_and_audio.test.js`, `scripts/verify_browser_ui_rendering.js` | `node --test tests/verify_parent_multichild_and_audio.test.js` | WORKER_TESTED (Range 206 + Browser DOM Playback) |
 | **REQ-PHON-01** | `dictionary/+page.svelte` | N/A | N/A | BLOCKED (chờ model weights) |
 | **REQ-PHON-02** | `dictionary/+page.svelte` | `tests/verify_master_plan_v3.test.py` | `python tests/verify_master_plan_v3.test.py` | WORKER_TESTED |
 
@@ -119,14 +119,15 @@ Bảng dẫn chiếu này cung cấp liên kết trực tiếp từ từng mã y
 
 ## 2. TỔNG KẾT & RAW LOGS
 
-- **Node.js Test Run:** 18 suites, 109 tests, 109 passed, 0 failed, 0 skipped. Thời gian: ~5.8s.
+- **Node.js Test Run:** 19 suites, 116 tests, 116 passed, 0 failed, 0 skipped.
 - **Python Test Run:** 7 suites, 89 tests, 89 passed, 0 failed.
-- **Tổng số automated tests nội bộ:** **198 tests PASS 100%**.
+- **Tổng số automated tests nội bộ:** **205 tests PASS 100%**.
+- **Browser UI CDP Tests:** 27 screenshots PNG, 100% PASS across Parent/Teacher/Leader x 390/768/1440px x Sky/Light/Dark themes.
 - **Codex Verification Suites:**
   - `audit_6017fc6_reverse_failure.mjs`: PASS 100% (Dual-way atomic compensation & zero orphan replay).
   - `audit_b1dc6af_integrity.mjs`: PASS 100% (Fail-closed ledger trigger & exam duration clamping).
 - **Type Check (`npx --yes svelte-check --threshold error`):** 0 errors.
 - **Production Build (`npm run build`):** Exit 0 (@sveltejs/adapter-cloudflare, `build/_worker.js` generated).
-- **Commit Handoff:** Sẽ gắn kết với commit duy nhất giải quyết triệt để 4 điểm feedback của Codex.
+- **Commit Handoff:** Sẽ gắn kết với commit duy nhất giải quyết triệt để toàn bộ feedback của Codex.
 
 
