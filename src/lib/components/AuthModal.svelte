@@ -123,7 +123,7 @@
     regSelectedGrade = ''; // Force active selection
   }
 
-  function handleFinalizeRegister() {
+  async function handleFinalizeRegister() {
     if (!regSelectedGrade) {
       errorMessage = 'Bắt buộc chọn đúng Lớp học của bạn trước khi hoàn tất đăng ký!';
       return;
@@ -134,7 +134,7 @@
     isLoading = true;
 
     try {
-      const res = registerUser({
+      const res = await registerUser({
         usernameOrPhone: regUsername.trim(),
         name: regName.trim(),
         password: regPassword.trim(),

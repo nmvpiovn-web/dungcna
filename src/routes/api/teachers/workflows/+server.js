@@ -158,12 +158,40 @@ export async function POST({ request, platform }) {
 
   // PUBLIC ACTION: CANDIDATE JOB APPLICATION (Does not require staff login)
   if (action === 'candidate_apply' || action === 'apply_job') {
-    const { candidate_name, phone, email, role_type, experience_years, certificates, notes } = body;
+    const { 
+      candidate_name, 
+      phone, 
+      email, 
+      role_type, 
+      experience_years, 
+      certificates, 
+      selected_grades, 
+      selected_subjects, 
+      interview_preference, 
+      availability, 
+      cv_link, 
+      notes 
+    } = body;
+
     if (!candidate_name || !phone) {
       return json({ success: false, error: 'Vui lòng cung cấp họ tên và số điện thoại liên hệ' }, { status: 400 });
     }
 
+    if (Array.isArray(selected_grades) && selected_grades.length === 0) {
+      return json({ success: false, error: 'Vui lòng chọn ít nhất một khối lớp có thể phụ trách giảng dạy' }, { status: 400 });
+    }
+
     const recId = `rec_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+    const structuredPayload = {
+      selected_grades: Array.isArray(selected_grades) ? selected_grades : [],
+      selected_subjects: Array.isArray(selected_subjects) ? selected_subjects : [],
+      interview_preference: interview_preference || 'online',
+      availability: availability || '',
+      cv_link: cv_link || '',
+      raw_notes: notes || '',
+      submitted_at: new Date().toISOString()
+    };
+
     try {
       await db.prepare(`
         INSERT INTO teacher_recruitment 
@@ -177,7 +205,7 @@ export async function POST({ request, platform }) {
         role_type || 'lead',
         Number(experience_years) || 0,
         certificates || '',
-        notes || 'Hồ sơ nộp trực tuyến qua cổng tuyển dụng'
+        JSON.stringify(structuredPayload)
       ).run();
 
       // Notify Leader of new applicant
@@ -186,14 +214,15 @@ export async function POST({ request, platform }) {
         VALUES (?, 'leader', 'Hồ sơ ứng viên giáo viên mới', ?, 'recruitment', ?);
       `).bind(
         `notif_rec_${Date.now()}`,
-        `Ứng viên ${candidate_name} vừa nộp hồ sơ vị trí ${role_type || 'giáo viên'}. SĐT: ${phone}`,
+        `Ứng viên ${candidate_name} vừa nộp hồ sơ vị trí ${role_type || 'giáo viên'} (Lớp: ${(selected_grades || []).join(', ')}). SĐT: ${phone}`,
         recId
       ).run();
 
       return json({
         success: true,
         message: 'Nộp hồ sơ ứng tuyển thành công! Ban Quản Lý Tiếng Anh Cô Dung sẽ liên hệ phỏng vấn trong vòng 48h.',
-        recruitment_id: recId
+        recruitment_id: recId,
+        selected_grades: structuredPayload.selected_grades
       });
     } catch (e) {
       return json({ success: false, error: `Lỗi ghi nhận hồ sơ: ${e.message}` }, { status: 500 });

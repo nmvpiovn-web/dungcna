@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-		<title>Tiếng Anh Cô Dung - Hệ Thống Đào Tạo K12 &amp; Khảo Thí Quốc Tế</title>
+		<title>Tiếng Anh Cô Dung - Hệ Thống Đào Tạo K12 &amp; Lộ Trình Quốc Tế</title>
 		
 		<!-- PWA & Mobile Meta Tags -->
 		<link rel="manifest" href="/manifest.webmanifest" />
@@ -64,25 +64,33 @@
 			})();
 		</script>
 		
+		<!-- Global Busy / Dirty Registry & Safe PWA Controller Update -->
 		<script>
+			window.__appBusyRegistry = window.__appBusyRegistry || new Set();
+			window.registerBusyState = function(id) { window.__appBusyRegistry.add(id); };
+			window.unregisterBusyState = function(id) { window.__appBusyRegistry.delete(id); };
+			window.isAppBusy = function() {
+				if (window.__appBusyRegistry.size > 0) return true;
+				if (window.__isExamActive) return true;
+				if (window.location.pathname.startsWith('/exam') && !window.__isExamSubmitted) return true;
+				if (window.__isRecordingActive) return true;
+				if (window.__hasUnsavedChanges) return true;
+				if (document.querySelector('form.dirty, input.dirty, textarea.dirty')) return true;
+				return false;
+			};
+
 			if ('serviceWorker' in navigator) {
 				navigator.serviceWorker.addEventListener('controllerchange', () => {
 					// Protect active exams, recordings, and unsaved form input from abrupt reloads
-					const isBusy = window.__isExamActive ||
-						(window.location.pathname.startsWith('/exam') && !window.__isExamSubmitted) ||
-						window.__isRecordingActive ||
-						window.__hasUnsavedChanges ||
-						document.querySelector('form input:focus, form textarea:focus');
-
-					if (isBusy) {
-						// Dispatch non-disruptive update notification instead of destroying user input
+					if (window.isAppBusy()) {
+						// Dispatch non-disruptive update notification without destroying user state
 						window.dispatchEvent(new CustomEvent('sw-update-available'));
 						let banner = document.getElementById('sw-update-banner');
 						if (!banner) {
 							banner = document.createElement('div');
 							banner.id = 'sw-update-banner';
 							banner.className = 'fixed bottom-4 right-4 z-[9999] p-3 bg-slate-900/95 text-white border border-sky-500 rounded-lg shadow-2xl text-xs flex items-center gap-3 backdrop-blur-md animate-in fade-in';
-							banner.innerHTML = '<span>⚡ Có bản cập nhật hệ thống mới. Vui lòng nộp bài / hoàn tất trước khi làm mới.</span> <button onclick="window.location.reload()" class="px-2.5 py-1 bg-sky-600 hover:bg-sky-500 text-white rounded font-bold shadow-xs">Làm Mới Ngay</button>';
+							banner.innerHTML = '<span>⚡ Có bản cập nhật hệ thống mới. Dữ liệu đã được bảo toàn tự động.</span> <button onclick="this.parentElement.remove()" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-sky-400 rounded font-semibold border border-slate-700 shadow-xs">Đã Rõ</button>';
 							document.body.appendChild(banner);
 						}
 						return;

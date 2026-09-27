@@ -243,6 +243,55 @@
     timeLeftSeconds = (currentExam?.duration_minutes || 15) * 60;
   }
 
+  function getExamBackupKey(examId) {
+    const uid = currentUser?.id || 'guest';
+    return `tienganh_exam_backup_${uid}_${examId || currentExam?.id}`;
+  }
+
+  function clearActiveExamBackup(examId) {
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.removeItem(getExamBackupKey(examId || currentExam?.id));
+        localStorage.removeItem('tienganh_active_exam_backup');
+      } catch {}
+    }
+  }
+
+  function restoreExamBackupIfAvailable(examId) {
+    if (typeof window === 'undefined') return false;
+    try {
+      const targetId = examId || currentExam?.id;
+      const key = getExamBackupKey(targetId);
+      const raw = localStorage.getItem(key) || localStorage.getItem('tienganh_active_exam_backup');
+      if (raw) {
+        const data = JSON.parse(raw);
+        if (data.exam_id === targetId && data.userAnswers && Object.keys(data.userAnswers).length > 0) {
+          const now = Date.now();
+          const remaining = data.deadline ? Math.floor((data.deadline - now) / 1000) : data.timeLeftSeconds;
+          if (remaining > 0) {
+            userAnswers = { ...data.userAnswers };
+            timeLeftSeconds = remaining;
+            isStarted = true;
+            isSubmitted = false;
+            window.__isExamActive = true;
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+              timeLeftSeconds--;
+              if (timeLeftSeconds <= 0) {
+                clearInterval(timerInterval);
+                submitExam();
+              }
+            }, 1000);
+            return true;
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Exam backup restore error:', e);
+    }
+    return false;
+  }
+
   function handleSelectExam(ex) {
     if (currentUser?.role === 'student' && !isExamEnrolledForUser(currentUser, ex)) {
       playAudioFeedback(false);
@@ -252,7 +301,10 @@
     }
     selectedExamId = ex.id;
     lockedExamAlert = '';
-    resetExamState();
+    const restored = restoreExamBackupIfAvailable(ex.id);
+    if (!restored) {
+      resetExamState();
+    }
   }
 
   function startExam() {
@@ -265,9 +317,22 @@
     isSubmitted = false;
     userAnswers = {};
     timeLeftSeconds = (currentExam?.duration_minutes || 15) * 60;
+    const deadline = Date.now() + (timeLeftSeconds * 1000);
     if (typeof window !== 'undefined') {
       window.__isExamActive = true;
       window.__isExamSubmitted = false;
+      try {
+        const backupData = {
+          exam_id: currentExam?.id,
+          user_id: currentUser?.id || 'guest',
+          userAnswers: {},
+          timeLeftSeconds,
+          deadline,
+          updated_at: Date.now()
+        };
+        localStorage.setItem(getExamBackupKey(currentExam?.id), JSON.stringify(backupData));
+        localStorage.setItem('tienganh_active_exam_backup', JSON.stringify(backupData));
+      } catch {}
     }
     
     if (timerInterval) clearInterval(timerInterval);
@@ -285,11 +350,18 @@
     userAnswers[qIdx] = option;
     if (typeof window !== 'undefined') {
       try {
-        localStorage.setItem('tienganh_active_exam_backup', JSON.stringify({
+        const key = getExamBackupKey(currentExam?.id);
+        const deadline = Date.now() + (timeLeftSeconds * 1000);
+        const backupData = {
           exam_id: currentExam?.id,
-          userAnswers,
-          timeLeftSeconds
-        }));
+          user_id: currentUser?.id || 'guest',
+          userAnswers: { ...userAnswers },
+          timeLeftSeconds,
+          deadline,
+          updated_at: Date.now()
+        };
+        localStorage.setItem(key, JSON.stringify(backupData));
+        localStorage.setItem('tienganh_active_exam_backup', JSON.stringify(backupData));
       } catch {}
     }
   }
@@ -535,7 +607,6 @@
     if (typeof window !== 'undefined') {
       window.__isExamActive = false;
       window.__isExamSubmitted = true;
-      try { localStorage.removeItem('tienganh_active_exam_backup'); } catch {}
     }
 
     const studentUser = (data.users || []).find(u => u.id === selectedStudentId) || currentUser;
@@ -554,6 +625,10 @@
       session_id: selectedSessionId,
       class_id: currentSession?.class_id || ''
     });
+
+    if (attempt) {
+      clearActiveExamBackup(currentExam?.id);
+    }
 
     // Dispatch bot alert
     dispatchBotReport('EXAM_SUBMITTED', {

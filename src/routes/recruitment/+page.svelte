@@ -136,6 +136,11 @@
           role_type: roleType,
           experience_years: Number(experienceYears) || 0,
           certificates: certificates.trim(),
+          selected_grades: selectedGrades,
+          selected_subjects: selectedSubjects,
+          interview_preference: interviewPreference,
+          availability: availability.trim(),
+          cv_link: cvLink.trim(),
           notes: combinedNotes
         })
       });

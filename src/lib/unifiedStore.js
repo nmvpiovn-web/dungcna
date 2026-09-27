@@ -288,7 +288,7 @@ export function toggleTheme() {
   return setTheme(next);
 }
 
-export function registerUser({ usernameOrPhone, name, password, role = 'student', grade = 'Lớp 7', target = '', linkedStudentPhoneOrId = '' }) {
+export async function registerUser({ usernameOrPhone, name, password, role = 'student', grade = 'Lớp 7', target = '', linkedStudentPhoneOrId = '' }) {
   if (!usernameOrPhone || !usernameOrPhone.trim()) {
     return { success: false, error: 'Vui lòng nhập Số điện thoại hoặc Tên đăng nhập!' };
   }
@@ -296,101 +296,60 @@ export function registerUser({ usernameOrPhone, name, password, role = 'student'
     return { success: false, error: 'Vui lòng nhập Mật khẩu!' };
   }
 
-  const cleanInput = usernameOrPhone.trim();
-  const isPhone = /^[0-9+]{8,15}$/.test(cleanInput);
-  const username = isPhone ? `user_${cleanInput}` : cleanInput.toLowerCase().replace(/[^a-z0-9_.]/gi, '');
-  const phone = isPhone ? cleanInput : '';
-  const cleanName = (name && name.trim()) ? name.trim() : (isPhone ? (role === 'parent' ? `Phụ huynh ${cleanInput}` : `Học viên ${cleanInput}`) : (role === 'parent' ? `Phụ huynh ${username}` : `Học viên ${username}`));
-
-  const users = getAllUsers();
-  const existing = users.find(u => {
-    const uName = (u.username || '').toLowerCase();
-    const uPhone = (u.phone || '').replace(/[^0-9+]/g, '');
-    return (username && uName === username.toLowerCase()) || (phone && uPhone === phone);
-  });
-
-  if (existing) {
-    return { success: false, error: 'Số điện thoại hoặc Tên đăng nhập này đã tồn tại! Vui lòng chọn Đăng nhập.' };
-  }
-
-  // Find linked student if parent role
-  let linkedStudent = null;
-  if (role === 'parent' && linkedStudentPhoneOrId) {
-    const cleanLink = linkedStudentPhoneOrId.trim().toLowerCase();
-    const cleanLinkPhone = cleanLink.replace(/[^0-9]/g, '');
-    linkedStudent = users.find(u => 
-      u.role === 'student' && (
-        u.id.toLowerCase() === cleanLink ||
-        (u.username && u.username.toLowerCase() === cleanLink) ||
-        (cleanLinkPhone && u.phone && u.phone.replace(/[^0-9]/g, '') === cleanLinkPhone)
-      )
-    );
-  }
-
-  const newUser = {
-    id: `usr_${Date.now()}`,
-    username: username,
-    phone: phone || '0900000000',
-    email: `${username}@tienganhcodung.edu.vn`,
-    name: cleanName,
-    password: password.trim(),
-    role: role || 'student',
-    grade: grade || 'Lớp 7',
-    avatar: role === 'parent' 
-      ? 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150'
-      : (role === 'teacher' 
-          ? 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150' 
-          : `https://api.dicebear.com/7.x/bottts/svg?seed=${username}`),
-    status: 'trial',
-    approval_status: 'trial',
-    metadata: JSON.stringify({
-      grade: grade || 'Lớp 7',
-      target: target || 'Chương trình GDPT 2026',
-      phone: phone || '',
-      is_trial: true,
-      linked_student_id: linkedStudent ? linkedStudent.id : (linkedStudentPhoneOrId || ''),
-      linked_student_name: linkedStudent ? linkedStudent.name : ''
-    }),
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  };
-
-  users.push(newUser);
-  saveAllUsers(users);
-
-  // Initialize student star balance (500 initial welcome stars)
-  if (newUser.role === 'student') {
-    saveStudentStars({
-      student_id: newUser.id,
-      stars_balance: 500,
-      total_earned_stars: 500,
-      stars_redeemed: 0
+  // 1. Call Server-Side Registration API
+  try {
+    const res = await fetch('/api/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        usernameOrPhone,
+        name,
+        password,
+        role,
+        grade,
+        target,
+        linkedStudentPhoneOrId
+      })
     });
+
+    const data = await res.json();
+    if (res.ok && data.success && data.user && data.token) {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('tienganh_auth_token', data.token);
+        sessionStorage.setItem('tienganh_auth_token', data.token);
+        document.cookie = `session_token=${encodeURIComponent(data.token)}; path=/; max-age=${7 * 86400}; SameSite=Lax`;
+      }
+      setCurrentUser(data.user, data.token);
+
+      // Initialize student star balance (500 initial welcome stars)
+      if (data.user.role === 'student') {
+        saveStudentStars({
+          student_id: data.user.id,
+          stars_balance: 500,
+          total_earned_stars: 500,
+          stars_redeemed: 0
+        });
+      }
+
+      logSnapshot('REGISTER_USER', 'user', data.user.id, null, data.user);
+      dispatchBotReport('NEW_USER_REGISTERED', {
+        name: data.user.name,
+        username: data.user.username,
+        phone: data.user.phone,
+        role: data.user.role,
+        grade: grade,
+        status: 'trial',
+        linked_student: linkedStudentPhoneOrId || 'Chưa liên kết'
+      });
+
+      return { success: true, user: data.user, token: data.token };
+    } else {
+      return { success: false, error: data.error || 'Đăng ký không thành công!' };
+    }
+  } catch (err) {
+    console.error('Server registration network error:', err);
+    return { success: false, error: 'Không thể kết nối máy chủ đăng ký: ' + err.message };
   }
-
-  logSnapshot('REGISTER_USER', 'user', newUser.id, null, newUser);
-  dispatchBotReport('NEW_USER_REGISTERED', {
-    name: newUser.name,
-    username: newUser.username,
-    phone: newUser.phone,
-    role: newUser.role,
-    grade: grade,
-    status: 'trial',
-    linked_student: linkedStudent?.name || 'Chưa liên kết'
-  });
-
-  addLeaderNotification({
-    type: 'new_registration',
-    priority: 'high',
-    title: `🔔 Đăng ký mới: ${newUser.name}`,
-    message: `Thành viên "${newUser.name}" (@${newUser.username}, SĐT: ${newUser.phone || 'Chưa có'}) vừa đăng ký tài khoản [${newUser.role.toUpperCase()}] (${grade || 'Chưa phân lớp'}). Đang ở trạng thái Dùng thử (Trial) - Chờ Cô Dung duyệt lên chính thức!`,
-    link_url: '/admin?tab=students',
-    action_type: 'approve_user',
-    meta: { userId: newUser.id, username: newUser.username, role: newUser.role, grade }
-  });
-
-  setCurrentUser(newUser);
-  return { success: true, user: newUser, linked_student: linkedStudent };
 }
 
 export function approveUserToOfficial(userId, operator = null) {

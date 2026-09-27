@@ -615,10 +615,39 @@ async function main() {
   recordTest('recruitment_multigrade_draft_persistence', !!(recruitDraftRes.success && recruitDraftRes.selectedGradesCount >= 2),
     `Draft saved candidate: "${recruitDraftRes.candidateName}", grades count: ${recruitDraftRes.selectedGradesCount}`);
 
+  // Test 13: Active Exam Backup & Deadline-Based Persistence
+  console.log('\n--- VERIFYING ACTIVE EXAM BACKUP & RESTORE ---');
+  await cdp.navigate(BASE_URL + '/exam');
+  await sleep(1000);
+  const examBackupTest = await cdp.evaluate(`
+    (async () => {
+      // Find start exam button
+      const startBtn = Array.from(document.querySelectorAll('button')).find(b => b.textContent.includes('Bắt Đầu') || b.textContent.includes('Làm Bài'));
+      if (startBtn) startBtn.click();
+      await new Promise(r => setTimeout(r, 400));
+
+      // Click option A
+      const optionBtn = Array.from(document.querySelectorAll('button')).find(b => b.textContent.includes('A.') || b.textContent.includes('A '));
+      if (optionBtn) optionBtn.click();
+      await new Promise(r => setTimeout(r, 300));
+
+      // Inspect backup
+      const raw = localStorage.getItem('tienganh_active_exam_backup');
+      const parsed = raw ? JSON.parse(raw) : null;
+      return {
+        hasBackup: !!(parsed && parsed.deadline && parsed.exam_id),
+        hasDeadline: !!(parsed && parsed.deadline > Date.now()),
+        isExamActive: Boolean(window.__isExamActive)
+      };
+    })()
+  `);
+  recordTest('exam_state_backup_and_restore', !!(examBackupTest.hasBackup && examBackupTest.hasDeadline),
+    `Exam active flag: ${examBackupTest.isExamActive}, backup contains valid server deadline: ${examBackupTest.hasDeadline}`);
+
   // Return to /admincp
   await cdp.navigate(BASE_URL + '/admincp');
 
-  // Test 13: 200% Zoom Resizability (WCAG 1.4.4 Resize Text)
+  // Test 14: 200% Zoom Resizability (WCAG 1.4.4 Resize Text)
   console.log('\n--- VERIFYING 200% ZOOM RESIZABILITY (WCAG 1.4.4) ---');
   await cdp.send('Emulation.setDeviceMetricsOverride', {
     width: 1440,
@@ -634,15 +663,19 @@ async function main() {
       const brand = header?.querySelector('a span');
       const cs = window.getComputedStyle(header);
       const isVisible = header && brand && cs.display !== 'none' && cs.visibility !== 'hidden';
+      const scrollW = document.documentElement.scrollWidth;
+      const innerW = window.innerWidth;
+      const noExcessiveOverflow = scrollW <= innerW + 15;
       return {
         brandLegible: isVisible,
-        scrollWidth: document.documentElement.scrollWidth,
-        innerWidth: window.innerWidth
+        scrollWidth: scrollW,
+        innerWidth: innerW,
+        noExcessiveOverflow
       };
     })()
   `);
-  recordTest('zoom_200_layout_integrity', zoomRes.brandLegible,
-    `At 200% zoom, brand header legible: ${zoomRes.brandLegible}, scrollWidth: ${zoomRes.scrollWidth}`);
+  recordTest('zoom_200_layout_integrity', zoomRes.brandLegible && zoomRes.noExcessiveOverflow,
+    `At 200% zoom, brand legible: ${zoomRes.brandLegible}, scrollWidth (${zoomRes.scrollWidth}) <= innerWidth (${zoomRes.innerWidth})`);
 
   // Reset scale back to normal
   await cdp.send('Emulation.setDeviceMetricsOverride', {
@@ -653,7 +686,7 @@ async function main() {
   });
   await sleep(300);
 
-  // Test 14: Multi-Theme Real Computed Contrast (WCAG 2.1 Luminance Formula)
+  // Test 15: Multi-Theme Real Computed Contrast (WCAG 2.1 Luminance Formula)
   console.log('\n--- MEASURING REAL COMPUTED WCAG CONTRAST RATIOS (MULTI-THEME) ---');
   const themes = ['sky', 'light', 'dark'];
 
@@ -710,8 +743,10 @@ async function main() {
         }
 
         const elementsToCheck = [
-          { label: 'AdminCP Page Title', selector: 'header h1' },
-          { label: 'Header Brand Name', selector: 'header a span' }
+          { label: 'AdminCP Page Title', selector: 'header h1, main h1' },
+          { label: 'Header Brand Name', selector: 'header a span' },
+          { label: 'Card Heading', selector: 'h2, h3, div.font-semibold' },
+          { label: 'Footer Brand', selector: 'footer div.font-semibold' }
         ];
 
         return elementsToCheck.map(item => {

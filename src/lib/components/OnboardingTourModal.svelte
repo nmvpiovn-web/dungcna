@@ -29,7 +29,7 @@
           <span class="text-2xl">🎓</span>
           <div>
             <h2 class="text-sm sm:text-base font-semibold text-white">Hướng Dẫn Hệ Thống &amp; Tầm Nhìn Sư Phạm</h2>
-            <div class="text-[11px] text-slate-400">Tiếng Anh Cô Dung • Hệ Thống Khảo Thí &amp; Đào Tạo K12 Chuẩn 2026</div>
+            <div class="text-[11px] text-slate-400">Tiếng Anh Cô Dung • Hệ Thống Lộ Trình &amp; Đào Tạo K12 Chuẩn 2026</div>
           </div>
         </div>
         <button
@@ -98,7 +98,7 @@
               </div>
 
               <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-1">
-                <div class="font-semibold text-slate-900 dark:text-white">2. Khảo Thí Quốc Tế &amp; Phonics</div>
+                <div class="font-semibold text-slate-900 dark:text-white">2. Lộ Trình Quốc Tế &amp; Phonics</div>
                 <p class="text-[11px] text-slate-600 dark:text-slate-400">
                   Học sinh được trang bị nền tảng ngữ âm Phonics chuẩn Cambridge, lộ trình tiếp cận IELTS 6.5 - 7.5 và các chứng chỉ KET/PET.
                 </p>

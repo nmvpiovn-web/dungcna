@@ -205,17 +205,17 @@
 </script>
 
 <svelte:head>
-  <title>Tiếng Anh Cô Dung - Hệ Thống Đào Tạo K12 &amp; Khảo Thí Quốc Tế</title>
-  <meta name="description" content="Hệ thống đào tạo tiếng Anh chuẩn K12 và khảo thí quốc tế Cambridge, IELTS cùng học liệu Obsidian Second Brain và phòng thi số hóa." />
+  <title>Tiếng Anh Cô Dung - Hệ Thống Đào Tạo K12 &amp; Lộ Trình Quốc Tế</title>
+  <meta name="description" content="Hệ thống đào tạo tiếng Anh chuẩn K12 và lộ trình quốc tế Cambridge, IELTS cùng học liệu Obsidian Second Brain và phòng thi số hóa." />
   <link rel="canonical" href={`https://timbk.io.vn${$page.url.pathname}`} />
   <meta property="og:url" content={`https://timbk.io.vn${$page.url.pathname}`} />
   <meta property="og:type" content="website" />
-  <meta property="og:title" content="Tiếng Anh Cô Dung - Hệ Thống Đào Tạo K12 &amp; Khảo Thí Quốc Tế" />
-  <meta property="og:description" content="Đào tạo Tiếng Anh chuẩn K12 &amp; Khảo thí quốc tế - Hệ thống học vụ, bài giảng số hóa và kho tri thức Obsidian." />
+  <meta property="og:title" content="Tiếng Anh Cô Dung - Hệ Thống Đào Tạo K12 &amp; Lộ Trình Quốc Tế" />
+  <meta property="og:description" content="Đào tạo Tiếng Anh chuẩn K12 &amp; Lộ trình quốc tế - Hệ thống học vụ, bài giảng số hóa và kho tri thức Obsidian." />
   <meta property="og:image" content="https://timbk.io.vn/icon.svg" />
   <meta name="twitter:card" content="summary" />
   <meta name="twitter:title" content="Tiếng Anh Cô Dung" />
-  <meta name="twitter:description" content="Hệ thống đào tạo K12 &amp; Khảo thí quốc tế" />
+  <meta name="twitter:description" content="Hệ thống đào tạo K12 &amp; Lộ trình quốc tế" />
   {#if $page.url.pathname.startsWith('/cpanel') || $page.url.pathname.startsWith('/admin') || $page.url.pathname.startsWith('/second-brain')}
     <meta name="robots" content="noindex, nofollow" />
   {:else}
@@ -253,7 +253,7 @@
                 2026 CTGDPT
               </span>
             </div>
-            <span class="hidden xl:block text-[11px] text-slate-700 dark:text-slate-300 font-medium -mt-0.5">K12 &amp; Khảo Thí Chuẩn Quốc Tế</span>
+            <span class="hidden xl:block text-[11px] text-slate-700 dark:text-slate-300 font-medium -mt-0.5">K12 &amp; Lộ Trình Chuẩn Quốc Tế</span>
           </div>
         </a>
 
@@ -334,7 +334,7 @@
                     </div>
                     <div>
                       <div class="font-semibold text-xs text-slate-900 dark:text-white group-hover:text-sky-600 dark:group-hover:text-sky-400">IELTS • TOEIC • VSTEP</div>
-                      <div class="text-[11px] text-slate-600 dark:text-slate-300">Khảo thí chuẩn Cambridge quốc tế</div>
+                      <div class="text-[11px] text-slate-600 dark:text-slate-300">Lộ trình chuẩn Cambridge quốc tế</div>
                     </div>
                   </a>
 
@@ -353,7 +353,7 @@
             </div>
           {/if}
 
-          <!-- Item 2: Khảo Thí & Luyện Thi Dropdown -->
+          <!-- Item 2: Phòng Thi & Luyện Đề Dropdown -->
           <div class="relative">
             <button
               onclick={() => toggleSubmenu('exams')}
@@ -414,7 +414,7 @@
                     onclick={closeAllDropdowns}
                     class="flex items-center justify-between p-2 rounded-md bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 text-xs font-bold hover:bg-sky-100 dark:hover:bg-sky-900/60 transition-colors"
                   >
-                    <span>Xem Tất Cả Bộ Đề Khảo Thí</span>
+                    <span>Xem Tất Cả Bộ Đề Lộ Trình</span>
                     <span>➔</span>
                   </a>
                 </div>
@@ -1047,7 +1047,7 @@
               <span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-800 dark:text-amber-300 text-[11px] font-semibold uppercase border border-amber-500/30">Chờ duyệt chính thức</span>
             </div>
             <div class="text-[11px] text-slate-600 dark:text-slate-300 mt-0.5">
-              Bạn có thể làm bài khảo thí 15p - 45p, xem bài giảng <strong>{currentUserGrade || 'lớp đã chọn'}</strong>. Sau khi Admin / Cô Dung duyệt, tài khoản sẽ được nâng lên Chính Thức để tích lũy Sao đổi học phí!
+              Bạn có thể làm bài luyện thi 15p - 45p, xem bài giảng <strong>{currentUserGrade || 'lớp đã chọn'}</strong>. Sau khi Admin / Cô Dung duyệt, tài khoản sẽ được nâng lên Chính Thức để tích lũy Sao đổi học phí!
             </div>
           </div>
         </div>
@@ -1075,7 +1075,7 @@
           CD
         </div>
         <div>
-          <div class="font-semibold text-slate-900 dark:text-white">Tiếng Anh Cô Dung — Hệ Thống Khảo Thí &amp; Đào Tạo Toàn Diện 2026</div>
+          <div class="font-semibold text-slate-900 dark:text-white">Tiếng Anh Cô Dung — Hệ Thống Lộ Trình &amp; Đào Tạo Toàn Diện 2026</div>
           <div class="text-[11px] text-slate-600 dark:text-slate-300 font-medium">
             Chương trình GDPT 2018 (Lớp 1-12) • Ôn thi THPT Quốc Gia • IELTS Cambridge • Co-Teaching Bản Ngữ
           </div>
