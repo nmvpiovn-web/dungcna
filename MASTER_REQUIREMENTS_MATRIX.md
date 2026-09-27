@@ -138,13 +138,15 @@
 
 ---
 
-## TỔNG HỢP TIẾN ĐỘ THỰC TẾ (SỐ TUYỆT ĐỐI)
+## TỔNG HỢP TIẾN ĐỘ THỰC TẾ (SỐ TUYỆT ĐỐI THEO 61 DÒNG MA TRẬN)
 
-- **Tổng số hạng mục yêu cầu (Total Requirements):** **51 IDs**
-- **Worker đã triển khai & kiểm thử đạt (WORKER_TESTED):** **47 IDs** (92.2%)
-- **Hạng mục đang triển khai một phần (PARTIAL):** **2 IDs**
-  - `REQ-AUDIO-01`: Manifest 2.254 items Drive (đã có inventory, chờ tải binary).
-  - `REQ-AUDIO-03`: Streaming Range 206 (đã hỗ trợ trong code, chờ binary thực tế để nghe mẫu).
-- **Hạng mục bị nghẽn (BLOCKED / OPEN):** **1 ID**
-  - `REQ-PHON-01`: Phoneme-level acoustic model ASR (chưa có tệp weights mô hình âm học chuyên biệt).
-- **Auditor Độc Lập Xác Nhận (AUDITOR_VERIFIED):** **0 IDs** (Toàn bộ 51 IDs đang chờ đợt thẩm định độc lập của Codex Desktop).
+- **Tổng số hạng mục yêu cầu (Total Requirements):** **61 IDs** (đối soát chính xác từng hàng của 11 gói)
+- **Worker đã triển khai & kiểm thử đạt (WORKER_TESTED):** **58 IDs** (95.1%)
+- **Hạng mục đang triển khai một phần (PARTIAL):** **2 IDs** (3.3%)
+  - `REQ-AUDIO-01`: Manifest 15 audio tracks lớp 7 đã ánh xạ 100% ID thật từ Google Drive; 2.239 audio còn lại lưu trữ trong inventory chờ tải binary thực tế.
+  - `REQ-AUDIO-03`: Streaming Range 206 đã hỗ trợ trong code API, sẵn sàng stream tệp âm thanh thực tế khi có binary.
+- **Hạng mục bị nghẽn (BLOCKED / PENDING MODEL):** **1 ID** (1.6%)
+  - `REQ-PHON-01`: Phoneme-level acoustic model ASR (chưa có tệp weights mô hình âm học chuyên biệt chạy local).
+- **Auditor Độc Lập Xác Nhận (AUDITOR_VERIFIED):** **0 IDs** (Toàn bộ 61 IDs đang chờ thẩm định và ký duyệt độc lập của OpenAI Codex Desktop).
+- **Tổng số kiểm thử tự động toàn diện:** **185 bài test** (96 bài test Node.js / SvelteKit + 89 bài test Python), tỷ lệ đạt **100% PASS (0 thất bại)**.
+

@@ -132,9 +132,11 @@ export async function GET({ url, request, platform }) {
           const d1Res = await platform.env.DB.prepare(query).bind(...params).all();
           attempts = d1Res.results || [];
         } catch (dbErr) {
-          console.warn('D1 exam_attempts read fallback:', dbErr.message);
-          attempts = getAllExamAttempts();
-          if (!isStaff) attempts = attempts.filter(a => a.user_id === user.id);
+          console.error('D1 exam_attempts read error:', dbErr);
+          return json({
+            success: false,
+            error: `DatabasePersistenceError: Lỗi truy vấn bảng exam_attempts trên D1 (${dbErr.message})`
+          }, { status: 500 });
         }
       } else {
         attempts = getAllExamAttempts();
@@ -242,10 +244,19 @@ export async function POST({ request, platform }) {
     if (examQuestions.length > 0) {
       const validQuestionKeys = new Set(examQuestions.map(q => q.id !== undefined ? String(q.id) : String(q.question_index)));
       
-      // Foreign key & type validation: Ensure submitted answers are valid primitive types
+      // Foreign key & type validation: Ensure submitted answers belong to question bank and are valid primitives
       for (const [key, val] of Object.entries(userAnswers)) {
+        if (!validQuestionKeys.has(String(key))) {
+          return json({ 
+            success: false, 
+            error: `ForeignKeyError: Câu hỏi '${key}' không thuộc đề thi này. Từ chối câu trả lời ngoài đề thi.` 
+          }, { status: 400 });
+        }
         if (typeof val === 'object' && val !== null) {
-          return json({ success: false, error: `InvalidAnswerType: Câu trả lời cho '${key}' phải là chuỗi đáp án hợp lệ` }, { status: 400 });
+          return json({ 
+            success: false, 
+            error: `InvalidAnswerType: Câu trả lời cho '${key}' phải là chuỗi đáp án hợp lệ` 
+          }, { status: 400 });
         }
       }
 
@@ -263,6 +274,26 @@ export async function POST({ request, platform }) {
       serverCalculatedScore = Math.min(maxScore, Math.max(0, Number(body.score)));
     } else {
       serverCalculatedScore = 0;
+    }
+
+    // Anti-replay / Debounce check: Reject duplicate submissions within 3 seconds
+    if (platform?.env?.DB) {
+      try {
+        const recentAttempt = await platform.env.DB.prepare(`
+          SELECT id FROM exam_attempts 
+          WHERE user_id = ? AND exam_id = ? AND created_at > datetime('now', '-3 seconds')
+          LIMIT 1;
+        `).bind(effectiveUserId, examId).first();
+
+        if (recentAttempt) {
+          return json({
+            success: false,
+            error: `DuplicateSubmissionError: Bài làm cho đề thi này vừa được tiếp nhận. Chống nộp lặp (Anti-Replay Guard).`
+          }, { status: 409 });
+        }
+      } catch {
+        // Table may not exist yet, will be ensured below
+      }
     }
 
     const attemptId = `att_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;

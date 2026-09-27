@@ -99,6 +99,44 @@ export async function GET({ url, request, platform }) {
       `).bind(targetTeacherId, billingCycle).first();
     }
 
+    // Locked period defense on GET: If cycle is already locked/closed/paid, return locked snapshot directly (never recompute)
+    if (existingRecord && ['locked', 'closed', 'paid'].includes(existingRecord.status)) {
+      let snapshot = null;
+      if (existingRecord.calculation_json) {
+        try {
+          snapshot = JSON.parse(existingRecord.calculation_json);
+        } catch {}
+      }
+      if (!snapshot) {
+        snapshot = {
+          teacher_id: targetTeacherId,
+          billing_cycle: billingCycle,
+          status: existingRecord.status,
+          is_locked: true,
+          rate_mode: 'per_session',
+          base_rate: 300000,
+          payable_sessions: [],
+          deducted_advances: [],
+          summary: {
+            total_sessions: 0,
+            total_hours: 0,
+            gross_income: Number(existingRecord.gross_amount || 0),
+            disbursed_advances_deducted: Number(existingRecord.disbursed_advances_deducted || 0),
+            prior_debt_deducted: Number(existingRecord.prior_debt_deducted || 0),
+            carried_over_debt: Number(existingRecord.carried_over_debt || 0),
+            net_pay: Number(existingRecord.net_amount || 0)
+          }
+        };
+      }
+      return json({
+        success: true,
+        payroll: snapshot,
+        is_manager: manager,
+        existing_record: existingRecord,
+        is_locked: true
+      });
+    }
+
     // 3. Fetch completed sessions for this teacher and cycle
     let sessions = [];
     if (db) {
@@ -120,7 +158,7 @@ export async function GET({ url, request, platform }) {
       advances = advRes.results || [];
     }
 
-    // 5. Run calculation engine
+    // 5. Run calculation engine for draft/unlocked period
     const payroll = calculateTeacherMonthlyPayroll({
       teacherId: targetTeacherId,
       billingCycle,
@@ -147,6 +185,16 @@ export async function POST({ request, platform }) {
     return json({ success: false, error: auth.error || 'Unauthorized: Vui lòng đăng nhập' }, { status: auth.status || 401 });
   }
 
+  const db = platform?.env?.DB;
+  if (db) {
+    await ensurePayrollSchema(db);
+  }
+
+  // RBAC GATE: Non-staff users (students, parents, guests) are strictly blocked from payroll modifications
+  if (!isStaffUser(auth.user)) {
+    return json({ success: false, error: 'Forbidden: Quyền truy cập quản lý lương chỉ dành riêng cho nhân sự sư phạm' }, { status: 403 });
+  }
+
   const manager = isManager(auth.user);
   let body = {};
   try {
@@ -155,103 +203,197 @@ export async function POST({ request, platform }) {
     return json({ success: false, error: 'InvalidJSON: Dữ liệu gửi lên không đúng định dạng JSON' }, { status: 400 });
   }
 
-  const action = body.action || 'calculate'; // 'calculate' | 'lock' | 'approve' | 'disburse'
-  const teacherId = body.teacher_id || auth.user.id;
-  const billingCycle = body.billing_cycle || '2026-09';
-
-  // State-modifying actions ('lock', 'approve', 'disburse') strictly require Leader / Manager role
-  if (['lock', 'approve', 'disburse'].includes(action) && !manager) {
-    return json({ success: false, error: 'Forbidden: Chỉ Ban Quản Lý (Leader/Admin) mới có quyền khóa sổ hoặc duyệt bảng lương' }, { status: 403 });
+  // ACTION ALLOWLIST
+  const ALLOWED_ACTIONS = ['preview', 'calculate', 'save_draft', 'approve', 'lock', 'disburse'];
+  const action = body.action || 'preview';
+  if (!ALLOWED_ACTIONS.includes(action)) {
+    return json({ success: false, error: `InvalidAction: Thao tác '${action}' không nằm trong danh mục hợp lệ` }, { status: 400 });
   }
 
-  const db = platform?.env?.DB;
-  if (!db) {
+  // TEACHER OWNERSHIP SCOPING: Non-managers can ONLY preview or calculate their own payroll
+  let teacherId = body.teacher_id || auth.user.id;
+  if (!manager) {
+    if (body.teacher_id && body.teacher_id !== auth.user.id) {
+      return json({ success: false, error: 'Forbidden: Giáo viên không có quyền thao tác trên bảng lương của giáo viên khác' }, { status: 403 });
+    }
+    teacherId = auth.user.id;
+  }
+
+  const billingCycle = body.billing_cycle || '2026-09';
+
+  // Administrative lifecycle actions strictly require Leader / Manager role
+  if (['approve', 'lock', 'disburse'].includes(action) && !manager) {
+    return json({ success: false, error: 'Forbidden: Chỉ Ban Quản Lý (Leader/Admin) mới có quyền khóa sổ hoặc duyệt chi bảng lương' }, { status: 403 });
+  }
+
+  if (!db && action !== 'preview') {
     return json({ success: false, error: 'DatabaseUnavailable: Cần kết nối D1 để lưu bảng lương' }, { status: 500 });
   }
 
   try {
-    await ensurePayrollSchema(db);
+    if (db) {
+      await ensurePayrollSchema(db);
+    }
 
-    // Check existing record status for write-time lock protection
-    const existing = await db.prepare(`
-      SELECT * FROM teacher_payrolls
-      WHERE teacher_id = ? AND billing_cycle = ?
-      LIMIT 1
-    `).bind(teacherId, billingCycle).first();
+    // Check existing record status for write-time lock protection & state machine
+    let existing = null;
+    if (db) {
+      existing = await db.prepare(`
+        SELECT * FROM teacher_payrolls
+        WHERE teacher_id = ? AND billing_cycle = ?
+        LIMIT 1
+      `).bind(teacherId, billingCycle).first();
+    }
 
-    if (existing && ['locked', 'closed', 'paid'].includes(existing.status) && action !== 'calculate') {
+    // STATE MACHINE VALIDATIONS:
+    // 1. Fully paid/closed periods cannot be modified by any action
+    if (existing && existing.status === 'paid') {
       return json({
         success: false,
-        error: `ConflictError: Kỳ lương ${billingCycle} của giáo viên ${teacherId} đã ở trạng thái '${existing.status}', không thể sửa đổi.`
+        error: `ConflictError: Kỳ lương ${billingCycle} của giáo viên ${teacherId} đã ở trạng thái 'paid' (hoàn tất chi trả), không thể sửa đổi.`
       }, { status: 409 });
+    }
+
+    // 2. Locked period handling:
+    if (existing && ['locked', 'closed'].includes(existing.status)) {
+      if (action === 'disburse') {
+        // Legitimate transition from locked -> paid (disbursement recorded)
+        await db.prepare(`
+          UPDATE teacher_payrolls
+          SET status = 'paid', updated_at = CURRENT_TIMESTAMP
+          WHERE id = ? AND status = 'locked'
+        `).bind(existing.id).run();
+
+        return json({
+          success: true,
+          message: `Đã xác nhận thực chi trả thành công cho kỳ lương ${billingCycle}!`,
+          status: 'paid'
+        });
+      } else {
+        // Any other modification attempt on locked period is rejected
+        return json({
+          success: false,
+          error: `ConflictError: Kỳ lương ${billingCycle} của giáo viên ${teacherId} đã ở trạng thái '${existing.status}', không thể sửa đổi.`
+        }, { status: 409 });
+      }
+    }
+
+    // 3. Disbursement pre-condition: Must be approved or locked before disbursement
+    if (action === 'disburse' && (!existing || existing.status === 'draft')) {
+      return json({
+        success: false,
+        error: `PreconditionError: Bảng lương phải được phê duyệt ('approved') hoặc khóa sổ ('locked') trước khi xác nhận thực chi ('paid').`
+      }, { status: 400 });
     }
 
     // Look up previous debt
     const prevCycle = getPreviousBillingCycle(billingCycle);
-    const prevRecord = await db.prepare(`
-      SELECT carried_over_debt FROM teacher_payrolls
-      WHERE teacher_id = ? AND billing_cycle = ?
-      LIMIT 1
-    `).bind(teacherId, prevCycle).first();
-    const previousDebtBalance = prevRecord?.carried_over_debt ? Number(prevRecord.carried_over_debt) : 0;
+    let previousDebtBalance = 0;
+    if (db) {
+      const prevRecord = await db.prepare(`
+        SELECT carried_over_debt FROM teacher_payrolls
+        WHERE teacher_id = ? AND billing_cycle = ?
+        LIMIT 1
+      `).bind(teacherId, prevCycle).first();
+      previousDebtBalance = prevRecord?.carried_over_debt ? Number(prevRecord.carried_over_debt) : 0;
+    }
 
     // Fetch sessions & advances
-    const sessRes = await db.prepare(`
-      SELECT * FROM class_sessions WHERE teacher_id = ? OR teacher_id LIKE ?
-    `).bind(teacherId, `%${teacherId}%`).all();
+    let sessions = [];
+    let advances = [];
+    if (db) {
+      const sessRes = await db.prepare(`
+        SELECT * FROM class_sessions WHERE teacher_id = ? OR teacher_id LIKE ?
+      `).bind(teacherId, `%${teacherId}%`).all();
+      sessions = sessRes.results || [];
 
-    const advRes = await db.prepare(`
-      SELECT * FROM teacher_salary_advances WHERE teacher_id = ?
-    `).bind(teacherId).all();
+      const advRes = await db.prepare(`
+        SELECT * FROM teacher_salary_advances WHERE teacher_id = ?
+      `).bind(teacherId).all();
+      advances = advRes.results || [];
+    }
 
     const calculated = calculateTeacherMonthlyPayroll({
       teacherId,
       billingCycle,
-      sessions: sessRes.results || [],
-      advances: advRes.results || [],
+      sessions,
+      advances,
       previousDebtBalance,
       existingPeriod: existing
     });
 
-    const targetStatus = action === 'lock' ? 'locked' : (action === 'approve' ? 'approved' : (action === 'disburse' ? 'paid' : (existing?.status || 'draft')));
+    // If pure preview, return calculated data with zero persistence
+    if (action === 'preview') {
+      return json({
+        success: true,
+        payroll: calculated,
+        is_preview: true
+      });
+    }
+
+    const targetStatus = action === 'lock' ? 'locked' : (action === 'approve' ? 'approved' : (action === 'disburse' ? 'paid' : 'draft'));
     const recordId = existing?.id || `pr_${teacherId}_${billingCycle.replace('-', '')}`;
 
-    // Write / upsert into teacher_payrolls
-    await db.prepare(`
-      INSERT INTO teacher_payrolls (
-        id, teacher_id, billing_cycle, gross_amount, net_amount,
-        disbursed_advances_deducted, prior_debt_deducted, carried_over_debt,
-        status, calculation_json, approved_by, approved_at, updated_at
-      )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-      ON CONFLICT(id) DO UPDATE SET
-        gross_amount = excluded.gross_amount,
-        net_amount = excluded.net_amount,
-        disbursed_advances_deducted = excluded.disbursed_advances_deducted,
-        prior_debt_deducted = excluded.prior_debt_deducted,
-        carried_over_debt = excluded.carried_over_debt,
-        status = excluded.status,
-        calculation_json = excluded.calculation_json,
-        approved_by = excluded.approved_by,
-        approved_at = excluded.approved_at,
-        updated_at = CURRENT_TIMESTAMP;
-    `).bind(
-      recordId,
-      teacherId,
-      billingCycle,
-      calculated.summary.gross_income,
-      calculated.summary.net_pay,
-      calculated.summary.disbursed_advances_deducted,
-      calculated.summary.prior_debt_deducted,
-      calculated.summary.carried_over_debt,
-      targetStatus,
-      JSON.stringify(calculated),
-      manager ? auth.user.id : null
-    ).run();
+    if (existing) {
+      // WRITE-TIME SQL CONCURRENCY GUARD: UPDATE only if status is NOT already locked/closed/paid
+      const updateRes = await db.prepare(`
+        UPDATE teacher_payrolls
+        SET gross_amount = ?,
+            net_amount = ?,
+            disbursed_advances_deducted = ?,
+            prior_debt_deducted = ?,
+            carried_over_debt = ?,
+            status = ?,
+            calculation_json = ?,
+            approved_by = ?,
+            approved_at = CURRENT_TIMESTAMP,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = ? AND status NOT IN ('locked', 'closed', 'paid');
+      `).bind(
+        calculated.summary.gross_income,
+        calculated.summary.net_pay,
+        calculated.summary.disbursed_advances_deducted,
+        calculated.summary.prior_debt_deducted,
+        calculated.summary.carried_over_debt,
+        targetStatus,
+        JSON.stringify(calculated),
+        manager ? auth.user.id : null,
+        recordId
+      ).run();
+
+      if (updateRes.meta?.changes === 0) {
+        return json({
+          success: false,
+          error: `ConflictError: Kỳ lương ${billingCycle} đã bị khóa sổ bởi phiên quản trị khác, không thể ghi đè.`
+        }, { status: 409 });
+      }
+    } else {
+      // INSERT new record
+      await db.prepare(`
+        INSERT INTO teacher_payrolls (
+          id, teacher_id, billing_cycle, gross_amount, net_amount,
+          disbursed_advances_deducted, prior_debt_deducted, carried_over_debt,
+          status, calculation_json, approved_by, approved_at, updated_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+      `).bind(
+        recordId,
+        teacherId,
+        billingCycle,
+        calculated.summary.gross_income,
+        calculated.summary.net_pay,
+        calculated.summary.disbursed_advances_deducted,
+        calculated.summary.prior_debt_deducted,
+        calculated.summary.carried_over_debt,
+        targetStatus,
+        JSON.stringify(calculated),
+        manager ? auth.user.id : null
+      ).run();
+    }
 
     return json({
       success: true,
-      message: `Đã ${action === 'lock' ? 'khóa sổ' : (action === 'approve' ? 'phê duyệt' : 'tính')} bảng lương thành công!`,
+      message: `Đã ${action === 'lock' ? 'khóa sổ' : (action === 'approve' ? 'phê duyệt' : 'lưu')} bảng lương thành công!`,
       status: targetStatus,
       payroll: calculated
     });

@@ -4,11 +4,11 @@
 **Auditor:** OpenAI Codex Desktop  
 **Ngày lập:** 2026-09-27  
 
-Bảng dẫn chiếu này cung cấp liên kết trực tiếp từ từng mã yêu cầu (51 IDs) tới file mã nguồn, file kiểm thử và kết quả kiểm tra thực tế trên hệ thống.
+Bảng dẫn chiếu này cung cấp liên kết trực tiếp từ từng mã yêu cầu (61 IDs) tới file mã nguồn, file kiểm thử và kết quả kiểm tra thực tế trên hệ thống.
 
 ---
 
-## 1. DẪN CHIẾU 51 YÊU CẦU HỆ THỐNG
+## 1. DẪN CHIẾU 61 YÊU CẦU HỆ THỐNG
 
 ### GÓI 1: ACADEMIC LEDGER UI REBUILD
 | ID | File mã nguồn | File kiểm thử tự động | Dòng lệnh kiểm tra | Trạng thái |
@@ -119,8 +119,8 @@ Bảng dẫn chiếu này cung cấp liên kết trực tiếp từ từng mã y
 
 ## 2. TỔNG KẾT & RAW LOGS
 
-- **Node.js Test Run:** 16 suites, 92 tests, 92 passed, 0 failed, 0 skipped. Thời gian: ~10s.
-- **Python Test Run:** 4 suites, 87 tests, 87 passed, 0 failed.
-- **Tổng số automated tests:** **179 tests PASS 100%**.
+- **Node.js Test Run:** 16 suites, 96 tests, 96 passed, 0 failed, 0 skipped. Thời gian: ~7s.
+- **Python Test Run:** 6 suites, 89 tests, 89 passed, 0 failed.
+- **Tổng số automated tests:** **185 tests PASS 100%**.
 - **Type Check (`npm run check`):** 0 errors, 70 warnings (a11y click-events, unused CSS).
-- **Production Build (`npm run build`):** Exit 0, thành công trong ~13s.
+- **Production Build (`npm run build`):** Exit 0, thành công trong ~14.8s.
