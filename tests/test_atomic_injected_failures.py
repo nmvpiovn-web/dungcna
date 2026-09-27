@@ -252,7 +252,5 @@ report("99 stars yields exactly 0 VND discount", d2 == 0 and f2 == 1500000)
 report("1050 stars yields exactly 10,000 VND discount", d3 == 10000 and f3 == 1490000)
 report("Extreme stars (200,000) floors final tuition amount at 0 VND (No Negative Tuition)", f4 == 0)
 
-print("=====================================================================")
-print(f"AUDIT SUMMARY: {passed}/{total} TESTS PASSED (100%)")
-print("=====================================================================")
-sys.exit(0 if passed == total else 1)
+if __name__ == '__main__':
+    sys.exit(0 if passed == total else 1)

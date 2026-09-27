@@ -42,6 +42,22 @@ async function ensurePayrollSchema(db) {
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
       );
     `).run();
+    await db.prepare(`
+      CREATE TABLE IF NOT EXISTS finance_ledger (
+        id TEXT PRIMARY KEY,
+        voucher_type TEXT NOT NULL,
+        reference_id TEXT NOT NULL,
+        teacher_id TEXT,
+        actor_id TEXT NOT NULL,
+        amount INTEGER NOT NULL,
+        payment_method TEXT DEFAULT 'bank_transfer',
+        billing_cycle TEXT NOT NULL,
+        idempotency_key TEXT UNIQUE,
+        voucher_number TEXT,
+        status TEXT DEFAULT 'completed',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
+    `).run();
   } catch (err) {
     console.warn('ensurePayrollSchema notice:', err.message);
   }
@@ -99,8 +115,8 @@ export async function GET({ url, request, platform }) {
       `).bind(targetTeacherId, billingCycle).first();
     }
 
-    // Locked period defense on GET: If cycle is already locked/closed/paid, return locked snapshot directly (never recompute)
-    if (existingRecord && ['locked', 'closed', 'paid'].includes(existingRecord.status)) {
+    // Locked & Approved period defense on GET: If cycle is already locked/closed/paid/approved, return snapshot directly (never recompute)
+    if (existingRecord && ['locked', 'closed', 'paid', 'approved'].includes(existingRecord.status)) {
       let snapshot = null;
       if (existingRecord.calculation_json) {
         try {
@@ -112,7 +128,7 @@ export async function GET({ url, request, platform }) {
           teacher_id: targetTeacherId,
           billing_cycle: billingCycle,
           status: existingRecord.status,
-          is_locked: true,
+          is_locked: ['locked', 'closed', 'paid'].includes(existingRecord.status),
           rate_mode: 'per_session',
           base_rate: 300000,
           payable_sessions: [],
@@ -128,12 +144,20 @@ export async function GET({ url, request, platform }) {
           }
         };
       }
+      // CRITICAL FIX FOR P2 AUDIT DEFECT: Ensure snapshot payload status matches existing_record.status!
+      snapshot.status = existingRecord.status;
+      snapshot.is_locked = ['locked', 'closed', 'paid'].includes(existingRecord.status);
+      snapshot.is_approved = ['approved', 'locked', 'closed', 'paid'].includes(existingRecord.status);
+      snapshot.approved_by = existingRecord.approved_by || snapshot.approved_by;
+      snapshot.approved_at = existingRecord.approved_at || snapshot.approved_at;
+
       return json({
         success: true,
         payroll: snapshot,
         is_manager: manager,
         existing_record: existingRecord,
-        is_locked: true
+        is_locked: ['locked', 'closed', 'paid'].includes(existingRecord.status),
+        is_approved: ['approved', 'locked', 'closed', 'paid'].includes(existingRecord.status)
       });
     }
 
@@ -246,6 +270,14 @@ export async function POST({ request, platform }) {
     }
 
     // STATE MACHINE VALIDATIONS:
+    // 0. Optimistic Concurrency Guard: Validate caller's expected status if provided
+    if (existing && body.expected_status && existing.status !== body.expected_status) {
+      return json({
+        success: false,
+        error: `ConflictError: Trạng thái kỳ lương ${billingCycle} đã bị thay đổi (hiện tại: '${existing.status}', mong đợi: '${body.expected_status}'). Vui lòng làm mới dữ liệu trước khi thực hiện.`
+      }, { status: 409 });
+    }
+
     // 1. Fully paid or closed periods are strictly terminal and cannot be modified or disbursed
     if (existing && ['paid', 'closed'].includes(existing.status)) {
       return json({
@@ -270,6 +302,10 @@ export async function POST({ request, platform }) {
       }
 
       if (action === 'disburse') {
+        const idempotencyKey = body.idempotency_key || request.headers.get('idempotency-key') || `disburse_${existing.id}_${billingCycle}`;
+        const voucherId = `vch_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+        const voucherNumber = `PC-${billingCycle.replace('-', '')}-${teacherId.slice(0, 4).toUpperCase()}-${Date.now().toString().slice(-4)}`;
+
         const disburseRes = await db.prepare(`
           UPDATE teacher_payrolls
           SET status = 'paid', updated_at = CURRENT_TIMESTAMP
@@ -283,11 +319,41 @@ export async function POST({ request, platform }) {
           }, { status: 409 });
         }
 
+        // Record immutable ledger voucher
+        try {
+          await db.prepare(`
+            INSERT INTO finance_ledger (
+              id, voucher_type, reference_id, teacher_id, actor_id,
+              amount, payment_method, billing_cycle, idempotency_key, voucher_number, status
+            ) VALUES (?, 'PAYROLL_DISBURSEMENT', ?, ?, ?, ?, ?, ?, ?, ?, 'completed');
+          `).bind(
+            voucherId,
+            existing.id,
+            teacherId,
+            auth.user.id,
+            existing.net_amount,
+            body.payment_method || 'bank_transfer',
+            billingCycle,
+            idempotencyKey,
+            voucherNumber
+          ).run();
+        } catch (lErr) {
+          console.warn('finance_ledger write note:', lErr.message);
+        }
+
         return json({
           success: true,
           message: `Đã xác nhận thực chi trả thành công số tiền đã duyệt cho kỳ lương ${billingCycle}!`,
           status: 'paid',
-          disbursed_net_amount: existing.net_amount
+          disbursed_net_amount: existing.net_amount,
+          voucher: {
+            voucher_id: voucherId,
+            voucher_number: voucherNumber,
+            actor_id: auth.user.id,
+            amount: existing.net_amount,
+            disbursed_at: new Date().toISOString(),
+            idempotency_key: idempotencyKey
+          }
         });
       } else if (action === 'lock') {
         const lockRes = await db.prepare(`
@@ -371,6 +437,12 @@ export async function POST({ request, platform }) {
 
     const targetStatus = action === 'lock' ? 'locked' : (action === 'approve' ? 'approved' : (action === 'disburse' ? 'paid' : 'draft'));
     const recordId = existing?.id || `pr_${teacherId}_${billingCycle.replace('-', '')}`;
+
+    calculated.status = targetStatus;
+    if (targetStatus === 'approved' || targetStatus === 'locked') {
+      calculated.approved_by = manager ? auth.user.id : null;
+      calculated.approved_at = new Date().toISOString();
+    }
 
     if (existing) {
       // WRITE-TIME SQL CONCURRENCY GUARD:

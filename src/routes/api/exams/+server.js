@@ -11,6 +11,103 @@ import { verifyServerAuth, isStaffUser } from '../../../lib/server/auth.js';
 
 export const prerender = false;
 
+async function ensureExamSchema(db) {
+  if (!db) return;
+  try {
+    await db.prepare(`
+      CREATE TABLE IF NOT EXISTS exam_attempts (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        user_name TEXT,
+        user_email TEXT,
+        exam_id TEXT NOT NULL,
+        exam_title TEXT,
+        score REAL NOT NULL,
+        max_score REAL NOT NULL,
+        answers_json TEXT NOT NULL,
+        duration_seconds INTEGER DEFAULT 0,
+        session_id TEXT,
+        class_id TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
+    `).run();
+    await db.prepare(`
+      CREATE TABLE IF NOT EXISTS exam_attempts_archive (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        user_name TEXT,
+        user_email TEXT,
+        exam_id TEXT NOT NULL,
+        exam_title TEXT,
+        score REAL NOT NULL,
+        max_score REAL NOT NULL,
+        answers_json TEXT NOT NULL,
+        duration_seconds INTEGER DEFAULT 0,
+        session_id TEXT,
+        class_id TEXT,
+        created_at DATETIME,
+        archived_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        archive_reason TEXT DEFAULT 'pre_unique_migration_duplicate'
+      );
+    `).run();
+    await db.prepare(`
+      CREATE TABLE IF NOT EXISTS exam_sessions (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        exam_id TEXT NOT NULL,
+        attempt_number INTEGER DEFAULT 1,
+        questions_snapshot_json TEXT NOT NULL,
+        time_limit_minutes INTEGER NOT NULL,
+        started_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        deadline_at DATETIME NOT NULL,
+        submitted_at DATETIME,
+        status TEXT DEFAULT 'in_progress',
+        score REAL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
+    `).run();
+    await db.prepare(`
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_exam_attempts_user_exam ON exam_attempts (user_id, exam_id);
+    `).run();
+  } catch (err) {
+    if (err.message && (err.message.includes('unique') || err.message.includes('indexed columns are not unique'))) {
+      try {
+        await db.prepare(`
+          INSERT OR IGNORE INTO exam_attempts_archive (
+            id, user_id, user_name, user_email, exam_id, exam_title,
+            score, max_score, answers_json, duration_seconds, session_id, class_id, created_at, archive_reason
+          )
+          SELECT a.id, a.user_id, a.user_name, a.user_email, a.exam_id, a.exam_title,
+                 a.score, a.max_score, a.answers_json, a.duration_seconds, a.session_id, a.class_id, a.created_at,
+                 'duplicate_prior_attempt'
+          FROM exam_attempts a
+          WHERE a.id NOT IN (
+            SELECT id FROM (
+              SELECT id, ROW_NUMBER() OVER (
+                PARTITION BY user_id, exam_id
+                ORDER BY datetime(created_at) DESC, rowid DESC
+              ) as rn
+              FROM exam_attempts
+            ) WHERE rn = 1
+          );
+        `).run();
+        await db.prepare(`
+          DELETE FROM exam_attempts
+          WHERE id IN (
+            SELECT id FROM exam_attempts_archive
+            WHERE archive_reason = 'duplicate_prior_attempt'
+          );
+        `).run();
+        await db.prepare(`
+          CREATE UNIQUE INDEX IF NOT EXISTS idx_exam_attempts_user_exam ON exam_attempts (user_id, exam_id);
+        `).run();
+      } catch (archErr) {
+        console.warn('exam_attempts_archive migration notice:', archErr.message);
+      }
+    }
+  }
+}
+
 export async function GET({ url, request, platform }) {
   let user = null;
   let isStaff = false;
@@ -92,23 +189,7 @@ export async function GET({ url, request, platform }) {
     if (user) {
       if (platform?.env?.DB) {
         try {
-          await platform.env.DB.prepare(`
-            CREATE TABLE IF NOT EXISTS exam_attempts (
-              id TEXT PRIMARY KEY,
-              user_id TEXT NOT NULL,
-              user_name TEXT,
-              user_email TEXT,
-              exam_id TEXT NOT NULL,
-              exam_title TEXT,
-              score REAL NOT NULL,
-              max_score REAL NOT NULL,
-              answers_json TEXT NOT NULL,
-              duration_seconds INTEGER DEFAULT 0,
-              session_id TEXT,
-              class_id TEXT,
-              created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            );
-          `).run();
+          await ensureExamSchema(platform.env.DB);
 
           let query = 'SELECT * FROM exam_attempts WHERE 1=1';
           const params = [];
@@ -214,7 +295,114 @@ export async function POST({ request, platform }) {
       });
     }
 
-    // 2. Single attempt submission
+    // 2. Exam Session Lifecycle: Start Session (Server-owned instance & deadline)
+    if (body.action === 'start_session' || body.action === 'start') {
+      const examId = body.exam_id;
+      if (!examId) {
+        return json({ success: false, error: 'MissingExamId: Thiếu mã đề thi' }, { status: 400 });
+      }
+
+      if (platform?.env?.DB) {
+        await ensureExamSchema(platform.env.DB);
+      }
+
+      const effectiveUserId = isStaff ? (body.user_id || user.id) : user.id;
+      const officialExam = getExams().find(e => e.id === examId);
+      const durationMinutes = Number(body.duration_minutes || officialExam?.duration_minutes || 45);
+
+      // Check if student already submitted this exam
+      if (platform?.env?.DB && !isStaff && !body.allow_retake) {
+        const priorAttempt = await platform.env.DB.prepare(`
+          SELECT id FROM exam_attempts WHERE user_id = ? AND exam_id = ? LIMIT 1;
+        `).bind(effectiveUserId, examId).first();
+        if (priorAttempt) {
+          return json({
+            success: false,
+            error: `DuplicateSubmissionError: Học sinh đã hoàn thành và nộp bài thi '${examId}'. Mỗi bài thi chỉ được nộp một lần (Anti-Replay / Retake Lock).`
+          }, { status: 409 });
+        }
+      }
+
+      // Check if an active session already exists for this user and exam
+      let existingSession = null;
+      if (platform?.env?.DB) {
+        existingSession = await platform.env.DB.prepare(`
+          SELECT * FROM exam_sessions
+          WHERE user_id = ? AND exam_id = ? AND status = 'in_progress'
+          ORDER BY started_at DESC LIMIT 1;
+        `).bind(effectiveUserId, examId).first();
+      }
+
+      if (existingSession) {
+        const deadline = new Date(existingSession.deadline_at);
+        if (deadline > new Date()) {
+          let snapshotQuestions = [];
+          try {
+            snapshotQuestions = JSON.parse(existingSession.questions_snapshot_json);
+          } catch {}
+          return json({
+            success: true,
+            resumed: true,
+            session_instance: {
+              instance_id: existingSession.id,
+              exam_id: existingSession.exam_id,
+              user_id: existingSession.user_id,
+              started_at: existingSession.started_at,
+              deadline_at: existingSession.deadline_at,
+              time_limit_minutes: existingSession.time_limit_minutes,
+              remaining_seconds: Math.max(0, Math.floor((deadline.getTime() - Date.now()) / 1000)),
+              questions: snapshotQuestions
+            }
+          });
+        } else {
+          if (platform?.env?.DB) {
+            await platform.env.DB.prepare(`
+              UPDATE exam_sessions SET status = 'expired' WHERE id = ?;
+            `).bind(existingSession.id).run();
+          }
+        }
+      }
+
+      // Create new session instance with sanitized questions snapshot
+      const rawQuestions = questionsData.filter(q => q.exam_id === examId);
+      const sanitizedSnapshot = rawQuestions.map(({ correct_answer, explanation, ...rest }) => rest);
+      const instanceId = `exm_sess_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+      const startedAt = new Date();
+      const deadlineAt = new Date(startedAt.getTime() + (durationMinutes * 60 + 60) * 1000); // 60s network grace
+
+      if (platform?.env?.DB) {
+        await platform.env.DB.prepare(`
+          INSERT INTO exam_sessions (
+            id, user_id, exam_id, questions_snapshot_json,
+            time_limit_minutes, started_at, deadline_at, status
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, 'in_progress');
+        `).bind(
+          instanceId,
+          effectiveUserId,
+          examId,
+          JSON.stringify(sanitizedSnapshot),
+          durationMinutes,
+          startedAt.toISOString(),
+          deadlineAt.toISOString()
+        ).run();
+      }
+
+      return json({
+        success: true,
+        session_instance: {
+          instance_id: instanceId,
+          exam_id: examId,
+          user_id: effectiveUserId,
+          started_at: startedAt.toISOString(),
+          deadline_at: deadlineAt.toISOString(),
+          time_limit_minutes: durationMinutes,
+          remaining_seconds: durationMinutes * 60,
+          questions: sanitizedSnapshot
+        }
+      });
+    }
+
+    // 3. Single attempt submission
     // OWNERSHIP CHECK: Student can ONLY submit an attempt for themselves
     const effectiveUserId = isStaff ? (body.user_id || user.id) : user.id;
     const effectiveUserName = isStaff ? (body.user_name || body.student_name || user.name) : user.name;
@@ -353,26 +541,30 @@ export async function POST({ request, platform }) {
     // D1 Persistence with fail-closed guarantee & Unique concurrency protection
     if (platform?.env?.DB) {
       try {
-        await platform.env.DB.prepare(`
-          CREATE TABLE IF NOT EXISTS exam_attempts (
-            id TEXT PRIMARY KEY,
-            user_id TEXT NOT NULL,
-            user_name TEXT,
-            user_email TEXT,
-            exam_id TEXT NOT NULL,
-            exam_title TEXT,
-            score REAL NOT NULL,
-            max_score REAL NOT NULL,
-            answers_json TEXT NOT NULL,
-            duration_seconds INTEGER DEFAULT 0,
-            session_id TEXT,
-            class_id TEXT,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-          );
-        `).run();
-        await platform.env.DB.prepare(`
-          CREATE UNIQUE INDEX IF NOT EXISTS idx_exam_attempts_user_exam ON exam_attempts (user_id, exam_id);
-        `).run();
+        await ensureExamSchema(platform.env.DB);
+
+        if (body.instance_id) {
+          const examSess = await platform.env.DB.prepare(`
+            SELECT * FROM exam_sessions WHERE id = ? LIMIT 1;
+          `).bind(body.instance_id).first();
+
+          if (examSess) {
+            if (examSess.status === 'submitted') {
+              return json({
+                success: false,
+                error: `DuplicateSubmissionError: Phiên thi này đã được hoàn tất trước đó.`
+              }, { status: 409 });
+            }
+            const deadline = new Date(examSess.deadline_at);
+            if (Date.now() > deadline.getTime() + 60000) {
+              await platform.env.DB.prepare(`UPDATE exam_sessions SET status = 'expired' WHERE id = ?;`).bind(body.instance_id).run();
+              return json({
+                success: false,
+                error: `DeadlineExceededError: Phiên thi đã quá thời hạn nộp bài cho phép.`
+              }, { status: 400 });
+            }
+          }
+        }
 
         await platform.env.DB.prepare(`
           INSERT INTO exam_attempts (
@@ -393,6 +585,16 @@ export async function POST({ request, platform }) {
           saved.session_id,
           saved.class_id
         ).run();
+
+        if (body.instance_id) {
+          try {
+            await platform.env.DB.prepare(`
+              UPDATE exam_sessions
+              SET status = 'submitted', submitted_at = CURRENT_TIMESTAMP, score = ?
+              WHERE id = ?;
+            `).bind(saved.score, body.instance_id).run();
+          } catch {}
+        }
       } catch (dbErr) {
         if (dbErr.message && (dbErr.message.includes('UNIQUE') || dbErr.message.includes('constraint'))) {
           return json({
