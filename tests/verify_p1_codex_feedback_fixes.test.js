@@ -172,10 +172,22 @@ test('P1-02: Locked Payroll GET returns 200 snapshot and POST prevents overwrite
   });
   const overwriteRes = await payrollPost({ request: overwriteReq, platform });
   assert.equal(overwriteRes.status, 409, 'Overwriting locked period must return 409 Conflict');
+
+  // Attempting to disburse an already closed period must return 409 Conflict (not return 200 with unchanged DB)
+  platform.env.DB.prepare("UPDATE teacher_payrolls SET status='closed' WHERE teacher_id='usr_teacher_a'").run();
+  const closedDisburseReq = new Request('http://localhost/api/teachers/payroll', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${leaderToken}` },
+    body: JSON.stringify({ action: 'disburse', teacher_id: 'usr_teacher_a', billing_cycle: '2026-09' })
+  });
+  const closedDisburseRes = await payrollPost({ request: closedDisburseReq, platform });
+  assert.equal(closedDisburseRes.status, 409, 'Disbursing closed period must return 409 Conflict');
+  const closedBody = await closedDisburseRes.json();
+  assert.match(closedBody.error, /ConflictError|đã ở trạng thái 'closed'/);
 });
 
 test('P1-03: Exam validation rejects rogue question keys (400) and repeated submissions (409)', async () => {
-  const { platform } = createMockPlatform();
+  const { platform, rawDb } = createMockPlatform();
   const studentToken = await createSignedToken({ id: 'usr_student_test', username: 'test_student', role: 'student' }, secret);
 
   // 1. Rogue question key rejected with 400
@@ -217,6 +229,21 @@ test('P1-03: Exam validation rejects rogue question keys (400) and repeated subm
   });
   const repeatRes = await examPost({ request: repeatReq, platform });
   assert.equal(repeatRes.status, 409, 'Immediate repeat submission must return 409 Conflict');
+
+  // 4. Repeat submission even after debounce window is strictly blocked with 409 (Single submission policy)
+  rawDb.exec("UPDATE exam_attempts SET created_at = datetime('now', '-5 seconds') WHERE user_id = 'usr_student_test'");
+  const delayedRepeatReq = new Request('http://localhost/api/exams', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${studentToken}` },
+    body: JSON.stringify({
+      exam_id: 'ex_g7_hsg_yenlap',
+      answers: { '1': 'C' }
+    })
+  });
+  const delayedRepeatRes = await examPost({ request: delayedRepeatReq, platform });
+  assert.equal(delayedRepeatRes.status, 409, 'Delayed repeat submission must return 409 Conflict');
+  const attemptsCount = rawDb.prepare('SELECT COUNT(*) AS c FROM exam_attempts WHERE user_id = ?').get('usr_student_test');
+  assert.equal(attemptsCount.c, 1, 'Strictly 1 attempt record must exist in DB');
 
   // 4. GET /api/exams fails closed (500) when D1 query for exam_attempts errors
   const failingPlatform = {

@@ -246,23 +246,29 @@ export async function POST({ request, platform }) {
     }
 
     // STATE MACHINE VALIDATIONS:
-    // 1. Fully paid/closed periods cannot be modified by any action
-    if (existing && existing.status === 'paid') {
+    // 1. Fully paid or closed periods are strictly terminal and cannot be modified or disbursed
+    if (existing && ['paid', 'closed'].includes(existing.status)) {
       return json({
         success: false,
-        error: `ConflictError: Kỳ lương ${billingCycle} của giáo viên ${teacherId} đã ở trạng thái 'paid' (hoàn tất chi trả), không thể sửa đổi.`
+        error: `ConflictError: Kỳ lương ${billingCycle} của giáo viên ${teacherId} đã ở trạng thái '${existing.status}' (hoàn tất chi trả/đã đóng sổ), không thể thực chi hay sửa đổi.`
       }, { status: 409 });
     }
 
-    // 2. Locked period handling:
-    if (existing && ['locked', 'closed'].includes(existing.status)) {
+    // 2. Locked period handling: Only legitimate transition is locked -> paid via disburse
+    if (existing && existing.status === 'locked') {
       if (action === 'disburse') {
-        // Legitimate transition from locked -> paid (disbursement recorded)
-        await db.prepare(`
+        const disburseRes = await db.prepare(`
           UPDATE teacher_payrolls
           SET status = 'paid', updated_at = CURRENT_TIMESTAMP
           WHERE id = ? AND status = 'locked'
         `).bind(existing.id).run();
+
+        if (disburseRes.meta?.changes === 0) {
+          return json({
+            success: false,
+            error: `ConflictError: Kỳ lương ${billingCycle} không còn ở trạng thái 'locked', không thể giải ngân.`
+          }, { status: 409 });
+        }
 
         return json({
           success: true,
@@ -270,10 +276,9 @@ export async function POST({ request, platform }) {
           status: 'paid'
         });
       } else {
-        // Any other modification attempt on locked period is rejected
         return json({
           success: false,
-          error: `ConflictError: Kỳ lương ${billingCycle} của giáo viên ${teacherId} đã ở trạng thái '${existing.status}', không thể sửa đổi.`
+          error: `ConflictError: Kỳ lương ${billingCycle} của giáo viên ${teacherId} đã ở trạng thái 'locked', không thể sửa đổi.`
         }, { status: 409 });
       }
     }

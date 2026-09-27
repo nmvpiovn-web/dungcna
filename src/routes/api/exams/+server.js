@@ -276,20 +276,36 @@ export async function POST({ request, platform }) {
       serverCalculatedScore = 0;
     }
 
-    // Anti-replay / Debounce check: Reject duplicate submissions within 3 seconds
+    // ANTI-REPLAY & RETAKE LOCK:
+    // Students can submit an exam strictly once; staff is debounced against rapid double-clicks
     if (platform?.env?.DB) {
       try {
-        const recentAttempt = await platform.env.DB.prepare(`
-          SELECT id FROM exam_attempts 
-          WHERE user_id = ? AND exam_id = ? AND created_at > datetime('now', '-3 seconds')
-          LIMIT 1;
-        `).bind(effectiveUserId, examId).first();
+        if (!isStaff) {
+          const priorAttempt = await platform.env.DB.prepare(`
+            SELECT id FROM exam_attempts 
+            WHERE user_id = ? AND exam_id = ?
+            LIMIT 1;
+          `).bind(effectiveUserId, examId).first();
 
-        if (recentAttempt) {
-          return json({
-            success: false,
-            error: `DuplicateSubmissionError: Bài làm cho đề thi này vừa được tiếp nhận. Chống nộp lặp (Anti-Replay Guard).`
-          }, { status: 409 });
+          if (priorAttempt) {
+            return json({
+              success: false,
+              error: `DuplicateSubmissionError: Học sinh đã hoàn thành và nộp bài thi '${examId}'. Mỗi bài thi chỉ được nộp một lần (Anti-Replay / Retake Lock).`
+            }, { status: 409 });
+          }
+        } else {
+          const recentAttempt = await platform.env.DB.prepare(`
+            SELECT id FROM exam_attempts 
+            WHERE user_id = ? AND exam_id = ? AND created_at > datetime('now', '-3 seconds')
+            LIMIT 1;
+          `).bind(effectiveUserId, examId).first();
+
+          if (recentAttempt) {
+            return json({
+              success: false,
+              error: `DuplicateSubmissionError: Bài làm cho đề thi này vừa được tiếp nhận. Chống nộp lặp (Anti-Replay Guard).`
+            }, { status: 409 });
+          }
         }
       } catch {
         // Table may not exist yet, will be ensured below
