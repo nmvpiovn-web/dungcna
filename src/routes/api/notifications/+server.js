@@ -26,6 +26,43 @@ async function ensureNotificationSchema(db) {
       PRIMARY KEY (notification_id, user_id)
     );
   `).run();
+  // Parent notification query references class_enrollments — ensure it exists
+  await db.prepare(`
+    CREATE TABLE IF NOT EXISTS class_enrollments (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      class_id TEXT NOT NULL,
+      enrolled_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      status TEXT DEFAULT 'active',
+      UNIQUE(user_id, class_id)
+    );
+  `).run();
+  // Parent notification revoke-guard references homework tables
+  await db.prepare(`
+    CREATE TABLE IF NOT EXISTS homework_assignments (
+      id TEXT PRIMARY KEY, session_id TEXT, class_id TEXT, class_name TEXT,
+      teacher_id TEXT, teacher_name TEXT, campus_id TEXT, skill_type TEXT,
+      title TEXT, description TEXT, obsidian_note_id TEXT, obsidian_note_title TEXT,
+      assigned_date TEXT, deadline_date TEXT, deadline_time TEXT,
+      max_score INTEGER DEFAULT 10, star_reward_on_time INTEGER DEFAULT 0,
+      status TEXT DEFAULT 'active', created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+  `).run();
+  await db.prepare(`
+    CREATE TABLE IF NOT EXISTS homework_submissions (
+      id TEXT PRIMARY KEY, assignment_id TEXT, student_id TEXT, student_name TEXT,
+      content TEXT, file_url TEXT, submitted_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      score REAL, teacher_feedback TEXT, graded_at TEXT, status TEXT DEFAULT 'submitted'
+    );
+  `).run();
+  // Also ensure parent_student_links exists
+  await db.prepare(`
+    CREATE TABLE IF NOT EXISTS parent_student_links (
+      id TEXT PRIMARY KEY, parent_user_id TEXT NOT NULL, student_user_id TEXT NOT NULL,
+      verification_status TEXT DEFAULT 'pending', created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      verified_at TEXT
+    );
+  `).run();
 }
 
 export async function GET({ request, platform }) {
@@ -94,11 +131,16 @@ export async function GET({ request, platform }) {
             EXISTS (
               SELECT 1 FROM parent_student_links psl
               JOIN homework_assignments ha ON ha.id = n.reference_id
-              JOIN users su ON su.id = psl.student_user_id
               WHERE psl.parent_user_id = ?
                 AND psl.verification_status = 'verified'
-                AND (su.metadata LIKE '%"class_id":"' || ha.class_id || '"%'
-                     OR su.metadata LIKE '%"class_id": "' || ha.class_id || '"%')
+                AND psl.student_user_id IN (
+                  SELECT ce.user_id FROM class_enrollments ce 
+                  WHERE ce.class_id = ha.class_id AND ce.status = 'active'
+                  UNION
+                  SELECT u.id FROM users u 
+                  WHERE u.id = psl.student_user_id
+                  AND json_valid(u.metadata) AND json_extract(u.metadata, '$.class_id') = ha.class_id
+                )
             )
             OR
             -- Grading notifications: reference_id is submission_id; find student via attempt/submission

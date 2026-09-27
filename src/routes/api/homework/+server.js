@@ -3,6 +3,27 @@ import { verifyServerAuth, isStaffUser } from '../../../lib/server/auth.js';
 
 export const prerender = false;
 
+// Ensure class_enrollments table exists (structured membership for class-scoped notifications)
+async function ensureClassEnrollmentsSchema(db) {
+  if (!db) return;
+  try {
+    await db.prepare(`
+      CREATE TABLE IF NOT EXISTS class_enrollments (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        class_id TEXT NOT NULL,
+        enrolled_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        status TEXT DEFAULT 'active',
+        UNIQUE(user_id, class_id)
+      );
+    `).run();
+  } catch (e) {
+    // Table may already exist; ignore safely
+    const msg = (e?.message || '').toLowerCase();
+    if (!msg.includes('already exists')) console.warn('[HW] class_enrollments schema init warn:', msg);
+  }
+}
+
 // In-Memory store for local development & fallback
 let inMemoryAssignments = [
   {
@@ -391,20 +412,26 @@ export async function POST({ request, platform }) {
         ).run();
 
         // Broadcast notifications ONLY to verified parents of students in this class
-        // P1/P2 Fix: Use exact structured membership query; reject empty class_id (would broadcast to all)
+        // Uses class_enrollments table (structured membership) — no LIKE wildcard issues
+        await ensureClassEnrollmentsSchema(db);
         const targetClassId = newAssignment.class_id || '';
         if (!targetClassId) {
           console.warn('[HW] Skipping parent notifications: class_id is empty, refusing broadcast-all');
         } else {
+          // Primary: class_enrollments table (exact match, no wildcard)
+          // Fallback: json_extract from metadata (exact equality, no LIKE)
           const linksRes = await db.prepare(`
             SELECT DISTINCT psl.parent_user_id 
             FROM parent_student_links psl
-            JOIN users u ON u.id = psl.student_user_id
             WHERE psl.verification_status = 'verified'
               AND psl.parent_user_id IS NOT NULL
-              AND (
-                u.metadata LIKE '%"class_id":"' || ? || '"%'
-                OR u.metadata LIKE '%"class_id": "' || ? || '"%'
+              AND psl.student_user_id IN (
+                SELECT ce.user_id FROM class_enrollments ce 
+                WHERE ce.class_id = ? AND ce.status = 'active'
+                UNION
+                SELECT u.id FROM users u 
+                WHERE u.role = 'student' 
+                AND json_valid(u.metadata) AND json_extract(u.metadata, '$.class_id') = ?
               );
           `).bind(targetClassId, targetClassId).all();
 
@@ -424,13 +451,14 @@ export async function POST({ request, platform }) {
         } // end if(targetClassId)
 
         // Send class-scoped notifications to students in this class (NOT a global NULL broadcast)
-        // Codex P1/P2: homework for a specific class must NOT broadcast to all students system-wide
         if (targetClassId) {
           const studentRes = await db.prepare(`
-            SELECT id FROM users
-            WHERE role = 'student'
-              AND (metadata LIKE '%"class_id":"' || ? || '"%'
-                   OR metadata LIKE '%"class_id": "' || ? || '"%');
+            SELECT user_id as id FROM class_enrollments 
+            WHERE class_id = ? AND status = 'active'
+            UNION
+            SELECT id FROM users 
+            WHERE role = 'student' 
+            AND json_valid(metadata) AND json_extract(metadata, '$.class_id') = ?;
           `).bind(targetClassId, targetClassId).all();
           const classStudents = (studentRes.results || []).map(r => r.id).filter(Boolean);
           for (const studentId of classStudents) {
