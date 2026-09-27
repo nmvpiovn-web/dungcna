@@ -73,6 +73,27 @@ function createMockPlatform() {
         }
       };
     },
+    batch(stmts) {
+      const runBatch = async () => {
+        db.exec('BEGIN TRANSACTION;');
+        try {
+          const results = [];
+          for (const stmt of stmts) {
+            const res = await stmt.run();
+            results.push(res);
+          }
+          db.exec('COMMIT;');
+          return results;
+        } catch (err) {
+          try { db.exec('ROLLBACK;'); } catch {}
+          throw err;
+        }
+      };
+      if (!this._queue) this._queue = Promise.resolve();
+      const res = this._queue.then(runBatch, runBatch);
+      this._queue = res.catch(() => {});
+      return res;
+    },
     rawDb: db
   };
 
@@ -225,12 +246,25 @@ test('P1-03: Exam validation rejects rogue question keys (400) and repeated subm
   const { platform, rawDb } = createMockPlatform();
   const studentToken = await createSignedToken({ id: 'usr_student_test', username: 'test_student', role: 'student' }, secret);
 
-  // 1. Rogue question key rejected with 400
+  // 1. Rogue question key rejected with 400 within an active session
+  const startRes = await examPost({
+    request: new Request('http://localhost/api/exams', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${studentToken}` },
+      body: JSON.stringify({ action: 'start_session', exam_id: 'ex_g7_hsg_yenlap' })
+    }),
+    platform
+  });
+  assert.equal(startRes.status, 200);
+  const startData = await startRes.json();
+  const instanceId = startData.session_instance.instance_id;
+
   const rogueReq = new Request('http://localhost/api/exams', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${studentToken}` },
     body: JSON.stringify({
       exam_id: 'ex_g7_hsg_yenlap',
+      instance_id: instanceId,
       answers: { 'rogue_injected_key_xyz': 'A' }
     })
   });
@@ -246,6 +280,7 @@ test('P1-03: Exam validation rejects rogue question keys (400) and repeated subm
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${studentToken}` },
       body: JSON.stringify({
         exam_id: 'ex_g7_hsg_yenlap',
+        instance_id: instanceId,
         answers: { '1': 'C' }
       })
     });

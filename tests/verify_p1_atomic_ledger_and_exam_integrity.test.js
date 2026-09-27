@@ -314,13 +314,29 @@ test('P1-EXAM-04: Student cannot bypass anti-retake lock by sending allow_retake
   const { platform } = createMockPlatform();
   const studentAlphaToken = await createSignedToken({ id: 'usr_student_alpha', username: 'student_alpha', role: 'student' }, secret);
 
-  // Submit first attempt
+  // Start session and submit first attempt (enforcing mandatory session lifecycle)
+  const startFirst = await examPost({
+    request: new Request('http://localhost/api/exams', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${studentAlphaToken}` },
+      body: JSON.stringify({
+        action: 'start_session',
+        exam_id: 'ex_g7_hsg_yenlap'
+      })
+    }),
+    platform
+  });
+  assert.equal(startFirst.status, 200);
+  const startFirstData = await startFirst.json();
+  const instanceId = startFirstData.session_instance.instance_id;
+
   const first = await examPost({
     request: new Request('http://localhost/api/exams', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${studentAlphaToken}` },
       body: JSON.stringify({
         exam_id: 'ex_g7_hsg_yenlap',
+        instance_id: instanceId,
         answers: { '1': 'C' }
       })
     }),

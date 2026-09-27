@@ -532,6 +532,15 @@ export async function POST({ request, platform }) {
       }
     }
 
+    // P1-03: ELIMINATE DIRECT SUBMISSION FOR STUDENTS (SessionRequiredError)
+    // Non-staff students MUST create a session (start_session) prior to submitting
+    if (!isStaff && !activeSession) {
+      return json({
+        success: false,
+        error: 'SessionRequiredError: Học sinh bắt buộc phải bắt đầu phiên thi (start_session) trước khi nộp bài. Không cho phép nộp bài trực tiếp không qua phiên thi.'
+      }, { status: 400 });
+    }
+
     // P1-04: SERVER-SIDE SCORING FROM AUTHORITATIVE ANSWER KEY SNAPSHOT
     let serverCalculatedScore = 0;
 
@@ -648,91 +657,36 @@ export async function POST({ request, platform }) {
     // P1-03: ATOMIC D1 PERSISTENCE
     if (platform?.env?.DB) {
       if (activeSession) {
-        if (typeof platform.env.DB.batch === 'function') {
-          const updateSessSql = `
-            UPDATE exam_sessions
-            SET status = 'submitted', submitted_at = CURRENT_TIMESTAMP, score = ?
-            WHERE id = ? 
-              AND user_id = ? 
-              AND exam_id = ? 
-              AND status = 'in_progress'
-              AND datetime('now') <= datetime(deadline_at, '+60 seconds');
-          `;
-          const insertAttemptSql = `
-            INSERT INTO exam_attempts (
-              id, user_id, user_name, user_email, exam_id, exam_title,
-              score, max_score, answers_json, duration_seconds, session_id, class_id
-            )
-            SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
-            WHERE EXISTS (
-              SELECT 1 FROM exam_sessions WHERE id = ? AND status = 'submitted'
-            );
-          `;
-          try {
-            const batchRes = await platform.env.DB.batch([
-              platform.env.DB.prepare(updateSessSql).bind(saved.score, activeSession.id, effectiveUserId, examId),
-              platform.env.DB.prepare(insertAttemptSql).bind(
-                saved.id,
-                saved.user_id,
-                saved.user_name,
-                saved.user_email,
-                saved.exam_id,
-                saved.exam_title,
-                saved.score,
-                saved.max_score,
-                JSON.stringify(saved.answers),
-                saved.duration_seconds,
-                saved.session_id,
-                saved.class_id,
-                activeSession.id
-              )
-            ]);
+        if (typeof platform.env.DB.batch !== 'function') {
+          return json({
+            success: false,
+            error: 'ExamTransactionError: Hệ thống yêu cầu hỗ trợ giao dịch nguyên tử (db.batch) để nộp bài thi.'
+          }, { status: 500 });
+        }
 
-            if (!batchRes || batchRes[0]?.meta?.changes === 0) {
-              return json({
-                success: false,
-                error: `DeadlineExceededError: Phiên thi đã quá thời hạn nộp bài tại thời điểm ghi dữ liệu hoặc đã được nộp đồng thời.`
-              }, { status: 400 });
-            }
-          } catch (batchErr) {
-            if (batchErr.message && (batchErr.message.includes('UNIQUE') || batchErr.message.includes('constraint'))) {
-              return json({
-                success: false,
-                error: `DuplicateSubmissionError: Bài làm cho đề thi này đã được tiếp nhận trong một phiên đồng thời. Chống nộp lặp (Unique Concurrency Guard).`
-              }, { status: 409 });
-            }
-            return json({
-              success: false,
-              error: `DatabasePersistenceError: Không thể lưu kết quả thi vào D1 (${batchErr.message})`
-            }, { status: 500 });
-          }
-        } else {
-          // Sequential CAS fallback for non-batch environments (unit test adapters):
-          // Update session via CAS first; if changes === 0, abort immediately without touching attempts.
-          const sessUpdateRes = await platform.env.DB.prepare(`
-            UPDATE exam_sessions
-            SET status = 'submitted', submitted_at = CURRENT_TIMESTAMP, score = ?
-            WHERE id = ? 
-              AND user_id = ? 
-              AND exam_id = ? 
-              AND status = 'in_progress'
-              AND datetime('now') <= datetime(deadline_at, '+60 seconds');
-          `).bind(saved.score, activeSession.id, effectiveUserId, examId).run();
-
-          if (sessUpdateRes.meta?.changes === 0) {
-            return json({
-              success: false,
-              error: `DeadlineExceededError: Phiên thi đã quá thời hạn nộp bài tại thời điểm ghi dữ liệu hoặc đã được nộp đồng thời.`
-            }, { status: 400 });
-          }
-
-          try {
-            await platform.env.DB.prepare(`
-              INSERT INTO exam_attempts (
-                id, user_id, user_name, user_email, exam_id, exam_title,
-                score, max_score, answers_json, duration_seconds, session_id, class_id
-              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
-            `).bind(
+        const updateSessSql = `
+          UPDATE exam_sessions
+          SET status = 'submitted', submitted_at = CURRENT_TIMESTAMP, score = ?
+          WHERE id = ? 
+            AND user_id = ? 
+            AND exam_id = ? 
+            AND status = 'in_progress'
+            AND datetime('now') <= datetime(deadline_at, '+60 seconds');
+        `;
+        const insertAttemptSql = `
+          INSERT INTO exam_attempts (
+            id, user_id, user_name, user_email, exam_id, exam_title,
+            score, max_score, answers_json, duration_seconds, session_id, class_id
+          )
+          SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+          WHERE EXISTS (
+            SELECT 1 FROM exam_sessions WHERE id = ? AND status = 'submitted'
+          );
+        `;
+        try {
+          const batchRes = await platform.env.DB.batch([
+            platform.env.DB.prepare(updateSessSql).bind(saved.score, activeSession.id, effectiveUserId, examId),
+            platform.env.DB.prepare(insertAttemptSql).bind(
               saved.id,
               saved.user_id,
               saved.user_name,
@@ -744,24 +698,31 @@ export async function POST({ request, platform }) {
               JSON.stringify(saved.answers),
               saved.duration_seconds,
               saved.session_id,
-              saved.class_id
-            ).run();
-          } catch (insertErr) {
-            // NEVER reset activeSession here! Do not execute compensating rollback.
-            if (insertErr.message && (insertErr.message.includes('UNIQUE') || insertErr.message.includes('constraint'))) {
-              return json({
-                success: false,
-                error: `DuplicateSubmissionError: Bài làm cho đề thi này đã được tiếp nhận trong một phiên đồng thời. Chống nộp lặp (Unique Concurrency Guard).`
-              }, { status: 409 });
-            }
+              saved.class_id,
+              activeSession.id
+            )
+          ]);
+
+          if (!batchRes || batchRes[0]?.meta?.changes === 0) {
             return json({
               success: false,
-              error: `DatabasePersistenceError: Không thể lưu kết quả thi vào D1 (${insertErr.message})`
-            }, { status: 500 });
+              error: `DeadlineExceededError: Phiên thi đã quá thời hạn nộp bài tại thời điểm ghi dữ liệu hoặc đã được nộp đồng thời.`
+            }, { status: 400 });
           }
+        } catch (batchErr) {
+          if (batchErr.message && (batchErr.message.includes('UNIQUE') || batchErr.message.includes('constraint'))) {
+            return json({
+              success: false,
+              error: `DuplicateSubmissionError: Bài làm cho đề thi này đã được tiếp nhận trong một phiên đồng thời. Chống nộp lặp (Unique Concurrency Guard).`
+            }, { status: 409 });
+          }
+          return json({
+            success: false,
+            error: `DatabasePersistenceError: Không thể lưu kết quả thi vào D1 (${batchErr.message})`
+          }, { status: 500 });
         }
       } else {
-        // Direct attempt submission without an active session (e.g. staff grading or quick test)
+        // Direct attempt submission without an active session (ONLY permitted for isStaff)
         try {
           await platform.env.DB.prepare(`
             INSERT INTO exam_attempts (

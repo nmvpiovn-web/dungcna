@@ -63,6 +63,21 @@ function createTestEnvironment() {
           return { meta: { changes: res.changes } };
         }
       };
+    },
+    async batch(stmts) {
+      db.exec('BEGIN TRANSACTION;');
+      try {
+        const results = [];
+        for (const stmt of stmts) {
+          const res = await stmt.run();
+          results.push(res);
+        }
+        db.exec('COMMIT;');
+        return results;
+      } catch (err) {
+        try { db.exec('ROLLBACK;'); } catch {}
+        throw err;
+      }
     }
   };
 

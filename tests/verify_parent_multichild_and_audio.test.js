@@ -376,6 +376,24 @@ describe('PARENT MULTI-CHILD, AUDIO STREAMING & EXAM BANK AUDIT SUITE', () => {
 
     test('EX-05: Server-side scoring evaluates answers, ignores client max_score tampering, and persists to D1', async () => {
       const url = new URL('http://localhost/api/exams');
+
+      // Start session first to comply with mandatory session lifecycle
+      const startReq = new Request(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${studentToken}`
+        },
+        body: JSON.stringify({
+          action: 'start_session',
+          exam_id: 'ex_g7_quick_5m'
+        })
+      });
+      const startRes = await postExams({ request: startReq, platform: mockPlatform });
+      assert.strictEqual(startRes.status, 200);
+      const startData = await startRes.json();
+      const instanceId = startData.session_instance.instance_id;
+
       const req = new Request(url, {
         method: 'POST',
         headers: {
@@ -384,6 +402,7 @@ describe('PARENT MULTI-CHILD, AUDIO STREAMING & EXAM BANK AUDIT SUITE', () => {
         },
         body: JSON.stringify({
           exam_id: 'ex_g7_quick_5m',
+          instance_id: instanceId,
           score: 10.0, // MALICIOUS CLIENT ATTEMPT: Claims perfect score 10.0
           max_score: 100.0, // MALICIOUS ATTEMPT: Inflate max_score scale to 100
           answers: {

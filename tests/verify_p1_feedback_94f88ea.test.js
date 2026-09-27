@@ -351,3 +351,111 @@ test('P1-04: Session submit fails closed with HTTP 500 when answer_key_snapshot_
   const attempts = rawDb.prepare('SELECT COUNT(*) n FROM exam_attempts WHERE session_id = ?').get(corruptSessionId);
   assert.equal(attempts.n, 0);
 });
+
+// =========================================================================
+// P1-03: MANDATORY ATOMIC BATCH & MANDATORY SESSIONS FOR STUDENTS
+// =========================================================================
+test('P1-03: Exam submit fails closed with HTTP 500 (ExamTransactionError) when db.batch is unavailable', async () => {
+  const { platform, rawDb } = createMockPlatform();
+  const studentToken = await createSignedToken({ id: 'usr_student_alpha', username: 'student_alpha', role: 'student' }, secret);
+
+  // 1. Start session normally with batch support
+  const startRes = await examPost({
+    request: new Request('http://localhost/api/exams', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${studentToken}` },
+      body: JSON.stringify({ action: 'start_session', exam_id: 'ex_g7_hsg_yenlap' })
+    }),
+    platform
+  });
+  assert.equal(startRes.status, 200);
+  const startData = await startRes.json();
+  const instanceId = startData.session_instance.instance_id;
+
+  // 2. Disable db.batch on platform
+  const nonBatchPlatform = {
+    env: {
+      DB: {
+        prepare: platform.env.DB.prepare.bind(platform.env.DB)
+        // db.batch is undefined!
+      },
+      AUTH_SECRET: secret
+    }
+  };
+
+  // 3. Attempt submit on non-batch platform
+  const submitRes = await examPost({
+    request: new Request('http://localhost/api/exams', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${studentToken}` },
+      body: JSON.stringify({
+        exam_id: 'ex_g7_hsg_yenlap',
+        instance_id: instanceId,
+        answers: { '1': 'C' }
+      })
+    }),
+    platform: nonBatchPlatform
+  });
+
+  assert.equal(submitRes.status, 500, 'Must fail-closed with 500 when db.batch is missing');
+  const body = await submitRes.json();
+  assert.match(body.error, /ExamTransactionError/);
+
+  // Session must remain in_progress (zero state change)
+  const sess = rawDb.prepare('SELECT status FROM exam_sessions WHERE id = ?').get(instanceId);
+  assert.equal(sess.status, 'in_progress');
+});
+
+test('P1-03: Direct student exam submission without active session is rejected with HTTP 400 (SessionRequiredError)', async () => {
+  const { platform, rawDb } = createMockPlatform();
+  const studentToken = await createSignedToken({ id: 'usr_student_alpha', username: 'student_alpha', role: 'student' }, secret);
+
+  // Attempt direct submission without starting session
+  const directSubmitRes = await examPost({
+    request: new Request('http://localhost/api/exams', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${studentToken}` },
+      body: JSON.stringify({
+        exam_id: 'ex_g7_hsg_yenlap',
+        answers: { '1': 'C' }
+      })
+    }),
+    platform
+  });
+
+  assert.equal(directSubmitRes.status, 400, 'Direct submission without session must be rejected with 400');
+  const body = await directSubmitRes.json();
+  assert.match(body.error, /SessionRequiredError/);
+
+  // Invariant: 0 attempts recorded
+  const attempts = rawDb.prepare('SELECT COUNT(*) n FROM exam_attempts WHERE user_id = ?').get('usr_student_alpha');
+  assert.equal(attempts.n, 0);
+});
+
+test('P1-03: Staff user (teacher) is permitted direct attempt submission without active session', async () => {
+  const { platform, rawDb } = createMockPlatform();
+  const teacherToken = await createSignedToken({ id: 'usr_teacher_t1', username: 'teacher_t1', role: 'teacher' }, secret);
+
+  // Teacher submits direct attempt for an exam
+  const staffSubmitRes = await examPost({
+    request: new Request('http://localhost/api/exams', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${teacherToken}` },
+      body: JSON.stringify({
+        exam_id: 'ex_g7_hsg_yenlap',
+        answers: { '1': 'C' }
+      })
+    }),
+    platform
+  });
+
+  assert.equal(staffSubmitRes.status, 200, 'Staff is permitted direct attempt submission');
+  const body = await staffSubmitRes.json();
+  assert.equal(body.success, true);
+  assert.ok(body.attempt);
+
+  // Invariant: 1 attempt recorded for teacher
+  const attempts = rawDb.prepare('SELECT COUNT(*) n FROM exam_attempts WHERE user_id = ?').get('usr_teacher_t1');
+  assert.equal(attempts.n, 1);
+});
+

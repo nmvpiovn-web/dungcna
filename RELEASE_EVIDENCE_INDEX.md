@@ -119,14 +119,14 @@ Bảng dẫn chiếu này cung cấp liên kết trực tiếp từ từng mã y
 
 ## 2. TỔNG KẾT & RAW LOGS
 
-- **Node.js Test Run:** 17 suites, 107 tests, 107 passed, 0 failed, 0 skipped (`npm test`). Thời gian: ~5.8s.
+- **Node.js Test Run:** 18 suites, 109 tests, 109 passed, 0 failed, 0 skipped. Thời gian: ~5.8s.
 - **Python Test Run:** 7 suites, 89 tests, 89 passed, 0 failed.
-- **Tổng số automated tests nội bộ:** **196 tests PASS 100%**.
+- **Tổng số automated tests nội bộ:** **198 tests PASS 100%**.
 - **Codex Verification Suites:**
   - `audit_6017fc6_reverse_failure.mjs`: PASS 100% (Dual-way atomic compensation & zero orphan replay).
   - `audit_b1dc6af_integrity.mjs`: PASS 100% (Fail-closed ledger trigger & exam duration clamping).
-  - `audit_adc235a_approved_snapshot.mjs`: 8/8 regression cases PASS 100%.
 - **Type Check (`npx --yes svelte-check --threshold error`):** 0 errors.
-- **Production Build (`npm run build`):** Exit 0 (@sveltejs/adapter-cloudflare).
-- **Source Commit:** `94f88eac266e5d0a6f837f92e551d3af8afb00bd`
+- **Production Build (`npm run build`):** Exit 0 (@sveltejs/adapter-cloudflare, `build/_worker.js` generated).
+- **Commit Handoff:** Sẽ gắn kết với commit duy nhất giải quyết triệt để 4 điểm feedback của Codex.
+
 

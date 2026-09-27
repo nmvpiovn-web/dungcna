@@ -69,7 +69,7 @@
 | **REQ-EXAM-03** | Server-Side Score Computation | Điểm thi do Server tự động chấm dựa trên đối soát bài làm với DB snapshot; client-supplied `body.score` bị vứt bỏ. | `api/exams/+server.js`, `api/exams/random` | `tests/verify_parent_multichild_and_audio.test.js` | Tests EX-05 | WORKER_TESTED | PENDING_CODEX_AUDIT |
 | **REQ-EXAM-04** | Server Enforced Max Score | Client `body.max_score` bị chặn không cho phép phóng đại scale; thang điểm 10 chuẩn mực do Server quyết định. | `src/routes/api/exams/+server.js` | `tests/verify_parent_multichild_and_audio.test.js` | Test EX-05 assertion | WORKER_TESTED | PENDING_CODEX_AUDIT |
 | **REQ-EXAM-05** | D1 Exam Persistence & Safe Migration | Lưu kết quả thi vào `exam_attempts` và phiên thi vào `exam_sessions`; migration DDL `ALTER TABLE ... answer_key_snapshot_json` bắt buộc fail-closed (HTTP 500) khi gặp lỗi DB/IO/constraint thật, chỉ bỏ qua lỗi duplicate column; chặn hoàn toàn tạo session/attempt khi migration lỗi. | `src/routes/api/exams/+server.js`, `migrations/0003_*.sql` | `tests/verify_p1_feedback_94f88ea.test.js`, `tests/verify_phase1_audit_hardening.test.js` | Test P1-02, Migration 0003 & Phase 1 Suite | WORKER_TESTED | PENDING_CODEX_AUDIT |
-| **REQ-EXAM-06** | Server-Owned Exam Lifecycle & CAS Deadline | Vòng đời phiên thi chuẩn mực: `duration_minutes` server-owned (chặn client 9999), xác thực sở hữu phiên (403), kiểm tra exam binding (400), nộp bài nguyên tử qua transaction/CAS không có catch rollback làm reset phiên thắng của worker khác; chấm điểm BẮT BUỘC thực hiện từ `answer_key_snapshot_json` đóng băng của phiên thi, nếu thiếu/lỗi snapshot thì fail-closed HTTP 500; chống nộp lặp / retake bypass. | `src/routes/api/exams/+server.js` | `tests/verify_p1_feedback_94f88ea.test.js`, `tests/verify_p1_atomic_ledger_and_exam_integrity.test.js` | Tests P1-03, P1-04, P1-EXAM-01..04 | WORKER_TESTED | PENDING_CODEX_AUDIT |
+| **REQ-EXAM-06** | Server-Owned Exam Lifecycle & Mandatory Batch | Vòng đời phiên thi chuẩn mực: `duration_minutes` server-owned (chặn client 9999), xác thực sở hữu phiên (403), kiểm tra exam binding (400); bắt buộc sử dụng `db.batch` trên D1 khi nộp bài qua phiên thi (fail-closed HTTP 500 nếu thiếu `db.batch`, loại bỏ hoàn toàn sequential CAS fallback); học sinh nộp bài BẮT BUỘC phải qua phiên thi (HTTP 400 `SessionRequiredError`), chỉ nhân viên/giáo viên (`isStaff`) mới được nộp trực tiếp; không có catch rollback làm reset phiên thắng của worker khác; chấm điểm BẮT BUỘC thực hiện từ `answer_key_snapshot_json` đóng băng của phiên thi, nếu thiếu/lỗi snapshot thì fail-closed HTTP 500; chống nộp lặp / retake bypass. | `src/routes/api/exams/+server.js` | `tests/verify_p1_feedback_94f88ea.test.js`, `tests/verify_p1_atomic_ledger_and_exam_integrity.test.js` | Tests P1-03 (9 tests), P1-04, P1-EXAM-01..04 | WORKER_TESTED | PENDING_CODEX_AUDIT |
 | **REQ-EXAM-07** | Bank Shortage Handling | Nếu ngân hàng câu hỏi thiếu số lượng cho mức nhận thức/khối lớp, báo lỗi thiếu câu hỏi cụ thể, không trộn sai khối/kỹ năng. | `api/exams/random`, `api/exams` | `tests/verify_real_behavioral_audit.test.js` | ShortageError 400 | WORKER_TESTED | PENDING_CODEX_AUDIT |
 
 ---
@@ -140,21 +140,25 @@
 
 ## TỔNG HỢP TIẾN ĐỘ THỰC TẾ (SỐ TUYỆT ĐỐI THEO 61 DÒNG MA TRẬN)
 
-- **Source Git SHA:** Khớp với Git commit sau khi nộp báo cáo đợt 9 (Clean Working Tree 100%).
+- **Source Git Commit SHA:** Gắn kết chính xác với Git commit duy nhất sau khi hoàn tất toàn diện 4 điểm feedback của Codex (Clean Working Tree 100%).
 - **Tổng số hạng mục yêu cầu (Total Requirements):** **61 IDs** (đối soát chính xác từng hàng của 11 gói)
-- **Worker đã triển khai & kiểm thử đạt (WORKER_TESTED):** **58 IDs** (95.1% Worker claim — KHÔNG thay thế quyết định release của Auditor)
+- **Worker đã triển khai & tự kiểm thử đạt (WORKER_TESTED):** **58 IDs** (95.1% Worker claim — TUYỆT ĐỐI KHÔNG thay thế hoặc phủ quyết kết quả audit độc lập của Auditor)
 - **Hạng mục đang triển khai một phần (PARTIAL):** **2 IDs** (3.3%)
   - `REQ-AUDIO-01`: Manifest 15 audio tracks lớp 7 đã ánh xạ 100% ID thật từ Google Drive; 2.239 audio còn lại lưu trữ trong inventory chờ tải binary thực tế.
   - `REQ-AUDIO-03`: Streaming Range 206 đã hỗ trợ trong code API, sẵn sàng stream tệp âm thanh thực tế khi có binary.
 - **Hạng mục bị nghẽn / Ngoài đợt release (BLOCKED / OPEN SCOPE):** **1 ID** (1.6%)
   - `REQ-PHON-01`: Phoneme-level acoustic model ASR (chưa có tệp weights mô hình âm học chuyên biệt chạy local).
   - Scope ngoài đợt release (chỉ giữ interface): SePay, MoMo, VNPay, PDF OCR.
-- **Auditor Độc Lập Xác Nhận (AUDITOR_VERIFIED):** **0 IDs** (Toàn bộ 61 IDs đang chờ thẩm định và ký duyệt độc lập của OpenAI Codex Desktop).
-- **Bộ kiểm thử P1 đợt 9 (`tests/verify_p1_feedback_94f88ea.test.js`):** **6/6 PASS (100%)** (P1-01 atomic batch, P1-02 fail-closed migration, P1-03 submit concurrency without clobbering rollback, P1-04 snapshot scoring).
+- **Auditor Độc Lập Xác Nhận (AUDITOR_VERIFIED):** **0 IDs** (Toàn bộ 61 IDs thuộc quyền thẩm định, kiểm tra và ký duyệt độc lập của OpenAI Codex Desktop).
+- **Bộ kiểm thử P1 đợt 9 (`tests/verify_p1_feedback_94f88ea.test.js`):** **9/9 PASS (100%)**
+  - P1-01: Payroll fail-closed khi thiếu `db.batch` (không sequential fallback, zero orphan voucher).
+  - P1-02: `ensureExamSchema` fail-closed khi gặp I/O error, an toàn bỏ qua duplicate column ALTER TABLE.
+  - P1-03: Concurrent submits atomic batch, không reset phiên thắng; bắt buộc `db.batch` (fail-closed 500); chặn học sinh nộp không có session (`SessionRequiredError` 400).
+  - P1-04: Chấm điểm nghiêm ngặt từ `answer_key_snapshot_json` đóng băng (fail-closed 500 nếu thiếu/hỏng).
 - **Bộ kiểm thử hồi quy độc lập Codex:**
   - `audit_6017fc6_reverse_failure.mjs`: **PASS (100%)** (payroll approved, ledger 0, retry fails closed with 500).
   - `audit_b1dc6af_integrity.mjs`: **PASS (100%)** (client duration ignored, foreign session 403, ledger abort 500).
-- **Tổng số kiểm thử tự động toàn diện:** **195 bài test** (106 bài test Node.js / SvelteKit + 89 bài test Python), tỷ lệ đạt **100% PASS (0 thất bại)**.
+- **Tổng số kiểm thử tự động nội bộ:** **198 bài test** (109 bài test Node.js / SvelteKit + 89 bài test Python), tỷ lệ đạt **100% PASS (0 thất bại)**.
 - **Build & Diagnostics Pipeline:** `npm run check` (0 errors), `npm run build` (thành công xuất `build/_worker.js`).
-- **Release Gate:** **STRICTLY BLOCKED — Chưa deploy production cho đến khi Codex Desktop cấp chứng chỉ nghiệm thu chính thức.**
+- **Release Gate:** **STRICTLY BLOCKED — Tuyệt đối chưa deploy production cho đến khi Codex Desktop cấp chứng chỉ nghiệm thu chính thức.**
 
