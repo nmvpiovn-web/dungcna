@@ -17,7 +17,6 @@
     getUnreadLeaderNotificationCount,
     scanScheduleAndAttendanceForLeader,
     scanTuitionDueAlerts,
-    SUPERADMIN_EMAILS,
     verifySessionWithServer,
     hasPersistedToken
   } from '$lib/unifiedStore';

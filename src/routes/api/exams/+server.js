@@ -17,6 +17,17 @@ export async function _ensureExamSchema(db) {
 
 const ensureExamSchema = ensureExamSchemaInternal;
 
+async function safeAddColumn(db, table, columnDef) {
+  try {
+    await db.prepare(`ALTER TABLE ${table} ADD COLUMN ${columnDef};`).run();
+  } catch (err) {
+    const msg = (err?.message || '').toLowerCase();
+    if (!msg.includes('duplicate column') && !msg.includes('already exists')) {
+      throw err;
+    }
+  }
+}
+
 async function ensureExamSchemaInternal(db) {
   if (!db) return;
   try {
@@ -73,25 +84,12 @@ async function ensureExamSchemaInternal(db) {
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       );
     `).run();
-    try {
-      await db.prepare(`ALTER TABLE exam_sessions ADD COLUMN questions_snapshot_json TEXT;`).run();
-    } catch {}
-    try {
-      await db.prepare(`ALTER TABLE exam_sessions ADD COLUMN answer_key_snapshot_json TEXT;`).run();
-    } catch (alterErr) {
-      const msg = (alterErr?.message || '').toLowerCase();
-      if (!msg.includes('duplicate column') && !msg.includes('already exists')) {
-        throw alterErr;
-      }
-    }
-    try {
-      await db.prepare(`ALTER TABLE exam_attempts ADD COLUMN session_id TEXT;`).run();
-    } catch {}
-    try {
-      await db.prepare(`ALTER TABLE exam_attempts ADD COLUMN user_name TEXT;`).run();
-      await db.prepare(`ALTER TABLE exam_attempts ADD COLUMN exam_title TEXT;`).run();
-      await db.prepare(`ALTER TABLE exam_attempts ADD COLUMN class_id TEXT;`).run();
-    } catch {}
+    await safeAddColumn(db, 'exam_sessions', 'questions_snapshot_json TEXT');
+    await safeAddColumn(db, 'exam_sessions', 'answer_key_snapshot_json TEXT');
+    await safeAddColumn(db, 'exam_attempts', 'session_id TEXT');
+    await safeAddColumn(db, 'exam_attempts', 'user_name TEXT');
+    await safeAddColumn(db, 'exam_attempts', 'exam_title TEXT');
+    await safeAddColumn(db, 'exam_attempts', 'class_id TEXT');
     await db.prepare(`
       CREATE UNIQUE INDEX IF NOT EXISTS idx_exam_attempts_user_exam ON exam_attempts (user_id, exam_id);
     `).run();

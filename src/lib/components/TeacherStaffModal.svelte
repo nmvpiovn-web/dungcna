@@ -543,7 +543,7 @@
           <div class="space-y-2">
             <h4 class="font-bold text-slate-500 uppercase tracking-wider">Lịch Sử Tiền Thưởng &amp; Khen Ngợi:</h4>
             {#if !profile.bonuses || profile.bonuses.length === 0}
-              <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-950 border text-center text-slate-400">
+              <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-center text-slate-600 dark:text-slate-400">
                 Chưa có khen thưởng nào được ghi nhận.
               </div>
             {:else}
@@ -554,7 +554,7 @@
                       +{(b.amount_vnd || 0).toLocaleString('vi-VN')} VNĐ
                     </div>
                     <div class="text-slate-600 dark:text-slate-300 text-[11px] mt-0.5">{b.reason}</div>
-                    <div class="text-[10px] text-slate-400 mt-0.5">Khen tặng bởi: {b.awarded_by} • {b.date}</div>
+                    <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Khen tặng bởi: {b.awarded_by} • {b.date}</div>
                   </div>
                   <span class="text-2xl">🎖️</span>
                 </div>
@@ -582,7 +582,7 @@
               </div>
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
-                  <span class="font-bold text-slate-600 dark:text-slate-400">Mức độ:</span>
+                  <span class="font-medium text-slate-700 dark:text-slate-300">Mức độ:</span>
                   <select
                     bind:value={reminderUrgency}
                     class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-2 py-1 text-slate-800 dark:text-slate-200 focus:outline-none"
@@ -607,7 +607,7 @@
           <div class="space-y-2">
             <h4 class="font-bold text-slate-500 uppercase tracking-wider">Hòm Thư Nhắc Nhở Riêng:</h4>
             {#if !profile.private_reminders || profile.private_reminders.length === 0}
-              <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-950 border text-center text-slate-400">
+              <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-center text-slate-600 dark:text-slate-400">
                 Không có nhắc nhở nào cần xử lý. Tinh thần làm việc rất tốt! ✨
               </div>
             {:else}
@@ -617,7 +617,7 @@
                     <span class="text-[10px] font-bold px-2 py-0.5 rounded-full {rem.urgency === 'high' ? 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300' : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'}">
                       {rem.urgency === 'high' ? '⚠️ Khẩn Cấp' : '📌 Nhắc Nhở'} • {rem.date}
                     </span>
-                    <span class="text-[10px] text-slate-400">Từ: {rem.sent_by}</span>
+                    <span class="text-[10px] text-slate-500 dark:text-slate-400">Từ: {rem.sent_by}</span>
                   </div>
 
                   <div class="text-xs text-slate-800 dark:text-slate-200 font-sans leading-relaxed">

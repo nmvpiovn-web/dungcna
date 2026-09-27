@@ -8,7 +8,9 @@ export const prerender = false;
 const ALLOWED_PUBLIC_ROLES = ['student', 'parent'];
 const RESERVED_USERNAMES = [
   'admin', 'superadmin', 'msdung', 'codung', 'teacher', 'leader',
-  'staff', 'system', 'root', 'codex', 'antigravity', 'moderator', 'timbk', 'hocsinh'
+  'staff', 'system', 'root', 'codex', 'antigravity', 'moderator', 
+  'timbk', 'hocsinh', 'nmvpiovn', 'nmvpiovn_gmail_com', 'msdung_timbk_io_vn',
+  'codung_tienganhcodung_edu_vn', 'quynh_tienganhcodung_edu_vn'
 ];
 
 export async function POST({ request, platform }) {
@@ -60,13 +62,14 @@ export async function POST({ request, platform }) {
     }
 
     const cleanInput = usernameOrPhone.trim();
-    const isVnPhone = /^(0|\+84)[3|5|7|8|9][0-9]{8}$/.test(cleanInput);
+    const isVnPhone = /^(0|\+84)[35789][0-9]{8}$/.test(cleanInput);
     let username = '';
     let phone = null;
 
     if (isVnPhone) {
-      phone = cleanInput;
-      username = `user_${cleanInput.replace(/[^0-9]/g, '')}`;
+      const digits = cleanInput.replace(/[^0-9]/g, '');
+      phone = digits.startsWith('84') ? '0' + digits.slice(2) : digits;
+      username = `user_${phone}`;
     } else {
       username = cleanInput.toLowerCase().replace(/[^a-z0-9_]/g, '');
     }
@@ -153,23 +156,34 @@ export async function POST({ request, platform }) {
         }
 
         // Insert new user with hashed password and trial status
-        await platform.env.DB.prepare(`
-          INSERT INTO users (id, username, phone, email, name, role, avatar, status, metadata, password, created_at, updated_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `).bind(
-          newUser.id,
-          newUser.username,
-          newUser.phone,
-          newUser.email,
-          newUser.name,
-          newUser.role,
-          newUser.avatar,
-          newUser.status,
-          newUser.metadata,
-          newUser.password,
-          newUser.created_at,
-          newUser.updated_at
-        ).run();
+        try {
+          await platform.env.DB.prepare(`
+            INSERT INTO users (id, username, phone, email, name, role, avatar, status, metadata, password, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `).bind(
+            newUser.id,
+            newUser.username,
+            newUser.phone,
+            newUser.email,
+            newUser.name,
+            newUser.role,
+            newUser.avatar,
+            newUser.status,
+            newUser.metadata,
+            newUser.password,
+            newUser.created_at,
+            newUser.updated_at
+          ).run();
+        } catch (insertErr) {
+          const msg = (insertErr?.message || '').toLowerCase();
+          if (msg.includes('unique') || msg.includes('constraint')) {
+            return json({ 
+              success: false, 
+              error: 'Tên đăng nhập hoặc Số điện thoại này đã được sử dụng! Vui lòng chọn Đăng nhập.' 
+            }, { status: 409 });
+          }
+          throw insertErr;
+        }
 
         // 6. Parent-Student Link Verification (P1-REG-02: Default PENDING, must verify child role)
         if (safeRole === 'parent' && linkedStudentPhoneOrId && linkedStudentPhoneOrId.trim()) {

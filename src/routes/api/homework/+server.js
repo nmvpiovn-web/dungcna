@@ -1,5 +1,5 @@
 import { json } from '@sveltejs/kit';
-import { verifyServerAuth, isStaffUser, SUPERADMIN_USERNAMES } from '../../../lib/server/auth.js';
+import { verifyServerAuth, isStaffUser } from '../../../lib/server/auth.js';
 
 export const prerender = false;
 
@@ -390,18 +390,24 @@ export async function POST({ request, platform }) {
           newAssignment.max_score, newAssignment.star_reward_on_time, newAssignment.status, newAssignment.created_at
         ).run();
 
-        // Broadcast notifications to parents linked to this class's students
+        // Broadcast notifications ONLY to verified parents of students in this class
+        const targetClassId = newAssignment.class_id || '';
         const linksRes = await db.prepare(`
-          SELECT parent_user_id, student_user_id 
-          FROM parent_student_links 
-          WHERE parent_user_id IS NOT NULL;
-        `).all();
+          SELECT DISTINCT psl.parent_user_id 
+          FROM parent_student_links psl
+          JOIN users u ON u.id = psl.student_user_id
+          WHERE psl.verification_status = 'verified'
+            AND psl.parent_user_id IS NOT NULL
+            AND (
+              u.metadata LIKE ? OR ? = ''
+            );
+        `).bind(`%"class_id":"${targetClassId}"%`, targetClassId).all();
 
         const notifSkillMap = { writing: 'Viết', reading: 'Đọc hiểu', speaking: 'Nói' };
         const notifTitle = `📚 BTVN Mới (${notifSkillMap[skill_type]}): ${title}`;
         const notifBody = `Giáo viên ${newAssignment.teacher_name} vừa giao BTVN lớp ${newAssignment.class_name}. Hạn nộp trước ${finalDeadlineTime} ngày ${finalDeadlineDate}.`;
 
-        // Send to parents
+        // Send strictly to verified parents
         const uniqueParents = [...new Set((linksRes.results || []).map(r => r.parent_user_id).filter(Boolean))];
         for (const parentId of uniqueParents) {
           const notifId = `notif_hw_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
@@ -647,9 +653,11 @@ export async function POST({ request, platform }) {
           submission_id
         ).run();
 
-        // Notify Parent of this student
+        // Notify Parent of this student - ONLY if verified
         const parentLinks = await db.prepare(`
-          SELECT parent_user_id FROM parent_student_links WHERE student_user_id = ?;
+          SELECT parent_user_id 
+          FROM parent_student_links 
+          WHERE student_user_id = ? AND verification_status = 'verified';
         `).bind(submission.student_id).all();
 
         for (const p of (parentLinks.results || [])) {

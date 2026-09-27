@@ -1,7 +1,32 @@
 import { json } from '@sveltejs/kit';
-import { verifyServerAuth, SUPERADMIN_USERNAMES } from '$lib/server/auth';
+import { verifyServerAuth } from '$lib/server/auth';
 
 export const prerender = false;
+
+async function ensureNotificationSchema(db) {
+  if (!db) return;
+  await db.prepare(`
+    CREATE TABLE IF NOT EXISTS system_notifications (
+      id TEXT PRIMARY KEY,
+      target_role TEXT,
+      target_user_id TEXT,
+      title TEXT NOT NULL,
+      body TEXT NOT NULL,
+      category TEXT,
+      reference_id TEXT,
+      is_read INTEGER DEFAULT 0,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+  `).run();
+  await db.prepare(`
+    CREATE TABLE IF NOT EXISTS system_notification_reads (
+      notification_id TEXT NOT NULL,
+      user_id TEXT NOT NULL,
+      read_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (notification_id, user_id)
+    );
+  `).run();
+}
 
 export async function GET({ request, platform }) {
   const auth = await verifyServerAuth(request, platform);
@@ -15,18 +40,10 @@ export async function GET({ request, platform }) {
 
   const db = platform.env.DB;
   const user = auth.user;
-  const isLeader = user.role === 'superadmin' || user.role === 'leader' || SUPERADMIN_USERNAMES.includes(user.username);
+  const isLeader = user.role === 'superadmin' || user.role === 'leader';
 
   try {
-    // Ensure read status table exists
-    await db.prepare(`
-      CREATE TABLE IF NOT EXISTS system_notification_reads (
-        notification_id TEXT NOT NULL,
-        user_id TEXT NOT NULL,
-        read_at TEXT DEFAULT CURRENT_TIMESTAMP,
-        PRIMARY KEY (notification_id, user_id)
-      );
-    `).run();
+    await ensureNotificationSchema(db);
 
     let sql = `
       SELECT n.id, n.target_role, n.target_user_id, n.title, n.body, n.category, n.reference_id, n.created_at,
@@ -88,7 +105,7 @@ export async function POST({ request, platform }) {
   }
 
   const db = platform.env.DB;
-  const isLeader = auth.user.role === 'superadmin' || auth.user.role === 'leader' || SUPERADMIN_USERNAMES.includes(auth.user.username);
+  const isLeader = auth.user.role === 'superadmin' || auth.user.role === 'leader';
 
   let body = {};
   try {
@@ -102,6 +119,7 @@ export async function POST({ request, platform }) {
   if (action === 'mark_read') {
     const { notification_id, mark_all } = body;
     try {
+      await ensureNotificationSchema(db);
       if (mark_all) {
         // Mark all eligible notifications read for this specific user
         const targetRoleCond = isLeader ? "(n.target_role = ? OR n.target_role = 'leader' OR n.target_role = 'all')" : "(n.target_role = ? OR n.target_role = 'all')";

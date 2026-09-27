@@ -1,5 +1,5 @@
 import { json } from '@sveltejs/kit';
-import { verifyServerAuth, isStaffUser, SUPERADMIN_USERNAMES } from '$lib/server/auth.js';
+import { verifyServerAuth, isStaffUser } from '$lib/server/auth.js';
 
 export const prerender = false;
 

@@ -51,25 +51,33 @@ export async function GET({ request, platform }) {
   const db = platform?.env?.DB;
   if (db) {
     try {
-      // Query parent_student_links from Cloudflare D1 with explicit verification_status
+      // Query parent_student_links from Cloudflare D1
+      // P1-REG-02 Fix: Pending links return ONLY request metadata; private profile is redacted until verified
       const linksRes = await db.prepare(`
-        SELECT psl.student_user_id, psl.verification_status, u.id, u.name, u.username, u.avatar, u.grade, u.status
+        SELECT psl.id as link_id, psl.student_user_id, psl.verification_status, psl.created_at as requested_at,
+               u.id, u.name, u.username, u.avatar, u.grade, u.status
         FROM parent_student_links psl
         LEFT JOIN users u ON psl.student_user_id = u.id
         WHERE psl.parent_user_id = ?;
       `).bind(user.id).all();
 
-      const children = (linksRes?.results || []).map(r => ({
-        id: r.student_user_id || r.id,
-        name: r.name || 'Học sinh liên kết',
-        username: r.username || '',
-        grade: r.grade || 'Lớp 7',
-        avatar: r.avatar || '',
-        status: r.status || 'active',
-        verification_status: r.verification_status || 'pending',
-        is_verified: r.verification_status === 'verified',
-        stars_total: 0
-      }));
+      const children = (linksRes?.results || []).map(r => {
+        const isVerified = r.verification_status === 'verified';
+        return {
+          id: r.student_user_id || r.id,
+          link_id: r.link_id,
+          verification_status: r.verification_status || 'pending',
+          is_verified: isVerified,
+          requested_at: r.requested_at || null,
+          // Private child profile ONLY revealed if link is formally verified
+          name: isVerified ? (r.name || 'Học sinh liên kết') : 'Yêu cầu liên kết đang chờ xác minh',
+          username: isVerified ? (r.username || '') : null,
+          grade: isVerified ? (r.grade || 'Lớp 7') : null,
+          avatar: isVerified ? (r.avatar || '') : null,
+          status: isVerified ? (r.status || 'active') : 'pending_verification',
+          stars_total: 0
+        };
+      });
 
       return json({
         success: true,
@@ -82,12 +90,12 @@ export async function GET({ request, platform }) {
     }
   }
 
-  // Fallback in-memory mode
+  // Fallback in-memory mode: Fail-closed (empty list for unverified parents)
   return json({
     success: true,
-    children: defaultLinkedChildren,
-    total: defaultLinkedChildren.length,
-    source: 'in_memory'
+    children: [],
+    total: 0,
+    source: 'fail_closed_unlinked_parent'
   });
 }
 

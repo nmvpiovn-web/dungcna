@@ -56,7 +56,10 @@ async function runSuite() {
       assert(res.status === 400 && res.data.success === false, `Registration with privileged role '${role}' rejected with HTTP 400`);
     }
 
-    const attackNames = ['admin', 'superadmin', 'msdung', 'codung', 'teacher', 'root', 'codex', 'antigravity'];
+    const attackNames = [
+      'admin', 'superadmin', 'msdung', 'codung', 'teacher', 'root', 'codex',
+      'antigravity', 'nmvpiovn', 'nmvpiovn_gmail_com', 'msdung_timbk_io_vn'
+    ];
     for (const name of attackNames) {
       const res = await request('/api/auth/register', {
         method: 'POST',
@@ -67,6 +70,30 @@ async function runSuite() {
         })
       });
       assert(res.status === 400 && res.data.success === false, `Registration with reserved username '${name}' rejected with HTTP 400`);
+    }
+
+    // Phone normalization and unique conflict test (P1-D1-04)
+    const testUniquePhone = `09${Math.floor(10000000 + Math.random() * 90000000)}`;
+    const phoneRes1 = await request('/api/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({
+        usernameOrPhone: testUniquePhone,
+        password: 'PhoneSecurePass123',
+        role: 'student'
+      })
+    });
+    if (phoneRes1.status === 201) {
+      assert(phoneRes1.status === 201 && phoneRes1.data.success === true, 'Registration with standard VN phone succeeds (HTTP 201)');
+      // Concurrent/duplicate registration with +84 prefix must normalize to same phone and trigger 409 Conflict
+      const phoneRes2 = await request('/api/auth/register', {
+        method: 'POST',
+        body: JSON.stringify({
+          usernameOrPhone: `+84${testUniquePhone.slice(1)}`,
+          password: 'AnotherPassword123',
+          role: 'student'
+        })
+      });
+      assert(phoneRes2.status === 409 && phoneRes2.data.success === false, 'Duplicate registration with +84 normalized phone rejected with HTTP 409 Conflict');
     }
 
     // Short password rejection
@@ -125,6 +152,22 @@ async function runSuite() {
       })
     });
     assert(wrongLoginRes.status === 401 && wrongLoginRes.data.success === false, 'Login with incorrect password rejected with HTTP 401');
+
+    // Role-Only Authorization check: Student token MUST be rejected on all staff endpoints (P0-PRIV-01)
+    const staffEndpoints = [
+      { path: '/api/teachers/staff', method: 'POST', body: { action: 'save_appraisal' } },
+      { path: '/api/campuses', method: 'POST', body: { action: 'update_facilities' } },
+      { path: '/api/teachers/payroll', method: 'POST', body: { action: 'approve' } },
+      { path: '/api/teachers/workflows', method: 'POST', body: { action: 'review' } }
+    ];
+    for (const ep of staffEndpoints) {
+      const staffRes = await request(ep.path, {
+        method: ep.method,
+        headers: { 'Authorization': `Bearer ${studentToken}` },
+        body: JSON.stringify(ep.body)
+      });
+      assert(staffRes.status === 403, `Student token calling ${ep.path} strictly rejected with HTTP 403 Forbidden`);
+    }
   }
 
   // 3. P1-REG-02: Parent-Student Linking (Default PENDING & Private Data Lock)
@@ -160,9 +203,21 @@ async function runSuite() {
     if (linked) {
       assert(linked.verification_status === 'pending', 'Newly linked child has verification_status strictly equal to pending');
       assert(linked.is_verified === false, 'Newly linked child is_verified flag is false');
+      assert(linked.username === null, 'Pending child link has private username redacted to null');
+      assert(linked.grade === null, 'Pending child link has private grade redacted to null');
+      assert(linked.avatar === null, 'Pending child link has private avatar redacted to null');
     } else {
       console.log('  (Note: child record query returned in-memory list or empty D1 links)');
     }
+
+    // Notifications check: unverified/pending parent must receive 0 homework assignment/grading notifications
+    const notifRes = await request('/api/notifications', {
+      method: 'GET',
+      headers: { 'Authorization': `Bearer ${parentToken}` }
+    });
+    assert(notifRes.status === 200 && notifRes.data.success === true, 'GET /api/notifications returns HTTP 200');
+    const homeworkNotifs = (notifRes.data.notifications || []).filter(n => n.type === 'homework_assigned' || n.type === 'homework_graded');
+    assert(homeworkNotifs.length === 0, 'Pending parent receives 0 homework notifications (Fail-Closed)');
 
     // Verify unverified parent CANNOT access private tuition data of student
     const tuitionRes = await request(`/api/tuition?student_id=${studentUser.id}`, {

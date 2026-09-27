@@ -1,5 +1,5 @@
 import { json } from '@sveltejs/kit';
-import { verifyServerAuth, isStaffUser, SUPERADMIN_USERNAMES } from '../../../lib/server/auth.js';
+import { verifyServerAuth, isStaffUser } from '../../../lib/server/auth.js';
 import { getAllTuitionBills, saveTuitionBill, dispatchBotReport } from '../../../lib/unifiedStore.js';
 
 export const prerender = false;
@@ -50,7 +50,7 @@ async function ensureStarLedgerTable(db) {
 
 function isManager(user) {
   if (!user) return false;
-  return user.role === 'superadmin' || user.role === 'leader' || SUPERADMIN_USERNAMES.includes(user.username);
+  return user.role === 'superadmin' || user.role === 'leader';
 }
 
 export async function GET({ url, request, platform }) {

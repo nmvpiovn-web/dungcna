@@ -1,5 +1,5 @@
 import { json } from '@sveltejs/kit';
-import { verifyServerAuth, isStaffUser, SUPERADMIN_USERNAMES } from '$lib/server/auth';
+import { verifyServerAuth, isStaffUser } from '$lib/server/auth';
 import { 
   getAllTeacherProfiles, 
   getTeacherProfile, 
@@ -77,7 +77,7 @@ async function ensureTeacherProfilesTable(db) {
 
 function isManager(user) {
   if (!user) return false;
-  return user.role === 'superadmin' || user.role === 'leader' || SUPERADMIN_USERNAMES.includes(user.username);
+  return user.role === 'superadmin' || user.role === 'leader';
 }
 
 export async function GET({ url, request, platform }) {

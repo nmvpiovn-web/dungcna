@@ -909,18 +909,12 @@ export function getSimilarProfileRecommendations(student) {
 
 export function isSuperAdmin(user) {
   if (!user) return false;
-  const username = (user.username || '').toLowerCase();
-  const email = (user.email || '').toLowerCase();
-  return (
-    user.role === 'superadmin' ||
-    SUPERADMIN_USERNAMES.includes(username) ||
-    SUPERADMIN_EMAILS.includes(email)
-  );
+  return user.role === 'superadmin';
 }
 
 export function isTeacherOrAdmin(user) {
   if (!user) return false;
-  return isSuperAdmin(user) || user.role === 'teacher';
+  return user.role === 'superadmin' || user.role === 'admin' || user.role === 'leader' || user.role === 'teacher';
 }
 
 // 2. Student & Teacher Management
@@ -958,7 +952,7 @@ export function removeTeacher(teacherId) {
   if (!target) return false;
 
   // Cannot delete superadmins
-  if (SUPERADMIN_EMAILS.includes(target.email) || SUPERADMIN_USERNAMES.includes(target.username)) {
+  if (target.role === 'superadmin') {
     throw new Error('Không thể xóa tài khoản SuperAdmin tối cao!');
   }
 

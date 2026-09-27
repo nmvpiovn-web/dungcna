@@ -198,20 +198,16 @@ export function sanitizeUserList(users) {
 
 /**
  * Check if a user has staff/admin privileges (superadmin, admin, leader, teacher)
+ * Strictly role-based: zero username or email bypass shortcuts (P0 fix).
  */
 export function isStaffUser(user) {
   if (!user) return false;
   const role = (user.role || '').toLowerCase();
-  const username = (user.username || '').toLowerCase();
-  const email = (user.email || '').toLowerCase();
-
   return (
     role === 'superadmin' ||
     role === 'admin' ||
     role === 'leader' ||
-    role === 'teacher' ||
-    SUPERADMIN_USERNAMES.includes(username) ||
-    SUPERADMIN_EMAILS.includes(email)
+    role === 'teacher'
   );
 }
 

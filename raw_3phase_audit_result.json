@@ -25,67 +25,67 @@
   "phase2_live_endpoints": {
     "endpoint_homepage": {
       "status": "PASS",
-      "detail": "HTTP 200 (5593 bytes)"
+      "detail": "HTTP 200 (5592 bytes)"
     },
     "endpoint_courses": {
       "status": "PASS",
-      "detail": "HTTP 200 (30184 bytes)"
+      "detail": "HTTP 200 (30183 bytes)"
     },
     "endpoint_exam": {
       "status": "PASS",
-      "detail": "HTTP 200 (5597 bytes)"
+      "detail": "HTTP 200 (5596 bytes)"
     },
     "endpoint_tools": {
       "status": "PASS",
-      "detail": "HTTP 200 (26722 bytes)"
+      "detail": "HTTP 200 (26721 bytes)"
     },
     "endpoint_tab_primary": {
       "status": "PASS",
-      "detail": "HTTP 200 (5593 bytes)"
+      "detail": "HTTP 200 (5592 bytes)"
     },
     "endpoint_tab_secondary": {
       "status": "PASS",
-      "detail": "HTTP 200 (5593 bytes)"
+      "detail": "HTTP 200 (5592 bytes)"
     },
     "endpoint_tab_high_school": {
       "status": "PASS",
-      "detail": "HTTP 200 (5593 bytes)"
+      "detail": "HTTP 200 (5592 bytes)"
     },
     "endpoint_tab_certificate": {
       "status": "PASS",
-      "detail": "HTTP 200 (5593 bytes)"
+      "detail": "HTTP 200 (5592 bytes)"
     },
     "endpoint_dictionary": {
       "status": "PASS",
-      "detail": "HTTP 200 (142188 bytes)"
+      "detail": "HTTP 200 (142187 bytes)"
     },
     "endpoint_flashcards": {
       "status": "PASS",
-      "detail": "HTTP 200 (21503 bytes)"
+      "detail": "HTTP 200 (21502 bytes)"
     },
     "endpoint_games": {
       "status": "PASS",
-      "detail": "HTTP 200 (16447 bytes)"
+      "detail": "HTTP 200 (16446 bytes)"
     },
     "endpoint_grammar": {
       "status": "PASS",
-      "detail": "HTTP 200 (82740 bytes)"
+      "detail": "HTTP 200 (82739 bytes)"
     },
     "endpoint_pedagogy": {
       "status": "PASS",
-      "detail": "HTTP 200 (5597 bytes)"
+      "detail": "HTTP 200 (5596 bytes)"
     },
     "endpoint_schedule": {
       "status": "PASS",
-      "detail": "HTTP 200 (18213 bytes)"
+      "detail": "HTTP 200 (18212 bytes)"
     },
     "endpoint_evaluations": {
       "status": "PASS",
-      "detail": "HTTP 200 (5597 bytes)"
+      "detail": "HTTP 200 (5596 bytes)"
     },
     "endpoint_second_brain": {
       "status": "PASS",
-      "detail": "HTTP 200 (15693 bytes)"
+      "detail": "HTTP 200 (15692 bytes)"
     },
     "endpoint_apk_version_json": {
       "status": "PASS",

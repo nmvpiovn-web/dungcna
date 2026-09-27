@@ -1,11 +1,11 @@
 import { json } from '@sveltejs/kit';
-import { verifyServerAuth, isStaffUser, SUPERADMIN_USERNAMES } from '../../../../lib/server/auth.js';
+import { verifyServerAuth, isStaffUser } from '../../../../lib/server/auth.js';
 
 export const prerender = false;
 
 function isManager(user) {
   if (!user) return false;
-  return user.role === 'superadmin' || user.role === 'leader' || SUPERADMIN_USERNAMES.includes(user.username);
+  return user.role === 'superadmin' || user.role === 'leader';
 }
 
 async function ensurePayrollTable(db) {
