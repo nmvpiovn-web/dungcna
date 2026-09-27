@@ -47,7 +47,7 @@ Bảng dẫn chiếu này cung cấp liên kết trực tiếp từ từng mã y
 | **REQ-PAY-02** | `api/teachers/payroll/+server.js` | `tests/verify_payroll_engine.test.js`, `tests/verify_phase1_audit_hardening.test.js` | `node --test tests/verify_phase1_audit_hardening.test.js` | WORKER_TESTED |
 | **REQ-PAY-03** | `src/lib/server/payrollEngine.js` | `tests/verify_payroll_engine.test.js` | `node --test tests/verify_payroll_engine.test.js` | WORKER_TESTED |
 | **REQ-PAY-04** | `src/lib/server/payrollEngine.js` | `tests/verify_payroll_engine.test.js` | `node --test tests/verify_payroll_engine.test.js` | WORKER_TESTED |
-| **REQ-PAY-05** | `api/teachers/payroll`, `cpanel/teacher`, `cpanel/leader` | `tests/verify_phase1_audit_hardening.test.js`, `svelte-check` | `node --test tests/verify_phase1_audit_hardening.test.js` | WORKER_TESTED |
+| **REQ-PAY-05** | `api/teachers/payroll`, `cpanel/teacher`, `cpanel/leader` | `tests/verify_p1_atomic_ledger_and_exam_integrity.test.js`, `tests/verify_phase1_audit_hardening.test.js` | `node --test tests/verify_p1_atomic_ledger_and_exam_integrity.test.js` | WORKER_TESTED |
 | **REQ-TUIT-01** | `api/tuition/+server.js` | `tests/homework_and_cpanel.test.py` | `python tests/homework_and_cpanel.test.py` | WORKER_TESTED |
 | **REQ-TUIT-02** | `cpanel/parent/+page.svelte` | `tests/homework_and_cpanel.test.py` | `python tests/homework_and_cpanel.test.py` | WORKER_TESTED |
 | **REQ-TUIT-03** | `api/tuition/+server.js` | `tests/homework_and_cpanel.test.py` | `python tests/homework_and_cpanel.test.py` | WORKER_TESTED |
@@ -60,7 +60,7 @@ Bảng dẫn chiếu này cung cấp liên kết trực tiếp từ từng mã y
 | **REQ-EXAM-03** | `api/exams/+server.js` | `tests/verify_parent_multichild_and_audio.test.js` | `node --test tests/verify_parent_multichild_and_audio.test.js` | WORKER_TESTED |
 | **REQ-EXAM-04** | `api/exams/+server.js` | `tests/verify_parent_multichild_and_audio.test.js` | `node --test tests/verify_parent_multichild_and_audio.test.js` | WORKER_TESTED |
 | **REQ-EXAM-05** | `api/exams/+server.js`, `migrations/0003_*.sql` | `tests/verify_phase1_audit_hardening.test.js` | `node --test tests/verify_phase1_audit_hardening.test.js` | WORKER_TESTED |
-| **REQ-EXAM-06** | `api/exams/+server.js` | `tests/verify_phase1_audit_hardening.test.js` | `node --test tests/verify_phase1_audit_hardening.test.js` | WORKER_TESTED |
+| **REQ-EXAM-06** | `api/exams/+server.js` | `tests/verify_p1_atomic_ledger_and_exam_integrity.test.js`, `tests/verify_phase1_audit_hardening.test.js` | `node --test tests/verify_p1_atomic_ledger_and_exam_integrity.test.js` | WORKER_TESTED |
 | **REQ-EXAM-07** | `api/exams/random/+server.js` | `tests/verify_real_behavioral_audit.test.js` | `node --test tests/verify_real_behavioral_audit.test.js` | WORKER_TESTED |
 
 ### GÓI 6: SECOND BRAIN & KNOWLEDGE VAULT
