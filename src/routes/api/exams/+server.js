@@ -84,6 +84,14 @@ async function ensureExamSchemaInternal(db) {
         throw alterErr;
       }
     }
+    try {
+      await db.prepare(`ALTER TABLE exam_attempts ADD COLUMN session_id TEXT;`).run();
+    } catch {}
+    try {
+      await db.prepare(`ALTER TABLE exam_attempts ADD COLUMN user_name TEXT;`).run();
+      await db.prepare(`ALTER TABLE exam_attempts ADD COLUMN exam_title TEXT;`).run();
+      await db.prepare(`ALTER TABLE exam_attempts ADD COLUMN class_id TEXT;`).run();
+    } catch {}
     await db.prepare(`
       CREATE UNIQUE INDEX IF NOT EXISTS idx_exam_attempts_user_exam ON exam_attempts (user_id, exam_id);
     `).run();
