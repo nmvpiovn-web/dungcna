@@ -280,6 +280,27 @@ export async function POST({ request, platform }) {
     // Students can submit an exam strictly once; staff is debounced against rapid double-clicks
     if (platform?.env?.DB) {
       try {
+        await platform.env.DB.prepare(`
+          CREATE TABLE IF NOT EXISTS exam_attempts (
+            id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            user_name TEXT,
+            user_email TEXT,
+            exam_id TEXT NOT NULL,
+            exam_title TEXT,
+            score REAL NOT NULL,
+            max_score REAL NOT NULL,
+            answers_json TEXT NOT NULL,
+            duration_seconds INTEGER DEFAULT 0,
+            session_id TEXT,
+            class_id TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+          );
+        `).run();
+        await platform.env.DB.prepare(`
+          CREATE UNIQUE INDEX IF NOT EXISTS idx_exam_attempts_user_exam ON exam_attempts (user_id, exam_id);
+        `).run();
+
         if (!isStaff) {
           const priorAttempt = await platform.env.DB.prepare(`
             SELECT id FROM exam_attempts 
@@ -308,7 +329,7 @@ export async function POST({ request, platform }) {
           }
         }
       } catch {
-        // Table may not exist yet, will be ensured below
+        // Table or index may not exist yet, will be ensured below
       }
     }
 
@@ -329,7 +350,7 @@ export async function POST({ request, platform }) {
       created_at: new Date().toISOString()
     };
 
-    // D1 Persistence with fail-closed guarantee
+    // D1 Persistence with fail-closed guarantee & Unique concurrency protection
     if (platform?.env?.DB) {
       try {
         await platform.env.DB.prepare(`
@@ -348,6 +369,9 @@ export async function POST({ request, platform }) {
             class_id TEXT,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
           );
+        `).run();
+        await platform.env.DB.prepare(`
+          CREATE UNIQUE INDEX IF NOT EXISTS idx_exam_attempts_user_exam ON exam_attempts (user_id, exam_id);
         `).run();
 
         await platform.env.DB.prepare(`
@@ -370,6 +394,12 @@ export async function POST({ request, platform }) {
           saved.class_id
         ).run();
       } catch (dbErr) {
+        if (dbErr.message && (dbErr.message.includes('UNIQUE') || dbErr.message.includes('constraint'))) {
+          return json({
+            success: false,
+            error: `DuplicateSubmissionError: Bài làm cho đề thi này đã được tiếp nhận trong một phiên đồng thời. Chống nộp lặp (Unique Concurrency Guard).`
+          }, { status: 409 });
+        }
         console.error('D1 exam_attempts write error:', dbErr);
         return json({
           success: false,

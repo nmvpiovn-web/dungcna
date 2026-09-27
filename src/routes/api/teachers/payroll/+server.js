@@ -283,7 +283,25 @@ export async function POST({ request, platform }) {
       }
     }
 
-    // 3. Disbursement pre-condition: Must be approved or locked before disbursement
+    // 3. Approved period handling:
+    // Teachers cannot modify or downgrade an approved payroll.
+    // Managers can lock or disburse, but cannot demote back to draft.
+    if (existing && existing.status === 'approved') {
+      if (!manager) {
+        return json({
+          success: false,
+          error: `Forbidden: Bảng lương ${billingCycle} đã được phê duyệt bởi Ban Quản Lý (${existing.approved_by || 'Leader'}). Giáo viên không có quyền chỉnh sửa hoặc hạ cấp về bản nháp.`
+        }, { status: 403 });
+      }
+      if (['save_draft', 'calculate'].includes(action)) {
+        return json({
+          success: false,
+          error: `ConflictError: Bảng lương ${billingCycle} đã được phê duyệt ('approved'). Không thể ghi đè về bản nháp. Vui lòng thực hiện 'lock' hoặc 'disburse'.`
+        }, { status: 409 });
+      }
+    }
+
+    // 4. Disbursement pre-condition: Must be approved or locked before disbursement
     if (action === 'disburse' && (!existing || existing.status === 'draft')) {
       return json({
         success: false,
@@ -340,7 +358,13 @@ export async function POST({ request, platform }) {
     const recordId = existing?.id || `pr_${teacherId}_${billingCycle.replace('-', '')}`;
 
     if (existing) {
-      // WRITE-TIME SQL CONCURRENCY GUARD: UPDATE only if status is NOT already locked/closed/paid
+      // WRITE-TIME SQL CONCURRENCY GUARD:
+      // Managers can update non-locked/non-closed/non-paid records.
+      // Regular teachers can strictly ONLY update records that are still in 'draft' status.
+      const allowedStatusClause = manager
+        ? "status NOT IN ('locked', 'closed', 'paid')"
+        : "status = 'draft'";
+
       const updateRes = await db.prepare(`
         UPDATE teacher_payrolls
         SET gross_amount = ?,
@@ -353,7 +377,7 @@ export async function POST({ request, platform }) {
             approved_by = ?,
             approved_at = CURRENT_TIMESTAMP,
             updated_at = CURRENT_TIMESTAMP
-        WHERE id = ? AND status NOT IN ('locked', 'closed', 'paid');
+        WHERE id = ? AND ${allowedStatusClause};
       `).bind(
         calculated.summary.gross_income,
         calculated.summary.net_pay,
@@ -369,7 +393,7 @@ export async function POST({ request, platform }) {
       if (updateRes.meta?.changes === 0) {
         return json({
           success: false,
-          error: `ConflictError: Kỳ lương ${billingCycle} đã bị khóa sổ bởi phiên quản trị khác, không thể ghi đè.`
+          error: `ConflictError: Kỳ lương ${billingCycle} đã bị thay đổi trạng thái bởi phiên quản trị khác hoặc không ở trạng thái được phép sửa đổi.`
         }, { status: 409 });
       }
     } else {
