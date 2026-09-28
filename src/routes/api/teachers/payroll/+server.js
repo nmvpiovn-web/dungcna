@@ -59,6 +59,26 @@ async function ensurePayrollSchema(db) {
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       );
     `).run();
+    // Auto-migrate columns for teacher_payrolls if missing
+    const payrollCols = [
+      'billing_cycle TEXT',
+      'gross_amount INTEGER DEFAULT 0',
+      'net_amount INTEGER DEFAULT 0',
+      'disbursed_advances_deducted INTEGER DEFAULT 0',
+      'prior_debt_deducted INTEGER DEFAULT 0',
+      'carried_over_debt INTEGER DEFAULT 0',
+      'status TEXT DEFAULT \'draft\'',
+      'calculation_json TEXT',
+      'approved_by TEXT',
+      'approved_at DATETIME',
+      'updated_at DATETIME'
+    ];
+    for (const col of payrollCols) {
+      try {
+        await db.prepare(`ALTER TABLE teacher_payrolls ADD COLUMN ${col};`).run();
+      } catch {}
+    }
+
     // Migrate: add description column if missing (for existing D1 databases)
     try {
       await db.prepare(`ALTER TABLE finance_ledger ADD COLUMN description TEXT;`).run();
@@ -169,22 +189,30 @@ export async function GET({ url, request, platform }) {
     // 3. Fetch completed sessions for this teacher and cycle
     let sessions = [];
     if (db) {
-      const sessRes = await db.prepare(`
-        SELECT * FROM class_sessions
-        WHERE (teacher_id = ? OR teacher_id LIKE ?)
-        ORDER BY session_date ASC
-      `).bind(targetTeacherId, `%${targetTeacherId}%`).all();
-      sessions = sessRes.results || [];
+      try {
+        const sessRes = await db.prepare(`
+          SELECT * FROM class_sessions
+          WHERE (teacher_id = ? OR teacher_id LIKE ?)
+          ORDER BY session_date ASC
+        `).bind(targetTeacherId, `%${targetTeacherId}%`).all();
+        sessions = sessRes?.results || [];
+      } catch {
+        sessions = [];
+      }
     }
 
     // 4. Fetch salary advances for this teacher and cycle
     let advances = [];
     if (db) {
-      const advRes = await db.prepare(`
-        SELECT * FROM teacher_salary_advances
-        WHERE teacher_id = ?
-      `).bind(targetTeacherId).all();
-      advances = advRes.results || [];
+      try {
+        const advRes = await db.prepare(`
+          SELECT * FROM teacher_salary_advances
+          WHERE teacher_id = ?
+        `).bind(targetTeacherId).all();
+        advances = advRes?.results || [];
+      } catch {
+        advances = [];
+      }
     }
 
     // 5. Run calculation engine for draft/unlocked period
@@ -610,15 +638,23 @@ export async function POST({ request, platform }) {
     let sessions = [];
     let advances = [];
     if (db) {
-      const sessRes = await db.prepare(`
-        SELECT * FROM class_sessions WHERE teacher_id = ? OR teacher_id LIKE ?
-      `).bind(teacherId, `%${teacherId}%`).all();
-      sessions = sessRes.results || [];
+      try {
+        const sessRes = await db.prepare(`
+          SELECT * FROM class_sessions WHERE teacher_id = ? OR teacher_id LIKE ?
+        `).bind(teacherId, `%${teacherId}%`).all();
+        sessions = sessRes?.results || [];
+      } catch {
+        sessions = [];
+      }
 
-      const advRes = await db.prepare(`
-        SELECT * FROM teacher_salary_advances WHERE teacher_id = ?
-      `).bind(teacherId).all();
-      advances = advRes.results || [];
+      try {
+        const advRes = await db.prepare(`
+          SELECT * FROM teacher_salary_advances WHERE teacher_id = ?
+        `).bind(teacherId).all();
+        advances = advRes?.results || [];
+      } catch {
+        advances = [];
+      }
     }
 
     const calculated = calculateTeacherMonthlyPayroll({
@@ -658,7 +694,9 @@ export async function POST({ request, platform }) {
 
       const updateRes = await db.prepare(`
         UPDATE teacher_payrolls
-        SET gross_amount = ?,
+        SET month_label = ?,
+            billing_cycle = ?,
+            gross_amount = ?,
             net_amount = ?,
             disbursed_advances_deducted = ?,
             prior_debt_deducted = ?,
@@ -670,6 +708,8 @@ export async function POST({ request, platform }) {
             updated_at = CURRENT_TIMESTAMP
         WHERE id = ? AND ${allowedStatusClause};
       `).bind(
+        billingCycle,
+        billingCycle,
         calculated.summary.gross_income,
         calculated.summary.net_pay,
         calculated.summary.disbursed_advances_deducted,
@@ -691,14 +731,15 @@ export async function POST({ request, platform }) {
       // INSERT new record
       await db.prepare(`
         INSERT INTO teacher_payrolls (
-          id, teacher_id, billing_cycle, gross_amount, net_amount,
+          id, teacher_id, month_label, billing_cycle, gross_amount, net_amount,
           disbursed_advances_deducted, prior_debt_deducted, carried_over_debt,
           status, calculation_json, approved_by, approved_at, updated_at
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
       `).bind(
         recordId,
         teacherId,
+        billingCycle,
         billingCycle,
         calculated.summary.gross_income,
         calculated.summary.net_pay,

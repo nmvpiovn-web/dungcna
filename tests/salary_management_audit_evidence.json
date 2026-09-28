@@ -1,0 +1,157 @@
+{
+  "suite": "salary_manage_contract_and_payroll_adjustments",
+  "target": "http://127.0.0.1:4173",
+  "timestamp": "2026-09-28T12:50:35.679Z",
+  "total_assertions": 21,
+  "passed_assertions": 21,
+  "failed_assertions": 0,
+  "results": [
+    {
+      "id": "SALARY-AUTH-1",
+      "description": "Staging fixtures authenticated successfully across 6 roles",
+      "passed": true,
+      "detail": "Roles verified: superadmin(admin), leader(msdung), admin(admin.staff), teacher(teacher.john), student(hocsinh), parent(phuhuynh)",
+      "timestamp": "2026-09-28T12:50:25.452Z"
+    },
+    {
+      "id": "SALARY-RBAC-SA",
+      "description": "Role superadmin can update teacher role and salary",
+      "passed": true,
+      "detail": "HTTP 200",
+      "timestamp": "2026-09-28T12:50:25.487Z"
+    },
+    {
+      "id": "SALARY-RBAC-LEADER",
+      "description": "Role leader can update teacher role and salary",
+      "passed": true,
+      "detail": "HTTP 200",
+      "timestamp": "2026-09-28T12:50:25.524Z"
+    },
+    {
+      "id": "SALARY-RBAC-ADMIN",
+      "description": "Role admin can update teacher role and salary",
+      "passed": true,
+      "detail": "HTTP 200",
+      "timestamp": "2026-09-28T12:50:25.556Z"
+    },
+    {
+      "id": "SALARY-RBAC-TEACHER-BLOCKED",
+      "description": "Role teacher is strictly FORBIDDEN from updating salary",
+      "passed": true,
+      "detail": "HTTP 403: Forbidden: Giáo viên không có quyền điều chỉnh chức danh, mức lương, đánh giá hoặc khen thưởng.",
+      "timestamp": "2026-09-28T12:50:25.584Z"
+    },
+    {
+      "id": "SALARY-RBAC-STUDENT-BLOCKED",
+      "description": "Role student is strictly FORBIDDEN from staff endpoints",
+      "passed": true,
+      "detail": "HTTP 403: Forbidden: Yêu cầu quyền Quản trị hoặc Giáo viên",
+      "timestamp": "2026-09-28T12:50:25.601Z"
+    },
+    {
+      "id": "SALARY-RBAC-PARENT-BLOCKED",
+      "description": "Role parent is strictly FORBIDDEN from staff endpoints",
+      "passed": true,
+      "detail": "HTTP 403: Forbidden: Yêu cầu quyền Quản trị hoặc Giáo viên",
+      "timestamp": "2026-09-28T12:50:25.616Z"
+    },
+    {
+      "id": "SALARY-RBAC-UNAUTH-BLOCKED",
+      "description": "Unauthenticated request is strictly rejected with HTTP 401",
+      "passed": true,
+      "detail": "HTTP 401",
+      "timestamp": "2026-09-28T12:50:25.629Z"
+    },
+    {
+      "id": "PAYROLL-DRAFT",
+      "description": "Manager can compute and save draft payroll",
+      "passed": true,
+      "detail": "Status: draft",
+      "timestamp": "2026-09-28T12:50:25.733Z"
+    },
+    {
+      "id": "PAYROLL-APPROVE",
+      "description": "Manager (Admin) can approve draft payroll",
+      "passed": true,
+      "detail": "Status: approved, Approver: admin.staff",
+      "timestamp": "2026-09-28T12:50:25.858Z"
+    },
+    {
+      "id": "PAYROLL-TEACHER-BLOCKED-APPROVE",
+      "description": "Teacher is strictly forbidden from approving payroll",
+      "passed": true,
+      "detail": "HTTP 403",
+      "timestamp": "2026-09-28T12:50:25.946Z"
+    },
+    {
+      "id": "PAYROLL-APPROVED-IMMUTABLE-OVERWRITE",
+      "description": "Approved payroll is protected against direct overwrite",
+      "passed": true,
+      "detail": "HTTP 409 Conflict",
+      "timestamp": "2026-09-28T12:50:26.056Z"
+    },
+    {
+      "id": "PAYROLL-ADJUST-REOPEN",
+      "description": "Manager can reopen approved payroll to draft with audit trail",
+      "passed": true,
+      "detail": "Status: draft, Snapshot: snap_pr_usr_teach_2_202710_1790599826163, Reason: Cập nhật bổ sung 2 ca dạy chấm bài chuyên sâu (Kiểm tra audit)",
+      "timestamp": "2026-09-28T12:50:26.171Z"
+    },
+    {
+      "id": "PAYROLL-LOCK",
+      "description": "Superadmin can lock approved payroll (status: locked)",
+      "passed": true,
+      "detail": "Status: locked",
+      "timestamp": "2026-09-28T12:50:26.388Z"
+    },
+    {
+      "id": "PAYROLL-DISBURSE",
+      "description": "Superadmin can execute atomic payroll disbursement with voucher creation",
+      "passed": true,
+      "detail": "Status: paid, Voucher: PC-202710-USR_-6501, Amount: 0",
+      "timestamp": "2026-09-28T12:50:26.508Z"
+    },
+    {
+      "id": "PAYROLL-IDEMPOTENT-REPLAY",
+      "description": "Idempotent replay on disbursement returns identical voucher with zero duplicate execution",
+      "passed": true,
+      "detail": "Voucher: PC-202710-USR_-6501",
+      "timestamp": "2026-09-28T12:50:26.612Z"
+    },
+    {
+      "id": "PAYROLL-PAID-IMMUTABLE",
+      "description": "Paid payroll strictly rejects adjust/reopen (immutable paid disbursement)",
+      "passed": true,
+      "detail": "HTTP 409 Conflict",
+      "timestamp": "2026-09-28T12:50:26.710Z"
+    },
+    {
+      "id": "PAYROLL-CREATE-ADJUSTMENT-VOUCHER",
+      "description": "Manager can create differential adjustment voucher linked to paid payroll without modifying original amount",
+      "passed": true,
+      "detail": "Voucher: DC-202710-USR_-6816, Version: v1, DiffAmount: 750000, OriginalNet: 0",
+      "timestamp": "2026-09-28T12:50:26.825Z"
+    },
+    {
+      "id": "UI-MANAGER-UNLOCKED",
+      "description": "Manager session (Leader/Admin/SuperAdmin) has salary controls UNLOCKED (disabled === false)",
+      "passed": true,
+      "detail": "RoleDisabled: false, SalaryDisabled: false, SaveBtn: true",
+      "timestamp": "2026-09-28T12:50:30.678Z"
+    },
+    {
+      "id": "UI-TEACHER-LOCKED",
+      "description": "Teacher session has salary controls strictly LOCKED (disabled === true, save button hidden)",
+      "passed": true,
+      "detail": "RoleDisabled: true, SalaryDisabled: true, SaveBtnVisible: false",
+      "timestamp": "2026-09-28T12:50:33.158Z"
+    },
+    {
+      "id": "UI-LEADER-TOOLBAR-MANAGEMENT",
+      "description": "Leader CPanel displays active management lifecycle toolbar buttons (Approve, Lock, Adjust)",
+      "passed": true,
+      "detail": "FoundApprove: false, FoundLock: true, FoundAdjust: false",
+      "timestamp": "2026-09-28T12:50:35.402Z"
+    }
+  ]
+}

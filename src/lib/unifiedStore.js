@@ -90,7 +90,10 @@ export function setSessionVerified(status, user = null) {
 
 export function getAuthToken() {
   if (typeof window === 'undefined') return null;
-  const token = localStorage.getItem('tienganh_auth_token') || sessionStorage.getItem('tienganh_auth_token');
+  const token = localStorage.getItem('tienganh_auth_token') || 
+                localStorage.getItem('tienganh_token') || 
+                sessionStorage.getItem('tienganh_auth_token') || 
+                sessionStorage.getItem('tienganh_token');
   if (token) return token;
   try {
     const match = document.cookie.match(/session_token=([^;]+)/);
@@ -190,6 +193,7 @@ export function setCurrentUser(user, token = null) {
       localStorage.setItem('tienganh_user', JSON.stringify(user));
       if (token) {
         localStorage.setItem('tienganh_auth_token', token);
+        localStorage.setItem('tienganh_token', token);
       }
     } else {
       logoutUser();
@@ -206,8 +210,10 @@ export function logoutUser() {
     localStorage.removeItem(STORAGE_KEY_USER);
     localStorage.removeItem('tienganh_user');
     localStorage.removeItem('tienganh_auth_token');
+    localStorage.removeItem('tienganh_token');
     localStorage.removeItem('tienganh_session_verified');
     sessionStorage.removeItem('tienganh_auth_token');
+    sessionStorage.removeItem('tienganh_token');
     sessionStorage.removeItem('tienganh_session_verified');
     document.cookie = 'session_token=; path=/; max-age=0; SameSite=Lax';
     window.dispatchEvent(new CustomEvent('tienganh:auth-change', { detail: null }));
@@ -243,7 +249,9 @@ export async function loginUser(identifier, password) {
     if (apiRes.ok && apiData?.success && apiData.token && apiData.user) {
       if (typeof window !== 'undefined') {
         localStorage.setItem('tienganh_auth_token', apiData.token);
+        localStorage.setItem('tienganh_token', apiData.token);
         sessionStorage.setItem('tienganh_auth_token', apiData.token);
+        sessionStorage.setItem('tienganh_token', apiData.token);
         document.cookie = `session_token=${encodeURIComponent(apiData.token)}; path=/; max-age=${7 * 86400}; SameSite=Lax`;
       }
       setCurrentUser(apiData.user, apiData.token);

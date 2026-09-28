@@ -3140,6 +3140,7 @@
     bind:isOpen={showStaffModal}
     staffProfile={editingStaffProfile}
     teacherId={editingStaffProfile?.teacher_id}
+    currentUser={currentUser}
     onSaved={handleStaffSaved}
     onUpdated={handleStaffSaved}
   />

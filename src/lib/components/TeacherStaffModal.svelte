@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { 
     getCurrentUser, 
+    getAuthToken,
     isSuperAdmin,
     canManageSalary, 
     getAllTeacherProfiles, 
@@ -17,6 +18,7 @@
     isOpen = $bindable(false), 
     teacherId = null, 
     staffProfile = null, 
+    currentUser: propCurrentUser = null,
     onUpdated = () => {}, 
     onSaved = () => {} 
   } = $props();
@@ -24,7 +26,7 @@
   let currentUser = $state(null);
   let profile = $state(null);
   let activeTab = $state('overview'); // 'overview' | 'appraisal' | 'bonus' | 'reminders'
-  let isLeader = $derived(canManageSalary(currentUser));
+  let isLeader = $derived(canManageSalary(currentUser || propCurrentUser));
 
   // Edit Role & Salary Form
   let roleType = $state('lead');
@@ -49,7 +51,7 @@
 
   $effect(() => {
     if (isOpen) {
-      currentUser = getCurrentUser();
+      currentUser = propCurrentUser || getCurrentUser();
       loadProfile();
     }
   });
@@ -79,7 +81,7 @@
 
   function getClientToken() {
     if (typeof window === 'undefined') return null;
-    return localStorage.getItem('tienganh_auth_token');
+    return getAuthToken();
   }
 
   async function handleSaveRoleSalary() {
@@ -369,6 +371,7 @@
                 Phân Loại Vai Trò (Chia Role Từ Leader):
               </label>
               <select
+                id="teacher-staff-role-select"
                 disabled={!isLeader}
                 bind:value={roleType}
                 class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none font-semibold disabled:opacity-75"
@@ -394,6 +397,7 @@
             <div>
               <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Mức Lương Cơ Bản (VNĐ/Tháng):</label>
               <input
+                id="teacher-staff-base-salary-input"
                 type="number"
                 disabled={!isLeader}
                 bind:value={baseSalaryVnd}
@@ -408,6 +412,7 @@
             <div>
               <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Thù Lao Theo Ca Giảng Dạy (VNĐ/Buổi):</label>
               <input
+                id="teacher-staff-rate-per-session-input"
                 type="number"
                 disabled={!isLeader}
                 bind:value={ratePerSessionVnd}
@@ -437,6 +442,7 @@
             {#if isLeader}
               <button
                 type="button"
+                id="teacher-staff-modal-save-btn"
                 disabled={isSaving}
                 onclick={handleSaveRoleSalary}
                 class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-bold text-xs shadow-md transition-all flex items-center gap-2"

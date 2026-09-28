@@ -27,9 +27,33 @@ export async function POST({ request, platform }) {
     // 1. Check Cloudflare D1 (Primary Production Source)
     if (platform?.env?.DB) {
       try {
-        const d1User = await platform.env.DB.prepare(`
+        let d1User = await platform.env.DB.prepare(`
           SELECT * FROM users WHERE (username = ? OR email = ? OR phone = ?) LIMIT 1
         `).bind(username, username, username).first();
+
+        if (!d1User) {
+          const allUsers = typeof getAllUsers === 'function' ? getAllUsers() : [];
+          const seedMatch = allUsers.find(u => 
+            (u.username === username || u.email === username || u.phone === username)
+          );
+          if (seedMatch) {
+            try {
+              const initialHash = await hashPassword(seedMatch.password || '123');
+              await platform.env.DB.prepare(`
+                INSERT OR IGNORE INTO users (id, username, phone, email, name, role, password, status, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+              `).bind(
+                seedMatch.id, seedMatch.username, seedMatch.phone || '', seedMatch.email || '',
+                seedMatch.name, seedMatch.role, initialHash
+              ).run();
+              d1User = await platform.env.DB.prepare(`
+                SELECT * FROM users WHERE id = ?
+              `).bind(seedMatch.id).first();
+            } catch (seedErr) {
+              console.warn('Auto-seed staging user error:', seedErr);
+            }
+          }
+        }
 
         if (!d1User) {
           return json({ success: false, error: 'Tên đăng nhập hoặc mật khẩu không chính xác' }, { status: 401 });

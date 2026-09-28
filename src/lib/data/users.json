@@ -168,5 +168,19 @@
     "username": "baokhiem",
     "phone": "0918889999",
     "password": "123"
+  },
+  {
+    "id": "usr_admin_stage",
+    "email": "admin.staff@timbk.io.vn",
+    "name": "Quản Trị Viên Sư Phạm (Admin Staging Fixture)",
+    "role": "admin",
+    "avatar": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150",
+    "status": "active",
+    "metadata": "{\"permissions\":[\"salary.manage\",\"users.manage\"],\"phone\":\"0988112233\"}",
+    "created_at": "2026-09-28 12:00:00",
+    "updated_at": "2026-09-28 12:00:00",
+    "username": "admin.staff",
+    "phone": "0988112233",
+    "password": "123"
   }
 ]

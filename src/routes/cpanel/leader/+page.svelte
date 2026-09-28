@@ -4,7 +4,7 @@
 
 <script>
   import { onMount } from 'svelte';
-  import { getCurrentUser } from '$lib/unifiedStore';
+  import { getCurrentUser, getAuthToken } from '$lib/unifiedStore';
   import { currentLang, toggleLanguage } from '$lib/i18n';
   import { playAudioFeedback } from '$lib/speech';
 
@@ -283,11 +283,34 @@
     }
   }
 
-  async function handlePayrollAction(action) {
+  async function handlePayrollAction(action, extraPayload = {}) {
     if (!payrollTeacherId || !payrollCycle) return;
+
+    if (action === 'adjust') {
+      const reason = window.prompt('Nhập lý do mở lại bảng lương để điều chỉnh (Audit Trail):');
+      if (!reason || !reason.trim()) {
+        showMessage('Thao tác hủy: Cần nhập lý do điều chỉnh hợp lệ', false);
+        return;
+      }
+      extraPayload.adjustment_reason = reason.trim();
+    } else if (action === 'create_adjustment') {
+      const amountStr = window.prompt('Nhập số tiền chênh lệch cần điều chỉnh (VNĐ, có thể âm hoặc dương):');
+      if (!amountStr || isNaN(Number(amountStr)) || Number(amountStr) === 0) {
+        showMessage('Thao tác hủy: Số tiền điều chỉnh phải là số hợp lệ khác 0', false);
+        return;
+      }
+      const reason = window.prompt('Nhập lý do tạo chứng từ điều chỉnh chênh lệch:');
+      if (!reason || !reason.trim()) {
+        showMessage('Thao tác hủy: Cần nhập lý do điều chỉnh hợp lệ', false);
+        return;
+      }
+      extraPayload.adjustment_amount = Number(amountStr);
+      extraPayload.adjustment_reason = reason.trim();
+    }
+
     isLockingPayroll = true;
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('tienganh_token') : '';
+      const token = getAuthToken() || (typeof window !== 'undefined' ? localStorage.getItem('tienganh_token') : '');
       const headers = {
         'Content-Type': 'application/json',
         ...(token ? { 'Authorization': `Bearer ${token}` } : {})
@@ -298,13 +321,18 @@
         body: JSON.stringify({
           action,
           teacher_id: payrollTeacherId,
-          billing_cycle: payrollCycle
+          billing_cycle: payrollCycle,
+          ...extraPayload
         })
       });
       const data = await res.json();
       if (res.ok && data.success) {
         showMessage(data.message || `Thực hiện ${action} thành công!`);
-        leaderPayrollData = data.payroll;
+        if (data.payroll) {
+          leaderPayrollData = data.payroll;
+        } else {
+          await fetchLeaderPayroll();
+        }
       } else {
         showMessage(data.error || `Lỗi: Không thể thực hiện thao tác ${action}`, false);
       }
@@ -865,23 +893,54 @@
           <!-- Leader Action Toolbar -->
           <div class="p-5 border-t border-slate-200 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-800/10 flex flex-wrap items-center justify-between gap-4">
             <div class="text-xs text-slate-500 dark:text-slate-400">
-              {#if leaderPayrollData.is_locked || ['locked', 'closed', 'paid'].includes(leaderPayrollData.status)}
-                <span class="text-emerald-700 dark:text-emerald-400 font-semibold">🔒 Kỳ lương đã khóa sổ. Không thể điều chỉnh hay tính lại.</span>
+              {#if leaderPayrollData.status === 'paid' || leaderPayrollData.status === 'closed'}
+                <span class="text-emerald-700 dark:text-emerald-400 font-semibold">🔒 Kỳ lương đã chi trả hoàn tất. Quản lý có thể tạo chứng từ điều chỉnh chênh lệch liên kết bản gốc.</span>
+              {:else if leaderPayrollData.is_locked || leaderPayrollData.status === 'locked'}
+                <span class="text-rose-700 dark:text-rose-400 font-semibold">🔒 Kỳ lương đã khóa sổ. Quản lý có thể mở lại (Adjust) để điều chỉnh có lưu vết audit.</span>
+              {:else if leaderPayrollData.status === 'approved'}
+                <span class="text-sky-700 dark:text-sky-400 font-semibold">📋 Kỳ lương đã duyệt. Quản lý có thể khóa sổ, chi trả, hoặc mở lại để điều chỉnh.</span>
               {:else}
                 <span>Bấm <strong>Phê Duyệt</strong> hoặc <strong>Khóa Sổ</strong> để chốt số liệu học vụ lên D1 Cloudflare.</span>
               {/if}
             </div>
 
-            <div class="flex items-center gap-2">
-              {#if !leaderPayrollData.is_locked && !['locked', 'closed', 'paid'].includes(leaderPayrollData.status)}
+            <div class="flex items-center gap-2 flex-wrap">
+              {#if leaderPayrollData.status === 'paid' || leaderPayrollData.status === 'closed'}
                 <button
-                  onclick={() => handlePayrollAction('approve')}
+                  type="button"
+                  id="leader-payroll-adjust-voucher-btn"
+                  onclick={() => handlePayrollAction('create_adjustment')}
                   disabled={isLockingPayroll}
-                  class="px-3.5 py-2 rounded-md text-xs font-semibold bg-sky-600 hover:bg-sky-700 text-white disabled:opacity-50 transition-colors shadow-sm"
+                  class="px-3.5 py-2 rounded-md text-xs font-semibold bg-amber-600 hover:bg-amber-700 text-white disabled:opacity-50 transition-colors shadow-sm flex items-center gap-1.5"
                 >
-                  Phê Duyệt Bảng Lương
+                  <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  Tạo Chứng Từ Điều Chỉnh (Adjustment Voucher)
+                </button>
+              {:else if leaderPayrollData.status === 'locked'}
+                <button
+                  type="button"
+                  id="leader-payroll-disburse-btn"
+                  onclick={() => handlePayrollAction('disburse')}
+                  disabled={isLockingPayroll}
+                  class="px-3.5 py-2 rounded-md text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-50 transition-colors shadow-sm"
+                >
+                  Xác Nhận Đã Chi Trả (Paid)
                 </button>
                 <button
+                  type="button"
+                  id="leader-payroll-adjust-btn"
+                  onclick={() => handlePayrollAction('adjust')}
+                  disabled={isLockingPayroll}
+                  class="px-3.5 py-2 rounded-md text-xs font-semibold bg-amber-600 hover:bg-amber-700 text-white disabled:opacity-50 transition-colors shadow-sm"
+                >
+                  Mở Lại Để Điều Chỉnh (Adjust)
+                </button>
+              {:else if leaderPayrollData.status === 'approved'}
+                <button
+                  type="button"
+                  id="leader-payroll-lock-btn"
                   onclick={() => handlePayrollAction('lock')}
                   disabled={isLockingPayroll}
                   class="px-3.5 py-2 rounded-md text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white disabled:opacity-50 transition-colors shadow-sm"
@@ -889,16 +948,42 @@
                   Khóa Sổ Kỳ Này (Lock)
                 </button>
                 <button
+                  type="button"
+                  id="leader-payroll-disburse-btn"
                   onclick={() => handlePayrollAction('disburse')}
                   disabled={isLockingPayroll}
                   class="px-3.5 py-2 rounded-md text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-50 transition-colors shadow-sm"
                 >
                   Xác Nhận Đã Chi Trả (Paid)
                 </button>
+                <button
+                  type="button"
+                  id="leader-payroll-adjust-btn"
+                  onclick={() => handlePayrollAction('adjust')}
+                  disabled={isLockingPayroll}
+                  class="px-3.5 py-2 rounded-md text-xs font-semibold bg-amber-600 hover:bg-amber-700 text-white disabled:opacity-50 transition-colors shadow-sm"
+                >
+                  Mở Lại Để Điều Chỉnh (Adjust)
+                </button>
               {:else}
-                <span class="text-xs font-semibold px-3 py-1.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-300 dark:border-slate-700">
-                  Thao Tác Đã Bị Vô Hiệu Hóa (Locked)
-                </span>
+                <button
+                  type="button"
+                  id="leader-payroll-approve-btn"
+                  onclick={() => handlePayrollAction('approve')}
+                  disabled={isLockingPayroll}
+                  class="px-3.5 py-2 rounded-md text-xs font-semibold bg-sky-600 hover:bg-sky-700 text-white disabled:opacity-50 transition-colors shadow-sm"
+                >
+                  Phê Duyệt Bảng Lương
+                </button>
+                <button
+                  type="button"
+                  id="leader-payroll-lock-btn"
+                  onclick={() => handlePayrollAction('lock')}
+                  disabled={isLockingPayroll}
+                  class="px-3.5 py-2 rounded-md text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white disabled:opacity-50 transition-colors shadow-sm"
+                >
+                  Khóa Sổ Kỳ Này (Lock)
+                </button>
               {/if}
             </div>
           </div>

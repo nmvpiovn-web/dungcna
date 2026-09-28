@@ -604,6 +604,7 @@
 <TeacherStaffModal
   bind:isOpen={showStaffModal}
   teacherId={selectedTeacherId}
+  currentUser={currentUser}
   onUpdated={loadData}
 />
 
