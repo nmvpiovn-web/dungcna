@@ -840,7 +840,7 @@
         <div>
           <div class="text-xs font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-2">
             <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span>👩‍🏫 ĐIỀU PHỐI KHẢO THÍ THEO LỚP &amp; ĐIỂM DANH (Teacher &amp; Leader Cô Dung)</span>
+            <span>👩‍🏫 ĐIỀU PHỐI PHÒNG THI THEO LỚP &amp; ĐIỂM DANH (Teacher &amp; Leader Cô Dung)</span>
           </div>
           <div class="text-sm font-black text-white mt-1">
             Khởi Tạo Đề Thi &amp; Gán Học Sinh Trực Tiếp Theo Buổi Học
@@ -1010,7 +1010,7 @@
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
       <div class="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider flex items-center gap-2">
         <span>👩‍🏫</span>
-        <span>HỆ THỐNG KHẢO THÍ CHUẨN 2026 (IELTS • TOEIC • TOEFL • 15P • 45P):</span>
+        <span>HỆ THỐNG PHÒNG THI &amp; ĐÁNH GIÁ NĂNG LỰC CHUẨN 2026 (IELTS • TOEIC • TOEFL • 15P • 45P):</span>
       </div>
 
       <!-- Category Filter Tabs -->
@@ -1273,7 +1273,7 @@
             <div class="flex items-center justify-between text-[10px] font-bold uppercase mb-1.5">
               <span class="{isSelected ? 'text-sky-100' : (isEnrolled ? (is5m ? 'text-amber-500 font-extrabold' : (is15m ? 'text-sky-600 dark:text-sky-400 font-extrabold' : 'text-blue-600 dark:text-blue-400 font-extrabold')) : 'text-slate-600 dark:text-slate-400 font-semibold')}">
                 {#if !isEnrolled}🔒 {/if}
-                {is5m ? '⚡ 5 Phút' : (is15m ? '⏱️ 15 Phút' : (is45m ? '📝 45 Phút' : (ex.format_type === 'ielts_academic' ? '🌍 IELTS' : (ex.format_type === 'toeic_lr' ? '💼 TOEIC' : (ex.format_type === 'toefl_ibt' ? '🎓 TOEFL' : '📜 Khảo Thí')))))}
+                {is5m ? '⚡ 5 Phút' : (is15m ? '⏱️ 15 Phút' : (is45m ? '📝 45 Phút' : (ex.format_type === 'ielts_academic' ? '🌍 IELTS' : (ex.format_type === 'toeic_lr' ? '💼 TOEIC' : (ex.format_type === 'toefl_ibt' ? '🎓 TOEFL' : '📜 Thi Đánh Giá')))))}
               </span>
               {#if !isEnrolled}
                 <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold border border-amber-500/20">Khóa</span>

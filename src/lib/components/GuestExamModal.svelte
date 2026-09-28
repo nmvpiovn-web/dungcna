@@ -31,6 +31,40 @@
   let isSubmittingLead = $state(false);
   let leadSuccessMsg = $state('');
 
+  function handleReset() {
+    if (timerInterval) clearInterval(timerInterval);
+    step = 'setup';
+    examResult = null;
+    leadSuccessMsg = '';
+    leadPhone = '';
+    isOpen = false;
+    onClose();
+  }
+
+  // Keyboard Escape & Mobile Back Listener
+  onMount(() => {
+    function handleKeyDown(e) {
+      if (e.key === 'Escape' && isOpen) {
+        handleReset();
+      }
+    }
+
+    function handlePopState() {
+      if (isOpen) {
+        handleReset();
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('popstate', handlePopState);
+      if (timerInterval) clearInterval(timerInterval);
+    };
+  });
+
   onDestroy(() => {
     if (timerInterval) clearInterval(timerInterval);
   });
@@ -40,6 +74,15 @@
     if (e) e.preventDefault();
     isStarting = true;
     errorMsg = '';
+
+    // Check supported grades
+    const supportedGrades = ['lop_7', 'lop_12'];
+    if (!supportedGrades.includes(selectedGrade)) {
+      isStarting = false;
+      const gradeLabel = selectedGrade.replace('lop_', 'Lớp ');
+      errorMsg = `Ngân hàng đề thi thử cho ${gradeLabel} đang được biên soạn và thẩm định theo chuẩn GDPT 2026. Hiện tại bạn có thể trải nghiệm đề kiểm tra chuẩn Lớp 7 hoặc Lớp 12!`;
+      return;
+    }
 
     try {
       const res = await fetch('/api/exams/guest', {
@@ -157,96 +200,124 @@
       isSubmittingLead = false;
     }
   }
-
-  function handleReset() {
-    step = 'setup';
-    examResult = null;
-    leadSuccessMsg = '';
-    leadPhone = '';
-    onClose();
-  }
 </script>
 
 {#if isOpen}
-  <div class="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white dark:bg-slate-900 rounded-lg max-w-2xl w-full border border-slate-200 dark:border-slate-800 shadow-2xl p-6 space-y-5 text-xs max-h-[90vh] overflow-y-auto">
+  <!-- Backdrop with click-outside to close and Escape handling -->
+  <div 
+    class="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="guest-modal-title"
+    onclick={(e) => { if (e.target === e.currentTarget) handleReset(); }}
+    onkeydown={(e) => { if (e.key === 'Escape') handleReset(); }}
+    tabindex="-1"
+  >
+    <div class="bg-white dark:bg-slate-900 rounded-xl max-w-2xl w-full border border-slate-200 dark:border-slate-800 shadow-2xl p-6 space-y-5 text-sm max-h-[90vh] overflow-y-auto relative animate-in fade-in zoom-in-95 duration-150">
       <!-- Modal Top Bar -->
       <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
         <div class="flex items-center gap-2">
           <span class="w-2.5 h-2.5 rounded-full bg-sky-500"></span>
-          <span class="text-xs font-semibold uppercase tracking-wider text-sky-600 dark:text-sky-400">
-            Khảo Sát Năng Lực Trực Tuyến
-          </span>
-          <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+          <h3 id="guest-modal-title" class="text-xs font-semibold uppercase tracking-wider text-sky-600 dark:text-sky-400">
+            Khảo Sát Năng Lực Trực Tuyến (Thi Thử Miễn Phí)
+          </h3>
+          <span class="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
             Dành Cho Khách
           </span>
         </div>
-        <button onclick={handleReset} class="text-slate-400 hover:text-slate-600 font-bold p-1 text-sm">✕</button>
+        <button 
+          type="button"
+          onclick={handleReset} 
+          class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-base"
+          aria-label="Đóng khảo sát năng lực"
+          title="Đóng (Escape)"
+        >
+          ✕
+        </button>
       </div>
 
       <!-- STEP 1: ONBOARDING & SETUP -->
       {#if step === 'setup'}
-        <div class="space-y-4">
+        <div class="space-y-4 font-normal">
           <div class="space-y-1">
             <h2 class="text-lg font-semibold text-slate-900 dark:text-white">Chào Mừng Bạn Đến Với Tiếng Anh Cô Dung! 🌸</h2>
-            <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
-              Bài thi thử thông minh giúp xác định trình độ chuẩn CEFR (A1 - C1), đánh giá phản xạ ngữ pháp, nghe và đọc hiểu điền từ (Open Cloze) mà không cần đăng ký tài khoản.
+            <p class="text-slate-600 dark:text-slate-400 leading-relaxed text-xs">
+              Bài thi thử thông minh giúp xác định trình độ chuẩn CEFR (A1 - C1), đánh giá phản xạ ngữ pháp, nghe và đọc hiểu điền từ mà không cần đăng ký tài khoản.
             </p>
           </div>
 
           {#if errorMsg}
-            <div class="p-3 rounded bg-rose-50 text-rose-700 border border-rose-200 font-medium">
-              {errorMsg}
+            <div class="p-3 rounded-lg bg-amber-50 text-amber-900 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-200 dark:border-amber-800 text-xs font-medium">
+              ⚠️ {errorMsg}
             </div>
           {/if}
 
           <form onsubmit={handleStartTest} class="space-y-4 bg-slate-50 dark:bg-slate-800/40 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
             <div>
-              <label for="cand-name-input" class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Tên của bạn hoặc học sinh:</label>
+              <label for="cand-name-input" class="block font-medium text-slate-700 dark:text-slate-300 mb-1 text-xs">Tên của bạn hoặc học sinh:</label>
               <input 
                 id="cand-name-input"
                 type="text" 
                 bind:value={candidateName}
                 placeholder="VD: Nguyễn Hoàng Nam"
-                class="w-full p-2.5 rounded-md bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-medium"
+                class="w-full p-2.5 rounded-md bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-xs font-normal"
               />
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label for="cand-grade-select" class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Khối lớp / Trình độ:</label>
+                <label for="cand-grade-select" class="block font-medium text-slate-700 dark:text-slate-300 mb-1 text-xs">Khối lớp / Trình độ:</label>
                 <select 
                   id="cand-grade-select"
                   bind:value={selectedGrade}
-                  class="w-full p-2.5 rounded-md bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-semibold"
+                  class="w-full p-2.5 rounded-md bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-xs font-medium"
                 >
-                  <option value="lop_7">Lớp 7 (Nền Tảng THCS - Chuẩn K12)</option>
-                  <option value="lop_12">Lớp 12 &amp; Luyện Thi THPT QG / IELTS</option>
+                  <optgroup label="Khối Lớp Đã Có Đề Thi Chuẩn">
+                    <option value="lop_7">Lớp 7 (Global Success Chuyên Sâu • Đã có sẵn đề)</option>
+                    <option value="lop_12">Lớp 12 & Ôn Thi Tốt Nghiệp THPTQG / IELTS</option>
+                  </optgroup>
+                  <optgroup label="Khối Lớp Khác (Đang hoàn thiện đề thi)">
+                    <option value="lop_1">Lớp 1 (Chương trình mới • Sắp mở)</option>
+                    <option value="lop_2">Lớp 2 (Chương trình mới • Sắp mở)</option>
+                    <option value="lop_3">Lớp 3 (Chương trình mới • Sắp mở)</option>
+                    <option value="lop_4">Lớp 4 (Chương trình mới • Sắp mở)</option>
+                    <option value="lop_5">Lớp 5 (Chương trình mới • Sắp mở)</option>
+                    <option value="lop_6">Lớp 6 (Chương trình mới • Sắp mở)</option>
+                    <option value="lop_8">Lớp 8 (Chương trình mới • Sắp mở)</option>
+                    <option value="lop_9">Lớp 9 (Chương trình mới • Sắp mở)</option>
+                    <option value="lop_10">Lớp 10 (Chương trình mới • Sắp mở)</option>
+                    <option value="lop_11">Lớp 11 (Chương trình mới • Sắp mở)</option>
+                  </optgroup>
                 </select>
-                <p class="text-[10px] text-slate-500 mt-1">Các khối lớp 1–6 và 8–11 đang trong lộ trình thẩm định đề.</p>
+                <p class="text-[11px] text-slate-500 mt-1">Hệ thống mở rộng từ Lớp 1 đến Lớp 12 theo lộ trình thẩm định.</p>
               </div>
 
               <div>
-                <label for="cand-dur-select" class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Thời lượng bài test:</label>
+                <label for="cand-dur-select" class="block font-medium text-slate-700 dark:text-slate-300 mb-1 text-xs">Thời lượng bài test:</label>
                 <select 
                   id="cand-dur-select"
                   bind:value={selectedDuration}
-                  class="w-full p-2.5 rounded-md bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-semibold"
+                  class="w-full p-2.5 rounded-md bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-xs font-medium"
                 >
                   <option value="5m">⚡ Khảo Sát Nhanh (5 phút - 5 câu)</option>
-                  {#if selectedGrade === 'lop_7'}
-                    <option value="15m">⏱️ Kiểm Tra Toàn Diện (15 phút - 10 câu)</option>
-                  {/if}
+                  <option value="15m">⏱️ Kiểm Tra Toàn Diện (15 phút - 10 câu)</option>
                 </select>
-                <p class="text-[10px] text-slate-500 mt-1">Mốc 30m &amp; 45m cần ngân hàng mở rộng đang được biên soạn.</p>
+                <p class="text-[11px] text-slate-500 mt-1">Đánh giá nhanh độ phản xạ ngữ pháp và từ vựng.</p>
               </div>
             </div>
 
-            <div class="pt-2 flex justify-end">
+            <div class="pt-2 flex items-center justify-end gap-2.5">
+              <button 
+                type="button"
+                onclick={handleReset}
+                class="px-4 py-2.5 rounded-md font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-xs"
+              >
+                Đóng
+              </button>
               <button 
                 type="submit"
                 disabled={isStarting}
-                class="px-6 py-2.5 rounded-md font-semibold bg-sky-600 hover:bg-sky-700 text-white disabled:opacity-50 transition-colors shadow-sm"
+                class="px-5 py-2.5 rounded-md font-semibold bg-sky-600 hover:bg-sky-700 text-white disabled:opacity-50 transition-colors shadow-sm text-xs"
               >
                 {isStarting ? 'Đang chuẩn bị đề...' : 'Bắt Đầu Làm Bài Ngay →'}
               </button>
@@ -263,9 +334,21 @@
               <span class="text-xs text-sky-400 font-semibold">{candidateName}</span>
               <span class="text-slate-400 text-xs">• Khối: {selectedGrade.replace('lop_', 'Lớp ')}</span>
             </div>
-            <div class="flex items-center gap-2">
-              <span class="text-xs text-slate-400">Thời gian còn lại:</span>
-              <span class="font-mono text-base font-semibold text-amber-400 tabular-nums">{formattedTime}</span>
+            <div class="flex items-center gap-3">
+              <div class="flex items-center gap-1.5">
+                <span class="text-xs text-slate-400">Thời gian:</span>
+                <span class="font-mono text-base font-semibold text-amber-400 tabular-nums">{formattedTime}</span>
+              </div>
+              <button
+                type="button"
+                onclick={() => {
+                  if (confirm('Bạn có chắc muốn dừng bài khảo sát và thoát?')) handleReset();
+                }}
+                class="text-xs text-rose-400 hover:text-rose-300 font-medium px-2 py-1 rounded hover:bg-slate-800 transition-colors"
+                title="Dừng bài thi"
+              >
+                ✕ Thoát
+              </button>
             </div>
           </div>
 
@@ -274,161 +357,143 @@
             {#each questions as q, idx}
               <div class="p-4 rounded-lg bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 space-y-3">
                 <div class="flex items-center justify-between">
-                  <span class="font-semibold text-sky-600 dark:text-sky-400">
+                  <span class="font-semibold text-sky-600 dark:text-sky-400 text-xs">
                     Câu {idx + 1} / {questions.length}
                   </span>
-                  <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
-                    {q.type === 'listening' ? '🎧 Bài Nghe' : q.type === 'open_cloze' ? '📖 Tự Luận Điền Từ' : '✍️ Trắc Nghiệm'}
+                  <span class="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
+                    {q.type === 'listening' ? '🎧 Bài Nghe' : q.type === 'open_cloze' ? '📖 Điền Từ' : '✍️ Trắc Nghiệm'}
                   </span>
                 </div>
 
-                <!-- Open Cloze Passage -->
                 {#if q.passage}
                   <div class="p-3 bg-white dark:bg-slate-950 rounded border border-slate-200 dark:border-slate-700 text-xs italic text-slate-800 dark:text-slate-200 leading-relaxed">
                     "{q.passage}"
                   </div>
                 {/if}
 
-                <!-- Audio term for listening -->
                 {#if q.audio_term}
                   <div class="flex items-center gap-2 p-2 bg-sky-50 dark:bg-sky-950/40 rounded border border-sky-200 dark:border-sky-800">
                     <button 
                       type="button"
                       onclick={() => speakWord(q.audio_term, 0.9)}
-                      class="px-3 py-1 rounded bg-sky-600 text-white font-semibold flex items-center gap-1 shadow-sm"
+                      class="px-3 py-1 rounded bg-sky-600 text-white font-medium flex items-center gap-1 shadow-sm text-xs"
                     >
                       <span>🔊</span>
-                      <span>Bấm để nghe phát âm</span>
+                      <span>Nghe Phát Âm</span>
                     </button>
-                    <span class="text-slate-500 text-[11px]">(Nghe kỹ trọng âm và ngữ điệu)</span>
+                    <span class="text-xs text-slate-600 dark:text-slate-400 italic">Bấm để nghe đoạn âm thanh mẫu</span>
                   </div>
                 {/if}
 
-                <div class="text-xs font-semibold text-slate-900 dark:text-white leading-relaxed">
-                  {q.question_text}
+                <div class="text-xs font-medium text-slate-900 dark:text-white leading-relaxed">
+                  {q.question}
                 </div>
 
-                <!-- Options for MCQ / Listening -->
-                {#if q.options && q.options.length > 0}
-                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-                    {#each q.options as opt}
-                      {@const isSelected = answers[q.id] === opt.id}
-                      <button 
-                        type="button"
-                        onclick={() => answers[q.id] = opt.id}
-                        class="p-2.5 rounded-md text-left transition-colors font-medium border flex items-center gap-2.5 {isSelected ? 'bg-sky-600 text-white border-sky-600 shadow-sm' : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700/60'}"
-                      >
-                        <span class="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold {isSelected ? 'bg-white text-sky-600' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}">
-                          {opt.id}
-                        </span>
-                        <span>{opt.text}</span>
-                      </button>
-                    {/each}
-                  </div>
-                {:else if q.type === 'open_cloze'}
-                  <!-- Open Cloze: Free-text fill in the blank without ABCD -->
-                  <div class="space-y-1.5 pt-1">
-                    <label for="cloze-input-{q.id}" class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400">
-                      Tự luận: Nhập từ chính xác điền vào chỗ trống:
-                    </label>
+                {#if q.type === 'open_cloze'}
+                  <div>
                     <input 
-                      id="cloze-input-{q.id}"
                       type="text" 
                       bind:value={answers[q.id]}
-                      placeholder="Ví dụ: pollution, wish, of..."
-                      class="w-full p-2.5 rounded-md bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-medium focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                      placeholder="Gõ từ còn thiếu vào đây..."
+                      class="w-full sm:w-2/3 p-2 rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs font-normal"
                     />
+                  </div>
+                {:else if q.options && q.options.length}
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {#each q.options as opt}
+                      <label class="flex items-center gap-2 p-2.5 rounded border text-xs cursor-pointer transition-colors {answers[q.id] === opt ? 'border-sky-500 bg-sky-50 dark:bg-sky-950/50 text-sky-900 dark:text-sky-200 font-medium' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-800 dark:text-slate-200 font-normal'}">
+                        <input 
+                          type="radio" 
+                          name={`q_${q.id}`} 
+                          value={opt} 
+                          bind:group={answers[q.id]}
+                          class="accent-sky-600"
+                        />
+                        <span>{opt}</span>
+                      </label>
+                    {/each}
                   </div>
                 {/if}
               </div>
             {/each}
           </div>
 
-          <!-- Submit Action -->
-          <div class="pt-2 flex justify-between items-center border-t border-slate-200 dark:border-slate-800">
-            <span class="text-slate-500 tabular-nums">Đã trả lời: {Object.keys(answers).length}/{questions.length} câu</span>
+          <!-- Bottom Action -->
+          <div class="flex items-center justify-between pt-3 border-t border-slate-200 dark:border-slate-800">
             <button 
-              onclick={handleSubmitTest}
-              disabled={isSubmitting}
-              class="px-6 py-2.5 rounded-md font-semibold bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-50 transition-colors shadow-sm"
+              type="button"
+              onclick={() => {
+                if (confirm('Bạn có chắc muốn hủy bài thi thử này không?')) handleReset();
+              }}
+              class="px-4 py-2 rounded-md font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-xs"
             >
-              {isSubmitting ? 'Đang chấm điểm...' : 'Hoàn Thành & Xem Kết Quả →'}
+              Hủy Bài Thi
+            </button>
+            <button 
+              type="button"
+              disabled={isSubmitting}
+              onclick={handleSubmitTest}
+              class="px-6 py-2.5 rounded-md font-semibold bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-50 transition-colors shadow-sm text-xs"
+            >
+              {isSubmitting ? 'Đang chấm điểm...' : 'Nộp Bài & Xem Điểm Ngay ✓'}
             </button>
           </div>
         </div>
 
-      <!-- STEP 3: CEFR COMPETENCY REPORT & VOLUNTARY LEAD -->
+      <!-- STEP 3: RESULT & VOLUNTARY FEEDBACK -->
       {:else if step === 'result' && examResult}
-        <div class="space-y-5">
-          <!-- Competency Summary Header -->
-          <div class="bg-slate-900 border border-slate-800 rounded-lg p-5 text-white space-y-3">
-            <div class="flex items-center justify-between">
-              <div>
-                <span class="text-xs text-sky-400 font-semibold uppercase tracking-wider">Báo Cáo Năng Lực Chuẩn CEFR</span>
-                <h3 class="text-xl font-semibold mt-0.5">{examResult.rank_title}</h3>
-              </div>
-              <div class="text-right">
-                <div class="text-2xl font-semibold text-amber-400 tabular-nums">{examResult.score_10} / 10</div>
-                <div class="text-xs text-slate-400 tabular-nums">Đúng {examResult.correct_count}/{examResult.total_questions} câu</div>
-              </div>
+        <div class="space-y-4 font-normal">
+          <div class="text-center p-5 rounded-xl bg-gradient-to-b from-sky-50 to-white dark:from-slate-800 dark:to-slate-900 border border-sky-100 dark:border-slate-800 space-y-2">
+            <span class="text-3xl">🎉</span>
+            <h3 class="text-lg font-semibold text-slate-900 dark:text-white">
+              Kết Quả Khảo Sát: {candidateName}
+            </h3>
+            <div class="flex items-center justify-center gap-4 text-xs font-medium pt-1">
+              <span class="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300">
+                Điểm Số: <strong>{examResult.score} / 10</strong> ({examResult.correct_count}/{examResult.total_questions} câu đúng)
+              </span>
+              <span class="px-3 py-1 rounded-full bg-sky-100 text-sky-800 dark:bg-sky-950/80 dark:text-sky-300">
+                Xếp Loại CEFR: <strong>{examResult.cefr_level || 'A2'}</strong>
+              </span>
             </div>
-
-            <div class="p-3 bg-slate-800/80 rounded border border-slate-700 text-xs text-slate-200 leading-relaxed">
-              <strong>💡 Đánh giá sư phạm &amp; Lộ trình:</strong> {examResult.recommendation}
-            </div>
+            <p class="text-xs text-slate-600 dark:text-slate-400 max-w-md mx-auto pt-1 leading-relaxed">
+              {examResult.feedback || 'Em có nền tảng ngữ pháp tương đối tốt, cần tiếp tục rèn luyện thêm kỹ năng nghe và đọc hiểu.'}
+            </p>
           </div>
 
-          <!-- Review Question By Question -->
-          <div class="space-y-3">
-            <h4 class="font-semibold text-slate-900 dark:text-white uppercase tracking-wider text-xs">Chi Tiết Từng Câu Hỏi &amp; Đáp Án:</h4>
-            {#each examResult.item_feedback as item}
-              <div class="p-3 rounded-md border text-xs space-y-1.5 {item.is_correct ? 'bg-emerald-50/60 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800' : 'bg-rose-50/60 dark:bg-rose-950/30 border-rose-200 dark:border-rose-800'}">
-                <div class="flex items-center justify-between">
-                  <span class="font-semibold text-slate-800 dark:text-slate-200">Câu {item.item_order}: {item.question_text}</span>
-                  <span class="font-bold {item.is_correct ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300'}">
-                    {item.is_correct ? '✓ Đúng' : `✗ Sai (Bạn chọn ${item.student_choice || 'Chưa chọn'} - Đáp án đúng: ${item.correct_id})`}
-                  </span>
-                </div>
-                {#if item.explanation}
-                  <p class="text-slate-600 dark:text-slate-400 italic">↳ Giải thích: {item.explanation}</p>
-                {/if}
-              </div>
-            {/each}
-          </div>
-
-          <!-- VOLUNTARY SEPARATE OPT-IN LEAD FORM -->
-          <div class="bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800 p-5 rounded-lg space-y-3">
+          <!-- Lead capture form -->
+          <div class="bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800 p-4 rounded-lg space-y-3">
             <div>
-              <h4 class="font-semibold text-sky-900 dark:text-sky-200 text-sm">Nhận Tư Vấn Lộ Trình Cá Nhân Hóa (Tùy Chọn)</h4>
+              <h4 class="font-semibold text-sky-900 dark:text-sky-200 text-xs">Nhận Tư Vấn Kế Hoạch Học Tập (Tùy Chọn)</h4>
               <p class="text-slate-600 dark:text-slate-400 text-xs mt-0.5 leading-relaxed">
-                Để lại số điện thoại để Cô Dung gửi kế hoạch học tập chi tiết và xếp lớp học thử miễn phí tại cơ sở gần nhất. Hoàn toàn tự nguyện, không ràng buộc.
+                Để lại số điện thoại nếu phụ huynh muốn nhận lộ trình chi tiết và đăng ký học thử miễn phí. Hoàn toàn tự nguyện, không ràng buộc.
               </p>
             </div>
 
             {#if leadSuccessMsg}
-              <div class="p-3 rounded bg-emerald-100 text-emerald-800 font-semibold text-xs">
+              <div class="p-3 rounded bg-emerald-100 text-emerald-800 font-medium text-xs">
                 {leadSuccessMsg}
               </div>
             {:else}
               <form onsubmit={handleSendLead} class="space-y-3">
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label for="lead-phone-input" class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Số điện thoại / Zalo (*):</label>
+                    <label for="lead-phone-input" class="block font-medium text-slate-700 dark:text-slate-300 mb-1 text-xs">Số điện thoại / Zalo (*):</label>
                     <input 
                       id="lead-phone-input"
                       type="tel" 
                       required
                       bind:value={leadPhone}
                       placeholder="VD: 0912345678"
-                      class="w-full p-2.5 rounded-md bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white tabular-nums font-medium"
+                      class="w-full p-2.5 rounded-md bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white tabular-nums text-xs font-normal"
                     />
                   </div>
                   <div>
-                    <label for="lead-target-select" class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Mục tiêu học tập:</label>
+                    <label for="lead-target-select" class="block font-medium text-slate-700 dark:text-slate-300 mb-1 text-xs">Mục tiêu học tập:</label>
                     <select 
                       id="lead-target-select"
                       bind:value={leadTarget}
-                      class="w-full p-2.5 rounded-md bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-medium"
+                      class="w-full p-2.5 rounded-md bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-xs font-medium"
                     >
                       <option value="Lấy gốc & Cải thiện điểm trên lớp">Lấy gốc &amp; Cải thiện điểm trên lớp</option>
                       <option value="Chuyên sâu Học Sinh Giỏi">Chuyên sâu Học Sinh Giỏi</option>
@@ -439,11 +504,11 @@
                 </div>
 
                 <div class="flex items-center justify-between pt-1">
-                  <span class="text-[11px] text-slate-500">Hotline tư vấn: 0912.xxx.xxx</span>
+                  <span class="text-[11px] text-slate-500">Tư vấn viên: Cô Dung & Đội ngũ chuyên môn</span>
                   <button 
                     type="submit"
                     disabled={isSubmittingLead}
-                    class="px-5 py-2 rounded-md font-semibold bg-sky-600 hover:bg-sky-700 text-white transition-colors"
+                    class="px-5 py-2 rounded-md font-semibold bg-sky-600 hover:bg-sky-700 text-white transition-colors text-xs"
                   >
                     {isSubmittingLead ? 'Đang gửi...' : 'Gửi Yêu Cầu Tư Vấn Zalo'}
                   </button>
@@ -454,7 +519,11 @@
 
           <!-- Bottom Actions -->
           <div class="flex justify-end pt-2">
-            <button onclick={handleReset} class="px-5 py-2 rounded-md font-semibold bg-slate-900 hover:bg-slate-800 text-white">
+            <button 
+              type="button"
+              onclick={handleReset} 
+              class="px-5 py-2 rounded-md font-semibold bg-slate-900 hover:bg-slate-800 text-white text-xs"
+            >
               Đóng &amp; Trở Về
             </button>
           </div>

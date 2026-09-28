@@ -100,6 +100,17 @@ async function ensureTables(db) {
           stars_redeemed INTEGER DEFAULT 0,
           last_updated TEXT DEFAULT CURRENT_TIMESTAMP
         );
+      `),
+      db.prepare(`
+        CREATE TABLE IF NOT EXISTS student_star_ledger (
+          id TEXT PRIMARY KEY,
+          student_id TEXT NOT NULL,
+          amount INTEGER NOT NULL,
+          action_type TEXT NOT NULL,
+          reference_id TEXT,
+          note TEXT,
+          created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        );
       `)
     ]);
   } catch (e) {
@@ -730,11 +741,13 @@ export async function POST({ request, platform }) {
       try {
         await ensureTables(db);
 
-        const batchStatements = [];
-
-        // 1. Update submission record
-        batchStatements.push(
-          db.prepare(`
+        // Optimistic Concurrency Control (CAS):
+        // Atomic compare-and-swap on submission state
+        let casSql;
+        let casParams;
+        if (submission.status === 'graded') {
+          // Regrade / revision: verify previous score and stars match snapshot
+          casSql = `
             UPDATE homework_submissions 
             SET graded_by_teacher_id = ?,
                 graded_by_teacher_name = ?,
@@ -745,28 +758,84 @@ export async function POST({ request, platform }) {
                 stars_awarded = ?,
                 star_awarded_reason = ?,
                 status = 'graded'
-            WHERE id = ?;
-          `).bind(
+            WHERE id = ? AND status = 'graded' AND score = ? AND stars_awarded = ?;
+          `;
+          casParams = [
+            user.id, teacherName, gradedAt, numericScore, teacher_feedback || '',
+            audio_feedback_url || null, starsAwarded, starReason || null, submission_id,
+            submission.score, previousStars
+          ];
+        } else {
+          // Initial grading: verify submission is still in 'submitted' status
+          casSql = `
+            UPDATE homework_submissions 
+            SET graded_by_teacher_id = ?,
+                graded_by_teacher_name = ?,
+                graded_at = ?,
+                score = ?,
+                teacher_feedback = ?,
+                audio_feedback_url = ?,
+                stars_awarded = ?,
+                star_awarded_reason = ?,
+                status = 'graded'
+            WHERE id = ? AND status = 'submitted';
+          `;
+          casParams = [
             user.id, teacherName, gradedAt, numericScore, teacher_feedback || '',
             audio_feedback_url || null, starsAwarded, starReason || null, submission_id
-          )
-        );
+          ];
+        }
 
-        // 2. Adjust stars strictly by starDelta (no double reward on retry)
+        const casResult = await db.prepare(casSql).bind(...casParams).run();
+
+        if (Number(casResult?.meta?.changes || 0) === 0) {
+          // Stale read or concurrent conflict!
+          const current = await db.prepare('SELECT score, status, stars_awarded FROM homework_submissions WHERE id = ?').bind(submission_id).first();
+          if (current && current.status === 'graded' && Number(current.score) === numericScore) {
+            // Idempotent retry: already graded with the exact same score
+            return json({
+              success: true,
+              message: 'Bài tập đã được chấm điểm (kết quả đã ghi nhận trước đó).',
+              submission: { ...submission, ...current }
+            });
+          }
+          return json({
+            success: false,
+            error: 'Conflict: Trạng thái bài nộp đã bị thay đổi bởi thao tác khác (CAS race detected). Vui lòng tải lại trang.'
+          }, { status: 409 });
+        }
+
+        // Only the winning CAS request executes star ledger and notifications:
+        const batchStatements = [];
+
+        // 1. Adjust stars strictly by starDelta
         if (starDelta !== 0) {
           batchStatements.push(
             db.prepare(`
               INSERT INTO student_stars (student_id, stars_balance, total_earned_stars, stars_redeemed, last_updated)
               VALUES (?, ?, ?, 0, CURRENT_TIMESTAMP)
               ON CONFLICT(student_id) DO UPDATE SET
-                stars_balance = MAX(0, stars_balance + ?),
-                total_earned_stars = MAX(0, total_earned_stars + ?),
+                stars_balance = stars_balance + excluded.stars_balance,
+                total_earned_stars = total_earned_stars + excluded.total_earned_stars,
                 last_updated = CURRENT_TIMESTAMP;
-            `).bind(submission.student_id, starDelta, starDelta, starDelta, starDelta)
+            `).bind(submission.student_id, starDelta, starDelta)
+          );
+
+          // 2. Insert audit trail in student_star_ledger
+          const ledgerId = `ledger_hw_${submission_id}_${Date.now()}`;
+          batchStatements.push(
+            db.prepare(`
+              INSERT INTO student_star_ledger (id, student_id, amount, action_type, reference_id, note)
+              VALUES (?, ?, ?, ?, ?, ?);
+            `).bind(
+              ledgerId, submission.student_id, starDelta,
+              starDelta >= 0 ? 'homework_reward' : 'homework_adjustment',
+              submission_id, starReason || 'Chấm điểm BTVN'
+            )
           );
         }
 
-        // 3. Notify Student (Deterministic ID prevents duplicate notifications on retry)
+        // 3. Deterministic Student Notification
         const notifStudentId = `notif_grade_s_${submission_id}`;
         batchStatements.push(
           db.prepare(`
@@ -784,7 +853,7 @@ export async function POST({ request, platform }) {
           )
         );
 
-        // 4. Notify Parent of this student - ONLY if verified
+        // 4. Deterministic Parent Notifications (Verified only)
         const parentLinks = await db.prepare(`
           SELECT parent_user_id 
           FROM parent_student_links 
@@ -811,8 +880,9 @@ export async function POST({ request, platform }) {
           );
         }
 
-        // Execute batch transaction atomically
-        await db.batch(batchStatements);
+        if (batchStatements.length > 0) {
+          await db.batch(batchStatements);
+        }
 
       } catch (e) {
         console.error('Failed to grade submission in D1:', e);

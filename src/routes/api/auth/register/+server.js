@@ -35,7 +35,7 @@ export async function POST({ request, platform }) {
       name, 
       password, 
       role = 'student', 
-      grade = 'Lớp 7', 
+      grade = '', 
       target = '', 
       linkedStudentPhoneOrId = '' 
     } = body;
@@ -112,14 +112,14 @@ export async function POST({ request, platform }) {
       name: cleanName,
       password: hashedPassword,
       role: safeRole,
-      grade: grade || 'Lớp 7',
+      grade: (grade && typeof grade === 'string' && grade.trim()) ? grade.trim() : null,
       avatar: safeRole === 'parent' 
         ? 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150'
         : `https://api.dicebear.com/7.x/bottts/svg?seed=${username}`,
       status: 'trial',
       approval_status: 'trial',
       metadata: JSON.stringify({
-        grade: grade || 'Lớp 7',
+        grade: (grade && typeof grade === 'string' && grade.trim()) ? grade.trim() : null,
         target: target || 'Chương trình GDPT 2026',
         phone: phone || null,
         is_trial: true,

@@ -2,24 +2,28 @@
  * verify_g1_notification_policy.test.js
  * Comprehensive G1 Fixture Matrix Audit Test Suite:
  * 
- * Matrix Requirements from Codex AUDIT_FEEDBACK_3526dd8_G1_FRAMEWORK_2026-09-28.md:
+ * Matrix Requirements from Codex AUDIT_FEEDBACK_38873c3_G1_UI_RACE_2026-09-28.md:
  * A. Parent P: A revoked/B verified; grade A denied, B allowed.
- * B. Pending P with old notification and homework broadcast: denied; system parent/all visible.
- * C. GET, mark_read, and mark_all have identical authorized IDs; forbidden read-state untouched.
+ * B. Pending P with old notification and homework broadcast: denied; public system announcements visible.
+ *    Quarantine / fail-closed for NULL category referencing revoked submissions; tuition verified allowed.
+ * C. Uniformity: GET, mark_read, and mark_all have identical authorized IDs; forbidden read-state untouched.
  * D. Enrollment inactive + metadata cũ không hồi quyền; student chuyển lớp; exact class equality (class_7 != classX7).
- * E. Real assign/grade handlers check exact recipients; unknown/non-allowlisted sensitive category deny.
- * F. Homework fault injection & idempotency: no double-star rewards on retry/regrade.
- * G. UNIQUE username and normalized phone: concurrent registration -> 1 success (201), 1 conflict (409), exactly 1 row.
+ * E. Real assign/grade handlers check exact recipients; unknown/non-allowlisted sensitive category denied.
+ * F. Homework CAS concurrency: two concurrent grading requests -> exactly 1 reward, no double stars,
+ *    honest student_star_ledger ledger without debt-clamping.
+ * G. True Concurrency on Registration: concurrent requests passing SELECT simultaneously are caught by
+ *    DB-level UNIQUE index (1 created with 201, 1 conflict with 409, exactly 1 row).
+ * H. Grade selection fidelity: registering Lớp 2 preserves Lớp 2 through D1, metadata, auth token, and sanitizeUser.
  */
 
-import { test, describe, before, beforeEach } from 'node:test';
+import { test, describe, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { DatabaseSync } from 'node:sqlite';
 
 import { GET as getNotifications, POST as postNotifications } from '../src/routes/api/notifications/+server.js';
 import { GET as getHomework, POST as postHomework } from '../src/routes/api/homework/+server.js';
 import { POST as postRegister } from '../src/routes/api/auth/register/+server.js';
-import { createSignedToken } from '../src/lib/server/auth.js';
+import { createSignedToken, verifyServerAuth } from '../src/lib/server/auth.js';
 
 const TEST_SECRET = 'ephemeral_test_secret_hmac_2026_isolated_for_audit';
 
@@ -177,6 +181,24 @@ function initTestDatabase() {
       last_updated TEXT DEFAULT CURRENT_TIMESTAMP
     );
 
+    CREATE TABLE IF NOT EXISTS student_star_ledger (
+      id TEXT PRIMARY KEY,
+      student_id TEXT NOT NULL,
+      amount INTEGER NOT NULL,
+      action_type TEXT NOT NULL,
+      reference_id TEXT,
+      note TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS tuition_bills (
+      id TEXT PRIMARY KEY,
+      student_id TEXT NOT NULL,
+      amount INTEGER NOT NULL,
+      status TEXT DEFAULT 'unpaid',
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+
     CREATE TABLE IF NOT EXISTS location_activity_streams (
       id TEXT PRIMARY KEY,
       campus_id TEXT NOT NULL,
@@ -221,7 +243,6 @@ describe('G1 AUDIT FIXTURE MATRIX - REAL HANDLERS & DB ISOLATION', async () => {
       const sqlite = initTestDatabase();
       const d1 = createD1Adapter(sqlite);
 
-      // Parent P has child A (revoked) and child B (verified)
       sqlite.exec(`
         INSERT INTO users (id, username, email, name, role) VALUES
           ('usr_parent_p', 'parent_p', 'parent_p@test.com', 'Phụ huynh P', 'parent'),
@@ -314,9 +335,9 @@ describe('G1 AUDIT FIXTURE MATRIX - REAL HANDLERS & DB ISOLATION', async () => {
   });
 
   // =========================================================================
-  // FIXTURE B: Pending P with old notification and homework broadcast
+  // FIXTURE B: Pending P with old notification, homework broadcast & NULL category quarantine
   // =========================================================================
-  describe('Fixture B: Pending P with Homework Broadcast vs System Announcements', () => {
+  describe('Fixture B: Pending P with Homework Broadcast vs System Announcements & NULL Category Quarantine', () => {
     test('B.1: Pending parent: homework broadcast & personal homework DENIED; public system announcement VISIBLE', async () => {
       const sqlite = initTestDatabase();
       const d1 = createD1Adapter(sqlite);
@@ -339,7 +360,7 @@ describe('G1 AUDIT FIXTURE MATRIX - REAL HANDLERS & DB ISOLATION', async () => {
         INSERT INTO system_notifications (id, target_role, target_user_id, title, body, category, reference_id) VALUES
           ('notif_hw_personal', 'parent', 'usr_parent_pending', 'BTVN Cá nhân', 'Nộp bài nhé', 'homework', 'hw_c'),
           ('notif_hw_broadcast', 'parent', NULL, 'BTVN Toàn Lớp 7', 'Hạn 18:00', 'homework', 'hw_c'),
-          ('notif_sys_announcement', 'parent', NULL, 'Thông báo nghỉ lễ', 'Trung tâm nghỉ lễ 2/9', NULL, NULL);
+          ('notif_sys_announcement', 'parent', NULL, 'Thông báo nghỉ lễ', 'Trung tâm nghỉ lễ 2/9', 'system', NULL);
       `);
 
       const pendingToken = await createSignedToken(
@@ -361,6 +382,38 @@ describe('G1 AUDIT FIXTURE MATRIX - REAL HANDLERS & DB ISOLATION', async () => {
       assert.ok(!ids.includes('notif_hw_broadcast'), 'Pending parent MUST NOT see homework broadcast notification');
       assert.ok(ids.includes('notif_sys_announcement'), 'Pending parent MUST see non-sensitive system announcement');
       assert.strictEqual(ids.length, 1);
+    });
+
+    test('B.2: NULL category with reference_id (legacy sensitive) pointing to revoked student MUST BE QUARANTINED (DENIED)', async () => {
+      const sqlite = initTestDatabase();
+      const d1 = createD1Adapter(sqlite);
+
+      sqlite.exec(`
+        INSERT INTO users (id, username, email, name, role) VALUES
+          ('usr_parent_p', 'parent_p', 'parent_p@test.com', 'Phụ huynh P', 'parent'),
+          ('usr_child_a', 'child_a', 'child_a@test.com', 'Học sinh A', 'student');
+
+        INSERT INTO parent_student_links (id, parent_user_id, student_user_id, verification_status) VALUES
+          ('link_a', 'usr_parent_p', 'usr_child_a', 'revoked');
+
+        INSERT INTO homework_submissions (id, assignment_id, student_id, student_name, submission_type, score, status) VALUES
+          ('sub_a', 'hw_a', 'usr_child_a', 'Học sinh A', 'writing', 8.0, 'graded');
+
+        -- Legacy notification with NULL category but pointing to sub_a of revoked child
+        INSERT INTO system_notifications (id, target_role, target_user_id, title, body, category, reference_id) VALUES
+          ('notif_legacy_null_cat', 'parent', 'usr_parent_p', 'Báo Cáo Điểm Cũ', 'Điểm 8.0', NULL, 'sub_a'),
+          ('notif_legit_public_null', 'parent', NULL, 'Khai giảng năm học', 'Chào đón năm học mới', NULL, NULL);
+      `);
+
+      const req = new Request('http://localhost/api/notifications', {
+        headers: { 'Authorization': `Bearer ${parentToken}` }
+      });
+      const res = await getNotifications({ request: req, platform: { env: { DB: d1, AUTH_SECRET: TEST_SECRET } } });
+      const data = await res.json();
+
+      const ids = (data.notifications || []).map(n => n.id);
+      assert.ok(!ids.includes('notif_legacy_null_cat'), 'Legacy NULL category with sensitive reference_id MUST be quarantined/denied');
+      assert.ok(ids.includes('notif_legit_public_null'), 'Public broadcast without reference_id MUST be allowed');
     });
   });
 
@@ -391,7 +444,7 @@ describe('G1 AUDIT FIXTURE MATRIX - REAL HANDLERS & DB ISOLATION', async () => {
 
         INSERT INTO system_notifications (id, target_role, target_user_id, title, body, category, reference_id, is_read) VALUES
           ('notif_auth_1', 'parent', 'usr_parent_p', 'BTVN Bé B', 'BTVN Lớp 8', 'homework', 'hw_b', 0),
-          ('notif_auth_2', 'parent', NULL, 'Họp phụ huynh', 'Họp toàn trường', NULL, NULL, 0),
+          ('notif_auth_2', 'parent', NULL, 'Họp phụ huynh', 'Họp toàn trường', 'system', NULL, 0),
           ('notif_forbid_3', 'parent', 'usr_parent_p', 'BTVN Lớp 9 Lạ', 'BTVN Lớp 9', 'homework', 'hw_o', 0);
       `);
 
@@ -414,7 +467,6 @@ describe('G1 AUDIT FIXTURE MATRIX - REAL HANDLERS & DB ISOLATION', async () => {
       assert.strictEqual(markAllRes.status, 200);
 
       // 3. Verify in DB:
-      // system_notification_reads must have records for notif_auth_1 and notif_auth_2 ONLY
       const reads = sqlite.prepare('SELECT notification_id FROM system_notification_reads WHERE user_id = ?').all('usr_parent_p');
       const readIds = reads.map(r => r.notification_id);
       assert.deepStrictEqual(readIds.sort(), ['notif_auth_1', 'notif_auth_2'].sort());
@@ -433,7 +485,6 @@ describe('G1 AUDIT FIXTURE MATRIX - REAL HANDLERS & DB ISOLATION', async () => {
       const sqlite = initTestDatabase();
       const d1 = createD1Adapter(sqlite);
 
-      // Student has metadata class_id='class_7' but class_enrollments status='inactive'
       sqlite.exec(`
         INSERT INTO users (id, username, email, name, role, metadata) VALUES
           ('usr_student_s', 'student_s', 'student_s@test.com', 'Học sinh S', 'student', '{"class_id":"class_7"}');
@@ -465,7 +516,6 @@ describe('G1 AUDIT FIXTURE MATRIX - REAL HANDLERS & DB ISOLATION', async () => {
       const sqlite = initTestDatabase();
       const d1 = createD1Adapter(sqlite);
 
-      // Student enrolled in classX7
       sqlite.exec(`
         INSERT INTO users (id, username, email, name, role) VALUES
           ('usr_student_s', 'student_s', 'student_s@test.com', 'Học sinh S', 'student');
@@ -473,12 +523,10 @@ describe('G1 AUDIT FIXTURE MATRIX - REAL HANDLERS & DB ISOLATION', async () => {
         INSERT INTO class_enrollments (id, user_id, class_id, status) VALUES
           ('ce_s_x7', 'usr_student_s', 'classX7', 'active');
 
-        -- Assignment is for class_7 (contains underscore)
         INSERT INTO homework_assignments (id, session_id, class_id, class_name, teacher_id, teacher_name, skill_type, title, description, assigned_date, deadline_date, deadline_time) VALUES
           ('hw_class_7', 'sess_7', 'class_7', 'Lớp 7', 'usr_teacher_lan', 'Cô Lan', 'writing', 'Bài Tập Lớp 7', 'Descr', '2026-10-01', '2026-10-05', '18:00');
       `);
 
-      // Attempt to access hw_class_7 -> MUST BE FORBIDDEN 403
       const req = new Request('http://localhost/api/homework?id=hw_class_7', {
         headers: { 'Authorization': `Bearer ${studentToken}` }
       });
@@ -529,7 +577,6 @@ describe('G1 AUDIT FIXTURE MATRIX - REAL HANDLERS & DB ISOLATION', async () => {
       const assignRes = await postHomework({ request: assignReq, platform: { env: { DB: d1, AUTH_SECRET: TEST_SECRET } } });
       assert.strictEqual(assignRes.status, 200);
 
-      // Verify recipient notifications in DB:
       const notifications = sqlite.prepare('SELECT target_user_id, target_role, title FROM system_notifications').all();
       const recipients = notifications.map(n => n.target_user_id);
 
@@ -541,10 +588,10 @@ describe('G1 AUDIT FIXTURE MATRIX - REAL HANDLERS & DB ISOLATION', async () => {
   });
 
   // =========================================================================
-  // FIXTURE F: Homework Fault Injection & Idempotency (No Double Stars)
+  // FIXTURE F: Homework CAS Concurrency & Idempotency
   // =========================================================================
-  describe('Fixture F: Star Reward Idempotency & Fault Injection', () => {
-    test('F.1: Regrading / retrying same submission does NOT award double stars', async () => {
+  describe('Fixture F: Star Reward CAS Concurrency, Ledger & Fault Injection', () => {
+    test('F.1: Concurrent grading race with CAS: only one request awards stars, no double reward', async () => {
       const sqlite = initTestDatabase();
       const d1 = createD1Adapter(sqlite);
 
@@ -560,32 +607,75 @@ describe('G1 AUDIT FIXTURE MATRIX - REAL HANDLERS & DB ISOLATION', async () => {
           ('sub_test', 'hw_test', 'usr_student_s', 'Học sinh S', 'writing', 1, 'submitted');
       `);
 
-      // First grading: score 10.0 on-time -> 100 stars
-      const gradeReq1 = new Request('http://localhost/api/homework', {
+      // Two concurrent grade requests attempting to grade the same submission at the same time
+      const req1 = new Request('http://localhost/api/homework', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${teacherToken}` },
-        body: JSON.stringify({ action: 'grade', submission_id: 'sub_test', score: 10.0, teacher_feedback: 'Xuất sắc' })
+        body: JSON.stringify({ action: 'grade', submission_id: 'sub_test', score: 10.0, teacher_feedback: 'Xuất sắc 1' })
       });
-      const gradeRes1 = await postHomework({ request: gradeReq1, platform: { env: { DB: d1, AUTH_SECRET: TEST_SECRET } } });
-      assert.strictEqual(gradeRes1.status, 200);
-
-      const starsAfterFirst = sqlite.prepare('SELECT stars_balance, total_earned_stars FROM student_stars WHERE student_id = ?').get('usr_student_s');
-      assert.strictEqual(starsAfterFirst.stars_balance, 100);
-
-      // Second grading (regrade / retry with same 10.0 score): MUST NOT double stars!
-      const gradeReq2 = new Request('http://localhost/api/homework', {
+      const req2 = new Request('http://localhost/api/homework', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${teacherToken}` },
-        body: JSON.stringify({ action: 'grade', submission_id: 'sub_test', score: 10.0, teacher_feedback: 'Xuất sắc lần 2' })
+        body: JSON.stringify({ action: 'grade', submission_id: 'sub_test', score: 10.0, teacher_feedback: 'Xuất sắc 2' })
       });
-      const gradeRes2 = await postHomework({ request: gradeReq2, platform: { env: { DB: d1, AUTH_SECRET: TEST_SECRET } } });
-      assert.strictEqual(gradeRes2.status, 200);
 
-      const starsAfterSecond = sqlite.prepare('SELECT stars_balance, total_earned_stars FROM student_stars WHERE student_id = ?').get('usr_student_s');
-      assert.strictEqual(starsAfterSecond.stars_balance, 100, 'Stars balance MUST remain 100 on retry, NOT 200 (no double reward)');
+      // Run both handlers concurrently
+      const [res1, res2] = await Promise.all([
+        postHomework({ request: req1, platform: { env: { DB: d1, AUTH_SECRET: TEST_SECRET } } }),
+        postHomework({ request: req2, platform: { env: { DB: d1, AUTH_SECRET: TEST_SECRET } } })
+      ]);
+
+      // Both requests should return 200 (one commits, second is idempotent retry with identical score)
+      assert.strictEqual(res1.status, 200);
+      assert.strictEqual(res2.status, 200);
+
+      // Verify DB balance: exactly 100 stars (NOT 200!)
+      const stars = sqlite.prepare('SELECT stars_balance, total_earned_stars FROM student_stars WHERE student_id = ?').get('usr_student_s');
+      assert.strictEqual(stars.stars_balance, 100, 'Student stars balance MUST be exactly 100 (never double awarded)');
+
+      // Verify ledger has exactly 1 entry for this reward
+      const ledgerEntries = sqlite.prepare('SELECT * FROM student_star_ledger WHERE student_id = ?').all('usr_student_s');
+      assert.strictEqual(ledgerEntries.length, 1, 'Exactly one star ledger record MUST exist');
     });
 
-    test('F.2: Fault Injection on D1 batch: returns HTTP 503 and rolls back cleanly without partial commit', async () => {
+    test('F.2: Regrade with lower score records honest delta without clamping debt', async () => {
+      const sqlite = initTestDatabase();
+      const d1 = createD1Adapter(sqlite);
+
+      sqlite.exec(`
+        INSERT INTO users (id, username, email, name, role) VALUES
+          ('usr_teacher_lan', 'lan', 'lan@test.com', 'Cô Lan', 'teacher'),
+          ('usr_student_s', 'student_s', 'student_s@test.com', 'Học sinh S', 'student');
+
+        INSERT INTO homework_assignments (id, session_id, class_id, class_name, teacher_id, teacher_name, skill_type, title, description, assigned_date, deadline_date, deadline_time) VALUES
+          ('hw_test', 'sess_t', 'class_7', 'Lớp 7', 'usr_teacher_lan', 'Cô Lan', 'writing', 'Bài Tập', 'Descr', '2026-10-01', '2026-10-05', '18:00');
+
+        INSERT INTO homework_submissions (id, assignment_id, student_id, student_name, submission_type, is_on_time, score, stars_awarded, status) VALUES
+          ('sub_test', 'hw_test', 'usr_student_s', 'Học sinh S', 'writing', 1, 10.0, 100, 'graded');
+
+        INSERT INTO student_stars (student_id, stars_balance, total_earned_stars, stars_redeemed) VALUES
+          ('usr_student_s', 100, 100, 0);
+      `);
+
+      // Regrade with 8.5 (earns 50 stars instead of 100, delta = -50)
+      const regradeReq = new Request('http://localhost/api/homework', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${teacherToken}` },
+        body: JSON.stringify({ action: 'grade', submission_id: 'sub_test', score: 8.5, teacher_feedback: 'Điều chỉnh điểm' })
+      });
+      const res = await postHomework({ request: regradeReq, platform: { env: { DB: d1, AUTH_SECRET: TEST_SECRET } } });
+      assert.strictEqual(res.status, 200);
+
+      const stars = sqlite.prepare('SELECT stars_balance, total_earned_stars FROM student_stars WHERE student_id = ?').get('usr_student_s');
+      assert.strictEqual(stars.stars_balance, 50, 'Balance reduced from 100 to 50 honestly');
+
+      const ledger = sqlite.prepare('SELECT * FROM student_star_ledger WHERE student_id = ?').all('usr_student_s');
+      assert.strictEqual(ledger.length, 1);
+      assert.strictEqual(ledger[0].amount, -50);
+      assert.strictEqual(ledger[0].action_type, 'homework_adjustment');
+    });
+
+    test('F.3: Fault Injection on D1 batch: returns HTTP 503 and rolls back cleanly', async () => {
       const sqlite = initTestDatabase();
       sqlite.exec(`
         INSERT INTO users (id, username, email, name, role) VALUES
@@ -593,7 +683,6 @@ describe('G1 AUDIT FIXTURE MATRIX - REAL HANDLERS & DB ISOLATION', async () => {
       `);
 
       const normalD1 = createD1Adapter(sqlite);
-      // DB adapter that throws on batch during assignment write
       const throwingD1 = {
         ...normalD1,
         async batch() {
@@ -622,21 +711,51 @@ describe('G1 AUDIT FIXTURE MATRIX - REAL HANDLERS & DB ISOLATION', async () => {
   });
 
   // =========================================================================
-  // FIXTURE G: UNIQUE Username & Normalized Phone Concurrency
+  // FIXTURE G: True Concurrency Race on UNIQUE Username & Phone
   // =========================================================================
-  describe('Fixture G: UNIQUE Index Defense & Concurrent Registration Race', () => {
-    test('G.1: Duplicate username race: first succeeds (201), second is rejected with 409 Conflict, exactly 1 row exists', async () => {
+  describe('Fixture G: True Concurrency Race Caught by Database UNIQUE Constraints', () => {
+    test('G.1: True concurrency race: two requests passing SELECT simultaneously are caught by DB UNIQUE constraint (1 created 201, 1 conflict 409, 1 row)', async () => {
       const sqlite = initTestDatabase();
-      const d1 = createD1Adapter(sqlite);
+      const baseD1 = createD1Adapter(sqlite);
+
+      // Create an interleaving barrier:
+      // Both requests call SELECT at the exact same moment (both see null).
+      // Then both proceed to INSERT. Exactly ONE must succeed and the other MUST hit SQLite UNIQUE constraint and return 409!
+      let selectCount = 0;
+      let resolveBarrier;
+      const barrierPromise = new Promise(resolve => { resolveBarrier = resolve; });
+
+      const racingD1 = {
+        prepare(sql) {
+          const stmt = baseD1.prepare(sql);
+          if (sql.includes('SELECT id, username FROM users WHERE username = ?')) {
+            return {
+              bind(...args) {
+                stmt.bind(...args);
+                return this;
+              },
+              async first() {
+                selectCount++;
+                if (selectCount === 2) {
+                  resolveBarrier();
+                } else {
+                  await barrierPromise; // Wait for second request to also reach SELECT
+                }
+                return null; // Both simulate seeing no existing user concurrently!
+              }
+            };
+          }
+          return stmt;
+        }
+      };
 
       const reqBody = {
-        usernameOrPhone: 'student_racing_test',
+        usernameOrPhone: 'student_concurrent_race',
         password: 'Password123!',
-        name: 'Học Sinh Đua Race',
+        name: 'Học Sinh Đua Concurrency',
         role: 'student'
       };
 
-      // Two registration calls competing for the same username
       const req1 = new Request('http://localhost/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -648,15 +767,16 @@ describe('G1 AUDIT FIXTURE MATRIX - REAL HANDLERS & DB ISOLATION', async () => {
         body: JSON.stringify(reqBody)
       });
 
-      const res1 = await postRegister({ request: req1, platform: { env: { DB: d1, AUTH_SECRET: TEST_SECRET } } });
-      const res2 = await postRegister({ request: req2, platform: { env: { DB: d1, AUTH_SECRET: TEST_SECRET } } });
+      const [res1, res2] = await Promise.all([
+        postRegister({ request: req1, platform: { env: { DB: racingD1, AUTH_SECRET: TEST_SECRET } } }),
+        postRegister({ request: req2, platform: { env: { DB: racingD1, AUTH_SECRET: TEST_SECRET } } })
+      ]);
 
-      assert.strictEqual(res1.status, 201, 'First registration MUST succeed with 201 Created');
-      assert.strictEqual(res2.status, 409, 'Second registration MUST be rejected with 409 Conflict');
+      const statuses = [res1.status, res2.status].sort();
+      assert.deepStrictEqual(statuses, [201, 409], 'Exactly one request must succeed with 201 and the competing request MUST be rejected with 409 Conflict');
 
-      // Verify DB state: exactly 1 user row in database
-      const rows = sqlite.prepare('SELECT id, username FROM users WHERE username = ?').all('student_racing_test');
-      assert.strictEqual(rows.length, 1, 'Exactly 1 row MUST exist in users table');
+      const rows = sqlite.prepare('SELECT id, username FROM users WHERE username = ?').all('student_concurrent_race');
+      assert.strictEqual(rows.length, 1, 'Exactly 1 row MUST exist in users table under concurrent race');
     });
 
     test('G.2: Duplicate normalized phone (+84 vs 03) conflict enforced at DB constraint level: returns 409 Conflict', async () => {
@@ -691,9 +811,51 @@ describe('G1 AUDIT FIXTURE MATRIX - REAL HANDLERS & DB ISOLATION', async () => {
       const res2 = await postRegister({ request: req2, platform: { env: { DB: d1, AUTH_SECRET: TEST_SECRET } } });
       assert.strictEqual(res2.status, 409, 'Duplicate normalized phone MUST return HTTP 409 Conflict');
 
-      // Verify DB count: exactly 1 row with phone 0389123456
       const rows = sqlite.prepare('SELECT id, phone FROM users WHERE phone = ?').all('0389123456');
       assert.strictEqual(rows.length, 1, 'Exactly 1 row with normalized phone MUST exist');
+    });
+  });
+
+  // =========================================================================
+  // FIXTURE H: Grade Selection Fidelity (Lớp 2 Stored & Retained Without Lớp 7 Default)
+  // =========================================================================
+  describe('Fixture H: Grade Selection Fidelity & Persistence (No Lớp 7 Fallback)', () => {
+    test('H.1: Registering with Lớp 2 saves Lớp 2 to D1 metadata and returns user.grade === Lớp 2 on auth verification', async () => {
+      const sqlite = initTestDatabase();
+      const d1 = createD1Adapter(sqlite);
+
+      const req = new Request('http://localhost/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          usernameOrPhone: 'student_grade_2',
+          password: 'Password123!',
+          name: 'Bé Học Lớp 2',
+          role: 'student',
+          grade: 'Lớp 2'
+        })
+      });
+
+      const res = await postRegister({ request: req, platform: { env: { DB: d1, AUTH_SECRET: TEST_SECRET } } });
+      assert.strictEqual(res.status, 201);
+      const data = await res.json();
+
+      assert.strictEqual(data.user.grade, 'Lớp 2', 'Registered user response MUST have grade === Lớp 2');
+      assert.ok(data.token, 'Must return signed token');
+
+      // Verify D1 database metadata directly
+      const dbUser = sqlite.prepare('SELECT metadata FROM users WHERE username = ?').get('student_grade_2');
+      assert.ok(dbUser);
+      const meta = JSON.parse(dbUser.metadata);
+      assert.strictEqual(meta.grade, 'Lớp 2', 'D1 metadata MUST store Lớp 2, NOT Lớp 7');
+
+      // Verify verifyServerAuth on subsequent request
+      const authReq = new Request('http://localhost/api/test', {
+        headers: { 'Authorization': `Bearer ${data.token}` }
+      });
+      const authResult = await verifyServerAuth(authReq, { env: { DB: d1, AUTH_SECRET: TEST_SECRET } });
+      assert.strictEqual(authResult.authenticated, true);
+      assert.strictEqual(authResult.user.grade, 'Lớp 2', 'verifyServerAuth MUST unpack grade as Lớp 2 from DB metadata');
     });
   });
 });

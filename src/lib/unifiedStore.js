@@ -288,7 +288,7 @@ export function toggleTheme() {
   return setTheme(next);
 }
 
-export async function registerUser({ usernameOrPhone, name, password, role = 'student', grade = 'Lớp 7', target = '', linkedStudentPhoneOrId = '' }) {
+export async function registerUser({ usernameOrPhone, name, password, role = 'student', grade = '', target = '', linkedStudentPhoneOrId = '' }) {
   if (!usernameOrPhone || !usernameOrPhone.trim()) {
     return { success: false, error: 'Vui lòng nhập Số điện thoại hoặc Tên đăng nhập!' };
   }
@@ -486,8 +486,8 @@ export function getUserEnrolledGrades(user) {
     }
   }
 
-  if (list.length === 0 && user.role === 'student') {
-    list.push('Lớp 7');
+  if (list.length === 0 && user.role === 'student' && user.grade) {
+    list.push(user.grade);
   }
   return list;
 }
@@ -564,9 +564,9 @@ export function removeStudentEnrolledGrade(studentId, gradeToRemove, operator = 
   let meta = {};
   try { meta = typeof user.metadata === 'string' ? JSON.parse(user.metadata) : (user.metadata || {}); } catch {}
 
-  let currentEnrolled = Array.isArray(meta.enrolled_grades) ? [...meta.enrolled_grades] : [user.grade || 'Lớp 7'];
+  let currentEnrolled = Array.isArray(meta.enrolled_grades) ? [...meta.enrolled_grades] : (user.grade ? [user.grade] : []);
   currentEnrolled = currentEnrolled.filter(g => g !== gradeToRemove);
-  if (currentEnrolled.length === 0) currentEnrolled = [user.grade || 'Lớp 7'];
+  if (currentEnrolled.length === 0 && user.grade) currentEnrolled = [user.grade];
 
   meta.enrolled_grades = currentEnrolled;
   user.metadata = JSON.stringify(meta);

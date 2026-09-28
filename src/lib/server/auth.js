@@ -185,6 +185,14 @@ export function sanitizeUser(user) {
   const clone = { ...user };
   delete clone.password;
   delete clone.secret;
+  if (!clone.grade && clone.metadata) {
+    try {
+      const meta = typeof clone.metadata === 'string' ? JSON.parse(clone.metadata) : clone.metadata;
+      if (meta && meta.grade) {
+        clone.grade = meta.grade;
+      }
+    } catch {}
+  }
   return clone;
 }
 
