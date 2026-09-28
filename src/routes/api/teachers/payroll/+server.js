@@ -29,8 +29,7 @@ async function sha256Hex(str) {
 
 async function ensurePayrollSchema(db) {
   if (!db) return;
-  try {
-    await db.prepare(`
+  await db.prepare(`
       CREATE TABLE IF NOT EXISTS teacher_payrolls (
         id TEXT PRIMARY KEY,
         teacher_id TEXT NOT NULL,
@@ -83,28 +82,40 @@ async function ensurePayrollSchema(db) {
       'approved_at DATETIME',
       'updated_at DATETIME'
     ];
-    for (const col of payrollCols) {
-      try {
-        await db.prepare(`ALTER TABLE teacher_payrolls ADD COLUMN ${col};`).run();
-      } catch {}
+  for (const col of payrollCols) {
+    try {
+      await db.prepare(`ALTER TABLE teacher_payrolls ADD COLUMN ${col};`).run();
+    } catch (err) {
+      if (!/duplicate column name/i.test(err?.message || '')) {
+        throw err;
+      }
     }
-
-    // Migrate: add description, metadata_json, and adjustment_version columns if missing
-    try {
-      await db.prepare(`ALTER TABLE finance_ledger ADD COLUMN description TEXT;`).run();
-    } catch { /* column already exists */ }
-    try {
-      await db.prepare(`ALTER TABLE finance_ledger ADD COLUMN metadata_json TEXT;`).run();
-    } catch { /* column already exists */ }
-    try {
-      await db.prepare(`ALTER TABLE finance_ledger ADD COLUMN adjustment_version INTEGER;`).run();
-    } catch { /* column already exists */ }
-    try {
-      await db.prepare(`CREATE UNIQUE INDEX IF NOT EXISTS idx_finance_ledger_payroll_version ON finance_ledger(reference_id, adjustment_version) WHERE voucher_type = 'PAYROLL_ADJUSTMENT' AND adjustment_version IS NOT NULL;`).run();
-    } catch { /* index already exists */ }
-  } catch (err) {
-    console.warn('ensurePayrollSchema notice:', err.message);
   }
+
+  // Migrate: add description, metadata_json, and adjustment_version columns if missing
+  try {
+    await db.prepare(`ALTER TABLE finance_ledger ADD COLUMN description TEXT;`).run();
+  } catch (err) {
+    if (!/duplicate column name/i.test(err?.message || '')) {
+      throw err;
+    }
+  }
+  try {
+    await db.prepare(`ALTER TABLE finance_ledger ADD COLUMN metadata_json TEXT;`).run();
+  } catch (err) {
+    if (!/duplicate column name/i.test(err?.message || '')) {
+      throw err;
+    }
+  }
+  try {
+    await db.prepare(`ALTER TABLE finance_ledger ADD COLUMN adjustment_version INTEGER;`).run();
+  } catch (err) {
+    if (!/duplicate column name/i.test(err?.message || '')) {
+      throw err;
+    }
+  }
+
+  await db.prepare(`CREATE UNIQUE INDEX IF NOT EXISTS idx_finance_ledger_payroll_version ON finance_ledger(reference_id, adjustment_version) WHERE voucher_type = 'PAYROLL_ADJUSTMENT' AND adjustment_version IS NOT NULL;`).run();
 }
 
 export async function GET({ url, request, platform }) {
@@ -263,7 +274,15 @@ export async function POST({ request, platform }) {
 
   const db = platform?.env?.DB;
   if (db) {
-    await ensurePayrollSchema(db);
+    try {
+      await ensurePayrollSchema(db);
+    } catch (schemaErr) {
+      console.error('Payroll schema initialization failed:', schemaErr);
+      return json({
+        success: false,
+        error: `DatabaseError: Khởi tạo bảng lương thất bại (${schemaErr.message})`
+      }, { status: 500 });
+    }
   }
 
   // RBAC GATE: Non-staff users (students, parents, guests) are strictly blocked from payroll modifications
