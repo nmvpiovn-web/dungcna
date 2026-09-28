@@ -75,9 +75,10 @@ async function ensureTeacherProfilesTable(db) {
   tableEnsured = true;
 }
 
+// salary.manage contract: superadmin, admin, and leader can manage staff profiles
 function isManager(user) {
   if (!user) return false;
-  return user.role === 'superadmin' || user.role === 'leader';
+  return user.role === 'superadmin' || user.role === 'admin' || user.role === 'leader';
 }
 
 export async function GET({ url, request, platform }) {

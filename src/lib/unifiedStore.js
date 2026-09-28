@@ -912,6 +912,16 @@ export function isSuperAdmin(user) {
   return user.role === 'superadmin';
 }
 
+/**
+ * salary.manage contract: superadmin, admin, and leader roles
+ * can view/edit teacher salary, role assignments, appraisals, and bonuses.
+ * This is the single source of truth for salary management authorization.
+ */
+export function canManageSalary(user) {
+  if (!user) return false;
+  return user.role === 'superadmin' || user.role === 'admin' || user.role === 'leader';
+}
+
 export function isTeacherOrAdmin(user) {
   if (!user) return false;
   return user.role === 'superadmin' || user.role === 'admin' || user.role === 'leader' || user.role === 'teacher';

@@ -2,7 +2,8 @@
   import { onMount } from 'svelte';
   import { 
     getCurrentUser, 
-    isSuperAdmin, 
+    isSuperAdmin,
+    canManageSalary, 
     getAllTeacherProfiles, 
     updateTeacherRoleAndSalary, 
     addTeacherAppraisalAndRating, 
@@ -23,7 +24,7 @@
   let currentUser = $state(null);
   let profile = $state(null);
   let activeTab = $state('overview'); // 'overview' | 'appraisal' | 'bonus' | 'reminders'
-  let isLeader = $derived(isSuperAdmin(currentUser));
+  let isLeader = $derived(canManageSalary(currentUser));
 
   // Edit Role & Salary Form
   let roleType = $state('lead');
