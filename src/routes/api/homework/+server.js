@@ -98,6 +98,7 @@ async function ensureTables(db) {
           stars_balance INTEGER DEFAULT 0,
           total_earned_stars INTEGER DEFAULT 0,
           stars_redeemed INTEGER DEFAULT 0,
+          star_debt INTEGER DEFAULT 0,
           last_updated TEXT DEFAULT CURRENT_TIMESTAMP
         );
       `),
@@ -105,14 +106,36 @@ async function ensureTables(db) {
         CREATE TABLE IF NOT EXISTS student_star_ledger (
           id TEXT PRIMARY KEY,
           student_id TEXT NOT NULL,
-          amount INTEGER NOT NULL,
-          action_type TEXT NOT NULL,
+          bill_id TEXT,
           reference_id TEXT,
+          delta_stars INTEGER NOT NULL,
+          amount INTEGER NOT NULL,
+          balance_after INTEGER NOT NULL,
+          action_type TEXT NOT NULL,
+          reason TEXT,
           note TEXT,
-          created_at TEXT DEFAULT CURRENT_TIMESTAMP
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         );
       `)
     ]);
+
+    // Backward-compatible schema migrations
+    const migrations = [
+      'ALTER TABLE homework_submissions ADD COLUMN version INTEGER DEFAULT 1;',
+      'ALTER TABLE student_stars ADD COLUMN star_debt INTEGER DEFAULT 0;',
+      'ALTER TABLE student_star_ledger ADD COLUMN bill_id TEXT;',
+      'ALTER TABLE student_star_ledger ADD COLUMN reference_id TEXT;',
+      'ALTER TABLE student_star_ledger ADD COLUMN delta_stars INTEGER;',
+      'ALTER TABLE student_star_ledger ADD COLUMN amount INTEGER;',
+      'ALTER TABLE student_star_ledger ADD COLUMN balance_after INTEGER;',
+      'ALTER TABLE student_star_ledger ADD COLUMN reason TEXT;',
+      'ALTER TABLE student_star_ledger ADD COLUMN note TEXT;'
+    ];
+    for (const mig of migrations) {
+      try {
+        await db.prepare(mig).run();
+      } catch {}
+    }
   } catch (e) {
     const msg = (e?.message || '').toLowerCase();
     if (!msg.includes('already exists')) {
@@ -712,6 +735,20 @@ export async function POST({ request, platform }) {
       return json({ success: false, error: 'Không tìm thấy bài nộp' }, { status: 404 });
     }
 
+    // Idempotent retry check on already-committed state
+    if (
+      submission.status === 'graded' &&
+      Number(submission.score) === numericScore &&
+      (submission.teacher_feedback || '') === (teacher_feedback || '') &&
+      submission.graded_by_teacher_id === user.id
+    ) {
+      return json({
+        success: true,
+        message: 'Bài tập đã được chấm điểm (kết quả đã ghi nhận trước đó).',
+        submission
+      });
+    }
+
     // Star calculation rule:
     // score == 10.0 AND is_on_time == 1 -> 100 stars
     // score >= 8.5 AND is_on_time == 1 -> 50 stars
@@ -732,7 +769,11 @@ export async function POST({ request, platform }) {
     // P1 Protection: Prevent double-awarding stars on regrade or retry!
     // Compute starDelta relative to any already-awarded stars
     const previousStars = Number(submission.stars_awarded || 0);
-    const starDelta = (submission.status === 'graded') ? (starsAwarded - previousStars) : starsAwarded;
+    const isRegrade = submission.status === 'graded';
+    const starDelta = isRegrade ? (starsAwarded - previousStars) : starsAwarded;
+
+    const currentVersion = Number(submission.version || 1);
+    const newVersion = currentVersion + 1;
 
     const gradedAt = new Date().toISOString();
     const teacherName = user.name || user.username;
@@ -741,12 +782,48 @@ export async function POST({ request, platform }) {
       try {
         await ensureTables(db);
 
+        // Fetch current student stars & star debt to calculate balance & debt transitions
+        const starRow = await db.prepare('SELECT stars_balance, total_earned_stars, stars_redeemed, star_debt FROM student_stars WHERE student_id = ?').bind(submission.student_id).first();
+        const currentBalance = Number(starRow?.stars_balance || 0);
+        const currentEarned = Number(starRow?.total_earned_stars || 0);
+        const currentRedeemed = Number(starRow?.stars_redeemed || 0);
+        const currentDebt = Number(starRow?.star_debt || 0);
+
+        let newBalance = currentBalance;
+        let newEarned = currentEarned;
+        let newDebt = currentDebt;
+        let shortfall = 0;
+
+        if (starDelta > 0) {
+          newEarned = currentEarned + starDelta;
+          if (currentDebt > 0) {
+            const repaid = Math.min(currentDebt, starDelta);
+            newDebt = currentDebt - repaid;
+            newBalance = currentBalance + (starDelta - repaid);
+          } else {
+            newBalance = currentBalance + starDelta;
+          }
+        } else if (starDelta < 0) {
+          const reduction = Math.abs(starDelta);
+          newEarned = Math.max(0, currentEarned - reduction);
+          if (currentBalance >= reduction) {
+            newBalance = currentBalance - reduction;
+          } else {
+            // Student already redeemed stars (e.g. tuition discount).
+            // Preserve financial non-negative balance invariant (balance stays 0).
+            // Record uncollateralized shortfall into star_debt (honest ledger, no debt wiping).
+            shortfall = reduction - currentBalance;
+            newBalance = 0;
+            newDebt = currentDebt + shortfall;
+          }
+        }
+
         // Optimistic Concurrency Control (CAS):
-        // Atomic compare-and-swap on submission state
+        // Atomic compare-and-swap incrementing version on submission state
         let casSql;
         let casParams;
-        if (submission.status === 'graded') {
-          // Regrade / revision: verify previous score and stars match snapshot
+        if (isRegrade) {
+          // Regrade / revision: verify previous version and status match snapshot
           casSql = `
             UPDATE homework_submissions 
             SET graded_by_teacher_id = ?,
@@ -757,16 +834,17 @@ export async function POST({ request, platform }) {
                 audio_feedback_url = ?,
                 stars_awarded = ?,
                 star_awarded_reason = ?,
+                version = ?,
                 status = 'graded'
-            WHERE id = ? AND status = 'graded' AND score = ? AND stars_awarded = ?;
+            WHERE id = ? AND (version = ? OR version IS NULL) AND status = 'graded';
           `;
           casParams = [
             user.id, teacherName, gradedAt, numericScore, teacher_feedback || '',
-            audio_feedback_url || null, starsAwarded, starReason || null, submission_id,
-            submission.score, previousStars
+            audio_feedback_url || null, starsAwarded, starReason || null,
+            newVersion, submission_id, currentVersion
           ];
         } else {
-          // Initial grading: verify submission is still in 'submitted' status
+          // Initial grading: verify submission is in 'submitted' status and version matches snapshot
           casSql = `
             UPDATE homework_submissions 
             SET graded_by_teacher_id = ?,
@@ -777,70 +855,76 @@ export async function POST({ request, platform }) {
                 audio_feedback_url = ?,
                 stars_awarded = ?,
                 star_awarded_reason = ?,
+                version = ?,
                 status = 'graded'
-            WHERE id = ? AND status = 'submitted';
+            WHERE id = ? AND (status = 'submitted' OR status IS NULL) AND (version = ? OR version IS NULL);
           `;
           casParams = [
             user.id, teacherName, gradedAt, numericScore, teacher_feedback || '',
-            audio_feedback_url || null, starsAwarded, starReason || null, submission_id
+            audio_feedback_url || null, starsAwarded, starReason || null,
+            newVersion, submission_id, currentVersion
           ];
         }
 
-        const casResult = await db.prepare(casSql).bind(...casParams).run();
-
-        if (Number(casResult?.meta?.changes || 0) === 0) {
-          // Stale read or concurrent conflict!
-          const current = await db.prepare('SELECT score, status, stars_awarded FROM homework_submissions WHERE id = ?').bind(submission_id).first();
-          if (current && current.status === 'graded' && Number(current.score) === numericScore) {
-            // Idempotent retry: already graded with the exact same score
-            return json({
-              success: true,
-              message: 'Bài tập đã được chấm điểm (kết quả đã ghi nhận trước đó).',
-              submission: { ...submission, ...current }
-            });
-          }
-          return json({
-            success: false,
-            error: 'Conflict: Trạng thái bài nộp đã bị thay đổi bởi thao tác khác (CAS race detected). Vui lòng tải lại trang.'
-          }, { status: 409 });
-        }
-
-        // Only the winning CAS request executes star ledger and notifications:
         const batchStatements = [];
 
-        // 1. Adjust stars strictly by starDelta
+        // 1. CAS Update on homework_submissions (Statement 0 of atomic batch)
+        batchStatements.push(
+          db.prepare(casSql).bind(...casParams)
+        );
+
+        // 2. Adjust stars strictly by starDelta, conditional on this specific grading operation succeeding
         if (starDelta !== 0) {
           batchStatements.push(
             db.prepare(`
-              INSERT INTO student_stars (student_id, stars_balance, total_earned_stars, stars_redeemed, last_updated)
-              VALUES (?, ?, ?, 0, CURRENT_TIMESTAMP)
+              INSERT INTO student_stars (student_id, stars_balance, total_earned_stars, stars_redeemed, star_debt, last_updated)
+              SELECT ?, ?, ?, ?, ?, CURRENT_TIMESTAMP
+              WHERE EXISTS (
+                SELECT 1 FROM homework_submissions 
+                WHERE id = ? AND version = ? AND graded_at = ?
+              )
               ON CONFLICT(student_id) DO UPDATE SET
-                stars_balance = stars_balance + excluded.stars_balance,
-                total_earned_stars = total_earned_stars + excluded.total_earned_stars,
+                stars_balance = excluded.stars_balance,
+                total_earned_stars = excluded.total_earned_stars,
+                star_debt = excluded.star_debt,
                 last_updated = CURRENT_TIMESTAMP;
-            `).bind(submission.student_id, starDelta, starDelta)
+            `).bind(submission.student_id, newBalance, newEarned, currentRedeemed, newDebt, submission_id, newVersion, gradedAt)
           );
 
-          // 2. Insert audit trail in student_star_ledger
+          // 3. Insert audit trail in student_star_ledger with unified schema, conditional on this specific grading operation succeeding
           const ledgerId = `ledger_hw_${submission_id}_${Date.now()}`;
+          const ledgerReason = shortfall > 0 
+            ? `${starReason || 'Điều chỉnh điểm BTVN'} (Ghi nợ ${shortfall} sao do đã tiêu dùng học phí)`
+            : (starReason || (starDelta >= 0 ? 'Thưởng sao làm BTVN' : 'Điều chỉnh điểm BTVN'));
+          const ledgerAction = starDelta >= 0 ? 'homework_reward' : 'homework_adjustment';
+
           batchStatements.push(
             db.prepare(`
-              INSERT INTO student_star_ledger (id, student_id, amount, action_type, reference_id, note)
-              VALUES (?, ?, ?, ?, ?, ?);
+              INSERT INTO student_star_ledger (id, student_id, bill_id, reference_id, delta_stars, amount, balance_after, action_type, reason, note)
+              SELECT ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?
+              WHERE EXISTS (
+                SELECT 1 FROM homework_submissions 
+                WHERE id = ? AND version = ? AND graded_at = ?
+              );
             `).bind(
-              ledgerId, submission.student_id, starDelta,
-              starDelta >= 0 ? 'homework_reward' : 'homework_adjustment',
-              submission_id, starReason || 'Chấm điểm BTVN'
+              ledgerId, submission.student_id, submission_id,
+              starDelta, starDelta, newBalance, ledgerAction,
+              ledgerReason, ledgerReason,
+              submission_id, newVersion, gradedAt
             )
           );
         }
 
-        // 3. Deterministic Student Notification
+        // 4. Deterministic Student Notification, conditional on this specific grading operation succeeding
         const notifStudentId = `notif_grade_s_${submission_id}`;
         batchStatements.push(
           db.prepare(`
             INSERT INTO system_notifications (id, target_role, target_user_id, title, body, category, reference_id)
-            VALUES (?, 'student', ?, ?, ?, 'homework', ?)
+            SELECT ?, 'student', ?, ?, ?, 'homework', ?
+            WHERE EXISTS (
+              SELECT 1 FROM homework_submissions 
+              WHERE id = ? AND version = ? AND graded_at = ?
+            )
             ON CONFLICT(id) DO UPDATE SET
               title = excluded.title,
               body = excluded.body,
@@ -849,11 +933,12 @@ export async function POST({ request, platform }) {
             notifStudentId, submission.student_id,
             `⭐ Kết Quả Chấm BTVN: ${numericScore} Điểm!`,
             `Cô ${teacherName} đã chấm bài tập của em: ${numericScore}/10 điểm. ${starsAwarded > 0 ? `Em được thưởng +${starsAwarded} sao! ` : ''}Lời cô: ${teacher_feedback || 'Rất đáng khen!'}`,
-            submission_id
+            submission_id,
+            submission_id, newVersion, gradedAt
           )
         );
 
-        // 4. Deterministic Parent Notifications (Verified only)
+        // 5. Deterministic Parent Notifications (Verified only), conditional on this specific grading operation succeeding
         const parentLinks = await db.prepare(`
           SELECT parent_user_id 
           FROM parent_student_links 
@@ -866,7 +951,11 @@ export async function POST({ request, platform }) {
           batchStatements.push(
             db.prepare(`
               INSERT INTO system_notifications (id, target_role, target_user_id, title, body, category, reference_id)
-              VALUES (?, 'parent', ?, ?, ?, 'homework', ?)
+              SELECT ?, 'parent', ?, ?, ?, 'homework', ?
+              WHERE EXISTS (
+                SELECT 1 FROM homework_submissions 
+                WHERE id = ? AND version = ? AND graded_at = ?
+              )
               ON CONFLICT(id) DO UPDATE SET
                 title = excluded.title,
                 body = excluded.body,
@@ -875,13 +964,37 @@ export async function POST({ request, platform }) {
               notifParentId, p.parent_user_id,
               `📊 Báo Cáo Học Tập: Bé ${submission.student_name} đạt ${numericScore} Điểm`,
               `Cô giáo ${teacherName} vừa chấm BTVN của bé ${submission.student_name}: Điểm số ${numericScore}/10.${starsAwarded > 0 ? ` Bé nhận thêm +${starsAwarded} sao tích lũy học phí!` : ''} Nhận xét: "${teacher_feedback || 'Bé làm bài rất tốt.'}"`,
-              submission_id
+              submission_id,
+              submission_id, newVersion, gradedAt
             )
           );
         }
 
-        if (batchStatements.length > 0) {
-          await db.batch(batchStatements);
+        // Execute entire grading operation atomically in a single batch
+        const batchResults = await db.batch(batchStatements);
+
+        const casChanges = Number(batchResults[0]?.meta?.changes || 0);
+        if (casChanges === 0) {
+          // Stale read or concurrent conflict!
+          const current = await db.prepare('SELECT score, status, version, teacher_feedback, graded_by_teacher_id FROM homework_submissions WHERE id = ?').bind(submission_id).first();
+          if (
+            current &&
+            current.status === 'graded' &&
+            Number(current.score) === numericScore &&
+            (current.teacher_feedback || '') === (teacher_feedback || '') &&
+            current.graded_by_teacher_id === user.id
+          ) {
+            // True idempotent retry: exactly same teacher, score, and feedback already committed!
+            return json({
+              success: true,
+              message: 'Bài tập đã được chấm điểm (kết quả đã ghi nhận trước đó).',
+              submission: { ...submission, ...current }
+            });
+          }
+          return json({
+            success: false,
+            error: 'Conflict: Trạng thái bài nộp đã bị thay đổi bởi thao tác khác (CAS race detected). Vui lòng tải lại trang.'
+          }, { status: 409 });
         }
 
       } catch (e) {
@@ -902,6 +1015,7 @@ export async function POST({ request, platform }) {
     submission.stars_awarded = starsAwarded;
     submission.star_awarded_reason = starReason;
     submission.status = 'graded';
+    submission.version = newVersion;
 
     return json({
       success: true,

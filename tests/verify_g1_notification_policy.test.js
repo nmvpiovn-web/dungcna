@@ -22,6 +22,7 @@ import { DatabaseSync } from 'node:sqlite';
 
 import { GET as getNotifications, POST as postNotifications } from '../src/routes/api/notifications/+server.js';
 import { GET as getHomework, POST as postHomework } from '../src/routes/api/homework/+server.js';
+import { POST as postTuition } from '../src/routes/api/tuition/+server.js';
 import { POST as postRegister } from '../src/routes/api/auth/register/+server.js';
 import { createSignedToken, verifyServerAuth } from '../src/lib/server/auth.js';
 
@@ -29,6 +30,7 @@ const TEST_SECRET = 'ephemeral_test_secret_hmac_2026_isolated_for_audit';
 
 // Helper to create Cloudflare D1-compatible adapter wrapping isolated SQLite DatabaseSync
 function createD1Adapter(sqliteDb) {
+  let txLock = Promise.resolve();
   return {
     prepare(sql) {
       let boundArgs = [];
@@ -54,18 +56,23 @@ function createD1Adapter(sqliteDb) {
       };
     },
     async batch(statements) {
-      sqliteDb.exec('BEGIN TRANSACTION');
+      const prevLock = txLock;
+      let release;
+      txLock = new Promise(r => release = r);
+      await prevLock;
       try {
+        sqliteDb.exec('BEGIN TRANSACTION');
         const results = [];
         for (const s of statements) {
-          const res = await s.run();
-          results.push(res);
+          results.push(await s.run());
         }
         sqliteDb.exec('COMMIT');
         return results;
       } catch (err) {
         try { sqliteDb.exec('ROLLBACK'); } catch {}
         throw err;
+      } finally {
+        release();
       }
     }
   };
@@ -151,6 +158,7 @@ function initTestDatabase() {
       audio_feedback_url TEXT,
       stars_awarded INTEGER DEFAULT 0,
       star_awarded_reason TEXT,
+      version INTEGER DEFAULT 1,
       status TEXT DEFAULT 'submitted'
     );
 
@@ -178,25 +186,72 @@ function initTestDatabase() {
       stars_balance INTEGER DEFAULT 0,
       total_earned_stars INTEGER DEFAULT 0,
       stars_redeemed INTEGER DEFAULT 0,
+      star_debt INTEGER DEFAULT 0,
       last_updated TEXT DEFAULT CURRENT_TIMESTAMP
     );
 
     CREATE TABLE IF NOT EXISTS student_star_ledger (
       id TEXT PRIMARY KEY,
       student_id TEXT NOT NULL,
-      amount INTEGER NOT NULL,
-      action_type TEXT NOT NULL,
+      bill_id TEXT,
       reference_id TEXT,
+      delta_stars INTEGER NOT NULL,
+      amount INTEGER NOT NULL,
+      balance_after INTEGER NOT NULL,
+      action_type TEXT NOT NULL,
+      reason TEXT,
       note TEXT,
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
+
+    CREATE TRIGGER IF NOT EXISTS trg_student_stars_no_negative
+    BEFORE UPDATE ON student_stars
+    FOR EACH ROW
+    WHEN NEW.stars_balance < 0
+    BEGIN
+      SELECT RAISE(ABORT, 'INSUFFICIENT_STARS: stars_balance cannot be negative');
+    END;
 
     CREATE TABLE IF NOT EXISTS tuition_bills (
       id TEXT PRIMARY KEY,
+      version INTEGER DEFAULT 1,
       student_id TEXT NOT NULL,
-      amount INTEGER NOT NULL,
-      status TEXT DEFAULT 'unpaid',
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+      student_name TEXT NOT NULL,
+      age INTEGER DEFAULT 13,
+      grade_level TEXT NOT NULL DEFAULT 'Lớp 7',
+      program_name TEXT NOT NULL DEFAULT 'Tiếng Anh K12',
+      billing_period TEXT NOT NULL DEFAULT 'Tháng 10/2026',
+      base_tuition_vnd INTEGER NOT NULL,
+      attendance_total_sessions INTEGER DEFAULT 12,
+      attendance_attended_sessions INTEGER DEFAULT 12,
+      attendance_rate INTEGER DEFAULT 100,
+      stars_available INTEGER DEFAULT 0,
+      stars_deducted INTEGER DEFAULT 0,
+      discount_vnd INTEGER DEFAULT 0,
+      final_amount_vnd INTEGER NOT NULL,
+      template_id INTEGER DEFAULT 1,
+      bank_name TEXT DEFAULT 'MBBank',
+      bank_account TEXT DEFAULT '0901234567',
+      account_holder TEXT DEFAULT 'NGUYEN MINH VU',
+      vietqr_url TEXT,
+      growth_status TEXT DEFAULT 'normal',
+      growth_percentage INTEGER DEFAULT 0,
+      growth_notes TEXT,
+      eval_listening REAL DEFAULT 8.0,
+      eval_reading REAL DEFAULT 8.0,
+      eval_writing REAL DEFAULT 8.0,
+      eval_speaking REAL DEFAULT 8.0,
+      eval_grammar REAL DEFAULT 8.0,
+      test_score_15m REAL DEFAULT 8.0,
+      test_score_45m REAL DEFAULT 8.5,
+      superadmin_notes TEXT,
+      status TEXT DEFAULT 'draft',
+      approved_by TEXT,
+      parent_name TEXT,
+      parent_phone TEXT,
+      parent_zalo_id TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
 
     CREATE TABLE IF NOT EXISTS location_activity_streams (
@@ -219,6 +274,7 @@ describe('G1 AUDIT FIXTURE MATRIX - REAL HANDLERS & DB ISOLATION', async () => {
   let teacherToken;
   let parentToken;
   let studentToken;
+  let adminToken;
 
   before(async () => {
     teacherToken = await createSignedToken(
@@ -231,6 +287,10 @@ describe('G1 AUDIT FIXTURE MATRIX - REAL HANDLERS & DB ISOLATION', async () => {
     );
     studentToken = await createSignedToken(
       { id: 'usr_student_s', username: 'student_s', role: 'student', name: 'Học sinh S', status: 'active' },
+      TEST_SECRET
+    );
+    adminToken = await createSignedToken(
+      { id: 'usr_admin', username: 'admin', role: 'superadmin', name: 'Super Admin', status: 'active' },
       TEST_SECRET
     );
   });
@@ -607,6 +667,39 @@ describe('G1 AUDIT FIXTURE MATRIX - REAL HANDLERS & DB ISOLATION', async () => {
           ('sub_test', 'hw_test', 'usr_student_s', 'Học sinh S', 'writing', 1, 'submitted');
       `);
 
+      // Create barrier ensuring both requests read the exact same snapshot version simultaneously
+      let selectCount = 0;
+      let resolveBarrier;
+      const barrierPromise = new Promise(resolve => { resolveBarrier = resolve; });
+
+      const racingD1 = {
+        prepare(sql) {
+          const stmt = d1.prepare(sql);
+          if (sql.includes('SELECT * FROM homework_submissions WHERE id = ?')) {
+            return {
+              bind(...args) {
+                stmt.bind(...args);
+                return this;
+              },
+              async first() {
+                const row = await stmt.first();
+                selectCount++;
+                if (selectCount === 2) {
+                  resolveBarrier();
+                } else {
+                  await barrierPromise;
+                }
+                return row; // Both see the exact same snapshot version concurrently!
+              }
+            };
+          }
+          return stmt;
+        },
+        batch(statements) {
+          return d1.batch(statements);
+        }
+      };
+
       // Two concurrent grade requests attempting to grade the same submission at the same time
       const req1 = new Request('http://localhost/api/homework', {
         method: 'POST',
@@ -621,19 +714,29 @@ describe('G1 AUDIT FIXTURE MATRIX - REAL HANDLERS & DB ISOLATION', async () => {
 
       // Run both handlers concurrently
       const [res1, res2] = await Promise.all([
-        postHomework({ request: req1, platform: { env: { DB: d1, AUTH_SECRET: TEST_SECRET } } }),
-        postHomework({ request: req2, platform: { env: { DB: d1, AUTH_SECRET: TEST_SECRET } } })
+        postHomework({ request: req1, platform: { env: { DB: racingD1, AUTH_SECRET: TEST_SECRET } } }),
+        postHomework({ request: req2, platform: { env: { DB: racingD1, AUTH_SECRET: TEST_SECRET } } })
       ]);
 
-      // Both requests should return 200 (one commits, second is idempotent retry with identical score)
-      assert.strictEqual(res1.status, 200);
-      assert.strictEqual(res2.status, 200);
+      // Exactly one succeeds with 200, and the concurrent request with differing feedback receives 409 Conflict
+      const statuses = [res1.status, res2.status].sort();
+      assert.deepStrictEqual(statuses, [200, 409], 'One commits with 200 and competing request with different feedback receives 409 Conflict');
+
+      // Now test true idempotent retry: re-sending the winning request body succeeds with 200
+      const winningBody = (res1.status === 200) 
+        ? { action: 'grade', submission_id: 'sub_test', score: 10.0, teacher_feedback: 'Xuất sắc 1' }
+        : { action: 'grade', submission_id: 'sub_test', score: 10.0, teacher_feedback: 'Xuất sắc 2' };
+      const retryReq = new Request('http://localhost/api/homework', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${teacherToken}` },
+        body: JSON.stringify(winningBody)
+      });
+      const retryRes = await postHomework({ request: retryReq, platform: { env: { DB: d1, AUTH_SECRET: TEST_SECRET } } });
+      assert.strictEqual(retryRes.status, 200, 'Idempotent retry with identical score and feedback succeeds with 200');
 
       // Verify DB balance: exactly 100 stars (NOT 200!)
       const stars = sqlite.prepare('SELECT stars_balance, total_earned_stars FROM student_stars WHERE student_id = ?').get('usr_student_s');
       assert.strictEqual(stars.stars_balance, 100, 'Student stars balance MUST be exactly 100 (never double awarded)');
-
-      // Verify ledger has exactly 1 entry for this reward
       const ledgerEntries = sqlite.prepare('SELECT * FROM student_star_ledger WHERE student_id = ?').all('usr_student_s');
       assert.strictEqual(ledgerEntries.length, 1, 'Exactly one star ledger record MUST exist');
     });
@@ -707,6 +810,175 @@ describe('G1 AUDIT FIXTURE MATRIX - REAL HANDLERS & DB ISOLATION', async () => {
       const data = await res.json();
       assert.strictEqual(data.success, false);
       assert.ok(data.error.includes('DatabaseError'));
+    });
+
+    test('F.4: Fault Injection on student_star_ledger: when ledger throws, entire batch rolls back (submission remains submitted, 0 stars, 0 ledger)', async () => {
+      const sqlite = initTestDatabase();
+      const d1 = createD1Adapter(sqlite);
+
+      sqlite.exec(`
+        INSERT INTO users (id, username, email, name, role) VALUES
+          ('usr_teacher_lan', 'lan', 'lan@test.com', 'Cô Lan', 'teacher'),
+          ('usr_student_s', 'student_s', 'student_s@test.com', 'Học sinh S', 'student');
+
+        INSERT INTO homework_assignments (id, session_id, class_id, class_name, teacher_id, teacher_name, skill_type, title, description, assigned_date, deadline_date, deadline_time) VALUES
+          ('hw_test', 'sess_t', 'class_7', 'Lớp 7', 'usr_teacher_lan', 'Cô Lan', 'writing', 'Bài Tập', 'Descr', '2026-10-01', '2026-10-05', '18:00');
+
+        INSERT INTO homework_submissions (id, assignment_id, student_id, student_name, submission_type, is_on_time, status) VALUES
+          ('sub_test', 'hw_test', 'usr_student_s', 'Học sinh S', 'writing', 1, 'submitted');
+
+        -- Trigger simulating failure on student_star_ledger write
+        CREATE TRIGGER audit_fail_ledger BEFORE INSERT ON student_star_ledger 
+        BEGIN 
+          SELECT RAISE(ABORT, 'AUDIT_LEDGER_FAILURE: disk write error on ledger'); 
+        END;
+      `);
+
+      const gradeReq = new Request('http://localhost/api/homework', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${teacherToken}` },
+        body: JSON.stringify({ action: 'grade', submission_id: 'sub_test', score: 10.0, teacher_feedback: 'Xuất sắc' })
+      });
+
+      const res = await postHomework({ request: gradeReq, platform: { env: { DB: d1, AUTH_SECRET: TEST_SECRET } } });
+      assert.strictEqual(res.status, 503, 'Must fail-closed with 503 on ledger write failure');
+
+      // Crucial assertion: the CAS update on homework_submissions MUST HAVE ROLLED BACK!
+      const sub = sqlite.prepare('SELECT status, score, stars_awarded FROM homework_submissions WHERE id = ?').get('sub_test');
+      assert.strictEqual(sub.status, 'submitted', 'Submission status MUST roll back to submitted, NOT stay graded');
+      assert.strictEqual(sub.score, null, 'Submission score MUST remain null');
+      assert.strictEqual(sub.stars_awarded, 0, 'Stars awarded MUST remain 0');
+
+      // Stars and ledger must be 0
+      const stars = sqlite.prepare('SELECT stars_balance FROM student_stars WHERE student_id = ?').get('usr_student_s');
+      assert.strictEqual(stars, undefined, 'No student_stars record created');
+      const ledgerCount = sqlite.prepare('SELECT count(*) as n FROM student_star_ledger').get();
+      assert.strictEqual(ledgerCount.n, 0, 'Zero ledger records');
+    });
+
+    test('F.5: Cross-module financial invariant & unified ledger: reward -> tuition redeem -> regrade shortfall debt -> earn stars debt repayment', async () => {
+      const sqlite = initTestDatabase();
+      const d1 = createD1Adapter(sqlite);
+
+      sqlite.exec(`
+        INSERT INTO users (id, username, email, name, role) VALUES
+          ('usr_teacher_lan', 'lan', 'lan@test.com', 'Cô Lan', 'teacher'),
+          ('usr_student_s', 'student_s', 'student_s@test.com', 'Học sinh S', 'student'),
+          ('usr_admin', 'admin', 'admin@test.com', 'Super Admin', 'superadmin');
+
+        INSERT INTO homework_assignments (id, session_id, class_id, class_name, teacher_id, teacher_name, skill_type, title, description, assigned_date, deadline_date, deadline_time) VALUES
+          ('hw_1', 'sess_1', 'class_7', 'Lớp 7', 'usr_teacher_lan', 'Cô Lan', 'writing', 'Bài 1', 'Descr', '2026-10-01', '2026-10-05', '18:00'),
+          ('hw_2', 'sess_2', 'class_7', 'Lớp 7', 'usr_teacher_lan', 'Cô Lan', 'writing', 'Bài 2', 'Descr', '2026-10-02', '2026-10-06', '18:00');
+
+        INSERT INTO homework_submissions (id, assignment_id, student_id, student_name, submission_type, is_on_time, status, version) VALUES
+          ('sub_1', 'hw_1', 'usr_student_s', 'Học sinh S', 'writing', 1, 'submitted', 1),
+          ('sub_2', 'hw_2', 'usr_student_s', 'Học sinh S', 'writing', 1, 'submitted', 1);
+      `);
+
+      // STEP 1: Teacher grades sub_1 with score 10.0 -> awards 100 stars
+      const gradeReq1 = new Request('http://localhost/api/homework', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${teacherToken}` },
+        body: JSON.stringify({ action: 'grade', submission_id: 'sub_1', score: 10.0, teacher_feedback: 'Xuất sắc' })
+      });
+      const gradeRes1 = await postHomework({ request: gradeReq1, platform: { env: { DB: d1, AUTH_SECRET: TEST_SECRET } } });
+      assert.strictEqual(gradeRes1.status, 200);
+
+      // Verify stars balance = 100, earned = 100, debt = 0
+      let stars = sqlite.prepare('SELECT stars_balance, total_earned_stars, stars_redeemed, star_debt FROM student_stars WHERE student_id = ?').get('usr_student_s');
+      assert.strictEqual(stars.stars_balance, 100);
+      assert.strictEqual(stars.total_earned_stars, 100);
+      assert.strictEqual(stars.star_debt, 0);
+
+      // Verify ledger has homework_reward record with unified schema (both delta_stars and amount set)
+      let ledger = sqlite.prepare('SELECT * FROM student_star_ledger WHERE student_id = ?').all('usr_student_s');
+      assert.strictEqual(ledger.length, 1);
+      assert.strictEqual(ledger[0].action_type, 'homework_reward');
+      assert.strictEqual(ledger[0].delta_stars, 100);
+      assert.strictEqual(ledger[0].amount, 100);
+      assert.strictEqual(ledger[0].balance_after, 100);
+      assert.strictEqual(ledger[0].reference_id, 'sub_1');
+
+      // STEP 2: Superadmin creates tuition bill redeeming all 100 stars (deducts 100 stars)
+      const tuitionReq = new Request('http://localhost/api/tuition', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
+        body: JSON.stringify({
+          action: 'save',
+          bill: {
+            id: 'bill_test_1',
+            student_id: 'usr_student_s',
+            student_name: 'Học sinh S',
+            base_tuition_vnd: 2000000,
+            stars_deducted: 100,
+            discount_vnd: 100000,
+            final_amount_vnd: 1900000,
+            status: 'draft'
+          }
+        })
+      });
+      const tuitionRes = await postTuition({ request: tuitionReq, platform: { env: { DB: d1, AUTH_SECRET: TEST_SECRET } } });
+      assert.strictEqual(tuitionRes.status, 200);
+
+      // Stars balance is now 0, redeemed is 100
+      stars = sqlite.prepare('SELECT stars_balance, total_earned_stars, stars_redeemed, star_debt FROM student_stars WHERE student_id = ?').get('usr_student_s');
+      assert.strictEqual(stars.stars_balance, 0);
+      assert.strictEqual(stars.stars_redeemed, 100);
+      assert.strictEqual(stars.star_debt, 0);
+
+      // Verify ledger has 2 records, 2nd is tuition deduct with unified columns
+      ledger = sqlite.prepare('SELECT * FROM student_star_ledger WHERE student_id = ? ORDER BY created_at ASC').all('usr_student_s');
+      assert.strictEqual(ledger.length, 2);
+      assert.strictEqual(ledger[1].action_type, 'deduct');
+      assert.strictEqual(ledger[1].delta_stars, -100);
+      assert.strictEqual(ledger[1].amount, -100);
+      assert.strictEqual(ledger[1].balance_after, 0);
+      assert.strictEqual(ledger[1].bill_id, 'bill_test_1');
+
+      // STEP 3: Teacher regrades sub_1 down to 8.5 (earns 50 stars instead of 100, delta = -50 stars)
+      // Because student already spent 100 stars on tuition, available balance is 0.
+      // Under financial invariant: balance stays 0 (trg_student_stars_no_negative NOT violated),
+      // and uncollateralized 50 stars shortfall is recorded honestly in star_debt!
+      const regradeReq = new Request('http://localhost/api/homework', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${teacherToken}` },
+        body: JSON.stringify({ action: 'grade', submission_id: 'sub_1', score: 8.5, teacher_feedback: 'Điều chỉnh điểm' })
+      });
+      const regradeRes = await postHomework({ request: regradeReq, platform: { env: { DB: d1, AUTH_SECRET: TEST_SECRET } } });
+      assert.strictEqual(regradeRes.status, 200);
+
+      stars = sqlite.prepare('SELECT stars_balance, total_earned_stars, stars_redeemed, star_debt FROM student_stars WHERE student_id = ?').get('usr_student_s');
+      assert.strictEqual(stars.stars_balance, 0, 'Stars balance MUST remain >= 0 (never negative)');
+      assert.strictEqual(stars.star_debt, 50, 'Shortfall of 50 stars MUST be recorded in star_debt (no silent debt wiping)');
+
+      // Ledger has 3rd entry: homework_adjustment with delta = -50, balance_after = 0
+      ledger = sqlite.prepare('SELECT * FROM student_star_ledger WHERE student_id = ? ORDER BY created_at ASC').all('usr_student_s');
+      assert.strictEqual(ledger.length, 3);
+      assert.strictEqual(ledger[2].action_type, 'homework_adjustment');
+      assert.strictEqual(ledger[2].delta_stars, -50);
+      assert.strictEqual(ledger[2].amount, -50);
+      assert.strictEqual(ledger[2].balance_after, 0);
+
+      // STEP 4: Student does sub_2 and teacher grades it with score 10.0 (+100 stars)
+      // The 100 new stars pay off the 50 star_debt, leaving 50 stars in available balance!
+      const gradeReq2 = new Request('http://localhost/api/homework', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${teacherToken}` },
+        body: JSON.stringify({ action: 'grade', submission_id: 'sub_2', score: 10.0, teacher_feedback: 'Bài 2 rất tốt' })
+      });
+      const gradeRes2 = await postHomework({ request: gradeReq2, platform: { env: { DB: d1, AUTH_SECRET: TEST_SECRET } } });
+      assert.strictEqual(gradeRes2.status, 200);
+
+      stars = sqlite.prepare('SELECT stars_balance, total_earned_stars, stars_redeemed, star_debt FROM student_stars WHERE student_id = ?').get('usr_student_s');
+      assert.strictEqual(stars.star_debt, 0, 'Debt has been fully repaid by new star reward');
+      assert.strictEqual(stars.stars_balance, 50, 'Remaining 50 stars credited to available balance');
+
+      // Ledger has 4th entry with delta = 100, balance_after = 50
+      ledger = sqlite.prepare('SELECT * FROM student_star_ledger WHERE student_id = ? ORDER BY created_at ASC').all('usr_student_s');
+      assert.strictEqual(ledger.length, 4);
+      assert.strictEqual(ledger[3].action_type, 'homework_reward');
+      assert.strictEqual(ledger[3].delta_stars, 100);
+      assert.strictEqual(ledger[3].balance_after, 50);
     });
   });
 

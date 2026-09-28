@@ -12,6 +12,7 @@ async function ensureStarLedgerTable(db) {
       stars_balance INTEGER DEFAULT 0,
       total_earned_stars INTEGER DEFAULT 0,
       stars_redeemed INTEGER DEFAULT 0,
+      star_debt INTEGER DEFAULT 0,
       last_updated TEXT DEFAULT CURRENT_TIMESTAMP
     );
   `).run();
@@ -21,20 +22,33 @@ async function ensureStarLedgerTable(db) {
       id TEXT PRIMARY KEY,
       student_id TEXT NOT NULL,
       bill_id TEXT,
+      reference_id TEXT,
       delta_stars INTEGER NOT NULL,
+      amount INTEGER NOT NULL,
       balance_after INTEGER NOT NULL,
       action_type TEXT NOT NULL,
       reason TEXT,
+      note TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
   `).run();
 
-  try {
-    await db.prepare('ALTER TABLE tuition_bills ADD COLUMN version INTEGER DEFAULT 1;').run();
-  } catch (colErr) {
-    if (!colErr?.message || (!colErr.message.includes('duplicate column') && !colErr.message.includes('already exists'))) {
-      throw colErr;
-    }
+  // Backward-compatible column migrations for existing D1 databases
+  const migrations = [
+    'ALTER TABLE tuition_bills ADD COLUMN version INTEGER DEFAULT 1;',
+    'ALTER TABLE student_stars ADD COLUMN star_debt INTEGER DEFAULT 0;',
+    'ALTER TABLE student_star_ledger ADD COLUMN bill_id TEXT;',
+    'ALTER TABLE student_star_ledger ADD COLUMN reference_id TEXT;',
+    'ALTER TABLE student_star_ledger ADD COLUMN delta_stars INTEGER;',
+    'ALTER TABLE student_star_ledger ADD COLUMN amount INTEGER;',
+    'ALTER TABLE student_star_ledger ADD COLUMN balance_after INTEGER;',
+    'ALTER TABLE student_star_ledger ADD COLUMN reason TEXT;',
+    'ALTER TABLE student_star_ledger ADD COLUMN note TEXT;'
+  ];
+  for (const mig of migrations) {
+    try {
+      await db.prepare(mig).run();
+    } catch {}
   }
 
   await db.prepare(`
@@ -189,7 +203,8 @@ export async function POST({ request, platform }) {
   let originalStarsBalance = null;
 
   try {
-    const body = await request.json();
+    const rawBody = await request.json();
+    const body = (rawBody && rawBody.bill) ? { ...rawBody.bill, ...rawBody } : rawBody;
     if (!body.student_name || body.base_tuition_vnd === undefined || body.base_tuition_vnd === null) {
       return json({ success: false, error: 'Thiếu thông tin học sinh hoặc mức học phí gốc' }, { status: 400 });
     }
@@ -337,12 +352,12 @@ export async function POST({ request, platform }) {
           `).bind(netStarsToDebit, netStarsToDebit, studentId, billId, studentId, existingVersion, previousDeducted, manager ? 1 : 0);
 
           const stmtLedger = db.prepare(`
-            INSERT INTO student_star_ledger (id, student_id, bill_id, delta_stars, balance_after, action_type, reason)
-            SELECT ?, ?, ?, ?, stars_balance, 'deduct', ?
+            INSERT INTO student_star_ledger (id, student_id, bill_id, reference_id, delta_stars, amount, balance_after, action_type, reason, note)
+            SELECT ?, ?, ?, ?, ?, ?, stars_balance, 'deduct', ?, ?
             FROM student_stars
             WHERE student_id = ?
               AND EXISTS (SELECT 1 FROM tuition_bills WHERE id = ? AND student_id = ? AND version = ? AND stars_deducted = ? AND (status = 'draft' OR ? = 1));
-          `).bind(ledgerId, studentId, billId, -netStarsToDebit, `Khấu trừ ${netStarsToDebit} sao cho phiếu học phí ${billId}`, studentId, billId, studentId, existingVersion, previousDeducted, manager ? 1 : 0);
+          `).bind(ledgerId, studentId, billId, billId, -netStarsToDebit, -netStarsToDebit, `Khấu trừ ${netStarsToDebit} sao cho phiếu học phí ${billId}`, `Khấu trừ ${netStarsToDebit} sao cho phiếu học phí ${billId}`, studentId, billId, studentId, existingVersion, previousDeducted, manager ? 1 : 0);
 
           const stmtBill = db.prepare(`
             UPDATE tuition_bills SET
@@ -410,9 +425,9 @@ export async function POST({ request, platform }) {
           `).bind(netStarsToDebit, netStarsToDebit, studentId);
 
           const stmtLedger = db.prepare(`
-            INSERT INTO student_star_ledger (id, student_id, bill_id, delta_stars, balance_after, action_type, reason)
-            VALUES (?, ?, ?, ?, (SELECT stars_balance FROM student_stars WHERE student_id = ?), 'deduct', ?);
-          `).bind(ledgerId, studentId, billId, -netStarsToDebit, studentId, `Khấu trừ ${netStarsToDebit} sao cho phiếu học phí ${billId}`);
+            INSERT INTO student_star_ledger (id, student_id, bill_id, reference_id, delta_stars, amount, balance_after, action_type, reason, note)
+            VALUES (?, ?, ?, ?, ?, ?, (SELECT stars_balance FROM student_stars WHERE student_id = ?), 'deduct', ?, ?);
+          `).bind(ledgerId, studentId, billId, billId, -netStarsToDebit, -netStarsToDebit, studentId, `Khấu trừ ${netStarsToDebit} sao cho phiếu học phí ${billId}`, `Khấu trừ ${netStarsToDebit} sao cho phiếu học phí ${billId}`);
 
           const stmtBill = db.prepare(`
             INSERT INTO tuition_bills (
@@ -456,12 +471,12 @@ export async function POST({ request, platform }) {
         `).bind(refundAmount, refundAmount, studentId, billId, studentId, existingVersion, previousDeducted, manager ? 1 : 0);
 
         const stmtLedger = db.prepare(`
-          INSERT INTO student_star_ledger (id, student_id, bill_id, delta_stars, balance_after, action_type, reason)
-          SELECT ?, ?, ?, ?, stars_balance, 'refund', ?
+          INSERT INTO student_star_ledger (id, student_id, bill_id, reference_id, delta_stars, amount, balance_after, action_type, reason, note)
+          SELECT ?, ?, ?, ?, ?, ?, stars_balance, 'refund', ?, ?
           FROM student_stars
           WHERE student_id = ?
             AND EXISTS (SELECT 1 FROM tuition_bills WHERE id = ? AND student_id = ? AND version = ? AND stars_deducted = ? AND (status = 'draft' OR ? = 1));
-        `).bind(ledgerId, studentId, billId, refundAmount, `Hoàn ${refundAmount} sao do giảm khấu trừ trên phiếu học phí ${billId}`, studentId, billId, studentId, existingVersion, previousDeducted, manager ? 1 : 0);
+        `).bind(ledgerId, studentId, billId, billId, refundAmount, refundAmount, `Hoàn ${refundAmount} sao do giảm khấu trừ trên phiếu học phí ${billId}`, `Hoàn ${refundAmount} sao do giảm khấu trừ trên phiếu học phí ${billId}`, studentId, billId, studentId, existingVersion, previousDeducted, manager ? 1 : 0);
 
         const stmtBill = db.prepare(`
           UPDATE tuition_bills SET
@@ -710,12 +725,12 @@ export async function DELETE({ url, request, platform }) {
         `).bind(starsDeducted, starsDeducted, studentId, billId, expectedVersion, starsDeducted);
 
         const stmtLedger = db.prepare(`
-          INSERT INTO student_star_ledger (id, student_id, bill_id, delta_stars, balance_after, action_type, reason)
-          SELECT ?, ?, ?, ?, stars_balance, 'refund', ?
+          INSERT INTO student_star_ledger (id, student_id, bill_id, reference_id, delta_stars, amount, balance_after, action_type, reason, note)
+          SELECT ?, ?, ?, ?, ?, ?, stars_balance, 'refund', ?, ?
           FROM student_stars
           WHERE student_id = ?
             AND EXISTS (SELECT 1 FROM tuition_bills WHERE id = ? AND version = ? AND stars_deducted = ?);
-        `).bind(`stl_del_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`, studentId, billId, starsDeducted, `Hoàn lại ${starsDeducted} sao do xóa hóa đơn ${billId}`, studentId, billId, expectedVersion, starsDeducted);
+        `).bind(`stl_del_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`, studentId, billId, billId, starsDeducted, starsDeducted, `Hoàn lại ${starsDeducted} sao do xóa hóa đơn ${billId}`, `Hoàn lại ${starsDeducted} sao do xóa hóa đơn ${billId}`, studentId, billId, expectedVersion, starsDeducted);
 
         const stmtDelete = db.prepare(`
           DELETE FROM tuition_bills WHERE id = ? AND version = ? AND stars_deducted = ?;
