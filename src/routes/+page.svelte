@@ -10,8 +10,7 @@
     getStudentStars,
     isSuperAdmin,
     isTeacherOrAdmin,
-    getParentTestRecords,
-    deleteParentTestRecord,
+    getAuthToken,
     getUserEnrolledGrades,
     isCurriculumEnrolled,
     requestUnlockClass
@@ -47,6 +46,40 @@
   let isRequestingUnlock = $state(false);
   let showLockedCurricula = $state(false);
 
+  let recordsError = $state('');
+  let recordsRequest = 0;
+  async function loadParentRecords() {
+    const requestId = ++recordsRequest;
+    const actorId = currentUser?.id;
+    const childId = linkedChild?.id;
+    parentTestRecords = [];
+    recordsError = '';
+    if (currentUser?.role !== 'parent' || !childId) return;
+    try {
+      const token = getAuthToken();
+      const res = await fetch(`/api/parents/tests?student_id=${encodeURIComponent(childId)}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
+      const result = await res.json();
+      if (requestId !== recordsRequest || currentUser?.id !== actorId || linkedChild?.id !== childId) return;
+      if (!res.ok || !result.success) throw new Error(result.error || 'Không thể tải hồ sơ bài thi.');
+      parentTestRecords = (result.records || []).map(record => ({ ...record, student_name: linkedChild.name }));
+    } catch (error) {
+      if (requestId === recordsRequest) recordsError = error.message || 'Không thể tải hồ sơ bài thi.';
+    }
+  }
+  async function removeParentRecord(id) {
+    try {
+      const token = getAuthToken();
+      const res = await fetch(`/api/parents/tests?id=${encodeURIComponent(id)}`, {
+        method: 'DELETE', headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
+      const result = await res.json();
+      if (!res.ok || !result.success) throw new Error(result.error || 'Không thể xóa hồ sơ.');
+      await loadParentRecords();
+    } catch (error) { recordsError = error.message || 'Không thể xóa hồ sơ.'; }
+  }
+
   // Phonics card sample for primary kids
   const primaryPhonics = [
     { word: 'Apple', ipa: '/ˈæpl/', meaning: 'Quả táo', emoji: '🍎', color: 'from-rose-500 to-red-600' },
@@ -71,7 +104,7 @@
         if (linkedChild) {
           childRecommendations = getSimilarProfileRecommendations(linkedChild);
           studentStars = extractStars(getStudentStars(linkedChild.id));
-          parentTestRecords = getParentTestRecords(linkedChild.id);
+          loadParentRecords();
         }
       } else if (currentUser.role === 'student') {
         studentStars = extractStars(getStudentStars(currentUser.id));
@@ -80,9 +113,9 @@
 
       // Auto-set curriculum tab based on user's grade / role
       const g = (currentUser.grade || '').toLowerCase();
-      if (/lớp [1-5]|tiểu học/i.test(g)) {
+      if (/lớp [1-5](?![0-9])|tiểu học/i.test(g)) {
         activeCurriculumTab = 'primary';
-      } else if (/lớp [6-9]|thcs/i.test(g)) {
+      } else if (/lớp [6-9](?![0-9])|thcs/i.test(g)) {
         activeCurriculumTab = 'secondary';
       } else if (/lớp 1[0-2]|thpt|đại học/i.test(g)) {
         activeCurriculumTab = 'high_school';
@@ -94,12 +127,16 @@
     }
 
     const handleAuth = (e) => {
+      ++recordsRequest;
+      parentTestRecords = [];
+      linkedChild = null;
+      showOcrModal = false;
       currentUser = e.detail || getCurrentUser();
       if (currentUser?.role === 'parent') {
         linkedChild = getLinkedStudentForParent(currentUser);
         if (linkedChild) {
           studentStars = extractStars(getStudentStars(linkedChild.id));
-          parentTestRecords = getParentTestRecords(linkedChild.id);
+          loadParentRecords();
         }
       } else if (currentUser?.role === 'student') {
         studentStars = extractStars(getStudentStars(currentUser.id));
@@ -108,7 +145,7 @@
 
     const handleRecordsUpdate = () => {
       if (linkedChild) {
-        parentTestRecords = getParentTestRecords(linkedChild.id);
+        loadParentRecords();
       }
     };
 
@@ -363,10 +400,7 @@
                   <span>Học sinh: {record.student_name}</span>
                   <button
                     type="button"
-                    onclick={() => {
-                      deleteParentTestRecord(record.id);
-                      parentTestRecords = getParentTestRecords(linkedChild?.id);
-                    }}
+                    onclick={() => removeParentRecord(record.id)}
                     class="text-rose-500 hover:text-rose-700 transition-colors"
                     title="Xóa bản ghi này"
                   >
@@ -1231,11 +1265,16 @@
   </div>
 
   <!-- Parent Test OCR / Upload Modal -->
+  {#if recordsError}
+    <div role="alert" class="fixed bottom-4 left-4 right-4 z-50 rounded bg-white text-rose-800 p-4 border border-rose-400">
+      {recordsError} <button onclick={loadParentRecords}>Thử lại</button>
+    </div>
+  {/if}
   <ParentTestOcrModal
     bind:isOpen={showOcrModal}
     student={linkedChild}
     onSaved={() => {
-      if (linkedChild) parentTestRecords = getParentTestRecords(linkedChild.id);
+      if (linkedChild) loadParentRecords();
     }}
   />
 

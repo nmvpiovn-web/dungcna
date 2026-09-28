@@ -34,8 +34,8 @@ async function ensureD1SessionTable(db) {
   `).run();
 
   // Backward compatibility migration for pre-existing tables
-  try { await db.prepare("ALTER TABLE guest_exam_sessions ADD COLUMN curriculum TEXT NOT NULL DEFAULT 'global_success'").run(); } catch {}
-  try { await db.prepare("ALTER TABLE guest_exam_sessions ADD COLUMN blueprint_json TEXT").run(); } catch {}
+  try { await db.prepare("ALTER TABLE guest_exam_sessions ADD COLUMN curriculum TEXT NOT NULL DEFAULT 'global_success'").run(); } catch (error) { if (!/duplicate column name/i.test(error?.message || '')) throw error; }
+  try { await db.prepare("ALTER TABLE guest_exam_sessions ADD COLUMN blueprint_json TEXT").run(); } catch (error) { if (!/duplicate column name/i.test(error?.message || '')) throw error; }
 }
 
 async function saveGuestSession(db, session) {

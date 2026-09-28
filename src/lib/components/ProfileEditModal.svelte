@@ -15,6 +15,8 @@
   let school = $state('');
   let target = $state('');
   let statusMessage = $state('');
+  let profileVersion = $state(null); // Integer CAS version from server
+  let originalProfile = {};
   let isSaving = $state(false);
 
   let showTransferModal = $state(false);
@@ -48,9 +50,28 @@
     }
   });
 
-  function loadProfileData() {
+  async function loadProfileData() {
     currentUser = getCurrentUser();
     if (!currentUser) return;
+
+    // Try to fetch authoritative profile from server (includes profile_version for CAS)
+    try {
+      const token = getAuthToken();
+      if (token) {
+        const res = await fetch('/api/users/profile', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && data.user) {
+            currentUser = data.user;
+            profileVersion = data.profile_version || null;
+          }
+        }
+      }
+    } catch {
+      // API unavailable — fall back to local store data
+    }
 
     name = currentUser.name || '';
     phone = currentUser.phone || '';
@@ -67,6 +88,7 @@
     requestedTargetGrade = grade || '';
     school = meta.school || '';
     target = meta.target || `Chương trình ${grade}`;
+    originalProfile = { name, phone, email, avatar, school, target, zalo_id: zaloId, grade };
     statusMessage = '';
   }
 
@@ -129,6 +151,15 @@
         payload.grade = grade;
       }
 
+      // Include CAS version for concurrency guard
+      if (profileVersion != null) {
+        payload.expected_version = profileVersion;
+      }
+
+      for (const key of Object.keys(payload)) {
+        if (key === 'expected_version') continue; // Don't strip version field
+        if (payload[key] === originalProfile[key]) delete payload[key];
+      }
       const res = await fetch('/api/users/profile', {
         method: 'POST',
         headers: {
@@ -145,11 +176,24 @@
         if (data.user) {
           currentUser = setCurrentUser(data.user);
         }
+        // Update version for any subsequent saves in the same session
+        if (data.profile_version) {
+          profileVersion = data.profile_version;
+        }
         playAudioFeedback('correct');
         setTimeout(() => {
           isOpen = false;
           isSaving = false;
         }, 500);
+      } else if (res.status === 409 && data.error?.includes('ConcurrencyConflict')) {
+        // Concurrency conflict: reload fresh profile version, keep user's edits in form
+        if (data.current_version) {
+          profileVersion = data.current_version;
+        }
+        statusMessage = '⚠️ Hồ sơ đã được cập nhật bởi phiên khác. Dữ liệu mới đã được tải lại — vui lòng xem lại và nhấn Lưu lần nữa.';
+        // Reload the original profile from server to update baseline and version
+        await loadProfileData();
+        isSaving = false;
       } else {
         statusMessage = `⚠️ ${data.error || 'Có lỗi xảy ra khi lưu hồ sơ vào máy chủ!'}`;
         isSaving = false;

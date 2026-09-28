@@ -27,6 +27,7 @@ function createMockPlatform() {
       metadata TEXT,
       grade TEXT,
       approval_status TEXT DEFAULT 'approved',
+      profile_version INTEGER NOT NULL DEFAULT 1,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
@@ -576,6 +577,149 @@ describe('AUDIT Remediation: Dot 27 Feedback (P1-01, P1-02, P1-03, P1-04)', () =
         platform: platformWithoutDb
       });
       assert.equal(resTests.status, 503, 'Missing DB binding must return HTTP 503 Fail-Closed for parent tests');
+    });
+  });
+
+  describe('P1-PROFILE-CAS — Integer version CAS concurrency guard', () => {
+    test('Concurrent metadata updates to independent fields are both preserved via json_set atomicity', async () => {
+      const { platform, rawDb } = createMockPlatform();
+      const token = await createSignedToken({ id: 'usr_parent_1', role: 'parent' }, secret);
+
+      // Request 1: update school
+      const res1 = await profilePost({
+        request: new Request('http://localhost/api/users/profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ school: 'Trường THCS A' })
+        }),
+        platform
+      });
+      assert.equal(res1.status, 200);
+      const data1 = await res1.json();
+      assert.ok(data1.profile_version >= 2, 'Version should increment after first update');
+
+      // Request 2: update target (with new version)
+      const res2 = await profilePost({
+        request: new Request('http://localhost/api/users/profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ target: 'Đạt IELTS 7.0', expected_version: data1.profile_version })
+        }),
+        platform
+      });
+      assert.equal(res2.status, 200);
+
+      // Verify both fields preserved in metadata
+      const row = rawDb.prepare("SELECT metadata FROM users WHERE id = 'usr_parent_1'").get();
+      const meta = JSON.parse(row.metadata);
+      assert.equal(meta.school, 'Trường THCS A', 'School from request 1 must be preserved');
+      assert.equal(meta.target, 'Đạt IELTS 7.0', 'Target from request 2 must be preserved');
+    });
+
+    test('Stale expected_version is rejected with 409 ConcurrencyConflict', async () => {
+      const { platform } = createMockPlatform();
+      const token = await createSignedToken({ id: 'usr_parent_1', role: 'parent' }, secret);
+
+      // First update: bumps version from 1 to 2
+      const res1 = await profilePost({
+        request: new Request('http://localhost/api/users/profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ school: 'Trường A', expected_version: 1 })
+        }),
+        platform
+      });
+      assert.equal(res1.status, 200);
+      const data1 = await res1.json();
+      assert.equal(data1.profile_version, 2);
+
+      // Second update with STALE version 1 — should be rejected
+      const res2 = await profilePost({
+        request: new Request('http://localhost/api/users/profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ target: 'Mục tiêu mới', expected_version: 1 })
+        }),
+        platform
+      });
+      assert.equal(res2.status, 409, 'Stale version must return 409');
+      const data2 = await res2.json();
+      assert.ok(data2.error.includes('ConcurrencyConflict'), 'Error message must mention ConcurrencyConflict');
+      assert.equal(data2.current_version, 2, 'Response must include current_version for client retry');
+    });
+
+    test('Same-second interleaving detected by version integer, not timestamp', async () => {
+      const { platform, rawDb } = createMockPlatform();
+      const token = await createSignedToken({ id: 'usr_parent_1', role: 'parent' }, secret);
+
+      // Both requests read version 1 (simulating concurrent read)
+      // Request A updates school with expected_version 1 → succeeds, version → 2
+      const resA = await profilePost({
+        request: new Request('http://localhost/api/users/profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ school: 'Trường B', expected_version: 1 })
+        }),
+        platform
+      });
+      assert.equal(resA.status, 200);
+
+      // Request B tries to update target with expected_version 1 → MUST be rejected
+      // (even if same second as Request A)
+      const resB = await profilePost({
+        request: new Request('http://localhost/api/users/profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ target: 'Mục tiêu B', expected_version: 1 })
+        }),
+        platform
+      });
+      assert.equal(resB.status, 409, 'Second request with same stale version must be rejected');
+
+      // Verify only school was updated, target was NOT silently written
+      const row = rawDb.prepare("SELECT metadata FROM users WHERE id = 'usr_parent_1'").get();
+      const meta = JSON.parse(row.metadata);
+      assert.equal(meta.school, 'Trường B', 'School from Request A preserved');
+      assert.equal(meta.target, undefined, 'Target from rejected Request B must NOT be written');
+    });
+
+    test('Successful update returns incremented profile_version and GET also returns it', async () => {
+      const { platform } = createMockPlatform();
+      const token = await createSignedToken({ id: 'usr_parent_1', role: 'parent' }, secret);
+
+      // GET initial version
+      const getRes1 = await profileGet({
+        request: new Request('http://localhost/api/users/profile', {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        platform
+      });
+      assert.equal(getRes1.status, 200);
+      const getData1 = await getRes1.json();
+      assert.equal(getData1.profile_version, 1, 'Initial version must be 1');
+
+      // POST update
+      const postRes = await profilePost({
+        request: new Request('http://localhost/api/users/profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ school: 'Trường C', expected_version: 1 })
+        }),
+        platform
+      });
+      assert.equal(postRes.status, 200);
+      const postData = await postRes.json();
+      assert.equal(postData.profile_version, 2, 'Version must increment to 2 after update');
+
+      // GET again — version must be 2
+      const getRes2 = await profileGet({
+        request: new Request('http://localhost/api/users/profile', {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        platform
+      });
+      const getData2 = await getRes2.json();
+      assert.equal(getData2.profile_version, 2, 'GET must return updated version');
     });
   });
 });

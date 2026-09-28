@@ -356,7 +356,7 @@ export async function POST({ request, platform }) {
         // STRICT IDEMPOTENCY INVARIANT:
         // A voucher represents a completed disbursement ONLY IF the underlying payroll
         // record is confirmed in terminal 'paid' state and matches this payroll record!
-        if (existing && existing.status === 'paid' && priorVoucher.reference_id === existing.id) {
+        if (existing && existing.status === 'paid' && priorVoucher.reference_id === existing.id && priorVoucher.voucher_type === 'PAYROLL_DISBURSEMENT') {
           return json({
             success: true,
             message: `Kỳ lương ${billingCycle} đã được chi trả trước đó (Idempotent Replay).`,
@@ -365,10 +365,7 @@ export async function POST({ request, platform }) {
             voucher: priorVoucher
           });
         } else {
-          // Orphan voucher cleanup: The prior voucher was written in an aborted transaction that never completed payroll update!
-          try {
-            await db.prepare(`DELETE FROM finance_ledger WHERE id = ?;`).bind(priorVoucher.id).run();
-          } catch {}
+          return json({ success: false, error: 'IdempotencyConflict: Khóa giao dịch đã thuộc chứng từ khác hoặc trạng thái không khớp. Không tự động xóa chứng từ.' }, { status: 409 });
         }
       }
     }

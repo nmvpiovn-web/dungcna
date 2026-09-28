@@ -43,8 +43,26 @@ function normalizeVnPhone(raw) {
 }
 
 /**
+ * Ensures the users table has the profile_version column for integer-based CAS.
+ * Idempotent migration: runs ALTER TABLE ADD COLUMN only if missing.
+ */
+async function ensureProfileVersionColumn(db) {
+  try {
+    await db.prepare(`ALTER TABLE users ADD COLUMN profile_version INTEGER NOT NULL DEFAULT 1`).run();
+  } catch (alterErr) {
+    // Only swallow "duplicate column name" — column already exists
+    if (alterErr?.message && /duplicate column name/i.test(alterErr.message)) {
+      // Column already exists — expected for subsequent requests
+      return;
+    }
+    throw alterErr; // IO or other errors propagate
+  }
+}
+
+/**
  * GET /api/users/profile
  * Returns the authenticated user's current authoritative profile from D1.
+ * Includes profile_version for CAS concurrency on subsequent writes.
  */
 export async function GET({ request, platform }) {
   const auth = await verifyServerAuth(request, platform);
@@ -68,13 +86,16 @@ export async function GET({ request, platform }) {
     return json({
       success: true,
       user: sanitizeUser(auth.user),
+      profile_version: 1,
       source: 'in_memory'
     });
   }
 
   try {
+    await ensureProfileVersionColumn(db);
+
     const row = await db.prepare(`
-      SELECT id, username, phone, email, name, role, avatar, status, metadata, created_at, updated_at
+      SELECT id, username, phone, email, name, role, avatar, status, metadata, created_at, updated_at, profile_version
       FROM users WHERE id = ? LIMIT 1
     `).bind(userId).first();
 
@@ -85,6 +106,7 @@ export async function GET({ request, platform }) {
     return json({
       success: true,
       user: sanitizeUser(row),
+      profile_version: row.profile_version || 1,
       source: 'cloudflare_d1'
     });
   } catch (dbErr) {
@@ -99,7 +121,9 @@ export async function GET({ request, platform }) {
 /**
  * POST & PATCH /api/users/profile
  * Updates self-profile of the authenticated actor.
- * Strictly enforces field allowlisting, types, phone normalization, concurrency CAS and blocks privilege escalation.
+ * Uses integer profile_version CAS to prevent lost updates.
+ * Metadata fields use json_set() for atomic per-path updates — independent fields never overwrite each other.
+ * Strictly enforces field allowlisting, types, phone normalization and blocks privilege escalation.
  */
 async function handleProfileUpdate({ request, platform }) {
   const auth = await verifyServerAuth(request, platform);
@@ -230,6 +254,13 @@ async function handleProfileUpdate({ request, platform }) {
     }
   }
 
+  // Validate expected_version type if present
+  if (body.expected_version !== undefined) {
+    if (typeof body.expected_version !== 'number' || !Number.isInteger(body.expected_version) || body.expected_version < 1) {
+      return json({ success: false, error: 'InvalidType: expected_version phải là số nguyên dương.' }, { status: 400 });
+    }
+  }
+
   const db = platform?.env?.DB;
 
   if (!db) {
@@ -247,14 +278,18 @@ async function handleProfileUpdate({ request, platform }) {
     return json({
       success: true,
       message: 'Cập nhật hồ sơ thành công!',
-      user: sanitizeUser(localRes.user)
+      user: sanitizeUser(localRes.user),
+      profile_version: 1
     });
   }
 
   try {
-    // Fetch existing authoritative user record
+    // Ensure profile_version column exists (idempotent migration)
+    await ensureProfileVersionColumn(db);
+
+    // Fetch existing authoritative user record including profile_version
     const current = await db.prepare(`
-      SELECT id, username, phone, email, name, role, avatar, status, metadata, created_at, updated_at
+      SELECT id, username, phone, email, name, role, avatar, status, metadata, created_at, updated_at, profile_version
       FROM users WHERE id = ? LIMIT 1
     `).bind(actor.id).first();
 
@@ -262,11 +297,23 @@ async function handleProfileUpdate({ request, platform }) {
       return json({ success: false, error: 'Không tìm thấy tài khoản người dùng trong cơ sở dữ liệu.' }, { status: 404 });
     }
 
-    // Concurrency CAS guard: check expected_updated_at if supplied
+    const currentVersion = current.profile_version || 1;
+
+    // Integer CAS guard: reject if client's expected_version doesn't match current
+    if (body.expected_version !== undefined && body.expected_version !== currentVersion) {
+      return json({
+        success: false,
+        error: 'ConcurrencyConflict: Hồ sơ đã được cập nhật bởi một phiên làm việc khác. Vui lòng tải lại trang và thử lại.',
+        current_version: currentVersion
+      }, { status: 409 });
+    }
+
+    // Legacy CAS guard: support expected_updated_at for backward compatibility
     if (body.expected_updated_at !== undefined && current.updated_at !== body.expected_updated_at) {
       return json({
         success: false,
-        error: 'ConcurrencyConflict: Hồ sơ đã được cập nhật bởi một phiên làm việc khác. Vui lòng tải lại trang và thử lại.'
+        error: 'ConcurrencyConflict: Hồ sơ đã được cập nhật bởi một phiên làm việc khác. Vui lòng tải lại trang và thử lại.',
+        current_version: currentVersion
       }, { status: 409 });
     }
 
@@ -327,46 +374,50 @@ async function handleProfileUpdate({ request, platform }) {
       updateParams.push(body.grade ? body.grade.trim() : null);
     }
 
-    // Metadata safe merge
-    const hasMetaChanges = body.school !== undefined || body.zalo_id !== undefined || body.target !== undefined || (body.grade !== undefined && isStaffUser(actor));
-    if (hasMetaChanges) {
-      let meta = {};
-      try {
-        meta = typeof current.metadata === 'string' ? JSON.parse(current.metadata) : (current.metadata || {});
-      } catch {
-        meta = {};
-      }
-
-      if (body.school !== undefined) meta.school = body.school ? body.school.trim() : '';
-      if (body.zalo_id !== undefined) {
-        meta.zalo_id = body.zalo_id ? body.zalo_id.trim() : '';
-        meta.zalo_phone = meta.zalo_id;
-      }
-      if (body.target !== undefined) meta.target = body.target ? body.target.trim() : '';
-      if (body.grade !== undefined && isStaffUser(actor)) {
-        meta.grade = body.grade ? body.grade.trim() : '';
-      }
-
-      updateClauses.push('metadata = ?');
-      updateParams.push(JSON.stringify(meta));
+    // Merge only supplied JSON paths against the row at WRITE time using json_set().
+    // json_set() operates on the row's current metadata atomically — independent fields
+    // from concurrent requests are never overwritten because each request only sets its own paths.
+    const metadataPaths = [];
+    const metadataValues = [];
+    function setMetadata(path, value) {
+      metadataPaths.push('?, ?');
+      metadataValues.push(path, value);
+    }
+    if (body.school !== undefined) setMetadata('$.school', body.school?.trim() || '');
+    if (body.target !== undefined) setMetadata('$.target', body.target?.trim() || '');
+    if (body.zalo_id !== undefined) {
+      const zalo = body.zalo_id?.trim() || '';
+      setMetadata('$.zalo_id', zalo);
+      setMetadata('$.zalo_phone', zalo);
+    }
+    if (body.grade !== undefined && isStaffUser(actor)) {
+      setMetadata('$.grade', body.grade?.trim() || '');
+    }
+    if (metadataPaths.length) {
+      updateClauses.push(`metadata = json_set(COALESCE(NULLIF(metadata, ''), '{}'), ${metadataPaths.join(', ')})`);
+      updateParams.push(...metadataValues);
     }
 
     if (updateClauses.length === 0) {
       return json({
         success: true,
         message: 'Không có thông tin nào cần cập nhật.',
-        user: sanitizeUser(current)
+        user: sanitizeUser(current),
+        profile_version: currentVersion
       });
     }
 
+    // Always increment profile_version and update timestamp
+    const newVersion = currentVersion + 1;
+    updateClauses.push('profile_version = ?');
+    updateParams.push(newVersion);
     updateClauses.push('updated_at = CURRENT_TIMESTAMP');
-    let updateSql = `UPDATE users SET ${updateClauses.join(', ')} WHERE id = ?`;
-    updateParams.push(actor.id);
 
-    if (body.expected_updated_at !== undefined) {
-      updateSql += ' AND updated_at = ?';
-      updateParams.push(body.expected_updated_at);
-    }
+    // Build UPDATE with version guard in WHERE clause
+    // This is the atomic CAS: if another request incremented version between our SELECT and UPDATE,
+    // this UPDATE will affect 0 rows and we return 409.
+    let updateSql = `UPDATE users SET ${updateClauses.join(', ')} WHERE id = ? AND profile_version = ?`;
+    updateParams.push(actor.id, currentVersion);
 
     let updateRes;
     try {
@@ -388,19 +439,20 @@ async function handleProfileUpdate({ request, platform }) {
       throw sqlErr;
     }
 
+    // If 0 rows affected, another request changed the version between our SELECT and UPDATE
     if (updateRes && updateRes.meta && typeof updateRes.meta.changes === 'number' && updateRes.meta.changes < 1) {
-      if (body.expected_updated_at !== undefined) {
-        return json({
-          success: false,
-          error: 'ConcurrencyConflict: Hồ sơ đã được cập nhật bởi một phiên làm việc khác. Vui lòng tải lại trang.'
-        }, { status: 409 });
-      }
-      throw new Error('D1 profile update affected 0 rows');
+      // Re-read current version to return to the client for retry
+      const recheck = await db.prepare('SELECT profile_version FROM users WHERE id = ?').bind(actor.id).first();
+      return json({
+        success: false,
+        error: 'ConcurrencyConflict: Hồ sơ đã được cập nhật bởi một phiên làm việc khác. Vui lòng tải lại trang và thử lại.',
+        current_version: recheck?.profile_version || currentVersion
+      }, { status: 409 });
     }
 
     // Read back fresh updated record from database
     const freshUser = await db.prepare(`
-      SELECT id, username, phone, email, name, role, avatar, status, metadata, created_at, updated_at
+      SELECT id, username, phone, email, name, role, avatar, status, metadata, created_at, updated_at, profile_version
       FROM users WHERE id = ? LIMIT 1
     `).bind(actor.id).first();
 
@@ -424,7 +476,8 @@ async function handleProfileUpdate({ request, platform }) {
     return json({
       success: true,
       message: 'Cập nhật hồ sơ cá nhân thành công!',
-      user: sanitizeUser(freshUser)
+      user: sanitizeUser(freshUser),
+      profile_version: freshUser.profile_version || newVersion
     });
   } catch (writeErr) {
     console.error('D1 self-profile write error:', writeErr);
