@@ -15,7 +15,7 @@ if os.path.exists(DOCS_DIR):
         if os.path.isfile(fp):
             initial_files[f] = os.path.getmtime(fp)
 
-START_ORDINAL = 4105
+START_ORDINAL = 4143
 if os.path.exists(ROLLOUT_FILE):
     initial_rollout_size = os.path.getsize(ROLLOUT_FILE)
 else:
