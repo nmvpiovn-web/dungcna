@@ -915,21 +915,21 @@ async function runRealBrowserVerification() {
     const dropdownOpenedAfterModalClose = await coursesDropdownItem.isVisible();
     recordTest('6.3', 'Underlying page elements accept pointer clicks after modal close (clicked #nav-btn-courses)', dropdownOpenedAfterModalClose, `Dropdown opened: ${dropdownOpenedAfterModalClose}`);
 
-    // Close courses dropdown
-    await page.keyboard.press('Escape');
-    await page.waitForTimeout(200);
+    // Toggle courses dropdown closed
+    await coursesNavBtn.click({ force: true });
+    await page.waitForTimeout(300);
 
     // Re-open modal and start test
     await guestExamBtn.scrollIntoViewIfNeeded();
     await guestExamBtn.click({ force: true });
-    await page.waitForTimeout(400);
+    await modalDialog.waitFor({ state: 'visible', timeout: 5000 });
 
-    const startTestBtn = page.locator('button:has-text("Bắt Đầu Làm Bài Ngay")');
+    const startTestBtn = modalDialog.locator('button[type="submit"], button:has-text("Bắt Đầu")').first();
     await startTestBtn.click({ force: true });
-    await page.waitForTimeout(1500);
-
-    // Answer Question 1: Check radio button
-    const firstOption = page.locator('input[type="radio"]').first();
+    
+    // Wait for questions and radio button to appear
+    const firstOption = modalDialog.locator('input[type="radio"]').first();
+    await firstOption.waitFor({ state: 'visible', timeout: 8000 });
     await firstOption.check({ force: true });
     await page.waitForTimeout(300);
     const isOptionChecked = await firstOption.isChecked();
