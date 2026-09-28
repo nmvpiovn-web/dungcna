@@ -1,6 +1,6 @@
 <script>
   import { onMount } from 'svelte';
-  import { getCurrentUser, updateUserProfile, POPULAR_SCHOOLS, isTeacherOrAdmin, requestUnlockClass } from '$lib/unifiedStore';
+  import { getCurrentUser, getAuthToken, setCurrentUser, updateUserProfile, POPULAR_SCHOOLS, isTeacherOrAdmin, requestUnlockClass } from '$lib/unifiedStore';
   import { playAudioFeedback } from '$lib/speech.js';
 
   let { isOpen = $bindable(false) } = $props();
@@ -106,7 +106,7 @@
     reader.readAsDataURL(file);
   }
 
-  function handleSaveProfile(e) {
+  async function handleSaveProfile(e) {
     if (e) e.preventDefault();
     if (!currentUser) return;
 
@@ -114,31 +114,48 @@
     statusMessage = '';
 
     try {
-      const res = updateUserProfile(currentUser.id, {
-        name,
-        phone,
-        email,
+      const token = getAuthToken();
+      const payload = {
+        name: name.trim(),
+        phone: phone ? phone.trim() : '',
+        email: email ? email.trim() : '',
         avatar,
-        grade,
-        school,
-        target,
-        zalo_id: zaloId,
-        zalo_phone: zaloId
+        school: school ? school.trim() : '',
+        target: target ? target.trim() : '',
+        zalo_id: zaloId ? zaloId.trim() : ''
+      };
+
+      if (isAdminOrTeacher && grade) {
+        payload.grade = grade;
+      }
+
+      const res = await fetch('/api/users/profile', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify(payload)
       });
 
-      if (res.success) {
+      const data = await res.json();
+
+      if (res.ok && data.success) {
         statusMessage = '✅ Cập nhật hồ sơ thành công!';
+        if (data.user) {
+          currentUser = setCurrentUser(data.user);
+        }
         playAudioFeedback('correct');
         setTimeout(() => {
           isOpen = false;
           isSaving = false;
-        }, 400);
+        }, 500);
       } else {
-        statusMessage = res.error || 'Có lỗi xảy ra khi lưu hồ sơ!';
+        statusMessage = `⚠️ ${data.error || 'Có lỗi xảy ra khi lưu hồ sơ vào máy chủ!'}`;
         isSaving = false;
       }
     } catch (err) {
-      statusMessage = err.message || 'Lỗi cập nhật';
+      statusMessage = `⚠️ Lỗi kết nối máy chủ: ${err.message || err}`;
       isSaving = false;
     }
   }

@@ -96,7 +96,7 @@ describe('CODEX AUDIT HANDOFF 7216f8c - REAL BEHAVIORAL SUITE', async () => {
       const startReq = new Request('http://localhost/api/exams/guest', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'start', grade: 'lop_7', duration_minutes: 5, candidate_name: 'Test FailClosed' })
+        body: JSON.stringify({ action: 'start', grade: 'lop_7', curriculum: 'global_success', duration_minutes: 5, candidate_name: 'Test FailClosed' })
       });
 
       const res = await postGuestExam({ request: startReq, platform: { env: { DB: throwingDb, AUTH_SECRET: TEST_SECRET } } });
@@ -114,7 +114,7 @@ describe('CODEX AUDIT HANDOFF 7216f8c - REAL BEHAVIORAL SUITE', async () => {
       const startReq = new Request('http://localhost/api/exams/guest', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'start', grade: 'lop_7', duration_minutes: 5, candidate_name: 'Test DB Error' })
+        body: JSON.stringify({ action: 'start', grade: 'lop_7', curriculum: 'global_success', duration_minutes: 5, candidate_name: 'Test DB Error' })
       });
       const startRes = await postGuestExam({ request: startReq, platform: { env: { DB: db, AUTH_SECRET: TEST_SECRET } } });
       assert.strictEqual(startRes.status, 200);
@@ -163,7 +163,7 @@ describe('CODEX AUDIT HANDOFF 7216f8c - REAL BEHAVIORAL SUITE', async () => {
       const startReq = new Request('http://localhost/api/exams/guest', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'start', grade: 'lop_7', duration_minutes: 5, candidate_name: 'Worker Race Test' })
+        body: JSON.stringify({ action: 'start', grade: 'lop_7', curriculum: 'global_success', duration_minutes: 5, candidate_name: 'Worker Race Test' })
       });
       const startRes = await postGuestExam({ request: startReq, platform: { env: { DB: db, AUTH_SECRET: TEST_SECRET } } });
       const startData = await startRes.json();
@@ -213,7 +213,7 @@ describe('CODEX AUDIT HANDOFF 7216f8c - REAL BEHAVIORAL SUITE', async () => {
       const startReq = new Request('http://localhost/api/exams/guest', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'start', grade: 'lop_7', duration_minutes: 5, candidate_name: 'Expiry Test' })
+        body: JSON.stringify({ action: 'start', grade: 'lop_7', curriculum: 'global_success', duration_minutes: 5, candidate_name: 'Expiry Test' })
       });
       const startRes = await postGuestExam({ request: startReq, platform: { env: { DB: db, AUTH_SECRET: TEST_SECRET } } });
       const startData = await startRes.json();

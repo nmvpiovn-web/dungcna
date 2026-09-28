@@ -318,23 +318,16 @@
             <button
               type="button"
               onclick={() => showOcrModal = true}
-              class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-medium text-xs shadow-sm transition-all flex items-center gap-1.5"
+              class="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs shadow-sm transition-all flex items-center gap-1.5"
             >
-              <span>📷 Chụp Ảnh Bài Thi (OCR)</span>
-            </button>
-            <button
-              type="button"
-              onclick={() => showOcrModal = true}
-              class="px-3.5 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs hover:border-purple-500 transition-all flex items-center gap-1"
-            >
-              <span>✍️ Nhập Điểm</span>
+              <span>✍️ Khai Báo Điểm Bài Thi</span>
             </button>
           </div>
         </div>
 
         {#if parentTestRecords.length === 0}
           <div class="p-6 text-center rounded-xl bg-white/70 dark:bg-slate-900/60 border border-purple-100 dark:border-purple-900 text-xs text-slate-700 dark:text-slate-300 font-medium">
-            Chưa có bài kiểm tra nào được lưu. Bấm nút <strong>"Chụp Ảnh Bài Thi (OCR)"</strong> ở trên để cập nhật bài thi đầu tiên của con!
+            Chưa có bài kiểm tra nào được lưu. Bấm nút <strong>"Khai Báo Điểm Bài Thi"</strong> ở trên để cập nhật bài thi đầu tiên của con!
           </div>
         {:else}
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -343,8 +336,8 @@
                 <div class="flex items-start justify-between gap-2">
                   <div>
                     <div class="flex items-center gap-1.5 mb-1">
-                      <span class="text-[10px] font-bold px-2 py-0.5 rounded-full {record.ocr_status === 'ocr_verified' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300/40' : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'}">
-                        {record.ocr_status === 'ocr_verified' ? '📸 OCR Đã Quét' : '✍️ Nhập Tay'}
+                      <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200 border border-amber-300/40">
+                        ✍️ Tự Khai Báo (Chưa xác thực)
                       </span>
                       <span class="text-[11px] text-slate-600 dark:text-slate-300 font-medium">{record.test_date}</span>
                     </div>

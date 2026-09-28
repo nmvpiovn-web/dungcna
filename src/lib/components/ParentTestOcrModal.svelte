@@ -1,20 +1,16 @@
 <script>
-  import { saveParentTestRecord, simulateOcrFromImage } from '$lib/unifiedStore';
+  import { getAuthToken, saveParentTestRecord } from '$lib/unifiedStore';
   import { playAudioFeedback } from '$lib/speech.js';
 
   let { isOpen = $bindable(false), student = null, onSaved = () => {} } = $props();
 
-  let activeTab = $state('ocr'); // 'ocr' | 'manual'
   let uploadedImage = $state(null);
-  let isScanning = $state(false);
-  let scanProgress = $state(0);
-  let ocrScanMessage = $state('');
-  let rawOcrText = $state('');
+  let isSaving = $state(false);
 
-  // Form Fields
-  let testName = $state('Bài Kiểm Tra Định Kỳ Mới');
+  // Form Fields - NO pre-filled sample scores!
+  let testName = $state('');
   let testType = $state('standard_45m');
-  let score = $state(9.0);
+  let score = $state('');
   let maxScore = $state(10);
   let testDate = $state(new Date().toISOString().split('T')[0]);
   let teacherFeedback = $state('');
@@ -25,8 +21,28 @@
     { id: 'standard_45m', label: '⏱️ Đề 1 Tiết 45 Phút Chuẩn' },
     { id: 'midterm_test', label: '📑 Khảo Sát Giữa Học Kỳ' },
     { id: 'final_test', label: '🏆 Đề Thi Cuối Kỳ' },
-    { id: 'cambridge_test', label: '🌍 Bài Test Cambridge / Tiếng Anh Quốc Tế' }
+    { id: 'cambridge_test', label: '🌍 Bài Test Cambridge / Tiếng Anh Quốc Tế' },
+    { id: 'other', label: '📝 Bài Kiểm Tra Khác' }
   ];
+
+  // Reset form cleanly whenever modal opens or child changes (prevent data leak across children)
+  $effect(() => {
+    if (isOpen) {
+      resetForm();
+    }
+  });
+
+  function resetForm() {
+    testName = '';
+    testType = 'standard_45m';
+    score = '';
+    maxScore = 10;
+    testDate = new Date().toISOString().split('T')[0];
+    teacherFeedback = '';
+    uploadedImage = null;
+    statusMessage = '';
+    isSaving = false;
+  }
 
   function handleFileSelect(e) {
     const file = e.target.files?.[0];
@@ -38,71 +54,76 @@
     }
 
     const reader = new FileReader();
-    reader.onload = async (event) => {
+    reader.onload = (event) => {
+      // Image is purely an attachment document, NOT proof of verified score
       uploadedImage = event.target.result;
-      await runOcrProcess(uploadedImage);
+      statusMessage = '📷 Đã đính kèm ảnh chụp bài thi (tài liệu tham khảo, chưa xác thực).';
     };
     reader.readAsDataURL(file);
   }
 
-  async function runOcrProcess(imgData) {
-    isScanning = true;
-    scanProgress = 20;
-    ocrScanMessage = 'Đang căn chỉnh độ nét và nhận diện khung bài thi...';
-
-    const interval = setInterval(() => {
-      if (scanProgress < 85) scanProgress += 20;
-    }, 250);
-
-    try {
-      const res = await simulateOcrFromImage(imgData);
-      clearInterval(interval);
-      scanProgress = 100;
-      isScanning = false;
-      ocrScanMessage = '✅ Nhận diện OCR thành công! Đã tự động điền điểm số và lời phê:';
-
-      // Auto populate form
-      score = res.detected_score;
-      maxScore = res.max_score;
-      testName = res.detected_title;
-      teacherFeedback = res.detected_feedback;
-      testDate = res.detected_date;
-      rawOcrText = res.raw_ocr_text;
-
-      playAudioFeedback('correct');
-    } catch (err) {
-      clearInterval(interval);
-      isScanning = false;
-      ocrScanMessage = '⚠️ OCR không nhận diện được rõ nét, vui lòng chỉnh sửa thông tin thủ công:';
-    }
-  }
-
-  function handleSave() {
-    if (!student) {
+  async function handleSave() {
+    if (!student || !student.id) {
       statusMessage = '⚠️ Chưa xác định được học sinh liên kết!';
       return;
     }
 
+    const cleanName = testName.trim();
+    if (!cleanName) {
+      statusMessage = '⚠️ Vui lòng nhập Tên bài kiểm tra / Chuyên đề!';
+      return;
+    }
+
+    if (score === '' || isNaN(Number(score))) {
+      statusMessage = '⚠️ Vui lòng nhập điểm số đạt được!';
+      return;
+    }
+
+    const numScore = Number(score);
+    const numMax = Number(maxScore) || 10;
+
+    if (!isFinite(numScore) || numScore < 0 || numScore > numMax) {
+      statusMessage = `⚠️ Điểm số không hợp lệ! Phải là số từ 0 đến ${numMax}.`;
+      return;
+    }
+
+    isSaving = true;
+    statusMessage = '';
+
     try {
-      const saved = saveParentTestRecord({
-        student_id: student.id,
-        student_name: student.name,
-        test_name: testName,
-        test_type: testType,
-        score: Number(score) || 0,
-        max_score: Number(maxScore) || 10,
-        test_date: testDate,
-        teacher_feedback: teacherFeedback,
-        ocr_status: uploadedImage ? 'ocr_verified' : 'manual_entry',
-        ocr_raw_text: rawOcrText,
-        image_url: uploadedImage || ''
+      const token = getAuthToken();
+      const res = await fetch('/api/parents/tests', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({
+          student_id: student.id,
+          test_name: cleanName,
+          test_type: testType,
+          score: numScore,
+          max_score: numMax,
+          test_date: testDate,
+          teacher_feedback: teacherFeedback.trim(),
+          image_url: uploadedImage || ''
+        })
       });
 
-      playAudioFeedback('correct');
-      onSaved(saved);
-      isOpen = false;
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        playAudioFeedback('correct');
+        onSaved(data.record);
+        isOpen = false;
+        resetForm();
+      } else {
+        statusMessage = `⚠️ ${data.error || 'Có lỗi xảy ra khi lưu hồ sơ bài thi vào máy chủ!'}`;
+      }
     } catch (err) {
-      statusMessage = err.message || 'Lỗi khi lưu bài thi';
+      statusMessage = `⚠️ Lỗi kết nối máy chủ: ${err.message || err}`;
+    } finally {
+      isSaving = false;
     }
   }
 </script>
@@ -123,32 +144,24 @@
 
         <div class="flex items-center gap-3">
           <div class="w-12 h-12 rounded-2xl bg-white/20 border border-white/30 flex items-center justify-center text-2xl shadow-md">
-            📸
+            📝
           </div>
           <div>
-            <div class="text-[11px] font-bold uppercase tracking-wider text-purple-200">SỔ PHỤ HUYNH THÔNG MINH</div>
+            <div class="text-[11px] font-bold uppercase tracking-wider text-purple-200">SỔ PHỤ HUYNH • THEO DÕI ĐIỂM SỐ</div>
             <h2 class="text-xl font-heading font-black">
-              Cập Nhật Điểm Bài Thi {student ? `của con: ${student.name}` : ''}
+              Khai Báo Điểm Bài Thi {student ? `của con: ${student.name}` : ''}
             </h2>
-            <div class="text-xs text-purple-100 mt-0.5">Tải ảnh chụp bài thi để máy tự động quét điểm (OCR) hoặc nhập thủ công</div>
+            <div class="text-xs text-purple-100 mt-0.5">Phụ huynh tự nhập điểm bài thi định kỳ để cùng Cô Dung theo dõi tiến độ</div>
           </div>
         </div>
       </div>
 
-      <!-- Tab Switcher -->
-      <div class="flex border-b border-slate-200 dark:border-slate-800 bg-slate-100/80 dark:bg-slate-950/50 p-1.5 text-xs font-bold">
-        <button
-          onclick={() => activeTab = 'ocr'}
-          class="flex-1 py-2 rounded-xl transition-all {activeTab === 'ocr' ? 'bg-white dark:bg-purple-600 text-purple-700 dark:text-white shadow-sm font-extrabold' : 'text-slate-700 dark:text-slate-300 font-semibold hover:text-slate-900 dark:hover:text-white'}"
-        >
-          📸 Chụp / Tải Ảnh Bài Thi (Tự Động OCR Điểm)
-        </button>
-        <button
-          onclick={() => activeTab = 'manual'}
-          class="flex-1 py-2 rounded-xl transition-all {activeTab === 'manual' ? 'bg-white dark:bg-purple-600 text-purple-700 dark:text-white shadow-sm font-extrabold' : 'text-slate-700 dark:text-slate-300 font-semibold hover:text-slate-900 dark:hover:text-white'}"
-        >
-          ✍️ Nhập Điểm Thủ Công
-        </button>
+      <!-- Regulatory Policy Notice Banner -->
+      <div class="bg-amber-50 dark:bg-amber-950/40 border-b border-amber-200 dark:border-amber-800/60 p-3.5 px-6 text-xs text-amber-900 dark:text-amber-200 flex items-start gap-2.5">
+        <span class="text-base leading-none">ℹ️</span>
+        <div class="text-[11px] leading-relaxed">
+          <strong>Lưu ý quy chế minh bạch:</strong> Điểm số do phụ huynh tự khai báo phục vụ theo dõi học tập của gia đình, mang trạng thái <strong>Chưa xác thực (Unverified)</strong>. Hệ thống không sử dụng dữ liệu này để cộng sao thưởng, giảm trừ học phí hoặc thay thế điểm thi chính thức của lớp.
+        </div>
       </div>
 
       <!-- Modal Body -->
@@ -159,89 +172,74 @@
           </div>
         {/if}
 
-        <!-- TAB 1: OCR PHOTO SCAN -->
-        {#if activeTab === 'ocr'}
-          <div class="p-5 rounded-2xl border-2 border-dashed border-purple-300 dark:border-purple-700 bg-purple-50/40 dark:bg-purple-950/20 text-center space-y-3">
-            {#if !uploadedImage}
-              <div class="text-4xl">📄</div>
+        <!-- Attachment upload box (No OCR scanning claim) -->
+        <div class="p-4 rounded-2xl border border-dashed border-purple-300 dark:border-purple-700 bg-purple-50/40 dark:bg-purple-950/20 text-center space-y-2">
+          {#if !uploadedImage}
+            <div class="flex items-center justify-between text-left">
               <div>
-                <strong class="text-sm font-bold text-slate-800 dark:text-white block">
-                  Chọn ảnh chụp bài kiểm tra giấy của con
+                <strong class="text-xs font-bold text-slate-800 dark:text-white block">
+                  Đính kèm ảnh chụp bài kiểm tra (Tùy chọn)
                 </strong>
-                <span class="text-slate-500 dark:text-slate-400 text-[11px] block mt-1">
-                  Hệ thống OCR sẽ tự động nhận dạng điểm số, tên bài và lời phê của giáo viên.
+                <span class="text-slate-500 dark:text-slate-400 text-[11px] block mt-0.5">
+                  Lưu trữ hình ảnh để đối chiếu khi cần. Dung lượng tối đa 5MB.
                 </span>
               </div>
-
-              <label class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs shadow-md cursor-pointer transition-all">
-                <span>📷 Tải Hoặc Chụp Ảnh Bài Thi</span>
+              <label class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs shadow-sm cursor-pointer transition-all">
+                <span>📎 Tải ảnh</span>
                 <input type="file" accept="image/*" onchange={handleFileSelect} class="hidden" />
               </label>
-            {:else}
-              <div class="flex items-center justify-center gap-4">
-                <img src={uploadedImage} alt="Bài thi chụp" class="w-24 h-24 rounded-2xl object-cover border-2 border-purple-400 shadow-md" />
-                <div class="text-left space-y-1">
-                  <div class="font-bold text-slate-800 dark:text-white">Ảnh Bài Thi Đã Tải Lên</div>
-                  <label class="text-[11px] text-purple-600 dark:text-purple-400 font-bold underline cursor-pointer">
-                    Chọn ảnh khác
-                    <input type="file" accept="image/*" onchange={handleFileSelect} class="hidden" />
-                  </label>
+            </div>
+          {:else}
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <img src={uploadedImage} alt="Bài thi đính kèm" class="w-14 h-14 rounded-xl object-cover border border-purple-400 shadow-sm" />
+                <div class="text-left">
+                  <div class="font-bold text-slate-800 dark:text-white text-xs">Ảnh bài thi đã đính kèm</div>
+                  <div class="text-[10px] text-amber-600 dark:text-amber-400 font-semibold">Tài liệu tham khảo (Chưa xác minh)</div>
                 </div>
               </div>
+              <div class="flex items-center gap-2">
+                <label class="text-[11px] text-purple-600 dark:text-purple-400 font-bold underline cursor-pointer">
+                  Đổi ảnh
+                  <input type="file" accept="image/*" onchange={handleFileSelect} class="hidden" />
+                </label>
+                <button
+                  type="button"
+                  onclick={() => uploadedImage = null}
+                  class="text-[11px] text-rose-500 hover:text-rose-700 font-bold ml-2"
+                >
+                  Gỡ ảnh
+                </button>
+              </div>
+            </div>
+          {/if}
+        </div>
 
-              {#if isScanning}
-                <div class="p-3 rounded-2xl bg-white dark:bg-slate-800 border border-purple-200 dark:border-purple-700 space-y-2">
-                  <div class="flex items-center justify-between text-[11px] font-bold text-purple-700 dark:text-purple-300">
-                    <span>{ocrScanMessage}</span>
-                    <span>{scanProgress}%</span>
-                  </div>
-                  <div class="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
-                    <div class="h-full bg-purple-600 transition-all duration-300" style="width: {scanProgress}%"></div>
-                  </div>
-                </div>
-              {:else if ocrScanMessage}
-                <div class="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 text-[11px] font-semibold text-left">
-                  {ocrScanMessage}
-                </div>
-              {/if}
-            {/if}
-          </div>
-        {/if}
-
-        <!-- EXTRACTED / EDITABLE SCORE FORM -->
-        <div class="space-y-3 pt-2">
-          <div class="font-bold text-slate-700 dark:text-slate-300 flex items-center justify-between">
-            <span>Chi Tiết Điểm Bài Thi:</span>
-            {#if uploadedImage && !isScanning}
-              <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-100 dark:bg-emerald-950 px-2 py-0.5 rounded-full">
-                ✓ OCR Đã Điền Tự Động
-              </span>
-            {/if}
-          </div>
-
+        <!-- FORM INPUTS -->
+        <div class="space-y-3 pt-1">
           <div>
-            <label for="ocr-test-name" class="block font-semibold text-slate-600 dark:text-slate-400 mb-1">
+            <label for="parent-test-name" class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
               Tên Bài Kiểm Tra / Chuyên Đề (*):
             </label>
             <input
-              id="ocr-test-name"
+              id="parent-test-name"
               type="text"
               bind:value={testName}
               required
-              placeholder="VD: Kiểm tra 15 phút Unit 2, Khảo sát Giữa kỳ..."
+              placeholder="VD: Khảo sát 15 phút Unit 2, Đề kiểm tra 1 tiết giữa kỳ..."
               class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-purple-500"
             />
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
-              <label for="ocr-test-type" class="block font-semibold text-slate-600 dark:text-slate-400 mb-1">
+              <label for="parent-test-type" class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
                 Loại Bài Kiểm Tra:
               </label>
               <select
-                id="ocr-test-type"
+                id="parent-test-type"
                 bind:value={testType}
-                class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-purple-500"
+                class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-purple-500 text-xs"
               >
                 {#each testTypes as t}
                   <option value={t.id}>{t.label}</option>
@@ -250,40 +248,41 @@
             </div>
 
             <div>
-              <label for="ocr-score" class="block font-semibold text-purple-700 dark:text-purple-400 mb-1 font-bold">
+              <label for="parent-score" class="block font-semibold text-purple-700 dark:text-purple-400 mb-1 font-bold">
                 Điểm Số Đạt Được (*):
               </label>
               <input
-                id="ocr-score"
+                id="parent-score"
                 type="number"
                 step="0.1"
                 min="0"
                 max={maxScore}
                 bind:value={score}
                 required
+                placeholder="VD: 8.5"
                 class="w-full bg-purple-50/50 dark:bg-slate-950 border border-purple-300 dark:border-purple-700 rounded-xl px-3 py-2 text-base font-heading font-black text-purple-700 dark:text-purple-300 focus:outline-none focus:border-purple-500"
               />
             </div>
 
             <div>
-              <label for="ocr-date" class="block font-semibold text-slate-600 dark:text-slate-400 mb-1">
+              <label for="parent-date" class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
                 Ngày Làm Bài:
               </label>
               <input
-                id="ocr-date"
+                id="parent-date"
                 type="date"
                 bind:value={testDate}
-                class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-purple-500"
+                class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-purple-500 text-xs"
               />
             </div>
           </div>
 
           <div>
-            <label for="ocr-feedback" class="block font-semibold text-slate-600 dark:text-slate-400 mb-1">
+            <label for="parent-feedback" class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
               Lời Phê / Nhận Xét Của Giáo Viên (Nếu có):
             </label>
             <textarea
-              id="ocr-feedback"
+              id="parent-feedback"
               rows="2"
               bind:value={teacherFeedback}
               placeholder="VD: Con làm bài cẩn thận, phát âm tốt..."
@@ -295,10 +294,16 @@
         <!-- Action Button -->
         <button
           type="button"
+          disabled={isSaving}
           onclick={handleSave}
-          class="w-full py-3 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-extrabold text-xs shadow-lg shadow-purple-600/25 transition-all hover:scale-[1.01] flex items-center justify-center gap-2 mt-4"
+          class="w-full py-3 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-extrabold text-xs shadow-lg shadow-purple-600/25 transition-all hover:scale-[1.01] flex items-center justify-center gap-2 mt-4 disabled:opacity-50"
         >
-          <span>💾 Lưu Điểm Bài Thi Vào Sổ Theo Dõi</span>
+          {#if isSaving}
+            <span class="inline-block animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span>
+            <span>Đang lưu trữ vào máy chủ...</span>
+          {:else}
+            <span>💾 Lưu Điểm Bài Thi Vào Sổ Theo Dõi</span>
+          {/if}
         </button>
       </div>
     </div>

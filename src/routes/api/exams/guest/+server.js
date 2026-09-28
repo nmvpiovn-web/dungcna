@@ -611,13 +611,15 @@ export async function POST({ request, platform }) {
       }, { status: 400 });
     }
 
-    // 2. Curriculum validation & filtering
+    // 2. Curriculum validation & filtering - STRICT CONTRACT (No silent fallback)
     const gradeCurricula = SUPPORTED_CURRICULA[grade] || {};
-    const defaultCurriculum = Object.keys(gradeCurricula)[0] || 'global_success';
-    if (body.curriculum != null && typeof body.curriculum !== 'string') {
-      return json({ success: false, error: 'InvalidCurriculum: Chương trình phải là chuỗi.' }, { status: 400 });
+    if (body.curriculum == null || typeof body.curriculum !== 'string' || !body.curriculum.trim()) {
+      return json({
+        success: false,
+        error: 'InvalidCurriculum: Vui lòng chọn rõ ràng chương trình học (curriculum) trước khi bắt đầu bài thi.'
+      }, { status: 400 });
     }
-    const curriculum = body.curriculum ? body.curriculum.trim() : defaultCurriculum;
+    const curriculum = body.curriculum.trim();
 
     if (!gradeCurricula[curriculum]) {
       return json({

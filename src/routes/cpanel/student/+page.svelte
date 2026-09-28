@@ -12,6 +12,7 @@
   let assignments = $state([]);
   let submissions = $state([]);
   let loading = $state(true);
+  let errorMessage = $state('');
   let activeTab = $state('todo'); // 'todo' | 'completed' | 'all'
   let skillFilter = $state('all'); // 'all' | 'writing' | 'reading' | 'speaking'
 
@@ -38,11 +39,18 @@
   let recordingTimer = null;
   let recordedAudioUrl = $state(null);
 
+  let loadSequence = 0;
   async function loadData() {
+    const sequence = ++loadSequence;
+    assignments = [];
+    submissions = [];
+    errorMessage = '';
     loading = true;
     currentUser = getCurrentUser();
     if (currentUser) {
       studentStars = getStudentStars(currentUser.id);
+    } else {
+      studentStars = null;
     }
 
     try {
@@ -50,15 +58,23 @@
       const res = await fetch('/api/homework', {
         headers: token ? { 'Authorization': `Bearer ${token}` } : {}
       });
+      if (!res.ok) {
+        throw new Error(`Mã lỗi máy chủ: ${res.status}`);
+      }
       const data = await res.json();
+      if (sequence !== loadSequence) return;
       if (data.success) {
         assignments = data.assignments || [];
         submissions = data.submissions || [];
+      } else {
+        errorMessage = data.error || 'Không thể tải danh sách bài tập về nhà.';
       }
     } catch (e) {
+      if (sequence !== loadSequence) return;
       console.error('Failed to load homework:', e);
+      errorMessage = 'Lỗi kết nối máy chủ hoặc phiên đăng nhập đã hết hạn. Vui lòng tải lại.';
     } finally {
-      loading = false;
+      if (sequence === loadSequence) loading = false;
     }
   }
 
@@ -240,7 +256,7 @@
         <div class="flex items-center gap-2 text-sky-400 text-xs font-semibold uppercase tracking-wider mb-1">
           <span>🎒 Không Gian Học Tập Của Em</span>
           <span>•</span>
-          <span>{currentUser?.grade || 'Lớp 7 Chuyên'}</span>
+          <span>{currentUser?.grade || 'Chưa phân lớp'}</span>
         </div>
         <h1 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">Xin chào, {currentUser?.name || currentUser?.username || 'Học Sinh'}! 👋</h1>
         <p class="text-slate-300 text-sm mt-1 max-w-xl">
@@ -306,7 +322,19 @@
   </div>
 
   <!-- Assignment Cards Grid -->
-  {#if loading}
+  {#if errorMessage}
+    <div class="text-center py-12 px-4 bg-white dark:bg-slate-900 rounded-xl border border-rose-200 dark:border-rose-900/50 shadow-sm space-y-3">
+      <div class="text-4xl">⚠️</div>
+      <h3 class="text-base font-bold text-rose-600 dark:text-rose-400">{errorMessage}</h3>
+      <p class="text-xs text-slate-500">Đã dừng hiển thị danh sách để bảo đảm tính chính xác của phiên học tập.</p>
+      <button
+        onclick={loadData}
+        class="inline-flex items-center gap-1.5 px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white rounded-lg text-xs font-semibold shadow-sm transition-all"
+      >
+        <span>🔄 Thử lại</span>
+      </button>
+    </div>
+  {:else if loading}
     <div class="text-center py-12 text-slate-400">
       <div class="inline-block animate-spin w-8 h-8 border-4 border-sky-500 border-t-transparent rounded-full mb-3"></div>
       <p class="text-sm font-medium">Đang tải bài tập về nhà...</p>

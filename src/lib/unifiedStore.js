@@ -1824,8 +1824,10 @@ const SEED_PARENT_TEST_RECORDS = [
     max_score: 10,
     test_date: '2026-09-18',
     teacher_feedback: 'Bảo Nhi phát âm các âm /s/ và /k/ rất tròn vành rõ chữ, làm bài cẩn thận đạt điểm tối đa.',
-    ocr_status: 'ocr_verified',
-    ocr_raw_text: 'Trường Tiểu Học Vinschool - Bài Kiểm Tra Giữa Kỳ I - Môn: Tiếng Anh. Điểm: 9.5/10. Lời phê: Con phát âm rất tốt, tự tin.',
+    ocr_status: 'parent_manual',
+    status: 'unverified',
+    source: 'parent_manual',
+    ocr_raw_text: '',
     image_url: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=400',
     created_at: '2026-09-18T08:30:00.000Z'
   },
@@ -1839,8 +1841,10 @@ const SEED_PARENT_TEST_RECORDS = [
     max_score: 10,
     test_date: '2026-09-20',
     teacher_feedback: 'Nắm chắc đại từ quan hệ which/who/whose. Cần chú ý dấu phẩy trong mệnh đề không xác định.',
-    ocr_status: 'ocr_verified',
-    ocr_raw_text: 'THPT Chu Văn An - Bài Khảo Sát 45 Phút. Học sinh: Lê Bảo Anh. Điểm số: 9.0/10. Giáo viên chấm: Cô Nguyễn Hương.',
+    ocr_status: 'parent_manual',
+    status: 'unverified',
+    source: 'parent_manual',
+    ocr_raw_text: '',
     image_url: 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=400',
     created_at: '2026-09-20T10:15:00.000Z'
   }
@@ -1864,18 +1868,25 @@ export function getParentTestRecords(studentId = null) {
 
 export function saveParentTestRecord(record) {
   const records = getParentTestRecords();
+  const maxScore = Number(record.max_score) || 10;
+  const rawScore = Number(record.score);
+  const validScore = (!isNaN(rawScore) && isFinite(rawScore) && rawScore >= 0 && rawScore <= maxScore) ? rawScore : 0;
+
   const newRecord = {
     id: record.id || `ptr_${Date.now()}`,
+    parent_user_id: record.parent_user_id || '',
     student_id: record.student_id,
     student_name: record.student_name,
     test_name: record.test_name || 'Bài Kiểm Tra Định Kỳ',
-    test_type: record.test_type || 'quick_test',
-    score: Number(record.score) || 0,
-    max_score: Number(record.max_score) || 10,
+    test_type: record.test_type || 'standard_45m',
+    score: validScore,
+    max_score: maxScore,
     test_date: record.test_date || new Date().toISOString().split('T')[0],
     teacher_feedback: record.teacher_feedback || '',
-    ocr_status: record.ocr_status || 'manual_entry',
-    ocr_raw_text: record.ocr_raw_text || '',
+    ocr_status: 'parent_manual',
+    source: 'parent_manual',
+    status: 'unverified',
+    ocr_raw_text: '',
     image_url: record.image_url || '',
     created_at: record.created_at || new Date().toISOString(),
     updated_at: new Date().toISOString()
@@ -1907,36 +1918,14 @@ export function deleteParentTestRecord(recordId) {
 }
 
 export async function simulateOcrFromImage(fileOrDataUrl) {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const sampleScores = [9.5, 9.0, 8.5, 10, 8.0, 9.2];
-      const randomScore = sampleScores[Math.floor(Math.random() * sampleScores.length)];
-      const sampleNames = [
-        'Bài Kiểm Tra 15 Phút - Unit 3: Community Service',
-        'Đề Thi 1 Tiết 45 Phút - Giữa Học Kỳ 1',
-        'Phiếu Khảo Sát Từ Vựng & Nghe Cambridge',
-        'Bài Đánh Giá Phonics & Giao Tiếp Định Kỳ'
-      ];
-      const randomTitle = sampleNames[Math.floor(Math.random() * sampleNames.length)];
-      const sampleFeedbacks = [
-        'Làm bài cẩn thận, từ vựng phong phú, nắm vững thì hiện tại hoàn thành.',
-        'Phát âm tròn vành, tự tin khi thuyết trình, ngữ pháp chính xác.',
-        'Bài làm rất tốt, chữ viết rõ ràng, phân tích câu chuẩn xác.',
-        'Kỹ năng đọc hiểu tiến bộ vượt bậc, hoàn thành 100% câu trắc nghiệm.'
-      ];
-      const randomFeedback = sampleFeedbacks[Math.floor(Math.random() * sampleFeedbacks.length)];
-
-      resolve({
-        success: true,
-        detected_score: randomScore,
-        max_score: 10,
-        detected_title: randomTitle,
-        detected_feedback: randomFeedback,
-        detected_date: new Date().toISOString().split('T')[0],
-        raw_ocr_text: `[OCR SCAN RESULT]\nBỘ GIÁO DỤC VÀ ĐÀO TẠO\nBÀI KIỂM TRA ĐỊNH KỲ TIẾNG ANH\nĐiểm: ${randomScore} / 10\nLời phê của giáo viên: ${randomFeedback}\nNgày kiểm tra: ${new Date().toLocaleDateString('vi-VN')}`
-      });
-    }, 1200);
-  });
+  // OCR simulation is completely disabled in release builds per architectural policy.
+  // Computer vision PDF/image OCR pipeline is explicitly DEFERRED.
+  // Never returns random synthetic scores or unverified automatic claims.
+  return {
+    success: false,
+    ocr_status: 'deferred',
+    error: 'Tính năng tự động quét điểm OCR đang trong lộ trình phát triển. Vui lòng nhập điểm thủ công.'
+  };
 }
 
 // =========================================================================
