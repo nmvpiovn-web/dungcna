@@ -108,8 +108,8 @@ export async function GET({ url, request, platform }) {
       const params = [];
 
       if (user.role === 'parent') {
-        query += 'parent_user_id = ? ';
-        params.push(user.id);
+        query += 'parent_user_id = ? AND student_user_id IN (SELECT student_user_id FROM parent_student_links WHERE parent_user_id = ? AND verification_status = \'verified\') ';
+        params.push(user.id, user.id);
         if (studentId) {
           query += 'AND student_user_id = ? ';
           params.push(studentId);

@@ -456,6 +456,21 @@ describe('P1 Remediation: OCR Simulation Elimination, Self-Profile & Parent Pers
       assert.equal(data.success, true);
       assert.ok(Array.isArray(data.records));
     });
+
+    test('3.7: Revoked/pending child absent filter must not leak records to parent', async () => {
+      const { platform, rawDb } = createMockPlatform();
+      rawDb.exec(`
+        UPDATE parent_student_links SET verification_status='revoked' WHERE id='psl_1';
+        INSERT INTO parent_test_records(id, parent_user_id, student_user_id, test_name, score, max_score, test_date)
+        VALUES('secret_record', 'usr_parent_1', 'usr_student_1', 'Private', 8, 10, '2026-09-28');
+      `);
+      const token = await createSignedToken({ id: 'usr_parent_1', role: 'parent' }, secret);
+      const url = new URL('http://localhost/api/parents/tests');
+      const r = await parentTestsGet({ url, request: new Request(url, { headers: { Authorization: `Bearer ${token}` } }), platform });
+      const data = await r.json();
+      assert.equal(r.status, 200);
+      assert.equal(data.records?.length, 0, 'Must return 0 records when link is revoked');
+    });
   });
 
   // =========================================================================
