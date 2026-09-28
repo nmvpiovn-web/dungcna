@@ -1,510 +1,301 @@
 {
-  "timestamp": "2026-09-28T08:25:53.295Z",
-  "commit": "36ed6438766abef645f244adc090c4cd4472e2df",
-  "build_identity": "build_36ed643_1790583822491",
-  "environment": "http://127.0.0.1:4173",
-  "total": 52,
-  "passed": 52,
-  "failed": 0,
-  "missing_expected_ids": [],
-  "screenshot_manifest": [
+  "sha": "1c4eae72f11401d9059a3b8e31c9d2f611b84c54",
+  "timestamp": "2026-09-28T08:45:13.722Z",
+  "tests": [
     {
-      "filename": "01_registered_lop2.png",
-      "testId": "1.2",
-      "description": "Registration completed with Lớp 2",
-      "sha256": "7ab1d1caed2b09a82993dd2cef3d6ce34af0a5296a5ce1c9a10ffc81997ab5d3",
-      "sizeBytes": 145286,
-      "timestamp": "2026-09-28T08:25:04.367Z"
+      "name": "service_worker_state",
+      "passed": true,
+      "detail": "SW Controller: activated, Caches: tienganh-academic-v3"
     },
     {
-      "filename": "02_reloaded_lop2_persisted.png",
-      "testId": "1.4",
-      "description": "Reloaded session preserved with Lớp 2",
-      "sha256": "4e1d3d73d4eff6729df18147a6b71654ddac7019f0b25832bade40cce17b691b",
-      "sizeBytes": 145280,
-      "timestamp": "2026-09-28T08:25:05.994Z"
+      "name": "header_unclipped_overflow",
+      "passed": true,
+      "detail": "Header overflow: visible, zIndex: 40"
     },
     {
-      "filename": "03_profile_dropdown_open.png",
-      "testId": "2.2",
-      "description": "Profile dropdown opened",
-      "sha256": "a4057a84b6f3a6543dabdff53f1c61ad7cb5b97469a59b28bfb13f6939113bfd",
-      "sizeBytes": 155506,
-      "timestamp": "2026-09-28T08:25:06.542Z"
+      "name": "lotrinh_hit_target_unobscured",
+      "passed": true,
+      "detail": "Target at (525, 32) is topElement: <SPAN>"
     },
     {
-      "filename": "04_logged_out_guest_state.png",
-      "testId": "2.5",
-      "description": "Logged out guest state",
-      "sha256": "c9cd2d2d0f7a2600e2af4254b8c4f0ac60bde4c5b8e6e8d11721cbd5241a1877",
-      "sizeBytes": 146879,
-      "timestamp": "2026-09-28T08:25:07.570Z"
+      "name": "lotrinh_dropdown_physically_opened",
+      "passed": true,
+      "detail": "Dropdown rect: {\"x\":472.984375,\"y\":54,\"width\":288,\"height\":271}"
     },
     {
-      "filename": "05_nav_dictionary_success.png",
-      "testId": "3.6",
-      "description": "Navigation to /dictionary successful",
-      "sha256": "4bae7f7044fe9afa2e650443a1c4d210fb664ee70f7cf4ca3ff654a8afd9fc59",
-      "sizeBytes": 122414,
-      "timestamp": "2026-09-28T08:25:16.746Z"
+      "name": "phongthi_dropdown_physically_opened",
+      "passed": true,
+      "detail": "Dropdown \"Phòng Thi\" opened via pointer events"
     },
     {
-      "filename": "06_mobile_drawer_open.png",
-      "testId": "3.10",
-      "description": "Mobile drawer open at 390px",
-      "sha256": "9c4484112b95ceaf08703837f87cdd4ef08d40de9e92bea323c169750c99bd3c",
-      "sizeBytes": 76318,
-      "timestamp": "2026-09-28T08:25:22.439Z"
+      "name": "tools_sublink_present",
+      "passed": true,
+      "detail": "Link href: https://timbk.io.vn/tools"
     },
     {
-      "filename": "07_theme_dark_applied.png",
-      "testId": "4.6",
-      "description": "Dark theme applied",
-      "sha256": "db0cfbc1f8626ac045141e245677550a546261bb60123c1e75a7f6122415fdd1",
-      "sizeBytes": 150773,
-      "timestamp": "2026-09-28T08:25:26.841Z"
+      "name": "tools_navigation_success",
+      "passed": true,
+      "detail": "Navigated to /tools/"
     },
     {
-      "filename": "08_sw_busy_banner_exam.png",
-      "testId": "5.2",
-      "description": "SW banner during active exam",
-      "sha256": "c4a5e4ab787c06663ab14cb65e0e507fb4009d697ea1cfdd1dace93894bc9915",
-      "sizeBytes": 208225,
-      "timestamp": "2026-09-28T08:25:37.155Z"
+      "name": "history_back_success",
+      "passed": true,
+      "detail": "History back returned to /admincp/"
     },
     {
-      "filename": "09_sw_busy_banner_recruitment.png",
-      "testId": "5.5",
-      "description": "SW banner during dirty recruitment form",
-      "sha256": "caa7b23078137902893d778b3c502c239d694147ade13dc2d9ca970e0cfb1ad5",
-      "sizeBytes": 106348,
-      "timestamp": "2026-09-28T08:25:39.189Z"
+      "name": "mobile_menu_button_present",
+      "passed": true,
+      "detail": "Mobile button at (354, 32)"
     },
     {
-      "filename": "10_exam_answers_preserved.png",
-      "testId": "6.7",
-      "description": "Exam answers and timer countdown verified",
-      "sha256": "ff994212eaa94eca7b2f366c85b91af576ecf6b4cf50abf9cb64e0c928eb9c8c",
-      "sizeBytes": 207823,
-      "timestamp": "2026-09-28T08:25:52.463Z"
+      "name": "mobile_drawer_direct_links",
+      "passed": true,
+      "detail": "Mobile drawer contains direct action buttons: Courses (true), Tools (true)"
+    },
+    {
+      "name": "guest_non_lockout_mode",
+      "passed": true,
+      "detail": "AuthModal open on initial visit: false, Header Login Button: true"
+    },
+    {
+      "name": "real_ui_login_success",
+      "passed": true,
+      "detail": "Logged in user badge displayed: true, Stored: true"
+    },
+    {
+      "name": "profile_modal_interaction_success",
+      "passed": true,
+      "detail": "Profile modal opened: true, Closed on Escape: true"
+    },
+    {
+      "name": "real_ui_logout_success",
+      "passed": true,
+      "detail": "User session cleared: true, Login CTA restored: true"
+    },
+    {
+      "name": "negative_control_protected_api_unauthorized",
+      "passed": true,
+      "detail": "Protected API /api/homework blocked unauthenticated request: HTTP 401, success: false"
+    },
+    {
+      "name": "onboarding_tour_modal_flow",
+      "passed": true,
+      "detail": "Onboarding tour opened: true, closed successfully: true"
+    },
+    {
+      "name": "recruitment_multigrade_draft_persistence",
+      "passed": true,
+      "detail": "Draft saved candidate: \"Cô Nguyễn Hoàng Yến\", grades count: 2"
+    },
+    {
+      "name": "exam_state_backup_and_restore",
+      "passed": true,
+      "detail": "Exam active flag: true, backup contains valid server deadline: true"
+    },
+    {
+      "name": "zoom_200_layout_integrity",
+      "passed": true,
+      "detail": "At 200% zoom, brand legible: true, scrollWidth (1434) <= innerWidth (1440)"
+    },
+    {
+      "name": "wcag_contrast_sky_admincp page title",
+      "passed": true,
+      "detail": "[SKY] Ratio 17.85:1 (Required: 3:1). FG: rgb(15, 23, 42), BG: rgb(255, 255, 255)"
+    },
+    {
+      "name": "wcag_contrast_sky_header brand name",
+      "passed": true,
+      "detail": "[SKY] Ratio 17.85:1 (Required: 4.5:1). FG: rgb(15, 23, 42), BG: rgb(255, 255, 255)"
+    },
+    {
+      "name": "wcag_contrast_sky_card heading",
+      "passed": true,
+      "detail": "[SKY] Ratio 17.85:1 (Required: 4.5:1). FG: rgb(15, 23, 42), BG: rgb(255, 255, 255)"
+    },
+    {
+      "name": "wcag_contrast_sky_footer brand",
+      "passed": true,
+      "detail": "[SKY] Ratio 5.93:1 (Required: 4.5:1). FG: rgb(255, 255, 255), BG: rgb(3, 105, 161)"
+    },
+    {
+      "name": "wcag_contrast_light_admincp page title",
+      "passed": true,
+      "detail": "[LIGHT] Ratio 17.85:1 (Required: 3:1). FG: rgb(15, 23, 42), BG: rgb(255, 255, 255)"
+    },
+    {
+      "name": "wcag_contrast_light_header brand name",
+      "passed": true,
+      "detail": "[LIGHT] Ratio 17.85:1 (Required: 4.5:1). FG: rgb(15, 23, 42), BG: rgb(255, 255, 255)"
+    },
+    {
+      "name": "wcag_contrast_light_card heading",
+      "passed": true,
+      "detail": "[LIGHT] Ratio 17.85:1 (Required: 4.5:1). FG: rgb(15, 23, 42), BG: rgb(255, 255, 255)"
+    },
+    {
+      "name": "wcag_contrast_light_footer brand",
+      "passed": true,
+      "detail": "[LIGHT] Ratio 5.93:1 (Required: 4.5:1). FG: rgb(255, 255, 255), BG: rgb(3, 105, 161)"
+    },
+    {
+      "name": "wcag_contrast_dark_admincp page title",
+      "passed": true,
+      "detail": "[DARK] Ratio 17.85:1 (Required: 3:1). FG: rgb(255, 255, 255), BG: rgb(15, 23, 42)"
+    },
+    {
+      "name": "wcag_contrast_dark_header brand name",
+      "passed": true,
+      "detail": "[DARK] Ratio 17.85:1 (Required: 4.5:1). FG: rgb(255, 255, 255), BG: rgb(15, 23, 42)"
+    },
+    {
+      "name": "wcag_contrast_dark_card heading",
+      "passed": true,
+      "detail": "[DARK] Ratio 17.85:1 (Required: 4.5:1). FG: rgb(255, 255, 255), BG: rgb(15, 23, 42)"
+    },
+    {
+      "name": "wcag_contrast_dark_footer brand",
+      "passed": true,
+      "detail": "[DARK] Ratio 5.93:1 (Required: 4.5:1). FG: rgb(255, 255, 255), BG: rgb(3, 105, 161)"
+    },
+    {
+      "name": "browser_console_clean",
+      "passed": true,
+      "detail": "Console errors count: 0"
     }
   ],
-  "results": [
+  "consoleErrors": [],
+  "contrastResults": [
     {
-      "id": "NEG-0.1",
-      "index": 1,
-      "name": "Negative Control: evaluateHeadingTypography rejects font-weight 900",
-      "pass": true,
-      "detail": "Evaluator correctly threw on weight 900",
-      "timestamp": "2026-09-28T08:24:54.534Z"
+      "theme": "sky",
+      "label": "AdminCP Page Title",
+      "found": true,
+      "fg": "rgb(15, 23, 42)",
+      "bg": "rgb(255, 255, 255)",
+      "ratio": 17.85,
+      "minRequired": 3,
+      "passesWcag": true,
+      "isLargeText": true
     },
     {
-      "id": "NEG-0.2",
-      "index": 2,
-      "name": "Negative Control: evaluateHorizontalOverflow rejects 5000px overflow",
-      "pass": true,
-      "detail": "Evaluator correctly threw on 5000px overflow",
-      "timestamp": "2026-09-28T08:24:54.557Z"
+      "theme": "sky",
+      "label": "Header Brand Name",
+      "found": true,
+      "fg": "rgb(15, 23, 42)",
+      "bg": "rgb(255, 255, 255)",
+      "ratio": 17.85,
+      "minRequired": 4.5,
+      "passesWcag": true,
+      "isLargeText": false
     },
     {
-      "id": "NEG-0.3",
-      "index": 3,
-      "name": "Negative Control: evaluateDrawerState rejects missing drawer selector when expectOpen=true",
-      "pass": true,
-      "detail": "Evaluator correctly threw on nonexistent drawer",
-      "timestamp": "2026-09-28T08:24:54.566Z"
+      "theme": "sky",
+      "label": "Card Heading",
+      "found": true,
+      "fg": "rgb(15, 23, 42)",
+      "bg": "rgb(255, 255, 255)",
+      "ratio": 17.85,
+      "minRequired": 4.5,
+      "passesWcag": true,
+      "isLargeText": false
     },
     {
-      "id": "NEG-0.4",
-      "index": 4,
-      "name": "Negative Control: evaluateServerAuth rejects HTTP 401 unauthenticated response",
-      "pass": true,
-      "detail": "Evaluator correctly threw on 401 unauthenticated response",
-      "timestamp": "2026-09-28T08:24:54.567Z"
+      "theme": "sky",
+      "label": "Footer Brand",
+      "found": true,
+      "fg": "rgb(255, 255, 255)",
+      "bg": "rgb(3, 105, 161)",
+      "ratio": 5.93,
+      "minRequired": 4.5,
+      "passesWcag": true,
+      "isLargeText": false
     },
     {
-      "id": "NEG-0.5",
-      "index": 5,
-      "name": "Negative Control: evaluateContrastRatio rejects low-contrast pair (1.1:1 < 4.5:1)",
-      "pass": true,
-      "detail": "Evaluator correctly threw on low contrast ratio",
-      "timestamp": "2026-09-28T08:24:54.568Z"
+      "theme": "light",
+      "label": "AdminCP Page Title",
+      "found": true,
+      "fg": "rgb(15, 23, 42)",
+      "bg": "rgb(255, 255, 255)",
+      "ratio": 17.85,
+      "minRequired": 3,
+      "passesWcag": true,
+      "isLargeText": true
     },
     {
-      "id": "1.1",
-      "index": 6,
-      "name": "Home page returns HTTP 200 with valid content",
-      "pass": true,
-      "detail": "HTTP 200",
-      "timestamp": "2026-09-28T08:24:55.964Z"
+      "theme": "light",
+      "label": "Header Brand Name",
+      "found": true,
+      "fg": "rgb(15, 23, 42)",
+      "bg": "rgb(255, 255, 255)",
+      "ratio": 17.85,
+      "minRequired": 4.5,
+      "passesWcag": true,
+      "isLargeText": false
     },
     {
-      "id": "1.2",
-      "index": 7,
-      "name": "UI displays logged in profile button (#user-profile-btn) after registration",
-      "pass": true,
-      "detail": "Profile button visible: true",
-      "timestamp": "2026-09-28T08:25:02.926Z"
+      "theme": "light",
+      "label": "Card Heading",
+      "found": true,
+      "fg": "rgb(15, 23, 42)",
+      "bg": "rgb(255, 255, 255)",
+      "ratio": 17.85,
+      "minRequired": 4.5,
+      "passesWcag": true,
+      "isLargeText": false
     },
     {
-      "id": "1.3",
-      "index": 8,
-      "name": "Server endpoint /api/auth/verify confirms authenticated user with grade === \"Lớp 2\"",
-      "pass": true,
-      "detail": "Server grade: Lớp 2",
-      "timestamp": "2026-09-28T08:25:04.429Z"
+      "theme": "light",
+      "label": "Footer Brand",
+      "found": true,
+      "fg": "rgb(255, 255, 255)",
+      "bg": "rgb(3, 105, 161)",
+      "ratio": 5.93,
+      "minRequired": 4.5,
+      "passesWcag": true,
+      "isLargeText": false
     },
     {
-      "id": "1.4",
-      "index": 9,
-      "name": "Page reload preserves session and server verifies grade === \"Lớp 2\"",
-      "pass": true,
-      "detail": "Reloaded server grade: Lớp 2",
-      "timestamp": "2026-09-28T08:25:05.891Z"
+      "theme": "dark",
+      "label": "AdminCP Page Title",
+      "found": true,
+      "fg": "rgb(255, 255, 255)",
+      "bg": "rgb(15, 23, 42)",
+      "ratio": 17.85,
+      "minRequired": 3,
+      "passesWcag": true,
+      "isLargeText": true
     },
     {
-      "id": "2.1",
-      "index": 10,
-      "name": "User profile button (#user-profile-btn) is visible in navbar",
-      "pass": true,
-      "detail": "Visible: true",
-      "timestamp": "2026-09-28T08:25:06.014Z"
+      "theme": "dark",
+      "label": "Header Brand Name",
+      "found": true,
+      "fg": "rgb(255, 255, 255)",
+      "bg": "rgb(15, 23, 42)",
+      "ratio": 17.85,
+      "minRequired": 4.5,
+      "passesWcag": true,
+      "isLargeText": false
     },
     {
-      "id": "2.2",
-      "index": 11,
-      "name": "Profile dropdown opens and displays logout button (#logout-btn)",
-      "pass": true,
-      "detail": "Visible: true",
-      "timestamp": "2026-09-28T08:25:06.434Z"
+      "theme": "dark",
+      "label": "Card Heading",
+      "found": true,
+      "fg": "rgb(255, 255, 255)",
+      "bg": "rgb(15, 23, 42)",
+      "ratio": 17.85,
+      "minRequired": 4.5,
+      "passesWcag": true,
+      "isLargeText": false
     },
     {
-      "id": "2.3",
-      "index": 12,
-      "name": "Real logout button click clears localStorage and session cookie",
-      "pass": true,
-      "detail": "Cleared: true",
-      "timestamp": "2026-09-28T08:25:07.469Z"
-    },
-    {
-      "id": "2.4",
-      "index": 13,
-      "name": "Navbar returns to guest state with #login-btn visible",
-      "pass": true,
-      "detail": "Login button visible: true",
-      "timestamp": "2026-09-28T08:25:07.472Z"
-    },
-    {
-      "id": "2.5",
-      "index": 14,
-      "name": "Protected server endpoint /api/auth/verify returns HTTP 401 when logged out",
-      "pass": true,
-      "detail": "Status: 401",
-      "timestamp": "2026-09-28T08:25:07.497Z"
-    },
-    {
-      "id": "2.6",
-      "index": 15,
-      "name": "Re-login via UI form succeeds and server confirms grade === \"Lớp 2\" retained",
-      "pass": true,
-      "detail": "Re-login server grade: Lớp 2",
-      "timestamp": "2026-09-28T08:25:09.685Z"
-    },
-    {
-      "id": "3.1",
-      "index": 16,
-      "name": "Desktop #nav-btn-courses opens courses dropdown submenu",
-      "pass": true,
-      "detail": "Dropdown open: true",
-      "timestamp": "2026-09-28T08:25:12.187Z"
-    },
-    {
-      "id": "3.2",
-      "index": 17,
-      "name": "Clicking courses submenu item navigates to /courses",
-      "pass": true,
-      "detail": "URL: http://127.0.0.1:4173/courses/",
-      "timestamp": "2026-09-28T08:25:12.408Z"
-    },
-    {
-      "id": "3.3",
-      "index": 18,
-      "name": "Desktop #nav-btn-exams opens exam dropdown submenu",
-      "pass": true,
-      "detail": "Dropdown open: true",
-      "timestamp": "2026-09-28T08:25:13.156Z"
-    },
-    {
-      "id": "3.4",
-      "index": 19,
-      "name": "Clicking exam submenu item navigates to /exam",
-      "pass": true,
-      "detail": "URL: http://127.0.0.1:4173/exam/",
-      "timestamp": "2026-09-28T08:25:13.531Z"
-    },
-    {
-      "id": "3.5",
-      "index": 20,
-      "name": "Desktop #nav-btn-tools opens tools dropdown submenu",
-      "pass": true,
-      "detail": "Dropdown open: true",
-      "timestamp": "2026-09-28T08:25:15.595Z"
-    },
-    {
-      "id": "3.6",
-      "index": 21,
-      "name": "Clicking tools submenu item navigates to /dictionary",
-      "pass": true,
-      "detail": "URL: http://127.0.0.1:4173/dictionary/",
-      "timestamp": "2026-09-28T08:25:15.791Z"
-    },
-    {
-      "id": "3.7",
-      "index": 22,
-      "name": "Tablet viewport (768px) has zero horizontal overflow via unified evaluator",
-      "pass": true,
-      "detail": "Evaluator passed at 768px",
-      "timestamp": "2026-09-28T08:25:19.238Z"
-    },
-    {
-      "id": "3.8",
-      "index": 23,
-      "name": "Mobile viewport (390px) has zero horizontal overflow via unified evaluator",
-      "pass": true,
-      "detail": "Evaluator passed at 390px",
-      "timestamp": "2026-09-28T08:25:21.592Z"
-    },
-    {
-      "id": "3.9",
-      "index": 24,
-      "name": "Mobile menu toggle button (#mobile-menu-btn) is visible at 390px",
-      "pass": true,
-      "detail": "Visible: true",
-      "timestamp": "2026-09-28T08:25:21.698Z"
-    },
-    {
-      "id": "3.10",
-      "index": 25,
-      "name": "Clicking #mobile-menu-btn opens mobile drawer (#mobile-drawer)",
-      "pass": true,
-      "detail": "Drawer verified open via evaluateDrawerState",
-      "timestamp": "2026-09-28T08:25:22.297Z"
-    },
-    {
-      "id": "3.11",
-      "index": 26,
-      "name": "Mobile drawer link click navigates to destination (/courses) AND drawer closes",
-      "pass": true,
-      "detail": "At courses: true, Drawer closed: true",
-      "timestamp": "2026-09-28T08:25:23.304Z"
-    },
-    {
-      "id": "4.1",
-      "index": 27,
-      "name": "H1 computed font-weight strictly equals 600 (NOT 900)",
-      "pass": true,
-      "detail": "H1 weight: 600",
-      "timestamp": "2026-09-28T08:25:25.056Z"
-    },
-    {
-      "id": "4.2",
-      "index": 28,
-      "name": "H2 computed font-weight strictly equals 600 (NOT 900)",
-      "pass": true,
-      "detail": "H2 weight: 600",
-      "timestamp": "2026-09-28T08:25:25.060Z"
-    },
-    {
-      "id": "4.3",
-      "index": 29,
-      "name": "Body computed font-weight equals 400 strictly",
-      "pass": true,
-      "detail": "Body weight: 400",
-      "timestamp": "2026-09-28T08:25:25.066Z"
-    },
-    {
-      "id": "4.4",
-      "index": 30,
-      "name": "Default theme is Sky: class \"theme-sky\" present and --primary === #0284c7",
-      "pass": true,
-      "detail": "Class: true, --primary: #0284c7",
-      "timestamp": "2026-09-28T08:25:25.073Z"
-    },
-    {
-      "id": "4.5",
-      "index": 31,
-      "name": "Switching to Light theme ensures !dark AND !theme-sky (Sky cannot pass as Light)",
-      "pass": true,
-      "detail": "isDark: false, isSky: false, savedTheme: light",
-      "timestamp": "2026-09-28T08:25:25.548Z"
-    },
-    {
-      "id": "4.6",
-      "index": 32,
-      "name": "Switching to Dark theme applies \"dark\" class cleanly",
-      "pass": true,
-      "detail": "Dark active: true",
-      "timestamp": "2026-09-28T08:25:26.478Z"
-    },
-    {
-      "id": "4.7",
-      "index": 33,
-      "name": "Dark theme persists across page reload from localStorage",
-      "pass": true,
-      "detail": "Persisted: true",
-      "timestamp": "2026-09-28T08:25:29.198Z"
-    },
-    {
-      "id": "4.8",
-      "index": 34,
-      "name": "Switching theme cycle returns cleanly to Sky theme",
-      "pass": true,
-      "detail": "Back to sky: true",
-      "timestamp": "2026-09-28T08:25:30.173Z"
-    },
-    {
-      "id": "4.9",
-      "index": 35,
-      "name": "Real DOM form label measured on /recruitment: font-weight 500/600 and WCAG contrast >= 4.5:1",
-      "pass": true,
-      "detail": "Label: \"Họ và tên (*):\", Weight: 500, Contrast: 9.9:1",
-      "timestamp": "2026-09-28T08:25:32.180Z"
-    },
-    {
-      "id": "4.10",
-      "index": 36,
-      "name": "Desktop 200% reflow zoom (640px) and CDP 2.0x visual viewport scale have zero horizontal clipping/overflow",
-      "pass": true,
-      "detail": "Reflow200: true, VisualScale: 2x",
-      "timestamp": "2026-09-28T08:25:33.170Z"
-    },
-    {
-      "id": "5.1",
-      "index": 37,
-      "name": "Real producer: Active exam on /exam registers \"active_exam\" in __appBusyRegistry",
-      "pass": true,
-      "detail": "Reason in registry: true, isBusy: true",
-      "timestamp": "2026-09-28T08:25:36.874Z"
-    },
-    {
-      "id": "5.2",
-      "index": 38,
-      "name": "Controllerchange during busy exam displays #sw-update-banner without reloading page",
-      "pass": true,
-      "detail": "Banner displayed: true",
-      "timestamp": "2026-09-28T08:25:36.986Z"
-    },
-    {
-      "id": "5.3",
-      "index": 39,
-      "name": "PWA Invariant: Zero reload occurred and student exam answer remains 100% intact",
-      "pass": true,
-      "detail": "Marker: intact_no_reload, Content preserved: true",
-      "timestamp": "2026-09-28T08:25:37.020Z"
-    },
-    {
-      "id": "5.4",
-      "index": 40,
-      "name": "Real producer: Typing into recruitment form registers \"dirty_form_recruitment\" in __appBusyRegistry",
-      "pass": true,
-      "detail": "Reason in registry: true",
-      "timestamp": "2026-09-28T08:25:38.676Z"
-    },
-    {
-      "id": "5.5",
-      "index": 41,
-      "name": "Controllerchange during dirty form preserves typed content without reloading",
-      "pass": true,
-      "detail": "Preserved text: \"Nguyễn Thị Ứng Viên G1\"",
-      "timestamp": "2026-09-28T08:25:39.074Z"
-    },
-    {
-      "id": "5.6",
-      "index": 42,
-      "name": "Navigating away from dirty form via in-app SPA link cleans up \"dirty_form_recruitment\" without page reload",
-      "pass": true,
-      "detail": "SPA intact: true, Cleaned up: true",
-      "timestamp": "2026-09-28T08:25:40.031Z"
-    },
-    {
-      "id": "5.7",
-      "index": 43,
-      "name": "Real UI microphone recording registers busy state, creates audio blob, survives SW update event, and unregisters on stop",
-      "pass": true,
-      "detail": "Started: true, BlobBytes: 11888, DurationMs: 1009, TracksEnded: true, Stopped: true",
-      "timestamp": "2026-09-28T08:25:44.460Z"
-    },
-    {
-      "id": "5.8",
-      "index": 44,
-      "name": "Idle state: isAppBusy() naturally returns false when no producers are active (zero artificial flag overrides)",
-      "pass": true,
-      "detail": "isAppBusy: false",
-      "timestamp": "2026-09-28T08:25:44.466Z"
-    },
-    {
-      "id": "6.1",
-      "index": 45,
-      "name": "Guest exam survey modal opens cleanly into DOM",
-      "pass": true,
-      "detail": "Modal visible: true",
-      "timestamp": "2026-09-28T08:25:47.316Z"
-    },
-    {
-      "id": "6.2",
-      "index": 46,
-      "name": "Real pointer click on backdrop closes modal without traps",
-      "pass": true,
-      "detail": "Modal closed: true",
-      "timestamp": "2026-09-28T08:25:47.924Z"
-    },
-    {
-      "id": "6.3",
-      "index": 47,
-      "name": "Underlying page elements accept pointer clicks after modal close (clicked #nav-btn-courses)",
-      "pass": true,
-      "detail": "Dropdown opened: true",
-      "timestamp": "2026-09-28T08:25:48.482Z"
-    },
-    {
-      "id": "6.4",
-      "index": 48,
-      "name": "Student answers question by checking radio option",
-      "pass": true,
-      "detail": "Checked: true",
-      "timestamp": "2026-09-28T08:25:50.186Z"
-    },
-    {
-      "id": "6.5",
-      "index": 49,
-      "name": "Cancelling exit prompt triggers real browser confirm dialog (dialogPromptTriggered === true)",
-      "pass": true,
-      "detail": "Dialog triggered: true",
-      "timestamp": "2026-09-28T08:25:51.420Z"
-    },
-    {
-      "id": "6.6",
-      "index": 50,
-      "name": "Cancelling exit prompt preserves modal open state and student answer selection",
-      "pass": true,
-      "detail": "Modal open: true, Answer checked: true",
-      "timestamp": "2026-09-28T08:25:51.459Z"
-    },
-    {
-      "id": "6.7",
-      "index": 51,
-      "name": "Cancelling exit prompt preserves timer countdown deadline (timer continues decreasing)",
-      "pass": true,
-      "detail": "Before: 05:00 (300s), After: 04:59 (299s)",
-      "timestamp": "2026-09-28T08:25:51.477Z"
-    },
-    {
-      "id": "6.8",
-      "index": 52,
-      "name": "Browser history popstate navigation handled cleanly with confirm and closes modal",
-      "pass": true,
-      "detail": "Closed: true, Dialog accepted: true",
-      "timestamp": "2026-09-28T08:25:52.153Z"
+      "theme": "dark",
+      "label": "Footer Brand",
+      "found": true,
+      "fg": "rgb(255, 255, 255)",
+      "bg": "rgb(3, 105, 161)",
+      "ratio": 5.93,
+      "minRequired": 4.5,
+      "passesWcag": true,
+      "isLargeText": false
     }
   ]
 }

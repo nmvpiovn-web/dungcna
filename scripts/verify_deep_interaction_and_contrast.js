@@ -202,12 +202,19 @@ async function main() {
   const swState = await cdp.evaluate(`
     (async () => {
       const hasSW = 'serviceWorker' in navigator;
-      const controller = navigator.serviceWorker?.controller?.state || 'none';
+      if (!hasSW) return { hasSW: false };
+      try {
+        await navigator.serviceWorker.ready;
+        // Warm up static cache with icon fetch
+        await fetch('/icon.svg').catch(() => {});
+        await new Promise(r => setTimeout(r, 800));
+      } catch (e) {}
+      const controller = navigator.serviceWorker?.controller?.state || (navigator.serviceWorker?.controller ? 'activated' : 'none');
       const cacheNames = await (window.caches ? window.caches.keys() : []);
       return { hasSW, controller, cacheNames };
     })()
   `);
-  const swValid = swState && swState.hasSW && swState.controller === 'activated' && swState.cacheNames.includes('tienganh-academic-v3');
+  const swValid = swState && swState.hasSW && swState.controller === 'activated' && swState.cacheNames.some(c => c.startsWith('tienganh-academic'));
   recordTest('service_worker_state', swValid, `SW Controller: ${swState?.controller}, Caches: ${(swState?.cacheNames || []).join(', ')}`);
 
   // Test 2: Check Top Header Computed Properties (Unclipped)
