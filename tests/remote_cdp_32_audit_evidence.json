@@ -1,0 +1,301 @@
+{
+  "sha": "d07c22042c12fc3169466907d5899f6917cd94f8",
+  "timestamp": "2026-09-28T09:04:54.304Z",
+  "tests": [
+    {
+      "name": "service_worker_state",
+      "passed": true,
+      "detail": "SW Controller: activated, Caches: tienganh-academic-v3"
+    },
+    {
+      "name": "header_unclipped_overflow",
+      "passed": true,
+      "detail": "Header overflow: visible, zIndex: 40"
+    },
+    {
+      "name": "lotrinh_hit_target_unobscured",
+      "passed": true,
+      "detail": "Target at (525, 32) is topElement: <SPAN>"
+    },
+    {
+      "name": "lotrinh_dropdown_physically_opened",
+      "passed": true,
+      "detail": "Dropdown rect: {\"x\":472.984375,\"y\":54,\"width\":288,\"height\":271}"
+    },
+    {
+      "name": "phongthi_dropdown_physically_opened",
+      "passed": true,
+      "detail": "Dropdown \"Phòng Thi\" opened via pointer events"
+    },
+    {
+      "name": "tools_sublink_present",
+      "passed": true,
+      "detail": "Link href: https://timbk.io.vn/tools"
+    },
+    {
+      "name": "tools_navigation_success",
+      "passed": true,
+      "detail": "Navigated to /tools/"
+    },
+    {
+      "name": "history_back_success",
+      "passed": true,
+      "detail": "History back returned to /admincp/"
+    },
+    {
+      "name": "mobile_menu_button_present",
+      "passed": true,
+      "detail": "Mobile button at (354, 32)"
+    },
+    {
+      "name": "mobile_drawer_direct_links",
+      "passed": true,
+      "detail": "Mobile drawer contains direct action buttons: Courses (true), Tools (true)"
+    },
+    {
+      "name": "guest_non_lockout_mode",
+      "passed": true,
+      "detail": "AuthModal open on initial visit: false, Header Login Button: true"
+    },
+    {
+      "name": "real_ui_login_success",
+      "passed": true,
+      "detail": "Logged in user badge displayed: true, Stored: true"
+    },
+    {
+      "name": "profile_modal_interaction_success",
+      "passed": true,
+      "detail": "Profile modal opened: true, Closed on Escape: true"
+    },
+    {
+      "name": "real_ui_logout_success",
+      "passed": true,
+      "detail": "User session cleared: true, Login CTA restored: true"
+    },
+    {
+      "name": "negative_control_protected_api_unauthorized",
+      "passed": true,
+      "detail": "Protected API /api/homework blocked unauthenticated request: HTTP 401, success: false"
+    },
+    {
+      "name": "onboarding_tour_modal_flow",
+      "passed": true,
+      "detail": "Onboarding tour opened: true, closed successfully: true"
+    },
+    {
+      "name": "recruitment_multigrade_draft_persistence",
+      "passed": true,
+      "detail": "Draft saved candidate: \"Cô Nguyễn Hoàng Yến\", grades count: 2"
+    },
+    {
+      "name": "exam_state_backup_and_restore",
+      "passed": true,
+      "detail": "Exam active flag: true, backup contains valid server deadline: true"
+    },
+    {
+      "name": "zoom_200_layout_integrity",
+      "passed": true,
+      "detail": "At 200% zoom, brand legible: true, scrollWidth (1434) <= innerWidth (1440)"
+    },
+    {
+      "name": "wcag_contrast_sky_admincp page title",
+      "passed": true,
+      "detail": "[SKY] Ratio 17.85:1 (Required: 3:1). FG: rgb(15, 23, 42), BG: rgb(255, 255, 255)"
+    },
+    {
+      "name": "wcag_contrast_sky_header brand name",
+      "passed": true,
+      "detail": "[SKY] Ratio 17.85:1 (Required: 4.5:1). FG: rgb(15, 23, 42), BG: rgb(255, 255, 255)"
+    },
+    {
+      "name": "wcag_contrast_sky_card heading",
+      "passed": true,
+      "detail": "[SKY] Ratio 17.85:1 (Required: 4.5:1). FG: rgb(15, 23, 42), BG: rgb(255, 255, 255)"
+    },
+    {
+      "name": "wcag_contrast_sky_footer brand",
+      "passed": true,
+      "detail": "[SKY] Ratio 5.93:1 (Required: 4.5:1). FG: rgb(255, 255, 255), BG: rgb(3, 105, 161)"
+    },
+    {
+      "name": "wcag_contrast_light_admincp page title",
+      "passed": true,
+      "detail": "[LIGHT] Ratio 17.85:1 (Required: 3:1). FG: rgb(15, 23, 42), BG: rgb(255, 255, 255)"
+    },
+    {
+      "name": "wcag_contrast_light_header brand name",
+      "passed": true,
+      "detail": "[LIGHT] Ratio 17.85:1 (Required: 4.5:1). FG: rgb(15, 23, 42), BG: rgb(255, 255, 255)"
+    },
+    {
+      "name": "wcag_contrast_light_card heading",
+      "passed": true,
+      "detail": "[LIGHT] Ratio 17.85:1 (Required: 4.5:1). FG: rgb(15, 23, 42), BG: rgb(255, 255, 255)"
+    },
+    {
+      "name": "wcag_contrast_light_footer brand",
+      "passed": true,
+      "detail": "[LIGHT] Ratio 5.93:1 (Required: 4.5:1). FG: rgb(255, 255, 255), BG: rgb(3, 105, 161)"
+    },
+    {
+      "name": "wcag_contrast_dark_admincp page title",
+      "passed": true,
+      "detail": "[DARK] Ratio 17.85:1 (Required: 3:1). FG: rgb(255, 255, 255), BG: rgb(15, 23, 42)"
+    },
+    {
+      "name": "wcag_contrast_dark_header brand name",
+      "passed": true,
+      "detail": "[DARK] Ratio 17.85:1 (Required: 4.5:1). FG: rgb(255, 255, 255), BG: rgb(15, 23, 42)"
+    },
+    {
+      "name": "wcag_contrast_dark_card heading",
+      "passed": true,
+      "detail": "[DARK] Ratio 17.85:1 (Required: 4.5:1). FG: rgb(255, 255, 255), BG: rgb(15, 23, 42)"
+    },
+    {
+      "name": "wcag_contrast_dark_footer brand",
+      "passed": true,
+      "detail": "[DARK] Ratio 5.93:1 (Required: 4.5:1). FG: rgb(255, 255, 255), BG: rgb(3, 105, 161)"
+    },
+    {
+      "name": "browser_console_clean",
+      "passed": true,
+      "detail": "Console errors count: 0"
+    }
+  ],
+  "consoleErrors": [],
+  "contrastResults": [
+    {
+      "theme": "sky",
+      "label": "AdminCP Page Title",
+      "found": true,
+      "fg": "rgb(15, 23, 42)",
+      "bg": "rgb(255, 255, 255)",
+      "ratio": 17.85,
+      "minRequired": 3,
+      "passesWcag": true,
+      "isLargeText": true
+    },
+    {
+      "theme": "sky",
+      "label": "Header Brand Name",
+      "found": true,
+      "fg": "rgb(15, 23, 42)",
+      "bg": "rgb(255, 255, 255)",
+      "ratio": 17.85,
+      "minRequired": 4.5,
+      "passesWcag": true,
+      "isLargeText": false
+    },
+    {
+      "theme": "sky",
+      "label": "Card Heading",
+      "found": true,
+      "fg": "rgb(15, 23, 42)",
+      "bg": "rgb(255, 255, 255)",
+      "ratio": 17.85,
+      "minRequired": 4.5,
+      "passesWcag": true,
+      "isLargeText": false
+    },
+    {
+      "theme": "sky",
+      "label": "Footer Brand",
+      "found": true,
+      "fg": "rgb(255, 255, 255)",
+      "bg": "rgb(3, 105, 161)",
+      "ratio": 5.93,
+      "minRequired": 4.5,
+      "passesWcag": true,
+      "isLargeText": false
+    },
+    {
+      "theme": "light",
+      "label": "AdminCP Page Title",
+      "found": true,
+      "fg": "rgb(15, 23, 42)",
+      "bg": "rgb(255, 255, 255)",
+      "ratio": 17.85,
+      "minRequired": 3,
+      "passesWcag": true,
+      "isLargeText": true
+    },
+    {
+      "theme": "light",
+      "label": "Header Brand Name",
+      "found": true,
+      "fg": "rgb(15, 23, 42)",
+      "bg": "rgb(255, 255, 255)",
+      "ratio": 17.85,
+      "minRequired": 4.5,
+      "passesWcag": true,
+      "isLargeText": false
+    },
+    {
+      "theme": "light",
+      "label": "Card Heading",
+      "found": true,
+      "fg": "rgb(15, 23, 42)",
+      "bg": "rgb(255, 255, 255)",
+      "ratio": 17.85,
+      "minRequired": 4.5,
+      "passesWcag": true,
+      "isLargeText": false
+    },
+    {
+      "theme": "light",
+      "label": "Footer Brand",
+      "found": true,
+      "fg": "rgb(255, 255, 255)",
+      "bg": "rgb(3, 105, 161)",
+      "ratio": 5.93,
+      "minRequired": 4.5,
+      "passesWcag": true,
+      "isLargeText": false
+    },
+    {
+      "theme": "dark",
+      "label": "AdminCP Page Title",
+      "found": true,
+      "fg": "rgb(255, 255, 255)",
+      "bg": "rgb(15, 23, 42)",
+      "ratio": 17.85,
+      "minRequired": 3,
+      "passesWcag": true,
+      "isLargeText": true
+    },
+    {
+      "theme": "dark",
+      "label": "Header Brand Name",
+      "found": true,
+      "fg": "rgb(255, 255, 255)",
+      "bg": "rgb(15, 23, 42)",
+      "ratio": 17.85,
+      "minRequired": 4.5,
+      "passesWcag": true,
+      "isLargeText": false
+    },
+    {
+      "theme": "dark",
+      "label": "Card Heading",
+      "found": true,
+      "fg": "rgb(255, 255, 255)",
+      "bg": "rgb(15, 23, 42)",
+      "ratio": 17.85,
+      "minRequired": 4.5,
+      "passesWcag": true,
+      "isLargeText": false
+    },
+    {
+      "theme": "dark",
+      "label": "Footer Brand",
+      "found": true,
+      "fg": "rgb(255, 255, 255)",
+      "bg": "rgb(3, 105, 161)",
+      "ratio": 5.93,
+      "minRequired": 4.5,
+      "passesWcag": true,
+      "isLargeText": false
+    }
+  ]
+}

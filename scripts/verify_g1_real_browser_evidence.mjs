@@ -30,10 +30,15 @@ const CHROME_PATH = process.env.CHROME_PATH || 'C:\\Program Files\\Google\\Chrom
 const LOCAL_SCREENSHOTS_DIR = path.resolve('screenshots/g1_evidence');
 const CODEX_SCREENSHOTS_DIR = 'C:/Users/admin/Documents/Codex/g1_evidence';
 
-// Clean stale screenshots to guarantee 100% fresh run manifest
+// Clean stale screenshots for this suite (01-10) to guarantee 100% fresh run manifest
 try {
   if (fs.existsSync(LOCAL_SCREENSHOTS_DIR)) {
-    fs.rmSync(LOCAL_SCREENSHOTS_DIR, { recursive: true, force: true });
+    const existingFiles = fs.readdirSync(LOCAL_SCREENSHOTS_DIR);
+    for (const f of existingFiles) {
+      if (/^(0[1-9]|10)_.*\.png$/.test(f)) {
+        try { fs.unlinkSync(path.join(LOCAL_SCREENSHOTS_DIR, f)); } catch {}
+      }
+    }
   }
 } catch {}
 fs.mkdirSync(LOCAL_SCREENSHOTS_DIR, { recursive: true });
@@ -1119,8 +1124,8 @@ async function runRealBrowserVerification() {
   }
 
   // Save raw evidence JSON
-  const evidenceReportPath = path.resolve('tests/deep_interaction_audit_evidence.json');
-  fs.writeFileSync(evidenceReportPath, JSON.stringify({
+  const evidenceReportPath = path.resolve('tests/full_browser_52_audit_evidence.json');
+  const evidenceData = JSON.stringify({
     timestamp: new Date().toISOString(),
     commit: currentCommit,
     build_identity: buildIdentity,
@@ -1131,7 +1136,10 @@ async function runRealBrowserVerification() {
     missing_expected_ids: missingExpectedIds,
     screenshot_manifest: screenshotManifest,
     results
-  }, null, 2));
+  }, null, 2);
+  fs.writeFileSync(evidenceReportPath, evidenceData);
+  const codex52Path = 'C:/Users/admin/Documents/Codex/full_browser_52_audit_evidence.json';
+  try { fs.writeFileSync(codex52Path, evidenceData); } catch {}
   console.log(`Raw Evidence Saved to: ${evidenceReportPath}`);
 
   if (failedTests > 0 || missingExpectedIds.length > 0) {

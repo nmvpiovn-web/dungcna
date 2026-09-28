@@ -1,85 +1,125 @@
 {
-  "suite": "real_sveltekit_pwa_lifecycle_upgrade",
-  "target": "http://127.0.0.1:4175/recruitment",
-  "app_artifact": "build/recruitment/index.html",
-  "sw_artifact": "build/sw.js",
+  "suite": "real_sveltekit_app_shell_and_sw_upgrade",
+  "target": "http://127.0.0.1:4175",
   "browser": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
   "build_sequence": [
     "BUILD_A",
     "BUILD_B",
     "BUILD_C"
   ],
-  "timestamp": "2026-09-28T08:51:22.355Z",
+  "artifact_provenance": {
+    "app_shell_artifact": "build/recruitment/index.html",
+    "app_shell_bytes": 26690,
+    "app_shell_sha256": "2a45587554f2543c7dcb15833ee5bdf13ee60605b23ca308604f74898127f447",
+    "base_sw_artifact": "build/sw.js",
+    "base_sw_bytes": 4104,
+    "base_sw_sha256": "5eee81421d6ee9973223bd25534a39d48b8f1e317aac418a70766b99c453cbaa",
+    "sw_build_a_bytes": 4225,
+    "sw_build_a_sha256": "8b6b234f17c9ac1d7efd932057baa25407a3d9a6ed09707044dd1878b42b2765",
+    "sw_build_b_bytes": 4225,
+    "sw_build_b_sha256": "b4a4737ae56b5d08230eca5bb0d404d9f844150c540b3072a16e299d10b09783",
+    "sw_build_c_bytes": 4225,
+    "sw_build_c_sha256": "d6037eb34ebccae4bcb8354aa60e84f306f7358b80032985d2377d15b908c0d5"
+  },
+  "timestamp": "2026-09-28T09:04:38.621Z",
   "results": [
+    {
+      "id": "PWA-APP-PROV",
+      "description": "Real build artifacts and static immutable SW hashes verified",
+      "passed": true,
+      "detail": "Provenance recorded",
+      "timestamp": "2026-09-28T09:04:27.809Z"
+    },
     {
       "id": "PWA-APP-1.1",
       "description": "Real SvelteKit /recruitment page is controlled by Build A ServiceWorker",
       "passed": true,
       "detail": "SW active and controlling",
-      "timestamp": "2026-09-28T08:51:17.725Z"
+      "timestamp": "2026-09-28T09:04:31.383Z"
     },
     {
       "id": "PWA-APP-1.2",
       "description": "Real src/app.html isAppBusy() function is active in production DOM",
       "passed": true,
       "detail": "app.html script loaded",
-      "timestamp": "2026-09-28T08:51:17.729Z"
+      "timestamp": "2026-09-28T09:04:31.387Z"
+    },
+    {
+      "id": "PWA-APP-IDEMP",
+      "description": "Idempotency Invariant: Same-version SW update produces ZERO controllerchange events",
+      "passed": true,
+      "detail": "Controllerchange events: 0",
+      "timestamp": "2026-09-28T09:04:34.821Z"
     },
     {
       "id": "PWA-APP-2.1",
       "description": "Producer input on real form naturally sets window.isAppBusy() === true",
       "passed": true,
       "detail": "isBusy: true",
-      "timestamp": "2026-09-28T08:51:17.874Z"
+      "timestamp": "2026-09-28T09:04:35.014Z"
     },
     {
       "id": "PWA-APP-3.1",
       "description": "Real app.html rendered #sw-update-banner upon controllerchange",
       "passed": true,
       "detail": "Banner: \"⚡ Có bản cập nhật hệ thống mới. Dữ liệu đã được bảo toàn tự động. Đã Rõ\"",
-      "timestamp": "2026-09-28T08:51:20.477Z"
+      "timestamp": "2026-09-28T09:04:35.739Z"
     },
     {
       "id": "PWA-APP-3.2",
       "description": "Document-only heap marker is 100% intact (zero page reload/unload)",
       "passed": true,
       "detail": "Token matched: true",
-      "timestamp": "2026-09-28T08:51:20.481Z"
+      "timestamp": "2026-09-28T09:04:35.747Z"
     },
     {
       "id": "PWA-APP-3.3",
       "description": "Browser beforeunload/pagehide events never triggered during busy upgrade",
       "passed": true,
       "detail": "Unloaded: false",
-      "timestamp": "2026-09-28T08:51:20.488Z"
+      "timestamp": "2026-09-28T09:04:35.752Z"
     },
     {
       "id": "PWA-APP-3.4",
       "description": "Real candidate form inputs 100% preserved without data loss",
       "passed": true,
       "detail": "Name: \"ThS. Nguyễn Thu Hà - Tuyển Dụng Sư Phạm PWA 2026\", Phone: \"0988776655\"",
-      "timestamp": "2026-09-28T08:51:20.506Z"
+      "timestamp": "2026-09-28T09:04:35.769Z"
     },
     {
       "id": "PWA-APP-4.1",
-      "description": "Application safely transitions to idle state",
+      "description": "Natural UI navigation away from form via SPA completed",
+      "passed": true,
+      "detail": "Current pathname: /",
+      "timestamp": "2026-09-28T09:04:37.287Z"
+    },
+    {
+      "id": "PWA-APP-4.2",
+      "description": "Document heap marker preserved across SPA client routing (zero document reload)",
+      "passed": true,
+      "detail": "Token intact: true",
+      "timestamp": "2026-09-28T09:04:37.292Z"
+    },
+    {
+      "id": "PWA-APP-4.3",
+      "description": "Component onDestroy naturally cleaned up registry (window.isAppBusy() === false)",
       "passed": true,
       "detail": "isBusy: false",
-      "timestamp": "2026-09-28T08:51:20.724Z"
+      "timestamp": "2026-09-28T09:04:37.309Z"
     },
     {
       "id": "PWA-APP-5.1",
       "description": "PWA Lifecycle Invariant: Idle client automatically executed document reload",
       "passed": true,
       "detail": "Page navigation/reload completed",
-      "timestamp": "2026-09-28T08:51:22.165Z"
+      "timestamp": "2026-09-28T09:04:38.471Z"
     },
     {
       "id": "PWA-APP-5.2",
       "description": "Document memory state was cleanly refreshed (old heap marker is undefined)",
       "passed": true,
       "detail": "Token after reload: undefined",
-      "timestamp": "2026-09-28T08:51:22.210Z"
+      "timestamp": "2026-09-28T09:04:38.491Z"
     }
   ]
 }

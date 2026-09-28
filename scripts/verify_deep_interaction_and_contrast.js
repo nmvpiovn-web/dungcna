@@ -804,8 +804,10 @@ async function main() {
 
   cdp.close();
 
-  const outPath = 'tests/deep_interaction_audit_evidence.json';
+  const outPath = 'tests/remote_cdp_32_audit_evidence.json';
   fs.writeFileSync(outPath, JSON.stringify(auditReport, null, 2));
+  const codexOutPath = 'C:/Users/admin/Documents/Codex/remote_cdp_32_audit_evidence.json';
+  try { fs.writeFileSync(codexOutPath, JSON.stringify(auditReport, null, 2)); } catch {}
 
   console.log(`\n=== AUDIT COMPLETE ===`);
   const failed = auditReport.tests.filter(t => !t.passed);

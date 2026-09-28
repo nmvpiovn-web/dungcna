@@ -1,0 +1,510 @@
+{
+  "timestamp": "2026-09-28T09:06:29.696Z",
+  "commit": "d07c22042c12fc3169466907d5899f6917cd94f8",
+  "build_identity": "build_d07c220_1790585546901",
+  "environment": "http://127.0.0.1:4173",
+  "total": 52,
+  "passed": 52,
+  "failed": 0,
+  "missing_expected_ids": [],
+  "screenshot_manifest": [
+    {
+      "filename": "01_registered_lop2.png",
+      "testId": "1.2",
+      "description": "Registration completed with Lớp 2",
+      "sha256": "98b271eafbe24a3ca4d69cac18be7e85cf9483ccce69fd6d535b75eed6ffcd0c",
+      "sizeBytes": 145395,
+      "timestamp": "2026-09-28T09:05:45.283Z"
+    },
+    {
+      "filename": "02_reloaded_lop2_persisted.png",
+      "testId": "1.4",
+      "description": "Reloaded session preserved with Lớp 2",
+      "sha256": "c86cd3f3a0f53c165dd9779c41e779da67c329a1fdc5c1be8a1aea1746ad68f0",
+      "sizeBytes": 145400,
+      "timestamp": "2026-09-28T09:05:47.420Z"
+    },
+    {
+      "filename": "03_profile_dropdown_open.png",
+      "testId": "2.2",
+      "description": "Profile dropdown opened",
+      "sha256": "0ef40d5bfa7a5d56c3bb1704bdef5752d3ddc462db7485dbd3d47dcb55d71a89",
+      "sizeBytes": 156025,
+      "timestamp": "2026-09-28T09:05:48.195Z"
+    },
+    {
+      "filename": "04_logged_out_guest_state.png",
+      "testId": "2.5",
+      "description": "Logged out guest state",
+      "sha256": "b23f2062abf6dc554650eba17f415620cb182342f8f12926b3329ba71a3d4038",
+      "sizeBytes": 147018,
+      "timestamp": "2026-09-28T09:05:49.545Z"
+    },
+    {
+      "filename": "05_nav_dictionary_success.png",
+      "testId": "3.6",
+      "description": "Navigation to /dictionary successful",
+      "sha256": "2852f50dfb0a2aab310a37ca691289ae94dee91a0be1d81bb7807874e3729e2d",
+      "sizeBytes": 122426,
+      "timestamp": "2026-09-28T09:05:58.973Z"
+    },
+    {
+      "filename": "06_mobile_drawer_open.png",
+      "testId": "3.10",
+      "description": "Mobile drawer open at 390px",
+      "sha256": "b4adc8d34d47a9ce064e7d44ee6a2e5afbb85f57757d0afb2f9edc64e5deffd8",
+      "sizeBytes": 76058,
+      "timestamp": "2026-09-28T09:06:03.022Z"
+    },
+    {
+      "filename": "07_theme_dark_applied.png",
+      "testId": "4.6",
+      "description": "Dark theme applied",
+      "sha256": "967529f6b7ccd5c2b5da069df90f9bbebd57391554150ee795b8c744deb4054b",
+      "sizeBytes": 150647,
+      "timestamp": "2026-09-28T09:06:06.323Z"
+    },
+    {
+      "filename": "08_sw_busy_banner_exam.png",
+      "testId": "5.2",
+      "description": "SW banner during active exam",
+      "sha256": "c4a5e4ab787c06663ab14cb65e0e507fb4009d697ea1cfdd1dace93894bc9915",
+      "sizeBytes": 208225,
+      "timestamp": "2026-09-28T09:06:14.175Z"
+    },
+    {
+      "filename": "09_sw_busy_banner_recruitment.png",
+      "testId": "5.5",
+      "description": "SW banner during dirty recruitment form",
+      "sha256": "caa7b23078137902893d778b3c502c239d694147ade13dc2d9ca970e0cfb1ad5",
+      "sizeBytes": 106348,
+      "timestamp": "2026-09-28T09:06:16.809Z"
+    },
+    {
+      "filename": "10_exam_answers_preserved.png",
+      "testId": "6.7",
+      "description": "Exam answers and timer countdown verified",
+      "sha256": "ff994212eaa94eca7b2f366c85b91af576ecf6b4cf50abf9cb64e0c928eb9c8c",
+      "sizeBytes": 207823,
+      "timestamp": "2026-09-28T09:06:28.836Z"
+    }
+  ],
+  "results": [
+    {
+      "id": "NEG-0.1",
+      "index": 1,
+      "name": "Negative Control: evaluateHeadingTypography rejects font-weight 900",
+      "pass": true,
+      "detail": "Evaluator correctly threw on weight 900",
+      "timestamp": "2026-09-28T09:05:36.838Z"
+    },
+    {
+      "id": "NEG-0.2",
+      "index": 2,
+      "name": "Negative Control: evaluateHorizontalOverflow rejects 5000px overflow",
+      "pass": true,
+      "detail": "Evaluator correctly threw on 5000px overflow",
+      "timestamp": "2026-09-28T09:05:36.865Z"
+    },
+    {
+      "id": "NEG-0.3",
+      "index": 3,
+      "name": "Negative Control: evaluateDrawerState rejects missing drawer selector when expectOpen=true",
+      "pass": true,
+      "detail": "Evaluator correctly threw on nonexistent drawer",
+      "timestamp": "2026-09-28T09:05:36.874Z"
+    },
+    {
+      "id": "NEG-0.4",
+      "index": 4,
+      "name": "Negative Control: evaluateServerAuth rejects HTTP 401 unauthenticated response",
+      "pass": true,
+      "detail": "Evaluator correctly threw on 401 unauthenticated response",
+      "timestamp": "2026-09-28T09:05:36.875Z"
+    },
+    {
+      "id": "NEG-0.5",
+      "index": 5,
+      "name": "Negative Control: evaluateContrastRatio rejects low-contrast pair (1.1:1 < 4.5:1)",
+      "pass": true,
+      "detail": "Evaluator correctly threw on low contrast ratio",
+      "timestamp": "2026-09-28T09:05:36.877Z"
+    },
+    {
+      "id": "1.1",
+      "index": 6,
+      "name": "Home page returns HTTP 200 with valid content",
+      "pass": true,
+      "detail": "HTTP 200",
+      "timestamp": "2026-09-28T09:05:38.350Z"
+    },
+    {
+      "id": "1.2",
+      "index": 7,
+      "name": "UI displays logged in profile button (#user-profile-btn) after registration",
+      "pass": true,
+      "detail": "Profile button visible: true",
+      "timestamp": "2026-09-28T09:05:44.591Z"
+    },
+    {
+      "id": "1.3",
+      "index": 8,
+      "name": "Server endpoint /api/auth/verify confirms authenticated user with grade === \"Lớp 2\"",
+      "pass": true,
+      "detail": "Server grade: Lớp 2",
+      "timestamp": "2026-09-28T09:05:45.332Z"
+    },
+    {
+      "id": "1.4",
+      "index": 9,
+      "name": "Page reload preserves session and server verifies grade === \"Lớp 2\"",
+      "pass": true,
+      "detail": "Reloaded server grade: Lớp 2",
+      "timestamp": "2026-09-28T09:05:47.263Z"
+    },
+    {
+      "id": "2.1",
+      "index": 10,
+      "name": "User profile button (#user-profile-btn) is visible in navbar",
+      "pass": true,
+      "detail": "Visible: true",
+      "timestamp": "2026-09-28T09:05:47.481Z"
+    },
+    {
+      "id": "2.2",
+      "index": 11,
+      "name": "Profile dropdown opens and displays logout button (#logout-btn)",
+      "pass": true,
+      "detail": "Visible: true",
+      "timestamp": "2026-09-28T09:05:48.000Z"
+    },
+    {
+      "id": "2.3",
+      "index": 12,
+      "name": "Real logout button click clears localStorage and session cookie",
+      "pass": true,
+      "detail": "Cleared: true",
+      "timestamp": "2026-09-28T09:05:49.271Z"
+    },
+    {
+      "id": "2.4",
+      "index": 13,
+      "name": "Navbar returns to guest state with #login-btn visible",
+      "pass": true,
+      "detail": "Login button visible: true",
+      "timestamp": "2026-09-28T09:05:49.280Z"
+    },
+    {
+      "id": "2.5",
+      "index": 14,
+      "name": "Protected server endpoint /api/auth/verify returns HTTP 401 when logged out",
+      "pass": true,
+      "detail": "Status: 401",
+      "timestamp": "2026-09-28T09:05:49.317Z"
+    },
+    {
+      "id": "2.6",
+      "index": 15,
+      "name": "Re-login via UI form succeeds and server confirms grade === \"Lớp 2\" retained",
+      "pass": true,
+      "detail": "Re-login server grade: Lớp 2",
+      "timestamp": "2026-09-28T09:05:52.463Z"
+    },
+    {
+      "id": "3.1",
+      "index": 16,
+      "name": "Desktop #nav-btn-courses opens courses dropdown submenu",
+      "pass": true,
+      "detail": "Dropdown open: true",
+      "timestamp": "2026-09-28T09:05:56.017Z"
+    },
+    {
+      "id": "3.2",
+      "index": 17,
+      "name": "Clicking courses submenu item navigates to /courses",
+      "pass": true,
+      "detail": "URL: http://127.0.0.1:4173/courses/",
+      "timestamp": "2026-09-28T09:05:56.169Z"
+    },
+    {
+      "id": "3.3",
+      "index": 18,
+      "name": "Desktop #nav-btn-exams opens exam dropdown submenu",
+      "pass": true,
+      "detail": "Dropdown open: true",
+      "timestamp": "2026-09-28T09:05:56.815Z"
+    },
+    {
+      "id": "3.4",
+      "index": 19,
+      "name": "Clicking exam submenu item navigates to /exam",
+      "pass": true,
+      "detail": "URL: http://127.0.0.1:4173/exam/",
+      "timestamp": "2026-09-28T09:05:56.961Z"
+    },
+    {
+      "id": "3.5",
+      "index": 20,
+      "name": "Desktop #nav-btn-tools opens tools dropdown submenu",
+      "pass": true,
+      "detail": "Dropdown open: true",
+      "timestamp": "2026-09-28T09:05:58.302Z"
+    },
+    {
+      "id": "3.6",
+      "index": 21,
+      "name": "Clicking tools submenu item navigates to /dictionary",
+      "pass": true,
+      "detail": "URL: http://127.0.0.1:4173/dictionary/",
+      "timestamp": "2026-09-28T09:05:58.709Z"
+    },
+    {
+      "id": "3.7",
+      "index": 22,
+      "name": "Tablet viewport (768px) has zero horizontal overflow via unified evaluator",
+      "pass": true,
+      "detail": "Evaluator passed at 768px",
+      "timestamp": "2026-09-28T09:06:00.609Z"
+    },
+    {
+      "id": "3.8",
+      "index": 23,
+      "name": "Mobile viewport (390px) has zero horizontal overflow via unified evaluator",
+      "pass": true,
+      "detail": "Evaluator passed at 390px",
+      "timestamp": "2026-09-28T09:06:02.351Z"
+    },
+    {
+      "id": "3.9",
+      "index": 24,
+      "name": "Mobile menu toggle button (#mobile-menu-btn) is visible at 390px",
+      "pass": true,
+      "detail": "Visible: true",
+      "timestamp": "2026-09-28T09:06:02.402Z"
+    },
+    {
+      "id": "3.10",
+      "index": 25,
+      "name": "Clicking #mobile-menu-btn opens mobile drawer (#mobile-drawer)",
+      "pass": true,
+      "detail": "Drawer verified open via evaluateDrawerState",
+      "timestamp": "2026-09-28T09:06:02.932Z"
+    },
+    {
+      "id": "3.11",
+      "index": 26,
+      "name": "Mobile drawer link click navigates to destination (/courses) AND drawer closes",
+      "pass": true,
+      "detail": "At courses: true, Drawer closed: true",
+      "timestamp": "2026-09-28T09:06:03.642Z"
+    },
+    {
+      "id": "4.1",
+      "index": 27,
+      "name": "H1 computed font-weight strictly equals 600 (NOT 900)",
+      "pass": true,
+      "detail": "H1 weight: 600",
+      "timestamp": "2026-09-28T09:06:04.945Z"
+    },
+    {
+      "id": "4.2",
+      "index": 28,
+      "name": "H2 computed font-weight strictly equals 600 (NOT 900)",
+      "pass": true,
+      "detail": "H2 weight: 600",
+      "timestamp": "2026-09-28T09:06:04.951Z"
+    },
+    {
+      "id": "4.3",
+      "index": 29,
+      "name": "Body computed font-weight equals 400 strictly",
+      "pass": true,
+      "detail": "Body weight: 400",
+      "timestamp": "2026-09-28T09:06:04.955Z"
+    },
+    {
+      "id": "4.4",
+      "index": 30,
+      "name": "Default theme is Sky: class \"theme-sky\" present and --primary === #0284c7",
+      "pass": true,
+      "detail": "Class: true, --primary: #0284c7",
+      "timestamp": "2026-09-28T09:06:04.961Z"
+    },
+    {
+      "id": "4.5",
+      "index": 31,
+      "name": "Switching to Light theme ensures !dark AND !theme-sky (Sky cannot pass as Light)",
+      "pass": true,
+      "detail": "isDark: false, isSky: false, savedTheme: light",
+      "timestamp": "2026-09-28T09:06:05.414Z"
+    },
+    {
+      "id": "4.6",
+      "index": 32,
+      "name": "Switching to Dark theme applies \"dark\" class cleanly",
+      "pass": true,
+      "detail": "Dark active: true",
+      "timestamp": "2026-09-28T09:06:05.942Z"
+    },
+    {
+      "id": "4.7",
+      "index": 33,
+      "name": "Dark theme persists across page reload from localStorage",
+      "pass": true,
+      "detail": "Persisted: true",
+      "timestamp": "2026-09-28T09:06:07.847Z"
+    },
+    {
+      "id": "4.8",
+      "index": 34,
+      "name": "Switching theme cycle returns cleanly to Sky theme",
+      "pass": true,
+      "detail": "Back to sky: true",
+      "timestamp": "2026-09-28T09:06:08.360Z"
+    },
+    {
+      "id": "4.9",
+      "index": 35,
+      "name": "Real DOM form label measured on /recruitment: font-weight 500/600 and WCAG contrast >= 4.5:1",
+      "pass": true,
+      "detail": "Label: \"Họ và tên (*):\", Weight: 500, Contrast: 9.9:1",
+      "timestamp": "2026-09-28T09:06:10.128Z"
+    },
+    {
+      "id": "4.10",
+      "index": 36,
+      "name": "Desktop 200% reflow zoom (640px) and CDP 2.0x visual viewport scale have zero horizontal clipping/overflow",
+      "pass": true,
+      "detail": "Reflow200: true, VisualScale: 2x",
+      "timestamp": "2026-09-28T09:06:11.073Z"
+    },
+    {
+      "id": "5.1",
+      "index": 37,
+      "name": "Real producer: Active exam on /exam registers \"active_exam\" in __appBusyRegistry",
+      "pass": true,
+      "detail": "Reason in registry: true, isBusy: true",
+      "timestamp": "2026-09-28T09:06:13.732Z"
+    },
+    {
+      "id": "5.2",
+      "index": 38,
+      "name": "Controllerchange during busy exam displays #sw-update-banner without reloading page",
+      "pass": true,
+      "detail": "Banner displayed: true",
+      "timestamp": "2026-09-28T09:06:13.812Z"
+    },
+    {
+      "id": "5.3",
+      "index": 39,
+      "name": "PWA Invariant: Zero reload occurred and student exam answer remains 100% intact",
+      "pass": true,
+      "detail": "Marker: intact_no_reload, Content preserved: true",
+      "timestamp": "2026-09-28T09:06:13.898Z"
+    },
+    {
+      "id": "5.4",
+      "index": 40,
+      "name": "Real producer: Typing into recruitment form registers \"dirty_form_recruitment\" in __appBusyRegistry",
+      "pass": true,
+      "detail": "Reason in registry: true",
+      "timestamp": "2026-09-28T09:06:16.277Z"
+    },
+    {
+      "id": "5.5",
+      "index": 41,
+      "name": "Controllerchange during dirty form preserves typed content without reloading",
+      "pass": true,
+      "detail": "Preserved text: \"Nguyễn Thị Ứng Viên G1\"",
+      "timestamp": "2026-09-28T09:06:16.650Z"
+    },
+    {
+      "id": "5.6",
+      "index": 42,
+      "name": "Navigating away from dirty form via in-app SPA link cleans up \"dirty_form_recruitment\" without page reload",
+      "pass": true,
+      "detail": "SPA intact: true, Cleaned up: true",
+      "timestamp": "2026-09-28T09:06:17.783Z"
+    },
+    {
+      "id": "5.7",
+      "index": 43,
+      "name": "Real UI microphone recording registers busy state, creates audio blob, survives SW update event, and unregisters on stop",
+      "pass": true,
+      "detail": "Started: true, BlobBytes: 11888, DurationMs: 1034, TracksEnded: true, Stopped: true",
+      "timestamp": "2026-09-28T09:06:22.144Z"
+    },
+    {
+      "id": "5.8",
+      "index": 44,
+      "name": "Idle state: isAppBusy() naturally returns false when no producers are active (zero artificial flag overrides)",
+      "pass": true,
+      "detail": "isAppBusy: false",
+      "timestamp": "2026-09-28T09:06:22.149Z"
+    },
+    {
+      "id": "6.1",
+      "index": 45,
+      "name": "Guest exam survey modal opens cleanly into DOM",
+      "pass": true,
+      "detail": "Modal visible: true",
+      "timestamp": "2026-09-28T09:06:24.491Z"
+    },
+    {
+      "id": "6.2",
+      "index": 46,
+      "name": "Real pointer click on backdrop closes modal without traps",
+      "pass": true,
+      "detail": "Modal closed: true",
+      "timestamp": "2026-09-28T09:06:25.074Z"
+    },
+    {
+      "id": "6.3",
+      "index": 47,
+      "name": "Underlying page elements accept pointer clicks after modal close (clicked #nav-btn-courses)",
+      "pass": true,
+      "detail": "Dropdown opened: true",
+      "timestamp": "2026-09-28T09:06:25.549Z"
+    },
+    {
+      "id": "6.4",
+      "index": 48,
+      "name": "Student answers question by checking radio option",
+      "pass": true,
+      "detail": "Checked: true",
+      "timestamp": "2026-09-28T09:06:26.877Z"
+    },
+    {
+      "id": "6.5",
+      "index": 49,
+      "name": "Cancelling exit prompt triggers real browser confirm dialog (dialogPromptTriggered === true)",
+      "pass": true,
+      "detail": "Dialog triggered: true",
+      "timestamp": "2026-09-28T09:06:27.979Z"
+    },
+    {
+      "id": "6.6",
+      "index": 50,
+      "name": "Cancelling exit prompt preserves modal open state and student answer selection",
+      "pass": true,
+      "detail": "Modal open: true, Answer checked: true",
+      "timestamp": "2026-09-28T09:06:27.996Z"
+    },
+    {
+      "id": "6.7",
+      "index": 51,
+      "name": "Cancelling exit prompt preserves timer countdown deadline (timer continues decreasing)",
+      "pass": true,
+      "detail": "Before: 05:00 (300s), After: 04:59 (299s)",
+      "timestamp": "2026-09-28T09:06:28.006Z"
+    },
+    {
+      "id": "6.8",
+      "index": 52,
+      "name": "Browser history popstate navigation handled cleanly with confirm and closes modal",
+      "pass": true,
+      "detail": "Closed: true, Dialog accepted: true",
+      "timestamp": "2026-09-28T09:06:28.662Z"
+    }
+  ]
+}
