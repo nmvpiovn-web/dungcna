@@ -1741,5 +1741,5 @@
   {/if}
 
   <!-- Guest Exam Modal -->
-  <GuestExamModal bind:isOpen={showGuestModal} />
+  <GuestExamModal bind:isOpen={showGuestModal} initialGrade={currentUser?.grade || ''} />
 </div>
