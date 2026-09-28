@@ -199,6 +199,8 @@ function initTestDatabase() {
       delta_stars INTEGER NOT NULL,
       amount INTEGER NOT NULL,
       balance_after INTEGER NOT NULL,
+      debt_delta INTEGER DEFAULT 0,
+      debt_after INTEGER DEFAULT 0,
       action_type TEXT NOT NULL,
       reason TEXT,
       note TEXT,
@@ -701,7 +703,10 @@ describe('G1 AUDIT FIXTURE MATRIX - REAL HANDLERS & DB ISOLATION', async () => {
       assert.strictEqual(ledger.balance_after, 150, 'Ledger balance_after must reflect the authoritative post-batch balance');
     });
 
-    test('F.1: Concurrent grading race with CAS: only one request awards stars, no double reward', async () => {
+    test('F.1: Concurrent grading race with CAS: only one request awards stars, no double reward', async (t) => {
+      const originalISO = Date.prototype.toISOString;
+      Date.prototype.toISOString = function () { return '2026-09-28T02:00:00.000Z'; };
+      if (t?.after) t.after(() => { Date.prototype.toISOString = originalISO; });
       const sqlite = initTestDatabase();
       const d1 = createD1Adapter(sqlite);
 

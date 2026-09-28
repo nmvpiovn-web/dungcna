@@ -113,6 +113,8 @@ async function ensureTables(db) {
           delta_stars INTEGER NOT NULL,
           amount INTEGER NOT NULL,
           balance_after INTEGER NOT NULL,
+          debt_delta INTEGER DEFAULT 0,
+          debt_after INTEGER DEFAULT 0,
           action_type TEXT NOT NULL,
           reason TEXT,
           note TEXT,
@@ -131,6 +133,8 @@ async function ensureTables(db) {
       'ALTER TABLE student_star_ledger ADD COLUMN delta_stars INTEGER;',
       'ALTER TABLE student_star_ledger ADD COLUMN amount INTEGER;',
       'ALTER TABLE student_star_ledger ADD COLUMN balance_after INTEGER;',
+      'ALTER TABLE student_star_ledger ADD COLUMN debt_delta INTEGER DEFAULT 0;',
+      'ALTER TABLE student_star_ledger ADD COLUMN debt_after INTEGER DEFAULT 0;',
       'ALTER TABLE student_star_ledger ADD COLUMN reason TEXT;',
       'ALTER TABLE student_star_ledger ADD COLUMN note TEXT;'
     ];
@@ -780,9 +784,10 @@ export async function POST({ request, platform }) {
 
     const gradedAt = new Date().toISOString();
     const teacherName = user.name || user.username;
-    const gradingToken = (typeof crypto !== 'undefined' && crypto.randomUUID)
-      ? crypto.randomUUID()
-      : `gt_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;
+    if (typeof crypto === 'undefined' || !crypto.randomUUID) {
+      return json({ success: false, error: 'Internal Server Error: Secure CSPRNG is required' }, { status: 500 });
+    }
+    const gradingToken = crypto.randomUUID();
 
     if (db) {
       try {
@@ -889,25 +894,31 @@ export async function POST({ request, platform }) {
           );
         }
 
-        // 3. Insert audit trail in student_star_ledger with unified schema, conditional on gradingToken
+        // 3. Insert audit trail in student_star_ledger with unified schema (including debt_delta and debt_after), conditional on gradingToken
         if (starDelta !== 0) {
-          const ledgerId = `ledger_hw_${submission_id}_${Date.now()}`;
+          const ledgerId = `ledger_hw_${submission_id}_${crypto.randomUUID()}`;
           const ledgerReason = starReason || (starDelta >= 0 ? 'Thưởng sao làm BTVN' : 'Điều chỉnh điểm BTVN');
           const ledgerAction = starDelta >= 0 ? 'homework_reward' : 'homework_adjustment';
 
           batchStatements.push(
             db.prepare(`
               INSERT INTO student_star_ledger (
-                id, student_id, bill_id, reference_id, delta_stars, amount, balance_after, action_type, reason, note
+                id, student_id, bill_id, reference_id, delta_stars, amount, balance_after, debt_delta, debt_after, action_type, reason, note
               )
-              SELECT ?, ?, NULL, ?, ?, ?, (SELECT stars_balance FROM student_stars WHERE student_id = ?), ?, ?, ?
+              SELECT ?, ?, NULL, ?, ?, ?, 
+                     (SELECT stars_balance FROM student_stars WHERE student_id = ?),
+                     ?,
+                     (SELECT star_debt FROM student_stars WHERE student_id = ?),
+                     ?, ?, ?
               WHERE EXISTS (
                 SELECT 1 FROM homework_submissions 
                 WHERE id = ? AND grading_token = ?
               );
             `).bind(
               ledgerId, submission.student_id, submission_id,
-              starDelta, starDelta, submission.student_id, ledgerAction,
+              starDelta, starDelta, submission.student_id,
+              0, // debt_delta placeholder (or 0 when balance is positive)
+              submission.student_id, ledgerAction,
               ledgerReason, ledgerReason,
               submission_id, gradingToken
             )

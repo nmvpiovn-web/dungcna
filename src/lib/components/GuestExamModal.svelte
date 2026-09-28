@@ -41,17 +41,26 @@
     onClose();
   }
 
+  function handleDismiss() {
+    if (step === 'testing') {
+      if (typeof window !== 'undefined' && !window.confirm('Bạn có chắc muốn dừng bài khảo sát và thoát? Tiến độ làm bài hiện tại sẽ không được lưu.')) {
+        return;
+      }
+    }
+    handleReset();
+  }
+
   // Keyboard Escape & Mobile Back Listener
   onMount(() => {
     function handleKeyDown(e) {
       if (e.key === 'Escape' && isOpen) {
-        handleReset();
+        handleDismiss();
       }
     }
 
     function handlePopState() {
       if (isOpen) {
-        handleReset();
+        handleDismiss();
       }
     }
 
@@ -209,8 +218,8 @@
     role="dialog"
     aria-modal="true"
     aria-labelledby="guest-modal-title"
-    onclick={(e) => { if (e.target === e.currentTarget) handleReset(); }}
-    onkeydown={(e) => { if (e.key === 'Escape') handleReset(); }}
+    onclick={(e) => { if (e.target === e.currentTarget) handleDismiss(); }}
+    onkeydown={(e) => { if (e.key === 'Escape') handleDismiss(); }}
     tabindex="-1"
   >
     <div class="bg-white dark:bg-slate-900 rounded-xl max-w-2xl w-full border border-slate-200 dark:border-slate-800 shadow-2xl p-6 space-y-5 text-sm max-h-[90vh] overflow-y-auto relative animate-in fade-in zoom-in-95 duration-150">
@@ -227,7 +236,7 @@
         </div>
         <button 
           type="button"
-          onclick={handleReset} 
+          onclick={handleDismiss} 
           class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-base"
           aria-label="Đóng khảo sát năng lực"
           title="Đóng (Escape)"
@@ -401,15 +410,17 @@
                 {:else if q.options && q.options.length}
                   <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {#each q.options as opt}
-                      <label class="flex items-center gap-2 p-2.5 rounded border text-xs cursor-pointer transition-colors {answers[q.id] === opt ? 'border-sky-500 bg-sky-50 dark:bg-sky-950/50 text-sky-900 dark:text-sky-200 font-medium' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-800 dark:text-slate-200 font-normal'}">
+                      {@const optVal = typeof opt === 'object' && opt ? opt.id : opt}
+                      {@const optLabel = typeof opt === 'object' && opt ? `${opt.id}. ${opt.text}` : opt}
+                      <label class="flex items-center gap-2 p-2.5 rounded border text-xs cursor-pointer transition-colors {answers[q.id] === optVal ? 'border-sky-500 bg-sky-50 dark:bg-sky-950/50 text-sky-900 dark:text-sky-200 font-medium' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-800 dark:text-slate-200 font-normal'}">
                         <input 
                           type="radio" 
                           name={`q_${q.id}`} 
-                          value={opt} 
+                          value={optVal} 
                           bind:group={answers[q.id]}
                           class="accent-sky-600"
                         />
-                        <span>{opt}</span>
+                        <span>{optLabel}</span>
                       </label>
                     {/each}
                   </div>

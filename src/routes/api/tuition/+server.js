@@ -26,6 +26,8 @@ async function ensureStarLedgerTable(db) {
       delta_stars INTEGER NOT NULL,
       amount INTEGER NOT NULL,
       balance_after INTEGER NOT NULL,
+      debt_delta INTEGER DEFAULT 0,
+      debt_after INTEGER DEFAULT 0,
       action_type TEXT NOT NULL,
       reason TEXT,
       note TEXT,
@@ -42,6 +44,8 @@ async function ensureStarLedgerTable(db) {
     'ALTER TABLE student_star_ledger ADD COLUMN delta_stars INTEGER;',
     'ALTER TABLE student_star_ledger ADD COLUMN amount INTEGER;',
     'ALTER TABLE student_star_ledger ADD COLUMN balance_after INTEGER;',
+    'ALTER TABLE student_star_ledger ADD COLUMN debt_delta INTEGER DEFAULT 0;',
+    'ALTER TABLE student_star_ledger ADD COLUMN debt_after INTEGER DEFAULT 0;',
     'ALTER TABLE student_star_ledger ADD COLUMN reason TEXT;',
     'ALTER TABLE student_star_ledger ADD COLUMN note TEXT;'
   ];

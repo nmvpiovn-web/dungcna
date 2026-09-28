@@ -67,7 +67,10 @@
 		<!-- Global Busy / Dirty Registry & Safe PWA Controller Update -->
 		<script>
 			window.__appBusyRegistry = window.__appBusyRegistry || new Set();
-			window.registerBusyState = function(id) { window.__appBusyRegistry.add(id); };
+			window.registerBusyState = function(id) {
+				window.__appBusyRegistry.add(id);
+				return function() { window.__appBusyRegistry.delete(id); };
+			};
 			window.unregisterBusyState = function(id) { window.__appBusyRegistry.delete(id); };
 			window.isAppBusy = function() {
 				if (window.__appBusyRegistry.size > 0) return true;
