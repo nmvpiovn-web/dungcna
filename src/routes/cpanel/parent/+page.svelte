@@ -4,7 +4,7 @@
 
 <script>
   import { onMount } from 'svelte';
-  import { getCurrentUser } from '$lib/unifiedStore';
+  import { getAuthToken, getCurrentUser } from '$lib/unifiedStore';
 
   let currentUser = $state(null);
   let assignments = $state([]);
@@ -43,7 +43,7 @@
 
   async function loadLinkedChildren() {
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('tienganh_token') : '';
+      const token = getAuthToken();
       const res = await fetch('/api/parents/children', {
         headers: token ? { 'Authorization': `Bearer ${token}` } : {}
       });
@@ -52,9 +52,9 @@
         if (data.success && data.children && data.children.length > 0) {
           linkedStudents = [
             { id: 'all', name: 'Tất cả học sinh liên kết' },
-            ...data.children.map(c => ({
+            ...data.children.filter(c => c.is_verified === true).map(c => ({
               id: c.id,
-              name: `${c.name} (${c.grade || 'Lớp 7'})`
+              name: `${c.name} (${c.grade || 'Chưa xác định khối'})`
             }))
           ];
         }
@@ -64,13 +64,17 @@
     }
   }
 
+  let loadSequence = 0;
   async function loadData() {
+    const sequence = ++loadSequence;
+    assignments = [];
+    rawSubmissions = [];
     loading = true;
     errorMessage = '';
     currentUser = getCurrentUser();
 
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('tienganh_token') : '';
+      const token = getAuthToken();
       const queryParam = selectedStudentId !== 'all' ? `?child_id=${encodeURIComponent(selectedStudentId)}` : '';
       const res = await fetch(`/api/homework${queryParam}`, {
         headers: token ? { 'Authorization': `Bearer ${token}` } : {}
@@ -81,6 +85,7 @@
       }
 
       const data = await res.json();
+      if (sequence !== loadSequence) return;
       if (data.success) {
         assignments = data.assignments || [];
         rawSubmissions = data.submissions || [];
@@ -88,10 +93,11 @@
         errorMessage = data.error || 'Không thể tải dữ liệu học tập của con.';
       }
     } catch (e) {
+      if (sequence !== loadSequence) return;
       console.error('Failed to load parent data:', e);
       errorMessage = 'Lỗi kết nối máy chủ hoặc phiên đăng nhập đã hết hạn. Vui lòng tải lại.';
     } finally {
-      loading = false;
+      if (sequence === loadSequence) loading = false;
     }
   }
 

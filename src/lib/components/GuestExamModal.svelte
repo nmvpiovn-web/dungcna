@@ -1,5 +1,5 @@
 <script>
-  import { onMount, onDestroy } from 'svelte';
+  import { onMount, onDestroy, untrack } from 'svelte';
   import { speakWord, playAudioFeedback } from '$lib/speech.js';
   import { getCurrentUser } from '$lib/unifiedStore.js';
 
@@ -52,35 +52,32 @@
     handleReset();
   }
 
+  function normalizeGrade(value) {
+    const match = String(value || '').trim().match(/^(?:lop_|Lớp\s*)?(1[0-2]|[1-9])$/i);
+    return match ? `lop_${match[1]}` : '';
+  }
+
+  // Re-read context on every opening; never restore another user's grade over the profile.
+  $effect(() => {
+    if (!isOpen) return;
+    untrack(() => {
+    const user = getCurrentUser();
+    let storedGrade = '';
+    let storedCurriculum = '';
+    try {
+      storedGrade = localStorage.getItem('guest_selected_grade') || localStorage.getItem('preferred_grade') || '';
+      storedCurriculum = localStorage.getItem('guest_selected_curriculum') || '';
+    } catch {}
+    selectedGrade = normalizeGrade(initialGrade) || normalizeGrade(user?.grade) || (!user ? normalizeGrade(storedGrade) : '');
+    const allowed = selectedGrade === 'lop_7' ? ['global_success', 'friends_plus', 'smart_world'] : selectedGrade === 'lop_12' ? ['thpt_qg', 'ielts_academic'] : [];
+    selectedCurriculum = allowed.includes(storedCurriculum) ? storedCurriculum : (allowed[0] || '');
+    selectedDuration = '5m';
+    errorMsg = '';
+    });
+  });
+
   // Restore state and handle Escape / Back
   onMount(() => {
-    // 1. Restore grade preference
-    try {
-      const storedGrade = localStorage.getItem('guest_selected_grade') || localStorage.getItem('preferred_grade');
-      const currentUser = getCurrentUser();
-
-      if (initialGrade) {
-        selectedGrade = initialGrade.startsWith('lop_') ? initialGrade : `lop_${initialGrade.replace(/[^0-9]/g, '')}`;
-      } else if (storedGrade) {
-        selectedGrade = storedGrade;
-      } else if (currentUser?.grade) {
-        const gNum = String(currentUser.grade).replace(/[^0-9]/g, '');
-        if (gNum) selectedGrade = `lop_${gNum}`;
-      }
-    } catch {}
-
-    // 2. Restore curriculum preference
-    try {
-      const storedCurr = localStorage.getItem('guest_selected_curriculum');
-      if (storedCurr) {
-        selectedCurriculum = storedCurr;
-      } else if (selectedGrade === 'lop_7') {
-        selectedCurriculum = 'global_success';
-      } else if (selectedGrade === 'lop_12') {
-        selectedCurriculum = 'thpt_qg';
-      }
-    } catch {}
-
     function handleKeyDown(e) {
       if (e.key === 'Escape' && isOpen) {
         handleDismiss();
@@ -152,7 +149,7 @@
     if (!supportedGrades.includes(selectedGrade)) {
       isStarting = false;
       const gradeLabel = selectedGrade.replace('lop_', 'Lớp ');
-      errorMsg = `Ngân hàng đề thi thử cho ${gradeLabel} đang được biên soạn và thẩm định theo chuẩn GDPT 2026. Hiện tại bạn có thể trải nghiệm đề kiểm tra chuẩn Lớp 7 hoặc Lớp 12!`;
+      errorMsg = `Ngân hàng đề thi thử cho ${gradeLabel} đang được biên soạn và thẩm định theo chuẩn GDPT 2026. Lựa chọn khối lớp của bạn được giữ nguyên.`;
       return;
     }
 

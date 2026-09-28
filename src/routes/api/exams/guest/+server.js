@@ -614,6 +614,9 @@ export async function POST({ request, platform }) {
     // 2. Curriculum validation & filtering
     const gradeCurricula = SUPPORTED_CURRICULA[grade] || {};
     const defaultCurriculum = Object.keys(gradeCurricula)[0] || 'global_success';
+    if (body.curriculum != null && typeof body.curriculum !== 'string') {
+      return json({ success: false, error: 'InvalidCurriculum: Chương trình phải là chuỗi.' }, { status: 400 });
+    }
     const curriculum = body.curriculum ? body.curriculum.trim() : defaultCurriculum;
 
     if (!gradeCurricula[curriculum]) {

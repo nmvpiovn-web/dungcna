@@ -11,14 +11,14 @@
   let zaloId = $state('');
   let email = $state('');
   let avatar = $state('');
-  let grade = $state('Lớp 7');
+  let grade = $state('');
   let school = $state('');
   let target = $state('');
   let statusMessage = $state('');
   let isSaving = $state(false);
 
   let showTransferModal = $state(false);
-  let requestedTargetGrade = $state('Lớp 8');
+  let requestedTargetGrade = $state('');
   let transferReason = $state('');
   let isSendingTransfer = $state(false);
   let isAdminOrTeacher = $derived(currentUser ? isTeacherOrAdmin(currentUser) : false);
@@ -63,8 +63,8 @@
     } catch {}
 
     zaloId = meta.zalo_id || meta.zalo_phone || phone;
-    grade = meta.grade || 'Lớp 7';
-    requestedTargetGrade = grade || 'Lớp 8';
+    grade = currentUser.grade || meta.grade || '';
+    requestedTargetGrade = grade || '';
     school = meta.school || '';
     target = meta.target || `Chương trình ${grade}`;
     statusMessage = '';

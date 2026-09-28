@@ -1761,7 +1761,7 @@ export function updateUserProfile(userId, updates, operator = null) {
     isTeacherOrAdmin(activeUser)
   );
 
-  let newGrade = meta.grade || current.grade || 'Lớp 7';
+  let newGrade = meta.grade || current.grade || '';
   if (updates.grade !== undefined) {
     if (isAuthorizedAdmin || (current.role !== 'student' && current.role !== 'parent')) {
       newGrade = updates.grade;

@@ -72,7 +72,7 @@ export async function GET({ request, platform }) {
           // Private child profile ONLY revealed if link is formally verified
           name: isVerified ? (r.name || 'Học sinh liên kết') : 'Yêu cầu liên kết đang chờ xác minh',
           username: isVerified ? (r.username || '') : null,
-          grade: isVerified ? (r.grade || 'Lớp 7') : null,
+          grade: isVerified ? (r.grade || null) : null,
           avatar: isVerified ? (r.avatar || '') : null,
           status: isVerified ? (r.status || 'active') : 'pending_verification',
           stars_total: 0

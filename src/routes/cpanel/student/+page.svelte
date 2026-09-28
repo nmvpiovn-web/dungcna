@@ -4,7 +4,7 @@
 
 <script>
   import { onMount, onDestroy } from 'svelte';
-  import { getCurrentUser, getStudentStars } from '$lib/unifiedStore';
+  import { getAuthToken, getCurrentUser, getStudentStars } from '$lib/unifiedStore';
   import { playAudioFeedback } from '$lib/speech';
 
   let currentUser = $state(null);
@@ -46,7 +46,7 @@
     }
 
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('tienganh_token') : '';
+      const token = getAuthToken();
       const res = await fetch('/api/homework', {
         headers: token ? { 'Authorization': `Bearer ${token}` } : {}
       });
