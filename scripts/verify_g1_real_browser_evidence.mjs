@@ -801,7 +801,9 @@ async function runRealBrowserVerification() {
     // Start exam
     const startExamBtn = page.locator('button:has-text("Bắt Đầu"), button:has-text("Làm Bài Ngay")').first();
     if (await startExamBtn.isVisible()) {
-      await startExamBtn.click({ force: true });
+      await startExamBtn.scrollIntoViewIfNeeded();
+      await page.evaluate(() => window.scrollBy(0, -100));
+      await startExamBtn.click();
       await page.waitForTimeout(600);
     }
 
@@ -881,10 +883,10 @@ async function runRealBrowserVerification() {
     });
     // Click desktop nav link to /courses to trigger client-side SPA navigation
     const coursesBtn = page.locator('#nav-btn-courses');
-    await coursesBtn.click({ force: true });
+    await coursesBtn.click();
     await page.waitForTimeout(250);
     const coursesLink = page.locator('a[href="/courses"]').first();
-    await coursesLink.click({ force: true });
+    await coursesLink.click();
     await page.waitForURL('**/courses**', { timeout: 5000 });
     await page.waitForTimeout(300);
 
@@ -911,17 +913,18 @@ async function runRealBrowserVerification() {
       window.__pwa_reload_marker_audio = 'audio_intact';
     });
 
-    // Click the real button to open pronunciation rubric modal
+    // Click the real button to open pronunciation rubric modal (no force click)
     const openDeepBtn = page.locator('#btn-open-deep-modal').first();
     await openDeepBtn.scrollIntoViewIfNeeded();
-    await openDeepBtn.click({ force: true });
+    await page.evaluate(() => window.scrollBy(0, -100));
+    await openDeepBtn.click();
     await page.waitForTimeout(400);
 
     // Click the real start recording button in the modal
     const startRecordBtn = page.locator('#btn-dict-start-record');
     await startRecordBtn.waitFor({ state: 'visible', timeout: 3000 });
     await startRecordBtn.click();
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(400);
 
     // Assert recording started and component registered busy state
     const recActiveCheck = await page.evaluate(() => {
@@ -941,29 +944,30 @@ async function runRealBrowserVerification() {
     // Click the real stop recording button in the modal
     const stopRecordBtn = page.locator('#btn-dict-stop-record');
     await stopRecordBtn.click();
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(400);
 
     const recordingCleanedUp = await page.evaluate(() => {
       return !window.__isRecordingActive && !window.__appBusyRegistry.has('dictionary_audio_recording');
     });
 
+    const audioEvidence = await page.evaluate(() => window.__lastRecordedAudioEvidence);
+    const audioBlobValid = Boolean(audioEvidence && audioEvidence.blobSize > 0 && audioEvidence.durationMs > 0 && audioEvidence.tracksEnded);
+
     // Close deep modal
     const closeDeepBtn = page.locator('#btn-close-deep-modal');
     if (await closeDeepBtn.isVisible()) {
       await closeDeepBtn.click();
+      await page.waitForTimeout(200);
     }
 
-    const audioTestPass = recActiveCheck && (audioReloadMarker === 'audio_intact') && audioStillRecording && audioSwBanner && recordingCleanedUp;
-    recordTest('5.7', 'Real UI microphone recording registers busy state, survives SW update event without interruption, and unregisters on stop', audioTestPass, `Started: ${recActiveCheck}, NoReload: ${audioReloadMarker === 'audio_intact'}, SWBanner: ${audioSwBanner}, Stopped: ${recordingCleanedUp}`);
+    const audioTestPass = recActiveCheck && (audioReloadMarker === 'audio_intact') && audioStillRecording && audioSwBanner && recordingCleanedUp && audioBlobValid;
+    recordTest('5.7', 'Real UI microphone recording registers busy state, creates audio blob, survives SW update event, and unregisters on stop', audioTestPass, `Started: ${recActiveCheck}, BlobBytes: ${audioEvidence?.blobSize || 0}, DurationMs: ${audioEvidence?.durationMs || 0}, TracksEnded: ${audioEvidence?.tracksEnded}, Stopped: ${recordingCleanedUp}`);
 
-    // 5.8: Idle State PWA Update
+    // 5.8: Natural Idle State PWA Update (zero manual variable assignments)
     const isIdleNow = await page.evaluate(() => {
-      window.__isExamActive = false;
-      window.__isRecordingActive = false;
-      window.__hasUnsavedChanges = false;
       return typeof window.isAppBusy === 'function' && window.isAppBusy() === false;
     });
-    recordTest('5.8', 'Idle state: isAppBusy() returns false when no producers are active', isIdleNow, `isAppBusy: ${!isIdleNow}`);
+    recordTest('5.8', 'Idle state: isAppBusy() naturally returns false when no producers are active (zero artificial flag overrides)', isIdleNow, `isAppBusy: ${!isIdleNow}`);
 
   } catch (err) {
     console.error('  Error in Section 5:', err);
@@ -978,10 +982,11 @@ async function runRealBrowserVerification() {
     await page.goto(`${BASE_URL}/exam`, { waitUntil: 'networkidle' });
     await page.waitForTimeout(400);
 
-    // Open Guest Exam Survey Modal via #guest-exam-btn (force click to bypass sticky header overlap)
+    // Open Guest Exam Survey Modal via #guest-exam-btn (scroll offset to prevent header overlap)
     const guestExamBtn = page.locator('#guest-exam-btn, button:has-text("Thi Thử Cho Khách")').first();
     await guestExamBtn.scrollIntoViewIfNeeded();
-    await guestExamBtn.click({ force: true });
+    await page.evaluate(() => window.scrollBy(0, -100));
+    await guestExamBtn.click();
     await page.waitForTimeout(400);
 
     const modalDialog = page.locator('div[role="dialog"][aria-modal="true"]').first();
@@ -990,7 +995,7 @@ async function runRealBrowserVerification() {
 
     // Real pointer click on backdrop coordinates (20, 20) outside inner box
     const modalBackdrop = page.locator('div[data-testid="guest-modal-backdrop"]').first();
-    await modalBackdrop.click({ position: { x: 20, y: 20 }, force: true });
+    await modalBackdrop.click({ position: { x: 20, y: 20 } });
     await page.waitForTimeout(500);
 
     const isClosedByBackdrop = !(await modalDialog.isVisible());
@@ -998,28 +1003,29 @@ async function runRealBrowserVerification() {
 
     // 6.3: CLICK-THROUGH OVERLAY CHECK: Actually CLICK #nav-btn-courses to prove no overlay traps clicks!
     const coursesNavBtn = page.locator('#nav-btn-courses').first();
-    await coursesNavBtn.click({ force: true });
+    await coursesNavBtn.click();
     await page.waitForTimeout(300);
     const coursesDropdownItem = page.locator('a[href="/courses"]').first();
     const dropdownOpenedAfterModalClose = await coursesDropdownItem.isVisible();
     recordTest('6.3', 'Underlying page elements accept pointer clicks after modal close (clicked #nav-btn-courses)', dropdownOpenedAfterModalClose, `Dropdown opened: ${dropdownOpenedAfterModalClose}`);
 
     // Toggle courses dropdown closed
-    await coursesNavBtn.click({ force: true });
+    await coursesNavBtn.click();
     await page.waitForTimeout(300);
 
     // Re-open modal and start test
     await guestExamBtn.scrollIntoViewIfNeeded();
-    await guestExamBtn.click({ force: true });
+    await page.evaluate(() => window.scrollBy(0, -100));
+    await guestExamBtn.click();
     await modalDialog.waitFor({ state: 'visible', timeout: 5000 });
 
     const startTestBtn = modalDialog.locator('button[type="submit"], button:has-text("Bắt Đầu")').first();
-    await startTestBtn.click({ force: true });
+    await startTestBtn.click();
     
     // Wait for questions and radio button to appear
     const firstOption = modalDialog.locator('input[type="radio"]').first();
     await firstOption.waitFor({ state: 'visible', timeout: 8000 });
-    await firstOption.check({ force: true });
+    await firstOption.check();
     await page.waitForTimeout(300);
     const isOptionChecked = await firstOption.isChecked();
     recordTest('6.4', 'Student answers question by checking radio option', isOptionChecked, `Checked: ${isOptionChecked}`);
@@ -1042,7 +1048,7 @@ async function runRealBrowserVerification() {
 
     // Attempt to dismiss while test is active
     const activeCloseBtn = page.locator('button[aria-label="Đóng khảo sát năng lực"], button:has-text("✕")').first();
-    await activeCloseBtn.click({ force: true });
+    await activeCloseBtn.click();
     await page.waitForTimeout(1000);
 
     // Assert: dialog was triggered, modal is still open, answer is still checked, and timer countdown continues

@@ -211,9 +211,23 @@
     }
   }
 
+  function closeDeepModal() {
+    if (isRecording) {
+      stopRecording();
+    }
+    showDeepModal = false;
+    selectedWordForDeep = null;
+    if (typeof window !== 'undefined') {
+      window.__isRecordingActive = false;
+      window.unregisterBusyState?.('dictionary_audio_recording');
+    }
+  }
+
   // Web Audio Recording Logic for Pronunciation Evaluation
   let speechRecognizer = null;
   let recognizedSpeechText = '';
+  let recordStartTime = 0;
+  let activeAudioStream = null;
 
   async function startRecording() {
     recordError = '';
@@ -221,9 +235,11 @@
     recordedAudioUrl = null;
     audioChunks = [];
     recognizedSpeechText = '';
+    recordStartTime = Date.now();
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      activeAudioStream = stream;
       recordConsentGranted = true;
       mediaRecorder = new MediaRecorder(stream);
 
@@ -232,10 +248,24 @@
       };
 
       mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+        const durationMs = Date.now() - recordStartTime;
+        const audioBlob = new Blob(audioChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
         recordedAudioUrl = URL.createObjectURL(audioBlob);
+
+        // Stop all tracks cleanly
+        stream.getTracks().forEach(track => {
+          try { track.stop(); } catch {}
+        });
+
+        if (typeof window !== 'undefined') {
+          window.__lastRecordedAudioEvidence = {
+            blobSize: audioBlob.size,
+            blobType: audioBlob.type,
+            durationMs: durationMs,
+            tracksEnded: stream.getTracks().every(t => t.readyState === 'ended')
+          };
+        }
         evaluatePronunciationRubric(audioBlob);
-        stream.getTracks().forEach(track => track.stop());
       };
 
       // If browser supports SpeechRecognition, start recognition stream
@@ -272,12 +302,22 @@
 
   function stopRecording() {
     if (mediaRecorder && isRecording) {
-      mediaRecorder.stop();
+      try {
+        mediaRecorder.stop();
+      } catch (e) {
+        console.warn('Error stopping mediaRecorder:', e);
+      }
       isRecording = false;
       if (typeof window !== 'undefined') {
         window.__isRecordingActive = false;
         window.unregisterBusyState?.('dictionary_audio_recording');
       }
+    }
+    if (activeAudioStream) {
+      activeAudioStream.getTracks().forEach(track => {
+        try { track.stop(); } catch {}
+      });
+      activeAudioStream = null;
     }
     if (speechRecognizer) {
       try { speechRecognizer.stop(); } catch {}
@@ -883,7 +923,7 @@
       <!-- Modal Footer -->
       <div class="flex items-center justify-between pt-2 border-t border-slate-200 dark:border-slate-800">
         <span class="text-[11px] text-slate-400">Nguồn: Giáo án Second-Brain Cô Dung</span>
-        <button onclick={() => showDeepModal = false} class="px-4 py-2 rounded-md font-semibold bg-slate-900 hover:bg-slate-800 text-white">Đóng</button>
+        <button id="btn-close-deep-modal" onclick={closeDeepModal} class="px-4 py-2 rounded-md font-semibold bg-slate-900 hover:bg-slate-800 text-white">Đóng</button>
       </div>
     </div>
   </div>

@@ -83,7 +83,12 @@
 			};
 
 			if ('serviceWorker' in navigator) {
+				let hadPreviousController = Boolean(navigator.serviceWorker.controller);
 				navigator.serviceWorker.addEventListener('controllerchange', () => {
+					if (!hadPreviousController) {
+						hadPreviousController = true;
+						return; // First install / claim: do not reload fresh page
+					}
 					// Protect active exams, recordings, and unsaved form input from abrupt reloads
 					if (window.isAppBusy()) {
 						// Dispatch non-disruptive update notification without destroying user state

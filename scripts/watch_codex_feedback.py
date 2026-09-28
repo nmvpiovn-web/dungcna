@@ -15,7 +15,7 @@ if os.path.exists(DOCS_DIR):
         if os.path.isfile(fp):
             initial_files[f] = os.path.getmtime(fp)
 
-START_ORDINAL = 3370
+START_ORDINAL = 3867
 if os.path.exists(ROLLOUT_FILE):
     initial_rollout_size = os.path.getsize(ROLLOUT_FILE)
 else:
@@ -45,7 +45,7 @@ while elapsed < MAX_WAIT_SECONDS:
                 continue
             mtime = os.path.getmtime(fp)
             if f not in initial_files or mtime > initial_files[f]:
-                if any(k in f.upper() for k in ["FEEDBACK", "AUDIT", "MASTER_PLAN", "GATE", "9202F7E"]):
+                if any(k in f.upper() for k in ["FEEDBACK", "AUDIT", "MASTER_PLAN", "GATE", "46377AD", "G1_"]):
                     print(f"\n=======================================================")
                     print(f"[{datetime.now().strftime('%H:%M:%S')}] DETECTED NEW/UPDATED CODEX FILE: {f}")
                     print(f"=======================================================\n")
@@ -82,26 +82,22 @@ while elapsed < MAX_WAIT_SECONDS:
                 for item in new_lines
             )
 
-            if task_completed:
-                # Find the assistant message in new_lines
-                assistant_msgs = []
-                for item in new_lines:
-                    payload = item.get("payload", {})
-                    if payload.get("role") == "assistant" or item.get("role") == "assistant":
-                        content = payload.get("content", [])
-                        for c in content:
-                            if isinstance(c, dict) and c.get("type") == "output_text":
-                                assistant_msgs.append(c.get("text", ""))
-                            elif isinstance(c, str):
-                                assistant_msgs.append(c)
-                
+            assistant_msgs = []
+            for item in new_lines:
+                payload = item.get("payload", {})
+                if payload.get("role") == "assistant" or item.get("role") == "assistant":
+                    content = payload.get("content", [])
+                    for c in content:
+                        if isinstance(c, dict) and c.get("type") == "output_text":
+                            assistant_msgs.append(c.get("text", ""))
+                        elif isinstance(c, str):
+                            assistant_msgs.append(c)
+
+            if task_completed and assistant_msgs:
                 print(f"\n=======================================================")
                 print(f"[{datetime.now().strftime('%H:%M:%S')}] CODEX TASK COMPLETED IN THREAD!")
                 print(f"=======================================================\n")
-                if assistant_msgs:
-                    print("\n\n".join(assistant_msgs))
-                else:
-                    print("(No direct text found; check recent Codex Documents folder)")
+                print("\n\n".join(assistant_msgs))
                 sys.stdout.flush()
                 sys.exit(0)
         except Exception as e:
