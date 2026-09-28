@@ -46,6 +46,7 @@
 
   $effect(() => {
     if (isOpen) {
+      statusMessage = '';
       loadProfileData();
     }
   });
@@ -89,7 +90,6 @@
     school = meta.school || '';
     target = meta.target || `Chương trình ${grade}`;
     originalProfile = { name, phone, email, avatar, school, target, zalo_id: zaloId, grade };
-    statusMessage = '';
   }
 
   async function handleSendClassTransferRequest() {
@@ -186,13 +186,20 @@
           isSaving = false;
         }, 500);
       } else if (res.status === 409 && data.error?.includes('ConcurrencyConflict')) {
-        // Concurrency conflict: reload fresh profile version, keep user's edits in form
-        if (data.current_version) {
-          profileVersion = data.current_version;
-        }
-        statusMessage = '⚠️ Hồ sơ đã được cập nhật bởi phiên khác. Dữ liệu mới đã được tải lại — vui lòng xem lại và nhấn Lưu lần nữa.';
-        // Reload the original profile from server to update baseline and version
+        // Keep the submitted dirty fields, refresh the server baseline/version,
+        // then restore only those edits for explicit user review and retry.
+        const draft = { ...payload };
+        delete draft.expected_version;
         await loadProfileData();
+        if ('name' in draft) name = draft.name;
+        if ('phone' in draft) phone = draft.phone;
+        if ('email' in draft) email = draft.email;
+        if ('avatar' in draft) avatar = draft.avatar;
+        if ('school' in draft) school = draft.school;
+        if ('target' in draft) target = draft.target;
+        if ('zalo_id' in draft) zaloId = draft.zalo_id;
+        if ('grade' in draft) grade = draft.grade;
+        statusMessage = '⚠️ Hồ sơ đã được cập nhật bởi phiên khác. Các chỉnh sửa của bạn được giữ lại; vui lòng đối chiếu và nhấn Lưu nếu muốn áp dụng.';
         isSaving = false;
       } else {
         statusMessage = `⚠️ ${data.error || 'Có lỗi xảy ra khi lưu hồ sơ vào máy chủ!'}`;
