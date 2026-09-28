@@ -612,8 +612,8 @@ test('P1-10: create_adjustment sequential versioning & idempotency replay/confli
   assert.equal(dataReplay.idempotent_replay, true);
   assert.equal(dataReplay.adjustment.voucher_id, data1.adjustment.voucher_id);
 
-  // 3. Retry with same clientKey but conflicting payload (different amount) -> Returns 409 Conflict
-  const resConflict = await payrollPost({
+  // 3a. Retry with same clientKey but conflicting payload (different amount) -> Returns 409 Conflict
+  const resConflictAmount = await payrollPost({
     request: new Request('http://localhost/api/teachers/payroll', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${leaderToken}` },
@@ -628,7 +628,26 @@ test('P1-10: create_adjustment sequential versioning & idempotency replay/confli
     }),
     platform
   });
-  assert.equal(resConflict.status, 409);
+  assert.equal(resConflictAmount.status, 409);
+
+  // 3b. Retry with same clientKey but conflicting payload (same amount, different effective_date) -> Returns 409 Conflict
+  const resConflictDate = await payrollPost({
+    request: new Request('http://localhost/api/teachers/payroll', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${leaderToken}` },
+      body: JSON.stringify({
+        action: 'create_adjustment',
+        teacher_id: 'usr_teacher_1',
+        billing_cycle: '2026-09',
+        adjustment_amount: 250000,
+        effective_date: '2027-01-15', // Different date
+        adjustment_reason: 'Khen thưởng giáo viên tiêu biểu',
+        idempotency_key: clientKey
+      })
+    }),
+    platform
+  });
+  assert.equal(resConflictDate.status, 409);
 
   // 4. Create second distinct adjustment -> Version increments to 2
   const res2 = await payrollPost({

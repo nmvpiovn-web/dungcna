@@ -461,7 +461,7 @@ export async function POST({ request, platform }) {
             const isMatching = (
               priorLedger.reference_id === existing.id &&
               priorLedger.amount === adjAmount &&
-              (priorMeta.payload_hash === payloadHash || priorLedger.description?.includes(trimmedReason))
+              (priorMeta.payload_hash ? priorMeta.payload_hash === payloadHash : priorLedger.description?.includes(trimmedReason))
             );
 
             if (isMatching) {
