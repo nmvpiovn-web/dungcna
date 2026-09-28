@@ -954,10 +954,10 @@ async function runRealBrowserVerification() {
     const audioBlobValid = Boolean(audioEvidence && audioEvidence.blobSize > 0 && audioEvidence.durationMs > 0 && audioEvidence.tracksEnded);
 
     // Close deep modal
-    const closeDeepBtn = page.locator('#btn-close-deep-modal');
+    const closeDeepBtn = page.locator('#btn-close-deep-modal, #btn-close-deep-modal-x').first();
     if (await closeDeepBtn.isVisible()) {
       await closeDeepBtn.click();
-      await page.waitForTimeout(200);
+      await page.waitForTimeout(300);
     }
 
     const audioTestPass = recActiveCheck && (audioReloadMarker === 'audio_intact') && audioStillRecording && audioSwBanner && recordingCleanedUp && audioBlobValid;

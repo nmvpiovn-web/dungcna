@@ -714,7 +714,7 @@
             {deepAnalysisData?.ipa || selectedWordForDeep.ipa || '/.../'}
           </div>
         </div>
-        <button id="btn-close-deep-modal" onclick={() => showDeepModal = false} class="text-slate-400 hover:text-slate-600 font-bold p-1 text-sm">✕</button>
+        <button id="btn-close-deep-modal-x" onclick={closeDeepModal} class="text-slate-400 hover:text-slate-600 font-bold p-1 text-sm">✕</button>
       </div>
 
       <!-- SECTION 1: MICROPHONE PRONUNCIATION EVALUATION (RUBRIC) -->
