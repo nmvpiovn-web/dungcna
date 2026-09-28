@@ -18,6 +18,8 @@ async function ensureD1SessionTable(db) {
       id TEXT PRIMARY KEY,
       token TEXT NOT NULL,
       grade TEXT NOT NULL,
+      curriculum TEXT NOT NULL DEFAULT 'global_success',
+      blueprint_json TEXT,
       candidate_name TEXT,
       duration_minutes INTEGER NOT NULL,
       start_time INTEGER NOT NULL,
@@ -30,6 +32,10 @@ async function ensureD1SessionTable(db) {
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
   `).run();
+
+  // Backward compatibility migration for pre-existing tables
+  try { await db.prepare("ALTER TABLE guest_exam_sessions ADD COLUMN curriculum TEXT NOT NULL DEFAULT 'global_success'").run(); } catch {}
+  try { await db.prepare("ALTER TABLE guest_exam_sessions ADD COLUMN blueprint_json TEXT").run(); } catch {}
 }
 
 async function saveGuestSession(db, session) {
@@ -37,12 +43,14 @@ async function saveGuestSession(db, session) {
     await ensureD1SessionTable(db);
     const dbRes = await db.prepare(`
       INSERT OR REPLACE INTO guest_exam_sessions 
-      (id, token, grade, candidate_name, duration_minutes, start_time, expires_at, questions_json, status, answers_json, result_json)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+      (id, token, grade, curriculum, blueprint_json, candidate_name, duration_minutes, start_time, expires_at, questions_json, status, answers_json, result_json)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
     `).bind(
       session.id,
       session.token,
       session.grade,
+      session.curriculum || 'global_success',
+      session.blueprint ? JSON.stringify(session.blueprint) : null,
       session.candidate_name || '',
       session.duration_minutes,
       session.startTime,
@@ -74,6 +82,8 @@ async function getGuestSession(db, sessionId) {
         id: row.id,
         token: row.token,
         grade: row.grade,
+        curriculum: row.curriculum || 'global_success',
+        blueprint: row.blueprint_json ? JSON.parse(row.blueprint_json) : null,
         candidate_name: row.candidate_name,
         duration_minutes: row.duration_minutes,
         startTime: row.start_time,
@@ -125,217 +135,429 @@ async function completeGuestSession(db, sessionId, answers, result, now = Date.n
   return 0;
 }
 
-// Supported Curated Grade & Duration Matrix
+// Supported Curated Grade & Curriculum Matrix
 // Strictly declare what is verified. ZERO cloning, ZERO fake looping.
 const SUPPORTED_GRADES = {
   lop_7: 'Lớp 7 (Nền Tảng THCS)',
   lop_12: 'Lớp 12 (Thi THPT QG / IELTS)'
 };
 
-const SUPPORTED_CONFIGS = {
+const SUPPORTED_CURRICULA = {
   lop_7: {
-    '5m': 5,
-    '15m': 10
+    global_success: 'Kết nối tri thức (Global Success)',
+    friends_plus: 'Chân trời sáng tạo (Friends Plus)',
+    smart_world: 'i-Learn Smart World'
   },
   lop_12: {
-    '5m': 5
+    thpt_qg: 'Chương trình GDPT Chuẩn & Ôn thi THPT Quốc Gia',
+    ielts_academic: 'Định hướng Học thuật & IELTS Foundation'
   }
 };
 
-// Verified Question Banks with 100% Unique, Non-Duplicated Questions
+const SUPPORTED_CONFIGS = {
+  lop_7: {
+    global_success: { '5m': 5, '15m': 10 },
+    friends_plus: { '5m': 5 },
+    smart_world: { '5m': 5 }
+  },
+  lop_12: {
+    thpt_qg: { '5m': 5 },
+    ielts_academic: { '5m': 5 }
+  }
+};
+
+// Verified Question Banks with 100% Unique, Non-Duplicated Questions per Curriculum
 const GUEST_QUESTION_BANK = {
-  lop_7: [
-    {
-      id: 'gst_q_mcq_1',
-      type: 'mcq',
-      skill: 'grammar',
-      question_text: 'She _____ English every day because she wants to study abroad.',
-      options: [
-        { id: 'A', text: 'practices' },
-        { id: 'B', text: 'practice' },
-        { id: 'C', text: 'practiced' },
-        { id: 'D', text: 'practicing' }
-      ],
-      correct_id: 'A',
-      explanation: 'Thì hiện tại đơn diễn tả thói quen lặp lại hàng ngày (every day) với chủ ngữ số ít She -> practices.'
-    },
-    {
-      id: 'gst_q_audio_2',
-      type: 'listening',
-      skill: 'listening',
-      question_text: 'Nghe đoạn phát âm và chọn từ có trọng âm rơi vào âm tiết thứ hai:',
-      audio_term: 'pollute',
-      options: [
-        { id: 'A', text: 'energy (/ˈenədʒi/)' },
-        { id: 'B', text: 'pollute (/pəˈluːt/)' },
-        { id: 'C', text: 'solar (/ˈsəʊlə(r)/)' },
-        { id: 'D', text: 'source (/sɔːs/)' }
-      ],
-      correct_id: 'B',
-      explanation: 'Pollute có trọng âm rơi vào âm tiết thứ hai (/pəˈluːt/), các từ còn lại rơi vào âm tiết thứ nhất.'
-    },
-    {
-      id: 'gst_q_cloze_3',
-      type: 'open_cloze',
-      skill: 'reading_cloze',
-      passage: 'Solar energy is renewable, clean and abundant. It does not cause (1)_____ to the environment like coal or oil.',
-      question_text: 'Tự luận điền từ: Nhập danh từ thích hợp vào chỗ trống (1):',
-      correct_text: 'pollution',
-      acceptable_answers: ['pollution', 'pollutions'],
-      explanation: 'Sau động từ cause cần một danh từ không đếm được chỉ tác hại ô nhiễm -> pollution.'
-    },
-    {
-      id: 'gst_q_mcq_4',
-      type: 'mcq',
-      skill: 'vocabulary',
-      question_text: 'My sister really enjoys _____ origami paper flowers in her free time.',
-      options: [
-        { id: 'A', text: 'making' },
-        { id: 'B', text: 'to make' },
-        { id: 'C', text: 'make' },
-        { id: 'D', text: 'made' }
-      ],
-      correct_id: 'A',
-      explanation: 'Cấu trúc enjoy + V-ing -> enjoys making.'
-    },
-    {
-      id: 'gst_q_cloze_5',
-      type: 'open_cloze',
-      skill: 'reading_cloze',
-      passage: 'Dao Son Tay school in Thu Duc has modern facilities and an active English club for students who (2)_____ to improve speaking.',
-      question_text: 'Tự luận điền từ: Nhập động từ nguyên thể thích hợp vào chỗ trống (2):',
-      correct_text: 'wish',
-      acceptable_answers: ['wish', 'want', 'hope'],
-      explanation: 'Mệnh đề quan hệ bổ nghĩa cho students (danh từ số nhiều) -> wish / want / hope.'
-    },
-    {
-      id: 'gst_q_mcq_6',
-      type: 'mcq',
-      skill: 'grammar',
-      question_text: 'If it _____ tomorrow, we will plant trees in the school garden.',
-      options: [
-        { id: 'A', text: 'does not rain' },
-        { id: 'B', text: 'will not rain' },
-        { id: 'C', text: 'did not rain' },
-        { id: 'D', text: 'not rain' }
-      ],
-      correct_id: 'A',
-      explanation: 'Câu điều kiện loại 1: Mệnh đề If dùng hiện tại đơn (does not rain).'
-    },
-    {
-      id: 'gst_q_cloze_7',
-      type: 'open_cloze',
-      skill: 'grammar',
-      passage: 'We should use public transport instead (3)_____ personal cars to reduce traffic congestion.',
-      question_text: 'Tự luận điền từ: Nhập giới từ thích hợp vào chỗ trống (3):',
-      correct_text: 'of',
-      acceptable_answers: ['of'],
-      explanation: 'Cụm giới từ cố định: instead of (thay vì).'
-    },
-    {
-      id: 'gst_q_audio_8',
-      type: 'listening',
-      skill: 'listening',
-      question_text: 'Nghe và xác định từ phát âm có phụ âm cuối /t/ (âm đuôi):',
-      audio_term: 'planted',
-      options: [
-        { id: 'A', text: 'played (/d/)' },
-        { id: 'B', text: 'watched (/t/)' },
-        { id: 'C', text: 'waited (/ɪd/)' },
-        { id: 'D', text: 'cleaned (/d/)' }
-      ],
-      correct_id: 'B',
-      explanation: 'Từ watched kết thúc bằng phụ âm vô thanh /tʃ/ nên -ed phát âm là /t/.'
-    },
-    {
-      id: 'gst_q_mcq_9',
-      type: 'mcq',
-      skill: 'vocabulary',
-      question_text: 'Volunteering gives teenagers a sense of _____ responsibility.',
-      options: [
-        { id: 'A', text: 'community' },
-        { id: 'B', text: 'communicate' },
-        { id: 'C', text: 'communication' },
-        { id: 'D', text: 'communicative' }
-      ],
-      correct_id: 'A',
-      explanation: 'Cụm danh từ: community responsibility (trách nhiệm cộng đồng).'
-    },
-    {
-      id: 'gst_q_cloze_10',
-      type: 'open_cloze',
-      skill: 'vocabulary',
-      passage: 'Eating too much fast food and sugary drinks is very harmful (4)_____ your health.',
-      question_text: 'Tự luận điền từ: Nhập giới từ thích hợp vào chỗ trống (4):',
-      correct_text: 'to',
-      acceptable_answers: ['to', 'for'],
-      explanation: 'Tính từ harmful đi với giới từ to (hoặc for): harmful to health.'
-    }
-  ],
-  lop_12: [
-    {
-      id: 'gst_q_12_1',
-      type: 'mcq',
-      skill: 'grammar',
-      question_text: 'Had the government invested more in clean energy, greenhouse emissions _____ substantially.',
-      options: [
-        { id: 'A', text: 'would have decreased' },
-        { id: 'B', text: 'will decrease' },
-        { id: 'C', text: 'would decrease' },
-        { id: 'D', text: 'decreased' }
-      ],
-      correct_id: 'A',
-      explanation: 'Đảo ngữ câu điều kiện loại 3: Had + S + PII, S + would have + PII.'
-    },
-    {
-      id: 'gst_q_12_2',
-      type: 'open_cloze',
-      skill: 'reading_cloze',
-      passage: 'The transition towards carbon neutrality requires not only technological breakthroughs but also concerted (1)_____ from all international stakeholders.',
-      question_text: 'Tự luận điền từ: Nhập danh từ số nhiều phù hợp đi kèm tính từ "concerted":',
-      correct_text: 'efforts',
-      acceptable_answers: ['efforts', 'actions'],
-      explanation: 'Collocation học thuật: concerted efforts (những nỗ lực đồng bộ).'
-    },
-    {
-      id: 'gst_q_12_3',
-      type: 'mcq',
-      skill: 'vocabulary',
-      question_text: 'The newly appointed CEO is expected to _____ crucial changes in corporate governance.',
-      options: [
-        { id: 'A', text: 'bring about' },
-        { id: 'B', text: 'bring up' },
-        { id: 'C', text: 'bring round' },
-        { id: 'D', text: 'bring off' }
-      ],
-      correct_id: 'A',
-      explanation: 'Phrasal verb: bring about (gây ra, mang lại sự thay đổi).'
-    },
-    {
-      id: 'gst_q_12_4',
-      type: 'open_cloze',
-      skill: 'grammar',
-      passage: 'Hardly had the keynote speaker commenced his presentation (2)_____ the electricity supply was abruptly interrupted.',
-      question_text: 'Tự luận điền từ: Nhập liên từ thích hợp đi cặp với "Hardly had...":',
-      correct_text: 'when',
-      acceptable_answers: ['when', 'before'],
-      explanation: 'Cấu trúc đảo ngữ: Hardly had + S + V3/ed + when + S + V2/ed.'
-    },
-    {
-      id: 'gst_q_12_5',
-      type: 'mcq',
-      skill: 'reading_cloze',
-      question_text: 'Artificial Intelligence has become an indispensable tool, _____ revolutionized various academic sectors.',
-      options: [
-        { id: 'A', text: 'having' },
-        { id: 'B', text: 'have' },
-        { id: 'C', text: 'which' },
-        { id: 'D', text: 'has' }
-      ],
-      correct_id: 'A',
-      explanation: 'Rút gọn mệnh đề phân từ hoàn thành chỉ nguyên nhân/kết quả: having revolutionized.'
-    }
-  ]
+  lop_7: {
+    global_success: [
+      {
+        id: 'gst_q_mcq_1',
+        type: 'mcq',
+        skill: 'grammar',
+        question_text: 'She _____ English every day because she wants to study abroad.',
+        options: [
+          { id: 'A', text: 'practices' },
+          { id: 'B', text: 'practice' },
+          { id: 'C', text: 'practiced' },
+          { id: 'D', text: 'practicing' }
+        ],
+        correct_id: 'A',
+        explanation: 'Thì hiện tại đơn diễn tả thói quen lặp lại hàng ngày (every day) với chủ ngữ số ít She -> practices.'
+      },
+      {
+        id: 'gst_q_audio_2',
+        type: 'listening',
+        skill: 'listening',
+        question_text: 'Nghe đoạn phát âm và chọn từ có trọng âm rơi vào âm tiết thứ hai:',
+        audio_term: 'pollute',
+        options: [
+          { id: 'A', text: 'energy (/ˈenədʒi/)' },
+          { id: 'B', text: 'pollute (/pəˈluːt/)' },
+          { id: 'C', text: 'solar (/ˈsəʊlə(r)/)' },
+          { id: 'D', text: 'source (/sɔːs/)' }
+        ],
+        correct_id: 'B',
+        explanation: 'Pollute có trọng âm rơi vào âm tiết thứ hai (/pəˈluːt/), các từ còn lại rơi vào âm tiết thứ nhất.'
+      },
+      {
+        id: 'gst_q_cloze_3',
+        type: 'open_cloze',
+        skill: 'reading_cloze',
+        passage: 'Solar energy is renewable, clean and abundant. It does not cause (1)_____ to the environment like coal or oil.',
+        question_text: 'Tự luận điền từ: Nhập danh từ thích hợp vào chỗ trống (1):',
+        correct_text: 'pollution',
+        acceptable_answers: ['pollution', 'pollutions'],
+        explanation: 'Sau động từ cause cần một danh từ không đếm được chỉ tác hại ô nhiễm -> pollution.'
+      },
+      {
+        id: 'gst_q_mcq_4',
+        type: 'mcq',
+        skill: 'vocabulary',
+        question_text: 'My sister really enjoys _____ origami paper flowers in her free time.',
+        options: [
+          { id: 'A', text: 'making' },
+          { id: 'B', text: 'to make' },
+          { id: 'C', text: 'make' },
+          { id: 'D', text: 'made' }
+        ],
+        correct_id: 'A',
+        explanation: 'Cấu trúc enjoy + V-ing -> enjoys making.'
+      },
+      {
+        id: 'gst_q_cloze_5',
+        type: 'open_cloze',
+        skill: 'reading_cloze',
+        passage: 'Dao Son Tay school in Thu Duc has modern facilities and an active English club for students who (2)_____ to improve speaking.',
+        question_text: 'Tự luận điền từ: Nhập động từ nguyên thể thích hợp vào chỗ trống (2):',
+        correct_text: 'wish',
+        acceptable_answers: ['wish', 'want', 'hope'],
+        explanation: 'Mệnh đề quan hệ bổ nghĩa cho students (danh từ số nhiều) -> wish / want / hope.'
+      },
+      {
+        id: 'gst_q_mcq_6',
+        type: 'mcq',
+        skill: 'grammar',
+        question_text: 'If it _____ tomorrow, we will plant trees in the school garden.',
+        options: [
+          { id: 'A', text: 'does not rain' },
+          { id: 'B', text: 'will not rain' },
+          { id: 'C', text: 'did not rain' },
+          { id: 'D', text: 'not rain' }
+        ],
+        correct_id: 'A',
+        explanation: 'Câu điều kiện loại 1: Mệnh đề If dùng hiện tại đơn (does not rain).'
+      },
+      {
+        id: 'gst_q_cloze_7',
+        type: 'open_cloze',
+        skill: 'grammar',
+        passage: 'We should use public transport instead (3)_____ personal cars to reduce traffic congestion.',
+        question_text: 'Tự luận điền từ: Nhập giới từ thích hợp vào chỗ trống (3):',
+        correct_text: 'of',
+        acceptable_answers: ['of'],
+        explanation: 'Cụm giới từ cố định: instead of (thay vì).'
+      },
+      {
+        id: 'gst_q_audio_8',
+        type: 'listening',
+        skill: 'listening',
+        question_text: 'Nghe và xác định từ phát âm có phụ âm cuối /t/ (âm đuôi):',
+        audio_term: 'planted',
+        options: [
+          { id: 'A', text: 'played (/d/)' },
+          { id: 'B', text: 'watched (/t/)' },
+          { id: 'C', text: 'waited (/ɪd/)' },
+          { id: 'D', text: 'cleaned (/d/)' }
+        ],
+        correct_id: 'B',
+        explanation: 'Từ watched kết thúc bằng phụ âm vô thanh /tʃ/ nên -ed phát âm là /t/.'
+      },
+      {
+        id: 'gst_q_mcq_9',
+        type: 'mcq',
+        skill: 'vocabulary',
+        question_text: 'Volunteering gives teenagers a sense of _____ responsibility.',
+        options: [
+          { id: 'A', text: 'community' },
+          { id: 'B', text: 'communicate' },
+          { id: 'C', text: 'communication' },
+          { id: 'D', text: 'communicative' }
+        ],
+        correct_id: 'A',
+        explanation: 'Cụm danh từ: community responsibility (trách nhiệm cộng đồng).'
+      },
+      {
+        id: 'gst_q_cloze_10',
+        type: 'open_cloze',
+        skill: 'vocabulary',
+        passage: 'Eating too much fast food and sugary drinks is very harmful (4)_____ your health.',
+        question_text: 'Tự luận điền từ: Nhập giới từ thích hợp vào chỗ trống (4):',
+        correct_text: 'to',
+        acceptable_answers: ['to', 'for'],
+        explanation: 'Tính từ harmful đi với giới từ to (hoặc for): harmful to health.'
+      }
+    ],
+    friends_plus: [
+      {
+        id: 'gst_fp7_1',
+        type: 'mcq',
+        skill: 'grammar',
+        question_text: 'How often _____ your brother play soccer after school? - Twice a week.',
+        options: [
+          { id: 'A', text: 'does' },
+          { id: 'B', text: 'do' },
+          { id: 'C', text: 'is' },
+          { id: 'D', text: 'are' }
+        ],
+        correct_id: 'A',
+        explanation: 'Chủ ngữ your brother là ngôi thứ ba số ít, câu hỏi thì hiện tại đơn mượn trợ động từ does.'
+      },
+      {
+        id: 'gst_fp7_2',
+        type: 'mcq',
+        skill: 'vocabulary',
+        question_text: 'I usually send text _____ to my friends instead of making phone calls.',
+        options: [
+          { id: 'A', text: 'messages' },
+          { id: 'B', text: 'letters' },
+          { id: 'C', text: 'parcels' },
+          { id: 'D', text: 'speeches' }
+        ],
+        correct_id: 'A',
+        explanation: 'Collocation trong Friends Plus Unit 2: text messages (tin nhắn văn bản).'
+      },
+      {
+        id: 'gst_fp7_3',
+        type: 'open_cloze',
+        skill: 'reading_cloze',
+        passage: 'Last weekend, Nam went to the bookstore in Thu Duc and (1)_____ a new English dictionary.',
+        question_text: 'Tự luận điền từ: Nhập dạng quá khứ đơn của động từ "buy" vào chỗ trống (1):',
+        correct_text: 'bought',
+        acceptable_answers: ['bought'],
+        explanation: 'Thì quá khứ đơn của động từ bất quy tắc buy là bought.'
+      },
+      {
+        id: 'gst_fp7_4',
+        type: 'listening',
+        skill: 'listening',
+        question_text: 'Nghe phát âm và chọn từ có đuôi -ed phát âm là /ɪd/:',
+        audio_term: 'decided',
+        options: [
+          { id: 'A', text: 'decided (/ɪd/)' },
+          { id: 'B', text: 'looked (/t/)' },
+          { id: 'C', text: 'stayed (/d/)' },
+          { id: 'D', text: 'washed (/t/)' }
+        ],
+        correct_id: 'A',
+        explanation: 'Từ decided có tận cùng là âm /d/ nên khi thêm -ed phát âm là /ɪd/.'
+      },
+      {
+        id: 'gst_fp7_5',
+        type: 'open_cloze',
+        skill: 'grammar',
+        passage: 'My elder sister loves music and she is very good (2)_____ playing the acoustic guitar.',
+        question_text: 'Tự luận điền từ: Nhập giới từ thích hợp vào chỗ trống (2):',
+        correct_text: 'at',
+        acceptable_answers: ['at'],
+        explanation: 'Cấu trúc be good at something / doing something (giỏi về cái gì).'
+      }
+    ],
+    smart_world: [
+      {
+        id: 'gst_sw7_1',
+        type: 'mcq',
+        skill: 'grammar',
+        question_text: 'My cousin is fond _____ collecting comic books and action figures.',
+        options: [
+          { id: 'A', text: 'of' },
+          { id: 'B', text: 'at' },
+          { id: 'C', text: 'with' },
+          { id: 'D', text: 'in' }
+        ],
+        correct_id: 'A',
+        explanation: 'Cấu trúc be fond of + V-ing/N (thích, say mê cái gì) trong Smart World Unit 1.'
+      },
+      {
+        id: 'gst_sw7_2',
+        type: 'open_cloze',
+        skill: 'reading_cloze',
+        passage: 'Doctors recommend that teenagers should get at least eight hours of (1)_____ every night to stay healthy.',
+        question_text: 'Tự luận điền từ: Nhập danh từ thích hợp chỉ giấc ngủ vào chỗ trống (1):',
+        correct_text: 'sleep',
+        acceptable_answers: ['sleep'],
+        explanation: 'Cụm danh từ: hours of sleep (số giờ ngủ).'
+      },
+      {
+        id: 'gst_sw7_3',
+        type: 'mcq',
+        skill: 'vocabulary',
+        question_text: 'Our school youth club decided to _____ warm clothes and old textbooks to children in highland areas.',
+        options: [
+          { id: 'A', text: 'donate' },
+          { id: 'B', text: 'borrow' },
+          { id: 'C', text: 'purchase' },
+          { id: 'D', text: 'damage' }
+        ],
+        correct_id: 'A',
+        explanation: 'Động từ donate (quyên góp, ủng hộ) trong chủ đề Community Services của Smart World Unit 3.'
+      },
+      {
+        id: 'gst_sw7_4',
+        type: 'mcq',
+        skill: 'grammar',
+        question_text: 'Pop music is completely different _____ traditional folk music.',
+        options: [
+          { id: 'A', text: 'from' },
+          { id: 'B', text: 'as' },
+          { id: 'C', text: 'like' },
+          { id: 'D', text: 'with' }
+        ],
+        correct_id: 'A',
+        explanation: 'Cấu trúc so sánh khác biệt: different from (khác với).'
+      },
+      {
+        id: 'gst_sw7_5',
+        type: 'open_cloze',
+        skill: 'grammar',
+        passage: 'We want to make fresh strawberry smoothies. Is there (2)_____ milk left in the refrigerator?',
+        question_text: 'Tự luận điền từ: Nhập lượng từ thích hợp dùng trong câu nghi vấn với danh từ không đếm được (2):',
+        correct_text: 'any',
+        acceptable_answers: ['any'],
+        explanation: 'Lượng từ any dùng trong câu hỏi nghi vấn với danh từ không đếm được milk.'
+      }
+    ]
+  },
+  lop_12: {
+    thpt_qg: [
+      {
+        id: 'gst_q_12_1',
+        type: 'mcq',
+        skill: 'grammar',
+        question_text: 'Had the government invested more in clean energy, greenhouse emissions _____ substantially.',
+        options: [
+          { id: 'A', text: 'would have decreased' },
+          { id: 'B', text: 'will decrease' },
+          { id: 'C', text: 'would decrease' },
+          { id: 'D', text: 'decreased' }
+        ],
+        correct_id: 'A',
+        explanation: 'Đảo ngữ câu điều kiện loại 3: Had + S + PII, S + would have + PII.'
+      },
+      {
+        id: 'gst_q_12_2',
+        type: 'open_cloze',
+        skill: 'reading_cloze',
+        passage: 'The transition towards carbon neutrality requires not only technological breakthroughs but also concerted (1)_____ from all international stakeholders.',
+        question_text: 'Tự luận điền từ: Nhập danh từ số nhiều phù hợp đi kèm tính từ "concerted":',
+        correct_text: 'efforts',
+        acceptable_answers: ['efforts', 'actions'],
+        explanation: 'Collocation học thuật: concerted efforts (những nỗ lực đồng bộ).'
+      },
+      {
+        id: 'gst_q_12_3',
+        type: 'mcq',
+        skill: 'vocabulary',
+        question_text: 'The newly appointed CEO is expected to _____ crucial changes in corporate governance.',
+        options: [
+          { id: 'A', text: 'bring about' },
+          { id: 'B', text: 'bring up' },
+          { id: 'C', text: 'bring round' },
+          { id: 'D', text: 'bring off' }
+        ],
+        correct_id: 'A',
+        explanation: 'Phrasal verb: bring about (gây ra, mang lại sự thay đổi).'
+      },
+      {
+        id: 'gst_q_12_4',
+        type: 'open_cloze',
+        skill: 'grammar',
+        passage: 'Hardly had the keynote speaker commenced his presentation (2)_____ the electricity supply was abruptly interrupted.',
+        question_text: 'Tự luận điền từ: Nhập liên từ thích hợp đi cặp với "Hardly had...":',
+        correct_text: 'when',
+        acceptable_answers: ['when', 'before'],
+        explanation: 'Cấu trúc đảo ngữ: Hardly had + S + V3/ed + when + S + V2/ed.'
+      },
+      {
+        id: 'gst_q_12_5',
+        type: 'mcq',
+        skill: 'reading_cloze',
+        question_text: 'Artificial Intelligence has become an indispensable tool, _____ revolutionized various academic sectors.',
+        options: [
+          { id: 'A', text: 'having' },
+          { id: 'B', text: 'have' },
+          { id: 'C', text: 'which' },
+          { id: 'D', text: 'has' }
+        ],
+        correct_id: 'A',
+        explanation: 'Rút gọn mệnh đề phân từ hoàn thành chỉ nguyên nhân/kết quả: having revolutionized.'
+      }
+    ],
+    ielts_academic: [
+      {
+        id: 'gst_ielts_1',
+        type: 'mcq',
+        skill: 'vocabulary',
+        question_text: 'The chart illustrates a significant _____ in the proportion of renewable energy consumption over the last two decades.',
+        options: [
+          { id: 'A', text: 'surge' },
+          { id: 'B', text: 'soared' },
+          { id: 'C', text: 'escalation' },
+          { id: 'D', text: 'rises' }
+        ],
+        correct_id: 'A',
+        explanation: 'Sau tính từ "significant" và mạo từ "a" cần một danh từ đếm được số ít -> surge (sự tăng vọt).'
+      },
+      {
+        id: 'gst_ielts_2',
+        type: 'open_cloze',
+        skill: 'reading_cloze',
+        passage: '(1)_____, implementing green technologies fosters long-term economic resilience and creates sustainable jobs.',
+        question_text: 'Tự luận điền từ: Nhập liên từ học thuật đồng nghĩa với "Furthermore" bắt đầu bằng chữ "M":',
+        correct_text: 'moreover',
+        acceptable_answers: ['moreover', 'more over'],
+        explanation: 'Liên từ chuyển tiếp học thuật Moreover (hơn nữa, ngoài ra).'
+      },
+      {
+        id: 'gst_ielts_3',
+        type: 'mcq',
+        skill: 'grammar',
+        question_text: 'Under no circumstances _____ candidates permitted to access external electronic dictionaries during the test.',
+        options: [
+          { id: 'A', text: 'are' },
+          { id: 'B', text: 'were' },
+          { id: 'C', text: 'will' },
+          { id: 'D', text: 'have' }
+        ],
+        correct_id: 'A',
+        explanation: 'Cấu trúc đảo ngữ với cụm phủ định đầu câu: Under no circumstances + be + S + PII.'
+      },
+      {
+        id: 'gst_ielts_4',
+        type: 'listening',
+        skill: 'listening',
+        question_text: 'Nghe phát âm và xác định từ có trọng âm rơi vào âm tiết thứ ba:',
+        audio_term: 'academic',
+        options: [
+          { id: 'A', text: 'academic (/ˌækəˈdemɪk/)' },
+          { id: 'B', text: 'convenient (/kənˈviːniənt/)' },
+          { id: 'C', text: 'photography (/fəˈtɒɡrəfi/)' },
+          { id: 'D', text: 'development (/dɪˈveləpmənt/)' }
+        ],
+        correct_id: 'A',
+        explanation: 'Academic có trọng âm chính rơi vào âm tiết thứ ba (/ˌækəˈdemɪk/).'
+      },
+      {
+        id: 'gst_ielts_5',
+        type: 'open_cloze',
+        skill: 'grammar',
+        passage: 'In (2)_____ of substantial financial investments, several infrastructure projects experienced severe delays.',
+        question_text: 'Tự luận điền từ: Nhập danh từ thích hợp đi trong cụm "In ... of" chỉ sự nhượng bộ:',
+        correct_text: 'spite',
+        acceptable_answers: ['spite'],
+        explanation: 'Cụm liên từ chỉ sự nhượng bộ: In spite of (mặc dù).'
+      }
+    ]
+  }
 };
 
 // Automatic cleanup of expired guest sessions (Retention TTL: 2 hours after exam expiry)
@@ -368,9 +590,19 @@ export async function POST({ request, platform }) {
 
   // 1. ACTION: START GUEST TEST SESSION
   if (action === 'start') {
-    const { grade = 'lop_7', duration_type = '5m', guest_role = 'student', candidate_name = 'Khách Trải Nghiệm' } = body;
+    // 1. Strict validation of grade - NO SILENT FALLBACK TO LỚP 7
+    if (!body.grade || typeof body.grade !== 'string' || !body.grade.trim()) {
+      return json({
+        success: false,
+        error: 'MissingGradeError: Vui lòng chọn khối lớp của bạn trước khi bắt đầu bài thi thử.'
+      }, { status: 400 });
+    }
 
-    // Strict validation of grade
+    const grade = body.grade.trim();
+    const duration_type = body.duration_type || '5m';
+    const guest_role = body.guest_role || 'student';
+    const candidate_name = (body.candidate_name && body.candidate_name.trim()) || 'Khách Trải Nghiệm';
+
     if (!SUPPORTED_GRADES[grade]) {
       return json({
         success: false,
@@ -379,14 +611,28 @@ export async function POST({ request, platform }) {
       }, { status: 400 });
     }
 
-    // Strict validation of duration for this grade - ZERO question looping or cloning!
-    const availableDurations = SUPPORTED_CONFIGS[grade];
-    const targetQuestionCount = availableDurations ? availableDurations[duration_type] : null;
+    // 2. Curriculum validation & filtering
+    const gradeCurricula = SUPPORTED_CURRICULA[grade] || {};
+    const defaultCurriculum = Object.keys(gradeCurricula)[0] || 'global_success';
+    const curriculum = body.curriculum ? body.curriculum.trim() : defaultCurriculum;
 
-    if (!targetQuestionCount) {
+    if (!gradeCurricula[curriculum]) {
       return json({
         success: false,
-        error: `Khối lớp ${SUPPORTED_GRADES[grade]} hiện hỗ trợ các mốc thời lượng: ${Object.keys(availableDurations || {}).join(', ')}. Mốc "${duration_type}" chưa có đủ ngân hàng câu hỏi độc lập được phê duyệt.`
+        error: `Chương trình "${curriculum}" không tồn tại hoặc chưa được hỗ trợ cho ${SUPPORTED_GRADES[grade]}. Vui lòng chọn một trong các chương trình: ${Object.values(gradeCurricula).join(', ')}.`,
+        supported_curricula: gradeCurricula
+      }, { status: 400 });
+    }
+
+    const gradePools = GUEST_QUESTION_BANK[grade] || {};
+    const curriculumPool = gradePools[curriculum] || [];
+    const targetQuestionCount = duration_type === '15m' ? 10 : 5;
+
+    if (curriculumPool.length < targetQuestionCount) {
+      return json({
+        success: false,
+        error: `Chương trình '${gradeCurricula[curriculum]}' hiện có sẵn ${curriculumPool.length} câu hỏi chuẩn hóa (phù hợp mốc 5 phút). Mốc ${duration_type} (${targetQuestionCount} câu) đang được cập nhật thêm theo lộ trình.`,
+        available_counts: { '5m': Math.min(5, curriculumPool.length) }
       }, { status: 400 });
     }
 
@@ -397,14 +643,35 @@ export async function POST({ request, platform }) {
     const expiresAt = startTime + (durationMinutes + 10) * 60 * 1000; // duration + 10m buffer
 
     // Select exact non-repeating unique questions
-    const questionPool = GUEST_QUESTION_BANK[grade];
-    const selectedQuestions = questionPool.slice(0, targetQuestionCount);
+    const selectedQuestions = curriculumPool.slice(0, targetQuestionCount);
+
+    const blueprint = {
+      grade,
+      curriculum,
+      curriculum_label: gradeCurricula[curriculum],
+      duration_minutes: durationMinutes,
+      total_questions: selectedQuestions.length,
+      skills_distribution: {
+        grammar: selectedQuestions.filter(q => q.skill === 'grammar').length,
+        vocabulary: selectedQuestions.filter(q => q.skill === 'vocabulary').length,
+        listening: selectedQuestions.filter(q => q.skill === 'listening').length,
+        reading_cloze: selectedQuestions.filter(q => q.skill === 'reading_cloze').length
+      },
+      question_types: {
+        mcq: selectedQuestions.filter(q => q.type === 'mcq').length,
+        open_cloze: selectedQuestions.filter(q => q.type === 'open_cloze').length,
+        listening: selectedQuestions.filter(q => q.type === 'listening').length
+      },
+      generated_at: new Date(startTime).toISOString()
+    };
 
     // Save server-side session (strictly storing answers and token on server only!)
     const sessionRecord = {
       id: guestSessionId,
       token: guestToken,
       grade,
+      curriculum,
+      blueprint,
       guest_role,
       candidate_name,
       duration_minutes: durationMinutes,
@@ -444,6 +711,8 @@ export async function POST({ request, platform }) {
       guest_session_id: guestSessionId,
       guest_token: guestToken,
       grade,
+      curriculum,
+      blueprint,
       candidate_name,
       duration_minutes: durationMinutes,
       total_questions: clientQuestions.length,
@@ -593,6 +862,9 @@ export async function POST({ request, platform }) {
       score_10: score10,
       correct_count: correctCount,
       total_questions: totalQuestions,
+      grade: session.grade,
+      curriculum: session.curriculum,
+      blueprint: session.blueprint,
       cefr_level: cefrLevel,
       rank_title: rankTitle,
       recommendation,

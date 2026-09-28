@@ -64,6 +64,7 @@ async function ensurePayrollSchema(db) {
         status TEXT DEFAULT 'completed',
         description TEXT,
         metadata_json TEXT DEFAULT '{}',
+        adjustment_version INTEGER,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       );
     `).run();
@@ -88,13 +89,19 @@ async function ensurePayrollSchema(db) {
       } catch {}
     }
 
-    // Migrate: add description and metadata_json columns if missing
+    // Migrate: add description, metadata_json, and adjustment_version columns if missing
     try {
       await db.prepare(`ALTER TABLE finance_ledger ADD COLUMN description TEXT;`).run();
     } catch { /* column already exists */ }
     try {
       await db.prepare(`ALTER TABLE finance_ledger ADD COLUMN metadata_json TEXT;`).run();
     } catch { /* column already exists */ }
+    try {
+      await db.prepare(`ALTER TABLE finance_ledger ADD COLUMN adjustment_version INTEGER;`).run();
+    } catch { /* column already exists */ }
+    try {
+      await db.prepare(`CREATE UNIQUE INDEX IF NOT EXISTS idx_finance_ledger_payroll_version ON finance_ledger(reference_id, adjustment_version) WHERE voucher_type = 'PAYROLL_ADJUSTMENT' AND adjustment_version IS NOT NULL;`).run();
+    } catch { /* index already exists */ }
   } catch (err) {
     console.warn('ensurePayrollSchema notice:', err.message);
   }
@@ -458,10 +465,11 @@ export async function POST({ request, platform }) {
           if (priorLedger) {
             let priorMeta = {};
             try { priorMeta = JSON.parse(priorLedger.metadata_json || '{}'); } catch {}
+            // Strict payload match: must match reference_id, amount, AND payload_hash
             const isMatching = (
               priorLedger.reference_id === existing.id &&
               priorLedger.amount === adjAmount &&
-              (priorMeta.payload_hash ? priorMeta.payload_hash === payloadHash : priorLedger.description?.includes(trimmedReason))
+              Boolean(priorMeta.payload_hash && priorMeta.payload_hash === payloadHash)
             );
 
             if (isMatching) {
@@ -472,17 +480,17 @@ export async function POST({ request, platform }) {
                 adjustment: {
                   voucher_id: priorLedger.id,
                   voucher_number: priorLedger.voucher_number,
-                  version: priorMeta.version || 1,
+                  version: priorMeta.version || priorLedger.adjustment_version || 1,
                   adjustment_amount: priorLedger.amount,
                   original_net_amount: existing.net_amount,
-                  reason: trimmedReason,
-                  effective_date: effectiveDate,
+                  reason: priorMeta.adjustment_reason || '',
+                  effective_date: priorMeta.effective_date || '',
                   actor: priorLedger.actor_id,
                   status: priorLedger.status || 'pending_approval',
                   disbursed: false,
                   original_payroll_id: existing.id,
                   original_payroll_status: existing.status,
-                  payload_hash: payloadHash
+                  payload_hash: priorMeta.payload_hash
                 }
               });
             } else {
@@ -497,71 +505,128 @@ export async function POST({ request, platform }) {
         }
       }
 
-      // Atomic version allocation: query current count/max version
-      const countRes = await db.prepare(`
-        SELECT COUNT(*) as cnt FROM finance_ledger
-        WHERE reference_id = ? AND voucher_type = 'PAYROLL_ADJUSTMENT'
-      `).bind(existing.id).first();
-      const adjVersion = (Number(countRes?.cnt) || 0) + 1;
+      // ATOMIC VERSION ALLOCATION WITH RETRY LOOP UNDER CONCURRENCY:
+      let adjVersion = null;
+      let adjVoucherId = null;
+      let adjVoucherNumber = null;
+      let insertSuccess = false;
+      const maxAttempts = 5;
 
-      const adjVoucherId = body.voucher_id || `adj_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
-      const adjVoucherNumber = `DC-${billingCycle.replace('-', '')}-${teacherId.slice(0, 4).toUpperCase()}-${Date.now().toString().slice(-4)}`;
-      const description = `[Điều chỉnh v${adjVersion} - Chờ duyệt] ${trimmedReason} | Người tạo: ${auth.user.username || auth.user.id} | Ngày hiệu lực: ${effectiveDate} | Bảng lương gốc: ${existing.net_amount} VNĐ`;
+      for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        const countRes = await db.prepare(`
+          SELECT COALESCE(MAX(adjustment_version), (SELECT COUNT(*) FROM finance_ledger WHERE reference_id = ? AND voucher_type = 'PAYROLL_ADJUSTMENT')) as cnt
+          FROM finance_ledger
+          WHERE reference_id = ? AND voucher_type = 'PAYROLL_ADJUSTMENT'
+        `).bind(existing.id, existing.id).first();
+        const candidateVersion = (Number(countRes?.cnt) || 0) + 1;
 
-      const metadata = {
-        version: adjVersion,
-        payload_hash: payloadHash,
-        original_net_amount: existing.net_amount,
-        original_gross_amount: existing.gross_amount,
-        effective_date: effectiveDate,
-        adjustment_reason: trimmedReason,
-        scope: 'pending_approval'
-      };
+        const candidateVoucherId = body.voucher_id || `adj_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+        const candidateVoucherNumber = `DC-${billingCycle.replace('-', '')}-${teacherId.slice(0, 4).toUpperCase()}-${Date.now().toString().slice(-4)}`;
+        const description = `[Điều chỉnh v${candidateVersion} - Chờ duyệt] ${trimmedReason} | Người tạo: ${auth.user.username || auth.user.id} | Ngày hiệu lực: ${effectiveDate} | Bảng lương gốc: ${existing.net_amount} VNĐ`;
 
-      // Atomic INSERT conditional on payroll remaining in ('paid', 'closed')
-      const insertAdjSql = `
-        INSERT INTO finance_ledger (
-          id, voucher_type, reference_id, teacher_id, actor_id,
-          amount, payment_method, billing_cycle, idempotency_key, voucher_number,
-          status, description, metadata_json, created_at
-        )
-        SELECT ?, 'PAYROLL_ADJUSTMENT', id, teacher_id, ?, ?, ?, billing_cycle, ?, ?, 'pending_approval', ?, ?, CURRENT_TIMESTAMP
-        FROM teacher_payrolls
-        WHERE id = ? AND status IN ('paid', 'closed');
-      `;
+        const metadata = {
+          version: candidateVersion,
+          payload_hash: payloadHash,
+          original_net_amount: existing.net_amount,
+          original_gross_amount: existing.gross_amount,
+          effective_date: effectiveDate,
+          adjustment_reason: trimmedReason,
+          scope: 'pending_approval'
+        };
 
-      try {
-        const batchRes = await db.batch([
-          db.prepare(insertAdjSql).bind(
-            adjVoucherId,
-            auth.user.id,
-            adjAmount,
-            body.payment_method || 'bank_transfer',
-            effectiveIdemKey,
-            adjVoucherNumber,
-            description,
-            JSON.stringify(metadata),
-            existing.id
+        const insertAdjSql = `
+          INSERT INTO finance_ledger (
+            id, voucher_type, reference_id, teacher_id, actor_id,
+            amount, payment_method, billing_cycle, idempotency_key, voucher_number,
+            status, description, metadata_json, adjustment_version, created_at
           )
-        ]);
+          SELECT ?, 'PAYROLL_ADJUSTMENT', id, teacher_id, ?, ?, ?, billing_cycle, ?, ?, 'pending_approval', ?, ?, ?, CURRENT_TIMESTAMP
+          FROM teacher_payrolls
+          WHERE id = ? AND status IN ('paid', 'closed');
+        `;
 
-        if (batchRes?.[0]?.meta?.changes === 0) {
+        try {
+          const batchRes = await db.batch([
+            db.prepare(insertAdjSql).bind(
+              candidateVoucherId,
+              auth.user.id,
+              adjAmount,
+              body.payment_method || 'bank_transfer',
+              effectiveIdemKey,
+              candidateVoucherNumber,
+              description,
+              JSON.stringify(metadata),
+              candidateVersion,
+              existing.id
+            )
+          ]);
+
+          if (batchRes?.[0]?.meta?.changes === 0) {
+            return json({
+              success: false,
+              error: `ConflictError: Kỳ lương ${billingCycle} không còn ở trạng thái 'paid' hoặc 'closed' (có thể đã bị thay đổi bởi phiên quản trị khác).`
+            }, { status: 409 });
+          }
+
+          adjVersion = candidateVersion;
+          adjVoucherId = candidateVoucherId;
+          adjVoucherNumber = candidateVoucherNumber;
+          insertSuccess = true;
+          break;
+        } catch (insertErr) {
+          // Version collision on concurrent requests:
+          if (insertErr.message?.includes('UNIQUE') && (insertErr.message?.includes('idx_finance_ledger_payroll_version') || insertErr.message?.includes('adjustment_version'))) {
+            // Another worker grabbed this candidateVersion, retry loop with incremented version
+            continue;
+          }
+
+          // Same-key concurrency:
+          if (insertErr.message?.includes('UNIQUE') && insertErr.message?.includes('idempotency_key')) {
+            const winner = await db.prepare(`SELECT * FROM finance_ledger WHERE idempotency_key = ? LIMIT 1`).bind(effectiveIdemKey).first();
+            if (winner) {
+              let winMeta = {};
+              try { winMeta = JSON.parse(winner.metadata_json || '{}'); } catch {}
+              if (winMeta.payload_hash === payloadHash && winner.amount === adjAmount) {
+                return json({
+                  success: true,
+                  message: `Chứng từ điều chỉnh cho kỳ lương ${billingCycle} đã được tạo trước đó (idempotent replay). Bảng lương gốc (${existing.net_amount} VNĐ) là bất biến và chứng từ này chưa được chi trả.`,
+                  idempotent_replay: true,
+                  adjustment: {
+                    voucher_id: winner.id,
+                    voucher_number: winner.voucher_number,
+                    version: winMeta.version || winner.adjustment_version || 1,
+                    adjustment_amount: winner.amount,
+                    original_net_amount: existing.net_amount,
+                    reason: winMeta.adjustment_reason || '',
+                    effective_date: winMeta.effective_date || '',
+                    actor: winner.actor_id,
+                    status: winner.status || 'pending_approval',
+                    disbursed: false,
+                    original_payroll_id: existing.id,
+                    original_payroll_status: existing.status,
+                    payload_hash: winMeta.payload_hash
+                  }
+                });
+              }
+            }
+            return json({
+              success: false,
+              error: `ConflictError: Thao tác điều chỉnh đang được xử lý đồng thời bởi phiên khác (Idempotency conflict).`
+            }, { status: 409 });
+          }
+
           return json({
             success: false,
-            error: `ConflictError: Kỳ lương ${billingCycle} không còn ở trạng thái 'paid' hoặc 'closed' (có thể đã bị thay đổi bởi phiên quản trị khác).`
-          }, { status: 409 });
+            error: `PayrollTransactionError: Quá trình tạo chứng từ điều chỉnh thất bại (${insertErr.message})`
+          }, { status: 500 });
         }
-      } catch (insertErr) {
-        if (insertErr.message?.includes('UNIQUE') || insertErr.message?.includes('constraint failed')) {
-          return json({
-            success: false,
-            error: `ConflictError: Thao tác điều chỉnh đang được xử lý đồng thời bởi phiên khác (Idempotency conflict).`
-          }, { status: 409 });
-        }
+      }
+
+      if (!insertSuccess) {
         return json({
           success: false,
-          error: `PayrollTransactionError: Quá trình tạo chứng từ điều chỉnh thất bại (${insertErr.message})`
-        }, { status: 500 });
+          error: 'ConflictError: Cấp phát version điều chỉnh vượt quá số lần thử lại do tranh chấp đồng thời cao. Vui lòng thử lại.'
+        }, { status: 409 });
       }
 
       return json({
@@ -629,6 +694,14 @@ export async function POST({ request, platform }) {
             if (priorLedger.voucher_type === 'PAYROLL_REOPEN_AUDIT' && priorLedger.reference_id === existing.id) {
               let priorSnapshot = null;
               try { priorSnapshot = JSON.parse(priorLedger.metadata_json || '{}'); } catch {}
+              const savedReason = priorSnapshot?.adjustment_reason || '';
+              // Verify reason strictly matches
+              if (body.adjustment_reason && savedReason && savedReason !== body.adjustment_reason.trim()) {
+                return json({
+                  success: false,
+                  error: `ConflictError: Idempotency key '${clientKey}' đã được sử dụng với lý do mở lại khác (đã lưu: '${savedReason}', yêu cầu mới: '${body.adjustment_reason.trim()}').`
+                }, { status: 409 });
+              }
               return json({
                 success: true,
                 message: `Kỳ lương ${billingCycle} đã được mở lại về trạng thái 'draft' (kết quả thực thi trước đó - idempotent replay).`,
@@ -637,7 +710,7 @@ export async function POST({ request, platform }) {
                 audit: {
                   snapshot_id: priorLedger.id,
                   voucher_number: priorLedger.voucher_number,
-                  reason: priorLedger.description,
+                  reason: savedReason || priorLedger.description,
                   actor: priorLedger.actor_id,
                   snapshot: priorSnapshot
                 }
