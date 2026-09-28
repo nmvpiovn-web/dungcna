@@ -340,7 +340,7 @@ export async function POST({ request, platform }) {
 
       // 5. Construct Unified Atomic Batch Statements
       const statements = [];
-      const ledgerId = `stl_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+      const ledgerId = `stl_${Date.now()}_${crypto.randomUUID()}`;
 
       if (netStarsToDebit > 0) {
         // Debit stars
@@ -356,8 +356,8 @@ export async function POST({ request, platform }) {
           `).bind(netStarsToDebit, netStarsToDebit, studentId, billId, studentId, existingVersion, previousDeducted, manager ? 1 : 0);
 
           const stmtLedger = db.prepare(`
-            INSERT INTO student_star_ledger (id, student_id, bill_id, reference_id, delta_stars, amount, balance_after, action_type, reason, note)
-            SELECT ?, ?, ?, ?, ?, ?, stars_balance, 'deduct', ?, ?
+            INSERT INTO student_star_ledger (id, student_id, bill_id, reference_id, delta_stars, amount, balance_after, debt_delta, debt_after, action_type, reason, note)
+            SELECT ?, ?, ?, ?, ?, ?, stars_balance, 0, star_debt, 'deduct', ?, ?
             FROM student_stars
             WHERE student_id = ?
               AND EXISTS (SELECT 1 FROM tuition_bills WHERE id = ? AND student_id = ? AND version = ? AND stars_deducted = ? AND (status = 'draft' OR ? = 1));
@@ -429,9 +429,9 @@ export async function POST({ request, platform }) {
           `).bind(netStarsToDebit, netStarsToDebit, studentId);
 
           const stmtLedger = db.prepare(`
-            INSERT INTO student_star_ledger (id, student_id, bill_id, reference_id, delta_stars, amount, balance_after, action_type, reason, note)
-            VALUES (?, ?, ?, ?, ?, ?, (SELECT stars_balance FROM student_stars WHERE student_id = ?), 'deduct', ?, ?);
-          `).bind(ledgerId, studentId, billId, billId, -netStarsToDebit, -netStarsToDebit, studentId, `Khấu trừ ${netStarsToDebit} sao cho phiếu học phí ${billId}`, `Khấu trừ ${netStarsToDebit} sao cho phiếu học phí ${billId}`);
+            INSERT INTO student_star_ledger (id, student_id, bill_id, reference_id, delta_stars, amount, balance_after, debt_delta, debt_after, action_type, reason, note)
+            VALUES (?, ?, ?, ?, ?, ?, (SELECT stars_balance FROM student_stars WHERE student_id = ?), 0, (SELECT star_debt FROM student_stars WHERE student_id = ?), 'deduct', ?, ?);
+          `).bind(ledgerId, studentId, billId, billId, -netStarsToDebit, -netStarsToDebit, studentId, studentId, `Khấu trừ ${netStarsToDebit} sao cho phiếu học phí ${billId}`, `Khấu trừ ${netStarsToDebit} sao cho phiếu học phí ${billId}`);
 
           const stmtBill = db.prepare(`
             INSERT INTO tuition_bills (
@@ -475,8 +475,8 @@ export async function POST({ request, platform }) {
         `).bind(refundAmount, refundAmount, studentId, billId, studentId, existingVersion, previousDeducted, manager ? 1 : 0);
 
         const stmtLedger = db.prepare(`
-          INSERT INTO student_star_ledger (id, student_id, bill_id, reference_id, delta_stars, amount, balance_after, action_type, reason, note)
-          SELECT ?, ?, ?, ?, ?, ?, stars_balance, 'refund', ?, ?
+          INSERT INTO student_star_ledger (id, student_id, bill_id, reference_id, delta_stars, amount, balance_after, debt_delta, debt_after, action_type, reason, note)
+          SELECT ?, ?, ?, ?, ?, ?, stars_balance, 0, star_debt, 'refund', ?, ?
           FROM student_stars
           WHERE student_id = ?
             AND EXISTS (SELECT 1 FROM tuition_bills WHERE id = ? AND student_id = ? AND version = ? AND stars_deducted = ? AND (status = 'draft' OR ? = 1));
@@ -729,12 +729,12 @@ export async function DELETE({ url, request, platform }) {
         `).bind(starsDeducted, starsDeducted, studentId, billId, expectedVersion, starsDeducted);
 
         const stmtLedger = db.prepare(`
-          INSERT INTO student_star_ledger (id, student_id, bill_id, reference_id, delta_stars, amount, balance_after, action_type, reason, note)
-          SELECT ?, ?, ?, ?, ?, ?, stars_balance, 'refund', ?, ?
+          INSERT INTO student_star_ledger (id, student_id, bill_id, reference_id, delta_stars, amount, balance_after, debt_delta, debt_after, action_type, reason, note)
+          SELECT ?, ?, ?, ?, ?, ?, stars_balance, 0, star_debt, 'refund', ?, ?
           FROM student_stars
           WHERE student_id = ?
             AND EXISTS (SELECT 1 FROM tuition_bills WHERE id = ? AND version = ? AND stars_deducted = ?);
-        `).bind(`stl_del_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`, studentId, billId, billId, starsDeducted, starsDeducted, `Hoàn lại ${starsDeducted} sao do xóa hóa đơn ${billId}`, `Hoàn lại ${starsDeducted} sao do xóa hóa đơn ${billId}`, studentId, billId, expectedVersion, starsDeducted);
+        `).bind(`stl_del_${Date.now()}_${crypto.randomUUID()}`, studentId, billId, billId, starsDeducted, starsDeducted, `Hoàn lại ${starsDeducted} sao do xóa hóa đơn ${billId}`, `Hoàn lại ${starsDeducted} sao do xóa hóa đơn ${billId}`, studentId, billId, expectedVersion, starsDeducted);
 
         const stmtDelete = db.prepare(`
           DELETE FROM tuition_bills WHERE id = ? AND version = ? AND stars_deducted = ?;

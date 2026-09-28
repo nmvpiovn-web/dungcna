@@ -214,6 +214,8 @@
 {#if isOpen}
   <!-- Backdrop with click-outside to close and Escape handling -->
   <div 
+    id="guest-modal-backdrop"
+    data-testid="guest-modal-backdrop"
     class="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
     role="dialog"
     aria-modal="true"

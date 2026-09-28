@@ -97,13 +97,38 @@ label, .form-label, .text-label {
 }
 
 /* ========================================================================= */
-/* TYPOGRAPHY CHUẨN MỰC HỌC THUẬT (Loại bỏ font-black lạm dụng, heading 600)  */
+/* TYPOGRAPHY CHUẨN MỰC HỌC THUẬT (Enforce Body 400, Label 500, Heading 600)  */
 /* ========================================================================= */
-h1, h2, h3, h4, .font-heading {
+h1, h2, h3, h4, h5, h6, .font-heading {
   font-family: 'Lexend', system-ui, -apple-system, sans-serif;
   letter-spacing: -0.015em;
-  font-weight: 600;
+  font-weight: 600 !important;
   color: #0f172a;
+}
+
+.dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6, .dark .font-heading {
+  color: #f8fafc;
+}
+
+/* Enforce body 400, label 500, heading/bold 600 strictly */
+body, p, .text-body {
+  font-weight: 400;
+}
+
+label, .form-label, .text-label {
+  font-weight: 500 !important;
+}
+
+.font-black, .font-extrabold, .font-bold {
+  font-weight: 600 !important;
+}
+
+.font-medium {
+  font-weight: 500 !important;
+}
+
+.font-normal {
+  font-weight: 400 !important;
 }
 
 h1 { font-size: 1.875rem; line-height: 2.25rem; }

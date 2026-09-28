@@ -1,301 +1,346 @@
 {
-  "sha": "9202f7e4d263332867c5f6adbe3762a076835b64",
-  "timestamp": "2026-09-27T13:18:44.785Z",
-  "tests": [
+  "timestamp": "2026-09-28T05:01:30.681Z",
+  "commit": "9f47b92486f95be090229035ab80dec96e78d631",
+  "environment": "http://127.0.0.1:4173",
+  "total": 42,
+  "passed": 42,
+  "failed": 0,
+  "results": [
     {
-      "name": "service_worker_state",
-      "passed": true,
-      "detail": "SW Controller: activated, Caches: tienganh-academic-v3"
+      "id": "NEG-0.1",
+      "index": 1,
+      "name": "Negative Control: Heading font-weight 900 triggers assertion failure",
+      "pass": true,
+      "detail": "Validator correctly rejected weight 900",
+      "timestamp": "2026-09-28T05:00:48.832Z"
     },
     {
-      "name": "header_unclipped_overflow",
-      "passed": true,
-      "detail": "Header overflow: visible, zIndex: 40"
+      "id": "NEG-0.2",
+      "index": 2,
+      "name": "Negative Control: Horizontal viewport overflow triggers assertion failure",
+      "pass": true,
+      "detail": "Validator correctly rejected scrollWidth 420 > 390",
+      "timestamp": "2026-09-28T05:00:48.832Z"
     },
     {
-      "name": "lotrinh_hit_target_unobscured",
-      "passed": true,
-      "detail": "Target at (527, 32) is topElement: <SPAN>"
+      "id": "NEG-0.3",
+      "index": 3,
+      "name": "Negative Control: Missing mobile drawer selector triggers assertion failure",
+      "pass": true,
+      "detail": "Validator correctly rejected missing drawer",
+      "timestamp": "2026-09-28T05:00:48.832Z"
     },
     {
-      "name": "lotrinh_dropdown_physically_opened",
-      "passed": true,
-      "detail": "Dropdown rect: {\"x\":475.25,\"y\":54,\"width\":288,\"height\":271}"
+      "id": "NEG-0.4",
+      "index": 4,
+      "name": "Negative Control: Null/404 HTTP response triggers assertion failure",
+      "pass": true,
+      "detail": "Validator correctly rejected null response without fallback",
+      "timestamp": "2026-09-28T05:00:48.833Z"
     },
     {
-      "name": "phongthi_dropdown_physically_opened",
-      "passed": true,
-      "detail": "Dropdown \"Phòng Thi\" opened via pointer events"
+      "id": "1.1",
+      "index": 5,
+      "name": "Home page returns HTTP 200 with valid content",
+      "pass": true,
+      "detail": "HTTP 200",
+      "timestamp": "2026-09-28T05:00:54.072Z"
     },
     {
-      "name": "tools_sublink_present",
-      "passed": true,
-      "detail": "Link href: https://timbk.io.vn/tools"
+      "id": "1.2",
+      "index": 6,
+      "name": "Registration with Lớp 2 stores grade === Lớp 2 (no fallback to Lớp 7)",
+      "pass": true,
+      "detail": "Stored grade: \"Lớp 2\"",
+      "timestamp": "2026-09-28T05:01:00.579Z"
     },
     {
-      "name": "tools_navigation_success",
-      "passed": true,
-      "detail": "Navigated to /tools/"
+      "id": "1.3",
+      "index": 7,
+      "name": "Page reload preserves session and grade === Lớp 2",
+      "pass": true,
+      "detail": "Persisted grade: \"Lớp 2\"",
+      "timestamp": "2026-09-28T05:01:03.369Z"
     },
     {
-      "name": "history_back_success",
-      "passed": true,
-      "detail": "History back returned to /admincp/"
+      "id": "2.1",
+      "index": 8,
+      "name": "User profile button (#user-profile-btn) is visible in navbar",
+      "pass": true,
+      "detail": "Visible: true",
+      "timestamp": "2026-09-28T05:01:03.586Z"
     },
     {
-      "name": "mobile_menu_button_present",
-      "passed": true,
-      "detail": "Mobile button at (354, 32)"
+      "id": "2.2",
+      "index": 9,
+      "name": "Profile dropdown opens and displays logout button (#logout-btn)",
+      "pass": true,
+      "detail": "Visible: true",
+      "timestamp": "2026-09-28T05:01:04.120Z"
     },
     {
-      "name": "mobile_drawer_direct_links",
-      "passed": true,
-      "detail": "Mobile drawer contains direct action buttons: Courses (true), Tools (true)"
+      "id": "2.3",
+      "index": 10,
+      "name": "Real logout button click clears localStorage and session cookie",
+      "pass": true,
+      "detail": "Cleared: true",
+      "timestamp": "2026-09-28T05:01:05.372Z"
     },
     {
-      "name": "guest_non_lockout_mode",
-      "passed": true,
-      "detail": "AuthModal open on initial visit: false, Header Login Button: true"
+      "id": "2.4",
+      "index": 11,
+      "name": "Navbar returns to guest state with #login-btn visible",
+      "pass": true,
+      "detail": "Login button visible: true",
+      "timestamp": "2026-09-28T05:01:05.380Z"
     },
     {
-      "name": "real_ui_login_success",
-      "passed": true,
-      "detail": "Logged in user badge displayed: true, Stored: true"
+      "id": "2.5",
+      "index": 12,
+      "name": "Protected server endpoint rejects unauthenticated request with HTTP 401",
+      "pass": true,
+      "detail": "Status: 401",
+      "timestamp": "2026-09-28T05:01:05.418Z"
     },
     {
-      "name": "profile_modal_interaction_success",
-      "passed": true,
-      "detail": "Profile modal opened: true, Closed on Escape: true"
+      "id": "3.1",
+      "index": 13,
+      "name": "Desktop #nav-btn-courses opens courses dropdown submenu",
+      "pass": true,
+      "detail": "Dropdown open: true",
+      "timestamp": "2026-09-28T05:01:07.564Z"
     },
     {
-      "name": "real_ui_logout_success",
-      "passed": true,
-      "detail": "User session cleared: true, Login CTA restored: true"
+      "id": "3.2",
+      "index": 14,
+      "name": "Clicking courses submenu item navigates to /courses",
+      "pass": true,
+      "detail": "URL: http://127.0.0.1:4173/courses/",
+      "timestamp": "2026-09-28T05:01:07.869Z"
     },
     {
-      "name": "negative_control_protected_api_unauthorized",
-      "passed": true,
-      "detail": "Protected API /api/homework blocked unauthenticated request: HTTP 401, success: false"
+      "id": "3.3",
+      "index": 15,
+      "name": "Desktop #nav-btn-exams opens exam dropdown submenu",
+      "pass": true,
+      "detail": "Dropdown open: true",
+      "timestamp": "2026-09-28T05:01:08.298Z"
     },
     {
-      "name": "onboarding_tour_modal_flow",
-      "passed": true,
-      "detail": "Onboarding tour opened: true, closed successfully: true"
+      "id": "3.4",
+      "index": 16,
+      "name": "Clicking exam submenu item navigates to /exam",
+      "pass": true,
+      "detail": "URL: http://127.0.0.1:4173/exam/",
+      "timestamp": "2026-09-28T05:01:08.401Z"
     },
     {
-      "name": "recruitment_multigrade_draft_persistence",
-      "passed": true,
-      "detail": "Draft saved candidate: \"Cô Nguyễn Hoàng Yến\", grades count: 2"
+      "id": "3.5",
+      "index": 17,
+      "name": "Desktop #nav-btn-tools opens tools dropdown submenu",
+      "pass": true,
+      "detail": "Dropdown open: true",
+      "timestamp": "2026-09-28T05:01:09.653Z"
     },
     {
-      "name": "exam_state_backup_and_restore",
-      "passed": true,
-      "detail": "Exam active flag: true, backup contains valid server deadline: true"
+      "id": "3.6",
+      "index": 18,
+      "name": "Clicking tools submenu item navigates to /dictionary",
+      "pass": true,
+      "detail": "URL: http://127.0.0.1:4173/dictionary/",
+      "timestamp": "2026-09-28T05:01:10.153Z"
     },
     {
-      "name": "zoom_200_layout_integrity",
-      "passed": true,
-      "detail": "At 200% zoom, brand legible: true, scrollWidth (1434) <= innerWidth (1440)"
+      "id": "3.7",
+      "index": 19,
+      "name": "Mobile viewport (390px) has no horizontal scroll overflow",
+      "pass": true,
+      "detail": "scrollWidth: 390px <= 390px",
+      "timestamp": "2026-09-28T05:01:12.234Z"
     },
     {
-      "name": "wcag_contrast_sky_admincp page title",
-      "passed": true,
-      "detail": "[SKY] Ratio 17.85:1 (Required: 3:1). FG: rgb(15, 23, 42), BG: rgb(255, 255, 255)"
+      "id": "3.8",
+      "index": 20,
+      "name": "Mobile menu toggle button (#mobile-menu-btn) is visible at 390px",
+      "pass": true,
+      "detail": "Visible: true",
+      "timestamp": "2026-09-28T05:01:12.278Z"
     },
     {
-      "name": "wcag_contrast_sky_header brand name",
-      "passed": true,
-      "detail": "[SKY] Ratio 17.85:1 (Required: 4.5:1). FG: rgb(15, 23, 42), BG: rgb(255, 255, 255)"
+      "id": "3.9",
+      "index": 21,
+      "name": "Clicking #mobile-menu-btn opens #mobile-drawer",
+      "pass": true,
+      "detail": "Drawer visible: true",
+      "timestamp": "2026-09-28T05:01:12.758Z"
     },
     {
-      "name": "wcag_contrast_sky_card heading",
-      "passed": true,
-      "detail": "[SKY] Ratio 17.85:1 (Required: 4.5:1). FG: rgb(15, 23, 42), BG: rgb(255, 255, 255)"
+      "id": "4.1",
+      "index": 22,
+      "name": "H1 computed font-weight equals 600 strictly (NOT 900)",
+      "pass": true,
+      "detail": "H1 weight: 600",
+      "timestamp": "2026-09-28T05:01:14.921Z"
     },
     {
-      "name": "wcag_contrast_sky_footer brand",
-      "passed": true,
-      "detail": "[SKY] Ratio 5.93:1 (Required: 4.5:1). FG: rgb(255, 255, 255), BG: rgb(3, 105, 161)"
+      "id": "4.2",
+      "index": 23,
+      "name": "H2 computed font-weight equals 600 strictly (NOT 900)",
+      "pass": true,
+      "detail": "H2 weight: 600",
+      "timestamp": "2026-09-28T05:01:14.921Z"
     },
     {
-      "name": "wcag_contrast_light_admincp page title",
-      "passed": true,
-      "detail": "[LIGHT] Ratio 17.85:1 (Required: 3:1). FG: rgb(15, 23, 42), BG: rgb(255, 255, 255)"
+      "id": "4.3",
+      "index": 24,
+      "name": "Body computed font-weight equals 400 strictly",
+      "pass": true,
+      "detail": "Body weight: 400",
+      "timestamp": "2026-09-28T05:01:14.921Z"
     },
     {
-      "name": "wcag_contrast_light_header brand name",
-      "passed": true,
-      "detail": "[LIGHT] Ratio 17.85:1 (Required: 4.5:1). FG: rgb(15, 23, 42), BG: rgb(255, 255, 255)"
+      "id": "4.4",
+      "index": 25,
+      "name": "Label computed font-weight equals 500 strictly",
+      "pass": true,
+      "detail": "Label weight: 500",
+      "timestamp": "2026-09-28T05:01:14.921Z"
     },
     {
-      "name": "wcag_contrast_light_card heading",
-      "passed": true,
-      "detail": "[LIGHT] Ratio 17.85:1 (Required: 4.5:1). FG: rgb(15, 23, 42), BG: rgb(255, 255, 255)"
+      "id": "4.5",
+      "index": 26,
+      "name": "Clicking theme button switches to Light theme",
+      "pass": true,
+      "detail": "Light active: true",
+      "timestamp": "2026-09-28T05:01:15.439Z"
     },
     {
-      "name": "wcag_contrast_light_footer brand",
-      "passed": true,
-      "detail": "[LIGHT] Ratio 5.93:1 (Required: 4.5:1). FG: rgb(255, 255, 255), BG: rgb(3, 105, 161)"
+      "id": "4.6",
+      "index": 27,
+      "name": "Clicking theme button switches to Dark theme with dark classes",
+      "pass": true,
+      "detail": "Dark class present: true",
+      "timestamp": "2026-09-28T05:01:16.007Z"
     },
     {
-      "name": "wcag_contrast_dark_admincp page title",
-      "passed": true,
-      "detail": "[DARK] Ratio 17.85:1 (Required: 3:1). FG: rgb(255, 255, 255), BG: rgb(15, 23, 42)"
+      "id": "4.7",
+      "index": 28,
+      "name": "Dark theme persists across page reload from localStorage",
+      "pass": true,
+      "detail": "Persisted: true",
+      "timestamp": "2026-09-28T05:01:18.017Z"
     },
     {
-      "name": "wcag_contrast_dark_header brand name",
-      "passed": true,
-      "detail": "[DARK] Ratio 17.85:1 (Required: 4.5:1). FG: rgb(255, 255, 255), BG: rgb(15, 23, 42)"
+      "id": "4.8",
+      "index": 29,
+      "name": "Zoom 200% layout test passes without content clipping",
+      "pass": true,
+      "detail": "Zoom 200% passed: true",
+      "timestamp": "2026-09-28T05:01:19.125Z"
     },
     {
-      "name": "wcag_contrast_dark_card heading",
-      "passed": true,
-      "detail": "[DARK] Ratio 17.85:1 (Required: 4.5:1). FG: rgb(255, 255, 255), BG: rgb(15, 23, 42)"
+      "id": "5.1",
+      "index": 30,
+      "name": "Real producer: Active exam on /exam registers isAppBusy() === true",
+      "pass": true,
+      "detail": "isAppBusy: true",
+      "timestamp": "2026-09-28T05:01:21.859Z"
     },
     {
-      "name": "wcag_contrast_dark_footer brand",
-      "passed": true,
-      "detail": "[DARK] Ratio 5.93:1 (Required: 4.5:1). FG: rgb(255, 255, 255), BG: rgb(3, 105, 161)"
+      "id": "5.2",
+      "index": 31,
+      "name": "Controllerchange during busy exam displays #sw-update-banner without reloading page",
+      "pass": true,
+      "detail": "Banner displayed: true",
+      "timestamp": "2026-09-28T05:01:21.897Z"
     },
     {
-      "name": "browser_console_clean",
-      "passed": true,
-      "detail": "Console errors count: 0"
-    }
-  ],
-  "consoleErrors": [],
-  "contrastResults": [
-    {
-      "theme": "sky",
-      "label": "AdminCP Page Title",
-      "found": true,
-      "fg": "rgb(15, 23, 42)",
-      "bg": "rgb(255, 255, 255)",
-      "ratio": 17.85,
-      "minRequired": 3,
-      "passesWcag": true,
-      "isLargeText": true
+      "id": "5.3",
+      "index": 32,
+      "name": "Real producer: Typing into recruitment form marks form dirty and isAppBusy() === true",
+      "pass": true,
+      "detail": "isDirty: true, isBusy: true",
+      "timestamp": "2026-09-28T05:01:24.094Z"
     },
     {
-      "theme": "sky",
-      "label": "Header Brand Name",
-      "found": true,
-      "fg": "rgb(15, 23, 42)",
-      "bg": "rgb(255, 255, 255)",
-      "ratio": 17.85,
-      "minRequired": 4.5,
-      "passesWcag": true,
-      "isLargeText": false
+      "id": "5.4",
+      "index": 33,
+      "name": "Controllerchange during dirty form preserves user input and displays update banner",
+      "pass": true,
+      "detail": "Banner displayed: true",
+      "timestamp": "2026-09-28T05:01:24.123Z"
     },
     {
-      "theme": "sky",
-      "label": "Card Heading",
-      "found": true,
-      "fg": "rgb(15, 23, 42)",
-      "bg": "rgb(255, 255, 255)",
-      "ratio": 17.85,
-      "minRequired": 4.5,
-      "passesWcag": true,
-      "isLargeText": false
+      "id": "5.5",
+      "index": 34,
+      "name": "User typed form input is 100% preserved after controllerchange notification",
+      "pass": true,
+      "detail": "Preserved text: \"Nguyễn Thị Ứng Viên G1\"",
+      "timestamp": "2026-09-28T05:01:24.139Z"
     },
     {
-      "theme": "sky",
-      "label": "Footer Brand",
-      "found": true,
-      "fg": "rgb(255, 255, 255)",
-      "bg": "rgb(3, 105, 161)",
-      "ratio": 5.93,
-      "minRequired": 4.5,
-      "passesWcag": true,
-      "isLargeText": false
+      "id": "6.1",
+      "index": 35,
+      "name": "Guest exam survey modal opens cleanly into DOM",
+      "pass": true,
+      "detail": "Modal visible: true",
+      "timestamp": "2026-09-28T05:01:25.898Z"
     },
     {
-      "theme": "light",
-      "label": "AdminCP Page Title",
-      "found": true,
-      "fg": "rgb(15, 23, 42)",
-      "bg": "rgb(255, 255, 255)",
-      "ratio": 17.85,
-      "minRequired": 3,
-      "passesWcag": true,
-      "isLargeText": true
+      "id": "6.2",
+      "index": 36,
+      "name": "Real pointer click on backdrop closes modal without traps",
+      "pass": true,
+      "detail": "Modal closed: true",
+      "timestamp": "2026-09-28T05:01:26.467Z"
     },
     {
-      "theme": "light",
-      "label": "Header Brand Name",
-      "found": true,
-      "fg": "rgb(15, 23, 42)",
-      "bg": "rgb(255, 255, 255)",
-      "ratio": 17.85,
-      "minRequired": 4.5,
-      "passesWcag": true,
-      "isLargeText": false
+      "id": "6.3",
+      "index": 37,
+      "name": "Underlying page elements are interactive and clickable after modal closure",
+      "pass": true,
+      "detail": "Clickable: true",
+      "timestamp": "2026-09-28T05:01:26.474Z"
     },
     {
-      "theme": "light",
-      "label": "Card Heading",
-      "found": true,
-      "fg": "rgb(15, 23, 42)",
-      "bg": "rgb(255, 255, 255)",
-      "ratio": 17.85,
-      "minRequired": 4.5,
-      "passesWcag": true,
-      "isLargeText": false
+      "id": "6.4",
+      "index": 38,
+      "name": "Student answers question by checking radio option",
+      "pass": true,
+      "detail": "Checked: true",
+      "timestamp": "2026-09-28T05:01:28.915Z"
     },
     {
-      "theme": "light",
-      "label": "Footer Brand",
-      "found": true,
-      "fg": "rgb(255, 255, 255)",
-      "bg": "rgb(3, 105, 161)",
-      "ratio": 5.93,
-      "minRequired": 4.5,
-      "passesWcag": true,
-      "isLargeText": false
+      "id": "6.5",
+      "index": 39,
+      "name": "Cancelling exit prompt preserves modal open state",
+      "pass": true,
+      "detail": "Modal open: true",
+      "timestamp": "2026-09-28T05:01:29.509Z"
     },
     {
-      "theme": "dark",
-      "label": "AdminCP Page Title",
-      "found": true,
-      "fg": "rgb(255, 255, 255)",
-      "bg": "rgb(15, 23, 42)",
-      "ratio": 17.85,
-      "minRequired": 3,
-      "passesWcag": true,
-      "isLargeText": true
+      "id": "6.6",
+      "index": 40,
+      "name": "Cancelling exit prompt preserves student checked answers",
+      "pass": true,
+      "detail": "Answer preserved: true",
+      "timestamp": "2026-09-28T05:01:29.509Z"
     },
     {
-      "theme": "dark",
-      "label": "Header Brand Name",
-      "found": true,
-      "fg": "rgb(255, 255, 255)",
-      "bg": "rgb(15, 23, 42)",
-      "ratio": 17.85,
-      "minRequired": 4.5,
-      "passesWcag": true,
-      "isLargeText": false
+      "id": "6.7",
+      "index": 41,
+      "name": "Cancelling exit prompt preserves countdown timer deadline",
+      "pass": true,
+      "detail": "Timer preserved: true",
+      "timestamp": "2026-09-28T05:01:29.509Z"
     },
     {
-      "theme": "dark",
-      "label": "Card Heading",
-      "found": true,
-      "fg": "rgb(255, 255, 255)",
-      "bg": "rgb(15, 23, 42)",
-      "ratio": 17.85,
-      "minRequired": 4.5,
-      "passesWcag": true,
-      "isLargeText": false
-    },
-    {
-      "theme": "dark",
-      "label": "Footer Brand",
-      "found": true,
-      "fg": "rgb(255, 255, 255)",
-      "bg": "rgb(3, 105, 161)",
-      "ratio": 5.93,
-      "minRequired": 4.5,
-      "passesWcag": true,
-      "isLargeText": false
+      "id": "6.8",
+      "index": 42,
+      "name": "Browser history popstate navigation handled cleanly during modal lifecycle",
+      "pass": true,
+      "detail": "Popstate triggered without crash",
+      "timestamp": "2026-09-28T05:01:29.838Z"
     }
   ]
 }

@@ -228,13 +228,13 @@
   <!-- ROLE SPECIFIC SECTION 1: PARENT VIEW ("SỔ PHỤ HUYNH THÔNG MINH") -->
   <!-- ========================================================================= -->
   {#if currentUser?.role === 'parent'}
-    <div class="rounded-3xl bg-gradient-to-br from-purple-50 via-white to-slate-50 dark:from-slate-900 dark:via-purple-950/20 dark:to-slate-950 border border-purple-200/80 dark:border-purple-800/40 p-6 sm:p-8 shadow-xl">
+    <div class="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 sm:p-8 shadow-xl">
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-purple-100 dark:border-purple-900/40">
         <div class="space-y-2">
-          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-black bg-purple-600 text-white tracking-wider">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-purple-600 text-white tracking-wider">
             <span>👨‍👩‍👧 SỔ PHỤ HUYNH THÔNG MINH</span>
           </div>
-          <h1 class="text-2xl sm:text-3xl font-heading font-black text-slate-900 dark:text-white">
+          <h1 class="text-2xl sm:text-3xl font-heading font-semibold text-slate-900 dark:text-white">
             Kính chào Quý Phụ Huynh {currentUser.name}!
           </h1>
           <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300">
@@ -247,7 +247,7 @@
             <img src={linkedChild.avatar} alt={linkedChild.name} class="w-14 h-14 rounded-2xl object-cover border-2 border-purple-400" />
             <div>
               <div class="text-xs text-purple-600 dark:text-purple-300 font-bold uppercase">Học Viên Liên Kết</div>
-              <div class="text-base font-heading font-black text-slate-900 dark:text-white">{linkedChild.name}</div>
+              <div class="text-base font-heading font-semibold text-slate-900 dark:text-white">{linkedChild.name}</div>
               <div class="text-xs text-slate-700 dark:text-slate-300 font-medium">
                 {(() => {
                   try {
@@ -269,7 +269,7 @@
           </div>
           <div>
             <div class="text-xs text-slate-700 dark:text-slate-300 font-bold uppercase">Sao Thưởng Hiện Có</div>
-            <div class="text-xl font-heading font-black text-slate-900 dark:text-white">{studentStars} Sao</div>
+            <div class="text-xl font-heading font-semibold text-slate-900 dark:text-white">{studentStars} Sao</div>
             <div class="text-[11px] text-emerald-700 dark:text-emerald-400 font-bold">
               Đổi được {(studentStars * 10).toLocaleString('vi-VN')} VNĐ trừ học phí
             </div>
@@ -282,7 +282,7 @@
           </div>
           <div>
             <div class="text-xs text-slate-700 dark:text-slate-300 font-bold uppercase">Chuyên Cần &amp; Kỷ Luật</div>
-            <div class="text-xl font-heading font-black text-emerald-600 dark:text-emerald-400">100%</div>
+            <div class="text-xl font-heading font-semibold text-emerald-600 dark:text-emerald-400">100%</div>
             <div class="text-[11px] text-slate-700 dark:text-slate-300 font-medium">Đầy đủ tất cả buổi học &amp; BTVN</div>
           </div>
         </div>
@@ -293,7 +293,7 @@
           </div>
           <div>
             <div class="text-xs text-slate-700 dark:text-slate-300 font-bold uppercase">Thiên Hướng Năng Khiếu</div>
-            <div class="text-base font-heading font-black text-purple-700 dark:text-purple-300">Phản Xạ &amp; Phát Âm Chuẩn</div>
+            <div class="text-base font-heading font-semibold text-purple-700 dark:text-purple-300">Phản Xạ &amp; Phát Âm Chuẩn</div>
             <div class="text-[11px] text-slate-700 dark:text-slate-300 font-medium">Đánh giá bởi GV Bản Ngữ &amp; Cô Dung</div>
           </div>
         </div>
@@ -305,7 +305,7 @@
           <div>
             <div class="flex items-center gap-2">
               <span class="text-xl">📸</span>
-              <h3 class="text-base font-heading font-black text-slate-900 dark:text-white">
+              <h3 class="text-base font-heading font-semibold text-slate-900 dark:text-white">
                 Sổ Điểm &amp; Bài Kiểm Tra Của Con (Hỗ Trợ Quét OCR)
               </h3>
             </div>
@@ -318,7 +318,7 @@
             <button
               type="button"
               onclick={() => showOcrModal = true}
-              class="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-extrabold text-xs shadow-md shadow-purple-600/25 transition-all hover:scale-105 flex items-center gap-1.5"
+              class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-medium text-xs shadow-sm transition-all flex items-center gap-1.5"
             >
               <span>📷 Chụp Ảnh Bài Thi (OCR)</span>
             </button>
@@ -354,7 +354,7 @@
                   </div>
 
                   <div class="text-right">
-                    <div class="text-xl font-heading font-black text-purple-700 dark:text-purple-300">
+                    <div class="text-xl font-heading font-semibold text-purple-700 dark:text-purple-300">
                       {record.score}<span class="text-xs text-slate-600 dark:text-slate-400 font-medium">/{record.max_score}</span>
                     </div>
                   </div>
@@ -391,7 +391,7 @@
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
             <span class="text-lg">💡</span>
-            <h3 class="text-base font-heading font-black text-slate-900 dark:text-white">
+            <h3 class="text-base font-heading font-semibold text-slate-900 dark:text-white">
               Gợi Ý Đồng Hành Dành Cho Con (Dựa Trên Hồ Sơ Tương Đồng)
             </h3>
           </div>
@@ -404,7 +404,7 @@
           {#each childRecommendations as rec}
             <div class="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-purple-200/80 dark:border-purple-800/50 shadow-sm space-y-2">
               <div class="flex items-center justify-between">
-                <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/60 text-purple-700 dark:text-purple-300">
+                <span class="text-[10px] font-medium uppercase px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/60 text-purple-700 dark:text-purple-300">
                   {rec.tag}
                 </span>
                 <span class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
@@ -438,13 +438,13 @@
   <!-- ROLE SPECIFIC SECTION: TEACHER VIEW ("CỔNG GIÁO VIÊN & ĐIỀU PHỐI LỚP HỌC") -->
   <!-- ========================================================================= -->
   {:else if isTeacher}
-    <div class="rounded-3xl bg-gradient-to-br from-teal-50 via-white to-slate-50 dark:from-slate-900 dark:via-teal-950/20 dark:to-slate-950 border border-teal-200/80 dark:border-teal-800/40 p-6 sm:p-8 shadow-xl">
+    <div class="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 sm:p-8 shadow-xl">
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-teal-100 dark:border-teal-900/40">
         <div class="space-y-2">
-          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-black bg-teal-600 text-white tracking-wider">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-teal-600 text-white tracking-wider">
             <span>👨‍🏫 CỔNG GIÁO VIÊN &amp; ĐIỀU PHỐI LỚP HỌC</span>
           </div>
-          <h1 class="text-2xl sm:text-3xl font-heading font-black text-slate-900 dark:text-white">
+          <h1 class="text-2xl sm:text-3xl font-heading font-semibold text-slate-900 dark:text-white">
             Kính chào Thầy/Cô {currentUser.name}! 🌟
           </h1>
           <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300">
@@ -455,7 +455,7 @@
         <div class="flex items-center gap-3">
           <a
             href="/schedule"
-            class="px-4 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-extrabold text-xs shadow-md shadow-teal-600/25 transition-all hover:scale-105 flex items-center gap-2"
+            class="px-4 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-medium text-xs shadow-md shadow-teal-600/25 transition-all hover:scale-105 flex items-center gap-2"
           >
             <span>📅 Điểm Danh &amp; Lịch Dạy</span>
           </a>
@@ -479,7 +479,7 @@
           </div>
           <div>
             <div class="text-xs text-slate-700 dark:text-slate-300 font-bold uppercase">Ca Dạy &amp; Lịch Học</div>
-            <div class="text-base font-heading font-black text-slate-900 dark:text-white">Điểm danh 1 chạm</div>
+            <div class="text-base font-heading font-semibold text-slate-900 dark:text-white">Điểm danh 1 chạm</div>
             <div class="text-[11px] text-teal-700 dark:text-teal-400 font-bold">Tự động báo phụ huynh đón 10p</div>
           </div>
         </a>
@@ -493,7 +493,7 @@
           </div>
           <div>
             <div class="text-xs text-slate-700 dark:text-slate-300 font-bold uppercase">Đánh Giá Năng Lực</div>
-            <div class="text-base font-heading font-black text-slate-900 dark:text-white">Nhận xét học viên</div>
+            <div class="text-base font-heading font-semibold text-slate-900 dark:text-white">Nhận xét học viên</div>
             <div class="text-[11px] text-purple-700 dark:text-purple-400 font-bold">Đồng bộ Zalo Bot &amp; Leader</div>
           </div>
         </a>
@@ -507,7 +507,7 @@
           </div>
           <div>
             <div class="text-xs text-slate-700 dark:text-slate-300 font-bold uppercase">Giáo Án 5512 &amp; Bản Ngữ</div>
-            <div class="text-base font-heading font-black text-slate-900 dark:text-white">Kho Học Liệu Chuẩn</div>
+            <div class="text-base font-heading font-semibold text-slate-900 dark:text-white">Kho Học Liệu Chuẩn</div>
             <div class="text-[11px] text-emerald-700 dark:text-emerald-400 font-bold">Phương pháp Co-Teaching 2026</div>
           </div>
         </a>
@@ -518,13 +518,13 @@
   <!-- ROLE SPECIFIC SECTION 2: PRIMARY STUDENTS (LỚP 1 - 5) -->
   <!-- ========================================================================= -->
   {:else if isPrimaryStudent}
-    <div class="rounded-3xl bg-gradient-to-br from-amber-50 via-white to-orange-50 dark:from-slate-900 dark:via-amber-950/20 dark:to-slate-950 border border-amber-200 dark:border-amber-800/40 p-6 sm:p-8 shadow-xl">
+    <div class="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 sm:p-8 shadow-xl">
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-amber-200/60 dark:border-amber-900/40">
         <div class="space-y-2">
-          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-black bg-amber-500 text-white tracking-wider shadow-sm">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-amber-500 text-white tracking-wider shadow-sm">
             <span>🎒 GÓC HỌC TẬP TIỂU HỌC VUI VẺ ({userGrade})</span>
           </div>
-          <h1 class="text-2xl sm:text-4xl font-heading font-black text-slate-900 dark:text-white">
+          <h1 class="text-2xl sm:text-4xl font-heading font-semibold text-slate-900 dark:text-white">
             Xin chào {currentUser.name}! 🌟
           </h1>
           <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300">
@@ -537,7 +537,7 @@
           <div class="text-4xl animate-bounce">⭐</div>
           <div>
             <div class="text-[11px] font-bold uppercase tracking-wider text-amber-100">Ví Sao Thưởng Của Bé</div>
-            <div class="text-2xl font-heading font-black">{studentStars} Sao</div>
+            <div class="text-2xl font-heading font-semibold">{studentStars} Sao</div>
             <div class="text-[11px] font-bold text-amber-100">
               = {(studentStars * 10).toLocaleString('vi-VN')}đ trừ học phí
             </div>
@@ -555,7 +555,7 @@
       <div class="mt-6 space-y-4">
         <div class="flex items-center justify-between">
           <div>
-            <h3 class="text-lg font-heading font-black text-slate-900 dark:text-white flex items-center gap-2">
+            <h3 class="text-lg font-heading font-semibold text-slate-900 dark:text-white flex items-center gap-2">
               <span>🔊</span> <span>Bảng Âm Phonics 1 Chạm (Bấm Để Nghe &amp; Tích Sao)</span>
             </h3>
             <p class="text-xs text-slate-500 dark:text-slate-400">Giọng chuẩn Anh - Mỹ bản ngữ, bấm vào hình để nghe đọc mẫu:</p>
@@ -570,10 +570,10 @@
               class="p-4 rounded-2xl bg-white dark:bg-slate-800 border-2 {selectedPrimaryWord === card.word ? 'border-amber-500 shadow-amber-500/20' : 'border-slate-200 dark:border-slate-700'} hover:border-amber-400 shadow-md transition-all hover:scale-105 active:scale-95 text-center flex flex-col items-center justify-between group"
             >
               <div class="text-4xl group-hover:scale-110 transition-transform">{card.emoji}</div>
-              <div class="mt-2 font-heading font-black text-base text-slate-900 dark:text-white">{card.word}</div>
+              <div class="mt-2 font-heading font-semibold text-base text-slate-900 dark:text-white">{card.word}</div>
               <div class="text-[11px] text-amber-600 dark:text-amber-400 font-mono font-bold">{card.ipa}</div>
               <div class="text-[11px] text-slate-500 dark:text-slate-400">{card.meaning}</div>
-              <div class="mt-2 text-[10px] text-emerald-600 dark:text-emerald-400 font-extrabold flex items-center gap-0.5">
+              <div class="mt-2 text-[10px] text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-0.5">
                 <span>🔊 Bấm nghe</span>
               </div>
             </button>
@@ -584,7 +584,7 @@
         <div class="pt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
           <a
             href="/games"
-            class="p-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-md hover:scale-[1.02] transition-all flex items-center gap-3"
+            class="p-4 rounded-2xl bg-sky-600 text-white shadow-md hover:scale-[1.02] transition-all flex items-center gap-3"
           >
             <span class="text-3xl">🎮</span>
             <div>
@@ -595,7 +595,7 @@
 
           <a
             href="/flashcards"
-            class="p-4 rounded-2xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md hover:scale-[1.02] transition-all flex items-center gap-3"
+            class="p-4 rounded-2xl bg-slate-700 text-white shadow-md hover:scale-[1.02] transition-all flex items-center gap-3"
           >
             <span class="text-3xl">🎴</span>
             <div>
@@ -606,7 +606,7 @@
 
           <a
             href="/exam"
-            class="p-4 rounded-2xl bg-gradient-to-r from-amber-500 to-rose-500 text-white shadow-md hover:scale-[1.02] transition-all flex items-center gap-3"
+            class="p-4 rounded-2xl bg-amber-600 text-white shadow-md hover:scale-[1.02] transition-all flex items-center gap-3"
           >
             <span class="text-3xl">⚡</span>
             <div>
@@ -625,10 +625,10 @@
     <div class="rounded-3xl bg-gradient-to-br from-teal-50 via-white to-slate-50 dark:from-slate-900 dark:via-teal-950/20 dark:to-slate-950 border border-teal-200 dark:border-teal-800/40 p-6 sm:p-8 shadow-xl">
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-teal-200/60 dark:border-teal-900/40">
         <div class="space-y-2">
-          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-black bg-teal-600 text-white tracking-wider">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-teal-600 text-white tracking-wider">
             <span>🌱 KHỐI TRUNG HỌC CƠ SỞ ({userGrade})</span>
           </div>
-          <h1 class="text-2xl sm:text-3xl font-heading font-black text-slate-900 dark:text-white">
+          <h1 class="text-2xl sm:text-3xl font-heading font-semibold text-slate-900 dark:text-white">
             Chào mừng {currentUser.name}! Chinh Phục Điểm 9+ Cùng Cô Dung 🎯
           </h1>
           <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300">
@@ -640,7 +640,7 @@
           <div class="text-3xl">⭐</div>
           <div>
             <div class="text-xs text-slate-700 dark:text-slate-300 font-bold uppercase">Sao Thưởng &amp; Giảm Học Phí</div>
-            <div class="text-xl font-heading font-black text-emerald-600 dark:text-emerald-400">{studentStars} Sao</div>
+            <div class="text-xl font-heading font-semibold text-emerald-600 dark:text-emerald-400">{studentStars} Sao</div>
             <div class="text-[11px] text-emerald-700 dark:text-emerald-300 font-bold">={(studentStars * 10).toLocaleString('vi-VN')} VNĐ trừ học phí</div>
           </div>
         </div>
@@ -693,13 +693,13 @@
   <!-- ROLE SPECIFIC SECTION 4: HIGH SCHOOL / IELTS / TOEIC (LỚP 10 - 12) -->
   <!-- ========================================================================= -->
   {:else if isHighSchoolStudent}
-    <div class="rounded-3xl bg-gradient-to-br from-indigo-50 via-white to-slate-50 dark:from-slate-900 dark:via-indigo-950/20 dark:to-slate-950 border border-indigo-200 dark:border-indigo-800/40 p-6 sm:p-8 shadow-xl">
+    <div class="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 sm:p-8 shadow-xl">
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-indigo-200/60 dark:border-indigo-900/40">
         <div class="space-y-2">
-          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-black bg-indigo-600 text-white tracking-wider">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-600 text-white tracking-wider">
             <span>🔥 ÔN THI ĐẠI HỌC THPTQG 2026 &amp; IELTS BAND 7.5+</span>
           </div>
-          <h1 class="text-2xl sm:text-3xl font-heading font-black text-slate-900 dark:text-white">
+          <h1 class="text-2xl sm:text-3xl font-heading font-semibold text-slate-900 dark:text-white">
             Chiến Dịch Chinh Phục Điểm 10 ĐH &amp; IELTS Cùng Cô Dung 🏛️
           </h1>
           <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300">
@@ -710,7 +710,7 @@
         <div class="flex items-center gap-3">
           <a
             href="/exam"
-            class="px-5 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs shadow-lg shadow-indigo-600/25 transition-all hover:scale-105"
+            class="px-5 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs shadow-lg shadow-indigo-600/25 transition-all hover:scale-105"
           >
             🚀 Vào Phòng Thi Thử Bấm Giờ
           </a>
@@ -749,13 +749,13 @@
   <!-- ROLE SPECIFIC SECTION 5: CERTIFICATE & GENERAL STUDENTS (CAMBRIDGE, IELTS, VSTEP) -->
   <!-- ========================================================================= -->
   {:else if isCertificateOrGeneralStudent || userRole === 'student'}
-    <div class="rounded-3xl bg-gradient-to-br from-emerald-50 via-white to-slate-50 dark:from-slate-900 dark:via-emerald-950/20 dark:to-slate-950 border border-emerald-200 dark:border-emerald-800/40 p-6 sm:p-8 shadow-xl">
+    <div class="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 sm:p-8 shadow-xl">
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-emerald-200/60 dark:border-emerald-900/40">
         <div class="space-y-2">
-          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-black bg-emerald-600 text-white tracking-wider">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-600 text-white tracking-wider">
             <span>🎒 GÓC HỌC TẬP HỌC SINH ({userGrade || 'Chương Trình Chuẩn'})</span>
           </div>
-          <h1 class="text-2xl sm:text-3xl font-heading font-black text-slate-900 dark:text-white">
+          <h1 class="text-2xl sm:text-3xl font-heading font-semibold text-slate-900 dark:text-white">
             Chào mừng {currentUser.name}! Chúc Bạn Học Tập Tiến Bộ Vượt Bậc 🎯
           </h1>
           <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300">
@@ -767,7 +767,7 @@
           <div class="text-3xl animate-bounce">⭐</div>
           <div>
             <div class="text-xs text-slate-700 dark:text-slate-300 font-bold uppercase">Sao Thưởng Của Bạn</div>
-            <div class="text-xl font-heading font-black text-emerald-600 dark:text-emerald-400">{studentStars} Sao</div>
+            <div class="text-xl font-heading font-semibold text-emerald-600 dark:text-emerald-400">{studentStars} Sao</div>
             <div class="text-[11px] text-emerald-700 dark:text-emerald-300 font-bold">={(studentStars * 10).toLocaleString('vi-VN')} VNĐ trừ học phí</div>
           </div>
         </div>
@@ -827,7 +827,7 @@
 
       <div class="relative z-10 max-w-4xl space-y-6">
         <div class="flex flex-wrap items-center gap-2">
-          <span class="px-3 py-1 rounded-full text-xs font-black bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 tracking-wider">
+          <span class="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 tracking-wider">
             TIẾNG ANH CÔ DUNG • CHƯƠNG TRÌNH 2026
           </span>
           <span class="px-3 py-1 rounded-full text-xs font-bold bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border border-indigo-500/30">
@@ -838,9 +838,9 @@
           </span>
         </div>
 
-        <h1 class="text-3xl sm:text-5xl font-heading font-black text-slate-900 dark:text-white tracking-tight leading-tight">
+        <h1 class="text-3xl sm:text-5xl font-heading font-semibold text-slate-900 dark:text-white tracking-tight leading-tight">
           Học Viện Tiếng Anh Cô Dung <br />
-          <span class="bg-gradient-to-r from-emerald-600 via-teal-500 to-emerald-700 dark:from-emerald-400 dark:via-teal-300 dark:to-cyan-300 bg-clip-text text-transparent">
+          <span class="text-sky-600 dark:text-sky-400">
             Đào Tạo &amp; Khảo Thí Chuẩn Quốc Tế
           </span>
         </h1>
@@ -854,14 +854,14 @@
         <div class="flex flex-wrap items-center gap-3 pt-2">
           <a
             href="/exam"
-            class="px-6 py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs sm:text-sm shadow-lg shadow-emerald-600/25 transition-all hover:scale-105 flex items-center gap-2"
+            class="px-6 py-3.5 rounded-2xl bg-sky-600 hover:bg-sky-500 text-white font-medium text-xs sm:text-sm shadow-sm transition-all hover:scale-105 flex items-center gap-2"
           >
             <span>⚡ Thi Thử Nhanh 15 Phút</span>
           </a>
 
           <a
             href="/exam"
-            class="px-6 py-3.5 rounded-2xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-extrabold text-xs sm:text-sm border border-slate-300 dark:border-slate-700 shadow-sm transition-all hover:scale-105 flex items-center gap-2"
+            class="px-6 py-3.5 rounded-2xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-medium text-xs sm:text-sm border border-slate-300 dark:border-slate-700 shadow-sm transition-all hover:scale-105 flex items-center gap-2"
           >
             <span>⏱️ Đề 1 Tiết 45 Phút Chuẩn Bộ</span>
           </a>
@@ -891,8 +891,8 @@
         📚
       </div>
       <div>
-        <div class="text-2xl font-heading font-black text-slate-900 dark:text-white">{data.curricula.length}</div>
-        <div class="text-[11px] text-slate-700 dark:text-slate-300 font-extrabold uppercase">Cấp Bậc &amp; Chương Trình</div>
+        <div class="text-2xl font-heading font-semibold text-slate-900 dark:text-white">{data.curricula.length}</div>
+        <div class="text-[11px] text-slate-700 dark:text-slate-300 font-medium uppercase">Cấp Bậc &amp; Chương Trình</div>
       </div>
     </div>
 
@@ -901,8 +901,8 @@
         📝
       </div>
       <div>
-        <div class="text-2xl font-heading font-black text-slate-900 dark:text-white">{data.exams.length}</div>
-        <div class="text-[11px] text-slate-700 dark:text-slate-300 font-extrabold uppercase">Bộ Đề Thi 15p - 45p</div>
+        <div class="text-2xl font-heading font-semibold text-slate-900 dark:text-white">{data.exams.length}</div>
+        <div class="text-[11px] text-slate-700 dark:text-slate-300 font-medium uppercase">Bộ Đề Thi 15p - 45p</div>
       </div>
     </div>
 
@@ -911,8 +911,8 @@
         📊
       </div>
       <div>
-        <div class="text-2xl font-heading font-black text-slate-900 dark:text-white">{data.evaluations.length}</div>
-        <div class="text-[11px] text-slate-700 dark:text-slate-300 font-extrabold uppercase">Hồ Sơ Năng Khiếu</div>
+        <div class="text-2xl font-heading font-semibold text-slate-900 dark:text-white">{data.evaluations.length}</div>
+        <div class="text-[11px] text-slate-700 dark:text-slate-300 font-medium uppercase">Hồ Sơ Năng Khiếu</div>
       </div>
     </div>
 
@@ -921,8 +921,8 @@
         ⭐
       </div>
       <div>
-        <div class="text-2xl font-heading font-black text-amber-600 dark:text-amber-400">100 : 1.000</div>
-        <div class="text-[11px] text-slate-700 dark:text-slate-300 font-extrabold uppercase">Tỷ Lệ Đổi Học Phí</div>
+        <div class="text-2xl font-heading font-semibold text-amber-600 dark:text-amber-400">100 : 1.000</div>
+        <div class="text-[11px] text-slate-700 dark:text-slate-300 font-medium uppercase">Tỷ Lệ Đổi Học Phí</div>
       </div>
     </div>
   </div>
@@ -943,13 +943,13 @@
     <!-- ================= STUDENT / PARENT VIEW: ONLY ENROLLED CLASSES SHOWN ================= -->
     <div class="space-y-6">
       <!-- Section 1: Active Enrolled Curriculum -->
-      <div class="rounded-3xl bg-gradient-to-br from-emerald-50 via-white to-teal-50 dark:from-slate-900 dark:via-emerald-950/20 dark:to-slate-950 border-2 border-emerald-500/50 p-6 sm:p-8 shadow-xl">
+      <div class="rounded-3xl bg-white dark:bg-slate-900 border-2 border-sky-500/50 p-6 sm:p-8 shadow-xl">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-emerald-200/60 dark:border-emerald-900/40">
           <div>
-            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-black bg-emerald-600 text-white tracking-wider shadow-sm">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-600 text-white tracking-wider shadow-sm">
               <span>📚 LỚP HỌC CHÍNH KHÓA ĐÃ GHI DANH</span>
             </div>
-            <h2 class="text-2xl sm:text-3xl font-heading font-black text-slate-900 dark:text-white mt-2">
+            <h2 class="text-2xl sm:text-3xl font-heading font-semibold text-slate-900 dark:text-white mt-2">
               Khóa Học Của Em: {enrolledGrades.join(' • ') || 'Lớp 7'} 🎓
             </h2>
             <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-1">
@@ -962,7 +962,7 @@
             <span class="text-2xl">🛡️</span>
             <div>
               <div class="text-[10px] font-bold text-slate-400 uppercase">Quyền Truy Cập</div>
-              <div class="text-xs font-extrabold text-emerald-600 dark:text-emerald-400">Đã Khóa Các Khối Khác</div>
+              <div class="text-xs font-medium text-emerald-600 dark:text-emerald-400">Đã Khóa Các Khối Khác</div>
             </div>
           </div>
         </div>
@@ -978,10 +978,10 @@
                       {curr.icon || '🚀'}
                     </span>
                     <div>
-                      <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300 border border-emerald-300/40 uppercase">
+                      <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300 border border-emerald-300/40 uppercase">
                         <span>✓</span> <span>Đang Theo Học</span>
                       </span>
-                      <h3 class="font-heading font-black text-xl text-slate-900 dark:text-white mt-1">
+                      <h3 class="font-heading font-semibold text-xl text-slate-900 dark:text-white mt-1">
                         {curr.title}
                       </h3>
                     </div>
@@ -1012,7 +1012,7 @@
               <div class="mt-6 pt-4 border-t border-slate-100 dark:border-slate-700/60 flex flex-wrap items-center gap-2">
                 <a
                   href="/exam"
-                  class="flex-1 min-w-[140px] px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs text-center shadow-md shadow-emerald-600/20 transition-all flex items-center justify-center gap-1.5"
+                  class="flex-1 min-w-[140px] px-4 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs text-center shadow-md shadow-emerald-600/20 transition-all flex items-center justify-center gap-1.5"
                 >
                   <span>🚀 Vào Học Ngay</span>
                   <span>➔</span>
@@ -1044,10 +1044,10 @@
             </div>
             <div>
               <div class="flex items-center gap-2">
-                <h3 class="font-heading font-black text-base sm:text-lg text-slate-900 dark:text-white">
+                <h3 class="font-heading font-semibold text-base sm:text-lg text-slate-900 dark:text-white">
                   Các Khối Lớp &amp; Chương Trình Khác ({studentLockedCurricula.length} Môn)
                 </h3>
-                <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-300/40 uppercase">
+                <span class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-300/40 uppercase">
                   Chỉ Được Set Thêm Sau
                 </span>
               </div>
@@ -1081,7 +1081,7 @@
                   </div>
 
                   <div>
-                    <h4 class="font-heading font-black text-sm text-slate-800 dark:text-slate-200">
+                    <h4 class="font-heading font-semibold text-sm text-slate-800 dark:text-slate-200">
                       {curr.title}
                     </h4>
                     <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
@@ -1113,12 +1113,12 @@
           <div class="flex items-center gap-2">
             <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">HỆ THỐNG PHÂN CẤP ĐÀO TẠO</span>
             {#if isTeacherOrAdmin(currentUser)}
-              <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/30">
+              <span class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/30">
                 👨‍🏫 Toàn Quyền Quản Lý 19 Khối Lớp
               </span>
             {/if}
           </div>
-          <h2 class="text-2xl font-heading font-black text-slate-900 dark:text-white mt-0.5">Khung Chương Trình Toàn Cấp K12 &amp; Khảo Thí 2026</h2>
+          <h2 class="text-2xl font-heading font-semibold text-slate-900 dark:text-white mt-0.5">Khung Chương Trình Toàn Cấp K12 &amp; Khảo Thí 2026</h2>
         </div>
 
         <!-- Category Filter Tabs -->
@@ -1150,7 +1150,7 @@
               </div>
 
               <div>
-                <h3 class="font-heading font-extrabold text-base text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                <h3 class="font-heading font-medium text-base text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
                   {curr.title}
                 </h3>
                 <p class="text-xs text-slate-700 dark:text-slate-300 mt-1 leading-relaxed line-clamp-3 font-normal">
@@ -1182,7 +1182,7 @@
         <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/30">
           ĐẶC QUYỀN GIÁO VIÊN &amp; PHỤ HUYNH
         </span>
-        <h2 class="text-2xl md:text-3xl font-heading font-black text-slate-900 dark:text-white leading-snug">
+        <h2 class="text-2xl md:text-3xl font-heading font-semibold text-slate-900 dark:text-white leading-snug">
           Phân Tích Năng Khiếu Đa Chiều &amp; Báo Cáo Sớm Cho Phụ Huynh
         </h2>
         <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">

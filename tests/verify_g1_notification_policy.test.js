@@ -1006,13 +1006,15 @@ describe('G1 AUDIT FIXTURE MATRIX - REAL HANDLERS & DB ISOLATION', async () => {
       assert.strictEqual(stars.stars_balance, 0, 'Stars balance MUST remain >= 0 (never negative)');
       assert.strictEqual(stars.star_debt, 50, 'Shortfall of 50 stars MUST be recorded in star_debt (no silent debt wiping)');
 
-      // Ledger has 3rd entry: homework_adjustment with delta = -50, balance_after = 0
+      // Ledger has 3rd entry: homework_adjustment with delta = -50, balance_after = 0, debt_delta = 50, debt_after = 50
       ledger = sqlite.prepare('SELECT * FROM student_star_ledger WHERE student_id = ? ORDER BY created_at ASC').all('usr_student_s');
       assert.strictEqual(ledger.length, 3);
       assert.strictEqual(ledger[2].action_type, 'homework_adjustment');
       assert.strictEqual(ledger[2].delta_stars, -50);
       assert.strictEqual(ledger[2].amount, -50);
       assert.strictEqual(ledger[2].balance_after, 0);
+      assert.strictEqual(ledger[2].debt_delta, 50, 'Regrade shortfall must record debt_delta = +50');
+      assert.strictEqual(ledger[2].debt_after, 50, 'Regrade shortfall must record debt_after = 50');
 
       // STEP 4: Student does sub_2 and teacher grades it with score 10.0 (+100 stars)
       // The 100 new stars pay off the 50 star_debt, leaving 50 stars in available balance!
@@ -1028,12 +1030,18 @@ describe('G1 AUDIT FIXTURE MATRIX - REAL HANDLERS & DB ISOLATION', async () => {
       assert.strictEqual(stars.star_debt, 0, 'Debt has been fully repaid by new star reward');
       assert.strictEqual(stars.stars_balance, 50, 'Remaining 50 stars credited to available balance');
 
-      // Ledger has 4th entry with delta = 100, balance_after = 50
+      // Ledger has 4th entry with delta = 100, balance_after = 50, debt_delta = -50, debt_after = 0
       ledger = sqlite.prepare('SELECT * FROM student_star_ledger WHERE student_id = ? ORDER BY created_at ASC').all('usr_student_s');
       assert.strictEqual(ledger.length, 4);
       assert.strictEqual(ledger[3].action_type, 'homework_reward');
       assert.strictEqual(ledger[3].delta_stars, 100);
       assert.strictEqual(ledger[3].balance_after, 50);
+      assert.strictEqual(ledger[3].debt_delta, -50, 'Debt repayment must record debt_delta = -50');
+      assert.strictEqual(ledger[3].debt_after, 0, 'Debt after repayment must be 0');
+
+      // Total change in debt across all ledger entries must equal current debt_after
+      const sumDebtDelta = ledger.reduce((sum, r) => sum + (r.debt_delta || 0), 0);
+      assert.strictEqual(sumDebtDelta, ledger[3].debt_after, 'Sum of all debt_delta must equal current debt_after (0)');
     });
   });
 

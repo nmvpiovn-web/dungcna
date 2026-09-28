@@ -271,6 +271,8 @@
           {:else}
             <div class="relative">
               <button
+                id="nav-btn-courses"
+                data-testid="nav-btn-courses"
                 onclick={() => toggleSubmenu('courses')}
                 class="flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-semibold tracking-wide transition-all {activeDropdown === 'courses' ? 'bg-sky-50 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300' : 'text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'}"
               >
@@ -355,6 +357,8 @@
           <!-- Item 2: Phòng Thi & Luyện Đề Dropdown -->
           <div class="relative">
             <button
+              id="nav-btn-exams"
+              data-testid="nav-btn-exams"
               onclick={() => toggleSubmenu('exams')}
               class="flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-semibold tracking-wide transition-all {$page.url.pathname.startsWith('/exam') ? 'bg-sky-600 text-white shadow-xs' : activeDropdown === 'exams' ? 'bg-sky-50 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300' : 'text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'}"
             >
@@ -424,6 +428,8 @@
           <!-- Item 3: Học Tập & Công Cụ Dropdown -->
           <div class="relative">
             <button
+              id="nav-btn-tools"
+              data-testid="nav-btn-tools"
               onclick={() => toggleSubmenu('tools')}
               class="flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-semibold tracking-wide transition-all {$page.url.pathname === '/dictionary' || $page.url.pathname === '/flashcards' || $page.url.pathname === '/games' || $page.url.pathname === '/grammar' || $page.url.pathname === '/pedagogy' ? 'bg-sky-600 text-white shadow-xs' : activeDropdown === 'tools' ? 'bg-sky-50 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300' : 'text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'}"
             >
@@ -555,6 +561,8 @@
           {#if isTeacherOrAdmin(currentUser)}
             <div class="relative">
               <button
+                id="nav-btn-admin"
+                data-testid="nav-btn-admin"
                 onclick={() => toggleSubmenu('admin')}
                 class="flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-semibold tracking-wide transition-all {$page.url.pathname.startsWith('/admin') || $page.url.pathname.startsWith('/second-brain') ? 'bg-amber-600 text-white shadow-xs' : activeDropdown === 'admin' ? 'bg-amber-50 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300' : 'text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30'}"
               >
@@ -695,6 +703,8 @@
           <div class="relative">
             {#if currentUser}
               <button
+                id="user-profile-btn"
+                data-testid="user-profile-btn"
                 onclick={() => { showUserDropdown = !showUserDropdown; activeDropdown = null; }}
                 class="flex items-center gap-1 sm:gap-2 p-1 sm:px-2.5 sm:py-1.5 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-sky-500 transition-all text-left text-xs"
               >
@@ -724,6 +734,8 @@
               </button>
             {:else}
               <button
+                id="login-btn"
+                data-testid="login-btn"
                 onclick={openAuthModal}
                 class="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-md bg-sky-600 hover:bg-sky-500 text-white font-semibold text-xs shadow-xs transition-all"
               >
@@ -789,6 +801,8 @@
                   </button>
 
                   <button
+                    id="logout-btn"
+                    data-testid="logout-btn"
                     onclick={handleLogout}
                     class="w-full flex items-center gap-2 px-3 py-2 rounded-md text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-all text-left"
                   >
@@ -807,6 +821,8 @@
 
           <!-- Mobile Menu Toggle Button -->
           <button
+            id="mobile-menu-btn"
+            data-testid="mobile-menu-btn"
             onclick={() => mobileMenuOpen = !mobileMenuOpen}
             class="lg:hidden p-1.5 sm:p-2 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors"
             aria-label="Toggle Menu"
@@ -819,7 +835,7 @@
 
       <!-- Mobile Navigation Drawer -->
       {#if mobileMenuOpen}
-        <div class="lg:hidden py-4 border-t border-slate-200 dark:border-slate-800 space-y-4 animate-in slide-in-from-top-2 duration-150 max-h-[82vh] overflow-y-auto">
+        <div id="mobile-drawer" data-testid="mobile-drawer" class="lg:hidden py-4 border-t border-slate-200 dark:border-slate-800 space-y-4 animate-in slide-in-from-top-2 duration-150 max-h-[82vh] overflow-y-auto">
           <!-- Section 1: Khóa Học & Lộ Trình -->
           <div class="space-y-1.5">
             <div class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 px-1">

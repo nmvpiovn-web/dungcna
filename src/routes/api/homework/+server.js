@@ -907,7 +907,7 @@ export async function POST({ request, platform }) {
               )
               SELECT ?, ?, NULL, ?, ?, ?, 
                      (SELECT stars_balance FROM student_stars WHERE student_id = ?),
-                     ?,
+                     (SELECT star_debt FROM student_stars WHERE student_id = ?) - COALESCE((SELECT debt_after FROM student_star_ledger WHERE student_id = ? ORDER BY rowid DESC LIMIT 1), 0),
                      (SELECT star_debt FROM student_stars WHERE student_id = ?),
                      ?, ?, ?
               WHERE EXISTS (
@@ -917,7 +917,7 @@ export async function POST({ request, platform }) {
             `).bind(
               ledgerId, submission.student_id, submission_id,
               starDelta, starDelta, submission.student_id,
-              0, // debt_delta placeholder (or 0 when balance is positive)
+              submission.student_id, submission.student_id,
               submission.student_id, ledgerAction,
               ledgerReason, ledgerReason,
               submission_id, gradingToken
