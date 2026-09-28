@@ -1,8 +1,9 @@
 # BẢNG MA TRẬN YÊU CẦU TOÀN DIỆN V4 (MASTER REQUIREMENTS MATRIX V4)
-**Authoritative Reference:** `CODEX_COORDINATION.md`, `ANTIGRAVITY_REQUIREMENTS_FULL_SCOPE_AND_DRIVE_2026-09-27.md` & `AUDIT_FEEDBACK_9f47b92_G1_UI_EVIDENCE_2026-09-28.md`  
+**Authoritative Reference:** `CODEX_COORDINATION.md`, `ANTIGRAVITY_REQUIREMENTS_FULL_SCOPE_AND_DRIVE_2026-09-27.md`, `AUDIT_FEEDBACK_3621e90_G1_EVIDENCE_GAPS_2026-09-28.md` & `V4_PRIORITY_G0_G1_G2_G4_DRIVE_EXPLORER_2026-09-28.md`  
 **Worker:** Antigravity (Implementation & Self-Audit)  
 **Auditor:** OpenAI Codex Desktop (Formal Verification & Sign-off)  
 **Ngày cập nhật:** 2026-09-28  
+**Frozen Source Commit:** `278020ee0304e0821b8d5bd933429476e03eaca7` | **Build Identity:** `build_1790580070052.4202`  
 **Chính sách trạng thái:**
 - `Worker Status`: `NOT_STARTED` | `WORKER_TESTED` | `OPEN` | `BLOCKED` | `DEFERRED`
 - `Auditor Status`: Chỉ Codex Desktop cập nhật `AUDITOR_VERIFIED`. Trạng thái hiện tại: `AUDIT_IN_PROGRESS / HOLD`.
@@ -88,6 +89,13 @@
 | **REQ-VAULT-03** | FTS5 Vietnamese Unicode Search | Hỗ trợ truy vấn FTS5 Unicode tiếng Việt bóc tách dấu, phân đoạn snippet() ngữ cảnh bài giảng. | `src/routes/api/second-brain/+server.js` | `tests/verify_d1_fts5_schema.test.js` | WORKER_TESTED | PENDING_CODEX_AUDIT |
 | **REQ-VAULT-04** | Auto-Sync SQLite Triggers | Trigger tự động cập nhật FTS khi INSERT, UPDATE, DELETE trên bảng nguồn `knowledge_vault`. | `migrations/0002_create_knowledge_fts.sql` | `tests/verify_d1_fts5_schema.test.js` | WORKER_TESTED | PENDING_CODEX_AUDIT |
 | **REQ-VAULT-05** | Vault Pagination & Lazy Detail | Giao diện `/second-brain` phân trang mượt mà, tải chi tiết lười (lazy load), hiển thị backlinks và chặn XSS. | `src/routes/second-brain/+page.svelte` | `tests/verify_d1_fts5_schema.test.js` | WORKER_TESTED | PENDING_CODEX_AUDIT |
+| **G4-SOURCE** | Multi-Source Drive Inventory | Kiểm kê toàn diện nguồn cũ (`0AB-joYp7SFLdUk9PVA`, 12.067 items) và nguồn mới (`1lMCrHoaBg5ubod0XHui7ygshObQQhTN4`). Khi token revoked/expired ghi nhận `ACCESS_BLOCKED (token_expired_or_revoked)` fail-closed trung thực, không giả định tải thành công. Dep: G0. | `scripts/all_gdrive_inventory.json`, `scripts/scan_gdrive_structure.py` | `scripts/test_token.py` | BLOCKED (ACCESS_BLOCKED) | PENDING_CODEX_AUDIT |
+| **G4-CLONE** | Independent Binary Copy to Target Drive | Sao chép byte thật sang Google Drive đích của User (`TIMBK_DATA_LIBRARY`), không dùng shortcut/link/iframe. SHA256 sau tải, MIME/size, kiểm tra tính độc lập (source_file_id != dest_file_id). Dep: G0, G4-SOURCE. | `scripts/download_target_gdrive_docs.py` | `src/lib/data/drive_sync_manifest.json` | OPEN (PENDING_RECONNECT) | PENDING_CODEX_AUDIT |
+| **G4-TREE** | Dual-Tree Hierarchy Architecture | Duy trì song song 2 cây: (1) Cây nguồn nguyên vẹn theo folder IDs/parent edges; (2) Cây phân loại logic: Môn -> Khối (Lớp 1-12) -> Kỹ năng -> Dạng tài liệu. Multi-tag dedup không nhân bản binary. Dep: G0, G4-SOURCE. | `scripts/all_gdrive_inventory.json`, `obsidian_vault/` | `src/lib/data/drive_sync_manifest.json` | WORKER_TESTED | PENDING_CODEX_AUDIT |
+| **G4-CLASSIFY** | Pedagogical Extraction & Classification | Bóc tách toàn văn/media, trích xuất từ vựng, ngữ pháp, câu hỏi; chuẩn hóa, de-dup. Phân loại chưa chắc chắn gắn cờ `Needs Review`, không tự ép thành Lớp 7. Dep: G0, G4-TREE. | `second_brain/07_GOOGLE_DRIVE_LIBRARY/` | `tests/verify_d1_fts5_schema.test.js` | WORKER_TESTED | PENDING_CODEX_AUDIT |
+| **G4-DASH** | Data Library & Reconciliation Dashboard | Route `/admin/data-library` (staff/admin RBAC): Giao diện 2 pane (Drive nguồn & Drive đích/local), preview text/ảnh/audio an toàn, filter đa chiều, FTS tiếng Việt có dấu. Dep: G1 (UI/Theme), G2 (RBAC). | `src/routes/admin/data-library/+page.svelte` | `scripts/verify_g1_real_browser_evidence.mjs` | OPEN (WORKTREE_DEV) | PENDING_CODEX_AUDIT |
+| **G4-RECON** | Reconciliation & Audit Report | Đối soát chi tiết số lượng file/bytes giữa nguồn và kho lưu trữ: discovered, downloaded, parsed, published, missing, duplicate, error. Xuất báo cáo batch dạng JSON/MD. Dep: G4-SOURCE, G4-CLONE. | `scripts/all_gdrive_inventory.json`, `drive_sync_manifest.json` | `tests/verify_d1_fts5_schema.test.js` | WORKER_TESTED | PENDING_CODEX_AUDIT |
+| **G4-PUBLISH** | Safe Staging to Production Batch Publishing | Quy trình xuất bản theo lô: staging dry-run -> review sư phạm -> published vào ngân hàng câu hỏi/từ điển có audit log và khả năng rollback batch không làm mất tiến độ học sinh. Dep: G0, G4-CLASSIFY. | `src/routes/api/second-brain/+server.js` | `tests/verify_d1_fts5_schema.test.js` | WORKER_TESTED | PENDING_CODEX_AUDIT |
 
 ---
 
@@ -156,14 +164,19 @@
 ---
 
 ## TỔNG KẾT TRẠNG THÁI TOÀN HỆ THỐNG V4
-
-- **Release Gate G1 Status:** **HOLD / IN_PROGRESS** (Chờ thẩm định độc lập từ OpenAI Codex Desktop).
-- **Môi trường đo kiểm Browser:**
-  - Local Dev Server: `http://127.0.0.1:4173` (Wrangler Pages Dev chạy trên build Cloudflare Pages functions thật).
-  - Trình duyệt: Google Chrome 128+ thực tế (`C:\Program Files\Google\Chrome\Application\chrome.exe`).
-  - Kết quả kiểm thử trình duyệt: **42/42 Assertions PASS** (bao gồm 4 negative controls, real typography measured styles, real UI profile dropdown & logout click, real navigation dropdowns desktop & mobile drawer 390px, real PWA busy producers `/exam` và `/recruitment`, real modal pointer backdrop click & answer preservation).
-- **Kết quả kiểm thử Database (DB Handlers & Isolation):** **38/38 PASS** (`verify_g1_notification_policy.test.js` 17 tests + `verify_p1_feedback_94f88ea.test.js` 21 tests/subtests).
-- **Kế toán nợ sao (Star Debt Ledger):** Đã sửa công thức nguyên tử `debt_delta` trong SQL subquery và kiểm chứng `sum(debt_delta) === debt_after`.
+- **Release Gate G1 Status:** **HOLD / IN_PROGRESS** (Chờ thẩm định độc lập từ OpenAI Codex Desktop trên commit `278020ee0304e0821b8d5bd933429476e03eaca7`).
+- **Môi trường đo kiểm Browser & Build Identity:**
+  - Frozen Commit SHA: `278020ee0304e0821b8d5bd933429476e03eaca7`
+  - Build Identity: `build_1790580070052.4202` (Vite / Cloudflare Pages Functions)
+  - Remote Deployments: `https://17e00cfb.tienganh7-pro.pages.dev`, `https://master.tienganh7-pro.pages.dev`, `https://timbk.io.vn`
+  - Local Dev Server: `http://127.0.0.1:4173` (Wrangler Pages Dev chạy trên build production thật)
+  - Trình duyệt: Google Chrome 128+ thực tế (`C:\Program Files\Google\Chrome\Application\chrome.exe`)
+  - Kết quả kiểm thử trình duyệt (`scripts/verify_g1_real_browser_evidence.mjs`): **52/52 Assertions PASS, 0 FAIL** (100% test IDs cố định vượt qua; 5 negative controls dùng chung evaluator; re-login Lớp 2 server verified; mobile drawer closed assertion; modal popstate back; real timer countdown; real label 500 contrast 9.9:1; CDP 200% real browser zoom; PWA busy producers `/exam`, `/recruitment`, micro recording không reload).
+- **Kết quả kiểm thử Database (DB Handlers & Isolation):** **49/49 PASS, 0 FAIL, 0 SKIP** (`tests/verify_g1_notification_policy.test.js` 20 tests gồm Fixture F.6 baseline migration + `tests/verify_codex_7216f8c_audit.test.js` 19 tests + `tests/verify_p1_feedback_94f88ea.test.js` 10 tests).
+- **Kế toán nợ sao (Star Debt Ledger & Migration Baseline):** Đã bổ sung migration tự động tạo dòng `migration_baseline` (`debt_delta = 0`, `debt_after = star_debt`) cho học sinh có nợ cũ thiếu ledger; subquery fallback an toàn `COALESCE(debt_after, star_debt)`.
+- **Hiện trạng Google Drive & G4 Data Explorer:**
+  - Nguồn cũ (`0AB-joYp7SFLdUk9PVA`): Đã kiểm kê 12.067 items trong `scripts/all_gdrive_inventory.json`; 35 tài liệu cốt lõi đã nạp và chuẩn hóa vào `second_brain/` & `obsidian_vault/`.
+  - Nguồn mới (`1lMCrHoaBg5ubod0XHui7ygshObQQhTN4`): Token OAuth trong `scripts/gdrive_token.json` bị Google báo `invalid_grant: Token has been expired or revoked.` -> ghi nhận trạng thái `ACCESS_BLOCKED (token_expired_or_revoked)` trung thực theo hợp đồng `V4_PRIORITY_G0_G1_G2_G4_DRIVE_EXPLORER_2026-09-28.md`, sẵn sàng tạo thư mục `TIMBK_DATA_LIBRARY` trên Drive đích khi token được cấp lại.
 - **Hạng mục bảo lưu:**
   - `REQ-AUDIO-01`: Giữ trạng thái OPEN (source_pending_download) trung thực theo hiện trạng Drive.
   - `REQ-PHON-01`: Giữ trạng thái BLOCKED do chưa có weights mô hình âm học cục bộ.

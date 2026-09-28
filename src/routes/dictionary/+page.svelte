@@ -634,6 +634,7 @@
           <!-- Action Footer: Deep Breakdown & Stealth Hide Button -->
           <div class="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2 text-xs">
             <button 
+              id="btn-open-deep-modal"
               onclick={() => openDeepModal(word)}
               class="px-3 py-1.5 rounded-md font-semibold text-sky-600 dark:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-950/60 transition-colors"
             >
@@ -673,7 +674,7 @@
             {deepAnalysisData?.ipa || selectedWordForDeep.ipa || '/.../'}
           </div>
         </div>
-        <button onclick={() => showDeepModal = false} class="text-slate-400 hover:text-slate-600 font-bold p-1 text-sm">✕</button>
+        <button id="btn-close-deep-modal" onclick={() => showDeepModal = false} class="text-slate-400 hover:text-slate-600 font-bold p-1 text-sm">✕</button>
       </div>
 
       <!-- SECTION 1: MICROPHONE PRONUNCIATION EVALUATION (RUBRIC) -->
@@ -700,6 +701,7 @@
         <div class="flex flex-wrap items-center gap-3">
           {#if !isRecording}
             <button 
+              id="btn-dict-start-record"
               onclick={startRecording}
               class="px-4 py-2 rounded-md font-semibold bg-rose-600 hover:bg-rose-700 text-white transition-colors flex items-center gap-1.5 shadow-sm"
             >
@@ -708,6 +710,7 @@
             </button>
           {:else}
             <button 
+              id="btn-dict-stop-record"
               onclick={stopRecording}
               class="px-4 py-2 rounded-md font-semibold bg-slate-900 hover:bg-slate-800 text-white transition-colors flex items-center gap-1.5 animate-pulse"
             >

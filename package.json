@@ -9,7 +9,7 @@
   },
   "scripts": {
     "dev": "vite dev",
-    "build": "vite build",
+    "build": "node scripts/generate_build_meta.js && vite build",
     "preview": "wrangler pages dev build --port 4173",
     "prepare": "svelte-kit sync || echo ''",
     "gen": "wrangler types",

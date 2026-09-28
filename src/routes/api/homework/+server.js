@@ -141,44 +141,54 @@ async function ensureTables(db) {
     for (const mig of migrations) {
       try {
         await db.prepare(mig).run();
-      } catch {}
+      } catch (migErr) {
+        const msg = (migErr?.message || '').toLowerCase();
+        if (!msg.includes('duplicate column') && !msg.includes('already exists')) {
+          throw migErr;
+        }
+      }
     }
 
     // Historical baseline reconciliation migration for legacy star_debt > 0
     // If student has star_debt > 0 from legacy schema, but student_star_ledger has no baseline or debt_after defaulted to 0,
     // insert an opening baseline entry so historical debt is never falsely attributed as a new transaction delta.
-    try {
-      await db.prepare(`
-        INSERT INTO student_star_ledger (
-          id, student_id, bill_id, reference_id, delta_stars, amount, balance_after, debt_delta, debt_after, action_type, reason, note, created_at
+    // FAIL-CLOSED: Errors (triggers, constraints, I/O) are NOT swallowed, allowing calling handlers to abort write transactions cleanly.
+    await db.prepare(`
+      INSERT INTO student_star_ledger (
+        id, student_id, bill_id, reference_id, delta_stars, amount, balance_after, debt_delta, debt_after, action_type, reason, note, created_at
+      )
+      SELECT 
+        'ledger_mig_base_' || s.student_id,
+        s.student_id,
+        NULL,
+        'migration_baseline',
+        0,
+        0,
+        s.stars_balance,
+        0,
+        s.star_debt,
+        'migration_baseline',
+        'Historical star debt baseline reconciliation',
+        'Automated baseline reconciliation from legacy student_stars',
+        s.last_updated
+      FROM student_stars s
+      WHERE s.star_debt > 0 
+        AND NOT EXISTS (
+          SELECT 1 FROM student_star_ledger l 
+          WHERE l.student_id = s.student_id AND l.action_type = 'migration_baseline'
         )
-        SELECT 
-          'ledger_mig_base_' || s.student_id,
-          s.student_id,
-          NULL,
-          'migration_baseline',
-          0,
-          0,
-          s.stars_balance,
-          0,
-          s.star_debt,
-          'migration_baseline',
-          'Historical star debt baseline reconciliation',
-          'Automated baseline reconciliation from legacy student_stars',
-          s.last_updated
-        FROM student_stars s
-        WHERE s.star_debt > 0 
-          AND (
-            NOT EXISTS (SELECT 1 FROM student_star_ledger l WHERE l.student_id = s.student_id)
-            OR (SELECT COALESCE(debt_after, 0) FROM student_star_ledger l WHERE l.student_id = s.student_id ORDER BY rowid DESC LIMIT 1) = 0
-          );
-      `).run();
-    } catch {}
+        AND (
+          NOT EXISTS (SELECT 1 FROM student_star_ledger l WHERE l.student_id = s.student_id)
+          OR (SELECT COALESCE(debt_after, 0) FROM student_star_ledger l WHERE l.student_id = s.student_id ORDER BY rowid DESC LIMIT 1) = 0
+        );
+    `).run();
   } catch (e) {
     const msg = (e?.message || '').toLowerCase();
-    if (!msg.includes('already exists')) {
-      console.warn('Homework tables ensureTables notice:', e.message);
+    if (msg.includes('already exists') || msg.includes('duplicate column')) {
+      return;
     }
+    console.error('Homework tables ensureTables fail-closed error:', e);
+    throw e;
   }
 }
 

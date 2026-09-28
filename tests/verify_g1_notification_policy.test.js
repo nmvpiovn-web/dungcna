@@ -1108,6 +1108,112 @@ describe('G1 AUDIT FIXTURE MATRIX - REAL HANDLERS & DB ISOLATION', async () => {
       assert.strictEqual(fullLedger[1].debt_delta, -50, 'New transaction debt_delta must ONLY reflect the new repayment (-50), NEVER historical debt');
       assert.strictEqual(fullLedger[1].debt_after, 20, 'Debt after repayment must be 20');
     });
+
+    test('F.7: Fault Injection on migration_baseline: trigger ABORT fails closed with 5xx, state untouched; retry after drop trigger succeeds with delta -50, debt 20, and migration idempotency holds', async () => {
+      const sqlite = initTestDatabase();
+      const d1 = createD1Adapter(sqlite);
+
+      // Seed student user and teacher
+      sqlite.exec(`
+        INSERT INTO users (id, username, phone, email, name, role, status, metadata)
+        VALUES 
+          ('usr_legacy_fault', 'fault_student', '0389997777', 'fault@test.vn', 'Fault Student', 'student', 'active', '{"grade":"Lớp 7"}'),
+          ('usr_legacy_t2', 'legacy_teacher2', '0389997778', 'teacher_leg2@test.vn', 'Cô Dung', 'teacher', 'active', '{}');
+      `);
+
+      // Seed legacy student_stars having star_debt = 70, and legacy ledger with debt_after = 0 (the exact gap audited)
+      sqlite.exec(`
+        INSERT INTO student_stars (student_id, stars_balance, total_earned_stars, stars_redeemed, star_debt, last_updated)
+        VALUES ('usr_legacy_fault', 0, 0, 70, 70, CURRENT_TIMESTAMP);
+
+        INSERT INTO student_star_ledger (id, student_id, bill_id, reference_id, delta_stars, amount, balance_after, debt_delta, debt_after, action_type, reason, note, created_at)
+        VALUES ('ledger_legacy_old', 'usr_legacy_fault', NULL, 'old_ref', 0, 0, 0, 0, 0, 'legacy_init', 'Old init', 'Old', CURRENT_TIMESTAMP);
+      `);
+
+      // Seed homework assignment and submission
+      sqlite.exec(`
+        INSERT INTO homework_assignments (id, session_id, class_id, class_name, teacher_id, teacher_name, skill_type, title, description, assigned_date, deadline_date, deadline_time)
+        VALUES ('hw_fault_1', 'sess_f1', 'class_7', 'Lớp 7', 'usr_legacy_t2', 'Cô Dung', 'grammar', 'Unit 1 Homework', 'Test', '2026-09-28', '2026-09-30', '23:59');
+
+        INSERT INTO homework_submissions (id, assignment_id, student_id, student_name, submission_type, content_text, submitted_at, is_on_time, status)
+        VALUES ('sub_fault_1', 'hw_fault_1', 'usr_legacy_fault', 'Fault Student', 'text', 'Bài làm', CURRENT_TIMESTAMP, 1, 'submitted');
+      `);
+
+      // Add trigger to abort specifically on migration_baseline INSERT
+      sqlite.exec(`
+        CREATE TRIGGER abort_baseline_mig BEFORE INSERT ON student_star_ledger
+        WHEN new.action_type = 'migration_baseline'
+        BEGIN
+          SELECT RAISE(ABORT, 'SIMULATED_BASELINE_TRIGGER_ABORT');
+        END;
+      `);
+
+      const teacherToken = await createSignedToken({ id: 'usr_legacy_t2', role: 'teacher', name: 'Cô Dung', username: 'legacy_teacher2' }, TEST_SECRET);
+
+      // Attempt to grade homework: handler calls ensureTables, which triggers migration_baseline insert -> ABORT!
+      const gradeReqFail = new Request('http://localhost/api/homework', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${teacherToken}` },
+        body: JSON.stringify({ action: 'grade', submission_id: 'sub_fault_1', score: 8.5, teacher_feedback: 'Tốt' })
+      });
+      const failRes = await postHomework({ request: gradeReqFail, platform: { env: { DB: d1, AUTH_SECRET: TEST_SECRET } } });
+
+      // MUST fail-closed with 5xx
+      assert.strictEqual(failRes.status >= 500, true, `Handler must fail-closed with 5xx on baseline migration error (got ${failRes.status})`);
+
+      // Assert complete untouched state (no partial write)
+      const subFail = sqlite.prepare('SELECT status, score, stars_awarded FROM homework_submissions WHERE id = ?').get('sub_fault_1');
+      assert.strictEqual(subFail.status, 'submitted', 'Submission must remain submitted');
+      assert.strictEqual(subFail.score, null, 'Submission score must remain null');
+      assert.strictEqual(subFail.stars_awarded, 0, 'Stars awarded must remain 0');
+
+      const starsFail = sqlite.prepare('SELECT stars_balance, star_debt FROM student_stars WHERE student_id = ?').get('usr_legacy_fault');
+      assert.strictEqual(starsFail.star_debt, 70, 'Star debt must remain 70 untouched');
+      assert.strictEqual(starsFail.stars_balance, 0, 'Stars balance must remain 0');
+
+      const ledgerFail = sqlite.prepare('SELECT * FROM student_star_ledger WHERE student_id = ?').all('usr_legacy_fault');
+      assert.strictEqual(ledgerFail.length, 1, 'Only the old legacy entry exists, no partial baseline or reward row');
+      assert.strictEqual(ledgerFail[0].id, 'ledger_legacy_old');
+
+      // Now DROP the trigger and retry
+      sqlite.exec('DROP TRIGGER abort_baseline_mig;');
+
+      const retryReq = new Request('http://localhost/api/homework', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${teacherToken}` },
+        body: JSON.stringify({ action: 'grade', submission_id: 'sub_fault_1', score: 8.5, teacher_feedback: 'Tốt' })
+      });
+      const retryRes = await postHomework({ request: retryReq, platform: { env: { DB: d1, AUTH_SECRET: TEST_SECRET } } });
+      assert.strictEqual(retryRes.status, 200, 'Retry after trigger removal must succeed with HTTP 200');
+
+      // Verify state after successful commit
+      const subSuccess = sqlite.prepare('SELECT status, score, stars_awarded FROM homework_submissions WHERE id = ?').get('sub_fault_1');
+      assert.strictEqual(subSuccess.status, 'graded');
+      assert.strictEqual(subSuccess.stars_awarded, 50);
+
+      const starsSuccess = sqlite.prepare('SELECT stars_balance, star_debt FROM student_stars WHERE student_id = ?').get('usr_legacy_fault');
+      assert.strictEqual(starsSuccess.star_debt, 20, 'Star debt reduced from 70 to 20 (-50 delta)');
+      assert.strictEqual(starsSuccess.stars_balance, 0);
+
+      const fullLedger = sqlite.prepare('SELECT * FROM student_star_ledger WHERE student_id = ? ORDER BY rowid ASC').all('usr_legacy_fault');
+      assert.strictEqual(fullLedger.length, 3, 'Ledger now has: old, baseline, and reward');
+      assert.strictEqual(fullLedger[1].action_type, 'migration_baseline');
+      assert.strictEqual(fullLedger[1].debt_delta, 0);
+      assert.strictEqual(fullLedger[1].debt_after, 70);
+
+      assert.strictEqual(fullLedger[2].action_type, 'homework_reward');
+      assert.strictEqual(fullLedger[2].debt_delta, -50, 'New transaction debt_delta is -50');
+      assert.strictEqual(fullLedger[2].debt_after, 20, 'Debt after is 20');
+
+      // IDEMPOTENCY: Run GET /api/homework twice more
+      const reqIdem1 = new Request('http://localhost/api/homework?class_id=class_7', { headers: { 'Authorization': `Bearer ${teacherToken}` } });
+      await getHomework({ request: reqIdem1, url: new URL(reqIdem1.url), platform: { env: { DB: d1, AUTH_SECRET: TEST_SECRET } } });
+      const reqIdem2 = new Request('http://localhost/api/homework?class_id=class_7', { headers: { 'Authorization': `Bearer ${teacherToken}` } });
+      await getHomework({ request: reqIdem2, url: new URL(reqIdem2.url), platform: { env: { DB: d1, AUTH_SECRET: TEST_SECRET } } });
+
+      const baselineCount = sqlite.prepare("SELECT count(*) as count FROM student_star_ledger WHERE student_id = ? AND action_type = 'migration_baseline'").get('usr_legacy_fault');
+      assert.strictEqual(baselineCount.count, 1, 'Migration must be completely idempotent: exactly 1 baseline entry after repeated calls');
+    });
   });
 
   // =========================================================================

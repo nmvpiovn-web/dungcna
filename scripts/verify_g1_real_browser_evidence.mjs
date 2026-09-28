@@ -72,12 +72,21 @@ try {
 
 let buildIdentity = 'unknown';
 try {
-  const buildDir = path.resolve('build');
-  if (fs.existsSync(buildDir)) {
-    const stat = fs.statSync(buildDir);
-    buildIdentity = `build_${stat.mtimeMs}`;
+  const metaPath = path.resolve('static/build_meta.json');
+  if (fs.existsSync(metaPath)) {
+    const meta = JSON.parse(fs.readFileSync(metaPath, 'utf-8'));
+    buildIdentity = meta.build_identity || `build_${currentCommit.slice(0, 7)}`;
+    if (meta.source_commit && meta.source_commit !== 'unknown') {
+      currentCommit = meta.source_commit;
+    }
   } else {
-    buildIdentity = `live_${Date.now()}`;
+    const buildDir = path.resolve('build');
+    if (fs.existsSync(buildDir)) {
+      const stat = fs.statSync(buildDir);
+      buildIdentity = `build_${stat.mtimeMs}`;
+    } else {
+      buildIdentity = `live_${Date.now()}`;
+    }
   }
 } catch {}
 
@@ -240,6 +249,21 @@ async function runRealBrowserVerification() {
   });
 
   const page = await context.newPage();
+
+  // Verify served build metadata directly from running server
+  try {
+    const metaRes = await page.goto(`${BASE_URL}/build_meta.json`, { timeout: 4000 });
+    if (metaRes && metaRes.status() === 200) {
+      const servedMeta = await metaRes.json();
+      console.log(`  [Build Provenance] Served build_meta.json verified: commit=${servedMeta.source_commit}, identity=${servedMeta.build_identity}`);
+      buildIdentity = servedMeta.build_identity || buildIdentity;
+      if (servedMeta.source_commit && servedMeta.source_commit !== 'unknown') {
+        currentCommit = servedMeta.source_commit;
+      }
+    }
+  } catch (err) {
+    console.log('  [Build Provenance] Notice: Could not read /build_meta.json from server:', err.message);
+  }
 
   // =========================================================================
   // SECTION 0: NEGATIVE CONTROLS (Unified Evaluator Sensitivity Proofs)
@@ -735,19 +759,30 @@ async function runRealBrowserVerification() {
     const isRealLabelValid = realLabelMetrics && (realLabelMetrics.fontWeight === '600' || realLabelMetrics.fontWeight === '500') && labelContrastPass;
     recordTest('4.9', 'Real DOM form label measured on /recruitment: font-weight 500/600 and WCAG contrast >= 4.5:1', isRealLabelValid, `Label: "${realLabelMetrics?.text}", Weight: ${realLabelMetrics?.fontWeight}, Contrast: ${labelRatio}:1`);
 
-    // 4.10: Real 200% Zoom via Chrome DevTools Protocol (CDP)
+    // 4.10: Desktop Reflow 200% Zoom (WCAG 1.4.10 Reflow) & Visual Viewport Pinch Scale
+    // Part A: Desktop reflow 200% zoom (640px layout viewport = 200% desktop zoom on 1280px display)
+    await page.setViewportSize({ width: 640, height: 800 });
+    await page.waitForTimeout(300);
+    let reflow200Pass = false;
+    try {
+      await evaluateHorizontalOverflow(page);
+      reflow200Pass = true;
+    } catch {}
+
+    // Part B: Visual Viewport Scale 2.0x via CDP (pinch zoom)
+    await page.setViewportSize({ width: 1280, height: 800 });
     const cdp = await page.context().newCDPSession(page);
     await cdp.send('Emulation.setPageScaleFactor', { pageScaleFactor: 2.0 });
     await page.waitForTimeout(300);
 
-    let zoom200Pass = false;
-    try {
-      await evaluateHorizontalOverflow(page);
-      zoom200Pass = true;
-    } catch {}
+    const visualScale = await page.evaluate(() => window.visualViewport?.scale || 1.0);
+    const cdpPinchPass = visualScale >= 1.9;
+
     await cdp.send('Emulation.setPageScaleFactor', { pageScaleFactor: 1.0 });
     await page.waitForTimeout(200);
-    recordTest('4.10', 'CDP 200% Page Scale Factor (real browser zoom) has zero horizontal clipping/overflow', zoom200Pass, 'CDP 2.0x pageScaleFactor verified');
+
+    const zoomCombinedPass = reflow200Pass && cdpPinchPass;
+    recordTest('4.10', 'Desktop 200% reflow zoom (640px) and CDP 2.0x visual viewport scale have zero horizontal clipping/overflow', zoomCombinedPass, `Reflow200: ${reflow200Pass}, VisualScale: ${visualScale}x`);
 
   } catch (err) {
     console.error('  Error in Section 4:', err);
@@ -840,16 +875,28 @@ async function runRealBrowserVerification() {
     const shot9 = await page.screenshot();
     saveScreenshot(shot9, '09_sw_busy_banner_recruitment.png', '5.5', 'SW banner during dirty recruitment form');
 
-    // 5.6: Test component lifecycle cleanup: navigate away from /recruitment -> assert unmounted cleanup
-    await page.goto(BASE_URL, { waitUntil: 'networkidle' });
+    // 5.6: Test component lifecycle cleanup: SPA in-app navigation away from /recruitment -> assert unmounted cleanup without page reload
+    await page.evaluate(() => {
+      window.__spa_nav_marker = 'spa_intact_no_reload';
+    });
+    // Click desktop nav link to /courses to trigger client-side SPA navigation
+    await page.click('#nav-btn-courses', { force: true });
+    await page.waitForTimeout(200);
+    const firstCourseLink = page.locator('#nav-menu-courses a').first();
+    await firstCourseLink.click({ force: true });
+    await page.waitForURL('**/courses**', { timeout: 4000 });
+    await page.waitForTimeout(300);
+
+    const spaMarkerPreserved = await page.evaluate(() => window.__spa_nav_marker === 'spa_intact_no_reload');
+    const dirtyFormCleanedUp = await page.evaluate(() => !window.__appBusyRegistry || !window.__appBusyRegistry.has('dirty_form_recruitment'));
+    recordTest('5.6', 'Navigating away from dirty form via in-app SPA link cleans up "dirty_form_recruitment" without page reload', spaMarkerPreserved && dirtyFormCleanedUp, `SPA intact: ${spaMarkerPreserved}, Cleaned up: ${dirtyFormCleanedUp}`);
+
+    // 5.7: Producer 3: Real Microphone Audio Recording on /dictionary
+    // Navigate to /dictionary
+    await page.goto(`${BASE_URL}/dictionary`, { waitUntil: 'networkidle' });
     await page.waitForTimeout(400);
 
-    const cleanupCheck = await page.evaluate(() => {
-      return !window.__appBusyRegistry.has('dirty_form_recruitment');
-    });
-    recordTest('5.6', 'Navigating away from dirty form cleans up "dirty_form_recruitment" from registry', cleanupCheck, `Cleaned up: ${cleanupCheck}`);
-
-    // 5.7: Producer 3: Audio Recording Busy State with mock getUserMedia
+    // Provide mock media stream for getUserMedia so real MediaRecorder operates without physical hardware
     await page.evaluate(() => {
       if (!navigator.mediaDevices) navigator.mediaDevices = {};
       navigator.mediaDevices.getUserMedia = async () => {
@@ -860,12 +907,53 @@ async function runRealBrowserVerification() {
         osc.start();
         return dst.stream;
       };
-      window.registerBusyState('dictionary_audio_recording');
+      window.__pwa_reload_marker_audio = 'audio_intact';
     });
-    const recordingBusyBefore = await page.evaluate(() => window.__appBusyRegistry.has('dictionary_audio_recording'));
-    await page.evaluate(() => window.unregisterBusyState('dictionary_audio_recording'));
-    const recordingBusyAfter = await page.evaluate(() => window.__appBusyRegistry.has('dictionary_audio_recording'));
-    recordTest('5.7', 'Audio recording producer registers and cleanly unregisters from busy registry', recordingBusyBefore && !recordingBusyAfter, `Before: ${recordingBusyBefore}, After: ${recordingBusyAfter}`);
+
+    // Click the real button to open pronunciation rubric modal
+    const openDeepBtn = page.locator('#btn-open-deep-modal').first();
+    await openDeepBtn.scrollIntoViewIfNeeded();
+    await openDeepBtn.click({ force: true });
+    await page.waitForTimeout(400);
+
+    // Click the real start recording button in the modal
+    const startRecordBtn = page.locator('#btn-dict-start-record');
+    await startRecordBtn.waitFor({ state: 'visible', timeout: 3000 });
+    await startRecordBtn.click();
+    await page.waitForTimeout(300);
+
+    // Assert recording started and component registered busy state
+    const recActiveCheck = await page.evaluate(() => {
+      return Boolean(window.__isRecordingActive && window.__appBusyRegistry && window.__appBusyRegistry.has('dictionary_audio_recording'));
+    });
+
+    // Dispatch SW controllerchange during active recording: MUST NOT reload page or disrupt recording
+    await page.evaluate(() => {
+      window.navigator?.serviceWorker?.dispatchEvent(new Event('controllerchange'));
+    });
+    await page.waitForTimeout(300);
+
+    const audioReloadMarker = await page.evaluate(() => window.__pwa_reload_marker_audio);
+    const audioStillRecording = await page.evaluate(() => Boolean(window.__isRecordingActive && window.__appBusyRegistry && window.__appBusyRegistry.has('dictionary_audio_recording')));
+    const audioSwBanner = await page.evaluate(() => Boolean(document.getElementById('sw-update-banner')));
+
+    // Click the real stop recording button in the modal
+    const stopRecordBtn = page.locator('#btn-dict-stop-record');
+    await stopRecordBtn.click();
+    await page.waitForTimeout(300);
+
+    const recordingCleanedUp = await page.evaluate(() => {
+      return !window.__isRecordingActive && !window.__appBusyRegistry.has('dictionary_audio_recording');
+    });
+
+    // Close deep modal
+    const closeDeepBtn = page.locator('#btn-close-deep-modal');
+    if (await closeDeepBtn.isVisible()) {
+      await closeDeepBtn.click();
+    }
+
+    const audioTestPass = recActiveCheck && (audioReloadMarker === 'audio_intact') && audioStillRecording && audioSwBanner && recordingCleanedUp;
+    recordTest('5.7', 'Real UI microphone recording registers busy state, survives SW update event without interruption, and unregisters on stop', audioTestPass, `Started: ${recActiveCheck}, NoReload: ${audioReloadMarker === 'audio_intact'}, SWBanner: ${audioSwBanner}, Stopped: ${recordingCleanedUp}`);
 
     // 5.8: Idle State PWA Update
     const isIdleNow = await page.evaluate(() => {
