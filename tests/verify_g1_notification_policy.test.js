@@ -159,6 +159,7 @@ function initTestDatabase() {
       stars_awarded INTEGER DEFAULT 0,
       star_awarded_reason TEXT,
       version INTEGER DEFAULT 1,
+      grading_token TEXT,
       status TEXT DEFAULT 'submitted'
     );
 
@@ -651,6 +652,55 @@ describe('G1 AUDIT FIXTURE MATRIX - REAL HANDLERS & DB ISOLATION', async () => {
   // FIXTURE F: Homework CAS Concurrency & Idempotency
   // =========================================================================
   describe('Fixture F: Star Reward CAS Concurrency, Ledger & Fault Injection', () => {
+    test('F.0: Independent committed award survives grading stale snapshot (no lost updates)', async () => {
+      const sqlite = initTestDatabase();
+      const d1 = createD1Adapter(sqlite);
+      sqlite.exec(`
+        INSERT INTO users (id, username, email, name, role) VALUES
+          ('usr_teacher_lan', 'lan', 'lan@test.com', 'Lan', 'teacher'),
+          ('usr_student_s', 'student_s', 's@test.com', 'S', 'student');
+        INSERT INTO homework_assignments (id, session_id, class_id, class_name, teacher_id, teacher_name, skill_type, title, description, assigned_date, deadline_date, deadline_time)
+        VALUES ('hw_test', 'sess_t', 'class_7', 'Class', 'usr_teacher_lan', 'Lan', 'writing', 'HW', 'Desc', '2026-10-01', '2026-10-05', '18:00');
+        INSERT INTO homework_submissions (id, assignment_id, student_id, student_name, submission_type, is_on_time, status)
+        VALUES ('sub_test', 'hw_test', 'usr_student_s', 'S', 'writing', 1, 'submitted');
+      `);
+      let injected = false;
+      const racingD1 = {
+        prepare(sql) {
+          const stmt = d1.prepare(sql);
+          if (sql.includes('SELECT stars_balance, total_earned_stars, stars_redeemed, star_debt')) {
+            return {
+              bind(...args) { stmt.bind(...args); return this; },
+              async first() {
+                const stale = await stmt.first();
+                // Simulate concurrent award committing +50 stars before teacher grading batch executes
+                sqlite.exec("INSERT INTO student_stars(student_id, stars_balance, total_earned_stars, stars_redeemed, star_debt) VALUES('usr_student_s', 50, 50, 0, 0)");
+                injected = true;
+                return stale;
+              }
+            };
+          }
+          return stmt;
+        },
+        batch(statements) { return d1.batch(statements); }
+      };
+      const response = await postHomework({
+        request: new Request('http://localhost/api/homework', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${teacherToken}` },
+          body: JSON.stringify({ action: 'grade', submission_id: 'sub_test', score: 10, teacher_feedback: 'Audit' })
+        }),
+        platform: { env: { DB: racingD1, AUTH_SECRET: TEST_SECRET } }
+      });
+      const actual = sqlite.prepare("SELECT stars_balance, total_earned_stars, star_debt FROM student_stars WHERE student_id = 'usr_student_s'").get();
+      assert.strictEqual(response.status, 200);
+      assert.strictEqual(injected, true);
+      assert.strictEqual(actual.stars_balance, 150, 'Independent committed +50 must survive homework +100 (atomic delta math)');
+      assert.strictEqual(actual.total_earned_stars, 150);
+      const ledger = sqlite.prepare("SELECT * FROM student_star_ledger WHERE student_id = 'usr_student_s'").get();
+      assert.strictEqual(ledger.balance_after, 150, 'Ledger balance_after must reflect the authoritative post-batch balance');
+    });
+
     test('F.1: Concurrent grading race with CAS: only one request awards stars, no double reward', async () => {
       const sqlite = initTestDatabase();
       const d1 = createD1Adapter(sqlite);

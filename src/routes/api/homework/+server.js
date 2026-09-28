@@ -52,6 +52,8 @@ async function ensureTables(db) {
           audio_feedback_url TEXT,
           stars_awarded INTEGER DEFAULT 0,
           star_awarded_reason TEXT,
+          version INTEGER DEFAULT 1,
+          grading_token TEXT,
           status TEXT DEFAULT 'submitted'
         );
       `),
@@ -122,6 +124,7 @@ async function ensureTables(db) {
     // Backward-compatible schema migrations
     const migrations = [
       'ALTER TABLE homework_submissions ADD COLUMN version INTEGER DEFAULT 1;',
+      'ALTER TABLE homework_submissions ADD COLUMN grading_token TEXT;',
       'ALTER TABLE student_stars ADD COLUMN star_debt INTEGER DEFAULT 0;',
       'ALTER TABLE student_star_ledger ADD COLUMN bill_id TEXT;',
       'ALTER TABLE student_star_ledger ADD COLUMN reference_id TEXT;',
@@ -777,49 +780,19 @@ export async function POST({ request, platform }) {
 
     const gradedAt = new Date().toISOString();
     const teacherName = user.name || user.username;
+    const gradingToken = (typeof crypto !== 'undefined' && crypto.randomUUID)
+      ? crypto.randomUUID()
+      : `gt_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;
 
     if (db) {
       try {
         await ensureTables(db);
 
-        // Fetch current student stars & star debt to calculate balance & debt transitions
-        const starRow = await db.prepare('SELECT stars_balance, total_earned_stars, stars_redeemed, star_debt FROM student_stars WHERE student_id = ?').bind(submission.student_id).first();
-        const currentBalance = Number(starRow?.stars_balance || 0);
-        const currentEarned = Number(starRow?.total_earned_stars || 0);
-        const currentRedeemed = Number(starRow?.stars_redeemed || 0);
-        const currentDebt = Number(starRow?.star_debt || 0);
-
-        let newBalance = currentBalance;
-        let newEarned = currentEarned;
-        let newDebt = currentDebt;
-        let shortfall = 0;
-
-        if (starDelta > 0) {
-          newEarned = currentEarned + starDelta;
-          if (currentDebt > 0) {
-            const repaid = Math.min(currentDebt, starDelta);
-            newDebt = currentDebt - repaid;
-            newBalance = currentBalance + (starDelta - repaid);
-          } else {
-            newBalance = currentBalance + starDelta;
-          }
-        } else if (starDelta < 0) {
-          const reduction = Math.abs(starDelta);
-          newEarned = Math.max(0, currentEarned - reduction);
-          if (currentBalance >= reduction) {
-            newBalance = currentBalance - reduction;
-          } else {
-            // Student already redeemed stars (e.g. tuition discount).
-            // Preserve financial non-negative balance invariant (balance stays 0).
-            // Record uncollateralized shortfall into star_debt (honest ledger, no debt wiping).
-            shortfall = reduction - currentBalance;
-            newBalance = 0;
-            newDebt = currentDebt + shortfall;
-          }
-        }
+        // Fetch current student stars snapshot for auditing & observability
+        await db.prepare('SELECT stars_balance, total_earned_stars, stars_redeemed, star_debt FROM student_stars WHERE student_id = ?').bind(submission.student_id).first();
 
         // Optimistic Concurrency Control (CAS):
-        // Atomic compare-and-swap incrementing version on submission state
+        // Atomic compare-and-swap incrementing version and writing unique grading_token
         let casSql;
         let casParams;
         if (isRegrade) {
@@ -835,13 +808,14 @@ export async function POST({ request, platform }) {
                 stars_awarded = ?,
                 star_awarded_reason = ?,
                 version = ?,
+                grading_token = ?,
                 status = 'graded'
             WHERE id = ? AND (version = ? OR version IS NULL) AND status = 'graded';
           `;
           casParams = [
             user.id, teacherName, gradedAt, numericScore, teacher_feedback || '',
             audio_feedback_url || null, starsAwarded, starReason || null,
-            newVersion, submission_id, currentVersion
+            newVersion, gradingToken, submission_id, currentVersion
           ];
         } else {
           // Initial grading: verify submission is in 'submitted' status and version matches snapshot
@@ -856,13 +830,14 @@ export async function POST({ request, platform }) {
                 stars_awarded = ?,
                 star_awarded_reason = ?,
                 version = ?,
+                grading_token = ?,
                 status = 'graded'
             WHERE id = ? AND (status = 'submitted' OR status IS NULL) AND (version = ? OR version IS NULL);
           `;
           casParams = [
             user.id, teacherName, gradedAt, numericScore, teacher_feedback || '',
             audio_feedback_url || null, starsAwarded, starReason || null,
-            newVersion, submission_id, currentVersion
+            newVersion, gradingToken, submission_id, currentVersion
           ];
         }
 
@@ -873,49 +848,73 @@ export async function POST({ request, platform }) {
           db.prepare(casSql).bind(...casParams)
         );
 
-        // 2. Adjust stars strictly by starDelta, conditional on this specific grading operation succeeding
-        if (starDelta !== 0) {
+        // 2. Adjust stars strictly by starDelta, conditional on this specific grading operation succeeding.
+        // Uses SQL-level atomic delta math so that concurrent independent transactions are never overwritten!
+        if (starDelta > 0) {
           batchStatements.push(
             db.prepare(`
-              INSERT INTO student_stars (student_id, stars_balance, total_earned_stars, stars_redeemed, star_debt, last_updated)
-              SELECT ?, ?, ?, ?, ?, CURRENT_TIMESTAMP
+              INSERT INTO student_stars (
+                student_id, stars_balance, total_earned_stars, stars_redeemed, star_debt, last_updated
+              )
+              SELECT ?, ?, ?, 0, 0, CURRENT_TIMESTAMP
               WHERE EXISTS (
                 SELECT 1 FROM homework_submissions 
-                WHERE id = ? AND version = ? AND graded_at = ?
+                WHERE id = ? AND grading_token = ?
               )
               ON CONFLICT(student_id) DO UPDATE SET
-                stars_balance = excluded.stars_balance,
-                total_earned_stars = excluded.total_earned_stars,
-                star_debt = excluded.star_debt,
+                stars_balance = student_stars.stars_balance + (excluded.stars_balance - MIN(student_stars.star_debt, excluded.stars_balance)),
+                star_debt = student_stars.star_debt - MIN(student_stars.star_debt, excluded.stars_balance),
+                total_earned_stars = student_stars.total_earned_stars + excluded.total_earned_stars,
                 last_updated = CURRENT_TIMESTAMP;
-            `).bind(submission.student_id, newBalance, newEarned, currentRedeemed, newDebt, submission_id, newVersion, gradedAt)
+            `).bind(submission.student_id, starDelta, starDelta, submission_id, gradingToken)
           );
+        } else if (starDelta < 0) {
+          const reduction = Math.abs(starDelta);
+          batchStatements.push(
+            db.prepare(`
+              INSERT INTO student_stars (
+                student_id, stars_balance, total_earned_stars, stars_redeemed, star_debt, last_updated
+              )
+              SELECT ?, 0, 0, 0, ?, CURRENT_TIMESTAMP
+              WHERE EXISTS (
+                SELECT 1 FROM homework_submissions 
+                WHERE id = ? AND grading_token = ?
+              )
+              ON CONFLICT(student_id) DO UPDATE SET
+                stars_balance = MAX(0, student_stars.stars_balance - excluded.star_debt),
+                star_debt = student_stars.star_debt + MAX(0, excluded.star_debt - student_stars.stars_balance),
+                total_earned_stars = MAX(0, student_stars.total_earned_stars - excluded.star_debt),
+                last_updated = CURRENT_TIMESTAMP;
+            `).bind(submission.student_id, reduction, submission_id, gradingToken)
+          );
+        }
 
-          // 3. Insert audit trail in student_star_ledger with unified schema, conditional on this specific grading operation succeeding
+        // 3. Insert audit trail in student_star_ledger with unified schema, conditional on gradingToken
+        if (starDelta !== 0) {
           const ledgerId = `ledger_hw_${submission_id}_${Date.now()}`;
-          const ledgerReason = shortfall > 0 
-            ? `${starReason || 'Điều chỉnh điểm BTVN'} (Ghi nợ ${shortfall} sao do đã tiêu dùng học phí)`
-            : (starReason || (starDelta >= 0 ? 'Thưởng sao làm BTVN' : 'Điều chỉnh điểm BTVN'));
+          const ledgerReason = starReason || (starDelta >= 0 ? 'Thưởng sao làm BTVN' : 'Điều chỉnh điểm BTVN');
           const ledgerAction = starDelta >= 0 ? 'homework_reward' : 'homework_adjustment';
 
           batchStatements.push(
             db.prepare(`
-              INSERT INTO student_star_ledger (id, student_id, bill_id, reference_id, delta_stars, amount, balance_after, action_type, reason, note)
-              SELECT ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?
+              INSERT INTO student_star_ledger (
+                id, student_id, bill_id, reference_id, delta_stars, amount, balance_after, action_type, reason, note
+              )
+              SELECT ?, ?, NULL, ?, ?, ?, (SELECT stars_balance FROM student_stars WHERE student_id = ?), ?, ?, ?
               WHERE EXISTS (
                 SELECT 1 FROM homework_submissions 
-                WHERE id = ? AND version = ? AND graded_at = ?
+                WHERE id = ? AND grading_token = ?
               );
             `).bind(
               ledgerId, submission.student_id, submission_id,
-              starDelta, starDelta, newBalance, ledgerAction,
+              starDelta, starDelta, submission.student_id, ledgerAction,
               ledgerReason, ledgerReason,
-              submission_id, newVersion, gradedAt
+              submission_id, gradingToken
             )
           );
         }
 
-        // 4. Deterministic Student Notification, conditional on this specific grading operation succeeding
+        // 4. Deterministic Student Notification, conditional on gradingToken
         const notifStudentId = `notif_grade_s_${submission_id}`;
         batchStatements.push(
           db.prepare(`
@@ -923,7 +922,7 @@ export async function POST({ request, platform }) {
             SELECT ?, 'student', ?, ?, ?, 'homework', ?
             WHERE EXISTS (
               SELECT 1 FROM homework_submissions 
-              WHERE id = ? AND version = ? AND graded_at = ?
+              WHERE id = ? AND grading_token = ?
             )
             ON CONFLICT(id) DO UPDATE SET
               title = excluded.title,
@@ -934,11 +933,11 @@ export async function POST({ request, platform }) {
             `⭐ Kết Quả Chấm BTVN: ${numericScore} Điểm!`,
             `Cô ${teacherName} đã chấm bài tập của em: ${numericScore}/10 điểm. ${starsAwarded > 0 ? `Em được thưởng +${starsAwarded} sao! ` : ''}Lời cô: ${teacher_feedback || 'Rất đáng khen!'}`,
             submission_id,
-            submission_id, newVersion, gradedAt
+            submission_id, gradingToken
           )
         );
 
-        // 5. Deterministic Parent Notifications (Verified only), conditional on this specific grading operation succeeding
+        // 5. Deterministic Parent Notifications (Verified only), conditional on gradingToken
         const parentLinks = await db.prepare(`
           SELECT parent_user_id 
           FROM parent_student_links 
@@ -954,7 +953,7 @@ export async function POST({ request, platform }) {
               SELECT ?, 'parent', ?, ?, ?, 'homework', ?
               WHERE EXISTS (
                 SELECT 1 FROM homework_submissions 
-                WHERE id = ? AND version = ? AND graded_at = ?
+                WHERE id = ? AND grading_token = ?
               )
               ON CONFLICT(id) DO UPDATE SET
                 title = excluded.title,
@@ -965,7 +964,7 @@ export async function POST({ request, platform }) {
               `📊 Báo Cáo Học Tập: Bé ${submission.student_name} đạt ${numericScore} Điểm`,
               `Cô giáo ${teacherName} vừa chấm BTVN của bé ${submission.student_name}: Điểm số ${numericScore}/10.${starsAwarded > 0 ? ` Bé nhận thêm +${starsAwarded} sao tích lũy học phí!` : ''} Nhận xét: "${teacher_feedback || 'Bé làm bài rất tốt.'}"`,
               submission_id,
-              submission_id, newVersion, gradedAt
+              submission_id, gradingToken
             )
           );
         }
