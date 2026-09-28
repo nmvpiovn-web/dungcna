@@ -1043,6 +1043,71 @@ describe('G1 AUDIT FIXTURE MATRIX - REAL HANDLERS & DB ISOLATION', async () => {
       const sumDebtDelta = ledger.reduce((sum, r) => sum + (r.debt_delta || 0), 0);
       assert.strictEqual(sumDebtDelta, ledger[3].debt_after, 'Sum of all debt_delta must equal current debt_after (0)');
     });
+
+    test('F.6: Historical baseline reconciliation migration for legacy star_debt > 0 without ledger entry: baseline created with debt_delta=0, subsequent grading delta only accounts for new transaction delta', async () => {
+      const sqlite = initTestDatabase();
+      const d1 = createD1Adapter(sqlite);
+
+      // Seed student user and teacher
+      sqlite.exec(`
+        INSERT INTO users (id, username, phone, email, name, role, status, metadata)
+        VALUES 
+          ('usr_legacy_s', 'legacy_student', '0389998888', 'legacy@test.vn', 'Legacy Student', 'student', 'active', '{"grade":"Lớp 7"}'),
+          ('usr_legacy_t', 'legacy_teacher', '0389998889', 'teacher_leg@test.vn', 'Cô Dung', 'teacher', 'active', '{}');
+      `);
+
+      // Seed legacy student_stars having star_debt = 70 from legacy system, NO ledger entry exists
+      sqlite.exec(`
+        INSERT INTO student_stars (student_id, stars_balance, total_earned_stars, stars_redeemed, star_debt, last_updated)
+        VALUES ('usr_legacy_s', 0, 0, 70, 70, CURRENT_TIMESTAMP);
+      `);
+
+      // Seed homework assignment and submission
+      sqlite.exec(`
+        INSERT INTO homework_assignments (id, session_id, class_id, class_name, teacher_id, teacher_name, skill_type, title, description, assigned_date, deadline_date, deadline_time)
+        VALUES ('hw_legacy_1', 'sess_1', 'class_7', 'Lớp 7', 'usr_legacy_t', 'Cô Dung', 'grammar', 'Unit 1 Homework', 'Test', '2026-09-28', '2026-09-30', '23:59');
+
+        INSERT INTO homework_submissions (id, assignment_id, student_id, student_name, submission_type, content_text, submitted_at, is_on_time, status)
+        VALUES ('sub_legacy_1', 'hw_legacy_1', 'usr_legacy_s', 'Legacy Student', 'text', 'Bài làm', CURRENT_TIMESTAMP, 1, 'submitted');
+      `);
+
+      const teacherToken = await createSignedToken({ id: 'usr_legacy_t', role: 'teacher', name: 'Cô Dung', username: 'legacy_teacher' }, TEST_SECRET);
+
+      // Trigger GET or POST homework to run ensureTables and its automated baseline reconciliation migration
+      const initReq = new Request('http://localhost/api/homework?class_id=class_7', {
+        headers: { 'Authorization': `Bearer ${teacherToken}` }
+      });
+      await getHomework({ request: initReq, url: new URL(initReq.url), platform: { env: { DB: d1, AUTH_SECRET: TEST_SECRET } } });
+
+      // Assert opening baseline ledger row was created
+      const initialLedger = sqlite.prepare('SELECT * FROM student_star_ledger WHERE student_id = ?').all('usr_legacy_s');
+      assert.strictEqual(initialLedger.length, 1, 'Baseline reconciliation must create exactly 1 opening ledger entry');
+      assert.strictEqual(initialLedger[0].action_type, 'migration_baseline');
+      assert.strictEqual(initialLedger[0].debt_delta, 0, 'Opening baseline must record debt_delta = 0 (NOT false attribution of old debt)');
+      assert.strictEqual(initialLedger[0].debt_after, 70, 'Opening baseline debt_after must equal historical star_debt (70)');
+      assert.strictEqual(initialLedger[0].balance_after, 0);
+
+      // Now teacher grades sub_legacy_1 with score awarding 50 stars (delta = +50)
+      const gradeReq = new Request('http://localhost/api/homework', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${teacherToken}` },
+        body: JSON.stringify({ action: 'grade', submission_id: 'sub_legacy_1', score: 9.0, teacher_feedback: 'Tốt' })
+      });
+      const gradeRes = await postHomework({ request: gradeReq, platform: { env: { DB: d1, AUTH_SECRET: TEST_SECRET } } });
+      assert.strictEqual(gradeRes.status, 200);
+
+      // Check student_stars: 50 stars paid towards 70 debt -> debt becomes 20, balance remains 0
+      const starsAfter = sqlite.prepare('SELECT stars_balance, star_debt FROM student_stars WHERE student_id = ?').get('usr_legacy_s');
+      assert.strictEqual(starsAfter.stars_balance, 0, 'Balance remains 0 while debt exists');
+      assert.strictEqual(starsAfter.star_debt, 20, 'Star debt reduced from 70 to 20');
+
+      // Check ledger entries: 2nd entry is homework_reward with debt_delta = -50 and debt_after = 20
+      const fullLedger = sqlite.prepare('SELECT * FROM student_star_ledger WHERE student_id = ? ORDER BY rowid ASC').all('usr_legacy_s');
+      assert.strictEqual(fullLedger.length, 2);
+      assert.strictEqual(fullLedger[1].action_type, 'homework_reward');
+      assert.strictEqual(fullLedger[1].debt_delta, -50, 'New transaction debt_delta must ONLY reflect the new repayment (-50), NEVER historical debt');
+      assert.strictEqual(fullLedger[1].debt_after, 20, 'Debt after repayment must be 20');
+    });
   });
 
   // =========================================================================

@@ -49,7 +49,7 @@
   }
 
   onDestroy(() => {
-    if (submitSuccess && typeof window !== 'undefined') {
+    if (typeof window !== 'undefined') {
       window.__hasUnsavedChanges = false;
       window.unregisterBusyState?.('dirty_form_recruitment');
     }
