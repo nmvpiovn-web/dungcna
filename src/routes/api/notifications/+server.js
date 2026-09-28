@@ -100,12 +100,17 @@ export async function GET({ request, platform }) {
       `;
       params = [user.id, user.id, user.id, user.role];
     } else if (user.role === 'parent') {
-      // P1 Fix (v2): For parents, homework notifications are only shown if:
-      //   - The notification is a SYSTEM/non-sensitive broadcast (target_user_id IS NULL, role parent/all)
-      //   - OR it is personally addressed (target_user_id = user.id) AND category != 'homework'
-      //   - OR it is homework but the link between this parent and the referenced student is STILL VERIFIED
-      //     (reference_id matches a homework submission/assignment tied to a verified child)
-      // This correctly denies revoked-child notifications while keeping verified-child ones.
+      // UNIFIED RESOURCE AUTHORIZATION POLICY (v3):
+      // ALL notifications visible to parent must satisfy:
+      //   (audience matches) AND (non-sensitive OR authorized resource)
+      // 
+      // - System/role broadcasts with category != 'homework': always visible
+      // - ANY notification with category = 'homework' (broadcast OR personal):
+      //     requires parent to have at least one VERIFIED link
+      //     For personal: tied to specific child via reference_id
+      //     For broadcast: requires at least one verified link (fail-closed for pending/revoked-all)
+      // - Personal non-homework: always visible
+      // - Unknown category with sensitive reference: fail-closed (treat as homework)
       sql = `
         SELECT n.id, n.target_role, n.target_user_id, n.title, n.body, n.category, n.reference_id, n.created_at,
                CASE 
@@ -117,17 +122,17 @@ export async function GET({ request, platform }) {
         LEFT JOIN system_notification_reads nr 
           ON n.id = nr.notification_id AND nr.user_id = ?
         WHERE (
-          -- System/role broadcasts (non-sensitive)
+          -- Audience: broadcast to parent/all role OR personally addressed
           (n.target_user_id IS NULL AND (n.target_role = 'parent' OR n.target_role = 'all'))
-        ) OR (
-          -- Personal notifications addressed to this parent
-          n.target_user_id = ?
-          AND (
-            -- Non-homework: always show
-            n.category != 'homework'
-            OR
-            -- Homework: only show if this parent still has an active verified link
-            -- that could have generated this notification (verified at READ time)
+          OR n.target_user_id = ?
+        )
+        AND (
+          -- Resource authorization gate:
+          -- Non-homework categories: always allowed (system announcements, tuition, etc.)
+          (n.category IS NULL OR n.category NOT IN ('homework'))
+          OR
+          -- Homework personal notifications: verified link to the specific child
+          (n.target_user_id = ? AND n.category = 'homework' AND (
             EXISTS (
               SELECT 1 FROM parent_student_links psl
               JOIN homework_assignments ha ON ha.id = n.reference_id
@@ -142,19 +147,23 @@ export async function GET({ request, platform }) {
                   AND json_valid(u.metadata) AND json_extract(u.metadata, '$.class_id') = ha.class_id
                 )
             )
-            OR
-            -- Grading notifications: reference_id is submission_id; find student via attempt/submission
-            EXISTS (
+            OR EXISTS (
               SELECT 1 FROM parent_student_links psl
               JOIN homework_submissions hs ON hs.id = n.reference_id
               WHERE psl.parent_user_id = ?
                 AND psl.student_user_id = hs.student_id
                 AND psl.verification_status = 'verified'
             )
-          )
+          ))
+          OR
+          -- Homework broadcasts (target_user_id IS NULL): require at least one verified link
+          (n.target_user_id IS NULL AND n.category = 'homework' AND EXISTS (
+            SELECT 1 FROM parent_student_links psl
+            WHERE psl.parent_user_id = ? AND psl.verification_status = 'verified'
+          ))
         )
       `;
-      params = [user.id, user.id, user.id, user.id, user.id];
+      params = [user.id, user.id, user.id, user.id, user.id, user.id, user.id];
     } else {
       sql = `
         SELECT n.id, n.target_role, n.target_user_id, n.title, n.body, n.category, n.reference_id, n.created_at,
@@ -216,16 +225,48 @@ export async function POST({ request, platform }) {
     try {
       await ensureNotificationSchema(db);
       if (mark_all) {
-        // Mark all eligible notifications read for this specific user
-        const targetRoleCond = isLeader ? "(n.target_role = ? OR n.target_role = 'leader' OR n.target_role = 'all')" : "(n.target_role = ? OR n.target_role = 'all')";
-        
-        await db.prepare(`
-          INSERT INTO system_notification_reads (notification_id, user_id, read_at)
-          SELECT n.id, ?, CURRENT_TIMESTAMP
-          FROM system_notifications n
-          WHERE (n.target_user_id = ? OR (n.target_user_id IS NULL AND ${targetRoleCond}))
-          ON CONFLICT(notification_id, user_id) DO UPDATE SET read_at = CURRENT_TIMESTAMP;
-        `).bind(auth.user.id, auth.user.id, auth.user.role).run();
+        // Mark all AUTHORIZED notifications read — same policy as GET
+        if (auth.user.role === 'parent') {
+          // Parents: only mark notifications they're authorized to see (same as GET query)
+          await db.prepare(`
+            INSERT INTO system_notification_reads (notification_id, user_id, read_at)
+            SELECT n.id, ?, CURRENT_TIMESTAMP
+            FROM system_notifications n
+            WHERE (
+              (n.target_user_id IS NULL AND (n.target_role = 'parent' OR n.target_role = 'all'))
+              OR n.target_user_id = ?
+            )
+            AND (
+              (n.category IS NULL OR n.category NOT IN ('homework'))
+              OR (n.target_user_id = ? AND n.category = 'homework' AND (
+                EXISTS (SELECT 1 FROM parent_student_links psl
+                  JOIN homework_assignments ha ON ha.id = n.reference_id
+                  WHERE psl.parent_user_id = ? AND psl.verification_status = 'verified'
+                    AND psl.student_user_id IN (
+                      SELECT ce.user_id FROM class_enrollments ce WHERE ce.class_id = ha.class_id AND ce.status = 'active'
+                      UNION SELECT u.id FROM users u WHERE u.id = psl.student_user_id AND json_valid(u.metadata) AND json_extract(u.metadata, '$.class_id') = ha.class_id
+                    ))
+                OR EXISTS (SELECT 1 FROM parent_student_links psl
+                  JOIN homework_submissions hs ON hs.id = n.reference_id
+                  WHERE psl.parent_user_id = ? AND psl.student_user_id = hs.student_id AND psl.verification_status = 'verified')
+              ))
+              OR (n.target_user_id IS NULL AND n.category = 'homework' AND EXISTS (
+                SELECT 1 FROM parent_student_links psl WHERE psl.parent_user_id = ? AND psl.verification_status = 'verified'
+              ))
+            )
+            ON CONFLICT(notification_id, user_id) DO UPDATE SET read_at = CURRENT_TIMESTAMP;
+          `).bind(auth.user.id, auth.user.id, auth.user.id, auth.user.id, auth.user.id, auth.user.id).run();
+        } else {
+          // Non-parent roles: mark all audience-matched notifications
+          const targetRoleCond = isLeader ? "(n.target_role = ? OR n.target_role = 'leader' OR n.target_role = 'all')" : "(n.target_role = ? OR n.target_role = 'all')";
+          await db.prepare(`
+            INSERT INTO system_notification_reads (notification_id, user_id, read_at)
+            SELECT n.id, ?, CURRENT_TIMESTAMP
+            FROM system_notifications n
+            WHERE (n.target_user_id = ? OR (n.target_user_id IS NULL AND ${targetRoleCond}))
+            ON CONFLICT(notification_id, user_id) DO UPDATE SET read_at = CURRENT_TIMESTAMP;
+          `).bind(auth.user.id, auth.user.id, auth.user.role).run();
+        }
 
         // Also update personal ones
         await db.prepare(`
@@ -237,7 +278,7 @@ export async function POST({ request, platform }) {
         return json({ success: true, message: 'Đã đánh dấu tất cả thông báo là đã đọc' });
       } else if (notification_id) {
         // Enforce strict ownership: Check target_user_id and target_role
-        const notif = await db.prepare('SELECT id, target_user_id, target_role FROM system_notifications WHERE id = ?').bind(notification_id).first();
+        const notif = await db.prepare('SELECT id, target_user_id, target_role, category, reference_id FROM system_notifications WHERE id = ?').bind(notification_id).first();
         if (!notif) {
           return json({ success: false, error: 'NotFound: Không tìm thấy thông báo' }, { status: 404 });
         }
@@ -250,6 +291,16 @@ export async function POST({ request, platform }) {
         // Role-based notification: User must belong to the target role (or 'all', or isLeader)
         if (notif.target_role && notif.target_role !== 'all' && notif.target_role !== auth.user.role && !isLeader) {
           return json({ success: false, error: 'Forbidden: Thông báo này không thuộc nhóm vai trò được phân quyền của bạn' }, { status: 403 });
+        }
+
+        // Resource authorization for parent: homework notifications require verified link
+        if (auth.user.role === 'parent' && notif.category === 'homework') {
+          const hasVerifiedLink = await db.prepare(`
+            SELECT 1 FROM parent_student_links WHERE parent_user_id = ? AND verification_status = 'verified' LIMIT 1
+          `).bind(auth.user.id).first();
+          if (!hasVerifiedLink) {
+            return json({ success: false, error: 'Forbidden: Bạn chưa có liên kết phụ huynh xác minh để truy cập thông báo bài tập' }, { status: 403 });
+          }
         }
 
         // Record per-user read state

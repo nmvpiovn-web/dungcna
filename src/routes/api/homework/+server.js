@@ -484,9 +484,15 @@ export async function POST({ request, platform }) {
 
       } catch (e) {
         console.error('Failed to save assignment to D1:', e);
+        // D1 is authoritative — assignment creation failure must NOT return success
+        return json({ 
+          success: false, 
+          error: `DatabaseError: Lỗi ghi bài tập vào cơ sở dữ liệu. ${e.message || ''}`.trim() 
+        }, { status: 503 });
       }
     }
 
+    // Only cache to in-memory AFTER D1 success (or if no DB available — local dev only)
     inMemoryAssignments.unshift(newAssignment);
     return json({ success: true, message: 'Đã giao bài tập về nhà thành công!', assignment: newAssignment });
   }
@@ -592,6 +598,10 @@ export async function POST({ request, platform }) {
 
       } catch (e) {
         console.error('Failed to save submission to D1:', e);
+        return json({ 
+          success: false, 
+          error: `DatabaseError: Lỗi ghi bài nộp vào cơ sở dữ liệu. ${e.message || ''}`.trim() 
+        }, { status: 503 });
       }
     }
 
@@ -722,6 +732,10 @@ export async function POST({ request, platform }) {
 
       } catch (e) {
         console.error('Failed to grade submission in D1:', e);
+        return json({ 
+          success: false, 
+          error: `DatabaseError: Lỗi chấm bài vào cơ sở dữ liệu. ${e.message || ''}`.trim() 
+        }, { status: 503 });
       }
     }
 
