@@ -9,77 +9,77 @@
     "BUILD_B",
     "BUILD_C"
   ],
-  "timestamp": "2026-09-28T08:46:22.784Z",
+  "timestamp": "2026-09-28T08:51:22.355Z",
   "results": [
     {
       "id": "PWA-APP-1.1",
       "description": "Real SvelteKit /recruitment page is controlled by Build A ServiceWorker",
       "passed": true,
       "detail": "SW active and controlling",
-      "timestamp": "2026-09-28T08:46:17.992Z"
+      "timestamp": "2026-09-28T08:51:17.725Z"
     },
     {
       "id": "PWA-APP-1.2",
       "description": "Real src/app.html isAppBusy() function is active in production DOM",
       "passed": true,
       "detail": "app.html script loaded",
-      "timestamp": "2026-09-28T08:46:17.998Z"
+      "timestamp": "2026-09-28T08:51:17.729Z"
     },
     {
       "id": "PWA-APP-2.1",
       "description": "Producer input on real form naturally sets window.isAppBusy() === true",
       "passed": true,
       "detail": "isBusy: true",
-      "timestamp": "2026-09-28T08:46:18.112Z"
+      "timestamp": "2026-09-28T08:51:17.874Z"
     },
     {
       "id": "PWA-APP-3.1",
       "description": "Real app.html rendered #sw-update-banner upon controllerchange",
       "passed": true,
       "detail": "Banner: \"⚡ Có bản cập nhật hệ thống mới. Dữ liệu đã được bảo toàn tự động. Đã Rõ\"",
-      "timestamp": "2026-09-28T08:46:20.802Z"
+      "timestamp": "2026-09-28T08:51:20.477Z"
     },
     {
       "id": "PWA-APP-3.2",
       "description": "Document-only heap marker is 100% intact (zero page reload/unload)",
       "passed": true,
       "detail": "Token matched: true",
-      "timestamp": "2026-09-28T08:46:20.807Z"
+      "timestamp": "2026-09-28T08:51:20.481Z"
     },
     {
       "id": "PWA-APP-3.3",
       "description": "Browser beforeunload/pagehide events never triggered during busy upgrade",
       "passed": true,
       "detail": "Unloaded: false",
-      "timestamp": "2026-09-28T08:46:20.812Z"
+      "timestamp": "2026-09-28T08:51:20.488Z"
     },
     {
       "id": "PWA-APP-3.4",
       "description": "Real candidate form inputs 100% preserved without data loss",
       "passed": true,
       "detail": "Name: \"ThS. Nguyễn Thu Hà - Tuyển Dụng Sư Phạm PWA 2026\", Phone: \"0988776655\"",
-      "timestamp": "2026-09-28T08:46:20.825Z"
+      "timestamp": "2026-09-28T08:51:20.506Z"
     },
     {
       "id": "PWA-APP-4.1",
       "description": "Application safely transitions to idle state",
       "passed": true,
       "detail": "isBusy: false",
-      "timestamp": "2026-09-28T08:46:21.029Z"
+      "timestamp": "2026-09-28T08:51:20.724Z"
     },
     {
       "id": "PWA-APP-5.1",
       "description": "PWA Lifecycle Invariant: Idle client automatically executed document reload",
       "passed": true,
       "detail": "Page navigation/reload completed",
-      "timestamp": "2026-09-28T08:46:22.543Z"
+      "timestamp": "2026-09-28T08:51:22.165Z"
     },
     {
       "id": "PWA-APP-5.2",
       "description": "Document memory state was cleanly refreshed (old heap marker is undefined)",
       "passed": true,
       "detail": "Token after reload: undefined",
-      "timestamp": "2026-09-28T08:46:22.603Z"
+      "timestamp": "2026-09-28T08:51:22.210Z"
     }
   ]
 }

@@ -3,7 +3,7 @@
 **Worker:** Antigravity (Implementation & Self-Audit)  
 **Auditor:** OpenAI Codex Desktop (Formal Verification & Sign-off)  
 **Ngày cập nhật:** 2026-09-28  
-**Frozen Source Commit:** `278020ee0304e0821b8d5bd933429476e03eaca7` | **Build Identity:** `build_1790580070052.4202`  
+**Frozen Source Commit:** `01beeac7f8a2c3cf870244036ebfdc7196026f6e` | **Build Identity:** `build_01beeac_1790585203855`  
 **Chính sách trạng thái:**
 - `Worker Status`: `NOT_STARTED` | `WORKER_TESTED` | `OPEN` | `BLOCKED` | `DEFERRED`
 - `Auditor Status`: Chỉ Codex Desktop cập nhật `AUDITOR_VERIFIED`. Trạng thái hiện tại: `AUDIT_IN_PROGRESS / HOLD`.
@@ -164,19 +164,30 @@
 ---
 
 ## TỔNG KẾT TRẠNG THÁI TOÀN HỆ THỐNG V4
-- **Release Gate G1 Status:** **HOLD / IN_PROGRESS** (Chờ thẩm định độc lập từ OpenAI Codex Desktop trên commit `278020ee0304e0821b8d5bd933429476e03eaca7`).
+- **Release Gate G1 Status:** **HOLD / IN_PROGRESS** (Chờ thẩm định độc lập từ OpenAI Codex Desktop trên commit `01beeac7f8a2c3cf870244036ebfdc7196026f6e`).
 - **Môi trường đo kiểm Browser & Build Identity:**
-  - Frozen Commit SHA: `278020ee0304e0821b8d5bd933429476e03eaca7`
-  - Build Identity: `build_1790580070052.4202` (Vite / Cloudflare Pages Functions)
-  - Remote Deployments: `https://17e00cfb.tienganh7-pro.pages.dev`, `https://master.tienganh7-pro.pages.dev`, `https://timbk.io.vn`
+  - Frozen Commit SHA: `01beeac7f8a2c3cf870244036ebfdc7196026f6e`
+  - Build Identity: `build_01beeac_1790585203855` (Vite / Cloudflare Pages Functions)
+  - Remote Production: `https://timbk.io.vn` (Cloudflare Pages Production trên branch `main`, verified HTTP 200 trên `/build_meta.json`)
   - Local Dev Server: `http://127.0.0.1:4173` (Wrangler Pages Dev chạy trên build production thật)
+  - Staging SW Test Server: `http://127.0.0.1:4175` (Phục vụ artifacts thật của SvelteKit build)
   - Trình duyệt: Google Chrome 128+ thực tế (`C:\Program Files\Google\Chrome\Application\chrome.exe`)
-  - Kết quả kiểm thử trình duyệt (`scripts/verify_g1_real_browser_evidence.mjs`): **52/52 Assertions PASS, 0 FAIL** (100% test IDs cố định vượt qua; 5 negative controls dùng chung evaluator; re-login Lớp 2 server verified; mobile drawer closed assertion; modal popstate back; real timer countdown; real label 500 contrast 9.9:1; CDP 200% real browser zoom; PWA busy producers `/exam`, `/recruitment`, micro recording không reload).
-- **Kết quả kiểm thử Database (DB Handlers & Isolation):** **49/49 PASS, 0 FAIL, 0 SKIP** (`tests/verify_g1_notification_policy.test.js` 20 tests gồm Fixture F.6 baseline migration + `tests/verify_codex_7216f8c_audit.test.js` 19 tests + `tests/verify_p1_feedback_94f88ea.test.js` 10 tests).
-- **Kế toán nợ sao (Star Debt Ledger & Migration Baseline):** Đã bổ sung migration tự động tạo dòng `migration_baseline` (`debt_delta = 0`, `debt_after = star_debt`) cho học sinh có nợ cũ thiếu ledger; subquery fallback an toàn `COALESCE(debt_after, star_debt)`.
+- **Kết quả Kiểm Định Thuật Ngữ "Khảo Thí" (`tests/verify_terminology.test.js`):**
+  - **3/3 PASS, 0 FAIL**: Quét 100% template Svelte, component, manifest, DOM titles, notification badges và store.
+  - **Triệt tiêu toàn diện**: Đã thay thế "khảo thí" bằng "lộ trình", "đánh giá", "luyện đề" tự nhiên theo đúng yêu cầu sư phạm.
+  - **Negative Control**: Xác minh negative control tiêm cụm từ "khảo thí" bắt buộc ném `AssertionError`.
+- **Kết quả Kiểm Định Nâng Cấp PWA Ứng Dụng Thật (`scripts/verify_real_pwa_lifecycle_upgrade.mjs`):**
+  - **10/10 PASS, 0 FAIL**: Chạy trực tiếp trên build artifact thật của SvelteKit (`build/recruitment/index.html`, real bundle, real `sw.js` logic).
+  - **Producer Thực Tế**: Form `/recruitment` tự kích hoạt busy state khi người dùng nhập liệu.
+  - **Bảo Vệ Document In-Memory**: Sử dụng marker bộ nhớ thuần túy (`window.__doc_alive_token` trên heap, không lưu sessionStorage), chứng minh 100% document không bị navigation hay reload khi nâng cấp SW lúc bận, banner hiển thị không gián đoạn.
+  - **Tự Động Tải Lại Khi Rảnh**: Khi form chuyển trạng thái idle, nâng cấp SW kích hoạt `window.location.reload()` tự động, làm mới bộ nhớ sạch sẽ (`tokenAfterReload === undefined`).
+- **Kết quả Cơ Chế Nâng Cấp SW Trình Duyệt (`scripts/verify_browser_sw_mechanism.mjs`):** **9/9 PASS**.
+- **Kết quả Kiểm Thử Trình Duyệt Chrome Thực Tế (`scripts/verify_g1_real_browser_evidence.mjs`):** **52/52 PASS, 0 FAIL** (100% tự nhiên không force click; audio blob thật 11.888 bytes).
+- **Kết quả Kiểm Thử CDP Deep Interaction & Contrast Trên Domain Thật (`scripts/verify_deep_interaction_and_contrast.js`):** **32/32 PASS, 0 FAIL** trên `https://timbk.io.vn`.
+- **Kết quả Kiểm Thử Database (Node DB Handlers & Isolation):** **50/50 PASS, 0 FAIL, 0 SKIP**.
 - **Hiện trạng Google Drive & G4 Data Explorer:**
   - Nguồn cũ (`0AB-joYp7SFLdUk9PVA`): Đã kiểm kê 12.067 items trong `scripts/all_gdrive_inventory.json`; 35 tài liệu cốt lõi đã nạp và chuẩn hóa vào `second_brain/` & `obsidian_vault/`.
-  - Nguồn mới (`1lMCrHoaBg5ubod0XHui7ygshObQQhTN4`): Token OAuth trong `scripts/gdrive_token.json` bị Google báo `invalid_grant: Token has been expired or revoked.` -> ghi nhận trạng thái `ACCESS_BLOCKED (token_expired_or_revoked)` trung thực theo hợp đồng `V4_PRIORITY_G0_G1_G2_G4_DRIVE_EXPLORER_2026-09-28.md`, sẵn sàng tạo thư mục `TIMBK_DATA_LIBRARY` trên Drive đích khi token được cấp lại.
+  - Nguồn mới (`1lMCrHoaBg5ubod0XHui7ygshObQQhTN4`): Token OAuth trong `scripts/gdrive_token.json` bị Google báo `invalid_grant: Token has been expired or revoked.` -> ghi nhận trạng thái `ACCESS_BLOCKED (token_expired_or_revoked)` trung thực theo hợp đồng, sẵn sàng tạo thư mục `TIMBK_DATA_LIBRARY` trên Drive đích khi token được cấp lại.
 - **Hạng mục bảo lưu:**
   - `REQ-AUDIO-01`: Giữ trạng thái OPEN (source_pending_download) trung thực theo hiện trạng Drive.
   - `REQ-PHON-01`: Giữ trạng thái BLOCKED do chưa có weights mô hình âm học cục bộ.
