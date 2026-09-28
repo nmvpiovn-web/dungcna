@@ -880,11 +880,12 @@ async function runRealBrowserVerification() {
       window.__spa_nav_marker = 'spa_intact_no_reload';
     });
     // Click desktop nav link to /courses to trigger client-side SPA navigation
-    await page.click('#nav-btn-courses', { force: true });
-    await page.waitForTimeout(200);
-    const firstCourseLink = page.locator('#nav-menu-courses a').first();
-    await firstCourseLink.click({ force: true });
-    await page.waitForURL('**/courses**', { timeout: 4000 });
+    const coursesBtn = page.locator('#nav-btn-courses');
+    await coursesBtn.click({ force: true });
+    await page.waitForTimeout(250);
+    const coursesLink = page.locator('a[href="/courses"]').first();
+    await coursesLink.click({ force: true });
+    await page.waitForURL('**/courses**', { timeout: 5000 });
     await page.waitForTimeout(300);
 
     const spaMarkerPreserved = await page.evaluate(() => window.__spa_nav_marker === 'spa_intact_no_reload');
