@@ -3,28 +3,114 @@ import { verifyServerAuth, isStaffUser } from '../../../lib/server/auth.js';
 
 export const prerender = false;
 
-// Ensure class_enrollments table exists (structured membership for class-scoped notifications)
-async function ensureClassEnrollmentsSchema(db) {
+// Ensure tables exist on D1
+async function ensureTables(db) {
   if (!db) return;
   try {
-    await db.prepare(`
-      CREATE TABLE IF NOT EXISTS class_enrollments (
-        id TEXT PRIMARY KEY,
-        user_id TEXT NOT NULL,
-        class_id TEXT NOT NULL,
-        enrolled_at TEXT DEFAULT CURRENT_TIMESTAMP,
-        status TEXT DEFAULT 'active',
-        UNIQUE(user_id, class_id)
-      );
-    `).run();
+    await db.batch([
+      db.prepare(`
+        CREATE TABLE IF NOT EXISTS homework_assignments (
+          id TEXT PRIMARY KEY,
+          session_id TEXT NOT NULL,
+          class_id TEXT NOT NULL,
+          class_name TEXT NOT NULL,
+          teacher_id TEXT NOT NULL,
+          teacher_name TEXT NOT NULL,
+          campus_id TEXT NOT NULL DEFAULT 'loc_codung',
+          skill_type TEXT NOT NULL,
+          title TEXT NOT NULL,
+          description TEXT NOT NULL,
+          obsidian_note_id TEXT,
+          obsidian_note_title TEXT,
+          assigned_date TEXT NOT NULL,
+          deadline_date TEXT NOT NULL,
+          deadline_time TEXT NOT NULL,
+          max_score REAL DEFAULT 10.0,
+          star_reward_on_time INTEGER DEFAULT 50,
+          status TEXT DEFAULT 'published',
+          created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        );
+      `),
+      db.prepare(`
+        CREATE TABLE IF NOT EXISTS homework_submissions (
+          id TEXT PRIMARY KEY,
+          assignment_id TEXT NOT NULL,
+          student_id TEXT NOT NULL,
+          student_name TEXT NOT NULL,
+          submission_type TEXT NOT NULL,
+          content_text TEXT,
+          audio_url TEXT,
+          handwritten_image_url TEXT,
+          attachments_json TEXT,
+          submitted_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          is_on_time INTEGER DEFAULT 1,
+          graded_by_teacher_id TEXT,
+          graded_by_teacher_name TEXT,
+          graded_at TEXT,
+          score REAL,
+          teacher_feedback TEXT,
+          audio_feedback_url TEXT,
+          stars_awarded INTEGER DEFAULT 0,
+          star_awarded_reason TEXT,
+          status TEXT DEFAULT 'submitted'
+        );
+      `),
+      db.prepare(`
+        CREATE TABLE IF NOT EXISTS location_activity_streams (
+          id TEXT PRIMARY KEY,
+          campus_id TEXT NOT NULL,
+          actor_id TEXT NOT NULL,
+          actor_name TEXT NOT NULL,
+          actor_role TEXT NOT NULL,
+          activity_type TEXT NOT NULL,
+          title TEXT NOT NULL,
+          detail TEXT,
+          reference_id TEXT,
+          created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        );
+      `),
+      db.prepare(`
+        CREATE TABLE IF NOT EXISTS class_enrollments (
+          id TEXT PRIMARY KEY,
+          user_id TEXT NOT NULL,
+          class_id TEXT NOT NULL,
+          enrolled_at TEXT DEFAULT CURRENT_TIMESTAMP,
+          status TEXT DEFAULT 'active',
+          UNIQUE(user_id, class_id)
+        );
+      `),
+      db.prepare(`
+        CREATE TABLE IF NOT EXISTS system_notifications (
+          id TEXT PRIMARY KEY,
+          target_role TEXT,
+          target_user_id TEXT,
+          title TEXT NOT NULL,
+          body TEXT NOT NULL,
+          category TEXT,
+          reference_id TEXT,
+          is_read INTEGER DEFAULT 0,
+          created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        );
+      `),
+      db.prepare(`
+        CREATE TABLE IF NOT EXISTS student_stars (
+          student_id TEXT PRIMARY KEY,
+          stars_balance INTEGER DEFAULT 0,
+          total_earned_stars INTEGER DEFAULT 0,
+          stars_redeemed INTEGER DEFAULT 0,
+          last_updated TEXT DEFAULT CURRENT_TIMESTAMP
+        );
+      `)
+    ]);
   } catch (e) {
-    // Table may already exist; ignore safely
     const msg = (e?.message || '').toLowerCase();
-    if (!msg.includes('already exists')) console.warn('[HW] class_enrollments schema init warn:', msg);
+    if (!msg.includes('already exists')) {
+      console.warn('Homework tables ensureTables notice:', e.message);
+    }
   }
 }
 
-// In-Memory store for local development & fallback
+// In-Memory store for local development testing
 let inMemoryAssignments = [
   {
     id: 'hw_demo_g7_writing',
@@ -94,77 +180,6 @@ let inMemorySubmissions = [
   }
 ];
 
-async function ensureTables(db) {
-  if (!db) return;
-  try {
-    await db.batch([
-      db.prepare(`
-        CREATE TABLE IF NOT EXISTS homework_assignments (
-          id TEXT PRIMARY KEY,
-          session_id TEXT NOT NULL,
-          class_id TEXT NOT NULL,
-          class_name TEXT NOT NULL,
-          teacher_id TEXT NOT NULL,
-          teacher_name TEXT NOT NULL,
-          campus_id TEXT NOT NULL DEFAULT 'loc_codung',
-          skill_type TEXT NOT NULL,
-          title TEXT NOT NULL,
-          description TEXT NOT NULL,
-          obsidian_note_id TEXT,
-          obsidian_note_title TEXT,
-          assigned_date TEXT NOT NULL,
-          deadline_date TEXT NOT NULL,
-          deadline_time TEXT NOT NULL,
-          max_score REAL DEFAULT 10.0,
-          star_reward_on_time INTEGER DEFAULT 50,
-          status TEXT DEFAULT 'published',
-          created_at TEXT DEFAULT CURRENT_TIMESTAMP
-        );
-      `),
-      db.prepare(`
-        CREATE TABLE IF NOT EXISTS homework_submissions (
-          id TEXT PRIMARY KEY,
-          assignment_id TEXT NOT NULL,
-          student_id TEXT NOT NULL,
-          student_name TEXT NOT NULL,
-          submission_type TEXT NOT NULL,
-          content_text TEXT,
-          audio_url TEXT,
-          handwritten_image_url TEXT,
-          attachments_json TEXT,
-          submitted_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-          is_on_time INTEGER DEFAULT 1,
-          graded_by_teacher_id TEXT,
-          graded_by_teacher_name TEXT,
-          graded_at TEXT,
-          score REAL,
-          teacher_feedback TEXT,
-          audio_feedback_url TEXT,
-          stars_awarded INTEGER DEFAULT 0,
-          star_awarded_reason TEXT,
-          status TEXT DEFAULT 'submitted'
-        );
-      `),
-      db.prepare(`
-        CREATE TABLE IF NOT EXISTS location_activity_streams (
-          id TEXT PRIMARY KEY,
-          campus_id TEXT NOT NULL,
-          actor_id TEXT NOT NULL,
-          actor_name TEXT NOT NULL,
-          actor_role TEXT NOT NULL,
-          activity_type TEXT NOT NULL,
-          title TEXT NOT NULL,
-          detail TEXT,
-          reference_id TEXT,
-          created_at TEXT DEFAULT CURRENT_TIMESTAMP
-        );
-      `)
-    ]);
-  } catch (e) {
-    console.warn('Homework tables ensureTables notice:', e.message);
-  }
-}
-
 export async function GET({ request, url, platform }) {
   const auth = await verifyServerAuth(request, platform);
   if (!auth.authenticated) {
@@ -190,11 +205,35 @@ export async function GET({ request, url, platform }) {
         if (!aRes) {
           return json({ success: false, error: 'Không tìm thấy bài tập' }, { status: 404 });
         }
+
+        // Scope check for student: must be actively enrolled in assignment's class
+        if (role === 'student') {
+          const isEnrolled = await db.prepare(
+            'SELECT 1 FROM class_enrollments WHERE user_id = ? AND class_id = ? AND status = \'active\' LIMIT 1'
+          ).bind(user.id, aRes.class_id).first();
+          if (!isEnrolled) {
+            return json({ success: false, error: 'Forbidden: Bạn không có quyền truy cập bài tập của lớp này' }, { status: 403 });
+          }
+        }
+
+        // Scope check for parent: must have a verified child actively enrolled in assignment's class
+        if (role === 'parent') {
+          const isEnrolled = await db.prepare(`
+            SELECT 1 FROM class_enrollments ce
+            JOIN parent_student_links psl ON psl.student_user_id = ce.user_id
+            WHERE psl.parent_user_id = ? AND psl.verification_status = 'verified'
+              AND ce.class_id = ? AND ce.status = 'active' LIMIT 1
+          `).bind(user.id, aRes.class_id).first();
+          if (!isEnrolled) {
+            return json({ success: false, error: 'Forbidden: Con bạn không thuộc lớp của bài tập này hoặc liên kết chưa được xác minh' }, { status: 403 });
+          }
+        }
+
         const sRes = await db.prepare('SELECT * FROM homework_submissions WHERE assignment_id = ?').bind(assignmentId).all();
         return json({ success: true, assignment: aRes, submissions: sRes.results || [] });
       }
 
-      // Query assignments with filters
+      // Query assignments with filters and strict class scoping
       let sql = 'SELECT * FROM homework_assignments WHERE 1=1';
       let params = [];
 
@@ -209,6 +248,31 @@ export async function GET({ request, url, platform }) {
       if (role === 'teacher') {
         sql += ' AND teacher_id = ?';
         params.push(user.id);
+      } else if (role === 'student') {
+        // Student only sees assignments of classes they are actively enrolled in
+        sql += ` AND class_id IN (
+          SELECT class_id FROM class_enrollments 
+          WHERE user_id = ? AND status = 'active'
+        )`;
+        params.push(user.id);
+      } else if (role === 'parent') {
+        // Parent only sees assignments of classes their verified children are actively enrolled in
+        if (requestedChildId && requestedChildId !== 'all') {
+          sql += ` AND class_id IN (
+            SELECT ce.class_id FROM class_enrollments ce
+            JOIN parent_student_links psl ON psl.student_user_id = ce.user_id
+            WHERE psl.parent_user_id = ? AND psl.student_user_id = ? 
+              AND psl.verification_status = 'verified' AND ce.status = 'active'
+          )`;
+          params.push(user.id, requestedChildId);
+        } else {
+          sql += ` AND class_id IN (
+            SELECT ce.class_id FROM class_enrollments ce
+            JOIN parent_student_links psl ON psl.student_user_id = ce.user_id
+            WHERE psl.parent_user_id = ? AND psl.verification_status = 'verified' AND ce.status = 'active'
+          )`;
+          params.push(user.id);
+        }
       }
 
       sql += ' ORDER BY created_at DESC LIMIT 100;';
@@ -222,7 +286,6 @@ export async function GET({ request, url, platform }) {
         const subRes = await db.prepare('SELECT * FROM homework_submissions WHERE student_id = ?').bind(user.id).all();
         submissions = subRes.results || [];
       } else if (role === 'parent') {
-        // Find linked students
         const linksRes = await db.prepare(`
           SELECT psl.student_user_id, u.name as student_name, u.grade, u.avatar
           FROM parent_student_links psl
@@ -248,7 +311,7 @@ export async function GET({ request, url, platform }) {
           submissions = subRes.results || [];
         }
       } else {
-        // Teacher / Leader / Superadmin: Fetch submissions for these assignments
+        // Teacher / Leader / Superadmin
         const subRes = await db.prepare('SELECT * FROM homework_submissions ORDER BY submitted_at DESC LIMIT 200').all();
         submissions = subRes.results || [];
       }
@@ -262,35 +325,35 @@ export async function GET({ request, url, platform }) {
       });
     } catch (e) {
       console.error('Error fetching homework from D1:', e);
+      return json({ success: false, error: 'DatabaseError: Lỗi khi truy vấn bài tập về nhà' }, { status: 503 });
     }
   }
 
-  // Fallback in-memory handling
+  // Fail-Closed if no DB on production
+  const isMockAllowed = platform?.env?.ENABLE_LOCAL_MOCK === 'true' || process?.env?.ENABLE_LOCAL_MOCK === 'true';
+  if (!isMockAllowed) {
+    return json({ success: false, error: 'DatabaseUnavailable: Cloudflare D1 không khả dụng (Fail-Closed)' }, { status: 503 });
+  }
+
+  // Fallback in-memory handling ONLY for local mock dev
   let assignments = inMemoryAssignments;
-  if (skillFilter !== 'all') {
-    assignments = assignments.filter(a => a.skill_type === skillFilter);
-  }
-  if (campusFilter !== 'all') {
-    assignments = assignments.filter(a => a.campus_id === campusFilter);
-  }
-  if (role === 'teacher') {
-    assignments = assignments.filter(a => a.teacher_id === user.id);
-  }
+  if (skillFilter !== 'all') assignments = assignments.filter(a => a.skill_type === skillFilter);
+  if (campusFilter !== 'all') assignments = assignments.filter(a => a.campus_id === campusFilter);
+  if (role === 'teacher') assignments = assignments.filter(a => a.teacher_id === user.id);
 
   let submissions = inMemorySubmissions;
-  if (role === 'student') {
-    submissions = submissions.filter(s => s.student_id === user.id);
-  } else if (role === 'parent') {
-    if (requestedChildId && requestedChildId !== 'all') {
-      submissions = submissions.filter(s => s.student_id === requestedChildId);
-    }
+  if (role === 'student') submissions = submissions.filter(s => s.student_id === user.id);
+  else if (role === 'parent' && requestedChildId && requestedChildId !== 'all') {
+    submissions = submissions.filter(s => s.student_id === requestedChildId);
   }
 
   return json({
     success: true,
     assignments,
     submissions,
-    total: assignments.length
+    linked_children: [],
+    total: assignments.length,
+    source: 'local_mock'
   });
 }
 
@@ -312,6 +375,14 @@ export async function POST({ request, platform }) {
 
   const action = body.action || '';
   const db = platform?.env?.DB;
+
+  // Fail-Closed requirement: DB is mandatory on production
+  if (!db) {
+    const isMockAllowed = platform?.env?.ENABLE_LOCAL_MOCK === 'true' || process?.env?.ENABLE_LOCAL_MOCK === 'true';
+    if (!isMockAllowed) {
+      return json({ success: false, error: 'DatabaseUnavailable: Cloudflare D1 không khả dụng (Fail-Closed)' }, { status: 503 });
+    }
+  }
 
   // ACTION 1: ASSIGN HOMEWORK (Teacher / Staff only)
   if (action === 'assign') {
@@ -341,47 +412,29 @@ export async function POST({ request, platform }) {
 
     const validSkills = ['writing', 'reading', 'speaking'];
     if (!validSkills.includes(skill_type)) {
-      return json({ success: false, error: `Kỹ năng không hợp lệ: '${skill_type}'. Chỉ chấp nhận 'writing', 'reading', hoặc 'speaking'` }, { status: 400 });
+      return json({ success: false, error: `skill_type không hợp lệ. Phải là một trong: ${validSkills.join(', ')}` }, { status: 400 });
     }
 
-    // Compute automatic deadline if not provided: find next session or default +3 days
     let finalDeadlineDate = inputDeadlineDate;
     let finalDeadlineTime = inputDeadlineTime;
-
-    if (!finalDeadlineDate && db) {
-      try {
-        const nextSession = await db.prepare(`
-          SELECT session_date, start_time 
-          FROM class_sessions 
-          WHERE class_id = ? AND session_date > date('now')
-          ORDER BY session_date ASC LIMIT 1;
-        `).bind(class_id).first();
-
-        if (nextSession && nextSession.session_date) {
-          finalDeadlineDate = nextSession.session_date;
-          finalDeadlineTime = nextSession.start_time || '18:00';
-        }
-      } catch {}
-    }
-
     if (!finalDeadlineDate) {
       const d = new Date();
       d.setDate(d.getDate() + 3);
       finalDeadlineDate = d.toISOString().split('T')[0];
     }
 
-    const assignmentId = `hw_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    const assignmentId = body.id || `hw_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
     const newAssignment = {
       id: assignmentId,
       session_id,
       class_id,
-      class_name: class_name || 'Lớp Học Tiếng Anh',
+      class_name: class_name || class_id,
       teacher_id: user.id,
-      teacher_name: user.name || user.username,
+      teacher_name: user.name || user.username || 'Giáo viên',
       campus_id,
       skill_type,
-      title,
-      description: description || '',
+      title: title.trim(),
+      description: description ? description.trim() : '',
       obsidian_note_id: obsidian_note_id || null,
       obsidian_note_title: obsidian_note_title || null,
       assigned_date: new Date().toISOString().split('T')[0],
@@ -396,95 +449,95 @@ export async function POST({ request, platform }) {
     if (db) {
       try {
         await ensureTables(db);
-        await db.prepare(`
-          INSERT INTO homework_assignments (
-            id, session_id, class_id, class_name, teacher_id, teacher_name, campus_id,
-            skill_type, title, description, obsidian_note_id, obsidian_note_title,
-            assigned_date, deadline_date, deadline_time, max_score, star_reward_on_time, status, created_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
-        `).bind(
-          newAssignment.id, newAssignment.session_id, newAssignment.class_id, newAssignment.class_name,
-          newAssignment.teacher_id, newAssignment.teacher_name, newAssignment.campus_id,
-          newAssignment.skill_type, newAssignment.title, newAssignment.description,
-          newAssignment.obsidian_note_id, newAssignment.obsidian_note_title,
-          newAssignment.assigned_date, newAssignment.deadline_date, newAssignment.deadline_time,
-          newAssignment.max_score, newAssignment.star_reward_on_time, newAssignment.status, newAssignment.created_at
-        ).run();
 
-        // Broadcast notifications ONLY to verified parents of students in this class
-        // Uses class_enrollments table (structured membership) — no LIKE wildcard issues
-        await ensureClassEnrollmentsSchema(db);
-        const targetClassId = newAssignment.class_id || '';
-        if (!targetClassId) {
-          console.warn('[HW] Skipping parent notifications: class_id is empty, refusing broadcast-all');
-        } else {
-          // Primary: class_enrollments table (exact match, no wildcard)
-          // Fallback: json_extract from metadata (exact equality, no LIKE)
-          const linksRes = await db.prepare(`
-            SELECT DISTINCT psl.parent_user_id 
-            FROM parent_student_links psl
-            WHERE psl.verification_status = 'verified'
-              AND psl.parent_user_id IS NOT NULL
-              AND psl.student_user_id IN (
-                SELECT ce.user_id FROM class_enrollments ce 
-                WHERE ce.class_id = ? AND ce.status = 'active'
-                UNION
-                SELECT u.id FROM users u 
-                WHERE u.role = 'student' 
-                AND json_valid(u.metadata) AND json_extract(u.metadata, '$.class_id') = ?
-              );
-          `).bind(targetClassId, targetClassId).all();
+        // Fetch verified parents of students actively enrolled in this class
+        const linksRes = await db.prepare(`
+          SELECT DISTINCT psl.parent_user_id 
+          FROM parent_student_links psl
+          JOIN class_enrollments ce ON ce.user_id = psl.student_user_id
+          WHERE psl.verification_status = 'verified'
+            AND psl.parent_user_id IS NOT NULL
+            AND ce.class_id = ? AND ce.status = 'active';
+        `).bind(class_id).all();
 
-          const notifSkillMap = { writing: 'Viết', reading: 'Đọc hiểu', speaking: 'Nói' };
-          const notifTitle = `📚 BTVN Mới (${notifSkillMap[skill_type]}): ${title}`;
-          const notifBody = `Giáo viên ${newAssignment.teacher_name} vừa giao BTVN lớp ${newAssignment.class_name}. Hạn nộp trước ${finalDeadlineTime} ngày ${finalDeadlineDate}.`;
+        const uniqueParents = [...new Set((linksRes.results || []).map(r => r.parent_user_id).filter(Boolean))];
 
-          // Send strictly to verified parents in the target class
-          const uniqueParents = [...new Set((linksRes.results || []).map(r => r.parent_user_id).filter(Boolean))];
-          for (const parentId of uniqueParents) {
-            const notifId = `notif_hw_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
-            await db.prepare(`
+        // Fetch students actively enrolled in this class
+        const studentRes = await db.prepare(`
+          SELECT user_id as id FROM class_enrollments 
+          WHERE class_id = ? AND status = 'active';
+        `).bind(class_id).all();
+        const classStudents = [...new Set((studentRes.results || []).map(r => r.id).filter(Boolean))];
+
+        // Prepare atomic batch statements
+        const batchStatements = [];
+
+        // 1. Primary Assignment Insert
+        batchStatements.push(
+          db.prepare(`
+            INSERT INTO homework_assignments (
+              id, session_id, class_id, class_name, teacher_id, teacher_name, campus_id,
+              skill_type, title, description, obsidian_note_id, obsidian_note_title,
+              assigned_date, deadline_date, deadline_time, max_score, star_reward_on_time, status, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+          `).bind(
+            newAssignment.id, newAssignment.session_id, newAssignment.class_id, newAssignment.class_name,
+            newAssignment.teacher_id, newAssignment.teacher_name, newAssignment.campus_id,
+            newAssignment.skill_type, newAssignment.title, newAssignment.description,
+            newAssignment.obsidian_note_id, newAssignment.obsidian_note_title,
+            newAssignment.assigned_date, newAssignment.deadline_date, newAssignment.deadline_time,
+            newAssignment.max_score, newAssignment.star_reward_on_time, newAssignment.status, newAssignment.created_at
+          )
+        );
+
+        // 2. Deterministic Parent Notifications
+        const notifSkillMap = { writing: 'Viết', reading: 'Đọc hiểu', speaking: 'Nói' };
+        const notifTitle = `📚 BTVN Mới (${notifSkillMap[skill_type] || skill_type}): ${title}`;
+        const notifBody = `Giáo viên ${newAssignment.teacher_name} vừa giao BTVN lớp ${newAssignment.class_name}. Hạn nộp trước ${finalDeadlineTime} ngày ${finalDeadlineDate}.`;
+
+        for (const parentId of uniqueParents) {
+          const notifId = `notif_hw_${assignmentId}_p_${parentId}`;
+          batchStatements.push(
+            db.prepare(`
               INSERT INTO system_notifications (id, target_role, target_user_id, title, body, category, reference_id)
-              VALUES (?, 'parent', ?, ?, ?, 'homework', ?);
-            `).bind(notifId, parentId, notifTitle, notifBody, assignmentId).run();
-          }
-        } // end if(targetClassId)
-
-        // Send class-scoped notifications to students in this class (NOT a global NULL broadcast)
-        if (targetClassId) {
-          const studentRes = await db.prepare(`
-            SELECT user_id as id FROM class_enrollments 
-            WHERE class_id = ? AND status = 'active'
-            UNION
-            SELECT id FROM users 
-            WHERE role = 'student' 
-            AND json_valid(metadata) AND json_extract(metadata, '$.class_id') = ?;
-          `).bind(targetClassId, targetClassId).all();
-          const classStudents = (studentRes.results || []).map(r => r.id).filter(Boolean);
-          for (const studentId of classStudents) {
-            const notifIdStudent = `notif_hw_s_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
-            await db.prepare(`
-              INSERT INTO system_notifications (id, target_role, target_user_id, title, body, category, reference_id)
-              VALUES (?, 'student', ?, ?, ?, 'homework', ?);
-            `).bind(notifIdStudent, studentId, `📚 BTVN Mới: ${title}`, `Giáo viên ${newAssignment.teacher_name} vừa giao BTVN lớp ${newAssignment.class_name}.`, assignmentId).run();
-          }
+              VALUES (?, 'parent', ?, ?, ?, 'homework', ?)
+              ON CONFLICT(id) DO UPDATE SET title = excluded.title, body = excluded.body;
+            `).bind(notifId, parentId, notifTitle, notifBody, assignmentId)
+          );
         }
 
-        // Log to activity stream
-        const streamId = `stm_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
-        await db.prepare(`
-          INSERT INTO location_activity_streams (id, campus_id, actor_id, actor_name, actor_role, activity_type, title, detail, reference_id)
-          VALUES (?, ?, ?, ?, 'teacher', 'homework_assigned', ?, ?, ?);
-        `).bind(
-          streamId, campus_id, user.id, user.name || user.username,
-          `Giao BTVN: ${title}`,
-          `Lớp ${class_name}`,
-          assignmentId
-        ).run();
+        // 3. Deterministic Student Notifications
+        for (const studentId of classStudents) {
+          const notifIdStudent = `notif_hw_${assignmentId}_s_${studentId}`;
+          batchStatements.push(
+            db.prepare(`
+              INSERT INTO system_notifications (id, target_role, target_user_id, title, body, category, reference_id)
+              VALUES (?, 'student', ?, ?, ?, 'homework', ?)
+              ON CONFLICT(id) DO UPDATE SET title = excluded.title, body = excluded.body;
+            `).bind(notifIdStudent, studentId, `📚 BTVN Mới: ${title}`, `Giáo viên ${newAssignment.teacher_name} vừa giao BTVN lớp ${newAssignment.class_name}.`, assignmentId)
+          );
+        }
+
+        // 4. Activity Stream Entry
+        const streamId = `stm_${assignmentId}`;
+        batchStatements.push(
+          db.prepare(`
+            INSERT INTO location_activity_streams (id, campus_id, actor_id, actor_name, actor_role, activity_type, title, detail, reference_id)
+            VALUES (?, ?, ?, ?, 'teacher', 'homework_assigned', ?, ?, ?)
+            ON CONFLICT(id) DO UPDATE SET title = excluded.title, detail = excluded.detail;
+          `).bind(
+            streamId, campus_id, user.id, user.name || user.username,
+            `Giao BTVN: ${title}`,
+            `Lớp ${newAssignment.class_name}`,
+            assignmentId
+          )
+        );
+
+        // Execute batch transaction atomically
+        await db.batch(batchStatements);
 
       } catch (e) {
         console.error('Failed to save assignment to D1:', e);
-        // D1 is authoritative — assignment creation failure must NOT return success
         return json({ 
           success: false, 
           error: `DatabaseError: Lỗi ghi bài tập vào cơ sở dữ liệu. ${e.message || ''}`.trim() 
@@ -492,7 +545,6 @@ export async function POST({ request, platform }) {
       }
     }
 
-    // Only cache to in-memory AFTER D1 success (or if no DB available — local dev only)
     inMemoryAssignments.unshift(newAssignment);
     return json({ success: true, message: 'Đã giao bài tập về nhà thành công!', assignment: newAssignment });
   }
@@ -504,38 +556,56 @@ export async function POST({ request, platform }) {
       return json({ success: false, error: 'Thiếu assignment_id hoặc submission_type' }, { status: 400 });
     }
 
+    const validSubmissionTypes = ['writing', 'speaking', 'reading', 'handwritten'];
+    if (!validSubmissionTypes.includes(submission_type)) {
+      return json({ success: false, error: `submission_type không hợp lệ: ${submission_type}` }, { status: 400 });
+    }
+
     let assignment = inMemoryAssignments.find(a => a.id === assignment_id);
+
     if (db) {
       try {
-        const d1A = await db.prepare('SELECT * FROM homework_assignments WHERE id = ?').bind(assignment_id).first();
-        if (d1A) assignment = d1A;
+        const d1Assignment = await db.prepare('SELECT * FROM homework_assignments WHERE id = ?').bind(assignment_id).first();
+        if (d1Assignment) assignment = d1Assignment;
       } catch {}
     }
 
     if (!assignment) {
-      return json({ success: false, error: 'Bài tập không tồn tại hoặc đã bị xóa' }, { status: 404 });
+      return json({ success: false, error: 'Không tìm thấy bài tập được chỉ định' }, { status: 404 });
     }
 
-    // Check deadline
-    const deadlineStr = `${assignment.deadline_date}T${assignment.deadline_time}:00`;
-    const deadlineTime = new Date(deadlineStr).getTime();
-    const nowTime = Date.now();
-    const isOnTime = isNaN(deadlineTime) || nowTime <= (deadlineTime + 300000) ? 1 : 0; // 5 min grace period
+    // Authorization check: student must be actively enrolled in assignment's class
+    if (db && user.role === 'student') {
+      const isEnrolled = await db.prepare(`
+        SELECT 1 FROM class_enrollments 
+        WHERE user_id = ? AND class_id = ? AND status = 'active' LIMIT 1;
+      `).bind(user.id, assignment.class_id).first();
+      if (!isEnrolled) {
+        return json({ success: false, error: 'Forbidden: Bạn không thuộc lớp học của bài tập này' }, { status: 403 });
+      }
+    }
 
-    const submissionId = `sub_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-    const studentName = user.name || user.username;
+    // Check on-time submission
+    let isOnTime = 1;
+    const now = new Date();
+    try {
+      const deadlineStr = `${assignment.deadline_date}T${assignment.deadline_time || '23:59'}:00`;
+      const deadline = new Date(deadlineStr);
+      if (now > deadline) isOnTime = 0;
+    } catch {}
 
+    const submissionId = body.id || `sub_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
     const submissionRecord = {
       id: submissionId,
       assignment_id,
       student_id: user.id,
-      student_name: studentName,
+      student_name: user.name || user.username || 'Học viên',
       submission_type,
-      content_text: content_text || '',
+      content_text: content_text || null,
       audio_url: audio_url || null,
       handwritten_image_url: handwritten_image_url || null,
       attachments_json: typeof attachments_json === 'string' ? attachments_json : JSON.stringify(attachments_json),
-      submitted_at: new Date().toISOString(),
+      submitted_at: now.toISOString(),
       is_on_time: isOnTime,
       graded_by_teacher_id: null,
       graded_by_teacher_name: null,
@@ -551,50 +621,40 @@ export async function POST({ request, platform }) {
     if (db) {
       try {
         await ensureTables(db);
-        await db.prepare(`
-          INSERT INTO homework_submissions (
-            id, assignment_id, student_id, student_name, submission_type, content_text,
-            audio_url, handwritten_image_url, attachments_json, submitted_at, is_on_time, status
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-          ON CONFLICT(assignment_id, student_id) DO UPDATE SET
-            submission_type = excluded.submission_type,
-            content_text = excluded.content_text,
-            audio_url = excluded.audio_url,
-            handwritten_image_url = excluded.handwritten_image_url,
-            attachments_json = excluded.attachments_json,
-            submitted_at = excluded.submitted_at,
-            is_on_time = excluded.is_on_time,
-            status = 'submitted';
-        `).bind(
-          submissionRecord.id, submissionRecord.assignment_id, submissionRecord.student_id,
-          submissionRecord.student_name, submissionRecord.submission_type, submissionRecord.content_text,
-          submissionRecord.audio_url, submissionRecord.handwritten_image_url, submissionRecord.attachments_json,
-          submissionRecord.submitted_at, submissionRecord.is_on_time, submissionRecord.status
-        ).run();
+        const batchStatements = [
+          db.prepare(`
+            INSERT INTO homework_submissions (
+              id, assignment_id, student_id, student_name, submission_type,
+              content_text, audio_url, handwritten_image_url, attachments_json,
+              submitted_at, is_on_time, status
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(id) DO UPDATE SET
+              content_text = excluded.content_text,
+              audio_url = excluded.audio_url,
+              handwritten_image_url = excluded.handwritten_image_url,
+              attachments_json = excluded.attachments_json,
+              submitted_at = excluded.submitted_at,
+              is_on_time = excluded.is_on_time;
+          `).bind(
+            submissionRecord.id, submissionRecord.assignment_id, submissionRecord.student_id,
+            submissionRecord.student_name, submissionRecord.submission_type,
+            submissionRecord.content_text, submissionRecord.audio_url, submissionRecord.handwritten_image_url,
+            submissionRecord.attachments_json, submissionRecord.submitted_at, submissionRecord.is_on_time,
+            submissionRecord.status
+          ),
+          db.prepare(`
+            INSERT INTO location_activity_streams (id, campus_id, actor_id, actor_name, actor_role, activity_type, title, detail, reference_id)
+            VALUES (?, ?, ?, ?, 'student', 'homework_submitted', ?, ?, ?)
+            ON CONFLICT(id) DO UPDATE SET title = excluded.title, detail = excluded.detail;
+          `).bind(
+            `stm_sub_${submissionId}`, assignment.campus_id || 'loc_codung', user.id, user.name || user.username,
+            `Nộp BTVN: ${assignment.title}`,
+            `Kỹ năng: ${submission_type} • Trạng thái: ${isOnTime ? 'Đúng hạn' : 'Nộp muộn'}`,
+            submissionId
+          )
+        ];
 
-        // Notify Teacher
-        const notifId = `notif_sub_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
-        await db.prepare(`
-          INSERT INTO system_notifications (id, target_role, target_user_id, title, body, category, reference_id)
-          VALUES (?, 'teacher', ?, ?, ?, 'homework', ?);
-        `).bind(
-          notifId, assignment.teacher_id,
-          `📝 Học Sinh Nộp Bài: ${studentName}`,
-          `Học sinh ${studentName} vừa nộp bài tập '${assignment.title}' (${isOnTime ? 'Đúng hạn' : 'Nộp muộn'}).`,
-          assignment_id
-        ).run();
-
-        // Stream activity
-        const streamId = `stm_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
-        await db.prepare(`
-          INSERT INTO location_activity_streams (id, campus_id, actor_id, actor_name, actor_role, activity_type, title, detail, reference_id)
-          VALUES (?, ?, ?, ?, 'student', 'homework_submitted', ?, ?, ?);
-        `).bind(
-          streamId, assignment.campus_id || 'loc_codung', user.id, studentName,
-          `Học sinh ${studentName} nộp bài ${assignment.title}`,
-          `Kỹ năng: ${submission_type} • Trạng thái: ${isOnTime ? 'Đúng hạn' : 'Nộp muộn'}`,
-          submissionId
-        ).run();
+        await db.batch(batchStatements);
 
       } catch (e) {
         console.error('Failed to save submission to D1:', e);
@@ -605,13 +665,9 @@ export async function POST({ request, platform }) {
       }
     }
 
-    // In-memory update
     const existingIdx = inMemorySubmissions.findIndex(s => s.assignment_id === assignment_id && s.student_id === user.id);
-    if (existingIdx >= 0) {
-      inMemorySubmissions[existingIdx] = submissionRecord;
-    } else {
-      inMemorySubmissions.unshift(submissionRecord);
-    }
+    if (existingIdx >= 0) inMemorySubmissions[existingIdx] = submissionRecord;
+    else inMemorySubmissions.unshift(submissionRecord);
 
     return json({
       success: true,
@@ -623,7 +679,7 @@ export async function POST({ request, platform }) {
   // ACTION 3: GRADE HOMEWORK (Teacher / Staff only)
   if (action === 'grade') {
     if (!isStaff) {
-      return json({ success: false, error: 'Forbidden: Chỉ giáo viên mới có quyền chấm điểm BTVN' }, { status: 403 });
+      return json({ success: false, error: 'Forbidden: Chỉ giáo viên mới có quyền chấm BTVN' }, { status: 403 });
     }
 
     const { submission_id, score, teacher_feedback, audio_feedback_url } = body;
@@ -662,54 +718,73 @@ export async function POST({ request, platform }) {
       }
     }
 
+    // P1 Protection: Prevent double-awarding stars on regrade or retry!
+    // Compute starDelta relative to any already-awarded stars
+    const previousStars = Number(submission.stars_awarded || 0);
+    const starDelta = (submission.status === 'graded') ? (starsAwarded - previousStars) : starsAwarded;
+
     const gradedAt = new Date().toISOString();
     const teacherName = user.name || user.username;
 
     if (db) {
       try {
         await ensureTables(db);
-        await db.prepare(`
-          UPDATE homework_submissions 
-          SET graded_by_teacher_id = ?,
-              graded_by_teacher_name = ?,
-              graded_at = ?,
-              score = ?,
-              teacher_feedback = ?,
-              audio_feedback_url = ?,
-              stars_awarded = ?,
-              star_awarded_reason = ?,
-              status = 'graded'
-          WHERE id = ?;
-        `).bind(
-          user.id, teacherName, gradedAt, numericScore, teacher_feedback || '',
-          audio_feedback_url || null, starsAwarded, starReason || null, submission_id
-        ).run();
 
-        // If stars awarded > 0, credit to student_stars
-        if (starsAwarded > 0) {
-          await db.prepare(`
-            INSERT INTO student_stars (student_id, stars_balance, total_earned_stars, stars_redeemed, last_updated)
-            VALUES (?, ?, ?, 0, CURRENT_TIMESTAMP)
-            ON CONFLICT(student_id) DO UPDATE SET
-              stars_balance = stars_balance + excluded.stars_balance,
-              total_earned_stars = total_earned_stars + excluded.total_earned_stars,
-              last_updated = CURRENT_TIMESTAMP;
-          `).bind(submission.student_id, starsAwarded, starsAwarded).run();
+        const batchStatements = [];
+
+        // 1. Update submission record
+        batchStatements.push(
+          db.prepare(`
+            UPDATE homework_submissions 
+            SET graded_by_teacher_id = ?,
+                graded_by_teacher_name = ?,
+                graded_at = ?,
+                score = ?,
+                teacher_feedback = ?,
+                audio_feedback_url = ?,
+                stars_awarded = ?,
+                star_awarded_reason = ?,
+                status = 'graded'
+            WHERE id = ?;
+          `).bind(
+            user.id, teacherName, gradedAt, numericScore, teacher_feedback || '',
+            audio_feedback_url || null, starsAwarded, starReason || null, submission_id
+          )
+        );
+
+        // 2. Adjust stars strictly by starDelta (no double reward on retry)
+        if (starDelta !== 0) {
+          batchStatements.push(
+            db.prepare(`
+              INSERT INTO student_stars (student_id, stars_balance, total_earned_stars, stars_redeemed, last_updated)
+              VALUES (?, ?, ?, 0, CURRENT_TIMESTAMP)
+              ON CONFLICT(student_id) DO UPDATE SET
+                stars_balance = MAX(0, stars_balance + ?),
+                total_earned_stars = MAX(0, total_earned_stars + ?),
+                last_updated = CURRENT_TIMESTAMP;
+            `).bind(submission.student_id, starDelta, starDelta, starDelta, starDelta)
+          );
         }
 
-        // Notify Student
-        const notifStudentId = `notif_grade_s_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
-        await db.prepare(`
-          INSERT INTO system_notifications (id, target_role, target_user_id, title, body, category, reference_id)
-          VALUES (?, 'student', ?, ?, ?, 'homework', ?);
-        `).bind(
-          notifStudentId, submission.student_id,
-          `⭐ Kết Quả Chấm BTVN: ${numericScore} Điểm!`,
-          `Cô ${teacherName} đã chấm bài tập của em: ${numericScore}/10 điểm. ${starsAwarded > 0 ? `Em được thưởng +${starsAwarded} sao! ` : ''}Lời cô: ${teacher_feedback || 'Rất đáng khen!'}`,
-          submission_id
-        ).run();
+        // 3. Notify Student (Deterministic ID prevents duplicate notifications on retry)
+        const notifStudentId = `notif_grade_s_${submission_id}`;
+        batchStatements.push(
+          db.prepare(`
+            INSERT INTO system_notifications (id, target_role, target_user_id, title, body, category, reference_id)
+            VALUES (?, 'student', ?, ?, ?, 'homework', ?)
+            ON CONFLICT(id) DO UPDATE SET
+              title = excluded.title,
+              body = excluded.body,
+              is_read = 0;
+          `).bind(
+            notifStudentId, submission.student_id,
+            `⭐ Kết Quả Chấm BTVN: ${numericScore} Điểm!`,
+            `Cô ${teacherName} đã chấm bài tập của em: ${numericScore}/10 điểm. ${starsAwarded > 0 ? `Em được thưởng +${starsAwarded} sao! ` : ''}Lời cô: ${teacher_feedback || 'Rất đáng khen!'}`,
+            submission_id
+          )
+        );
 
-        // Notify Parent of this student - ONLY if verified
+        // 4. Notify Parent of this student - ONLY if verified
         const parentLinks = await db.prepare(`
           SELECT parent_user_id 
           FROM parent_student_links 
@@ -718,17 +793,26 @@ export async function POST({ request, platform }) {
 
         for (const p of (parentLinks.results || [])) {
           if (!p.parent_user_id) continue;
-          const notifParentId = `notif_grade_p_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
-          await db.prepare(`
-            INSERT INTO system_notifications (id, target_role, target_user_id, title, body, category, reference_id)
-            VALUES (?, 'parent', ?, ?, ?, 'homework', ?);
-          `).bind(
-            notifParentId, p.parent_user_id,
-            `📊 Báo Cáo Học Tập: Bé ${submission.student_name} đạt ${numericScore} Điểm`,
-            `Cô giáo ${teacherName} vừa chấm BTVN của bé ${submission.student_name}: Điểm số ${numericScore}/10.${starsAwarded > 0 ? ` Bé nhận thêm +${starsAwarded} sao tích lũy học phí!` : ''} Nhận xét: "${teacher_feedback || 'Bé làm bài rất tốt.'}"`,
-            submission_id
-          ).run();
+          const notifParentId = `notif_grade_p_${submission_id}_${p.parent_user_id}`;
+          batchStatements.push(
+            db.prepare(`
+              INSERT INTO system_notifications (id, target_role, target_user_id, title, body, category, reference_id)
+              VALUES (?, 'parent', ?, ?, ?, 'homework', ?)
+              ON CONFLICT(id) DO UPDATE SET
+                title = excluded.title,
+                body = excluded.body,
+                is_read = 0;
+            `).bind(
+              notifParentId, p.parent_user_id,
+              `📊 Báo Cáo Học Tập: Bé ${submission.student_name} đạt ${numericScore} Điểm`,
+              `Cô giáo ${teacherName} vừa chấm BTVN của bé ${submission.student_name}: Điểm số ${numericScore}/10.${starsAwarded > 0 ? ` Bé nhận thêm +${starsAwarded} sao tích lũy học phí!` : ''} Nhận xét: "${teacher_feedback || 'Bé làm bài rất tốt.'}"`,
+              submission_id
+            )
+          );
         }
+
+        // Execute batch transaction atomically
+        await db.batch(batchStatements);
 
       } catch (e) {
         console.error('Failed to grade submission in D1:', e);
@@ -739,7 +823,6 @@ export async function POST({ request, platform }) {
       }
     }
 
-    // In-memory update
     submission.graded_by_teacher_id = user.id;
     submission.graded_by_teacher_name = teacherName;
     submission.graded_at = gradedAt;
@@ -752,7 +835,7 @@ export async function POST({ request, platform }) {
 
     return json({
       success: true,
-      message: `Đã chấm bài thành công: ${numericScore} điểm ${starsAwarded > 0 ? `(+${starsAwarded} sao thưởng)` : ''}`,
+      message: `Đã lưu kết quả chấm điểm ${numericScore}/10 thành công!`,
       submission
     });
   }
