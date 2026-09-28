@@ -898,7 +898,7 @@
             {/if}
           </div>
 
-          <!-- Section 2: Khảo Thí & Học Tập -->
+          <!-- Section 2: Lộ Trình & Học Tập -->
           <div class="space-y-1.5">
             <div class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 px-1">
               ⏱️ Phòng Thi &amp; Học Tập Đa Giác Quan

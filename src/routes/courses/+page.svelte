@@ -65,7 +65,7 @@
       Chương Trình Khóa Học & Lộ Trình Phát Triển
     </h1>
     <p class="text-slate-700 dark:text-slate-300 max-w-2xl mx-auto text-base font-normal">
-      Phương pháp giảng dạy hiện đại kết hợp hệ sinh thái học tập số: ngân hàng khảo thí D1, sổ học vụ điện tử và bảng sao tích lũy.
+      Phương pháp giảng dạy hiện đại kết hợp hệ sinh thái học tập số: ngân hàng đề thi D1, sổ học vụ điện tử và bảng sao tích lũy.
     </p>
   </header>
 
@@ -145,7 +145,7 @@
     </h3>
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm text-slate-700 dark:text-slate-300">
       <div class="p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
-        <h4 class="font-bold text-slate-900 dark:text-white mb-1">Khảo Thí 40 Câu 2025</h4>
+        <h4 class="font-bold text-slate-900 dark:text-white mb-1">Luyện Đề 40 Câu 2025</h4>
         <p class="text-xs text-slate-600 dark:text-slate-300 font-medium leading-relaxed">Mọi đề thi đều có ma trận 14 Nhận biết, 14 Thông hiểu, 8 Vận dụng, 4 Vận dụng cao.</p>
       </div>
       <div class="p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">

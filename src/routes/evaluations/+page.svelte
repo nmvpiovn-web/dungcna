@@ -509,13 +509,13 @@
         {#if currentUser?.role === 'student'}
           <div class="text-4xl">🌱</div>
           <h3 class="text-lg font-bold text-slate-200">Em chưa có bản đánh giá năng lực định kỳ nào</h3>
-          <p class="text-xs text-slate-400 max-w-md mx-auto">Giáo viên phụ trách và Cô Dung sẽ cập nhật đánh giá 4 kỹ năng (Nghe - Nói - Đọc - Viết) và nhận xét sổ đầu bài sau buổi học hoặc bài khảo thí.</p>
+          <p class="text-xs text-slate-400 max-w-md mx-auto">Giáo viên phụ trách và Cô Dung sẽ cập nhật đánh giá 4 kỹ năng (Nghe - Nói - Đọc - Viết) và nhận xét sổ đầu bài sau buổi học hoặc bài kiểm tra.</p>
           <div class="pt-2">
             <a
               href="/exam"
               class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/25 transition-all"
             >
-              <span>⚡ Làm Bài Khảo Thí Năng Lực Đầu Vào</span>
+              <span>⚡ Làm Bài Đánh Giá Năng Lực Đầu Vào</span>
             </a>
           </div>
         {:else if currentUser?.role === 'parent'}
@@ -735,7 +735,7 @@
               <th class="p-3">Học Sinh</th>
               <th class="p-3">Khối Lớp &amp; Trường</th>
               <th class="p-3">Đội Ngũ Giáo Viên (1 HS = 2-3 GV)</th>
-              <th class="p-3">Mục Tiêu Khảo Thí</th>
+              <th class="p-3">Mục Tiêu Lộ Trình</th>
               <th class="p-3">Thông Tin Phụ Huynh</th>
               <th class="p-3 text-right">Thao Tác</th>
             </tr>
@@ -947,7 +947,7 @@
               <textarea
                 bind:value={evalForm.leader_codung_feedback}
                 rows="3"
-                placeholder="Cô Dung duyệt kế hoạch chiến lược: Mục tiêu band điểm, bổ trợ chuyên đề ngữ pháp/khảo thí..."
+                placeholder="Cô Dung duyệt kế hoạch chiến lược: Mục tiêu band điểm, bổ trợ chuyên đề ngữ pháp/luyện thi..."
                 class="w-full bg-slate-950 border border-amber-500/30 rounded-xl p-3 text-slate-200 focus:outline-none focus:border-amber-500"
               ></textarea>
             </div>

@@ -374,7 +374,7 @@
                       Tôi Là Giáo Viên / Trợ Giảng
                     </div>
                     <div class="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">
-                       Giảng dạy, quản lý thời khóa biểu, điểm danh, ghi nhận xét sổ đầu bài và khảo thí học sinh.
+                       Giảng dạy, quản lý thời khóa biểu, điểm danh, ghi nhận xét sổ đầu bài và đánh giá học sinh.
                     </div>
                   </div>
                   <div class="text-slate-500 dark:text-slate-400 group-hover:text-teal-600 font-semibold">➔</div>

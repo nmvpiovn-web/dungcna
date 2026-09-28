@@ -448,7 +448,7 @@
             Kính chào Thầy/Cô {currentUser.name}! 🌟
           </h1>
           <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300">
-            Hệ thống Tiếng Anh Cô Dung: Quản lý thời khóa biểu, điểm danh, sổ đầu bài, khảo thí học sinh và báo cáo Leader.
+            Hệ thống Tiếng Anh Cô Dung: Quản lý thời khóa biểu, điểm danh, sổ đầu bài, đánh giá học sinh và báo cáo Leader.
           </p>
         </div>
 
@@ -703,7 +703,7 @@
             Chiến Dịch Chinh Phục Điểm 10 ĐH &amp; IELTS Cùng Cô Dung 🏛️
           </h1>
           <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300">
-            Học viên: <strong>{currentUser.name}</strong> • Khóa: {userGrade} • Phòng thi bấm giờ tự động chuẩn format khảo thí quốc tế.
+            Học viên: <strong>{currentUser.name}</strong> • Khóa: {userGrade} • Phòng thi bấm giờ tự động theo lộ trình chuẩn quốc tế.
           </p>
         </div>
 
@@ -783,7 +783,7 @@
             ⚡
           </div>
           <div>
-            <div class="font-bold text-sm text-slate-900 dark:text-white">Khảo Thí 15 Phút Có Thưởng</div>
+            <div class="font-bold text-sm text-slate-900 dark:text-white">Luyện Đề 15 Phút Có Thưởng</div>
             <div class="text-xs text-slate-700 dark:text-slate-300 font-medium">Kiểm tra từ vựng &amp; phản xạ nhận sao</div>
           </div>
         </a>
@@ -841,7 +841,7 @@
         <h1 class="text-3xl sm:text-5xl font-heading font-semibold text-slate-900 dark:text-white tracking-tight leading-tight">
           Học Viện Tiếng Anh Cô Dung <br />
           <span class="text-sky-600 dark:text-sky-400">
-            Đào Tạo &amp; Khảo Thí Chuẩn Quốc Tế
+            Đào Tạo &amp; Lộ Trình Chuẩn Quốc Tế
           </span>
         </h1>
 
@@ -1118,7 +1118,7 @@
               </span>
             {/if}
           </div>
-          <h2 class="text-2xl font-heading font-semibold text-slate-900 dark:text-white mt-0.5">Khung Chương Trình Toàn Cấp K12 &amp; Khảo Thí 2026</h2>
+          <h2 class="text-2xl font-heading font-semibold text-slate-900 dark:text-white mt-0.5">Khung Chương Trình Toàn Cấp K12 &amp; Lộ Trình 2026</h2>
         </div>
 
         <!-- Category Filter Tabs -->

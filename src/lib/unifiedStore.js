@@ -1244,7 +1244,7 @@ ${evaluation.recommended_materials}
 💬 THẢO LUẬN & PHẢN BIỆN ĐÁNH GIÁ:
 Học sinh và phụ huynh có thể vào hệ thống để trao đổi, phản biện hoặc đặt câu hỏi trực tiếp cho Cô Dung và các thầy cô!
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Học Viện Tiếng Anh Cô Dung • Đào Tạo K12 & Khảo Thí Quốc Tế 2026`;
+Học Viện Tiếng Anh Cô Dung • Đào Tạo K12 & Lộ Trình Quốc Tế 2026`;
 }
 
 // 4. Curricula & Exams

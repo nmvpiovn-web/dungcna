@@ -54,11 +54,11 @@
     },
     {
       id: 'exam',
-      title: 'Phòng Thi Khảo Thí & Bấm Giờ Tự Động',
+      title: 'Phòng Luyện Đề & Bấm Giờ Tự Động',
       description: 'Kiểm tra nhanh 15 phút, đề 1 tiết 45 phút chuẩn ma trận và phòng thi mô phỏng IELTS 4 kỹ năng có ghi âm và chấm điểm.',
       icon: '⏱️',
       href: '/exam',
-      tag: 'Khảo Thí',
+      tag: 'Luyện Đề',
       tagColor: 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 border-rose-200 dark:border-rose-800',
       badge: 'Chấm Tự Động'
     }
@@ -66,7 +66,7 @@
 </script>
 
 <svelte:head>
-  <title>Bộ Công Cụ Học Tập &amp; Khảo Thí Đa Giác Quan - Tiếng Anh Cô Dung</title>
+  <title>Bộ Công Cụ Học Tập &amp; Lộ Trình Đa Giác Quan - Tiếng Anh Cô Dung</title>
   <meta name="description" content="Trung tâm công cụ học tập tiếng Anh: Từ điển IPA Cambridge, Flashcards 3D, Game Hub phản xạ từ vựng, Sơ đồ ngữ pháp Mindmap và Phòng thi bấm giờ trực tuyến." />
   <link rel="canonical" href="https://timbk.io.vn/tools" />
 </svelte:head>
@@ -80,7 +80,7 @@
         <span>⚡ TRUNG TÂM TIỆN ÍCH HỌC TẬP THẾ HỆ MỚI</span>
       </div>
       <h1 class="text-3xl sm:text-5xl font-heading font-black tracking-tight leading-tight">
-        Bộ Công Cụ Học Tập &amp; Khảo Thí Đa Giác Quan
+        Bộ Công Cụ Học Tập &amp; Lộ Trình Đa Giác Quan
       </h1>
       <p class="text-sm sm:text-base text-slate-200 leading-relaxed font-normal">
         Hệ sinh thái công cụ hỗ trợ học sinh từ Tiểu Học, THCS, THPT đến Luyện thi IELTS/TOEIC. Tích hợp âm thanh bản ngữ, thẻ nhớ phản xạ và phòng thi bấm giờ chuẩn quy cách 2026.

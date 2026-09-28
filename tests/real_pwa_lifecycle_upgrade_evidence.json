@@ -1,0 +1,76 @@
+{
+  "suite": "real_pwa_lifecycle_upgrade",
+  "target": "http://127.0.0.1:4175",
+  "browser": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+  "build_sequence": [
+    "BUILD_A_1.0.0",
+    "BUILD_B_2.0.0",
+    "BUILD_C_3.0.0"
+  ],
+  "timestamp": "2026-09-28T08:38:36.727Z",
+  "results": [
+    {
+      "id": "SW-STAGE-1.1",
+      "description": "Browser document controlled by Build A Service Worker",
+      "passed": true,
+      "detail": "Controller active",
+      "timestamp": "2026-09-28T08:38:32.961Z"
+    },
+    {
+      "id": "SW-STAGE-2.1",
+      "description": "Client registers active_exam in appBusyRegistry",
+      "passed": true,
+      "detail": "isBusy: true",
+      "timestamp": "2026-09-28T08:38:33.015Z"
+    },
+    {
+      "id": "SW-STAGE-3.1",
+      "description": "Real browser controllerchange fired during busy state",
+      "passed": true,
+      "detail": "Event captured, isBusy: true",
+      "timestamp": "2026-09-28T08:38:34.988Z"
+    },
+    {
+      "id": "SW-STAGE-3.2",
+      "description": "SW update banner displayed on document during controllerchange",
+      "passed": true,
+      "detail": "Banner visible: true",
+      "timestamp": "2026-09-28T08:38:34.993Z"
+    },
+    {
+      "id": "SW-STAGE-3.3",
+      "description": "PWA Safety Invariant: ZERO page reloads occurred during busy SW upgrade",
+      "passed": true,
+      "detail": "Reload count: 0",
+      "timestamp": "2026-09-28T08:38:34.997Z"
+    },
+    {
+      "id": "SW-STAGE-3.4",
+      "description": "PWA Data Integrity: Student exam text 100% intact",
+      "passed": true,
+      "detail": "Value: \"Dữ liệu bài thi đang được bảo vệ trong bộ nhớ.\"",
+      "timestamp": "2026-09-28T08:38:35.003Z"
+    },
+    {
+      "id": "SW-STAGE-3.5",
+      "description": "PWA Execution Invariant: Document object was never reloaded or destroyed",
+      "passed": true,
+      "detail": "Marker intact: true",
+      "timestamp": "2026-09-28T08:38:35.006Z"
+    },
+    {
+      "id": "SW-STAGE-4.1",
+      "description": "Client naturally transitions to idle state",
+      "passed": true,
+      "detail": "isBusy: false",
+      "timestamp": "2026-09-28T08:38:35.093Z"
+    },
+    {
+      "id": "SW-STAGE-5.1",
+      "description": "PWA Lifecycle Invariant: Idle client automatically reloads to consume Build C",
+      "passed": true,
+      "detail": "Reload count: 1",
+      "timestamp": "2026-09-28T08:38:36.661Z"
+    }
+  ]
+}

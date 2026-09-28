@@ -1,7 +1,7 @@
 {
   "name": "Tiếng Anh Cô Dung - Hệ Thống Đào Tạo K12 & Quốc Tế 2026",
   "short_name": "Tiếng Anh Cô Dung",
-  "description": "Hệ thống đào tạo và khảo thí Tiếng Anh Cô Dung: K12 (Lớp 1-12), Ôn thi Đại Học, IELTS, TOEIC, TOEFL, B1/B2 VSTEP, báo học phí đổi sao thưởng, trung tâm thông báo Leader và kết nối bot Zalo phụ huynh",
+  "description": "Hệ thống đào tạo và lộ trình Tiếng Anh Cô Dung: K12 (Lớp 1-12), Ôn thi Đại Học, IELTS, TOEIC, TOEFL, B1/B2 VSTEP, báo học phí đổi sao thưởng, trung tâm thông báo Leader và kết nối bot Zalo phụ huynh",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -33,8 +33,8 @@
       "icons": [{ "src": "/icon.svg", "sizes": "192x192" }]
     },
     {
-      "name": "Phòng Khảo Thí & Test",
-      "short_name": "Khảo Thí",
+      "name": "Phòng Luyện Đề & Test",
+      "short_name": "Luyện Đề",
       "description": "Kiểm tra 15 phút, 1 tiết, đề thi học kỳ và IELTS",
       "url": "/exam",
       "icons": [{ "src": "/icon.svg", "sizes": "192x192" }]

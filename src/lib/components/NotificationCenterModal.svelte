@@ -79,7 +79,7 @@
       case 'tuition': return { text: 'Học phí', color: 'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300' };
       case 'leave': return { text: 'Nghỉ & Dạy thay', color: 'bg-teal-100 text-teal-800 dark:bg-teal-950 dark:text-teal-300' };
       case 'salary': return { text: 'Lương & Ứng', color: 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300' };
-      case 'exam': return { text: 'Khảo thí', color: 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300' };
+      case 'exam': return { text: 'Bài kiểm tra', color: 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300' };
       default: return { text: 'Thông báo', color: 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300' };
     }
   }
