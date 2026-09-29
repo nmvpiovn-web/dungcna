@@ -211,9 +211,17 @@
         questions = data.questions || [];
         answers = {};
         const durMins = data.duration_minutes || (selectedDuration === '15m' ? 15 : 5);
-        examStartTimeMs = Date.now();
-        examDeadlineMs = Date.now() + durMins * 60 * 1000;
-        timeLeftSeconds = durMins * 60;
+        const serverDeadline = data.deadline_ms;
+        const now = Date.now();
+        if (serverDeadline && typeof serverDeadline === 'number') {
+          examDeadlineMs = serverDeadline;
+          examStartTimeMs = data.start_time || (serverDeadline - durMins * 60 * 1000);
+          timeLeftSeconds = Math.max(0, Math.round((examDeadlineMs - now) / 1000));
+        } else {
+          examStartTimeMs = now;
+          examDeadlineMs = now + durMins * 60 * 1000;
+          timeLeftSeconds = durMins * 60;
+        }
         step = 'testing';
         startTimer();
       } else {

@@ -34,6 +34,16 @@
     { id: 'other', label: '📝 Bài Kiểm Tra Khác' }
   ];
 
+  function fastHash(str) {
+    let hash = 5381;
+    const step = Math.max(1, Math.floor(str.length / 500));
+    for (let i = 0; i < str.length; i += step) {
+      hash = ((hash << 5) + hash) + str.charCodeAt(i);
+      hash = hash & hash;
+    }
+    return str.length + '_' + hash;
+  }
+
   function computePayloadSignature() {
     return JSON.stringify({
       studentId: student?.id,
@@ -43,7 +53,7 @@
       maxScore,
       testDate,
       feedback: teacherFeedback.trim(),
-      hasImage: !!uploadedImage
+      imageSignature: uploadedImage ? (uploadedImage.slice(0, 100) + '_' + uploadedImage.slice(-100) + '_' + fastHash(uploadedImage)) : ''
     });
   }
 
@@ -82,12 +92,16 @@
   });
 
   onDestroy(() => {
+    saveGen += 1;
+    fileReaderGen += 1;
     if (typeof window !== 'undefined') {
       window.removeEventListener('tienganh:auth-change', handleAuthChange);
     }
   });
 
   function resetForm() {
+    saveGen += 1;
+    fileReaderGen += 1;
     testName = '';
     testType = 'standard_45m';
     score = '';
@@ -105,8 +119,9 @@
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 375 * 1024) {
-      statusMessage = '⚠️ Dung lượng ảnh tối đa là 375KB! Vui lòng chọn ảnh nhỏ hơn hoặc nén lại.';
+    // Strict UI limit: 360KB binary ensures base64 string + data URL header < 500,000 characters
+    if (file.size > 360 * 1024) {
+      statusMessage = '⚠️ Dung lượng ảnh tối đa là 360KB! Vui lòng chọn ảnh nhỏ hơn hoặc nén lại.';
       return;
     }
 
@@ -119,7 +134,12 @@
       if (thisReaderGen !== fileReaderGen || !isOpen || student?.id !== targetStudentId) {
         return;
       }
-      uploadedImage = event.target.result;
+      const dataUrl = event.target?.result;
+      if (typeof dataUrl === 'string' && dataUrl.length > 500000) {
+        statusMessage = '⚠️ Dữ liệu ảnh sau mã hóa vượt quá giới hạn 500.000 ký tự. Vui lòng chọn ảnh nhỏ hơn.';
+        return;
+      }
+      uploadedImage = dataUrl;
       statusMessage = '📷 Đã đính kèm ảnh chụp bài thi (tài liệu tham khảo, chưa xác thực).';
     };
     reader.readAsDataURL(file);
@@ -268,7 +288,7 @@
                   Đính kèm ảnh chụp bài kiểm tra (Tùy chọn)
                 </strong>
                 <span class="text-slate-500 dark:text-slate-400 text-[11px] block mt-0.5">
-                  Lưu trữ hình ảnh để đối chiếu khi cần. Dung lượng tối đa 375KB.
+                  Lưu trữ hình ảnh để đối chiếu khi cần. Dung lượng tối đa 360KB.
                 </span>
               </div>
               <label class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs shadow-sm cursor-pointer transition-all">

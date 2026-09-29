@@ -720,6 +720,9 @@ export async function POST({ request, platform }) {
       blueprint,
       candidate_name,
       duration_minutes: durationMinutes,
+      start_time: startTime,
+      server_time: startTime,
+      deadline_ms: startTime + durationMinutes * 60 * 1000,
       total_questions: clientQuestions.length,
       expires_at: expiresAt,
       questions: clientQuestions

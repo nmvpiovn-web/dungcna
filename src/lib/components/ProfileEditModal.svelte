@@ -1,5 +1,5 @@
 <script>
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy, untrack } from 'svelte';
   import { getCurrentUser, getAuthToken, setCurrentUser, updateUserProfile, POPULAR_SCHOOLS, isTeacherOrAdmin, requestUnlockClass } from '$lib/unifiedStore';
   import { playAudioFeedback } from '$lib/speech.js';
 
@@ -18,6 +18,11 @@
   let profileVersion = $state(null); // Integer CAS version from server
   let originalProfile = {};
   let isSaving = $state(false);
+
+  let profileLoadGen = 0;
+  let saveGen = 0;
+  let activeActorId = $state(null);
+  let closeTimeout = null;
 
   let showTransferModal = $state(false);
   let requestedTargetGrade = $state('');
@@ -44,16 +49,79 @@
     'Luyện Thi TOEFL iBT'
   ];
 
-  $effect(() => {
-    if (isOpen) {
-      statusMessage = '';
-      loadProfileData();
+  function handleAuthChange() {
+    profileLoadGen += 1;
+    saveGen += 1;
+    if (closeTimeout) {
+      clearTimeout(closeTimeout);
+      closeTimeout = null;
+    }
+    activeActorId = null;
+    isOpen = false;
+    statusMessage = '';
+    currentUser = null;
+    profileVersion = null;
+    isSaving = false;
+  }
+
+  onMount(() => {
+    if (typeof window !== 'undefined') {
+      window.addEventListener('tienganh:auth-change', handleAuthChange);
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('tienganh:auth-change', handleAuthChange);
+      }
+    };
+  });
+
+  onDestroy(() => {
+    profileLoadGen += 1;
+    saveGen += 1;
+    if (closeTimeout) {
+      clearTimeout(closeTimeout);
+      closeTimeout = null;
+    }
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('tienganh:auth-change', handleAuthChange);
     }
   });
 
-  async function loadProfileData() {
-    currentUser = getCurrentUser();
-    if (!currentUser) return;
+  $effect(() => {
+    if (isOpen) {
+      untrack(() => {
+        statusMessage = '';
+        loadProfileData({ isInitial: true });
+      });
+    } else {
+      untrack(() => {
+        profileLoadGen += 1;
+        saveGen += 1;
+        if (closeTimeout) {
+          clearTimeout(closeTimeout);
+          closeTimeout = null;
+        }
+        isSaving = false;
+      });
+    }
+  });
+
+  async function loadProfileData({ isInitial = false } = {}) {
+    const thisGen = ++profileLoadGen;
+    const user = getCurrentUser();
+    currentUser = user;
+    if (!user) {
+      activeActorId = null;
+      profileVersion = null;
+      return { success: false, error: 'Chưa đăng nhập' };
+    }
+    activeActorId = user.id;
+
+    // Reset profileVersion at start of load so stale version is never reused if load fails
+    profileVersion = null;
+
+    let serverSuccess = false;
+    let fetchError = null;
 
     // Try to fetch authoritative profile from server (includes profile_version for CAS)
     try {
@@ -62,34 +130,57 @@
         const res = await fetch('/api/users/profile', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
+        if (thisGen !== profileLoadGen || user.id !== activeActorId || !isOpen) {
+          return { success: false, error: 'Stale actor or modal closed' };
+        }
         if (res.ok) {
           const data = await res.json();
           if (data.success && data.user) {
             currentUser = data.user;
             profileVersion = data.profile_version || null;
+            serverSuccess = true;
+          } else {
+            fetchError = data.error || 'Lỗi dữ liệu từ máy chủ';
           }
+        } else {
+          fetchError = `Máy chủ phản hồi HTTP ${res.status}`;
         }
+      } else {
+        fetchError = 'Thiếu auth token';
       }
-    } catch {
-      // API unavailable — fall back to local store data
+    } catch (err) {
+      if (thisGen !== profileLoadGen || user.id !== activeActorId || !isOpen) {
+        return { success: false, error: 'Stale actor or modal closed' };
+      }
+      fetchError = err.message || 'Lỗi kết nối máy chủ';
     }
 
-    name = currentUser.name || '';
-    phone = currentUser.phone || '';
-    email = currentUser.email || '';
-    avatar = currentUser.avatar || presetAvatars[0].url;
+    if (thisGen !== profileLoadGen || user.id !== activeActorId || !isOpen) {
+      return { success: false, error: 'Stale actor or modal closed' };
+    }
 
-    let meta = {};
-    try {
-      meta = typeof currentUser.metadata === 'string' ? JSON.parse(currentUser.metadata) : (currentUser.metadata || {});
-    } catch {}
+    // Only populate fields from server or initial store baseline.
+    // If this is a refresh after 409 and server failed, DO NOT replace baseline with local cache!
+    if (serverSuccess || isInitial) {
+      name = currentUser.name || '';
+      phone = currentUser.phone || '';
+      email = currentUser.email || '';
+      avatar = currentUser.avatar || presetAvatars[0].url;
 
-    zaloId = meta.zalo_id || meta.zalo_phone || phone;
-    grade = currentUser.grade || meta.grade || '';
-    requestedTargetGrade = grade || '';
-    school = meta.school || '';
-    target = meta.target || `Chương trình ${grade}`;
-    originalProfile = { name, phone, email, avatar, school, target, zalo_id: zaloId, grade };
+      let meta = {};
+      try {
+        meta = typeof currentUser.metadata === 'string' ? JSON.parse(currentUser.metadata) : (currentUser.metadata || {});
+      } catch {}
+
+      zaloId = meta.zalo_id || meta.zalo_phone || phone;
+      grade = currentUser.grade || meta.grade || '';
+      requestedTargetGrade = grade || '';
+      school = meta.school || '';
+      target = meta.target || `Chương trình ${grade}`;
+      originalProfile = { name, phone, email, avatar, school, target, zalo_id: zaloId, grade };
+    }
+
+    return { success: serverSuccess, error: fetchError, version: profileVersion };
   }
 
   async function handleSendClassTransferRequest() {
@@ -121,9 +212,15 @@
       return;
     }
 
+    const thisGen = ++profileLoadGen;
+    const thisActorId = activeActorId;
+
     const reader = new FileReader();
     reader.onload = (event) => {
-      avatar = event.target.result;
+      if (thisGen !== profileLoadGen || thisActorId !== activeActorId || !isOpen) {
+        return;
+      }
+      avatar = event.target?.result;
     };
     reader.readAsDataURL(file);
   }
@@ -131,6 +228,9 @@
   async function handleSaveProfile(e) {
     if (e) e.preventDefault();
     if (!currentUser) return;
+
+    const thisSaveGen = ++saveGen;
+    const thisActorId = activeActorId;
 
     isSaving = true;
     statusMessage = '';
@@ -171,6 +271,10 @@
 
       const data = await res.json();
 
+      if (thisSaveGen !== saveGen || thisActorId !== activeActorId || !isOpen) {
+        return;
+      }
+
       if (res.ok && data.success) {
         statusMessage = '✅ Cập nhật hồ sơ thành công!';
         if (data.user) {
@@ -181,16 +285,23 @@
           profileVersion = data.profile_version;
         }
         playAudioFeedback('correct');
-        setTimeout(() => {
-          isOpen = false;
-          isSaving = false;
+        if (closeTimeout) clearTimeout(closeTimeout);
+        closeTimeout = setTimeout(() => {
+          if (thisSaveGen === saveGen && thisActorId === activeActorId) {
+            isOpen = false;
+            isSaving = false;
+            closeTimeout = null;
+          }
         }, 500);
       } else if (res.status === 409 && data.error?.includes('ConcurrencyConflict')) {
         // Keep the submitted dirty fields, refresh the server baseline/version,
         // then restore only those edits for explicit user review and retry.
         const draft = { ...payload };
         delete draft.expected_version;
-        await loadProfileData();
+        const refreshResult = await loadProfileData({ isInitial: false });
+        if (thisSaveGen !== saveGen || thisActorId !== activeActorId || !isOpen) {
+          return;
+        }
         if ('name' in draft) name = draft.name;
         if ('phone' in draft) phone = draft.phone;
         if ('email' in draft) email = draft.email;
@@ -199,13 +310,21 @@
         if ('target' in draft) target = draft.target;
         if ('zalo_id' in draft) zaloId = draft.zalo_id;
         if ('grade' in draft) grade = draft.grade;
-        statusMessage = '⚠️ Hồ sơ đã được cập nhật bởi phiên khác. Các chỉnh sửa của bạn được giữ lại; vui lòng đối chiếu và nhấn Lưu nếu muốn áp dụng.';
+
+        if (refreshResult && !refreshResult.success) {
+          statusMessage = `⚠️ Xung đột phiên xảy ra, nhưng không thể tải bản mới nhất từ máy chủ (${refreshResult.error || 'Lỗi mạng'}). Bản nháp chỉnh sửa của bạn vẫn được giữ nguyên. Vui lòng kiểm tra lại kết nối và thử lại.`;
+        } else {
+          statusMessage = '⚠️ Hồ sơ đã được cập nhật bởi phiên khác. Các chỉnh sửa của bạn được giữ lại; vui lòng đối chiếu và nhấn Lưu nếu muốn áp dụng.';
+        }
         isSaving = false;
       } else {
         statusMessage = `⚠️ ${data.error || 'Có lỗi xảy ra khi lưu hồ sơ vào máy chủ!'}`;
         isSaving = false;
       }
     } catch (err) {
+      if (thisSaveGen !== saveGen || thisActorId !== activeActorId || !isOpen) {
+        return;
+      }
       statusMessage = `⚠️ Lỗi kết nối máy chủ: ${err.message || err}`;
       isSaving = false;
     }
@@ -247,7 +366,7 @@
       </div>
 
       <!-- Modal Body -->
-      <form onsubmit={handleSaveProfile} class="p-6 overflow-y-auto space-y-4 flex-1 text-xs">
+      <form onsubmit={handleSaveProfile} novalidate class="p-6 overflow-y-auto space-y-4 flex-1 text-xs">
         {#if statusMessage}
           <div class="p-3 rounded-md text-xs font-semibold {statusMessage.includes('✅') ? 'bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300' : 'bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-300'}">
             {statusMessage}

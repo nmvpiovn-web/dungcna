@@ -177,8 +177,13 @@
   function handlePhotoUpload(e) {
     const file = e.target.files?.[0];
     if (!file) return;
+    const currentGen = authGeneration;
+    const currentActorId = currentUser?.id;
     const reader = new FileReader();
     reader.onload = (event) => {
+      if (currentGen !== authGeneration || currentActorId !== getCurrentUser()?.id || !showSubmitModal) {
+        return;
+      }
       handwrittenPhotoUrl = event.target?.result || null;
     };
     reader.readAsDataURL(file);
@@ -186,21 +191,35 @@
 
   // MediaRecorder functions
   async function startRecording() {
+    const startGen = authGeneration;
+    const startActorId = currentUser?.id;
     audioChunks = [];
     recordedAudioUrl = null;
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      if (startGen !== authGeneration || startActorId !== getCurrentUser()?.id || !showSubmitModal) {
+        stream.getTracks().forEach(t => t.stop());
+        return;
+      }
       mediaRecorder = new MediaRecorder(stream);
       mediaRecorder.ondataavailable = (e) => {
+        if (startGen !== authGeneration || startActorId !== getCurrentUser()?.id) return;
         if (e.data.size > 0) audioChunks.push(e.data);
       };
       mediaRecorder.onstop = () => {
+        if (startGen !== authGeneration || startActorId !== getCurrentUser()?.id || !showSubmitModal) {
+          audioChunks = [];
+          return;
+        }
         const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
         const reader = new FileReader();
-        reader.readAsDataURL(audioBlob);
         reader.onloadend = () => {
+          if (startGen !== authGeneration || startActorId !== getCurrentUser()?.id || !showSubmitModal) {
+            return;
+          }
           recordedAudioUrl = reader.result;
         };
+        reader.readAsDataURL(audioBlob);
       };
       mediaRecorder.start();
       isRecording = true;
@@ -209,18 +228,33 @@
         window.registerBusyState?.('cpanel_audio_recording');
       }
       recordingSeconds = 0;
+      clearInterval(recordingTimer);
       recordingTimer = setInterval(() => {
+        if (startGen !== authGeneration || startActorId !== getCurrentUser()?.id || !showSubmitModal) {
+          clearInterval(recordingTimer);
+          return;
+        }
         recordingSeconds += 1;
       }, 1000);
     } catch (err) {
-      alert('Không thể truy cập microphone. Vui lòng cấp quyền micro trên trình duyệt của bạn!');
+      if (startGen === authGeneration && startActorId === getCurrentUser()?.id && showSubmitModal) {
+        alert('Không thể truy cập microphone. Vui lòng cấp quyền micro trên trình duyệt của bạn!');
+      }
     }
   }
 
   function stopRecording() {
-    if (mediaRecorder && isRecording) {
-      mediaRecorder.stop();
-      mediaRecorder.stream.getTracks().forEach(track => track.stop());
+    if (mediaRecorder) {
+      if (isRecording) {
+        try {
+          mediaRecorder.stop();
+        } catch {}
+      }
+      if (mediaRecorder.stream) {
+        try {
+          mediaRecorder.stream.getTracks().forEach(track => track.stop());
+        } catch {}
+      }
       isRecording = false;
       clearInterval(recordingTimer);
       if (typeof window !== 'undefined') {

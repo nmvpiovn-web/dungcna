@@ -124,8 +124,8 @@ function createMockPlatform() {
 
 describe('Dot 29 Directive Remediation: A2, B1, B2, B3, C (Codex 2026-09-29)', () => {
 
-  describe('A2: Student Auth Change Invalidation', () => {
-    test('Static inspection: student page listens to tienganh:auth-change, increments authGeneration, and purges modals/drafts', () => {
+  describe('A2: Student Auth Change Invalidation & Media/File Guards', () => {
+    test('Static inspection: student page listens to tienganh:auth-change, increments authGeneration, purges modals/drafts, and guards media/file callbacks', () => {
       const studentPagePath = path.resolve('src/routes/cpanel/student/+page.svelte');
       const content = fs.readFileSync(studentPagePath, 'utf8');
 
@@ -137,6 +137,11 @@ describe('Dot 29 Directive Remediation: A2, B1, B2, B3, C (Codex 2026-09-29)', (
       assert.match(content, /recordedAudioUrl\s*=\s*null/, 'Must purge recorded audio upon auth switch');
       assert.match(content, /stopRecording\(\)/, 'Must stop active recording upon auth switch');
       assert.match(content, /if\s*\(\s*currentGen\s*!==\s*authGeneration/, 'Must guard in-flight responses with generation check');
+
+      // Check media and file upload callback guards
+      assert.match(content, /currentGen\s*!==\s*authGeneration\s*\|\|\s*currentActorId\s*!==\s*getCurrentUser\(\)\?\.id/, 'Photo upload reader must check authGeneration and actor');
+      assert.match(content, /stream\.getTracks\(\)\.forEach\(t\s*=>\s*t\.stop\(\)\)/, 'Late getUserMedia stream must stop tracks immediately when stale');
+      assert.match(content, /startGen\s*!==\s*authGeneration\s*\|\|\s*startActorId\s*!==\s*getCurrentUser\(\)\?\.id/, 'Audio onstop & reader must check startGen and actor');
     });
   });
 
@@ -152,6 +157,45 @@ describe('Dot 29 Directive Remediation: A2, B1, B2, B3, C (Codex 2026-09-29)', (
       assert.match(content, /currentIdempotencyKey/, 'Must maintain stable idempotency key for identical retries');
       assert.match(content, /computePayloadSignature/, 'Must detect payload signature mutations to rotate idempotency key');
       assert.match(content, /tienganh:auth-change/, 'Must listen to auth-change to immediately close modal and reset');
+    });
+
+    test('P1-03: resetForm increments saveGen and fileReaderGen so context switch A -> B -> A invalidates pending save/read from first A', () => {
+      const modalPath = path.resolve('src/lib/components/ParentTestOcrModal.svelte');
+      const content = fs.readFileSync(modalPath, 'utf8');
+
+      // resetForm MUST increment saveGen and fileReaderGen
+      const resetFormMatch = content.match(/function\s+resetForm\(\)\s*\{([^}]+)\}/);
+      assert.ok(resetFormMatch, 'resetForm must exist');
+      assert.match(resetFormMatch[1], /saveGen\s*\+=\s*1/, 'resetForm must increment saveGen');
+      assert.match(resetFormMatch[1], /fileReaderGen\s*\+=\s*1/, 'resetForm must increment fileReaderGen');
+    });
+
+    test('Parent modal image rotation: changing uploaded image changes signature and rotates idempotency key', () => {
+      const modalPath = path.resolve('src/lib/components/ParentTestOcrModal.svelte');
+      const content = fs.readFileSync(modalPath, 'utf8');
+
+      assert.match(content, /imageSignature:\s*uploadedImage\s*\?/, 'Signature must include image signature');
+      assert.match(content, /360\s*\*\s*1024/, 'UI must enforce 360KB limit for binary files');
+      assert.match(content, /dataUrl\.length\s*>\s*500000/, 'UI must guard dataUrl length > 500000');
+
+      // Test simulation of signature computation logic
+      function computeSig(studentId, name, score, img) {
+        return JSON.stringify({
+          studentId,
+          name: name.trim(),
+          score: String(score).trim(),
+          imageSignature: img ? (img.length + '_' + img.slice(0, 100) + '_' + img.slice(-100)) : ''
+        });
+      }
+
+      const imgA = 'data:image/jpeg;base64,' + 'A'.repeat(500);
+      const imgB = 'data:image/png;base64,' + 'B'.repeat(500);
+      const sigA = computeSig('s1', 'Test', 9, imgA);
+      const sigB = computeSig('s1', 'Test', 9, imgB);
+      assert.notEqual(sigA, sigB, 'Different images must produce different payload signatures');
+
+      const sigNoImg = computeSig('s1', 'Test', 9, null);
+      assert.notEqual(sigA, sigNoImg, 'Image vs no image must produce different signatures');
     });
 
     test('Parent test endpoint: same idempotency key with identical payload succeeds / replays; same key with different payload returns HTTP 409', async () => {
@@ -251,9 +295,53 @@ describe('Dot 29 Directive Remediation: A2, B1, B2, B3, C (Codex 2026-09-29)', (
       assert.match(content, /if\s*\(!isOpen\)\s*\{\s*guestGeneration\s*\+=/, 'Must abort & bump generation when modal closes');
       assert.match(content, /if\s*\(currentGen\s*!==\s*guestGeneration\s*\|\|\s*!isOpen\)\s*return/, 'Must discard late responses');
     });
+    test('B3 Server Deadline Alignment: start response returns deadline_ms & server_time, modal reconciles timer without extending on network delay', async () => {
+      const modalPath = path.resolve('src/lib/components/GuestExamModal.svelte');
+      const content = fs.readFileSync(modalPath, 'utf8');
+      assert.match(content, /data\.deadline_ms/, 'Modal must read server deadline_ms');
+      assert.match(content, /examDeadlineMs\s*=\s*serverDeadline/, 'Modal must set examDeadlineMs to server deadline');
+      assert.match(content, /timeLeftSeconds\s*=\s*Math\.max\(0,\s*Math\.round\(\(examDeadlineMs\s*-\s*now\)\s*\/\s*1000\)\)/, 'Timer must reconcile remaining seconds from server deadline');
+
+      // Test guest server start endpoint returns deadline_ms
+      const { platform } = createMockPlatform();
+      const res = await guestExamPost({
+        request: new Request('http://localhost/api/exams/guest', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'start',
+            grade: 'lop_7',
+            curriculum: 'global_success',
+            duration_type: '5m'
+          })
+        }),
+        platform
+      });
+      assert.equal(res.status, 200);
+      const data = await res.json();
+      assert.equal(data.success, true);
+      assert.ok(data.deadline_ms, 'Response must include deadline_ms');
+      assert.ok(data.start_time, 'Response must include start_time');
+      assert.equal(data.deadline_ms, data.start_time + 5 * 60 * 1000, '5m exam deadline must be start_time + 300,000ms');
+    });
   });
 
   describe('C: Profile Version CAS Concurrency Semantics (C1 - C7)', () => {
+    test('Static inspection: ProfileEditModal enforces actor/modal generation guards, cancels close timeout, resets version at load start, and reports 409 refresh failures without fake sync', () => {
+      const modalPath = path.resolve('src/lib/components/ProfileEditModal.svelte');
+      const content = fs.readFileSync(modalPath, 'utf8');
+
+      assert.match(content, /profileLoadGen/, 'Must track profileLoadGen');
+      assert.match(content, /saveGen/, 'Must track saveGen');
+      assert.match(content, /activeActorId/, 'Must track activeActorId');
+      assert.match(content, /closeTimeout/, 'Must manage closeTimeout');
+      assert.match(content, /tienganh:auth-change/, 'Must listen to auth change to close modal and reset state');
+      assert.match(content, /profileVersion\s*=\s*null/, 'Must reset profileVersion at start of load');
+      assert.match(content, /return\s*\{\s*success:\s*serverSuccess,\s*error:\s*fetchError,\s*version:\s*profileVersion\s*\}/, 'loadProfileData must return explicit status');
+      assert.match(content, /refreshResult\s*&&\s*!refreshResult\.success/, 'Must inspect refreshResult after 409');
+      assert.match(content, /Bản nháp chỉnh sửa của bạn vẫn được giữ nguyên/, 'Must preserve draft and alert on refresh failure without fake sync');
+    });
+
     test('C1, C2 & C6: Concurrent updates in same second with stale version return 409 ConcurrencyConflict; retrying with incremented version succeeds', async () => {
       const { platform, rawDb } = createMockPlatform();
       const token = await createSignedToken({ id: 'usr_parent_1', role: 'parent' }, secret);

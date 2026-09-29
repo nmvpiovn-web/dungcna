@@ -1,0 +1,222 @@
+{
+  "suite": "dot29_profile_cas_concurrency_browser_e2e",
+  "timestamp": "2026-09-29T02:24:26.923Z",
+  "source_commit": "f86e76aeaaeb0732884aa7d644328ad76b23488e",
+  "build_identity": "build_f86e76a_1790648306076",
+  "environment": "http://127.0.0.1:4173",
+  "total_assertions": 21,
+  "passed_assertions": 21,
+  "failed_assertions": 0,
+  "results": [
+    {
+      "id": "AUTH-SETUP",
+      "index": 1,
+      "name": "Registered test student and acquired valid session token",
+      "pass": true,
+      "detail": "Token length: 205",
+      "timestamp": "2026-09-29T02:24:13.941Z"
+    },
+    {
+      "id": "C1.1",
+      "index": 2,
+      "name": "Session B updates target successfully and advances version",
+      "pass": true,
+      "detail": "HTTP 200, Version: 2",
+      "timestamp": "2026-09-29T02:24:15.281Z"
+    },
+    {
+      "id": "C1.2",
+      "index": 3,
+      "name": "Session A draft school input is strictly preserved after 409 conflict",
+      "pass": true,
+      "detail": "Current value: \"THCS Chu Văn An - Hà Nội (Bản Nháp A)\"",
+      "timestamp": "2026-09-29T02:24:16.994Z"
+    },
+    {
+      "id": "C1.3",
+      "index": 4,
+      "name": "Session B updated target is displayed after server baseline refresh",
+      "pass": true,
+      "detail": "Current target: \"Chinh phục IELTS 7.5 Academic (Session B)\"",
+      "timestamp": "2026-09-29T02:24:16.994Z"
+    },
+    {
+      "id": "C1.4",
+      "index": 5,
+      "name": "Conflict notice banner is displayed to user",
+      "pass": true,
+      "detail": "⚠️ Hồ sơ đã được cập nhật bởi phiên khác. Các chỉnh sửa của bạn được giữ lại; vui lòng đối chiếu và nhấn Lưu nếu muốn áp dụng.",
+      "timestamp": "2026-09-29T02:24:16.994Z"
+    },
+    {
+      "id": "C1.5",
+      "index": 6,
+      "name": "Modal remains open for explicit user review and retry",
+      "pass": true,
+      "detail": "Modal visible: true",
+      "timestamp": "2026-09-29T02:24:16.994Z"
+    },
+    {
+      "id": "C2.1",
+      "index": 7,
+      "name": "DB does NOT have draft school before user explicitly retries (no auto-retry)",
+      "pass": true,
+      "detail": "DB School before retry: \"\"",
+      "timestamp": "2026-09-29T02:24:17.017Z"
+    },
+    {
+      "id": "C2.2",
+      "index": 8,
+      "name": "Explicit retry succeeds with HTTP 200 and version advance",
+      "pass": true,
+      "detail": "HTTP 200, Version: 3",
+      "timestamp": "2026-09-29T02:24:17.153Z"
+    },
+    {
+      "id": "C2.3",
+      "index": 9,
+      "name": "Reload confirmed: School from A is persisted in DB",
+      "pass": true,
+      "detail": "DB School: \"THCS Chu Văn An - Hà Nội (Bản Nháp A)\"",
+      "timestamp": "2026-09-29T02:24:19.196Z"
+    },
+    {
+      "id": "C2.4",
+      "index": 10,
+      "name": "Reload confirmed: Target from B is persisted in DB",
+      "pass": true,
+      "detail": "DB Target: \"Chinh phục IELTS 7.5 Academic (Session B)\"",
+      "timestamp": "2026-09-29T02:24:19.196Z"
+    },
+    {
+      "id": "C2.5",
+      "index": 11,
+      "name": "Reload confirmed: profile_version advanced sequentially to N+2",
+      "pass": true,
+      "detail": "Final Version: 3",
+      "timestamp": "2026-09-29T02:24:19.196Z"
+    },
+    {
+      "id": "C3.1",
+      "index": 12,
+      "name": "Session B concurrently updates same field (target)",
+      "pass": true,
+      "detail": "HTTP 200, Version: 4",
+      "timestamp": "2026-09-29T02:24:20.434Z"
+    },
+    {
+      "id": "C3.2",
+      "index": 13,
+      "name": "Same-field conflict: Tab A draft target is kept in input for review, not overwritten by Session B",
+      "pass": true,
+      "detail": "Current DOM value: \"Target A: Chuyên Ngoại Ngữ 2026\"",
+      "timestamp": "2026-09-29T02:24:21.537Z"
+    },
+    {
+      "id": "C4.1",
+      "index": 14,
+      "name": "Banner explicitly states conflict occurred and refresh failed without claiming sync",
+      "pass": true,
+      "detail": "⚠️ Xung đột phiên xảy ra, nhưng không thể tải bản mới nhất từ máy chủ (Máy chủ phản hồi HTTP 503). Bản nháp chỉnh sửa của bạn vẫn được giữ nguyên. Vui lòng kiểm tra lại kết nối và thử lại.",
+      "timestamp": "2026-09-29T02:24:24.547Z"
+    },
+    {
+      "id": "C4.2",
+      "index": 15,
+      "name": "Banner does NOT display fake success or fake synchronization claim",
+      "pass": true,
+      "detail": "⚠️ Xung đột phiên xảy ra, nhưng không thể tải bản mới nhất từ máy chủ (Máy chủ phản hồi HTTP 503). Bản nháp chỉnh sửa của bạn vẫn được giữ nguyên. Vui lòng kiểm tra lại kết nối và thử lại.",
+      "timestamp": "2026-09-29T02:24:24.547Z"
+    },
+    {
+      "id": "C4.3",
+      "index": 16,
+      "name": "Draft school input remains intact despite reload 503 failure",
+      "pass": true,
+      "detail": "School value: \"Trường Nháp Khi Mạng Rớt 503\"",
+      "timestamp": "2026-09-29T02:24:24.547Z"
+    },
+    {
+      "id": "C5.1",
+      "index": 17,
+      "name": "Modal is open before auth change",
+      "pass": true,
+      "detail": "Open",
+      "timestamp": "2026-09-29T02:24:26.003Z"
+    },
+    {
+      "id": "C5.2",
+      "index": 18,
+      "name": "Modal immediately closes upon tienganh:auth-change event",
+      "pass": true,
+      "detail": "Visible: false",
+      "timestamp": "2026-09-29T02:24:26.548Z"
+    },
+    {
+      "id": "C6.1",
+      "index": 19,
+      "name": "Sub-second concurrency: One request succeeds (200) and the concurrent one is rejected (409)",
+      "pass": true,
+      "detail": "Statuses: [200, 409]",
+      "timestamp": "2026-09-29T02:24:26.717Z"
+    },
+    {
+      "id": "C7.1",
+      "index": 20,
+      "name": "Unauthenticated request to /api/users/profile returns HTTP 401",
+      "pass": true,
+      "detail": "Status: 401",
+      "timestamp": "2026-09-29T02:24:26.729Z"
+    },
+    {
+      "id": "NEG-C.1",
+      "index": 21,
+      "name": "Negative control validator correctly detects wiped draft and flags violation",
+      "pass": true,
+      "detail": "Caught assertion failure as expected",
+      "timestamp": "2026-09-29T02:24:26.729Z"
+    }
+  ],
+  "screenshot_manifest": [
+    {
+      "filename": "01_c1_409_draft_preserved.png",
+      "testId": "C1",
+      "description": "Profile 409 conflict keeps dirty school draft and shows Session B target",
+      "sha256": "4bccb00ce309d2b74c2de106f818902d6465aaa1d4d671595a016c708d5531dc",
+      "sizeBytes": 202165,
+      "timestamp": "2026-09-29T02:24:16.994Z"
+    },
+    {
+      "filename": "02_c2_retry_success.png",
+      "testId": "C2",
+      "description": "Explicit retry succeeded and updated profile",
+      "sha256": "06fa0ef1d57a88f292b01f2272985d01f8592973df4bf5dc9fd0db3da3b1b583",
+      "sizeBytes": 226478,
+      "timestamp": "2026-09-29T02:24:17.238Z"
+    },
+    {
+      "filename": "03_c3_same_field_conflict.png",
+      "testId": "C3",
+      "description": "Same-field conflict preserves Tab A draft target",
+      "sha256": "8eb44655572ed3f704f58ab14b075cbe6feed73cb7262eaddcb74305fe587c3f",
+      "sizeBytes": 200689,
+      "timestamp": "2026-09-29T02:24:21.630Z"
+    },
+    {
+      "filename": "04_c4_503_refresh_failure_draft_retained.png",
+      "testId": "C4",
+      "description": "Reload failure after 409 preserves draft and reports server error without fake sync",
+      "sha256": "223e11b883613d8dc6e2e2c0da4c8631b21c157b2d548d4449b6da4db2fde070",
+      "sizeBytes": 205188,
+      "timestamp": "2026-09-29T02:24:24.547Z"
+    },
+    {
+      "filename": "05_c5_auth_change_invalidation.png",
+      "testId": "C5",
+      "description": "Auth change event immediately closes modal and purges actor state",
+      "sha256": "a248131ed8232f1de44c5610c6367d491cef4b79bbecaeb89f4aef41cebf978f",
+      "sizeBytes": 160852,
+      "timestamp": "2026-09-29T02:24:26.629Z"
+    }
+  ]
+}
