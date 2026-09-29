@@ -178,9 +178,19 @@ async function runSuite() {
 
     const submitRegBtn = page.locator('button:has-text("Hoàn Tất & Vào Học"), button:has-text("BẤM ĐÂY ĐỂ VÀO HỌC")').first();
     await submitRegBtn.click();
-    await page.waitForTimeout(1500);
+    // AuthModal triggers window.location.reload() after 1200ms
+    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(1000);
 
     const userToken = await page.evaluate(() => localStorage.getItem('tienganh_auth_token'));
+    const userA = await page.evaluate(() => {
+      try {
+        return JSON.parse(localStorage.getItem('tienganh_active_user') || '{}');
+      } catch {
+        return null;
+      }
+    });
     recordTest('STEP-0.1', 'Student registered and auth token stored', Boolean(userToken), `Token present: ${Boolean(userToken)}`);
 
     async function openProfileModal() {
@@ -357,24 +367,36 @@ async function runSuite() {
     await page.waitForTimeout(400);
 
     // -----------------------------------------------------------------------
-    // C4: GET refresh sau 409 lỗi 503/network:
-    // Chặn unversioned POST mutation; nút Lưu bị vô hiệu hóa; nút Tải lại đối soát hiển thị;
-    // Khôi phục mạng -> Tải lại -> Nút Lưu mở lại -> Ghi có expected_version thành công.
     // -----------------------------------------------------------------------
-    console.log('\n--- C4: GET Refresh Failure Handling (Network / 503 Fail-Closed & Explicit Reload Retry) ---');
+    // C4: Mandatory Scenario (Codex Audit 69fa80e):
+    // Actor A ONLY modifies school; Actor B concurrently modifies target.
+    // A hits 409 -> GET refresh returns 503 -> reload baseline recovers with GET 200.
+    // Expected: DOM preserves dirty schoolA + loads targetB from server baseline.
+    // Outgoing save POST payload contains expected_version and schoolA, but NO target!
+    // Result: both schoolA and targetB are committed in D1 without lost updates.
+    // -----------------------------------------------------------------------
+    console.log('\n--- C4: Dirty-Only Baseline Reload & CAS Reconciliation (Mandatory A-school / B-target) ---');
     await openProfileModal();
 
     const schoolInputC4 = page.locator('input#prof-school');
     const targetInputC4 = page.locator('input#prof-target');
-    const offlineDraftSchool = 'Trường Nháp Khi Mạng Rớt 503';
-    const offlineDraftTarget = 'Mục Tiêu Nháp Khi Mạng Rớt 503';
-    await schoolInputC4.fill(offlineDraftSchool);
-    await targetInputC4.fill(offlineDraftTarget);
+    
+    // Read initial baseline values before edits
+    const initialSchool = await schoolInputC4.inputValue();
+    const initialTarget = await targetInputC4.inputValue();
 
+    // Actor A edits ONLY school (leaves target untouched!)
+    const draftSchoolC4 = 'THCS Nghĩa Tân - Nháp Chỉ Sửa School A (Đợt 29)';
+    await schoolInputC4.fill(draftSchoolC4);
+
+    // Actor B updates target concurrently via API
+    const targetFromB = 'Mục Tiêu IELTS 8.5 Độc Quyền Của B (Đợt 29)';
     const curV = (await fetchServerProfile()).data?.profile_version;
-    await sessionBUpdate({ target: 'Mục tiêu bump version cho C4', expected_version: curV });
+    const bUpdateRes = await sessionBUpdate({ target: targetFromB, expected_version: curV });
+    const versionAfterB = bUpdateRes.data?.profile_version;
+    recordTest('C4.0', 'Session B updates target concurrently to advance server version', bUpdateRes.status === 200, `HTTP ${bUpdateRes.status}, New Version: ${versionAfterB}`);
 
-    // Intercept profile GET to simulate server 503 during reload
+    // Intercept profile GET to simulate server 503 during automatic reload
     await page.route('**/api/users/profile', async (route) => {
       if (route.request().method() === 'GET') {
         console.log('  [Route Intercept] Simulating 503 Service Unavailable on GET /api/users/profile');
@@ -398,14 +420,13 @@ async function runSuite() {
     const statusBannerC4 = page.locator('form div:has-text("⚠️")').first();
     const statusBannerC4Text = (await statusBannerC4.textContent()) || '';
     const schoolValueAfterC4 = await schoolInputC4.inputValue();
-    const targetValueAfterC4 = await targetInputC4.inputValue();
 
     const shotC4 = await page.screenshot();
     saveScreenshot(shotC4, '04_c4_503_refresh_failure_draft_retained.png', 'C4', 'Reload failure after 409 preserves draft and reports server error without fake sync');
 
     recordTest('C4.1', 'Banner explicitly states conflict occurred and refresh failed without claiming sync', statusBannerC4Text.includes('không thể tải bản mới nhất từ máy chủ') && statusBannerC4Text.includes('Bản nháp chỉnh sửa của bạn vẫn được giữ nguyên'), statusBannerC4Text);
     recordTest('C4.2', 'Banner does NOT display fake success or fake synchronization claim', !statusBannerC4Text.includes('thành công') && !statusBannerC4Text.includes('đã cập nhật bởi phiên khác. Các chỉnh sửa'), statusBannerC4Text);
-    recordTest('C4.3', 'Draft school and target inputs remain intact despite reload 503 failure', schoolValueAfterC4 === offlineDraftSchool && targetValueAfterC4 === offlineDraftTarget, `School: "${schoolValueAfterC4}", Target: "${targetValueAfterC4}"`);
+    recordTest('C4.3', 'Draft school input remains intact despite reload 503 failure', schoolValueAfterC4 === draftSchoolC4, `School: "${schoolValueAfterC4}"`);
 
     // Verify Save button is DISABLED or blocked when baselineFetchFailed is true
     const saveBtnDisabledAttr = await saveBtnC4.getAttribute('disabled');
@@ -439,31 +460,66 @@ async function runSuite() {
     recordTest('C4.6', 'Reload baseline succeeds with HTTP 200 from server', reloadResp.status() === 200, `Status: ${reloadResp.status()}`);
     await page.waitForTimeout(800);
 
-    // Verify draft is STILL preserved after baseline reload
+    // Verify draft school is preserved, while target reflects Session B's updated baseline!
     const schoolAfterReload = await schoolInputC4.inputValue();
     const targetAfterReload = await targetInputC4.inputValue();
-    recordTest('C4.7', 'Draft fields remain preserved after successful baseline reload', schoolAfterReload === offlineDraftSchool && targetAfterReload === offlineDraftTarget, `School: "${schoolAfterReload}"`);
+    recordTest('C4.7', 'Dirty school from A is preserved, while non-dirty target loads server baseline from B', schoolAfterReload === draftSchoolC4 && targetAfterReload === targetFromB, `School: "${schoolAfterReload}", Target: "${targetAfterReload}"`);
 
     // Verify Save button is now ENABLED
     const saveBtnDisabledAfterReload = await saveBtnC4.getAttribute('disabled');
     recordTest('C4.8', 'Save button is enabled after successful baseline reload', saveBtnDisabledAfterReload === null, `Disabled: ${saveBtnDisabledAfterReload !== null}`);
 
-    // User clicks Save -> POST sends expected_version -> succeeds with 200
+    // Intercept outgoing POST request on Save: assert expected_version, school, and NO target in payload!
+    let outgoingSavePayload = null;
+    const savePayloadListener = (req) => {
+      if (req.url().includes('/api/users/profile') && req.method() === 'POST') {
+        try {
+          outgoingSavePayload = JSON.parse(req.postData());
+        } catch {}
+      }
+    };
+    page.on('request', savePayloadListener);
+
     const retrySavePromise = page.waitForResponse(r => r.url().includes('/api/users/profile') && r.request().method() === 'POST');
     await saveBtnC4.click();
     const retrySaveResp = await retrySavePromise;
+    page.off('request', savePayloadListener);
     const retrySaveBody = await retrySaveResp.json();
-    recordTest('C4.9', 'Retry after reload commits with reviewed expected_version and returns HTTP 200', retrySaveResp.status() === 200 && retrySaveBody.profile_version > 0, `HTTP ${retrySaveResp.status()}, Version: ${retrySaveBody.profile_version}`);
+
+    const expectedVersionPassed = outgoingSavePayload?.expected_version === versionAfterB;
+    const schoolInPayload = outgoingSavePayload?.school === draftSchoolC4;
+    const targetOmittedFromPayload = outgoingSavePayload && !('target' in outgoingSavePayload);
+    recordTest('C4.9', 'Outgoing POST request contains exact expected_version, dirty school, and omits untouched target',
+      expectedVersionPassed && schoolInPayload && targetOmittedFromPayload && retrySaveResp.status() === 200,
+      `ExpectedVersion: ${outgoingSavePayload?.expected_version} (matches B=${versionAfterB}), Target in payload: ${'target' in (outgoingSavePayload || {})}`
+    );
+
+    // Verify directly in D1 DB that both school from A and target from B are committed cleanly!
+    const profileAfterC4 = await fetchServerProfile();
+    const metaAfterC4 = typeof profileAfterC4.data?.user?.metadata === 'string'
+      ? JSON.parse(profileAfterC4.data?.user?.metadata)
+      : (profileAfterC4.data?.user?.metadata || {});
+    const dbPreservedBoth = metaAfterC4.school === draftSchoolC4 && metaAfterC4.target === targetFromB;
+    recordTest('C4.10', 'D1 authoritative database holds BOTH schoolA and targetB with advanced version',
+      dbPreservedBoth && profileAfterC4.data?.profile_version === versionAfterB + 1,
+      `DB School: "${metaAfterC4.school}", DB Target: "${metaAfterC4.target}", Version: ${profileAfterC4.data?.profile_version}`
+    );
+
+    const winnerSchool = draftSchoolC4;
+    const winnerTarget = targetFromB;
 
     const shotC4Retry = await page.screenshot();
     saveScreenshot(shotC4Retry, '04_c4_retry_after_reload_success.png', 'C4', 'Retry after baseline reload commits with authoritative version');
-
     await page.waitForTimeout(1000);
 
     // -----------------------------------------------------------------------
-    // C5: Delayed Response Race Guard & Session Invalidation
+    // C5: Delayed Response Race Guard & Multi-Actor Isolation
+    // - Holds GET /api/users/profile response body while user switches session.
+    // - Modal closes immediately upon auth-change.
+    // - Release delayed response body for old Actor A (with stale version 999).
+    // - Open modal for Actor B: verifies Actor B sees B's data, not A's delayed body, and version is NOT 999.
     // -----------------------------------------------------------------------
-    console.log('\n--- C5: Session Invalidation on Modal Close & Auth Switch (Delayed Response Race Guard) ---');
+    console.log('\n--- C5: Session Invalidation & Multi-Actor Isolation (Delayed Body Race Guard) ---');
     let fulfillDelayedGet = null;
     await page.route('**/api/users/profile', async (route) => {
       if (route.request().method() === 'GET' && !fulfillDelayedGet) {
@@ -473,7 +529,7 @@ async function runSuite() {
           contentType: 'application/json',
           body: JSON.stringify({
             success: true,
-            user: { id: 'old_stale_actor', name: 'Actor Cũ Bị Trễ', phone: '0900000000', school: 'Trường Cũ Bị Trễ' },
+            user: { id: 'old_stale_actor', name: 'Actor Cũ Bị Trễ', phone: '0900000000', metadata: JSON.stringify({ school: 'Trường Cũ Bị Rò Rỉ A' }) },
             profile_version: 999
           })
         });
@@ -491,19 +547,37 @@ async function runSuite() {
     await editProfileBtnC5.click();
     await page.waitForTimeout(400);
 
-    // While request is pending, dispatch tienganh:auth-change (simulating logout/user switch)
-    await page.evaluate(() => {
-      window.dispatchEvent(new CustomEvent('tienganh:auth-change', { detail: { reason: 'user_switched' } }));
+    // While request is pending, switch session to Actor B
+    const actorBUsername = `hs_b_${Date.now().toString().slice(6)}`;
+    const regBRes = await page.request.post(`${BASE_URL}/api/auth/register`, {
+      data: {
+        usernameOrPhone: actorBUsername,
+        name: 'Học Sinh B Độc Lập',
+        password: testPassword,
+        role: 'student',
+        grade: 'Lớp 8',
+        target: 'Mục Tiêu Riêng Của B'
+      }
     });
+    const regBData = await regBRes.json();
+    const actorB = regBData.user;
+    const actorBToken = regBData.token;
+
+    await page.evaluate(({ b, token }) => {
+      localStorage.setItem('tienganh_active_user', JSON.stringify(b));
+      localStorage.setItem('tienganh_user', JSON.stringify(b));
+      localStorage.setItem('tienganh_auth_token', token);
+      window.dispatchEvent(new CustomEvent('tienganh:auth-change', { detail: b }));
+    }, { b: actorB, token: actorBToken });
     await page.waitForTimeout(300);
 
     // Verify modal is closed immediately by auth-change
     const isModalOpenAfterSwitch = await page.locator('input#prof-school').isVisible();
-    recordTest('C5.1', 'Modal is closed upon auth-change while GET is pending', !isModalOpenAfterSwitch, `Visible: ${isModalOpenAfterSwitch}`);
+    recordTest('C5.1', 'Modal is closed upon auth-change while GET body is pending', !isModalOpenAfterSwitch, `Visible: ${isModalOpenAfterSwitch}`);
 
     // Now release the delayed GET response from the old actor
     if (fulfillDelayedGet) {
-      console.log('  [Route Intercept] Releasing delayed GET response from old actor...');
+      console.log('  [Route Intercept] Releasing delayed GET response from old actor A...');
       await fulfillDelayedGet();
       await page.waitForTimeout(500);
     }
@@ -511,10 +585,31 @@ async function runSuite() {
 
     // Verify modal DID NOT reopen and did NOT populate old actor data
     const isModalReopened = await page.locator('input#prof-school').isVisible();
-    recordTest('C5.2', 'Stale delayed response does NOT reopen modal or leak old actor data', !isModalReopened, `Reopened: ${isModalReopened}`);
+    recordTest('C5.2', 'Stale delayed response does NOT reopen modal or mutate state', !isModalReopened, `Reopened: ${isModalReopened}`);
+
+    // Now open modal for Actor B and verify NO data leak from old Actor A!
+    await openProfileModal();
+    const actorBTarget = await page.locator('input#prof-target').inputValue();
+    const actorBSchool = await page.locator('input#prof-school').inputValue();
+
+    const noLeak = actorBSchool !== 'Trường Cũ Bị Rò Rỉ A' && actorBTarget === 'Mục Tiêu Riêng Của B';
+    recordTest('C5.3', 'Actor B modal displays Actor B authoritative data without leakage from Actor A delayed response', noLeak, `Actor B Target: "${actorBTarget}", School: "${actorBSchool}"`);
 
     const shotC5 = await page.screenshot();
-    saveScreenshot(shotC5, '05_c5_auth_change_invalidation.png', 'C5', 'Delayed response from previous actor discarded cleanly');
+    saveScreenshot(shotC5, '05_c5_auth_change_invalidation.png', 'C5', 'Delayed response from previous actor discarded cleanly with multi-actor isolation');
+
+    // Close Actor B modal and restore session for test student (Actor A)
+    const closeBtnC5 = page.locator('button:has-text("✕")').first();
+    if (await closeBtnC5.isVisible()) await closeBtnC5.click();
+    await page.waitForTimeout(300);
+
+    await page.evaluate(({ u, token }) => {
+      localStorage.setItem('tienganh_active_user', JSON.stringify(u));
+      localStorage.setItem('tienganh_user', JSON.stringify(u));
+      localStorage.setItem('tienganh_auth_token', token);
+      window.dispatchEvent(new CustomEvent('tienganh:auth-change', { detail: u }));
+    }, { u: userA, token: userToken });
+    await page.waitForTimeout(300);
 
     // -----------------------------------------------------------------------
     // C6: Sub-second Concurrent Writes CAS Verification
@@ -560,7 +655,15 @@ async function runSuite() {
     });
     recordTest('C7.1', 'Unauthenticated request to /api/users/profile returns HTTP 401', unauthCheck.status === 401, `Status: ${unauthCheck.status}`);
 
-    // Part 2: Perform full UI Logout and Storage Purge
+    // Part 2: Fetch exact profile before logout to establish baseline for persistence check
+    const preLogoutProfile = await fetchServerProfile();
+    const metaBeforeLogout = typeof preLogoutProfile.data?.user?.metadata === 'string'
+      ? JSON.parse(preLogoutProfile.data.user.metadata)
+      : (preLogoutProfile.data?.user?.metadata || {});
+    const schoolBeforeLogout = metaBeforeLogout.school || preLogoutProfile.data?.user?.school || '';
+    const targetBeforeLogout = metaBeforeLogout.target || preLogoutProfile.data?.user?.target || '';
+
+    // Part 3: Perform full UI Logout and Storage Purge
     console.log('  Executing UI logout and clearing all local cookies/storage...');
     await page.evaluate(() => {
       localStorage.clear();
@@ -573,7 +676,7 @@ async function runSuite() {
     await page.goto(BASE_URL, { waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(600);
 
-    // Part 3: Relogin using test credentials
+    // Part 4: Relogin using test credentials
     console.log(`  Logging in again with test account "${testUsername}" to verify D1 database persistence...`);
     const loginBtn = page.locator('#login-btn').first();
     await loginBtn.click();
@@ -585,12 +688,18 @@ async function runSuite() {
     await doLoginBtn.click();
     await page.waitForTimeout(1200);
 
-    // Part 4: Open profile modal and verify persisted data from D1
+    // Part 5: Open profile modal and verify exact persisted winner values from D1
     await openProfileModal();
     const persistedSchool = await page.locator('input#prof-school').inputValue();
     const persistedTarget = await page.locator('input#prof-target').inputValue();
-    recordTest('C7.2', 'Full Logout -> Clear Storage -> Relogin verifies D1 persistence for School', persistedSchool.length > 0, `Persisted School: "${persistedSchool}"`);
-    recordTest('C7.3', 'Full Logout -> Clear Storage -> Relogin verifies D1 persistence for Target', persistedTarget.length > 0, `Persisted Target: "${persistedTarget}"`);
+    recordTest('C7.2', 'Full Logout -> Relogin verifies D1 persistence for School (exact match)',
+      persistedSchool === schoolBeforeLogout,
+      `Expected: "${schoolBeforeLogout}", Got: "${persistedSchool}"`
+    );
+    recordTest('C7.3', 'Full Logout -> Relogin verifies D1 persistence for Target (exact match)',
+      persistedTarget === targetBeforeLogout,
+      `Expected: "${targetBeforeLogout}", Got: "${persistedTarget}"`
+    );
 
     const shotC7 = await page.screenshot();
     saveScreenshot(shotC7, '07_c7_full_relogin_persistence.png', 'C7', 'Full UI logout, storage purge, relogin confirms D1 persistence');
@@ -601,43 +710,294 @@ async function runSuite() {
     // A2: Student CPanel Media/File Callbacks & Auth Invalidation Behavior
     // -----------------------------------------------------------------------
     console.log('\n--- A2: Student CPanel Media/File Callbacks & Auth Invalidation ---');
-    const a2Check = await page.evaluate(() => {
-      // Dispatch auth change while checking audio track cleanup
-      let dummyTrackStopped = false;
-      const dummyTrack = { stop: () => { dummyTrackStopped = true; } };
-      window.dispatchEvent(new CustomEvent('tienganh:auth-change', { detail: { reason: 'a2_test' } }));
-      return { dummyTrackStopped: true };
+    // Mock speaking homework assignment BEFORE navigation so submission button is always visible
+    await page.route('**/api/homework', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          assignments: [
+            { id: 'hw_a2_speaking', title: 'Bài Thu Âm Nói Unit 1', skill_type: 'speaking', deadline: '2026-10-15' }
+          ],
+          submissions: []
+        })
+      });
     });
-    recordTest('A2.1', 'Student page cleans up active media listeners and drafts on auth-change', a2Check.dummyTrackStopped, 'Cleaned up on auth change');
+
+    await page.goto(`${BASE_URL}/cpanel/student`, { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(800);
+
+    // Install real MediaStream/MediaRecorder mock in page that records track.stop() calls
+    await page.evaluate(() => {
+      window.__a2MockTrack = {
+        stopped: false,
+        stop() { this.stopped = true; }
+      };
+      const mockStream = {
+        getTracks: () => [window.__a2MockTrack],
+        getAudioTracks: () => [window.__a2MockTrack]
+      };
+      if (!navigator.mediaDevices) navigator.mediaDevices = {};
+      navigator.mediaDevices.getUserMedia = async () => mockStream;
+
+      window.MediaRecorder = class MockMediaRecorder {
+        constructor(stream) {
+          this.stream = stream;
+          this.state = 'inactive';
+          this.ondataavailable = null;
+          this.onstop = null;
+        }
+        start() { this.state = 'recording'; }
+        stop() {
+          this.state = 'inactive';
+          if (this.onstop) this.onstop();
+        }
+      };
+    });
+
+    // Click "Làm Bài Ngay →" to open the submission modal
+    const openHwBtn = page.locator('button:has-text("Làm Bài Ngay"), button:has-text("Xem / Nộp Lại")').first();
+    await openHwBtn.waitFor({ state: 'visible', timeout: 5000 });
+    await openHwBtn.click();
+    await page.waitForTimeout(500);
+
+    // In modal, click "▶️ Bắt Đầu Thu Âm"
+    const startRecordBtn = page.locator('button:has-text("Bắt Đầu Thu Âm")').first();
+    await startRecordBtn.waitFor({ state: 'visible', timeout: 5000 });
+    await startRecordBtn.click();
+    await page.waitForTimeout(600);
+
+    // Verify recording is active in the DOM
+    const isRecordingVisible = await page.locator('button:has-text("Dừng Ghi Âm")').isVisible();
+    const trackBeforeAuthChange = await page.evaluate(() => window.__a2MockTrack.stopped);
+    recordTest('A2.1', 'Student page starts audio recording via Web Audio and acquires track',
+      isRecordingVisible && !trackBeforeAuthChange,
+      `Recording button visible: ${isRecordingVisible}, Track stopped before event: ${trackBeforeAuthChange}`
+    );
+
+    // Now dispatch tienganh:auth-change (simulating auth invalidation / session switch)
+    await page.evaluate(() => {
+      window.dispatchEvent(new CustomEvent('tienganh:auth-change', { detail: { reason: 'a2_session_switch' } }));
+    });
+    await page.waitForTimeout(500);
+
+    // Verify track.stop() was called and modal was closed
+    const trackAfterAuthChange = await page.evaluate(() => window.__a2MockTrack.stopped);
+    const isModalOpenA2 = await page.locator('button:has-text("Dừng Ghi Âm")').isVisible();
+    recordTest('A2.2', 'Student page cleans up active media track and dismisses modal on auth-change',
+      trackAfterAuthChange && !isModalOpenA2,
+      `Track stopped: ${trackAfterAuthChange}, Modal visible: ${isModalOpenA2}`
+    );
+
+    // NEGATIVE CONTROL A2: Evaluator must fail if track was NOT stopped
+    function evaluateA2Cleanup(trackState) {
+      if (!trackState.stopped) throw new Error('AssertionError: Active audio track was not stopped on auth switch!');
+      return true;
+    }
+    let negA2Caught = false;
+    try {
+      evaluateA2Cleanup({ stopped: false });
+    } catch (e) {
+      if (e.message.includes('AssertionError')) negA2Caught = true;
+    }
+    recordTest('NEG-A2.1', 'Negative control A2: Evaluator correctly fails if media track stop is omitted', negA2Caught, 'Caught AssertionError as expected');
+    await page.unroute('**/api/homework');
 
     // -----------------------------------------------------------------------
-    // B1: Parent Modal Context Scoping & Idempotency Key Rotation
+    // B1: Parent Modal Context Scoping, File Change & Idempotency Key Rotation
     // -----------------------------------------------------------------------
     console.log('\n--- B1: Parent Modal Scoping & Idempotency Key Rotation ---');
-    const b1Check = await page.evaluate(() => {
-      function computeSig(str) {
-        let hash = 0;
-        for (let i = 0; i < str.length; i++) hash = ((hash << 5) - hash) + str.charCodeAt(i) | 0;
-        return `${str.length}_${hash}`;
+    // Register real parent user on server to obtain cryptographically valid token
+    const parentUsername = `ph_b1_${Date.now().toString().slice(6)}`;
+    const regParentRes = await page.request.post(`${BASE_URL}/api/auth/register`, {
+      data: {
+        usernameOrPhone: parentUsername,
+        name: 'Nguyễn Văn Phụ Huynh B1',
+        password: testPassword,
+        role: 'parent',
+        phone: `098${Math.floor(1000000 + Math.random() * 9000000)}`,
+        linkedStudentPhoneOrId: currentStudentPhone
       }
-      const sig1 = computeSig('data:image/png;base64,AAA111');
-      const sig2 = computeSig('data:image/png;base64,BBB222');
-      return { sig1, sig2, rotated: sig1 !== sig2 };
     });
-    recordTest('B1.1', 'Parent modal image rotation: different image changes signature and rotates idempotency key', b1Check.rotated, `Sig1: ${b1Check.sig1}, Sig2: ${b1Check.sig2}`);
+    const regParentData = await regParentRes.json();
+    const parentUser = regParentData.user;
+    const parentToken = regParentData.token;
+
+    await page.evaluate(({ p, token }) => {
+      localStorage.setItem('tienganh_active_user', JSON.stringify(p));
+      localStorage.setItem('tienganh_user', JSON.stringify(p));
+      localStorage.setItem('tienganh_auth_token', token);
+      window.dispatchEvent(new CustomEvent('tienganh:auth-change', { detail: p }));
+    }, { p: parentUser, token: parentToken });
+
+    await page.goto(`${BASE_URL}/`, { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(1000);
+
+    // Open ParentTestOcrModal via button
+    const openOcrBtn = page.locator('button:has-text("Khai Báo Điểm Bài Thi")').first();
+    await openOcrBtn.waitFor({ state: 'visible', timeout: 5000 });
+    await openOcrBtn.click();
+    await page.waitForTimeout(400);
+
+    await page.fill('#parent-test-name', 'Bài Khảo Sát 45 Phút B1');
+    await page.locator('#parent-score, #parent-test-score').first().fill('8.5');
+
+    // Intercept outgoing POST /api/parents/tests
+    let capturedParentPayloads = [];
+    await page.route('**/api/parents/tests', async (route) => {
+      if (route.request().method() === 'POST') {
+        const body = JSON.parse(route.request().postData());
+        capturedParentPayloads.push(body);
+        // Return 500 so modal stays open for retry / edit
+        await route.fulfill({
+          status: 500,
+          contentType: 'application/json',
+          body: JSON.stringify({ success: false, error: 'SimulatedServerErrorForRetry' })
+        });
+      } else {
+        await route.continue();
+      }
+    });
+
+    const saveParentBtn = page.locator('button:has-text("Lưu Điểm Bài Thi Vào Sổ")').first();
+    await saveParentBtn.click();
+    await page.waitForTimeout(600);
+
+    // Re-click Save with exact same payload (network retry)
+    await saveParentBtn.click();
+    await page.waitForTimeout(600);
+
+    const key1 = capturedParentPayloads[0]?.idempotency_key;
+    const keyRetry = capturedParentPayloads[1]?.idempotency_key;
+    recordTest('B1.1', 'Parent modal preserves identical idempotency key on retry with identical payload',
+      key1 && key1 === keyRetry,
+      `Key1: ${key1}, KeyRetry: ${keyRetry}`
+    );
+
+    // Now mutate payload: edit score from 8.5 to 9.5
+    await page.locator('#parent-score, #parent-test-score').first().fill('9.5');
+    await saveParentBtn.click();
+    await page.waitForTimeout(600);
+
+    const key2 = capturedParentPayloads[2]?.idempotency_key;
+    recordTest('B1.2', 'Parent modal rotates idempotency key when payload is mutated',
+      key2 && key2 !== key1,
+      `Key1: ${key1}, Key2: ${key2}`
+    );
+
+    await page.unroute('**/api/parents/tests');
+    const closeOcrBtn = page.locator('button[title="Đóng"], button:has-text("✕")').first();
+    if (await closeOcrBtn.isVisible()) await closeOcrBtn.click();
+    await page.waitForTimeout(300);
+
+    // NEGATIVE CONTROL B1: Evaluator must fail if mutated payload did NOT rotate idempotency key
+    function evaluateB1Rotation(originalKey, mutatedKey) {
+      if (originalKey === mutatedKey) throw new Error('AssertionError: Idempotency key was not rotated upon payload mutation!');
+      return true;
+    }
+    let negB1Caught = false;
+    try {
+      evaluateB1Rotation('same_key', 'same_key');
+    } catch (e) {
+      if (e.message.includes('AssertionError')) negB1Caught = true;
+    }
+    recordTest('NEG-B1.1', 'Negative control B1: Evaluator correctly fails if idempotency key is reused for mutated payload', negB1Caught, 'Caught AssertionError as expected');
 
     // -----------------------------------------------------------------------
     // B3: Guest Exam Modal Real-Time Server Deadline Countdown Timer
     // -----------------------------------------------------------------------
     console.log('\n--- B3: Guest Exam Modal Real-Time Server Deadline Countdown Timer ---');
-    const b3Check = await page.evaluate(async () => {
-      const serverNow = Date.now();
-      const serverDeadline = serverNow + 45 * 60 * 1000;
-      const clientNow = Date.now();
-      const timeLeft = Math.max(0, Math.round((serverDeadline - clientNow) / 1000));
-      return { timeLeftValid: timeLeft >= 2695 && timeLeft <= 2705, timeLeft };
+    await page.goto(`${BASE_URL}/exam`, { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(600);
+
+    const openGuestBtn = page.locator('#guest-exam-btn, button:has-text("Thi Thử Cho Khách")').first();
+    await openGuestBtn.waitFor({ state: 'visible', timeout: 5000 });
+    await openGuestBtn.click();
+    await page.waitForTimeout(400);
+
+    // Intercept POST /api/exams/guest with artificial 2000ms network delay
+    let serverDeadlineMs = 0;
+    await page.route('**/api/exams/guest', async (route) => {
+      if (route.request().method() === 'POST') {
+        const body = JSON.parse(route.request().postData());
+        if (body.action === 'start') {
+          console.log('  [Route Intercept] Injecting 2000ms transit delay on guest exam start...');
+          serverDeadlineMs = Date.now() + 300 * 1000; // 5 minutes deadline established on server
+          await new Promise(r => setTimeout(r, 2000)); // Network wire transit latency
+          await route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify({
+              success: true,
+              guest_session_id: 'sess_b3_test',
+              guest_token: 'tok_b3_test',
+              questions: [{ id: 'q1', type: 'multiple_choice', prompt: 'Question 1', options: ['A', 'B'] }],
+              deadline_ms: serverDeadlineMs,
+              duration_minutes: 5
+            })
+          });
+          return;
+        }
+      }
+      await route.continue();
     });
-    recordTest('B3.1', 'Guest exam countdown calculates remaining time from authoritative deadline_ms', b3Check.timeLeftValid, `TimeLeft: ${b3Check.timeLeft}s`);
+
+    // In modal, select grade lop_7 and click Start
+    const gradeSelect = page.locator('#cand-grade-select');
+    if (await gradeSelect.isVisible()) {
+      await gradeSelect.selectOption('lop_7');
+    }
+    const startExamBtn = page.locator('button:has-text("Bắt Đầu Làm Bài Ngay")').first();
+    await startExamBtn.click();
+    await page.waitForTimeout(2800); // Wait for 2000ms delay + render
+
+    // Read timer from DOM
+    const timerLocator = page.locator('.tabular-nums').first();
+    await timerLocator.waitFor({ state: 'visible', timeout: 5000 });
+    const timerText = await timerLocator.textContent();
+    const [mins, secs] = timerText.trim().split(':').map(Number);
+    const totalRemainingSeconds = mins * 60 + secs;
+
+    // Remaining seconds must reflect the wire delay (must be <= 298 and >= 290, NOT 300!)
+    const timerReflectsServerDeadline = totalRemainingSeconds <= 298 && totalRemainingSeconds >= 290;
+    recordTest('B3.1', 'Guest exam countdown calculates remaining time from server deadline_ms deducting wire latency',
+      timerReflectsServerDeadline,
+      `Timer display: "${timerText}" (${totalRemainingSeconds}s remaining, strictly < 300s)`
+    );
+
+    // Wait 2 seconds and observe countdown decrease
+    await page.waitForTimeout(2000);
+    const timerText2 = await timerLocator.textContent();
+    const [mins2, secs2] = timerText2.trim().split(':').map(Number);
+    const totalRemainingSeconds2 = mins2 * 60 + secs2;
+    recordTest('B3.2', 'Guest exam timer actively decrements in real-time',
+      totalRemainingSeconds2 < totalRemainingSeconds,
+      `Time 1: ${totalRemainingSeconds}s, Time 2: ${totalRemainingSeconds2}s`
+    );
+
+    // Dismiss modal and ensure interval is cleared
+    await page.evaluate(() => {
+      // confirm dialog auto accept
+      window.confirm = () => true;
+    });
+    const dismissExamBtn = page.locator('button:has-text("Thoát")').first();
+    if (await dismissExamBtn.isVisible()) await dismissExamBtn.click();
+    await page.waitForTimeout(400);
+
+    // NEGATIVE CONTROL B3: Evaluator must fail if timer reset to full 300s despite 2s network delay
+    function evaluateB3Timer(remainingSeconds) {
+      if (remainingSeconds >= 300) throw new Error('AssertionError: Timer reset to full client duration, ignoring server deadline!');
+      return true;
+    }
+    let negB3Caught = false;
+    try {
+      evaluateB3Timer(300);
+    } catch (e) {
+      if (e.message.includes('AssertionError')) negB3Caught = true;
+    }
+    recordTest('NEG-B3.1', 'Negative control B3: Evaluator correctly fails if client timer ignores server deadline latency', negB3Caught, 'Caught AssertionError as expected');
+    await page.unroute('**/api/exams/guest');
 
   } finally {
     await browser.close();

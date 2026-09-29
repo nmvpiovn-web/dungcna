@@ -154,6 +154,9 @@
         }
         if (res.ok) {
           const data = await res.json();
+          if (thisGen !== profileLoadGen || user.id !== activeActorId || !isOpen) {
+            return { success: false, error: 'Stale actor or modal closed' };
+          }
           if (data.success && data.user) {
             currentUser = data.user;
             profileVersion = data.profile_version || null;
@@ -210,20 +213,41 @@
   }
 
   async function handleReloadBaseline() {
-    const currentDraft = {
-      name, phone, email, avatar, school, target, zaloId, grade
-    };
+    const thisActorId = activeActorId;
+    const thisGen = profileLoadGen;
+
+    // Capture ONLY dirty diff relative to originalProfile BEFORE await
+    const dirtyDiff = {};
+    if (originalProfile) {
+      if (name !== (originalProfile.name ?? '')) dirtyDiff.name = name;
+      if (phone !== (originalProfile.phone ?? '')) dirtyDiff.phone = phone;
+      if (email !== (originalProfile.email ?? '')) dirtyDiff.email = email;
+      if (avatar !== (originalProfile.avatar ?? presetAvatars[0].url)) dirtyDiff.avatar = avatar;
+      if (school !== (originalProfile.school ?? '')) dirtyDiff.school = school;
+      if (target !== (originalProfile.target ?? '')) dirtyDiff.target = target;
+      const origZalo = originalProfile.zalo_id ?? originalProfile.zaloId ?? '';
+      if (zaloId !== origZalo) dirtyDiff.zaloId = zaloId;
+      if (grade !== (originalProfile.grade ?? '')) dirtyDiff.grade = grade;
+    }
+
     const res = await loadProfileData({ isInitial: false });
+
+    // Guard actor and modal state after await (loadProfileData itself guards generation internally)
+    if (thisActorId !== activeActorId || !isOpen) {
+      return;
+    }
+
     if (res.success) {
-      // Re-apply dirty fields on top of the newly loaded server baseline
-      if (currentDraft.name !== undefined) name = currentDraft.name;
-      if (currentDraft.phone !== undefined) phone = currentDraft.phone;
-      if (currentDraft.email !== undefined) email = currentDraft.email;
-      if (currentDraft.avatar !== undefined) avatar = currentDraft.avatar;
-      if (currentDraft.school !== undefined) school = currentDraft.school;
-      if (currentDraft.target !== undefined) target = currentDraft.target;
-      if (currentDraft.zaloId !== undefined) zaloId = currentDraft.zaloId;
-      if (currentDraft.grade !== undefined) grade = currentDraft.grade;
+      // Re-apply ONLY the dirty diff fields on top of the newly loaded server baseline.
+      // Fields not modified by this user remain strictly as loaded from server baseline (no lost-update).
+      if ('name' in dirtyDiff) name = dirtyDiff.name;
+      if ('phone' in dirtyDiff) phone = dirtyDiff.phone;
+      if ('email' in dirtyDiff) email = dirtyDiff.email;
+      if ('avatar' in dirtyDiff) avatar = dirtyDiff.avatar;
+      if ('school' in dirtyDiff) school = dirtyDiff.school;
+      if ('target' in dirtyDiff) target = dirtyDiff.target;
+      if ('zaloId' in dirtyDiff) zaloId = dirtyDiff.zaloId;
+      if ('grade' in dirtyDiff) grade = dirtyDiff.grade;
 
       statusMessage = '✅ Đã tải bản mới nhất từ máy chủ thành công. Bản nháp của bạn đã được đối soát; bạn có thể bấm Lưu.';
       baselineFetchFailed = false;

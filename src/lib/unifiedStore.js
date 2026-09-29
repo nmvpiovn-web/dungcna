@@ -507,7 +507,7 @@ export function isCurriculumEnrolled(user, curriculum) {
   const title = (curriculum.title || '').toLowerCase();
 
   return enrolled.some(enr => {
-    const clean = enr.toLowerCase().trim();
+    const clean = String(enr || '').toLowerCase().trim();
     // Match grade number (e.g., 'lớp 7' -> 'grade-7', 'lớp 7')
     const match = clean.match(/lớp\s*([0-9]+)/i) || clean.match(/grade-?([0-9]+)/i);
     if (match) {
