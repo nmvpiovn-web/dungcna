@@ -1191,8 +1191,9 @@ async function runSuite() {
     await page.unroute('**/api/homework');
 
     // -----------------------------------------------------------------------
-    // A2-EXT.3b: onstop fires and creates FileReader; actor switches WHILE FileReader is pending
-    //            FileReader.onloadend guard (startGen/actorId check) prevents data assignment to new session
+    // A2-EXT.3b: onstop creates FileReader; Actor B opens a fresh modal before
+    //             Actor A's FileReader completes. Releasing A must not replace
+    //             B's sentinel audio or close B's modal.
     // -----------------------------------------------------------------------
     await page.route('**/api/homework', async (route) => {
       await route.fulfill({
@@ -1201,7 +1202,12 @@ async function runSuite() {
         body: JSON.stringify({
           success: true,
           assignments: [
-            { id: 'hw_a2ext3b', title: 'Bài Thu Âm A2-EXT3b', skill_type: 'speaking', deadline: '2026-10-15' }
+            {
+              id: 'hw_a2ext3b',
+              title: 'Bài Thu Âm A2-EXT3b',
+              skill_type: 'speaking',
+              deadline: '2026-10-15'
+            }
           ],
           submissions: []
         })
@@ -1211,10 +1217,12 @@ async function runSuite() {
     await page.goto(`${BASE_URL}/cpanel/student`, { waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(800);
 
-    // Mock: onstop fires quickly (200ms), but FileReader.onloadend fires after 800ms (very slow encoding)
-    // auth-change happens AFTER onstop but BEFORE FileReader completes
+    // Mock: onstop fires quickly, then FileReader waits on an explicit barrier.
+    // This proves the old callback actually completes after Actor B is active.
     await page.evaluate(() => {
-      window.__a2ext3bAudioAssigned = false; // true if recordedAudioUrl was set with actor A's data
+      window.__a2ext3bReaderCreated = false;
+      window.__a2ext3bReaderCompleted = false;
+      window.__a2ext3bReleaseReader = null;
 
       const mockTrack3b = { stopped: false, stop() { this.stopped = true; } };
       const mockStream3b = {
@@ -1238,19 +1246,19 @@ async function runSuite() {
         }
       };
 
-      // FileReader with 800ms delay before onloadend
+      // FileReader controlled by the test barrier.
       window.FileReader = class SlowEncodeFR {
         constructor() {
           this.onloadend = null;
           this.result = null;
         }
         readAsDataURL(blob) {
-          const self = this;
-          setTimeout(() => {
-            self.result = 'data:audio/webm;base64,ACTOR_A_AUDIO_DATA_SHOULD_NOT_LEAK';
-            // Check if page tracks assignment (we'll check via DOM state, not window)
-            if (self.onloadend) self.onloadend();
-          }, 800);
+          window.__a2ext3bReaderCreated = true;
+          window.__a2ext3bReleaseReader = () => {
+            this.result = 'data:audio/webm;base64,ACTOR_A_AUDIO_DATA_SHOULD_NOT_LEAK';
+            window.__a2ext3bReaderCompleted = true;
+            this.onloadend?.();
+          };
         }
       };
     });
@@ -1271,26 +1279,37 @@ async function runSuite() {
       await a2ext3bStopBtn.click();
     }
 
-    // Wait for onstop to fire (200ms) + a bit
-    await page.waitForTimeout(350);
+    await page.waitForFunction(() => window.__a2ext3bReaderCreated === true, null, { timeout: 3000 });
 
-    // NOW fire auth-change: onstop has run and created FileReader, but onloadend hasn't fired yet
-    await page.evaluate(() => {
-      window.dispatchEvent(new CustomEvent('tienganh:auth-change', { detail: { reason: 'a2ext3b_switch_after_onstop_before_onloadend' } }));
-    });
+    // Close Session A and immediately open a fresh Session B for the same
+    // assignment in the same document while A's FileReader is pending.
+    await page.locator('button:has-text("Hủy")').first().click();
+    await page.waitForTimeout(100);
 
-    // Wait for SlowEncodeFR to complete (800ms from onstop = ~600ms from now)
-    await page.waitForTimeout(900);
+    const a2ext3bActorBHwBtn = page.locator('button:has-text("Làm Bài Ngay"), button:has-text("Xem / Nộp Lại")').first();
+    await a2ext3bActorBHwBtn.waitFor({ state: 'visible', timeout: 5000 });
+    await a2ext3bActorBHwBtn.click();
+    const sessionBNotes = 'SESSION_B_SENTINEL_NOTES';
+    await page.fill('#speaking-notes-input', sessionBNotes);
+    const sessionBModalOpenBefore = await page.locator('button:has-text("Nộp Bài Cho Cô Giáo")').isVisible();
+    const sessionBAudioBefore = await page.locator('audio').count();
 
-    // After FileReader completes: since authGeneration was incremented (auth-change fired),
-    // the onloadend guard (startGen !== authGeneration) should prevent recordedAudioUrl assignment.
-    // Verify: modal should be closed (auth-change closes it), no "audio ready" UI element visible.
-    const a2ext3bModalVisible = await page.locator('button:has-text("Dừng Ghi Âm")').isVisible();
-    // Check that no audio playback element appeared (recordedAudioUrl not set for new session)
-    const a2ext3bAudioPlayerVisible = await page.locator('audio').isVisible().catch(() => false);
-    recordTest('A2-EXT.3b', 'Delayed FileReader onloadend (after actor switch) does not assign Actor A audio to new session — modal closed, no audio player leak',
-      !a2ext3bModalVisible && !a2ext3bAudioPlayerVisible,
-      `Modal visible: ${a2ext3bModalVisible}, Audio player visible: ${a2ext3bAudioPlayerVisible}`
+    // Complete Session A's old FileReader only after Session B's modal is active.
+    await page.evaluate(() => window.__a2ext3bReleaseReader?.());
+    await page.waitForFunction(() => window.__a2ext3bReaderCompleted === true, null, { timeout: 3000 });
+    await page.waitForTimeout(100);
+
+    const actorBModalStillOpen = await page.locator('button:has-text("Nộp Bài Cho Cô Giáo")').isVisible();
+    const sessionBNotesAfter = await page.locator('#speaking-notes-input').inputValue();
+    const sessionBAudioAfter = await page.locator('audio').count();
+    const a2ext3bPass = sessionBModalOpenBefore
+      && actorBModalStillOpen
+      && sessionBNotesAfter === sessionBNotes
+      && sessionBAudioBefore === 0
+      && sessionBAudioAfter === 0;
+    recordTest('A2-EXT.3b', 'Session A delayed FileReader completion cannot overwrite fresh Session B modal/audio state',
+      a2ext3bPass,
+      `Reader completed: true, B modal open: ${actorBModalStillOpen}, B notes intact: ${sessionBNotesAfter === sessionBNotes}, Audio leaked: ${sessionBAudioAfter > 0}`
     );
 
     await page.unroute('**/api/homework');
@@ -1444,15 +1463,18 @@ async function runSuite() {
     const b1ext2ModalHeader = await page.locator('h2').first().textContent().catch(() => '');
     console.log(`  B1-EXT.2 Modal header: "${b1ext2ModalHeader}"`);
 
-    // Track POST payloads with 2500ms delay
+    // Hold the old A POST behind an explicit barrier.
     let b1ext2Payloads = [];
-    let b1ext2OnSavedCalled = false;
+    let b1ext2ReleaseOldPost;
+    let b1ext2MarkRequestSeen;
+    const b1ext2OldPostBarrier = new Promise(resolve => { b1ext2ReleaseOldPost = resolve; });
+    const b1ext2RequestSeen = new Promise(resolve => { b1ext2MarkRequestSeen = resolve; });
     await page.route('**/api/parents/tests', async (route) => {
       if (route.request().method() === 'POST') {
         const body = JSON.parse(route.request().postData());
         b1ext2Payloads.push({ ...body, _captured_at: Date.now() });
-        // Hold 2500ms (POST A is in-flight)
-        await new Promise(r => setTimeout(r, 2500));
+        b1ext2MarkRequestSeen?.();
+        await b1ext2OldPostBarrier;
         await route.fulfill({
           status: 200,
           contentType: 'application/json',
@@ -1463,43 +1485,56 @@ async function runSuite() {
       }
     });
 
-    // Fire POST (in-flight, 2500ms delay)
+    // Fire POST A_old and wait until the route barrier has captured it.
     const b1ext2SaveBtn = page.locator('button:has-text("Lưu Điểm Bài Thi Vào Sổ")').first();
     b1ext2SaveBtn.click(); // fire-and-forget
-    await page.waitForTimeout(300); // let network capture it
+    await b1ext2RequestSeen;
+    const studentAId = b1ext2Payloads[0]?.student_id;
 
-    // NOW switch linkedChild to studentB IN SAME DOCUMENT (no page.goto):
-    // Modify parent's localStorage to set linked_student_id = studentB.id
-    // then dispatch auth-change so +page.svelte re-derives linkedChild = studentB
-    await page.evaluate(({ parentUser, studentBId }) => {
-      // Update parent's metadata to link to studentB
-      const updatedParent = {
-        ...parentUser,
-        metadata: JSON.stringify({ linked_student_id: studentBId })
-      };
-      localStorage.setItem('tienganh_active_user', JSON.stringify(updatedParent));
-      localStorage.setItem('tienganh_user', JSON.stringify(updatedParent));
-      // Re-dispatch auth-change so Svelte reactivity updates linkedChild
-      window.dispatchEvent(new CustomEvent('tienganh:auth-change', { detail: updatedParent }));
-    }, { parentUser: parentUserExt, studentBId: studentBUser?.id || 'student_b_id' });
-    await page.waitForTimeout(200);
+    // Change only the child prop in the same parent actor and same document.
+    // No auth-change is dispatched: this exercises ParentTestOcrModal's student
+    // $effect/resetForm generation invalidation directly.
+    await page.evaluate((studentB) => {
+      window.dispatchEvent(new CustomEvent('tienganh:linked-child-change', {
+        detail: { student: studentB }
+      }));
+    }, studentBUser);
+    await page.waitForTimeout(150);
 
-    // Modal should now be closed (student changed → modal invalidated)
-    const b1ext2ModalOpenAfterStudentSwitch = await page.locator('#parent-test-name').isVisible();
-    recordTest('B1-EXT.2a', 'B1-EXT.2: Modal closes on same-document linkedChild switch while POST is pending',
-      !b1ext2ModalOpenAfterStudentSwitch,
-      `Modal visible after student switch: ${b1ext2ModalOpenAfterStudentSwitch}`
+    const b1ext2InputAfterB = page.locator('#parent-test-name');
+    const b1ext2ModalOpenOnB = await b1ext2InputAfterB.isVisible();
+    const b1ext2ValueOnB = b1ext2ModalOpenOnB ? await b1ext2InputAfterB.inputValue() : '__missing__';
+    const b1ext2HeaderOnB = await page.locator('h2:has-text("Khai Báo Điểm Bài Thi")').textContent().catch(() => '');
+    recordTest('B1-EXT.2a', 'B1-EXT.2: Student prop A→B resets the open modal without auth-change or document reload',
+      b1ext2ModalOpenOnB && b1ext2ValueOnB === '' && b1ext2HeaderOnB.includes(studentBUser?.name || 'Học Sinh B'),
+      `Modal open: ${b1ext2ModalOpenOnB}, Value reset: ${b1ext2ValueOnB === ''}, Header: ${b1ext2HeaderOnB}`
     );
 
-    // Wait for the stale POST A response to arrive
-    await page.waitForTimeout(2500);
+    // Switch B→A while the original A_old POST is still pending, then create a
+    // fresh A_new draft that must survive the stale response.
+    const studentAForProp = { id: studentAId, name: 'Học Sinh A (Phiên Mới)' };
+    await page.evaluate((studentA) => {
+      window.dispatchEvent(new CustomEvent('tienganh:linked-child-change', {
+        detail: { student: studentA }
+      }));
+    }, studentAForProp);
+    await page.waitForTimeout(150);
 
-    // The stale response's `onSaved` must NOT have been called, modal must NOT have re-opened,
-    // and the form data from Session A must NOT be written (modal did not reopen with stale data)
-    const b1ext2ModalReopened = await page.locator('#parent-test-name').isVisible();
-    recordTest('B1-EXT.2b', 'B1-EXT.2: Stale POST response for studentA does NOT reopen modal when linkedChild is now studentB (student.id !== targetStudentId guard)',
-      !b1ext2ModalReopened,
-      `Modal visible after stale response: ${b1ext2ModalReopened}`
+    const freshADraft = 'A_NEW_DRAFT_MUST_SURVIVE_STALE_RESPONSE';
+    await page.fill('#parent-test-name', freshADraft);
+    await page.locator('#parent-score, #parent-test-score').first().fill('9.25');
+
+    b1ext2ReleaseOldPost?.();
+    await page.waitForTimeout(400);
+
+    const b1ext2ModalStillOpen = await page.locator('#parent-test-name').isVisible();
+    const b1ext2FreshValue = b1ext2ModalStillOpen
+      ? await page.locator('#parent-test-name').inputValue()
+      : '__modal_closed__';
+    const b1ext2HeaderBackOnA = await page.locator('h2:has-text("Khai Báo Điểm Bài Thi")').textContent().catch(() => '');
+    recordTest('B1-EXT.2b', 'B1-EXT.2: A_old stale POST cannot close or overwrite the fresh A_new form after A→B→A prop changes',
+      b1ext2ModalStillOpen && b1ext2FreshValue === freshADraft && b1ext2HeaderBackOnA.includes('Học Sinh A (Phiên Mới)'),
+      `Modal open: ${b1ext2ModalStillOpen}, Fresh draft intact: ${b1ext2FreshValue === freshADraft}, Header: ${b1ext2HeaderBackOnA}`
     );
 
     await page.unroute('**/api/parents/tests');

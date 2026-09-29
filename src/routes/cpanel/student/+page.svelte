@@ -41,9 +41,11 @@
 
   let loadSequence = 0;
   let authGeneration = 0;
+  let submitGeneration = 0;
 
   function handleAuthChange(event) {
     authGeneration += 1;
+    submitGeneration += 1;
 
     // Immediately close submit modal and purge drafts scoped to previous actor
     showSubmitModal = false;
@@ -146,6 +148,7 @@
   });
 
   function openSubmitModal(assignment) {
+    submitGeneration += 1;
     selectedAssignment = assignment;
     const existing = assignment.submission;
     if (existing) {
@@ -163,6 +166,13 @@
     showSubmitModal = true;
   }
 
+  function closeSubmitModal() {
+    submitGeneration += 1;
+    showSubmitModal = false;
+    isSubmitting = false;
+    stopRecording();
+  }
+
   function openWorksheetPrint(assignment) {
     worksheetToPrint = assignment;
     showWorksheetPrintModal = true;
@@ -178,10 +188,11 @@
     const file = e.target.files?.[0];
     if (!file) return;
     const currentGen = authGeneration;
+    const currentSubmitGen = submitGeneration;
     const currentActorId = currentUser?.id;
     const reader = new FileReader();
     reader.onload = (event) => {
-      if (currentGen !== authGeneration || currentActorId !== getCurrentUser()?.id || !showSubmitModal) {
+      if (currentGen !== authGeneration || currentSubmitGen !== submitGeneration || currentActorId !== getCurrentUser()?.id || !showSubmitModal) {
         return;
       }
       handwrittenPhotoUrl = event.target?.result || null;
@@ -192,29 +203,30 @@
   // MediaRecorder functions
   async function startRecording() {
     const startGen = authGeneration;
+    const startSubmitGen = submitGeneration;
     const startActorId = currentUser?.id;
     audioChunks = [];
     recordedAudioUrl = null;
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      if (startGen !== authGeneration || startActorId !== getCurrentUser()?.id || !showSubmitModal) {
+      if (startGen !== authGeneration || startSubmitGen !== submitGeneration || startActorId !== getCurrentUser()?.id || !showSubmitModal) {
         stream.getTracks().forEach(t => t.stop());
         return;
       }
       mediaRecorder = new MediaRecorder(stream);
       mediaRecorder.ondataavailable = (e) => {
-        if (startGen !== authGeneration || startActorId !== getCurrentUser()?.id) return;
+        if (startGen !== authGeneration || startSubmitGen !== submitGeneration || startActorId !== getCurrentUser()?.id) return;
         if (e.data.size > 0) audioChunks.push(e.data);
       };
       mediaRecorder.onstop = () => {
-        if (startGen !== authGeneration || startActorId !== getCurrentUser()?.id || !showSubmitModal) {
+        if (startGen !== authGeneration || startSubmitGen !== submitGeneration || startActorId !== getCurrentUser()?.id || !showSubmitModal) {
           audioChunks = [];
           return;
         }
         const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
         const reader = new FileReader();
         reader.onloadend = () => {
-          if (startGen !== authGeneration || startActorId !== getCurrentUser()?.id || !showSubmitModal) {
+          if (startGen !== authGeneration || startSubmitGen !== submitGeneration || startActorId !== getCurrentUser()?.id || !showSubmitModal) {
             return;
           }
           recordedAudioUrl = reader.result;
@@ -230,14 +242,14 @@
       recordingSeconds = 0;
       clearInterval(recordingTimer);
       recordingTimer = setInterval(() => {
-        if (startGen !== authGeneration || startActorId !== getCurrentUser()?.id || !showSubmitModal) {
+        if (startGen !== authGeneration || startSubmitGen !== submitGeneration || startActorId !== getCurrentUser()?.id || !showSubmitModal) {
           clearInterval(recordingTimer);
           return;
         }
         recordingSeconds += 1;
       }, 1000);
     } catch (err) {
-      if (startGen === authGeneration && startActorId === getCurrentUser()?.id && showSubmitModal) {
+      if (startGen === authGeneration && startSubmitGen === submitGeneration && startActorId === getCurrentUser()?.id && showSubmitModal) {
         alert('Không thể truy cập microphone. Vui lòng cấp quyền micro trên trình duyệt của bạn!');
       }
     }
@@ -265,6 +277,7 @@
   }
 
   onDestroy(() => {
+    submitGeneration += 1;
     if (typeof window !== 'undefined') {
       window.removeEventListener('tienganh:auth-change', handleAuthChange);
     }
@@ -284,6 +297,7 @@
   async function submitHomework() {
     if (!selectedAssignment) return;
     const currentGen = authGeneration;
+    const currentSubmitGen = submitGeneration;
     const submitActorId = currentUser?.id;
 
     isSubmitting = true;
@@ -309,14 +323,14 @@
         body: JSON.stringify(payload)
       });
       const data = await res.json();
-      if (currentGen !== authGeneration || submitActorId !== getCurrentUser()?.id) return;
+      if (currentGen !== authGeneration || currentSubmitGen !== submitGeneration || submitActorId !== getCurrentUser()?.id) return;
 
       if (data.success) {
         submitMessage = data.message;
         playAudioFeedback(true);
         setTimeout(() => {
-          if (currentGen === authGeneration && submitActorId === getCurrentUser()?.id) {
-            showSubmitModal = false;
+          if (currentGen === authGeneration && currentSubmitGen === submitGeneration && submitActorId === getCurrentUser()?.id) {
+            closeSubmitModal();
             loadData();
           }
         }, 1500);
@@ -324,10 +338,10 @@
         submitMessage = data.error || 'Nộp bài thất bại';
       }
     } catch (e) {
-      if (currentGen !== authGeneration || submitActorId !== getCurrentUser()?.id) return;
+      if (currentGen !== authGeneration || currentSubmitGen !== submitGeneration || submitActorId !== getCurrentUser()?.id) return;
       submitMessage = 'Lỗi kết nối server: ' + e.message;
     } finally {
-      if (currentGen === authGeneration && submitActorId === getCurrentUser()?.id) {
+      if (currentGen === authGeneration && currentSubmitGen === submitGeneration && submitActorId === getCurrentUser()?.id) {
         isSubmitting = false;
       }
     }
@@ -545,7 +559,7 @@
           <h2 class="text-lg font-bold text-slate-900 dark:text-white mt-0.5">{selectedAssignment.title}</h2>
         </div>
         <button 
-          onclick={() => showSubmitModal = false}
+          onclick={closeSubmitModal}
           class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-900 flex items-center justify-center font-bold"
         >
           ✕
@@ -730,7 +744,7 @@
       <!-- Modal Footer -->
       <div class="p-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-2 bg-slate-50 dark:bg-slate-800/40">
         <button 
-          onclick={() => showSubmitModal = false}
+          onclick={closeSubmitModal}
           class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-200"
         >
           Hủy

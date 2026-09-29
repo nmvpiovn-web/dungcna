@@ -149,11 +149,26 @@
       }
     };
 
+    // Keep the parent actor/session intact while changing the child context.
+    // Family UI controls can dispatch this event after the server has returned a
+    // verified child. ParentTestOcrModal receives a real `student` prop change,
+    // which invalidates pending reads/saves without abusing auth-change.
+    const handleLinkedChildChange = (event) => {
+      const nextChild = event?.detail?.student;
+      if (currentUser?.role !== 'parent' || !nextChild?.id) return;
+      ++recordsRequest;
+      parentTestRecords = [];
+      recordsError = '';
+      linkedChild = nextChild;
+    };
+
     window.addEventListener('tienganh:auth-change', handleAuth);
     window.addEventListener('tienganh:parent-records-change', handleRecordsUpdate);
+    window.addEventListener('tienganh:linked-child-change', handleLinkedChildChange);
     return () => {
       window.removeEventListener('tienganh:auth-change', handleAuth);
       window.removeEventListener('tienganh:parent-records-change', handleRecordsUpdate);
+      window.removeEventListener('tienganh:linked-child-change', handleLinkedChildChange);
     };
   });
 
@@ -347,7 +362,7 @@
               </h3>
             </div>
             <p class="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
-              Phụ huynh có thể chụp ảnh bài thi giấy trên lớp để hệ thống tự động nhận diện điểm số hoặc nhập thủ công.
+              Phụ huynh có thể nhập điểm thủ công và đính kèm ảnh bài thi để tham khảo. Dữ liệu này ở trạng thái chưa xác thực.
             </p>
           </div>
 

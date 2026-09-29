@@ -131,6 +131,7 @@ describe('Dot 29 Directive Remediation: A2, B1, B2, B3, C (Codex 2026-09-29)', (
 
       assert.match(content, /tienganh:auth-change/, 'Must listen to auth change event');
       assert.match(content, /authGeneration/, 'Must track authGeneration integer sequence');
+      assert.match(content, /submitGeneration/, 'Must track submission modal generation separately');
       assert.match(content, /showSubmitModal\s*=\s*false/, 'Must close submit modal upon auth switch');
       assert.match(content, /selectedAssignment\s*=\s*null/, 'Must purge selected assignment upon auth switch');
       assert.match(content, /writingContent\s*=\s*''/, 'Must purge writing draft upon auth switch');
@@ -139,9 +140,9 @@ describe('Dot 29 Directive Remediation: A2, B1, B2, B3, C (Codex 2026-09-29)', (
       assert.match(content, /if\s*\(\s*currentGen\s*!==\s*authGeneration/, 'Must guard in-flight responses with generation check');
 
       // Check media and file upload callback guards
-      assert.match(content, /currentGen\s*!==\s*authGeneration\s*\|\|\s*currentActorId\s*!==\s*getCurrentUser\(\)\?\.id/, 'Photo upload reader must check authGeneration and actor');
+      assert.match(content, /currentGen\s*!==\s*authGeneration\s*\|\|\s*currentSubmitGen\s*!==\s*submitGeneration\s*\|\|\s*currentActorId\s*!==\s*getCurrentUser\(\)\?\.id/, 'Photo upload reader must check auth, modal generation and actor');
       assert.match(content, /stream\.getTracks\(\)\.forEach\(t\s*=>\s*t\.stop\(\)\)/, 'Late getUserMedia stream must stop tracks immediately when stale');
-      assert.match(content, /startGen\s*!==\s*authGeneration\s*\|\|\s*startActorId\s*!==\s*getCurrentUser\(\)\?\.id/, 'Audio onstop & reader must check startGen and actor');
+      assert.match(content, /startGen\s*!==\s*authGeneration\s*\|\|\s*startSubmitGen\s*!==\s*submitGeneration\s*\|\|\s*startActorId\s*!==\s*getCurrentUser\(\)\?\.id/, 'Audio callbacks must check auth, modal generation and actor');
     });
   });
 
