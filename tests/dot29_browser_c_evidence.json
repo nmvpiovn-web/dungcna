@@ -1,9 +1,9 @@
 {
   "suite": "dot29_complete_audit_remediation_browser_e2e",
-  "timestamp": "2026-09-29T04:10:26.864Z",
+  "timestamp": "2026-09-29T05:21:10.575Z",
   "environment": "http://127.0.0.1:4173",
-  "total_assertions": 57,
-  "passed_assertions": 57,
+  "total_assertions": 62,
+  "passed_assertions": 62,
   "failed_assertions": 0,
   "results": [
     {
@@ -12,7 +12,7 @@
       "name": "Runtime target build_meta verification",
       "pass": true,
       "detail": "Commit: babc64cb415f, Identity: build_babc64c_1790652183486",
-      "timestamp": "2026-09-29T04:08:55.570Z"
+      "timestamp": "2026-09-29T05:19:51.132Z"
     },
     {
       "id": "STEP-0.1",
@@ -20,7 +20,7 @@
       "name": "Student registered and auth token stored",
       "pass": true,
       "detail": "Token present: true",
-      "timestamp": "2026-09-29T04:09:04.952Z"
+      "timestamp": "2026-09-29T05:19:57.340Z"
     },
     {
       "id": "C1.1",
@@ -28,7 +28,7 @@
       "name": "Session B updates target successfully (N -> N+1)",
       "pass": true,
       "detail": "Status: 200, Version: 2",
-      "timestamp": "2026-09-29T04:09:06.635Z"
+      "timestamp": "2026-09-29T05:19:58.506Z"
     },
     {
       "id": "C1.2",
@@ -36,7 +36,7 @@
       "name": "Session A save with stale version returns HTTP 409 ConcurrencyConflict",
       "pass": true,
       "detail": "HTTP Status: 409",
-      "timestamp": "2026-09-29T04:09:06.848Z"
+      "timestamp": "2026-09-29T05:19:58.605Z"
     },
     {
       "id": "C1.3",
@@ -44,7 +44,7 @@
       "name": "Session A draft school input is strictly preserved after 409 conflict",
       "pass": true,
       "detail": "Current value: \"THCS Chu Văn An - Hà Nội (Bản Nháp A)\"",
-      "timestamp": "2026-09-29T04:09:07.886Z"
+      "timestamp": "2026-09-29T05:19:59.626Z"
     },
     {
       "id": "C1.4",
@@ -52,7 +52,7 @@
       "name": "Session B updated target is displayed after server baseline refresh",
       "pass": true,
       "detail": "Current target: \"Chinh phục IELTS 7.5 Academic (Session B)\"",
-      "timestamp": "2026-09-29T04:09:07.886Z"
+      "timestamp": "2026-09-29T05:19:59.626Z"
     },
     {
       "id": "C1.5",
@@ -60,7 +60,7 @@
       "name": "Conflict notice banner is displayed to user",
       "pass": true,
       "detail": "⚠️ Hồ sơ đã được cập nhật bởi phiên khác. Các chỉnh sửa của bạn được giữ lại; vui lòng đối chiếu và nhấn Lưu nếu muốn áp dụng.",
-      "timestamp": "2026-09-29T04:09:07.897Z"
+      "timestamp": "2026-09-29T05:19:59.628Z"
     },
     {
       "id": "C1.6",
@@ -68,7 +68,7 @@
       "name": "Modal remains open for explicit user review and retry",
       "pass": true,
       "detail": "Modal visible: true",
-      "timestamp": "2026-09-29T04:09:07.904Z"
+      "timestamp": "2026-09-29T05:19:59.630Z"
     },
     {
       "id": "NEG-C.1",
@@ -76,7 +76,7 @@
       "name": "Negative control validator correctly detects corrupted draft on DOM and flags violation",
       "pass": true,
       "detail": "Evaluator caught assertion failure as expected",
-      "timestamp": "2026-09-29T04:09:08.241Z"
+      "timestamp": "2026-09-29T05:19:59.723Z"
     },
     {
       "id": "C2.1",
@@ -84,7 +84,7 @@
       "name": "DB does NOT have draft school before user explicitly retries (no auto-retry)",
       "pass": true,
       "detail": "DB School before retry: \"\"",
-      "timestamp": "2026-09-29T04:09:08.336Z"
+      "timestamp": "2026-09-29T05:19:59.760Z"
     },
     {
       "id": "C2.2",
@@ -92,7 +92,7 @@
       "name": "Explicit retry succeeds with HTTP 200 and version advance",
       "pass": true,
       "detail": "HTTP 200, Version: 3",
-      "timestamp": "2026-09-29T04:09:08.556Z"
+      "timestamp": "2026-09-29T05:19:59.838Z"
     },
     {
       "id": "C2.3",
@@ -100,7 +100,7 @@
       "name": "Reload confirmed: School from A is persisted in DB",
       "pass": true,
       "detail": "DB School: \"THCS Chu Văn An - Hà Nội (Bản Nháp A)\"",
-      "timestamp": "2026-09-29T04:09:10.393Z"
+      "timestamp": "2026-09-29T05:20:01.004Z"
     },
     {
       "id": "C2.4",
@@ -108,7 +108,7 @@
       "name": "Reload confirmed: Target from B is persisted in DB",
       "pass": true,
       "detail": "DB Target: \"Chinh phục IELTS 7.5 Academic (Session B)\"",
-      "timestamp": "2026-09-29T04:09:10.393Z"
+      "timestamp": "2026-09-29T05:20:01.005Z"
     },
     {
       "id": "C2.5",
@@ -116,7 +116,7 @@
       "name": "Reload confirmed: profile_version advanced sequentially to N+2",
       "pass": true,
       "detail": "Final Version: 3",
-      "timestamp": "2026-09-29T04:09:10.393Z"
+      "timestamp": "2026-09-29T05:20:01.005Z"
     },
     {
       "id": "C3.1",
@@ -124,7 +124,7 @@
       "name": "Session B concurrently updates same field (target)",
       "pass": true,
       "detail": "HTTP 200, Version: 4",
-      "timestamp": "2026-09-29T04:09:11.973Z"
+      "timestamp": "2026-09-29T05:20:02.166Z"
     },
     {
       "id": "C3.2",
@@ -132,7 +132,7 @@
       "name": "Same-field conflict: Tab A draft target is kept in input for review, not overwritten by Session B",
       "pass": true,
       "detail": "Current DOM value: \"Target A: Chuyên Ngoại Ngữ 2026\"",
-      "timestamp": "2026-09-29T04:09:13.189Z"
+      "timestamp": "2026-09-29T05:20:03.285Z"
     },
     {
       "id": "C4.0",
@@ -140,7 +140,7 @@
       "name": "Session B updates target concurrently to advance server version",
       "pass": true,
       "detail": "HTTP 200, New Version: 5",
-      "timestamp": "2026-09-29T04:09:15.257Z"
+      "timestamp": "2026-09-29T05:20:04.835Z"
     },
     {
       "id": "C4.1",
@@ -148,7 +148,7 @@
       "name": "Banner explicitly states conflict occurred and refresh failed without claiming sync",
       "pass": true,
       "detail": "⚠️ Xung đột phiên xảy ra, nhưng không thể tải bản mới nhất từ máy chủ (Máy chủ phản hồi HTTP 503). Bản nháp chỉnh sửa của bạn vẫn được giữ nguyên. Vui lòng kiểm tra lại kết nối và thử lại.",
-      "timestamp": "2026-09-29T04:09:16.999Z"
+      "timestamp": "2026-09-29T05:20:06.206Z"
     },
     {
       "id": "C4.2",
@@ -156,7 +156,7 @@
       "name": "Banner does NOT display fake success or fake synchronization claim",
       "pass": true,
       "detail": "⚠️ Xung đột phiên xảy ra, nhưng không thể tải bản mới nhất từ máy chủ (Máy chủ phản hồi HTTP 503). Bản nháp chỉnh sửa của bạn vẫn được giữ nguyên. Vui lòng kiểm tra lại kết nối và thử lại.",
-      "timestamp": "2026-09-29T04:09:16.999Z"
+      "timestamp": "2026-09-29T05:20:06.206Z"
     },
     {
       "id": "C4.3",
@@ -164,7 +164,7 @@
       "name": "Draft school input remains intact despite reload 503 failure",
       "pass": true,
       "detail": "School: \"THCS Nghĩa Tân - Nháp Chỉ Sửa School A (Đợt 29)\"",
-      "timestamp": "2026-09-29T04:09:16.999Z"
+      "timestamp": "2026-09-29T05:20:06.206Z"
     },
     {
       "id": "C4.4",
@@ -172,7 +172,7 @@
       "name": "Save button is disabled and Reload Baseline button is visible when refresh failed",
       "pass": true,
       "detail": "Disabled: true, ReloadBtn: true",
-      "timestamp": "2026-09-29T04:09:17.017Z"
+      "timestamp": "2026-09-29T05:20:06.210Z"
     },
     {
       "id": "C4.5",
@@ -180,7 +180,7 @@
       "name": "Clicking Save when version is null does NOT issue unversioned POST mutation",
       "pass": true,
       "detail": "Unversioned POST sent: false",
-      "timestamp": "2026-09-29T04:09:17.451Z"
+      "timestamp": "2026-09-29T05:20:06.620Z"
     },
     {
       "id": "C4.6",
@@ -188,7 +188,7 @@
       "name": "Reload baseline succeeds with HTTP 200 from server",
       "pass": true,
       "detail": "Status: 200",
-      "timestamp": "2026-09-29T04:09:17.569Z"
+      "timestamp": "2026-09-29T05:20:06.664Z"
     },
     {
       "id": "C4.7",
@@ -196,7 +196,7 @@
       "name": "Dirty school from A is preserved, while non-dirty target loads server baseline from B",
       "pass": true,
       "detail": "School: \"THCS Nghĩa Tân - Nháp Chỉ Sửa School A (Đợt 29)\", Target: \"Mục Tiêu IELTS 8.5 Độc Quyền Của B (Đợt 29)\"",
-      "timestamp": "2026-09-29T04:09:18.399Z"
+      "timestamp": "2026-09-29T05:20:07.479Z"
     },
     {
       "id": "C4.8",
@@ -204,7 +204,7 @@
       "name": "Save button is enabled after successful baseline reload",
       "pass": true,
       "detail": "Disabled: false",
-      "timestamp": "2026-09-29T04:09:18.406Z"
+      "timestamp": "2026-09-29T05:20:07.481Z"
     },
     {
       "id": "C4.9",
@@ -212,7 +212,7 @@
       "name": "Outgoing POST request contains exact expected_version, dirty school, and omits untouched target",
       "pass": true,
       "detail": "ExpectedVersion: 5 (matches B=5), Target in payload: false",
-      "timestamp": "2026-09-29T04:09:18.564Z"
+      "timestamp": "2026-09-29T05:20:07.538Z"
     },
     {
       "id": "C4.10",
@@ -220,7 +220,7 @@
       "name": "D1 authoritative database holds BOTH schoolA and targetB with advanced version",
       "pass": true,
       "detail": "DB School: \"THCS Nghĩa Tân - Nháp Chỉ Sửa School A (Đợt 29)\", DB Target: \"Mục Tiêu IELTS 8.5 Độc Quyền Của B (Đợt 29)\", Version: 6",
-      "timestamp": "2026-09-29T04:09:18.677Z"
+      "timestamp": "2026-09-29T05:20:07.585Z"
     },
     {
       "id": "C5.1",
@@ -228,7 +228,7 @@
       "name": "Modal is closed upon auth-change while GET body is pending",
       "pass": true,
       "detail": "Visible: false",
-      "timestamp": "2026-09-29T04:09:21.389Z"
+      "timestamp": "2026-09-29T05:20:09.798Z"
     },
     {
       "id": "C5.2",
@@ -236,7 +236,7 @@
       "name": "Stale delayed response does NOT reopen modal or mutate state",
       "pass": true,
       "detail": "Reopened: false",
-      "timestamp": "2026-09-29T04:09:21.923Z"
+      "timestamp": "2026-09-29T05:20:10.313Z"
     },
     {
       "id": "C5.3",
@@ -244,7 +244,7 @@
       "name": "Actor B modal displays Actor B authoritative data without leakage from Actor A delayed response",
       "pass": true,
       "detail": "Actor B Target: \"Mục Tiêu Riêng Của B\", School: \"\"",
-      "timestamp": "2026-09-29T04:09:23.069Z"
+      "timestamp": "2026-09-29T05:20:11.290Z"
     },
     {
       "id": "C6.1",
@@ -252,7 +252,7 @@
       "name": "Sub-second concurrency: One request succeeds (200) and the concurrent one is rejected (409)",
       "pass": true,
       "detail": "Statuses: [200, 409]",
-      "timestamp": "2026-09-29T04:09:24.314Z"
+      "timestamp": "2026-09-29T05:20:12.090Z"
     },
     {
       "id": "C7.1",
@@ -260,7 +260,7 @@
       "name": "Unauthenticated request to /api/users/profile returns HTTP 401",
       "pass": true,
       "detail": "Status: 401",
-      "timestamp": "2026-09-29T04:09:24.351Z"
+      "timestamp": "2026-09-29T05:20:12.101Z"
     },
     {
       "id": "C7.2",
@@ -268,7 +268,7 @@
       "name": "Full Logout -> Relogin verifies D1 persistence for School (exact match)",
       "pass": true,
       "detail": "Expected: \"Trường Concurrent 1\", Got: \"Trường Concurrent 1\"",
-      "timestamp": "2026-09-29T04:09:30.941Z"
+      "timestamp": "2026-09-29T05:20:15.749Z"
     },
     {
       "id": "C7.3",
@@ -276,7 +276,7 @@
       "name": "Full Logout -> Relogin verifies D1 persistence for Target (exact match)",
       "pass": true,
       "detail": "Expected: \"Mục Tiêu IELTS 8.5 Độc Quyền Của B (Đợt 29)\", Got: \"Mục Tiêu IELTS 8.5 Độc Quyền Của B (Đợt 29)\"",
-      "timestamp": "2026-09-29T04:09:30.941Z"
+      "timestamp": "2026-09-29T05:20:15.749Z"
     },
     {
       "id": "A2.1",
@@ -284,7 +284,7 @@
       "name": "Student page starts audio recording via Web Audio and acquires track",
       "pass": true,
       "detail": "Recording button visible: true, Track stopped before event: false",
-      "timestamp": "2026-09-29T04:09:34.974Z"
+      "timestamp": "2026-09-29T05:20:18.666Z"
     },
     {
       "id": "A2.2",
@@ -292,7 +292,7 @@
       "name": "Student page cleans up active media track and dismisses modal on auth-change",
       "pass": true,
       "detail": "Track stopped: true, Modal visible: false",
-      "timestamp": "2026-09-29T04:09:35.508Z"
+      "timestamp": "2026-09-29T05:20:19.178Z"
     },
     {
       "id": "NEG-A2.1",
@@ -300,23 +300,23 @@
       "name": "Negative control A2: Evaluator correctly fails if media track stop is omitted",
       "pass": true,
       "detail": "Caught AssertionError as expected",
-      "timestamp": "2026-09-29T04:09:35.508Z"
+      "timestamp": "2026-09-29T05:20:19.179Z"
     },
     {
       "id": "B1.1",
       "index": 38,
       "name": "Parent modal preserves identical idempotency key on retry with identical payload",
       "pass": true,
-      "detail": "Key1: ptest_usr_student_demo_1790654978862_anrkxp4, KeyRetry: ptest_usr_student_demo_1790654978862_anrkxp4",
-      "timestamp": "2026-09-29T04:09:40.289Z"
+      "detail": "Key1: ptest_usr_student_demo_1790659220935_27s6728, KeyRetry: ptest_usr_student_demo_1790659220935_27s6728",
+      "timestamp": "2026-09-29T05:20:22.211Z"
     },
     {
       "id": "B1.2",
       "index": 39,
       "name": "Parent modal rotates idempotency key when payload is mutated",
       "pass": true,
-      "detail": "Key1: ptest_usr_student_demo_1790654978862_anrkxp4, Key2: ptest_usr_student_demo_1790654980385_2tlytk6",
-      "timestamp": "2026-09-29T04:09:41.027Z"
+      "detail": "Key1: ptest_usr_student_demo_1790659220935_27s6728, Key2: ptest_usr_student_demo_1790659222250_0fbrslf",
+      "timestamp": "2026-09-29T05:20:22.857Z"
     },
     {
       "id": "NEG-B1.1",
@@ -324,7 +324,7 @@
       "name": "Negative control B1: Evaluator correctly fails if idempotency key is reused for mutated payload",
       "pass": true,
       "detail": "Caught AssertionError as expected",
-      "timestamp": "2026-09-29T04:09:41.397Z"
+      "timestamp": "2026-09-29T05:20:23.186Z"
     },
     {
       "id": "B3.1",
@@ -332,7 +332,7 @@
       "name": "Guest exam countdown calculates remaining time from server deadline_ms deducting wire latency",
       "pass": true,
       "detail": "Timer display: \"04:58\" (298s remaining, strictly < 300s)",
-      "timestamp": "2026-09-29T04:09:46.913Z"
+      "timestamp": "2026-09-29T05:20:27.244Z"
     },
     {
       "id": "B3.2",
@@ -340,7 +340,7 @@
       "name": "Guest exam timer actively decrements in real-time",
       "pass": true,
       "detail": "Time 1: 298s, Time 2: 296s",
-      "timestamp": "2026-09-29T04:09:48.934Z"
+      "timestamp": "2026-09-29T05:20:29.247Z"
     },
     {
       "id": "NEG-B3.1",
@@ -348,7 +348,7 @@
       "name": "Negative control B3: Evaluator correctly fails if client timer ignores server deadline latency",
       "pass": true,
       "detail": "Caught AssertionError as expected",
-      "timestamp": "2026-09-29T04:09:49.438Z"
+      "timestamp": "2026-09-29T05:20:29.679Z"
     },
     {
       "id": "A2-EXT.1",
@@ -356,7 +356,7 @@
       "name": "Delayed getUserMedia resolve after auth-change: track is stopped when modal/session is already invalidated",
       "pass": true,
       "detail": "Track stopped: true",
-      "timestamp": "2026-09-29T04:09:53.161Z"
+      "timestamp": "2026-09-29T05:20:32.551Z"
     },
     {
       "id": "A2-EXT.2",
@@ -364,103 +364,143 @@
       "name": "Recording UI is not active after auth-change even if getUserMedia resolved late",
       "pass": true,
       "detail": "Recording button visible: false",
-      "timestamp": "2026-09-29T04:09:53.168Z"
+      "timestamp": "2026-09-29T05:20:32.552Z"
     },
     {
-      "id": "A2-EXT.3",
+      "id": "A2-EXT.3a",
       "index": 46,
-      "name": "Delayed onstop FileReader completion does not reopen modal or display stale audio data in new session",
+      "name": "Delayed onstop after auth-change: source guard (startGen !== authGeneration) prevents FileReader from being created",
       "pass": true,
-      "detail": "Modal visible after delayed onstop: false",
-      "timestamp": "2026-09-29T04:09:57.507Z"
+      "detail": "FileReader called after invalidated onstop: false",
+      "timestamp": "2026-09-29T05:20:35.576Z"
+    },
+    {
+      "id": "A2-EXT.3b",
+      "index": 47,
+      "name": "Delayed FileReader onloadend (after actor switch) does not assign Actor A audio to new session — modal closed, no audio player leak",
+      "pass": true,
+      "detail": "Modal visible: false, Audio player visible: false",
+      "timestamp": "2026-09-29T05:20:39.118Z"
     },
     {
       "id": "B1-EXT.1",
-      "index": 47,
+      "index": 48,
       "name": "B1-EXT: Modal closes on auth-change (A→B switch) while POST is pending",
       "pass": true,
       "detail": "Modal input visible after switch: false",
-      "timestamp": "2026-09-29T04:10:01.451Z"
+      "timestamp": "2026-09-29T05:20:41.641Z"
     },
     {
-      "id": "B1-EXT.2",
-      "index": 48,
-      "name": "B1-EXT: After A→B→A switch and stale POST response, re-opened modal starts with fresh form (no stale A data)",
+      "id": "B1-EXT.2a",
+      "index": 49,
+      "name": "B1-EXT.2: Modal closes on same-document linkedChild switch while POST is pending",
       "pass": true,
-      "detail": "TestName in re-opened modal: \"\"",
-      "timestamp": "2026-09-29T04:10:06.512Z"
+      "detail": "Modal visible after student switch: false",
+      "timestamp": "2026-09-29T05:20:45.803Z"
+    },
+    {
+      "id": "B1-EXT.2b",
+      "index": 50,
+      "name": "B1-EXT.2: Stale POST response for studentA does NOT reopen modal when linkedChild is now studentB (student.id !== targetStudentId guard)",
+      "pass": true,
+      "detail": "Modal visible after stale response: false",
+      "timestamp": "2026-09-29T05:20:48.320Z"
     },
     {
       "id": "B1-EXT.3",
-      "index": 49,
-      "name": "B1-EXT: Same payload (no image) retry keeps identical idempotency key",
+      "index": 51,
+      "name": "B1-EXT: Same payload (with image X) retry keeps identical idempotency key",
       "pass": true,
-      "detail": "Key1: ptest_usr_student_demo_1790655007506_gxo6yi2, Key1Retry: ptest_usr_student_demo_1790655007506_gxo6yi2",
-      "timestamp": "2026-09-29T04:10:08.966Z"
+      "detail": "KeyX: ptest_usr_student_demo_1790659250197_cez1jtd, KeyXRetry: ptest_usr_student_demo_1790659250197_cez1jtd",
+      "timestamp": "2026-09-29T05:20:51.837Z"
     },
     {
       "id": "B1-EXT.4",
-      "index": 50,
-      "name": "B1-EXT: Mutated payload (score change) rotates idempotency key",
+      "index": 52,
+      "name": "B1-EXT: Real image X→Y via setInputFiles rotates idempotency key (key rotation proves computePayloadSignature detects different image content)",
       "pass": true,
-      "detail": "Key1: ptest_usr_student_demo_1790655007506_gxo6yi2, Key2: ptest_usr_student_demo_1790655009066_7a91suu",
-      "timestamp": "2026-09-29T04:10:09.705Z"
+      "detail": "KeyX: ptest_usr_student_demo_1790659250197_cez1jtd, KeyY: ptest_usr_student_demo_1790659252363_3o6io3e, ImgX present: true, ImgY present: true, Keys differ: true",
+      "timestamp": "2026-09-29T05:20:53.174Z"
+    },
+    {
+      "id": "B1-EXT.5",
+      "index": 53,
+      "name": "B1-EXT: Same image Y retry keeps identical idempotency key (no-duplicate for Y)",
+      "pass": true,
+      "detail": "KeyY: ptest_usr_student_demo_1790659252363_3o6io3e, KeyYRetry: ptest_usr_student_demo_1790659252363_3o6io3e",
+      "timestamp": "2026-09-29T05:20:54.014Z"
     },
     {
       "id": "B3-EXT.1",
-      "index": 51,
+      "index": 54,
       "name": "B3-EXT: Modal is closed after dismiss during startPending; delayed start response is discarded",
       "pass": true,
       "detail": "Start button visible after close: false",
-      "timestamp": "2026-09-29T04:10:13.746Z"
+      "timestamp": "2026-09-29T05:20:56.730Z"
     },
     {
       "id": "B3-EXT.2",
-      "index": 52,
+      "index": 55,
       "name": "B3-EXT: Re-opened modal is in setup step (grade selector visible), not stuck in loading state",
       "pass": true,
       "detail": "Grade selector visible on reopen: true",
-      "timestamp": "2026-09-29T04:10:14.234Z"
+      "timestamp": "2026-09-29T05:20:57.165Z"
     },
     {
       "id": "B3-EXT.3",
-      "index": 53,
+      "index": 56,
       "name": "B3-EXT: Timer continues running after submit 500 error (modal stays in testing step)",
       "pass": true,
-      "detail": "Timer before: \"04:58\", Timer after 500: \"04:58\"",
-      "timestamp": "2026-09-29T04:10:18.318Z"
+      "detail": "Timer before: \"04:59\", Timer after 500: \"04:59\"",
+      "timestamp": "2026-09-29T05:20:59.935Z"
     },
     {
       "id": "B3-EXT.4",
-      "index": 54,
+      "index": 57,
       "name": "B3-EXT: Timer decrements after submit 500 (confirms timer not frozen)",
       "pass": true,
-      "detail": "Before: 04:58 (298s), After 2s: 04:56 (296s)",
-      "timestamp": "2026-09-29T04:10:20.332Z"
+      "detail": "Before: 04:59 (299s), After 2s: 04:57 (297s)",
+      "timestamp": "2026-09-29T05:21:01.945Z"
     },
     {
       "id": "B3-EXT.5",
-      "index": 55,
+      "index": 58,
       "name": "B3-EXT: Submit retry after 500 succeeds (result step displayed, not setup step)",
       "pass": true,
       "detail": "Setup step button visible after retry: false",
-      "timestamp": "2026-09-29T04:10:20.355Z"
+      "timestamp": "2026-09-29T05:21:01.950Z"
+    },
+    {
+      "id": "B3-EXT.6a",
+      "index": 59,
+      "name": "B3-EXT.6: Re-opened modal after submitPending→close is in setup step (not result)",
+      "pass": true,
+      "detail": "Grade selector visible on reopen: true",
+      "timestamp": "2026-09-29T05:21:05.183Z"
+    },
+    {
+      "id": "B3-EXT.6b",
+      "index": 60,
+      "name": "B3-EXT.6: Stale submit response (guestGeneration guard) does NOT move re-opened modal to result step",
+      "pass": true,
+      "detail": "Setup still shown: true, Stale result visible: false",
+      "timestamp": "2026-09-29T05:21:05.704Z"
     },
     {
       "id": "PROFILE-EXT.1",
-      "index": 56,
-      "name": "Profile modal can be re-opened after manual close during save close-timeout window",
+      "index": 61,
+      "name": "Profile modal can be re-opened after manual close within 500ms save close-timeout window (POST 200 confirmed)",
       "pass": true,
-      "detail": "Modal input visible after reopen: true",
-      "timestamp": "2026-09-29T04:10:25.046Z"
+      "detail": "Modal visible: true, Save status: 200",
+      "timestamp": "2026-09-29T05:21:09.036Z"
     },
     {
       "id": "PROFILE-EXT.2",
-      "index": 57,
-      "name": "Stale closeTimeout from old save does NOT close the freshly re-opened modal (saveGen guard works)",
+      "index": 62,
+      "name": "Stale closeTimeout (saveGen guard) does NOT close the freshly re-opened modal — barrier-confirmed POST 200 was pending",
       "pass": true,
       "detail": "Modal still open after stale timeout: true",
-      "timestamp": "2026-09-29T04:10:25.767Z"
+      "timestamp": "2026-09-29T05:21:10.042Z"
     }
   ],
   "screenshot_manifest": [
@@ -468,57 +508,57 @@
       "filename": "01_c1_409_draft_preserved.png",
       "testId": "C1",
       "description": "Profile modal preserves draft inputs upon 409 conflict and loads baseline",
-      "sha256": "029993f7ab70508f0d7ecc58d10b5ccdd530f02a30892f5bc2a250aa1968f58e",
-      "sizeBytes": 203191,
-      "timestamp": "2026-09-29T04:09:08.188Z"
+      "sha256": "61807e93fd3d7850726734f84fc958ef4d14f0fc96d57ebb319085425a6e1559",
+      "sizeBytes": 202601,
+      "timestamp": "2026-09-29T05:19:59.710Z"
     },
     {
       "filename": "02_c2_retry_success.png",
       "testId": "C2",
       "description": "Explicit retry reconciles edits and commits cleanly",
-      "sha256": "f50480700506e0c0e4b4c6c55bb6365ddaa4bc961e1b6fa002202a29f8560d3b",
-      "sizeBytes": 226589,
-      "timestamp": "2026-09-29T04:09:08.964Z"
+      "sha256": "939ac8d19e545c491eecd2665f73df54f7ba63f404d158b1e19da70b1cde7b50",
+      "sizeBytes": 226458,
+      "timestamp": "2026-09-29T05:19:59.909Z"
     },
     {
       "filename": "03_c3_same_field_conflict.png",
       "testId": "C3",
       "description": "Same-field conflict preserves Tab A draft target",
-      "sha256": "67de5a08c7f914be79c8592085571db8cd855883208fb9f8f046cae73b5a10cb",
-      "sizeBytes": 201973,
-      "timestamp": "2026-09-29T04:09:13.472Z"
+      "sha256": "818c4701e55c4879a20f27271b45e85881c88e9b8cc18a1a2627a2e100af7c13",
+      "sizeBytes": 201282,
+      "timestamp": "2026-09-29T05:20:03.360Z"
     },
     {
       "filename": "04_c4_503_refresh_failure_draft_retained.png",
       "testId": "C4",
       "description": "Reload failure after 409 preserves draft and reports server error without fake sync",
-      "sha256": "68b22a1227aee47152656b1d6682362bd9142c9cfe140260a6023c2a8e3f7a56",
-      "sizeBytes": 209100,
-      "timestamp": "2026-09-29T04:09:16.998Z"
+      "sha256": "67686c0f71765f33c8ce5b62e50332b6875c30681a07b8bd95ecdd4110b741de",
+      "sizeBytes": 208262,
+      "timestamp": "2026-09-29T05:20:06.205Z"
     },
     {
       "filename": "04_c4_retry_after_reload_success.png",
       "testId": "C4",
       "description": "Retry after baseline reload commits with authoritative version",
-      "sha256": "f50480700506e0c0e4b4c6c55bb6365ddaa4bc961e1b6fa002202a29f8560d3b",
-      "sizeBytes": 226589,
-      "timestamp": "2026-09-29T04:09:18.872Z"
+      "sha256": "939ac8d19e545c491eecd2665f73df54f7ba63f404d158b1e19da70b1cde7b50",
+      "sizeBytes": 226458,
+      "timestamp": "2026-09-29T05:20:07.647Z"
     },
     {
       "filename": "05_c5_auth_change_invalidation.png",
       "testId": "C5",
       "description": "Delayed response from previous actor discarded cleanly with multi-actor isolation",
-      "sha256": "8b3dae57693ed1168e7a8814ae5f6c63c9f59ab5aa2094deabba2d91977dfea2",
-      "sizeBytes": 194689,
-      "timestamp": "2026-09-29T04:09:23.362Z"
+      "sha256": "9ee690b7afa7606f6ea27d8d76a9cc86e1a66ae9c1fd462a00cab8a7b70758bd",
+      "sizeBytes": 192848,
+      "timestamp": "2026-09-29T05:20:11.357Z"
     },
     {
       "filename": "07_c7_full_relogin_persistence.png",
       "testId": "C7",
       "description": "Full UI logout, storage purge, relogin confirms D1 persistence",
-      "sha256": "27d8ec3f937f106e175d6d14e0c148caf6ed06e4c61d157a85daa947fca11355",
-      "sizeBytes": 194367,
-      "timestamp": "2026-09-29T04:09:31.237Z"
+      "sha256": "98e5df3e10bf19f8a8a31c045173c90c074d559e0436cdb5b3603221f2d56873",
+      "sizeBytes": 193526,
+      "timestamp": "2026-09-29T05:20:15.818Z"
     }
   ]
 }

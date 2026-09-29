@@ -1097,8 +1097,11 @@ async function runSuite() {
 
     await page.unroute('**/api/homework');
 
-    // Now test delayed onstop FileReader cross-session guard:
-    // Install a mock where onstop fires after 600ms with audio data
+    // -----------------------------------------------------------------------
+    // A2-EXT.3a: onstop fires AFTER guard invalidated → FileReader NOT created (data discarded)
+    // Stop recording → fire auth-change immediately → wait for delayed onstop fire (400ms)
+    // Source guard in onstop: `startGen !== authGeneration` → audioChunks cleared, FileReader not called
+    // -----------------------------------------------------------------------
     await page.route('**/api/homework', async (route) => {
       await route.fulfill({
         status: 200,
@@ -1106,7 +1109,7 @@ async function runSuite() {
         body: JSON.stringify({
           success: true,
           assignments: [
-            { id: 'hw_a2ext2', title: 'Bài Thu Âm A2-EXT2', skill_type: 'speaking', deadline: '2026-10-15' }
+            { id: 'hw_a2ext3a', title: 'Bài Thu Âm A2-EXT3a', skill_type: 'speaking', deadline: '2026-10-15' }
           ],
           submissions: []
         })
@@ -1117,87 +1120,177 @@ async function runSuite() {
     await page.waitForTimeout(800);
 
     await page.evaluate(() => {
-      window.__a2extOnstopData = null; // Will be set if onstop writes to recordedAudioUrl
+      window.__a2ext3aFileReaderCalled = false;
 
-      const mockTrack2 = { stopped: false, stop() { this.stopped = true; } };
-      const mockStream2 = {
-        getTracks: () => [mockTrack2],
-        getAudioTracks: () => [mockTrack2]
+      const mockTrack3a = { stopped: false, stop() { this.stopped = true; } };
+      const mockStream3a = {
+        getTracks: () => [mockTrack3a],
+        getAudioTracks: () => [mockTrack3a]
       };
-      navigator.mediaDevices.getUserMedia = async () => mockStream2;
+      navigator.mediaDevices.getUserMedia = async () => mockStream3a;
 
-      window.MediaRecorder = class SlowOnstopMR {
+      window.MediaRecorder = class OnstopDelayMR {
         constructor(stream) {
           this.stream = stream;
           this.state = 'inactive';
           this.onstop = null;
+          this.ondataavailable = null;
         }
         start() { this.state = 'recording'; }
         stop() {
           this.state = 'inactive';
-          // onstop fires after 600ms with fake audio data
-          setTimeout(() => {
-            if (this.onstop) this.onstop();
-          }, 600);
+          // onstop fires after 500ms
+          setTimeout(() => { if (this.onstop) this.onstop(); }, 500);
         }
       };
 
-      // Intercept FileReader to track if it tries to write data to window
-      const OrigFileReader = window.FileReader;
-      window.FileReader = class GuardedFR extends OrigFileReader {
-        constructor() {
-          super();
-          this.onloadend = null;
-        }
+      // Intercept FileReader to detect if it's invoked after invalidation
+      const NativeFileReader = window.FileReader;
+      window.FileReader = class TrackFR extends NativeFileReader {
         readAsDataURL(blob) {
-          // After 200ms, "complete" with fake base64 data
-          setTimeout(() => {
-            if (this.onloadend) {
-              this.result = 'data:audio/webm;base64,FAKE_AUDIO_DATA_A2EXT2';
-              window.__a2extOnstopData = this.result;
-              this.onloadend();
-            }
-          }, 200);
+          window.__a2ext3aFileReaderCalled = true;
+          // Call super so it doesn't throw, but mark the call
+          try { super.readAsDataURL(blob); } catch {}
         }
       };
     });
 
-    const a2ext2HwBtn = page.locator('button:has-text("Làm Bài Ngay"), button:has-text("Xem / Nộp Lại")').first();
-    await a2ext2HwBtn.waitFor({ state: 'visible', timeout: 5000 });
-    await a2ext2HwBtn.click();
+    const a2ext3aHwBtn = page.locator('button:has-text("Làm Bài Ngay"), button:has-text("Xem / Nộp Lại")').first();
+    await a2ext3aHwBtn.waitFor({ state: 'visible', timeout: 5000 });
+    await a2ext3aHwBtn.click();
     await page.waitForTimeout(400);
 
-    const a2ext2StartBtn = page.locator('button:has-text("Bắt Đầu Thu Âm")').first();
-    await a2ext2StartBtn.waitFor({ state: 'visible', timeout: 5000 });
-    await a2ext2StartBtn.click();
+    const a2ext3aStartBtn = page.locator('button:has-text("Bắt Đầu Thu Âm")').first();
+    await a2ext3aStartBtn.waitFor({ state: 'visible', timeout: 5000 });
+    await a2ext3aStartBtn.click();
     await page.waitForTimeout(600); // Let recording start
 
-    // Stop recording (triggers delayed onstop after 600ms)
-    const a2ext2StopBtn = page.locator('button:has-text("Dừng Ghi Âm")').first();
-    if (await a2ext2StopBtn.isVisible()) {
-      await a2ext2StopBtn.click();
-      await page.waitForTimeout(100);
+    // Click stop recording to trigger delayed onstop
+    const a2ext3aStopBtn = page.locator('button:has-text("Dừng Ghi Âm")').first();
+    if (await a2ext3aStopBtn.isVisible()) {
+      await a2ext3aStopBtn.click();
+      await page.waitForTimeout(50); // Brief pause
     }
 
-    // Fire auth-change immediately after stopRecording click (before onstop fires at 600ms)
+    // Fire auth-change IMMEDIATELY (before onstop fires at 500ms)
+    // This increments authGeneration → onstop guard will see startGen !== authGeneration
     await page.evaluate(() => {
-      window.dispatchEvent(new CustomEvent('tienganh:auth-change', { detail: { reason: 'a2ext2_switch_before_onstop' } }));
+      window.dispatchEvent(new CustomEvent('tienganh:auth-change', { detail: { reason: 'a2ext3a_switch_before_onstop' } }));
     });
-    await page.waitForTimeout(200);
 
-    // Close the modal (auth-change should have already closed it, but ensure)
-    const a2ext2CloseBtn = page.locator('button:has-text("✕"), button[aria-label="Đóng"]').first();
-    if (await a2ext2CloseBtn.isVisible()) await a2ext2CloseBtn.click();
+    // Wait for delayed onstop to fire (500ms from stop click)
+    await page.waitForTimeout(700);
 
-    // Wait for onstop and FileReader to complete (600ms + 200ms buffer)
-    await page.waitForTimeout(1000);
+    // FileReader must NOT have been called — source guard returned early before creating FileReader
+    const a2ext3aFRCalled = await page.evaluate(() => window.__a2ext3aFileReaderCalled);
+    recordTest('A2-EXT.3a', 'Delayed onstop after auth-change: source guard (startGen !== authGeneration) prevents FileReader from being created',
+      !a2ext3aFRCalled,
+      `FileReader called after invalidated onstop: ${a2ext3aFRCalled}`
+    );
 
-    // The key assertion: onstop fired and called FileReader, but the resulting data
-    // should NOT be visible in any active UI (modal is closed). We verify modal is not open.
-    const a2ext2ModalOpen = await page.locator('button:has-text("Dừng Ghi Âm")').isVisible();
-    recordTest('A2-EXT.3', 'Delayed onstop FileReader completion does not reopen modal or display stale audio data in new session',
-      !a2ext2ModalOpen,
-      `Modal visible after delayed onstop: ${a2ext2ModalOpen}`
+    await page.unroute('**/api/homework');
+
+    // -----------------------------------------------------------------------
+    // A2-EXT.3b: onstop fires and creates FileReader; actor switches WHILE FileReader is pending
+    //            FileReader.onloadend guard (startGen/actorId check) prevents data assignment to new session
+    // -----------------------------------------------------------------------
+    await page.route('**/api/homework', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          assignments: [
+            { id: 'hw_a2ext3b', title: 'Bài Thu Âm A2-EXT3b', skill_type: 'speaking', deadline: '2026-10-15' }
+          ],
+          submissions: []
+        })
+      });
+    });
+
+    await page.goto(`${BASE_URL}/cpanel/student`, { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(800);
+
+    // Mock: onstop fires quickly (200ms), but FileReader.onloadend fires after 800ms (very slow encoding)
+    // auth-change happens AFTER onstop but BEFORE FileReader completes
+    await page.evaluate(() => {
+      window.__a2ext3bAudioAssigned = false; // true if recordedAudioUrl was set with actor A's data
+
+      const mockTrack3b = { stopped: false, stop() { this.stopped = true; } };
+      const mockStream3b = {
+        getTracks: () => [mockTrack3b],
+        getAudioTracks: () => [mockTrack3b]
+      };
+      navigator.mediaDevices.getUserMedia = async () => mockStream3b;
+
+      window.MediaRecorder = class FastOnstopMR {
+        constructor(stream) {
+          this.stream = stream;
+          this.state = 'inactive';
+          this.onstop = null;
+          this.ondataavailable = null;
+        }
+        start() { this.state = 'recording'; }
+        stop() {
+          this.state = 'inactive';
+          // onstop fires after 200ms (fast) 
+          setTimeout(() => { if (this.onstop) this.onstop(); }, 200);
+        }
+      };
+
+      // FileReader with 800ms delay before onloadend
+      window.FileReader = class SlowEncodeFR {
+        constructor() {
+          this.onloadend = null;
+          this.result = null;
+        }
+        readAsDataURL(blob) {
+          const self = this;
+          setTimeout(() => {
+            self.result = 'data:audio/webm;base64,ACTOR_A_AUDIO_DATA_SHOULD_NOT_LEAK';
+            // Check if page tracks assignment (we'll check via DOM state, not window)
+            if (self.onloadend) self.onloadend();
+          }, 800);
+        }
+      };
+    });
+
+    const a2ext3bHwBtn = page.locator('button:has-text("Làm Bài Ngay"), button:has-text("Xem / Nộp Lại")').first();
+    await a2ext3bHwBtn.waitFor({ state: 'visible', timeout: 5000 });
+    await a2ext3bHwBtn.click();
+    await page.waitForTimeout(400);
+
+    const a2ext3bStartBtn = page.locator('button:has-text("Bắt Đầu Thu Âm")').first();
+    await a2ext3bStartBtn.waitFor({ state: 'visible', timeout: 5000 });
+    await a2ext3bStartBtn.click();
+    await page.waitForTimeout(600);
+
+    // Stop recording → onstop will fire after 200ms → creates SlowEncodeFR
+    const a2ext3bStopBtn = page.locator('button:has-text("Dừng Ghi Âm")').first();
+    if (await a2ext3bStopBtn.isVisible()) {
+      await a2ext3bStopBtn.click();
+    }
+
+    // Wait for onstop to fire (200ms) + a bit
+    await page.waitForTimeout(350);
+
+    // NOW fire auth-change: onstop has run and created FileReader, but onloadend hasn't fired yet
+    await page.evaluate(() => {
+      window.dispatchEvent(new CustomEvent('tienganh:auth-change', { detail: { reason: 'a2ext3b_switch_after_onstop_before_onloadend' } }));
+    });
+
+    // Wait for SlowEncodeFR to complete (800ms from onstop = ~600ms from now)
+    await page.waitForTimeout(900);
+
+    // After FileReader completes: since authGeneration was incremented (auth-change fired),
+    // the onloadend guard (startGen !== authGeneration) should prevent recordedAudioUrl assignment.
+    // Verify: modal should be closed (auth-change closes it), no "audio ready" UI element visible.
+    const a2ext3bModalVisible = await page.locator('button:has-text("Dừng Ghi Âm")').isVisible();
+    // Check that no audio playback element appeared (recordedAudioUrl not set for new session)
+    const a2ext3bAudioPlayerVisible = await page.locator('audio').isVisible().catch(() => false);
+    recordTest('A2-EXT.3b', 'Delayed FileReader onloadend (after actor switch) does not assign Actor A audio to new session — modal closed, no audio player leak',
+      !a2ext3bModalVisible && !a2ext3bAudioPlayerVisible,
+      `Modal visible: ${a2ext3bModalVisible}, Audio player visible: ${a2ext3bAudioPlayerVisible}`
     );
 
     await page.unroute('**/api/homework');
@@ -1307,89 +1400,240 @@ async function runSuite() {
       `Modal input visible after switch: ${b1extModalOpenAfterSwitch}`
     );
 
-    // Wait for the pending POST A response to arrive (2500ms from click)
+    // Wait for the pending POST A response to arrive (2500ms from click) before unrouting
     await page.waitForTimeout(2800);
-
-    // After stale POST A response resolves: form A data should NOT have re-appeared in UI
-    // Re-open modal fresh to verify no stale data leaked
-    await page.goto(`${BASE_URL}/`, { waitUntil: 'domcontentloaded' });
-    await page.waitForTimeout(1000);
-
-    const b1extReopenBtn = page.locator('button:has-text("Khai Báo Điểm Bài Thi")').first();
-    if (await b1extReopenBtn.isVisible()) {
-      await b1extReopenBtn.click();
-      await page.waitForTimeout(400);
-    }
-
-    // Verify form is fresh (empty testName, not pre-filled with A's stale data)
-    const b1extTestNameAfterReopen = await page.locator('#parent-test-name').inputValue().catch(() => '');
-    recordTest('B1-EXT.2', 'B1-EXT: After A→B→A switch and stale POST response, re-opened modal starts with fresh form (no stale A data)',
-      b1extTestNameAfterReopen === '' || b1extTestNameAfterReopen !== 'Bài Khảo Sát B1-EXT Session A',
-      `TestName in re-opened modal: "${b1extTestNameAfterReopen}"`
-    );
-
     await page.unroute('**/api/parents/tests');
     const b1extClose = page.locator('button[title="Đóng"], button:has-text("✕")').first();
     if (await b1extClose.isVisible()) await b1extClose.click();
     await page.waitForTimeout(300);
 
-    // Now test image X→Y idempotency key rotation
-    // Re-open modal and establish baseline key with no image
-    const b1imgOcrBtn = page.locator('button:has-text("Khai Báo Điểm Bài Thi")').first();
-    if (await b1imgOcrBtn.isVisible()) {
-      await b1imgOcrBtn.click();
+    // -----------------------------------------------------------------------
+    // B1-EXT.2: SAME-DOCUMENT student switch while POST pending → stale response discarded
+    // Scenario: parent has linkedChild = studentA; opens modal; fills form for studentA;
+    //   POST held; in same document switch linkedChild to studentB (via auth-change with new metadata);
+    //   POST response arrives → student.id !== targetStudentId → response discarded → form NOT written.
+    // -----------------------------------------------------------------------
+    console.log('\n--- B1-EXT.2: Same-document student switch while POST pending ---');
+
+    // Register studentB for the same parent
+    const studentBPhone = `035${Math.floor(1000000 + Math.random() * 9000000)}`;
+    const regStudentBRes = await page.request.post(`${BASE_URL}/api/auth/register`, {
+      data: {
+        usernameOrPhone: `hs_b2_${Date.now().toString().slice(6)}`,
+        name: 'Học Sinh B (Con 2)',
+        password: testPassword,
+        role: 'student',
+        grade: 'Lớp 9',
+        phone: studentBPhone
+      }
+    });
+    const regStudentBData = await regStudentBRes.json();
+    const studentBUser = regStudentBData.user;
+
+    // Open OCR modal (currently shows studentA as linkedChild)
+    const b1ext2OcrBtn = page.locator('button:has-text("Khai Báo Điểm Bài Thi")').first();
+    if (await b1ext2OcrBtn.isVisible()) {
+      await b1ext2OcrBtn.click();
       await page.waitForTimeout(400);
     }
 
-    await page.fill('#parent-test-name', 'Bài Thi Ảnh Rotate Key');
-    await page.locator('#parent-score, #parent-test-score').first().fill('6.5');
+    await page.fill('#parent-test-name', 'Bài Thi Session A Sinh B1-EXT2');
+    await page.locator('#parent-score, #parent-test-score').first().fill('5.5');
 
-    let b1imgPayloads = [];
+    // Confirm the modal is showing studentA (verify student name in modal header)
+    const b1ext2ModalHeader = await page.locator('h2').first().textContent().catch(() => '');
+    console.log(`  B1-EXT.2 Modal header: "${b1ext2ModalHeader}"`);
+
+    // Track POST payloads with 2500ms delay
+    let b1ext2Payloads = [];
+    let b1ext2OnSavedCalled = false;
     await page.route('**/api/parents/tests', async (route) => {
       if (route.request().method() === 'POST') {
         const body = JSON.parse(route.request().postData());
-        b1imgPayloads.push(body);
+        b1ext2Payloads.push({ ...body, _captured_at: Date.now() });
+        // Hold 2500ms (POST A is in-flight)
+        await new Promise(r => setTimeout(r, 2500));
         await route.fulfill({
-          status: 500,
+          status: 200,
           contentType: 'application/json',
-          body: JSON.stringify({ success: false, error: 'SimulatedFor500' })
+          body: JSON.stringify({ success: true, message: 'B1-EXT2 OK', record: { id: 'rec_b1ext2' } })
         });
       } else {
         await route.continue();
       }
     });
 
-    // Submit WITHOUT image (key 1)
-    const b1imgSaveBtn = page.locator('button:has-text("Lưu Điểm Bài Thi Vào Sổ")').first();
-    await b1imgSaveBtn.click();
-    await page.waitForTimeout(600);
-    const b1imgKey1 = b1imgPayloads[0]?.idempotency_key;
+    // Fire POST (in-flight, 2500ms delay)
+    const b1ext2SaveBtn = page.locator('button:has-text("Lưu Điểm Bài Thi Vào Sổ")').first();
+    b1ext2SaveBtn.click(); // fire-and-forget
+    await page.waitForTimeout(300); // let network capture it
 
-    // Retry with SAME payload (no change) — key must remain stable
-    await b1imgSaveBtn.click();
-    await page.waitForTimeout(600);
-    const b1imgKey1Retry = b1imgPayloads[1]?.idempotency_key;
-    recordTest('B1-EXT.3', 'B1-EXT: Same payload (no image) retry keeps identical idempotency key',
-      b1imgKey1 && b1imgKey1 === b1imgKey1Retry,
-      `Key1: ${b1imgKey1}, Key1Retry: ${b1imgKey1Retry}`
+    // NOW switch linkedChild to studentB IN SAME DOCUMENT (no page.goto):
+    // Modify parent's localStorage to set linked_student_id = studentB.id
+    // then dispatch auth-change so +page.svelte re-derives linkedChild = studentB
+    await page.evaluate(({ parentUser, studentBId }) => {
+      // Update parent's metadata to link to studentB
+      const updatedParent = {
+        ...parentUser,
+        metadata: JSON.stringify({ linked_student_id: studentBId })
+      };
+      localStorage.setItem('tienganh_active_user', JSON.stringify(updatedParent));
+      localStorage.setItem('tienganh_user', JSON.stringify(updatedParent));
+      // Re-dispatch auth-change so Svelte reactivity updates linkedChild
+      window.dispatchEvent(new CustomEvent('tienganh:auth-change', { detail: updatedParent }));
+    }, { parentUser: parentUserExt, studentBId: studentBUser?.id || 'student_b_id' });
+    await page.waitForTimeout(200);
+
+    // Modal should now be closed (student changed → modal invalidated)
+    const b1ext2ModalOpenAfterStudentSwitch = await page.locator('#parent-test-name').isVisible();
+    recordTest('B1-EXT.2a', 'B1-EXT.2: Modal closes on same-document linkedChild switch while POST is pending',
+      !b1ext2ModalOpenAfterStudentSwitch,
+      `Modal visible after student switch: ${b1ext2ModalOpenAfterStudentSwitch}`
     );
 
-    // Simulate selecting image X (inject fake base64 via JS since we can't use file chooser in headless)
-    await page.evaluate(() => {
-      // Dispatch an internal image-selected event by directly setting uploadedImage via DOM
-      // We simulate what handleFileSelect does by triggering FileReader.onload manually
-      window.__b1extImageX = 'data:image/jpeg;base64,FAKE_IMAGE_X_DATA_' + Math.random().toString(36).slice(2);
+    // Wait for the stale POST A response to arrive
+    await page.waitForTimeout(2500);
+
+    // The stale response's `onSaved` must NOT have been called, modal must NOT have re-opened,
+    // and the form data from Session A must NOT be written (modal did not reopen with stale data)
+    const b1ext2ModalReopened = await page.locator('#parent-test-name').isVisible();
+    recordTest('B1-EXT.2b', 'B1-EXT.2: Stale POST response for studentA does NOT reopen modal when linkedChild is now studentB (student.id !== targetStudentId guard)',
+      !b1ext2ModalReopened,
+      `Modal visible after stale response: ${b1ext2ModalReopened}`
+    );
+
+    await page.unroute('**/api/parents/tests');
+
+    // -----------------------------------------------------------------------
+    // B1-EXT.4: Real image file X→Y via setInputFiles rotates idempotency key
+    // Uses Playwright setInputFiles with valid PNG byte buffers
+    // Asserts: image_url in payload X != Y, key for X != key for Y, retry Y keeps keyY
+    // -----------------------------------------------------------------------
+    console.log('\n--- B1-EXT.4: Real image X→Y via setInputFiles rotates idempotency key ---');
+
+    // Re-open modal (need parent linked to studentA again)
+    await page.evaluate(({ parentUser, studentAId }) => {
+      const restored = {
+        ...parentUser,
+        metadata: JSON.stringify({ linked_student_id: studentAId })
+      };
+      localStorage.setItem('tienganh_active_user', JSON.stringify(restored));
+      localStorage.setItem('tienganh_user', JSON.stringify(restored));
+      window.dispatchEvent(new CustomEvent('tienganh:auth-change', { detail: restored }));
+    }, { parentUser: parentUserExt, studentAId: parentUserExt?.id ? undefined : undefined });
+    // Restore to original linked student (currentStudentPhone)
+    await page.evaluate(({ parentUser }) => {
+      // Reset to original parent without explicit linked_student_id (falls back to phone match)
+      const restored = { ...parentUser, metadata: '{}' };
+      localStorage.setItem('tienganh_active_user', JSON.stringify(restored));
+      localStorage.setItem('tienganh_user', JSON.stringify(restored));
+      window.dispatchEvent(new CustomEvent('tienganh:auth-change', { detail: restored }));
+    }, { parentUser: parentUserExt });
+    await page.waitForTimeout(800);
+
+    const b1img4OcrBtn = page.locator('button:has-text("Khai Báo Điểm Bài Thi")').first();
+    if (await b1img4OcrBtn.isVisible()) {
+      await b1img4OcrBtn.click();
+      await page.waitForTimeout(500);
+    }
+
+    await page.fill('#parent-test-name', 'Bài Thi Image Key Rotation Real File');
+    await page.locator('#parent-score, #parent-test-score').first().fill('8.0');
+
+    // Create minimal valid 1x1 PNG byte buffers (different pixel colors for X and Y)
+    // PNG Image X: 1x1 red pixel
+    const pngX = Buffer.from([
+      0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a, // PNG signature
+      0x00,0x00,0x00,0x0d,0x49,0x48,0x44,0x52, // IHDR chunk length + type
+      0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x01, // width=1, height=1
+      0x08,0x02,0x00,0x00,0x00,0x90,0x77,0x53, // bit depth=8, color=RGB, etc
+      0xde,0x00,0x00,0x00,0x0c,0x49,0x44,0x41, // IHDR CRC, IDAT chunk
+      0x54,0x08,0xd7,0x63,0xf8,0xcf,0xc0,0x00, // IDAT data (deflate)
+      0x00,0x00,0x02,0x00,0x01,0xe2,0x21,0xbc, // IDAT CRC
+      0x33,0x00,0x00,0x00,0x00,0x49,0x45,0x4e, // IEND
+      0x44,0xae,0x42,0x60,0x82              // IEND CRC
+    ]);
+    // PNG Image Y: 1x1 blue pixel (different bytes)
+    const pngY = Buffer.from([
+      0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a,
+      0x00,0x00,0x00,0x0d,0x49,0x48,0x44,0x52,
+      0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x01,
+      0x08,0x02,0x00,0x00,0x00,0x90,0x77,0x53,
+      0xde,0x00,0x00,0x00,0x0c,0x49,0x44,0x41,
+      0x54,0x08,0xd7,0x63,0x60,0x60,0xf8,0x0f, // different pixel data (blue)
+      0x00,0x00,0x00,0x04,0x00,0x01,0x5c,0xcd, 
+      0xf5,0x00,0x00,0x00,0x00,0x49,0x45,0x4e,
+      0x44,0xae,0x42,0x60,0x82
+    ]);
+
+    let b1img4Payloads = [];
+    await page.route('**/api/parents/tests', async (route) => {
+      if (route.request().method() === 'POST') {
+        const body = JSON.parse(route.request().postData());
+        b1img4Payloads.push({ idempotency_key: body.idempotency_key, image_url_prefix: (body.image_url || '').slice(0, 100) });
+        await route.fulfill({
+          status: 500,
+          contentType: 'application/json',
+          body: JSON.stringify({ success: false, error: 'SimulatedFor500_B1EXT4' })
+        });
+      } else {
+        await route.continue();
+      }
     });
 
-    // Since we can't click the file input in headless, we trigger the idempotency signature change
-    // by changing the score (equivalent to payload mutation that causes key rotation)
-    await page.locator('#parent-score, #parent-test-score').first().fill('7.0');
-    await b1imgSaveBtn.click();
-    await page.waitForTimeout(600);
-    const b1imgKey2 = b1imgPayloads[2]?.idempotency_key;
-    recordTest('B1-EXT.4', 'B1-EXT: Mutated payload (score change) rotates idempotency key',
-      b1imgKey2 && b1imgKey2 !== b1imgKey1,
-      `Key1: ${b1imgKey1}, Key2: ${b1imgKey2}`
+    // Locate the hidden file input within the upload label
+    const b1img4FileInput = page.locator('input[type="file"][accept="image/*"]').first();
+
+    // Upload image X (red 1x1 PNG)
+    await b1img4FileInput.setInputFiles({
+      name: 'test_image_x.png',
+      mimeType: 'image/png',
+      buffer: pngX
+    });
+    await page.waitForTimeout(500); // Let FileReader process
+
+    // Submit with image X (key should be generated)
+    const b1img4SaveBtn = page.locator('button:has-text("Lưu Điểm Bài Thi Vào Sổ")').first();
+    await b1img4SaveBtn.click();
+    await page.waitForTimeout(800);
+    const b1img4KeyX = b1img4Payloads[0]?.idempotency_key;
+    const b1img4ImgX = b1img4Payloads[0]?.image_url_prefix;
+
+    // Retry with same image X (no change) — key must be stable
+    await b1img4SaveBtn.click();
+    await page.waitForTimeout(800);
+    const b1img4KeyXRetry = b1img4Payloads[1]?.idempotency_key;
+    recordTest('B1-EXT.3', 'B1-EXT: Same payload (with image X) retry keeps identical idempotency key',
+      b1img4KeyX && b1img4KeyX === b1img4KeyXRetry,
+      `KeyX: ${b1img4KeyX}, KeyXRetry: ${b1img4KeyXRetry}`
+    );
+
+    // Upload image Y (blue 1x1 PNG) — different file bytes → computePayloadSignature changes
+    await b1img4FileInput.setInputFiles({
+      name: 'test_image_y.png',
+      mimeType: 'image/png',
+      buffer: pngY
+    });
+    await page.waitForTimeout(500); // Let FileReader process
+
+    // Submit with image Y — key must ROTATE (payload signature changed due to different image)
+    await b1img4SaveBtn.click();
+    await page.waitForTimeout(800);
+    const b1img4KeyY = b1img4Payloads[2]?.idempotency_key;
+    const b1img4ImgY = b1img4Payloads[2]?.image_url_prefix;
+
+    recordTest('B1-EXT.4', 'B1-EXT: Real image X→Y via setInputFiles rotates idempotency key (key rotation proves computePayloadSignature detects different image content)',
+      b1img4KeyY && b1img4KeyY !== b1img4KeyX && !!b1img4ImgX && !!b1img4ImgY,
+      `KeyX: ${b1img4KeyX}, KeyY: ${b1img4KeyY}, ImgX present: ${!!b1img4ImgX}, ImgY present: ${!!b1img4ImgY}, Keys differ: ${b1img4KeyY !== b1img4KeyX}`
+    );
+
+    // Retry with Y again — key must be stable
+    await b1img4SaveBtn.click();
+    await page.waitForTimeout(800);
+    const b1img4KeyYRetry = b1img4Payloads[3]?.idempotency_key;
+    recordTest('B1-EXT.5', 'B1-EXT: Same image Y retry keeps identical idempotency key (no-duplicate for Y)',
+      b1img4KeyYRetry && b1img4KeyYRetry === b1img4KeyY,
+      `KeyY: ${b1img4KeyY}, KeyYRetry: ${b1img4KeyYRetry}`
     );
 
     await page.unroute('**/api/parents/tests');
@@ -1611,10 +1855,117 @@ async function runSuite() {
     await page.unroute('**/api/exams/guest');
 
     // -----------------------------------------------------------------------
+    // B3-EXT.6: submitPending → close → reopen → delayed response arrives
+    //           Result from old submit must NOT overwrite current fresh setup screen
+    // -----------------------------------------------------------------------
+    console.log('\n--- B3-EXT.6: submitPending→close→reopen→old response does not overwrite ---');
+
+    await page.goto(`${BASE_URL}/exam`, { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(600);
+
+    let b3ext6SubmitResolveFn = null;
+    let b3ext6StartCount = 0;
+    await page.route('**/api/exams/guest', async (route) => {
+      if (route.request().method() === 'POST') {
+        const body = JSON.parse(route.request().postData());
+        if (body.action === 'start') {
+          b3ext6StartCount++;
+          await route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify({
+              success: true,
+              guest_session_id: `sess_b3ext6_${b3ext6StartCount}`,
+              guest_token: `tok_b3ext6_${b3ext6StartCount}`,
+              questions: [{ id: 'q1', type: 'multiple_choice', prompt: 'Q1 B3-EXT6', options: ['A', 'B'] }],
+              deadline_ms: Date.now() + 300 * 1000,
+              duration_minutes: 5
+            })
+          });
+          return;
+        }
+        if (body.action === 'submit') {
+          console.log('  [B3-EXT.6] Holding submit response indefinitely...');
+          // Hold submit response until test releases
+          await new Promise(r => { b3ext6SubmitResolveFn = r; });
+          await route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify({
+              success: true,
+              result: { score: 5, total: 5, percentage: 100, feedback: 'STALE_RESULT_B3EXT6' }
+            })
+          });
+          return;
+        }
+      }
+      await route.continue();
+    });
+
+    const b3ext6OpenBtn = page.locator('#guest-exam-btn, button:has-text("Thi Thử Cho Khách")').first();
+    await b3ext6OpenBtn.waitFor({ state: 'visible', timeout: 5000 });
+    await b3ext6OpenBtn.click();
+    await page.waitForTimeout(400);
+
+    const b3ext6GradeSelect = page.locator('#cand-grade-select');
+    if (await b3ext6GradeSelect.isVisible()) {
+      await b3ext6GradeSelect.selectOption('lop_7');
+    }
+    await page.evaluate(() => { window.confirm = () => true; window.alert = () => {}; });
+    const b3ext6StartBtn = page.locator('button:has-text("Bắt Đầu Làm Bài Ngay")').first();
+    await b3ext6StartBtn.click();
+    await page.waitForTimeout(1200);
+
+    // Verify in testing step (timer visible)
+    const b3ext6TimerVisible = await page.locator('.tabular-nums').first().isVisible().catch(() => false);
+    console.log(`  B3-EXT.6: Testing step with timer visible: ${b3ext6TimerVisible}`);
+
+    // Click submit (will be held)
+    const b3ext6SubmitBtn = page.locator('button:has-text("Nộp Bài Ngay")').first();
+    if (await b3ext6SubmitBtn.isVisible()) {
+      b3ext6SubmitBtn.click(); // fire-and-forget (held)
+      await page.waitForTimeout(300); // let intercept capture it
+    }
+
+    // Close modal while submit is pending (user gives up)
+    const b3ext6DismissBtn = page.locator('button:has-text("✕"), button[aria-label*="Đóng"]').first();
+    if (await b3ext6DismissBtn.isVisible()) await b3ext6DismissBtn.click();
+    await page.waitForTimeout(300);
+
+    // Reopen modal — should be in setup step (grade selector)
+    await b3ext6OpenBtn.waitFor({ state: 'visible', timeout: 5000 });
+    await b3ext6OpenBtn.click();
+    await page.waitForTimeout(400);
+
+    const b3ext6ReopenedSetup = await page.locator('#cand-grade-select').isVisible().catch(() => false);
+    recordTest('B3-EXT.6a', 'B3-EXT.6: Re-opened modal after submitPending→close is in setup step (not result)',
+      b3ext6ReopenedSetup,
+      `Grade selector visible on reopen: ${b3ext6ReopenedSetup}`
+    );
+
+    // Now release the held submit response
+    if (b3ext6SubmitResolveFn) b3ext6SubmitResolveFn();
+    await page.waitForTimeout(500);
+
+    // CRITICAL: The stale submit response must NOT have moved modal to result step
+    // Modal should STILL be in setup step (grade selector visible, result NOT visible)
+    const b3ext6StillSetupAfterRelease = await page.locator('#cand-grade-select').isVisible().catch(() => false);
+    const b3ext6ResultVisible = await page.locator('text=STALE_RESULT_B3EXT6').isVisible().catch(() => false);
+    recordTest('B3-EXT.6b', 'B3-EXT.6: Stale submit response (guestGeneration guard) does NOT move re-opened modal to result step',
+      b3ext6StillSetupAfterRelease && !b3ext6ResultVisible,
+      `Setup still shown: ${b3ext6StillSetupAfterRelease}, Stale result visible: ${b3ext6ResultVisible}`
+    );
+
+    await page.unroute('**/api/exams/guest');
+    const b3ext6Close = page.locator('button:has-text("✕"), button[aria-label*="Đóng"]').first();
+    if (await b3ext6Close.isVisible()) await b3ext6Close.click();
+    await page.waitForTimeout(300);
+
+    // -----------------------------------------------------------------------
     // PROFILE-EXT: Stale closeTimeout from old save does NOT close fresh modal
-    // Scenario: A saves → 200 → 500ms closeTimeout fires, but before 500ms:
-    //   user closes modal manually → waits → reopens modal → closeTimeout fires
-    //   → MUST NOT close the fresh re-opened modal!
+    // Scenario: save → wait for POST 200 + closeTimeout pending → close modal BEFORE timeout
+    //           fires → reopen fresh modal → advance time past 500ms → modal still open.
+    // Uses barrier to confirm POST completed and timeout is genuinely pending.
     // -----------------------------------------------------------------------
     console.log('\n--- PROFILE-EXT: Stale closeTimeout must not close re-opened modal ---');
 
@@ -1628,7 +1979,8 @@ async function runSuite() {
     await page.goto(BASE_URL, { waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(600);
 
-    // Intercept profile POST to return 200 immediately (simple static response)
+    // Intercept profile POST: return 200 AND set window.__profExtSaveCompleted = true
+    // so we have a barrier to know the save completed and closeTimeout is now pending
     await page.route('**/api/users/profile', async (route) => {
       if (route.request().method() === 'POST') {
         await route.fulfill({
@@ -1648,34 +2000,52 @@ async function runSuite() {
     // Open profile modal
     await openProfileModal();
     const profExtSchoolInput = page.locator('input#prof-school');
-    await profExtSchoolInput.fill('THCS Profile Ext Test ' + Date.now());
+    await profExtSchoolInput.fill('THCS Profile Ext Test Barrier ' + Date.now());
 
-    // Save (200 → closeTimeout will fire after 500ms)
+    // Inject saveGen observer: expose current saveGen to window so we can track increments
+    await page.evaluate(() => {
+      window.__profExtCloseTimeoutFired = false;
+      // We'll detect whether closeTimeout fires by watching isOpen state
+      // (Svelte reactivity: if modal closes, the input will disappear)
+    });
+
+    // Save — 200 fires immediately, closeTimeout scheduled for 500ms
     const profExtSaveBtn = page.locator('button:has-text("Lưu Thay Đổi Hồ Sơ")').first();
     await profExtSaveBtn.scrollIntoViewIfNeeded();
+    
+    // Click save and wait for POST 200 response (barrier: wait for save network response)
+    const profExtSaveResponsePromise = page.waitForResponse(r =>
+      r.url().includes('/api/users/profile') && r.request().method() === 'POST'
+    );
+    await profExtSaveBtn.click();
+    const profExtSaveResp = await profExtSaveResponsePromise;
+    const profExtSaveStatus = profExtSaveResp.status();
+    console.log(`  PROFILE-EXT: Save POST returned HTTP ${profExtSaveStatus} — closeTimeout now pending (500ms)`);
 
-    // Click save but immediately close the modal manually (within 500ms window)
-    profExtSaveBtn.click(); // Fire save
-    await page.waitForTimeout(100); // Brief wait for network
-    // Close modal manually (simulates user clicking X before closeTimeout fires)
+    // POST 200 confirmed. closeTimeout is now pending (500ms from here).
+    // Close modal immediately BEFORE 500ms elapses (within ~100ms of response)
     const profExtCloseBtn = page.locator('button:has-text("✕")').first();
-    if (await profExtCloseBtn.isVisible()) await profExtCloseBtn.click();
-    await page.waitForTimeout(200);
+    if (await profExtCloseBtn.isVisible()) {
+      await profExtCloseBtn.click();
+      console.log('  PROFILE-EXT: Modal closed manually within 500ms timeout window');
+    }
+    await page.waitForTimeout(50);
 
-    // Reopen modal fresh
+    // Reopen modal fresh (increments saveGen via openProfileModal which calls loadProfileData → profileLoadGen++)
     await openProfileModal();
-    const profExtModalOpenAfterClose = await page.locator('input#prof-school').isVisible();
-    recordTest('PROFILE-EXT.1', 'Profile modal can be re-opened after manual close during save close-timeout window',
-      profExtModalOpenAfterClose,
-      `Modal input visible after reopen: ${profExtModalOpenAfterClose}`
+    const profExtModalOpenAfterReopen = await page.locator('input#prof-school').isVisible();
+    recordTest('PROFILE-EXT.1', 'Profile modal can be re-opened after manual close within 500ms save close-timeout window (POST 200 confirmed)',
+      profExtModalOpenAfterReopen && profExtSaveStatus === 200,
+      `Modal visible: ${profExtModalOpenAfterReopen}, Save status: ${profExtSaveStatus}`
     );
 
-    // Wait for closeTimeout to fire (500ms from click) 
-    await page.waitForTimeout(700);
+    // Wait for stale closeTimeout to fire (500ms from save click, we're now ~300-400ms in)
+    // Wait a full second to be certain the timeout has fired
+    await page.waitForTimeout(1000);
 
-    // CRITICAL: The stale closeTimeout must NOT have closed the freshly opened modal!
+    // CRITICAL: The stale closeTimeout (thisSaveGen !== saveGen after reopen) MUST NOT have closed modal
     const profExtModalStillOpen = await page.locator('input#prof-school').isVisible();
-    recordTest('PROFILE-EXT.2', 'Stale closeTimeout from old save does NOT close the freshly re-opened modal (saveGen guard works)',
+    recordTest('PROFILE-EXT.2', 'Stale closeTimeout (saveGen guard) does NOT close the freshly re-opened modal — barrier-confirmed POST 200 was pending',
       profExtModalStillOpen,
       `Modal still open after stale timeout: ${profExtModalStillOpen}`
     );
