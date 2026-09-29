@@ -1,347 +1,129 @@
-// src/routes/api/students/+server.js
 import { json } from '@sveltejs/kit';
-import { 
-  getAllUsers, 
-  addStudent, 
-  removeStudent, 
-  updateUserGradeAndClass, 
-  enrollStudentAdditionalGrade, 
-  removeStudentEnrolledGrade, 
-  requestUnlockClass, 
-  updateUserProfile 
-} from '../../../lib/unifiedStore.js';
-import { verifyServerAuth, isStaffUser, sanitizeUser, sanitizeUserList } from '../../../lib/server/auth.js';
+import { getAllUsers, addStudent, removeStudent, updateUserGradeAndClass, enrollStudentAdditionalGrade, removeStudentEnrolledGrade, requestUnlockClass } from '../../../lib/unifiedStore.js';
+import { verifyServerAuth, isStaffUser, sanitizeUser, sanitizeUserList, hashPassword } from '../../../lib/server/auth.js';
 
 export const prerender = false;
+const MANAGER_ROLES = new Set(['superadmin', 'admin', 'leader']);
+const GRADE_ACTIONS = new Set(['change_grade', 'add_enrolled_grade', 'remove_enrolled_grade']);
+const isManager = (user) => MANAGER_ROLES.has(String(user?.role || '').toLowerCase());
+const localMockEnabled = (platform) => platform?.env?.ENABLE_LOCAL_MOCK === 'true' || (typeof process !== 'undefined' && process.env?.ENABLE_LOCAL_MOCK === 'true');
+const parseMetadata = (value) => { try { return typeof value === 'string' ? JSON.parse(value || '{}') : { ...(value || {}) }; } catch { return {}; } };
+const dbError = () => json({ success: false, error: 'DatabaseError: Thao tác Cloudflare D1 thất bại.' }, { status: 503 });
 
-/**
- * GET /api/students
- * Server-side authentication and role-scoping.
- * Excludes sensitive fields (passwords) from all returned payloads.
- */
 export async function GET({ url, request, platform }) {
   const auth = await verifyServerAuth(request, platform);
-  if (!auth.authenticated) {
-    return json({ 
-      success: false, 
-      error: auth.error || 'Unauthorized: Vui lòng đăng nhập để truy cập dữ liệu học sinh.' 
-    }, { status: auth.status || 401 });
+  if (!auth.authenticated) return json({ success: false, error: auth.error }, { status: auth.status || 401 });
+  const requestedId = url.searchParams.get('id');
+  if (!isStaffUser(auth.user) && (!requestedId || requestedId !== auth.user.id)) {
+    return json({ success: false, error: 'Forbidden: Học sinh chỉ được xem hồ sơ của chính mình.' }, { status: 403 });
   }
-
-  const requestedStudentId = url.searchParams.get('id');
-  const isStaff = isStaffUser(auth.user);
-
-  // If requester is a student, they are ONLY allowed to access their own profile
-  if (!isStaff) {
-    if (!requestedStudentId || requestedStudentId !== auth.user.id) {
-      return json({ 
-        success: false, 
-        error: 'Forbidden: Học sinh chỉ có quyền xem thông tin cá nhân của chính mình.' 
-      }, { status: 403 });
-    }
-  }
-
-  // 1. Try Cloudflare D1 if available
-  if (platform?.env?.DB) {
+  const db = platform?.env?.DB;
+  if (db) {
     try {
-      if (requestedStudentId) {
-        const d1Student = await platform.env.DB.prepare(`
-          SELECT id, username, phone, email, name, role, avatar, status, metadata, created_at, updated_at
-          FROM users 
-          WHERE role = 'student' AND (id = ? OR username = ?)
-          LIMIT 1
-        `).bind(requestedStudentId, requestedStudentId).first();
-
-        if (d1Student) {
-          return json({
-            success: true,
-            student: sanitizeUser(d1Student),
-            source: 'cloudflare_d1'
-          });
-        }
-      } else {
-        const d1Res = await platform.env.DB.prepare(`
-          SELECT id, username, phone, email, name, role, avatar, status, metadata, created_at, updated_at
-          FROM users 
-          WHERE role = 'student' 
-          ORDER BY created_at DESC
-        `).all();
-
-        if (d1Res?.results?.length > 0) {
-          return json({
-            success: true,
-            total: d1Res.results.length,
-            students: sanitizeUserList(d1Res.results),
-            source: 'cloudflare_d1'
-          });
-        }
+      if (requestedId) {
+        const row = await db.prepare(`SELECT id, username, phone, email, name, role, avatar, status, metadata, COALESCE(profile_version,0) profile_version, created_at, updated_at FROM users WHERE role='student' AND (id=? OR username=?) LIMIT 1`).bind(requestedId, requestedId).first();
+        if (!row) return json({ success: false, error: 'Không tìm thấy học sinh.' }, { status: 404 });
+        return json({ success: true, student: sanitizeUser(row), source: 'cloudflare_d1' });
       }
-    } catch (e) {
-      console.error('D1 students query error:', e);
-      return json({ success: false, error: 'Lỗi truy vấn cơ sở dữ liệu Cloudflare D1: ' + (e.message || String(e)) }, { status: 500 });
-    }
-  } else if (platform?.env?.ENABLE_LOCAL_MOCK === 'true' || process.env.ENABLE_LOCAL_MOCK === 'true') {
-    // 2. Fallback to local store with strict password sanitization (Mock environment only)
-    const users = getAllUsers();
-    const students = users.filter(u => u.role === 'student');
-
-    if (requestedStudentId) {
-      const single = students.find(s => s.id === requestedStudentId || s.username === requestedStudentId);
-      if (!single) {
-        return json({ success: false, error: 'Không tìm thấy thông tin học sinh' }, { status: 404 });
-      }
-      return json({
-        success: true,
-        student: sanitizeUser(single),
-        source: 'local_store'
-      });
-    }
-
-    return json({
-      success: true,
-      total: students.length,
-      students: sanitizeUserList(students),
-      source: 'local_store'
-    });
-  } else {
-    return json({
-      success: false,
-      error: 'Lỗi cấu hình hệ thống: Thiếu binding cơ sở dữ liệu Cloudflare D1 (DB) trên môi trường production (Fail-Closed).'
-    }, { status: 500 });
+      const result = await db.prepare(`SELECT id, username, phone, email, name, role, avatar, status, metadata, COALESCE(profile_version,0) profile_version, created_at, updated_at FROM users WHERE role='student' ORDER BY created_at DESC`).all();
+      const students = result?.results || [];
+      return json({ success: true, total: students.length, students: sanitizeUserList(students), source: 'cloudflare_d1' });
+    } catch (error) { console.error('D1 students GET error:', error); return dbError(); }
   }
+  if (!localMockEnabled(platform)) return json({ success: false, error: 'DatabaseUnavailable: Thiếu D1 binding.' }, { status: 503 });
+  const students = getAllUsers().filter((user) => user.role === 'student');
+  if (requestedId) {
+    const row = students.find((user) => user.id === requestedId || user.username === requestedId);
+    return row ? json({ success: true, student: sanitizeUser(row), source: 'local_mock' }) : json({ success: false, error: 'Không tìm thấy học sinh.' }, { status: 404 });
+  }
+  return json({ success: true, total: students.length, students: sanitizeUserList(students), source: 'local_mock' });
 }
 
-/**
- * POST /api/students
- * Creates a new student record (Staff only: Admin, Leader, Teacher).
- */
 export async function POST({ request, platform }) {
-  try {
-    const auth = await verifyServerAuth(request, platform);
-    if (!auth.authenticated) {
-      return json({ success: false, error: auth.error || 'Unauthorized: Vui lòng đăng nhập.' }, { status: auth.status || 401 });
+  const auth = await verifyServerAuth(request, platform);
+  if (!auth.authenticated) return json({ success: false, error: auth.error }, { status: auth.status || 401 });
+  if (!isManager(auth.user)) return json({ success: false, error: 'Forbidden: Chỉ admin/leader/superadmin được tạo học sinh.' }, { status: 403 });
+  let body; try { body = await request.json(); } catch { return json({ success: false, error: 'Invalid JSON.' }, { status: 400 }); }
+  const name = typeof body.name === 'string' ? body.name.trim() : '';
+  const username = typeof body.username === 'string' ? body.username.trim().toLowerCase() : '';
+  const password = typeof body.password === 'string' ? body.password : '';
+  const grade = typeof body.grade === 'string' ? body.grade.trim() : '';
+  if (!name || !/^[a-z0-9_]{3,30}$/.test(username) || password.length < 6 || !grade) return json({ success: false, error: 'ValidationError: name, username, password >= 6 ký tự và grade tường minh là bắt buộc.' }, { status: 400 });
+  const id = `usr_student_${crypto.randomUUID()}`;
+  const metadata = { grade, enrolled_grades: [grade], school: String(body.school || '').trim(), target: String(body.target || '').trim(), parent_name: String(body.parent_name || '').trim(), parent_phone: String(body.parent_phone || '').trim(), parent_zalo_id: String(body.parent_zalo_id || '').trim(), class_id: String(body.class_id || '').trim() };
+  const passwordHash = await hashPassword(password);
+  const db = platform?.env?.DB;
+  if (db) {
+    try {
+      await db.prepare(`INSERT INTO users (id,username,phone,password,email,name,role,avatar,status,metadata,profile_version) VALUES (?,?,?,?,?,?,'student',?,'active',?,0)`).bind(id, username, body.phone || null, passwordHash, body.email || null, name, body.avatar || '', JSON.stringify(metadata)).run();
+    } catch (error) {
+      console.error('D1 student POST error:', error);
+      return /unique|constraint/i.test(String(error?.message || error)) ? json({ success: false, error: 'ConflictError: Username/phone/email đã tồn tại.' }, { status: 409 }) : dbError();
     }
-
-    if (!isStaffUser(auth.user)) {
-      return json({ success: false, error: 'Forbidden: Chỉ giáo viên hoặc quản trị viên mới có quyền thêm học sinh.' }, { status: 403 });
-    }
-
-    const body = await request.json();
-    if (!body.name) {
-      return json({ success: false, error: 'Tên học sinh là bắt buộc' }, { status: 400 });
-    }
-
-    const newStudent = addStudent({
-      name: body.name,
-      username: body.username,
-      phone: body.phone,
-      password: body.password || '123',
-      email: body.email,
-      grade: body.grade || 'Lớp 7',
-      school: body.school || '',
-      target: body.target || '',
-      parent_name: body.parent_name || '',
-      parent_phone: body.parent_phone || '',
-      parent_zalo_id: body.parent_zalo_id || '',
-      class_id: body.class_id || 'GENERAL'
-    });
-
-    if (platform?.env?.DB) {
-      try {
-        await platform.env.DB.prepare(`
-          INSERT INTO users (id, username, phone, password, email, name, role, avatar, status, metadata)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-          ON CONFLICT(id) DO UPDATE SET name = excluded.name, updated_at = CURRENT_TIMESTAMP;
-        `).bind(
-          newStudent.id, newStudent.username, newStudent.phone, newStudent.password,
-          newStudent.email, newStudent.name, 'student', newStudent.avatar,
-          'active', newStudent.metadata
-        ).run();
-      } catch (d1Err) {
-        console.error('D1 insert error:', d1Err);
-        return json({
-          success: false,
-          error: 'Lỗi ghi cơ sở dữ liệu Cloudflare D1: ' + (d1Err.message || String(d1Err))
-        }, { status: 500 });
-      }
-    }
-
-    return json({
-      success: true,
-      message: 'Thêm học sinh thành công vào hệ thống!',
-      student: sanitizeUser(newStudent)
-    });
-  } catch (err) {
-    return json({ success: false, error: err.message }, { status: 500 });
+    return json({ success: true, student: sanitizeUser({ id, username, name, phone: body.phone || null, email: body.email || null, role: 'student', status: 'active', metadata: JSON.stringify(metadata), profile_version: 0 }) }, { status: 201 });
   }
+  if (!localMockEnabled(platform)) return json({ success: false, error: 'DatabaseUnavailable: Thiếu D1 binding.' }, { status: 503 });
+  return json({ success: true, student: sanitizeUser(addStudent({ ...body, id, name, username, password: passwordHash, grade, class_id: metadata.class_id })), source: 'local_mock' }, { status: 201 });
 }
 
-/**
- * PATCH /api/students
- * Performs profile updates, grade transfers, and enrollment modifications.
- */
 export async function PATCH({ request, platform }) {
-  try {
-    const auth = await verifyServerAuth(request, platform);
-    if (!auth.authenticated) {
-      return json({ success: false, error: auth.error || 'Unauthorized: Vui lòng đăng nhập.' }, { status: auth.status || 401 });
-    }
-
-    const body = await request.json();
-    const action = body.action || 'change_grade';
-    const studentId = body.student_id || body.id;
-    const operator = body.operator || auth.user;
-    const isStaff = isStaffUser(auth.user);
-
-    if (!studentId && action !== 'bulk_sync') {
-      return json({ success: false, error: 'Thiếu student_id' }, { status: 400 });
-    }
-
-    // Role-scoping checks:
-    // Only staff can change primary grade or add/remove enrolled grades
-    if (['change_grade', 'add_enrolled_grade', 'remove_enrolled_grade'].includes(action)) {
-      if (!isStaff) {
-        return json({ 
-          success: false, 
-          error: 'Forbidden: Chỉ giáo viên hoặc quản trị viên mới có quyền thay đổi phân quyền lớp học.' 
-        }, { status: 403 });
+  const auth = await verifyServerAuth(request, platform);
+  if (!auth.authenticated) return json({ success: false, error: auth.error }, { status: auth.status || 401 });
+  let body; try { body = await request.json(); } catch { return json({ success: false, error: 'Invalid JSON.' }, { status: 400 }); }
+  if (Object.prototype.hasOwnProperty.call(body, 'operator')) return json({ success: false, error: 'PrivilegeEscalationAttempt: operator chỉ được lấy từ session server.' }, { status: 400 });
+  const action = body.action || 'change_grade';
+  const studentId = body.student_id || body.id;
+  if (!studentId) return json({ success: false, error: 'Thiếu student_id.' }, { status: 400 });
+  if (action === 'update_profile') return json({ success: false, error: 'DeprecatedEndpoint: Dùng /api/users/profile với profile_version CAS.' }, { status: 410 });
+  if (GRADE_ACTIONS.has(action) && !isStaffUser(auth.user)) return json({ success: false, error: 'Forbidden: Chỉ staff được thay đổi phân lớp.' }, { status: 403 });
+  if (action === 'request_class_transfer' && studentId !== auth.user.id && !isStaffUser(auth.user)) return json({ success: false, error: 'Forbidden: Không được tạo yêu cầu cho học sinh khác.' }, { status: 403 });
+  if (!GRADE_ACTIONS.has(action) && action !== 'request_class_transfer') return json({ success: false, error: `Hành động '${action}' không hợp lệ.` }, { status: 400 });
+  const db = platform?.env?.DB;
+  if (db) {
+    try {
+      const row = await db.prepare(`SELECT id,role,metadata,COALESCE(profile_version,0) profile_version FROM users WHERE id=? LIMIT 1`).bind(studentId).first();
+      if (!row || row.role !== 'student') return json({ success: false, error: 'Không tìm thấy học sinh.' }, { status: 404 });
+      const metadata = parseMetadata(row.metadata);
+      const enrolled = Array.isArray(metadata.enrolled_grades) ? [...new Set(metadata.enrolled_grades)] : (metadata.grade ? [metadata.grade] : []);
+      if (action === 'change_grade') {
+        const grade = typeof body.grade === 'string' ? body.grade.trim() : ''; if (!grade) return json({ success: false, error: 'Thiếu grade mới.' }, { status: 400 });
+        metadata.grade = grade; metadata.class_id = String(body.class_id || '').trim(); metadata.enrolled_grades = [...new Set([...enrolled, grade])];
+      } else if (action === 'add_enrolled_grade') {
+        const grade = typeof body.grade === 'string' ? body.grade.trim() : ''; if (!grade) return json({ success: false, error: 'Thiếu grade cần thêm.' }, { status: 400 }); metadata.enrolled_grades = [...new Set([...enrolled, grade])];
+      } else if (action === 'remove_enrolled_grade') {
+        const grade = typeof body.grade === 'string' ? body.grade.trim() : ''; if (!grade) return json({ success: false, error: 'Thiếu grade cần gỡ.' }, { status: 400 }); if (grade === metadata.grade) return json({ success: false, error: 'ConflictError: Không thể gỡ khối lớp chính.' }, { status: 409 }); metadata.enrolled_grades = enrolled.filter((item) => item !== grade);
+      } else {
+        const targetGrade = typeof body.target_grade === 'string' ? body.target_grade.trim() : ''; if (!targetGrade) return json({ success: false, error: 'Thiếu target_grade.' }, { status: 400 }); metadata.pending_class_transfer = { target_grade: targetGrade, note: String(body.note || '').trim(), requested_by: auth.user.id, requested_at: new Date().toISOString() };
       }
-    }
-
-    // For updating profile: students can only update their own profile
-    if (action === 'update_profile') {
-      if (!isStaff && studentId !== auth.user.id) {
-        return json({ 
-          success: false, 
-          error: 'Forbidden: Bạn chỉ có thể cập nhật hồ sơ của chính mình.' 
-        }, { status: 403 });
-      }
-    }
-
-    let result = null;
-
-    switch (action) {
-      case 'change_grade': {
-        if (!body.grade) return json({ success: false, error: 'Thiếu grade mới' }, { status: 400 });
-        result = updateUserGradeAndClass(studentId, body.grade, body.class_id || '', operator);
-        if (platform?.env?.DB && result.success) {
-          try {
-            await platform.env.DB.prepare(`
-              UPDATE users SET metadata = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
-            `).bind(result.user.metadata, studentId).run();
-          } catch (e) {
-            console.error('D1 update grade error:', e);
-          }
-        }
-        break;
-      }
-
-      case 'add_enrolled_grade': {
-        if (!body.grade) return json({ success: false, error: 'Thiếu grade cần set thêm' }, { status: 400 });
-        result = enrollStudentAdditionalGrade(studentId, body.grade, operator);
-        if (platform?.env?.DB && result.success) {
-          try {
-            await platform.env.DB.prepare(`
-              UPDATE users SET metadata = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
-            `).bind(result.user.metadata, studentId).run();
-          } catch (e) {
-            console.error('D1 add enrolled grade error:', e);
-          }
-        }
-        break;
-      }
-
-      case 'remove_enrolled_grade': {
-        if (!body.grade) return json({ success: false, error: 'Thiếu grade cần gỡ' }, { status: 400 });
-        result = removeStudentEnrolledGrade(studentId, body.grade, operator);
-        if (platform?.env?.DB && result.success) {
-          try {
-            await platform.env.DB.prepare(`
-              UPDATE users SET metadata = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
-            `).bind(result.user.metadata, studentId).run();
-          } catch (e) {
-            console.error('D1 remove enrolled grade error:', e);
-          }
-        }
-        break;
-      }
-
-      case 'request_class_transfer': {
-        if (!body.target_grade) return json({ success: false, error: 'Thiếu target_grade mong muốn' }, { status: 400 });
-        result = await requestUnlockClass(studentId, body.target_grade, body.note || '');
-        break;
-      }
-
-      case 'update_profile': {
-        result = updateUserProfile(studentId, body.updates || {}, operator);
-        if (platform?.env?.DB && result.success) {
-          try {
-            const u = result.user;
-            await platform.env.DB.prepare(`
-              UPDATE users SET name = ?, phone = ?, email = ?, avatar = ?, metadata = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
-            `).bind(u.name, u.phone, u.email, u.avatar, u.metadata, studentId).run();
-          } catch (e) {
-            console.error('D1 update profile error:', e);
-          }
-        }
-        break;
-      }
-
-      default:
-        return json({ success: false, error: `Hành động '${action}' không hợp lệ!` }, { status: 400 });
-    }
-
-    if (!result || !result.success) {
-      return json({ success: false, error: result?.error || 'Thao tác không thành công!' }, { status: 400 });
-    }
-
-    return json({
-      success: true,
-      action,
-      result: {
-        ...result,
-        user: sanitizeUser(result.user)
-      }
-    });
-  } catch (err) {
-    return json({ success: false, error: err.message }, { status: 500 });
+      const result = await db.prepare(`UPDATE users SET metadata=?,profile_version=COALESCE(profile_version,0)+1,updated_at=CURRENT_TIMESTAMP WHERE id=? AND COALESCE(profile_version,0)=?`).bind(JSON.stringify(metadata), studentId, row.profile_version).run();
+      if ((result?.meta?.changes ?? result?.changes ?? 0) !== 1) return json({ success: false, error: 'ConcurrencyConflict: Hồ sơ đã thay đổi.' }, { status: 409 });
+      return json({ success: true, action, student_id: studentId, metadata, profile_version: row.profile_version + 1 });
+    } catch (error) { console.error('D1 student PATCH error:', error); return dbError(); }
   }
+  if (!localMockEnabled(platform)) return json({ success: false, error: 'DatabaseUnavailable: Thiếu D1 binding.' }, { status: 503 });
+  let result;
+  if (action === 'change_grade') result = updateUserGradeAndClass(studentId, body.grade, body.class_id || '', auth.user);
+  if (action === 'add_enrolled_grade') result = enrollStudentAdditionalGrade(studentId, body.grade, auth.user);
+  if (action === 'remove_enrolled_grade') result = removeStudentEnrolledGrade(studentId, body.grade, auth.user);
+  if (action === 'request_class_transfer') result = await requestUnlockClass(studentId, body.target_grade, body.note || '');
+  return result?.success ? json({ success: true, action, result: { ...result, user: sanitizeUser(result.user) }, source: 'local_mock' }) : json({ success: false, error: result?.error || 'Thao tác thất bại.' }, { status: 400 });
 }
 
 export const PUT = PATCH;
 
-/**
- * DELETE /api/students
- * Staff only
- */
 export async function DELETE({ url, request, platform }) {
-  try {
-    const auth = await verifyServerAuth(request, platform);
-    if (!auth.authenticated) {
-      return json({ success: false, error: auth.error || 'Unauthorized: Vui lòng đăng nhập.' }, { status: 401 });
-    }
-
-    if (!isStaffUser(auth.user)) {
-      return json({ success: false, error: 'Forbidden: Chỉ quản trị viên mới có quyền xóa học sinh.' }, { status: 403 });
-    }
-
-    const studentId = url.searchParams.get('id');
-    if (!studentId) {
-      return json({ success: false, error: 'Thiếu student id' }, { status: 400 });
-    }
-
-    const ok = removeStudent(studentId);
-
-    if (platform?.env?.DB && ok) {
-      try {
-        await platform.env.DB.prepare("DELETE FROM users WHERE id = ?").bind(studentId).run();
-      } catch (e) {
-        console.error('D1 delete user error:', e);
-      }
-    }
-
-    return json({ success: ok, message: ok ? 'Xóa học sinh thành công' : 'Không tìm thấy học sinh' });
-  } catch (err) {
-    return json({ success: false, error: err.message }, { status: 500 });
+  const auth = await verifyServerAuth(request, platform);
+  if (!auth.authenticated) return json({ success: false, error: auth.error }, { status: auth.status || 401 });
+  if (!isManager(auth.user)) return json({ success: false, error: 'Forbidden: Chỉ admin/leader/superadmin được xóa học sinh.' }, { status: 403 });
+  const studentId = url.searchParams.get('id'); if (!studentId) return json({ success: false, error: 'Thiếu student id.' }, { status: 400 });
+  const db = platform?.env?.DB;
+  if (db) {
+    try {
+      const result = await db.prepare("DELETE FROM users WHERE id=? AND role='student'").bind(studentId).run();
+      if ((result?.meta?.changes ?? result?.changes ?? 0) !== 1) return json({ success: false, error: 'Không tìm thấy học sinh.' }, { status: 404 });
+      return json({ success: true, message: 'Xóa học sinh thành công.' });
+    } catch (error) { console.error('D1 student DELETE error:', error); return dbError(); }
   }
+  if (!localMockEnabled(platform)) return json({ success: false, error: 'DatabaseUnavailable: Thiếu D1 binding.' }, { status: 503 });
+  const ok = removeStudent(studentId); return json({ success: ok, message: ok ? 'Xóa học sinh thành công.' : 'Không tìm thấy học sinh.' }, { status: ok ? 200 : 404 });
 }

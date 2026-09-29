@@ -1,9 +1,13 @@
 import { json } from '@sveltejs/kit';
-import { getAllEvaluations, getEvaluationsByStudent, saveEvaluation, formatParentReportCard, dispatchBotReport } from '$lib/unifiedStore';
+import { getAllEvaluations, getEvaluationsByStudent, saveEvaluation, formatParentReportCard, dispatchBotReport } from '../../../lib/unifiedStore.js';
+import { verifyServerAuth, isStaffUser } from '../../../lib/server/auth.js';
 
 export const prerender = false;
 
-export async function GET({ url, platform }) {
+export async function GET({ url, request, platform }) {
+  const auth = await verifyServerAuth(request, platform);
+  if (!auth.authenticated) return json({ success: false, error: auth.error }, { status: auth.status || 401 });
+  if (!isStaffUser(auth.user)) return json({ success: false, error: 'Forbidden: Dữ liệu đánh giá chỉ dành cho staff.' }, { status: 403 });
   const studentId = url.searchParams.get('student_id');
 
   if (platform?.env?.DB) {
@@ -15,36 +19,31 @@ export async function GET({ url, platform }) {
         params = [studentId];
       }
       const d1Res = await platform.env.DB.prepare(query).bind(...params).all();
-      if (d1Res?.results?.length > 0) {
-        return json({
-          success: true,
-          total: d1Res.results.length,
-          evaluations: d1Res.results,
-          source: 'cloudflare_d1'
-        });
-      }
+      const evaluations = d1Res?.results || [];
+      return json({ success: true, total: evaluations.length, evaluations, source: 'cloudflare_d1' });
     } catch (e) {
       console.error('D1 evaluations query error:', e);
+      return json({ success: false, error: 'DatabaseError: Không thể đọc đánh giá.' }, { status: 503 });
     }
   }
-
-  if (studentId) {
-    const list = getEvaluationsByStudent(studentId);
-    return json({ success: true, evaluations: list, source: 'local_store' });
-  }
-
-  const all = getAllEvaluations();
-  return json({ success: true, total: all.length, evaluations: all, source: 'local_store' });
+  const localMock = platform?.env?.ENABLE_LOCAL_MOCK === 'true' || (typeof process !== 'undefined' && process.env?.ENABLE_LOCAL_MOCK === 'true');
+  if (!localMock) return json({ success: false, error: 'DatabaseUnavailable: Thiếu D1 binding.' }, { status: 503 });
+  const list = studentId ? getEvaluationsByStudent(studentId) : getAllEvaluations();
+  return json({ success: true, total: list.length, evaluations: list, source: 'local_mock' });
 }
 
 export async function POST({ request, platform }) {
   try {
+    const auth = await verifyServerAuth(request, platform);
+    if (!auth.authenticated) return json({ success: false, error: auth.error }, { status: auth.status || 401 });
+    if (!isStaffUser(auth.user)) return json({ success: false, error: 'Forbidden: Chỉ staff được tạo đánh giá.' }, { status: 403 });
     const body = await request.json();
-    if (!body.student_name || !body.teacher_name) {
-      return json({ success: false, error: 'Thiếu thông tin học sinh hoặc giáo viên đánh giá' }, { status: 400 });
+    if (!body.student_id || !body.student_name || !body.grade_level) {
+      return json({ success: false, error: 'Thiếu student_id, student_name hoặc grade_level.' }, { status: 400 });
     }
-
-    const saved = saveEvaluation(body);
+    const localMock = platform?.env?.ENABLE_LOCAL_MOCK === 'true' || (typeof process !== 'undefined' && process.env?.ENABLE_LOCAL_MOCK === 'true');
+    if (!platform?.env?.DB && !localMock) return json({ success: false, error: 'DatabaseUnavailable: Thiếu D1 binding.' }, { status: 503 });
+    const saved = saveEvaluation({ ...body, teacher_id: auth.user.id, teacher_name: auth.user.name || auth.user.username });
     const parentReport = formatParentReportCard(saved);
 
     if (platform?.env?.DB) {
@@ -58,8 +57,8 @@ export async function POST({ request, platform }) {
           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           ON CONFLICT(id) DO UPDATE SET overall_score = excluded.overall_score, updated_at = CURRENT_TIMESTAMP;
         `).bind(
-          saved.id, saved.student_id, saved.student_name, saved.teacher_id || 'usr_super_2',
-          saved.teacher_name, saved.grade_level || 'Lớp 7', saved.listening_score,
+          saved.id, saved.student_id, saved.student_name, auth.user.id,
+          auth.user.name || auth.user.username, saved.grade_level, saved.listening_score,
           saved.reading_score, saved.writing_score, saved.speaking_score,
           saved.grammar_vocab_score, saved.overall_score, saved.primary_aptitude,
           saved.secondary_aptitude || '', saved.strengths || '', saved.weaknesses || '',
@@ -68,6 +67,7 @@ export async function POST({ request, platform }) {
         ).run();
       } catch (d1Err) {
         console.error('D1 evaluation insert error:', d1Err);
+        return json({ success: false, error: 'DatabaseError: Không thể lưu đánh giá.' }, { status: 503 });
       }
     }
 

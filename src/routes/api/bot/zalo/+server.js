@@ -1,19 +1,25 @@
 import { json } from '@sveltejs/kit';
-import { addStudent, removeStudent, saveEvaluation, formatParentReportCard, getAllUsers, getEvaluationsByStudent, logSnapshot } from '$lib/unifiedStore';
+import { addStudent, removeStudent, saveEvaluation, formatParentReportCard, getAllUsers, getEvaluationsByStudent, logSnapshot } from '../../../../lib/unifiedStore.js';
+import { verifyServiceSecret } from '../../../../lib/server/serviceAuth.js';
 
 export const prerender = false;
 
-export async function POST({ request }) {
+export async function POST({ request, platform }) {
   try {
+    const serviceAuth = verifyServiceSecret(request, platform, 'ZALO_BOT_WEBHOOK_SECRET', 'x-zalo-webhook-secret');
+    if (!serviceAuth.ok) return json({ success: false, error: serviceAuth.error }, { status: serviceAuth.status });
     const payload = await request.json();
     const action = payload.action || 'info';
 
     // 1. Add Student via Zalo Bot
     if (action === 'add_student') {
+      if (!payload.name || !payload.grade) {
+        return json({ success: false, error: 'ValidationError: name và grade tường minh là bắt buộc.' }, { status: 400 });
+      }
       const student = addStudent({
         name: payload.name,
         email: payload.email,
-        grade: payload.grade || 'Lớp 7',
+        grade: payload.grade,
         school: payload.school || '',
         target: payload.target || '',
         parent_name: payload.parent_name || '',
@@ -40,17 +46,21 @@ export async function POST({ request }) {
 
     // 3. Evaluate Student & Output Parent Report Card
     if (action === 'evaluate_student') {
+      const scoreFields = ['listening', 'reading', 'writing', 'speaking', 'grammar'];
+      if (!payload.student_id || !payload.grade_level || scoreFields.some((field) => !Number.isFinite(Number(payload[field])))) {
+        return json({ success: false, error: 'ValidationError: student_id, grade_level và toàn bộ điểm số là bắt buộc.' }, { status: 400 });
+      }
       const evaluation = saveEvaluation({
         student_id: payload.student_id,
         student_name: payload.student_name,
         teacher_id: payload.teacher_id || 'usr_teach_zalo',
         teacher_name: payload.teacher_name || 'Giáo viên phụ trách',
-        grade_level: payload.grade_level || 'Lớp 7',
-        listening_score: payload.listening || 7.0,
-        reading_score: payload.reading || 7.0,
-        writing_score: payload.writing || 7.0,
-        speaking_score: payload.speaking || 7.0,
-        grammar_vocab_score: payload.grammar || 7.0,
+        grade_level: payload.grade_level,
+        listening_score: Number(payload.listening),
+        reading_score: Number(payload.reading),
+        writing_score: Number(payload.writing),
+        speaking_score: Number(payload.speaking),
+        grammar_vocab_score: Number(payload.grammar),
         strengths: payload.strengths || 'Tiếp thu bài nhanh, thái độ học tập tích cực',
         weaknesses: payload.weaknesses || 'Cần chú ý cẩn thận hơn khi làm bài viết',
         teacher_feedback: payload.feedback || 'Em có nhiều tiến bộ trong quá trình học.',

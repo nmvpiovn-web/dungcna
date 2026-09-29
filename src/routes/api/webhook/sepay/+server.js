@@ -1,4 +1,5 @@
 import { json } from '@sveltejs/kit';
+import { verifyServiceSecret } from '../../../../lib/server/serviceAuth.js';
 
 export const prerender = false;
 
@@ -14,25 +15,8 @@ export const prerender = false;
  */
 export async function POST({ request, platform }) {
   // 1. Signature / Authorization Verification (Fail-Closed)
-  const webhookSecret = platform?.env?.SEPAY_WEBHOOK_SECRET || process.env.SEPAY_WEBHOOK_SECRET;
-  const authHeader = request.headers.get('Authorization') || '';
-  const apiKeyHeader = request.headers.get('X-Sepay-Api-Key') || '';
-
-  // Extract provided key from "Bearer <key>", "Apikey <key>" or direct header
-  let providedKey = '';
-  if (authHeader.startsWith('Bearer ') || authHeader.startsWith('Apikey ')) {
-    providedKey = authHeader.split(' ')[1]?.trim() || '';
-  } else if (apiKeyHeader) {
-    providedKey = apiKeyHeader.trim();
-  }
-
-  // If secret is configured on server, enforce strict match
-  if (webhookSecret && (!providedKey || providedKey !== webhookSecret)) {
-    return json({
-      success: false,
-      error: 'Unauthorized: SePay webhook signature/API key không hợp lệ.'
-    }, { status: 401 });
-  }
+  const serviceAuth = verifyServiceSecret(request, platform, 'SEPAY_WEBHOOK_SECRET', 'x-sepay-api-key');
+  if (!serviceAuth.ok) return json({ success: false, error: serviceAuth.error }, { status: serviceAuth.status });
 
   // 2. Parse & Validate Payload
   let body;
@@ -54,11 +38,16 @@ export async function POST({ request, platform }) {
     transactionDate = new Date().toISOString()
   } = body;
 
-  if (!gatewayTxId) {
+  const normalizedGatewayId = typeof gatewayTxId === 'string' || typeof gatewayTxId === 'number' ? String(gatewayTxId).trim() : '';
+  const amount = Number(transferAmount);
+  if (!normalizedGatewayId || normalizedGatewayId.length > 128) {
     return json({
       success: false,
       error: 'BadRequest: Thiếu transaction ID từ cổng thanh toán.'
     }, { status: 400 });
+  }
+  if (!['in', 'out'].includes(transferType) || !Number.isSafeInteger(amount) || amount <= 0 || typeof content !== 'string' || content.length > 1000) {
+    return json({ success: false, error: 'ValidationError: transferType, transferAmount hoặc content không hợp lệ.' }, { status: 400 });
   }
 
   const db = platform?.env?.DB;
@@ -67,7 +56,10 @@ export async function POST({ request, platform }) {
     return json({
       success: false,
       error: 'DatabaseUnavailable: Cloudflare D1 binding platform.env.DB không khả dụng.'
-    }, { status: 500 });
+    }, { status: 503 });
+  }
+  if (typeof db.batch !== 'function') {
+    return json({ success: false, error: 'PaymentTransactionError: D1 db.batch là bắt buộc.' }, { status: 503 });
   }
 
   try {
@@ -76,7 +68,7 @@ export async function POST({ request, platform }) {
       SELECT id, status, bill_id, amount FROM tuition_transactions
       WHERE gateway_transaction_id = ?
       LIMIT 1;
-    `).bind(String(gatewayTxId)).first();
+    `).bind(normalizedGatewayId).first();
 
     if (existing) {
       return json({
@@ -104,7 +96,7 @@ export async function POST({ request, platform }) {
     }
 
     // 5. Determine State Transition
-    const newTxId = `tx_sp_${gatewayTxId}_${Date.now()}`;
+    const newTxId = `tx_sp_${crypto.randomUUID()}`;
     let txStatus = 'confirmed';
     let billUpdated = false;
 
@@ -112,7 +104,7 @@ export async function POST({ request, platform }) {
       txStatus = 'reversed';
     } else if (targetBill) {
       // If payment meets or exceeds bill amount, mark bill paid/confirmed
-      if (transferAmount >= targetBill.total_amount) {
+      if (amount >= targetBill.total_amount) {
         billUpdated = true;
       }
     }
@@ -128,11 +120,11 @@ export async function POST({ request, platform }) {
         newTxId,
         targetBill?.student_id || 'unknown_student',
         targetBill?.id || matchedRef || null,
-        Number(transferAmount),
+        amount,
         txStatus,
         'sepay',
-        String(gatewayTxId),
-        referenceCode,
+        normalizedGatewayId,
+        String(referenceCode || '').slice(0, 200),
         content,
         Date.now()
       )
@@ -154,13 +146,13 @@ export async function POST({ request, platform }) {
         INSERT INTO audit_logs (id, action, actor_id, actor_role, details, created_at)
         VALUES (?, ?, ?, ?, ?, ?);
       `).bind(
-        `aud_sp_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+        `aud_sp_${crypto.randomUUID()}`,
         `PAYMENT_SEPAY_${txStatus.toUpperCase()}`,
         'system:sepay_webhook',
         'system',
         JSON.stringify({
-          gatewayTxId,
-          amount: transferAmount,
+          gatewayTxId: normalizedGatewayId,
+          amount,
           matchedBill: targetBill?.id || null,
           transferType
         }),
@@ -181,7 +173,7 @@ export async function POST({ request, platform }) {
   } catch (err) {
     return json({
       success: false,
-      error: `InternalServerError: Lỗi xử lý webhook SePay: ${err.message}`
+      error: 'InternalServerError: Lỗi xử lý webhook SePay.'
     }, { status: 500 });
   }
 }
