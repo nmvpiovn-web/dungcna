@@ -3,7 +3,7 @@ import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { DatabaseSync } from 'node:sqlite';
 
-import { GET as parentTestsGet, POST as parentTestsPost } from '../src/routes/api/parents/tests/+server.js';
+import { GET as parentTestsGet, POST as parentTestsPost, DELETE as parentTestsDelete } from '../src/routes/api/parents/tests/+server.js';
 import { GET as profileGet, POST as profilePost, PATCH as profilePatch } from '../src/routes/api/users/profile/+server.js';
 import { POST as payrollPost } from '../src/routes/api/teachers/payroll/+server.js';
 import { createSignedToken } from '../src/lib/server/auth.js';
@@ -720,6 +720,139 @@ describe('AUDIT Remediation: Dot 27 Feedback (P1-01, P1-02, P1-03, P1-04)', () =
       });
       const getData2 = await getRes2.json();
       assert.equal(getData2.profile_version, 2, 'GET must return updated version');
+    });
+  });
+
+  describe('A1-DELETE — Parent records verified-link write-time guard', () => {
+    test('Parent with verified link can delete own child record', async () => {
+      const { platform, rawDb } = createMockPlatform();
+      const token = await createSignedToken({ id: 'usr_parent_1', role: 'parent' }, secret);
+
+      // Insert a test record for verified child usr_student_1
+      rawDb.exec(`
+        CREATE TABLE IF NOT EXISTS parent_test_records (
+          id TEXT PRIMARY KEY, parent_user_id TEXT NOT NULL, student_user_id TEXT NOT NULL,
+          test_name TEXT NOT NULL, test_type TEXT NOT NULL DEFAULT 'standard_45m',
+          score REAL NOT NULL, max_score REAL NOT NULL DEFAULT 10, test_date TEXT NOT NULL,
+          teacher_feedback TEXT, image_url TEXT, source TEXT NOT NULL DEFAULT 'parent_manual',
+          status TEXT NOT NULL DEFAULT 'unverified', version INTEGER NOT NULL DEFAULT 1,
+          idempotency_key TEXT, payload_hash TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+        INSERT INTO parent_test_records (id, parent_user_id, student_user_id, test_name, score, test_date)
+          VALUES ('rec_del_1', 'usr_parent_1', 'usr_student_1', 'Bài thi 1', 8.0, '2026-09-28');
+      `);
+
+      const res = await parentTestsDelete({
+        url: new URL('http://localhost/api/parents/tests?id=rec_del_1'),
+        request: new Request('http://localhost/api/parents/tests?id=rec_del_1', {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        platform
+      });
+      assert.equal(res.status, 200, 'Verified parent should be able to delete');
+      const row = rawDb.prepare("SELECT * FROM parent_test_records WHERE id = 'rec_del_1'").get();
+      assert.equal(row, undefined, 'Record must be deleted from DB');
+    });
+
+    test('Parent with revoked link CANNOT delete revoked child record', async () => {
+      const { platform, rawDb } = createMockPlatform();
+      const token = await createSignedToken({ id: 'usr_parent_1', role: 'parent' }, secret);
+
+      // Insert record for revoked child usr_student_2
+      rawDb.exec(`
+        CREATE TABLE IF NOT EXISTS parent_test_records (
+          id TEXT PRIMARY KEY, parent_user_id TEXT NOT NULL, student_user_id TEXT NOT NULL,
+          test_name TEXT NOT NULL, test_type TEXT NOT NULL DEFAULT 'standard_45m',
+          score REAL NOT NULL, max_score REAL NOT NULL DEFAULT 10, test_date TEXT NOT NULL,
+          teacher_feedback TEXT, image_url TEXT, source TEXT NOT NULL DEFAULT 'parent_manual',
+          status TEXT NOT NULL DEFAULT 'unverified', version INTEGER NOT NULL DEFAULT 1,
+          idempotency_key TEXT, payload_hash TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+        INSERT INTO parent_test_records (id, parent_user_id, student_user_id, test_name, score, test_date)
+          VALUES ('rec_del_revoked', 'usr_parent_1', 'usr_student_2', 'Bài thi revoked', 7.0, '2026-09-28');
+      `);
+
+      const res = await parentTestsDelete({
+        url: new URL('http://localhost/api/parents/tests?id=rec_del_revoked'),
+        request: new Request('http://localhost/api/parents/tests?id=rec_del_revoked', {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        platform
+      });
+      assert.equal(res.status, 404, 'Revoked link must block DELETE');
+      // Record must still exist
+      const row = rawDb.prepare("SELECT * FROM parent_test_records WHERE id = 'rec_del_revoked'").get();
+      assert.ok(row, 'Record must NOT be deleted when link is revoked');
+    });
+
+    test('Link revoked between precheck and DELETE blocks deletion (race condition)', async () => {
+      const { platform, rawDb } = createMockPlatform();
+      const token = await createSignedToken({ id: 'usr_parent_1', role: 'parent' }, secret);
+
+      // Insert record for verified child
+      rawDb.exec(`
+        CREATE TABLE IF NOT EXISTS parent_test_records (
+          id TEXT PRIMARY KEY, parent_user_id TEXT NOT NULL, student_user_id TEXT NOT NULL,
+          test_name TEXT NOT NULL, test_type TEXT NOT NULL DEFAULT 'standard_45m',
+          score REAL NOT NULL, max_score REAL NOT NULL DEFAULT 10, test_date TEXT NOT NULL,
+          teacher_feedback TEXT, image_url TEXT, source TEXT NOT NULL DEFAULT 'parent_manual',
+          status TEXT NOT NULL DEFAULT 'unverified', version INTEGER NOT NULL DEFAULT 1,
+          idempotency_key TEXT, payload_hash TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+        INSERT INTO parent_test_records (id, parent_user_id, student_user_id, test_name, score, test_date)
+          VALUES ('rec_del_race', 'usr_parent_1', 'usr_student_1', 'Bài thi race', 9.0, '2026-09-28');
+      `);
+
+      // Revoke the link BEFORE DELETE executes (simulating race condition)
+      rawDb.exec("UPDATE parent_student_links SET verification_status = 'revoked' WHERE id = 'psl_1'");
+
+      const res = await parentTestsDelete({
+        url: new URL('http://localhost/api/parents/tests?id=rec_del_race'),
+        request: new Request('http://localhost/api/parents/tests?id=rec_del_race', {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        platform
+      });
+      assert.equal(res.status, 404, 'Revoked-at-delete-time must block DELETE');
+      const row = rawDb.prepare("SELECT * FROM parent_test_records WHERE id = 'rec_del_race'").get();
+      assert.ok(row, 'Record must survive revoked-link race condition');
+    });
+
+    test('Staff can delete any record without link check', async () => {
+      const { platform, rawDb } = createMockPlatform();
+      const teacherToken = await createSignedToken({ id: 'usr_teacher_1', role: 'teacher' }, secret);
+
+      rawDb.exec(`
+        CREATE TABLE IF NOT EXISTS parent_test_records (
+          id TEXT PRIMARY KEY, parent_user_id TEXT NOT NULL, student_user_id TEXT NOT NULL,
+          test_name TEXT NOT NULL, test_type TEXT NOT NULL DEFAULT 'standard_45m',
+          score REAL NOT NULL, max_score REAL NOT NULL DEFAULT 10, test_date TEXT NOT NULL,
+          teacher_feedback TEXT, image_url TEXT, source TEXT NOT NULL DEFAULT 'parent_manual',
+          status TEXT NOT NULL DEFAULT 'unverified', version INTEGER NOT NULL DEFAULT 1,
+          idempotency_key TEXT, payload_hash TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+        INSERT INTO parent_test_records (id, parent_user_id, student_user_id, test_name, score, test_date)
+          VALUES ('rec_del_staff', 'usr_parent_1', 'usr_student_2', 'Bài thi staff', 6.0, '2026-09-28');
+      `);
+
+      const res = await parentTestsDelete({
+        url: new URL('http://localhost/api/parents/tests?id=rec_del_staff'),
+        request: new Request('http://localhost/api/parents/tests?id=rec_del_staff', {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${teacherToken}` }
+        }),
+        platform
+      });
+      assert.equal(res.status, 200, 'Staff must be able to delete any record');
+      const row = rawDb.prepare("SELECT * FROM parent_test_records WHERE id = 'rec_del_staff'").get();
+      assert.equal(row, undefined, 'Record must be deleted by staff');
     });
   });
 });

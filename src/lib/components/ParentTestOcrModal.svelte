@@ -48,8 +48,8 @@
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-      statusMessage = '⚠️ Dung lượng ảnh tối đa là 5MB!';
+    if (file.size > 375 * 1024) {
+      statusMessage = '⚠️ Dung lượng ảnh tối đa là 375KB! Vui lòng chọn ảnh nhỏ hơn hoặc nén lại.';
       return;
     }
 
@@ -181,7 +181,7 @@
                   Đính kèm ảnh chụp bài kiểm tra (Tùy chọn)
                 </strong>
                 <span class="text-slate-500 dark:text-slate-400 text-[11px] block mt-0.5">
-                  Lưu trữ hình ảnh để đối chiếu khi cần. Dung lượng tối đa 5MB.
+                  Lưu trữ hình ảnh để đối chiếu khi cần. Dung lượng tối đa 375KB.
                 </span>
               </div>
               <label class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs shadow-sm cursor-pointer transition-all">

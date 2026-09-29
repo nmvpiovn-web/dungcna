@@ -375,7 +375,13 @@ export async function POST({ request, platform }) {
   }
 
   const teacherFeedback = body.teacher_feedback ? body.teacher_feedback.trim().slice(0, 1000) : '';
-  const imageUrl = body.image_url ? body.image_url.trim().slice(0, 500000) : '';
+  if (body.image_url && typeof body.image_url === 'string' && body.image_url.length > 500000) {
+    return json({
+      success: false,
+      error: 'ImageTooLarge: Dữ liệu hình ảnh vượt quá giới hạn 500.000 ký tự (~375KB). Vui lòng chọn ảnh nhỏ hơn hoặc giảm chất lượng.'
+    }, { status: 400 });
+  }
+  const imageUrl = body.image_url ? body.image_url.trim() : '';
   const idempotencyKey = body.idempotency_key ? body.idempotency_key.trim().slice(0, 128) : null;
 
   const db = platform?.env?.DB;
@@ -589,6 +595,8 @@ export async function POST({ request, platform }) {
 /**
  * DELETE /api/parents/tests
  * Deletes a parent test record owned by the authenticated parent.
+ * Non-staff parents: verified parent-child link required at DELETE time (write-time guard).
+ * Staff: may delete any record without link check.
  */
 export async function DELETE({ url, request, platform }) {
   const auth = await verifyServerAuth(request, platform);
@@ -618,15 +626,25 @@ export async function DELETE({ url, request, platform }) {
 
     let deleteRes;
     if (isStaff) {
+      // Staff may delete any record
       deleteRes = await db.prepare('DELETE FROM parent_test_records WHERE id = ?').bind(recordId).run();
     } else {
-      deleteRes = await db.prepare('DELETE FROM parent_test_records WHERE id = ? AND parent_user_id = ?')
-        .bind(recordId, auth.user.id).run();
+      // Parent: write-time verified-link guard — DELETE only if the record belongs
+      // to this parent AND the child still has a verified link at DELETE time.
+      // This prevents deletion after link revocation (matching GET/POST contract).
+      deleteRes = await db.prepare(`
+        DELETE FROM parent_test_records
+        WHERE id = ? AND parent_user_id = ?
+          AND student_user_id IN (
+            SELECT student_user_id FROM parent_student_links
+            WHERE parent_user_id = ? AND verification_status = 'verified'
+          )
+      `).bind(recordId, auth.user.id, auth.user.id).run();
     }
 
     const changes = deleteRes?.meta?.changes || 0;
     if (changes < 1) {
-      return json({ success: false, error: 'Không tìm thấy hồ sơ hoặc bạn không có quyền xóa hồ sơ này.' }, { status: 404 });
+      return json({ success: false, error: 'Không tìm thấy hồ sơ, liên kết đã bị thu hồi, hoặc bạn không có quyền xóa hồ sơ này.' }, { status: 404 });
     }
 
     return json({ success: true, message: 'Đã xóa hồ sơ bài thi thành công.' });
