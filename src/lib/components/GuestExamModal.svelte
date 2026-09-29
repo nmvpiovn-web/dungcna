@@ -16,6 +16,12 @@
   let isStarting = $state(false);
   let errorMsg = $state('');
 
+  // Generation & Abort Guard for Pending Requests
+  let guestGeneration = 0;
+  let activeAbortController = null;
+  let examDeadlineMs = 0;
+  let examStartTimeMs = 0;
+
   // Step 2 Testing State
   let guestSessionId = $state('');
   let guestToken = $state('');
@@ -34,11 +40,21 @@
   let leadSuccessMsg = $state('');
 
   function handleReset() {
-    if (timerInterval) clearInterval(timerInterval);
+    guestGeneration += 1;
+    if (activeAbortController) {
+      activeAbortController.abort();
+      activeAbortController = null;
+    }
+    if (timerInterval) {
+      clearInterval(timerInterval);
+      timerInterval = null;
+    }
     step = 'setup';
     examResult = null;
     leadSuccessMsg = '';
     leadPhone = '';
+    isStarting = false;
+    isSubmitting = false;
     isOpen = false;
     onClose();
   }
@@ -59,20 +75,33 @@
 
   // Re-read context on every opening; never restore another user's grade over the profile.
   $effect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      guestGeneration += 1;
+      if (activeAbortController) {
+        activeAbortController.abort();
+        activeAbortController = null;
+      }
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+      isStarting = false;
+      isSubmitting = false;
+      return;
+    }
     untrack(() => {
-    const user = getCurrentUser();
-    let storedGrade = '';
-    let storedCurriculum = '';
-    try {
-      storedGrade = localStorage.getItem('guest_selected_grade') || localStorage.getItem('preferred_grade') || '';
-      storedCurriculum = localStorage.getItem('guest_selected_curriculum') || '';
-    } catch {}
-    selectedGrade = normalizeGrade(initialGrade) || normalizeGrade(user?.grade) || (!user ? normalizeGrade(storedGrade) : '');
-    const allowed = selectedGrade === 'lop_7' ? ['global_success', 'friends_plus', 'smart_world'] : selectedGrade === 'lop_12' ? ['thpt_qg', 'ielts_academic'] : [];
-    selectedCurriculum = allowed.includes(storedCurriculum) ? storedCurriculum : (allowed[0] || '');
-    selectedDuration = '5m';
-    errorMsg = '';
+      const user = getCurrentUser();
+      let storedGrade = '';
+      let storedCurriculum = '';
+      try {
+        storedGrade = localStorage.getItem('guest_selected_grade') || localStorage.getItem('preferred_grade') || '';
+        storedCurriculum = localStorage.getItem('guest_selected_curriculum') || '';
+      } catch {}
+      selectedGrade = normalizeGrade(initialGrade) || normalizeGrade(user?.grade) || (!user ? normalizeGrade(storedGrade) : '');
+      const allowed = selectedGrade === 'lop_7' ? ['global_success', 'friends_plus', 'smart_world'] : selectedGrade === 'lop_12' ? ['thpt_qg', 'ielts_academic'] : [];
+      selectedCurriculum = allowed.includes(storedCurriculum) ? storedCurriculum : (allowed[0] || '');
+      selectedDuration = '5m';
+      errorMsg = '';
     });
   });
 
@@ -153,10 +182,17 @@
       return;
     }
 
+    const currentGen = ++guestGeneration;
+    if (activeAbortController) {
+      activeAbortController.abort();
+    }
+    activeAbortController = new AbortController();
+
     try {
       const res = await fetch('/api/exams/guest', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal: activeAbortController.signal,
         body: JSON.stringify({
           action: 'start',
           candidate_name: candidateName.trim() || 'Học Sinh Khách',
@@ -167,33 +203,50 @@
       });
 
       const data = await res.json();
+      if (currentGen !== guestGeneration || !isOpen) return;
+
       if (data.success) {
         guestSessionId = data.guest_session_id;
         guestToken = data.guest_token;
         questions = data.questions || [];
         answers = {};
-        timeLeftSeconds = data.duration_minutes * 60;
+        const durMins = data.duration_minutes || (selectedDuration === '15m' ? 15 : 5);
+        examStartTimeMs = Date.now();
+        examDeadlineMs = Date.now() + durMins * 60 * 1000;
+        timeLeftSeconds = durMins * 60;
         step = 'testing';
         startTimer();
       } else {
         errorMsg = data.error || 'Không thể khởi tạo bài thi thử.';
       }
     } catch (err) {
+      if (currentGen !== guestGeneration || !isOpen || err.name === 'AbortError') return;
       errorMsg = 'Lỗi kết nối máy chủ: ' + err.message;
     } finally {
-      isStarting = false;
+      if (currentGen === guestGeneration) {
+        isStarting = false;
+      }
     }
   }
 
   function startTimer() {
     if (timerInterval) clearInterval(timerInterval);
-    timerInterval = setInterval(() => {
-      timeLeftSeconds -= 1;
+    const tick = () => {
+      if (examDeadlineMs > 0) {
+        const remainingMs = examDeadlineMs - Date.now();
+        timeLeftSeconds = Math.max(0, Math.ceil(remainingMs / 1000));
+      } else {
+        timeLeftSeconds -= 1;
+      }
       if (timeLeftSeconds <= 0) {
-        clearInterval(timerInterval);
+        if (timerInterval) {
+          clearInterval(timerInterval);
+          timerInterval = null;
+        }
         handleSubmitTest();
       }
-    }, 1000);
+    };
+    timerInterval = setInterval(tick, 1000);
   }
 
   let formattedTime = $derived.by(() => {
@@ -205,12 +258,14 @@
   // Submit Guest Test
   async function handleSubmitTest() {
     if (isSubmitting) return;
-    if (timerInterval) clearInterval(timerInterval);
     isSubmitting = true;
+    const currentGen = guestGeneration;
 
     try {
       const durMins = selectedDuration === '15m' ? 15 : 5;
-      const durationSeconds = durMins * 60 - timeLeftSeconds;
+      const elapsedSeconds = examStartTimeMs > 0 ? Math.round((Date.now() - examStartTimeMs) / 1000) : (durMins * 60 - timeLeftSeconds);
+      const durationSeconds = Math.max(10, elapsedSeconds);
+
       const res = await fetch('/api/exams/guest', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -219,22 +274,32 @@
           guest_session_id: guestSessionId,
           guest_token: guestToken,
           answers: answers,
-          duration_seconds: Math.max(10, durationSeconds)
+          duration_seconds: durationSeconds
         })
       });
 
       const data = await res.json();
+      if (currentGen !== guestGeneration || !isOpen) return;
+
       if (data.success) {
+        if (timerInterval) {
+          clearInterval(timerInterval);
+          timerInterval = null;
+        }
         examResult = data.result;
         step = 'result';
         playAudioFeedback(true);
       } else {
-        alert(data.error || 'Nộp bài thất bại');
+        // Countdown is NOT frozen; timer remains active so user can retry!
+        alert(data.error || 'Nộp bài thất bại. Bạn có thể nhấn Thử Lại để gửi bài.');
       }
     } catch (err) {
-      alert('Lỗi nộp bài: ' + err.message);
+      if (currentGen !== guestGeneration || !isOpen || err.name === 'AbortError') return;
+      alert('Lỗi nộp bài: ' + err.message + '. Vui lòng kiểm tra kết nối và thử gửi lại.');
     } finally {
-      isSubmitting = false;
+      if (currentGen === guestGeneration && isOpen) {
+        isSubmitting = false;
+      }
     }
   }
 

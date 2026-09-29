@@ -40,13 +40,49 @@
   let recordedAudioUrl = $state(null);
 
   let loadSequence = 0;
+  let authGeneration = 0;
+
+  function handleAuthChange(event) {
+    authGeneration += 1;
+
+    // Immediately close submit modal and purge drafts scoped to previous actor
+    showSubmitModal = false;
+    selectedAssignment = null;
+    writingContent = '';
+    recordedAudioUrl = null;
+    handwrittenPhotoUrl = null;
+    submitMessage = '';
+    isSubmitting = false;
+    stopRecording();
+
+    // Close print modal
+    showWorksheetPrintModal = false;
+    worksheetToPrint = null;
+
+    // Purge lists and errors
+    assignments = [];
+    submissions = [];
+    errorMessage = '';
+
+    currentUser = getCurrentUser();
+    if (currentUser) {
+      studentStars = getStudentStars(currentUser.id);
+      loadData();
+    } else {
+      studentStars = null;
+      loading = false;
+    }
+  }
+
   async function loadData() {
     const sequence = ++loadSequence;
+    const currentGen = ++authGeneration;
     assignments = [];
     submissions = [];
     errorMessage = '';
     loading = true;
     currentUser = getCurrentUser();
+    const requestActorId = currentUser?.id;
     if (currentUser) {
       studentStars = getStudentStars(currentUser.id);
     } else {
@@ -62,7 +98,7 @@
         throw new Error(`Mã lỗi máy chủ: ${res.status}`);
       }
       const data = await res.json();
-      if (sequence !== loadSequence) return;
+      if (currentGen !== authGeneration || requestActorId !== getCurrentUser()?.id) return;
       if (data.success) {
         assignments = data.assignments || [];
         submissions = data.submissions || [];
@@ -70,15 +106,20 @@
         errorMessage = data.error || 'Không thể tải danh sách bài tập về nhà.';
       }
     } catch (e) {
-      if (sequence !== loadSequence) return;
+      if (currentGen !== authGeneration || requestActorId !== getCurrentUser()?.id) return;
       console.error('Failed to load homework:', e);
       errorMessage = 'Lỗi kết nối máy chủ hoặc phiên đăng nhập đã hết hạn. Vui lòng tải lại.';
     } finally {
-      if (sequence === loadSequence) loading = false;
+      if (currentGen === authGeneration && requestActorId === getCurrentUser()?.id) {
+        loading = false;
+      }
     }
   }
 
   onMount(() => {
+    if (typeof window !== 'undefined') {
+      window.addEventListener('tienganh:auth-change', handleAuthChange);
+    }
     loadData();
   });
 
@@ -190,6 +231,9 @@
   }
 
   onDestroy(() => {
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('tienganh:auth-change', handleAuthChange);
+    }
     if (recordingTimer) clearInterval(recordingTimer);
     if (mediaRecorder && isRecording) {
       try {
@@ -205,6 +249,9 @@
 
   async function submitHomework() {
     if (!selectedAssignment) return;
+    const currentGen = authGeneration;
+    const submitActorId = currentUser?.id;
+
     isSubmitting = true;
     submitMessage = '';
 
@@ -218,30 +265,37 @@
     };
 
     try {
-      const token = localStorage.getItem('tienganh_token') || '';
+      const token = getAuthToken();
       const res = await fetch('/api/homework', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         },
         body: JSON.stringify(payload)
       });
       const data = await res.json();
+      if (currentGen !== authGeneration || submitActorId !== getCurrentUser()?.id) return;
+
       if (data.success) {
         submitMessage = data.message;
         playAudioFeedback(true);
         setTimeout(() => {
-          showSubmitModal = false;
-          loadData();
+          if (currentGen === authGeneration && submitActorId === getCurrentUser()?.id) {
+            showSubmitModal = false;
+            loadData();
+          }
         }, 1500);
       } else {
         submitMessage = data.error || 'Nộp bài thất bại';
       }
     } catch (e) {
+      if (currentGen !== authGeneration || submitActorId !== getCurrentUser()?.id) return;
       submitMessage = 'Lỗi kết nối server: ' + e.message;
     } finally {
-      isSubmitting = false;
+      if (currentGen === authGeneration && submitActorId === getCurrentUser()?.id) {
+        isSubmitting = false;
+      }
     }
   }
 

@@ -1,5 +1,6 @@
 <script>
-  import { getAuthToken, saveParentTestRecord } from '$lib/unifiedStore';
+  import { onMount, onDestroy } from 'svelte';
+  import { getAuthToken, getCurrentUser, saveParentTestRecord } from '$lib/unifiedStore';
   import { playAudioFeedback } from '$lib/speech.js';
 
   let { isOpen = $bindable(false), student = null, onSaved = () => {} } = $props();
@@ -16,6 +17,14 @@
   let teacherFeedback = $state('');
   let statusMessage = $state('');
 
+  // Scoping & Generation Guards
+  let activeStudentId = $state(null);
+  let activeActorId = $state(null);
+  let fileReaderGen = 0;
+  let saveGen = 0;
+  let currentIdempotencyKey = $state(null);
+  let lastSubmittedPayloadSig = $state('');
+
   const testTypes = [
     { id: 'quick_15m', label: '⚡ Kiểm Tra 15 Phút Nhanh' },
     { id: 'standard_45m', label: '⏱️ Đề 1 Tiết 45 Phút Chuẩn' },
@@ -25,10 +34,56 @@
     { id: 'other', label: '📝 Bài Kiểm Tra Khác' }
   ];
 
-  // Reset form cleanly whenever modal opens or child changes (prevent data leak across children)
+  function computePayloadSignature() {
+    return JSON.stringify({
+      studentId: student?.id,
+      testName: testName.trim(),
+      testType,
+      score: String(score).trim(),
+      maxScore,
+      testDate,
+      feedback: teacherFeedback.trim(),
+      hasImage: !!uploadedImage
+    });
+  }
+
+  // Reset form cleanly whenever modal opens, child changes, or actor changes
   $effect(() => {
+    const actor = getCurrentUser();
+    const actorId = actor?.id || null;
+    const sId = student?.id || null;
+
     if (isOpen) {
-      resetForm();
+      if (activeStudentId !== sId || activeActorId !== actorId) {
+        activeStudentId = sId;
+        activeActorId = actorId;
+        resetForm();
+      }
+    } else {
+      // Invalidate in-flight background operations when modal is closed
+      saveGen += 1;
+      fileReaderGen += 1;
+    }
+  });
+
+  function handleAuthChange() {
+    saveGen += 1;
+    fileReaderGen += 1;
+    isOpen = false;
+    resetForm();
+    activeStudentId = null;
+    activeActorId = null;
+  }
+
+  onMount(() => {
+    if (typeof window !== 'undefined') {
+      window.addEventListener('tienganh:auth-change', handleAuthChange);
+    }
+  });
+
+  onDestroy(() => {
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('tienganh:auth-change', handleAuthChange);
     }
   });
 
@@ -42,6 +97,8 @@
     uploadedImage = null;
     statusMessage = '';
     isSaving = false;
+    currentIdempotencyKey = null;
+    lastSubmittedPayloadSig = '';
   }
 
   function handleFileSelect(e) {
@@ -53,9 +110,15 @@
       return;
     }
 
+    const thisReaderGen = ++fileReaderGen;
+    const targetStudentId = student?.id;
+
     const reader = new FileReader();
     reader.onload = (event) => {
-      // Image is purely an attachment document, NOT proof of verified score
+      // Invalidate if modal closed, student changed, or superseded by another file read
+      if (thisReaderGen !== fileReaderGen || !isOpen || student?.id !== targetStudentId) {
+        return;
+      }
       uploadedImage = event.target.result;
       statusMessage = '📷 Đã đính kèm ảnh chụp bài thi (tài liệu tham khảo, chưa xác thực).';
     };
@@ -87,6 +150,19 @@
       return;
     }
 
+    const currentSig = computePayloadSignature();
+    // If payload changed, generate a new idempotency key to prevent 409 conflict
+    // If payload is identical (retry), maintain same idempotency key to permit safe replay
+    if (!currentIdempotencyKey || currentSig !== lastSubmittedPayloadSig) {
+      currentIdempotencyKey = `ptest_${student.id}_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+      lastSubmittedPayloadSig = currentSig;
+    }
+
+    const thisSaveGen = ++saveGen;
+    const targetStudentId = student.id;
+    const actor = getCurrentUser();
+    const actorId = actor?.id;
+
     isSaving = true;
     statusMessage = '';
 
@@ -99,18 +175,24 @@
           ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         },
         body: JSON.stringify({
-          student_id: student.id,
+          student_id: targetStudentId,
           test_name: cleanName,
           test_type: testType,
           score: numScore,
           max_score: numMax,
           test_date: testDate,
           teacher_feedback: teacherFeedback.trim(),
-          image_url: uploadedImage || ''
+          image_url: uploadedImage || '',
+          idempotency_key: currentIdempotencyKey
         })
       });
 
       const data = await res.json();
+
+      // Guard against late response if modal closed, student changed, or actor changed
+      if (thisSaveGen !== saveGen || !isOpen || student?.id !== targetStudentId || getCurrentUser()?.id !== actorId) {
+        return;
+      }
 
       if (res.ok && data.success) {
         playAudioFeedback('correct');
@@ -121,9 +203,14 @@
         statusMessage = `⚠️ ${data.error || 'Có lỗi xảy ra khi lưu hồ sơ bài thi vào máy chủ!'}`;
       }
     } catch (err) {
+      if (thisSaveGen !== saveGen || !isOpen || student?.id !== targetStudentId || getCurrentUser()?.id !== actorId) {
+        return;
+      }
       statusMessage = `⚠️ Lỗi kết nối máy chủ: ${err.message || err}`;
     } finally {
-      isSaving = false;
+      if (thisSaveGen === saveGen && isOpen && student?.id === targetStudentId) {
+        isSaving = false;
+      }
     }
   }
 </script>
