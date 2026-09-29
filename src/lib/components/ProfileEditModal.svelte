@@ -18,6 +18,9 @@
   let profileVersion = $state(null); // Integer CAS version from server
   let originalProfile = {};
   let isSaving = $state(false);
+  let isInitialLoading = $state(false);
+  let baselineFetchFailed = $state(false);
+  let isReloadingBaseline = $state(false);
 
   let profileLoadGen = 0;
   let saveGen = 0;
@@ -62,6 +65,9 @@
     currentUser = null;
     profileVersion = null;
     isSaving = false;
+    isInitialLoading = false;
+    baselineFetchFailed = false;
+    isReloadingBaseline = false;
   }
 
   onMount(() => {
@@ -91,6 +97,7 @@
     if (isOpen) {
       untrack(() => {
         statusMessage = '';
+        baselineFetchFailed = false;
         loadProfileData({ isInitial: true });
       });
     } else {
@@ -102,6 +109,9 @@
           closeTimeout = null;
         }
         isSaving = false;
+        isInitialLoading = false;
+        baselineFetchFailed = false;
+        isReloadingBaseline = false;
       });
     }
   });
@@ -113,9 +123,18 @@
     if (!user) {
       activeActorId = null;
       profileVersion = null;
+      isInitialLoading = false;
+      isReloadingBaseline = false;
+      baselineFetchFailed = false;
       return { success: false, error: 'Chưa đăng nhập' };
     }
     activeActorId = user.id;
+
+    if (isInitial) {
+      isInitialLoading = true;
+    } else {
+      isReloadingBaseline = true;
+    }
 
     // Reset profileVersion at start of load so stale version is never reused if load fails
     profileVersion = null;
@@ -153,11 +172,18 @@
         return { success: false, error: 'Stale actor or modal closed' };
       }
       fetchError = err.message || 'Lỗi kết nối máy chủ';
+    } finally {
+      if (thisGen === profileLoadGen && user.id === activeActorId && isOpen) {
+        isInitialLoading = false;
+        isReloadingBaseline = false;
+      }
     }
 
     if (thisGen !== profileLoadGen || user.id !== activeActorId || !isOpen) {
       return { success: false, error: 'Stale actor or modal closed' };
     }
+
+    baselineFetchFailed = !serverSuccess;
 
     // Only populate fields from server or initial store baseline.
     // If this is a refresh after 409 and server failed, DO NOT replace baseline with local cache!
@@ -181,6 +207,29 @@
     }
 
     return { success: serverSuccess, error: fetchError, version: profileVersion };
+  }
+
+  async function handleReloadBaseline() {
+    const currentDraft = {
+      name, phone, email, avatar, school, target, zaloId, grade
+    };
+    const res = await loadProfileData({ isInitial: false });
+    if (res.success) {
+      // Re-apply dirty fields on top of the newly loaded server baseline
+      if (currentDraft.name !== undefined) name = currentDraft.name;
+      if (currentDraft.phone !== undefined) phone = currentDraft.phone;
+      if (currentDraft.email !== undefined) email = currentDraft.email;
+      if (currentDraft.avatar !== undefined) avatar = currentDraft.avatar;
+      if (currentDraft.school !== undefined) school = currentDraft.school;
+      if (currentDraft.target !== undefined) target = currentDraft.target;
+      if (currentDraft.zaloId !== undefined) zaloId = currentDraft.zaloId;
+      if (currentDraft.grade !== undefined) grade = currentDraft.grade;
+
+      statusMessage = '✅ Đã tải bản mới nhất từ máy chủ thành công. Bản nháp của bạn đã được đối soát; bạn có thể bấm Lưu.';
+      baselineFetchFailed = false;
+    } else {
+      statusMessage = `⚠️ Tải lại thất bại (${res.error || 'Lỗi mạng'}). Vui lòng thử lại sau.`;
+    }
   }
 
   async function handleSendClassTransferRequest() {
@@ -229,6 +278,18 @@
     if (e) e.preventDefault();
     if (!currentUser) return;
 
+    // Block save if initial load is pending
+    if (isInitialLoading) {
+      statusMessage = '⚠️ Dữ liệu hồ sơ đang được tải, vui lòng đợi...';
+      return;
+    }
+
+    // Block save if baseline fetch failed or version is unknown (prevent unversioned mutation)
+    if (baselineFetchFailed || profileVersion == null) {
+      statusMessage = '⚠️ Chưa thể đồng bộ phiên bản mới nhất từ máy chủ để lưu. Vui lòng bấm "Tải lại dữ liệu đối soát" trước khi lưu.';
+      return;
+    }
+
     const thisSaveGen = ++saveGen;
     const thisActorId = activeActorId;
 
@@ -251,10 +312,8 @@
         payload.grade = grade;
       }
 
-      // Include CAS version for concurrency guard
-      if (profileVersion != null) {
-        payload.expected_version = profileVersion;
-      }
+      // STRICT CAS GUARD: MUST include expected_version. Never send unversioned mutation from profile modal!
+      payload.expected_version = profileVersion;
 
       for (const key of Object.keys(payload)) {
         if (key === 'expected_version') continue; // Don't strip version field
@@ -284,6 +343,7 @@
         if (data.profile_version) {
           profileVersion = data.profile_version;
         }
+        baselineFetchFailed = false;
         playAudioFeedback('correct');
         if (closeTimeout) clearTimeout(closeTimeout);
         closeTimeout = setTimeout(() => {
@@ -312,8 +372,10 @@
         if ('grade' in draft) grade = draft.grade;
 
         if (refreshResult && !refreshResult.success) {
-          statusMessage = `⚠️ Xung đột phiên xảy ra, nhưng không thể tải bản mới nhất từ máy chủ (${refreshResult.error || 'Lỗi mạng'}). Bản nháp chỉnh sửa của bạn vẫn được giữ nguyên. Vui lòng kiểm tra lại kết nối và thử lại.`;
+          baselineFetchFailed = true;
+          statusMessage = `⚠️ Xung đột phiên xảy ra, nhưng không thể tải bản mới nhất từ máy chủ (${refreshResult.error || 'Máy chủ phản hồi HTTP 503'}). Bản nháp chỉnh sửa của bạn vẫn được giữ nguyên. Vui lòng kiểm tra lại kết nối và thử lại.`;
         } else {
+          baselineFetchFailed = false;
           statusMessage = '⚠️ Hồ sơ đã được cập nhật bởi phiên khác. Các chỉnh sửa của bạn được giữ lại; vui lòng đối chiếu và nhấn Lưu nếu muốn áp dụng.';
         }
         isSaving = false;
@@ -603,14 +665,36 @@
           />
         </div>
 
-        <!-- Action Button -->
-        <button
-          type="submit"
-          disabled={isSaving}
-          class="w-full py-2.5 rounded-md bg-sky-700 hover:bg-sky-600 text-white font-semibold text-xs shadow-xs transition-colors flex items-center justify-center gap-2 mt-4"
-        >
-          <span>{isSaving ? '⏳ Đang lưu hồ sơ...' : '💾 Lưu Thay Đổi Hồ Sơ'}</span>
-        </button>
+        <!-- Action Buttons -->
+        {#if baselineFetchFailed || profileVersion == null}
+          <div class="flex flex-col sm:flex-row gap-2 mt-4">
+            <button
+              type="button"
+              id="reload-baseline-btn"
+              disabled={isReloadingBaseline}
+              onclick={handleReloadBaseline}
+              class="flex-1 py-2.5 rounded-md bg-amber-600 hover:bg-amber-500 text-white font-semibold text-xs shadow-xs transition-colors flex items-center justify-center gap-2"
+            >
+              <span>{isReloadingBaseline ? '⏳ Đang tải bản mới...' : '🔄 Tải Lại Dữ Liệu Đối Soát'}</span>
+            </button>
+            <button
+              type="submit"
+              disabled={true}
+              title="Vui lòng tải lại dữ liệu đối soát trước khi lưu"
+              class="flex-1 py-2.5 rounded-md bg-slate-400 dark:bg-slate-700 cursor-not-allowed text-white/70 font-semibold text-xs shadow-xs transition-colors flex items-center justify-center gap-2"
+            >
+              <span>💾 Lưu Thay Đổi Hồ Sơ</span>
+            </button>
+          </div>
+        {:else}
+          <button
+            type="submit"
+            disabled={isSaving || isInitialLoading}
+            class="w-full py-2.5 rounded-md bg-sky-700 hover:bg-sky-600 text-white font-semibold text-xs shadow-xs transition-colors flex items-center justify-center gap-2 mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <span>{isSaving ? '⏳ Đang lưu hồ sơ...' : '💾 Lưu Thay Đổi Hồ Sơ'}</span>
+          </button>
+        {/if}
       </form>
     </div>
   </div>

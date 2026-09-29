@@ -337,6 +337,9 @@ describe('Dot 29 Directive Remediation: A2, B1, B2, B3, C (Codex 2026-09-29)', (
       assert.match(content, /closeTimeout/, 'Must manage closeTimeout');
       assert.match(content, /tienganh:auth-change/, 'Must listen to auth change to close modal and reset state');
       assert.match(content, /profileVersion\s*=\s*null/, 'Must reset profileVersion at start of load');
+      assert.match(content, /baselineFetchFailed/, 'Must track baselineFetchFailed');
+      assert.match(content, /handleReloadBaseline/, 'Must provide handleReloadBaseline for manual reconciliation');
+      assert.match(content, /isInitialLoading/, 'Must track isInitialLoading');
       assert.match(content, /return\s*\{\s*success:\s*serverSuccess,\s*error:\s*fetchError,\s*version:\s*profileVersion\s*\}/, 'loadProfileData must return explicit status');
       assert.match(content, /refreshResult\s*&&\s*!refreshResult\.success/, 'Must inspect refreshResult after 409');
       assert.match(content, /Bản nháp chỉnh sửa của bạn vẫn được giữ nguyên/, 'Must preserve draft and alert on refresh failure without fake sync');
