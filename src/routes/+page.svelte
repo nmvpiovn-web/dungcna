@@ -264,7 +264,7 @@
   const proofStats = [
     { value: data.stats?.totalQuestions ?? 1375, suffix: '', label: 'Câu hỏi ngân hàng đề', icon: '📝' },
     { value: data.stats?.totalWords ?? 222, suffix: '', label: 'Từ vựng minh họa', icon: '🔤' },
-    { value: data.curricula?.length ?? 0, suffix: '', label: 'Chương trình học K12', icon: '📚' },
+    { value: data.stats?.totalCurricula ?? data.curricula?.length ?? 0, suffix: '', label: 'Chương trình học K12', icon: '📚' },
     { value: 100, suffix: '', label: 'Sao = 1.000đ trừ học phí', icon: '⭐' }
   ];
 

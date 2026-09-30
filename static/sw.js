@@ -2,11 +2,11 @@
 // Architecture: Strict Network-Only for dynamic data/APIs; Cache-First for static immutable assets;
 // Network-First (with offline fallback) for navigations.
 
-const CACHE_NAME = 'tienganh-academic-v4';
+const CACHE_NAME = 'tienganh-academic-v5';
 
 // App shell precache (offline fallback + icons + manifest). Individual failures must not break install.
 const PRECACHE_URLS = [
-  '/offline.html',
+  '/offline/',
   '/icon-192.png',
   '/icon-512.png',
   '/apple-touch-icon.png',
@@ -50,14 +50,14 @@ self.addEventListener('fetch', (event) => {
   }
 
   // 2. Navigation requests: Network-First so deployments reflect immediately,
-  //    with cache + offline.html fallback when the device is offline.
+  //    with cache + offline fallback when the device is offline.
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request)
         .then((networkResponse) => networkResponse)
         .catch(() =>
           caches.match(event.request).then(
-            (cachedPage) => cachedPage || caches.match('/offline.html')
+            (cachedPage) => cachedPage || caches.match('/offline/')
           )
         )
     );

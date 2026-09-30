@@ -27,9 +27,11 @@
 
 <div class={`relative flex flex-col p-6 rounded-3xl border-2 shadow-sm transition-all hover:shadow-md ${featured ? 'border-accent-500 bg-surface-0' : 'border-line bg-surface-0'}`}>
   {#if badge}
-    <span class="absolute -top-3.5 left-1/2 -translate-x-1/2 whitespace-nowrap px-4 py-1 rounded-full bg-accent-500 text-white text-xs font-extrabold shadow-sm">
-      {badge}{discountPct ? ` −${discountPct}%` : ''}
-    </span>
+    <div class="flex justify-center -mt-2 mb-3">
+      <span class="whitespace-nowrap px-4 py-1 rounded-full bg-accent-500 text-white text-xs font-extrabold shadow-md">
+        {badge}{discountPct ? ` −${discountPct}%` : ''}
+      </span>
+    </div>
   {/if}
 
   <h3 class="font-heading text-lg font-extrabold text-ink-900 text-center mt-1">{title}</h3>
