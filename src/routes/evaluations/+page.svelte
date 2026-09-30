@@ -423,12 +423,12 @@
 <div class="space-y-6">
   <!-- Toast Alert -->
   {#if alertMessage}
-    <div class="p-4 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-200 text-sm flex items-center justify-between shadow-lg">
+    <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-900 text-sm flex items-center justify-between shadow-lg">
       <div class="flex items-center gap-2">
         <span>✅</span>
         <span>{alertMessage}</span>
       </div>
-      <button onclick={() => alertMessage = ''} class="text-emerald-400 hover:text-white">✕</button>
+      <button onclick={() => alertMessage = ''} class="text-emerald-900 hover:text-emerald-950">✕</button>
     </div>
   {/if}
 
@@ -436,52 +436,52 @@
   {#if currentUser?.role === 'student'}
     {@const isOfficial = currentUser.approval_status === 'official' || (currentUser.status === 'active' && !currentUser.is_trial && !currentUser.metadata?.includes('"is_trial":true'))}
     {@const primaryGrade = currentUser.grade || 'Lớp 7'}
-    <div class="rounded-2xl bg-indigo-950/40 border border-indigo-500/30 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg">
+    <div class="rounded-2xl bg-white border border-sky-200 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg">
       <div class="flex items-center gap-3.5">
-        <div class="w-11 h-11 rounded-2xl bg-indigo-600/30 border border-indigo-500/40 text-indigo-300 font-bold flex items-center justify-center text-xl shadow-md">
+        <div class="w-11 h-11 rounded-2xl bg-sky-100 border border-sky-300 text-sky-900 font-bold flex items-center justify-center text-xl shadow-md">
           📊
         </div>
         <div class="space-y-0.5">
-          <div class="text-sm font-bold text-white flex flex-wrap items-center gap-2">
-            <span>Học Sinh: <strong class="text-indigo-200">{currentUser.name}</strong></span>
+          <div class="text-sm font-bold text-slate-950 flex flex-wrap items-center gap-2">
+            <span>Học Sinh: <strong class="text-sky-800">{currentUser.name}</strong></span>
             {#if isOfficial}
-              <span class="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/30">
+              <span class="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 font-bold border border-emerald-300">
                 ✓ Học Sinh Chính Thức
               </span>
             {:else}
-              <span class="text-[10px] px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">
+              <span class="text-[10px] px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-900 font-bold border border-amber-300">
                 ⏳ Dùng Thử (Trial) • Chờ Cô Dung Duyệt
               </span>
             {/if}
           </div>
           <div class="text-xs text-slate-400">
-            Tài khoản: <strong class="text-slate-200">@{currentUser.username}</strong> • Sổ theo dõi đánh giá năng lực &amp; chuyên cần
+            Tài khoản: <strong class="text-slate-900">@{currentUser.username}</strong> • Sổ theo dõi đánh giá năng lực &amp; chuyên cần
           </div>
         </div>
       </div>
-      <div class="sm:text-right bg-indigo-900/30 px-3.5 py-2 rounded-xl border border-indigo-500/20">
-        <div class="text-[10px] text-indigo-300 font-extrabold uppercase tracking-wider">Khối Lớp Đã Đăng Ký</div>
-        <div class="text-sm font-black text-white">{primaryGrade}</div>
+      <div class="sm:text-right bg-sky-50 px-3.5 py-2 rounded-xl border border-indigo-500/20">
+        <div class="text-[10px] text-sky-800 font-extrabold uppercase tracking-wider">Khối Lớp Đã Đăng Ký</div>
+        <div class="text-sm font-black text-slate-950">{primaryGrade}</div>
       </div>
     </div>
   {/if}
 
   <!-- Header Banner -->
-  <div class="rounded-3xl bg-gradient-to-r from-slate-900 via-indigo-950/60 to-slate-900 border border-slate-800 p-6 md:p-8 shadow-2xl relative overflow-hidden">
+  <div class="rounded-3xl bg-gradient-to-r from-white via-sky-50 to-white border border-sky-200 p-6 md:p-8 shadow-2xl relative overflow-hidden">
     <div class="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
       <div>
         <div class="flex items-center gap-2 mb-2">
-          <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+          <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-900 border border-emerald-300">
             TIẾNG ANH CÔ DUNG • KHUNG ĐÁNH GIÁ 2026
           </span>
-          <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">
+          <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-50 text-indigo-900 border border-indigo-300">
             Tích Hợp Bot Zalo Phụ Huynh
           </span>
         </div>
-        <h1 class="text-2xl md:text-3xl font-black tracking-tight text-white">
+        <h1 class="text-2xl md:text-3xl font-black tracking-tight text-slate-950">
           Tiếng Anh Cô Dung — Đánh Giá Năng Lực &amp; Kế Hoạch Cá Nhân Hóa
         </h1>
-        <p class="text-sm text-slate-300 mt-2 max-w-3xl leading-relaxed">
+        <p class="text-sm text-slate-700 mt-2 max-w-3xl leading-relaxed">
           Cùng Cô Dung phân tích thiên hướng học tập (Nghe - Nói phản xạ vs. Đọc - Viết học thuật), xác định điểm mạnh/yếu,
           lập kế hoạch hành động 1-3 tháng và xuất phiếu báo cáo tự động chuyển tiếp tới Zalo phụ huynh.
         </p>
@@ -492,7 +492,7 @@
         <div class="flex flex-wrap items-center gap-3">
           <button
             onclick={() => showAddStudentModal = true}
-            class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs flex items-center gap-2 border border-slate-700 transition-all shadow-md"
+            class="px-4 py-2.5 rounded-xl bg-white hover:bg-slate-100 text-slate-900 border border-slate-300 font-bold text-xs flex items-center gap-2 border border-slate-700 transition-all shadow-md"
           >
             <span>➕ Thêm Học Sinh</span>
           </button>
@@ -511,18 +511,18 @@
   </div>
 
   <!-- Tabs Navigation -->
-  <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+  <div class="flex items-center justify-between border-b border-slate-200 pb-3">
     <div class="flex items-center gap-2">
       <button
         onclick={() => activeTab = 'evaluations'}
-        class="px-4 py-2 rounded-xl text-xs font-bold transition-all {activeTab === 'evaluations' ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-900 text-slate-400 hover:text-white'}"
+        class="px-4 py-2 rounded-xl text-xs font-bold transition-all {activeTab === 'evaluations' ? 'bg-indigo-600 text-white shadow-md' : 'bg-white text-slate-700 hover:bg-sky-50 hover:text-sky-900 border border-slate-300'}"
       >
         📑 {currentUser?.role === 'student' ? 'Phiếu Đánh Giá Của Em' : (currentUser?.role === 'parent' ? 'Phiếu Đánh Giá Của Con' : 'Danh Sách Đánh Giá Đã Lưu')} ({filteredEvaluations.length})
       </button>
       {#if currentUser && isTeacherOrAdmin(currentUser)}
         <button
           onclick={() => activeTab = 'students'}
-          class="px-4 py-2 rounded-xl text-xs font-bold transition-all {activeTab === 'students' ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-900 text-slate-400 hover:text-white'}"
+          class="px-4 py-2 rounded-xl text-xs font-bold transition-all {activeTab === 'students' ? 'bg-indigo-600 text-white shadow-md' : 'bg-white text-slate-700 hover:bg-sky-50 hover:text-sky-900 border border-slate-300'}"
         >
           👥 Danh Sách Học Sinh ({students.length})
         </button>
@@ -534,7 +534,7 @@
       <div class="flex items-center gap-2">
         <select
           bind:value={filterAptitude}
-          class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
+          class="bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-slate-900 focus:outline-none focus:border-indigo-500"
         >
           <option value="all">🔍 Tất Cả Thiên Hướng</option>
           <option value="listening_speaking">🎧 Thiên về Nghe - Nói</option>
@@ -550,11 +550,11 @@
   <!-- TAB 1: EVALUATIONS LIST -->
   {#if activeTab === 'evaluations'}
     {#if filteredEvaluations.length === 0}
-      <div class="p-12 text-center rounded-2xl bg-slate-900/60 border border-slate-800 space-y-3">
+      <div class="p-12 text-center rounded-2xl bg-white border border-slate-200 space-y-3">
         {#if currentUser?.role === 'student'}
           <div class="text-4xl">🌱</div>
-          <h3 class="text-lg font-bold text-slate-200">Em chưa có bản đánh giá năng lực định kỳ nào</h3>
-          <p class="text-xs text-slate-400 max-w-md mx-auto">Giáo viên phụ trách và Cô Dung sẽ cập nhật đánh giá 4 kỹ năng (Nghe - Nói - Đọc - Viết) và nhận xét sổ đầu bài sau buổi học hoặc bài kiểm tra.</p>
+          <h3 class="text-lg font-bold text-slate-900">Em chưa có bản đánh giá năng lực định kỳ nào</h3>
+          <p class="text-xs text-slate-600 max-w-md mx-auto">Giáo viên phụ trách và Cô Dung sẽ cập nhật đánh giá 4 kỹ năng (Nghe - Nói - Đọc - Viết) và nhận xét sổ đầu bài sau buổi học hoặc bài kiểm tra.</p>
           <div class="pt-2">
             <a
               href="/exam"
@@ -565,12 +565,12 @@
           </div>
         {:else if currentUser?.role === 'parent'}
           <div class="text-4xl">👨‍👩‍👧</div>
-          <h3 class="text-lg font-bold text-slate-200">Chưa có bản đánh giá của con em</h3>
-          <p class="text-xs text-slate-400 max-w-md mx-auto">Giáo viên phụ trách đang tổng hợp kết quả học tập và nhận xét năng khiếu. Quý phụ huynh vui lòng quay lại sau ca học gần nhất.</p>
+          <h3 class="text-lg font-bold text-slate-900">Chưa có bản đánh giá của con em</h3>
+          <p class="text-xs text-slate-600 max-w-md mx-auto">Giáo viên phụ trách đang tổng hợp kết quả học tập và nhận xét năng khiếu. Quý phụ huynh vui lòng quay lại sau ca học gần nhất.</p>
         {:else}
           <div class="text-4xl mb-3">📋</div>
-          <h3 class="text-lg font-bold text-slate-200">Chưa có bản đánh giá nào phù hợp</h3>
-          <p class="text-xs text-slate-400 mt-1">Hãy bấm "Tạo Đánh Giá Năng Lực Mới" để bắt đầu ghi nhận năng khiếu học sinh.</p>
+          <h3 class="text-lg font-bold text-slate-900">Chưa có bản đánh giá nào phù hợp</h3>
+          <p class="text-xs text-slate-600 mt-1">Hãy bấm "Tạo Đánh Giá Năng Lực Mới" để bắt đầu ghi nhận năng khiếu học sinh.</p>
         {/if}
       </div>
     {:else}
@@ -583,19 +583,19 @@
             speaking: ev.speaking_score,
             grammar: ev.grammar_vocab_score
           })}
-          <div class="rounded-2xl bg-slate-900/90 border border-slate-800 p-6 flex flex-col justify-between shadow-xl hover:border-slate-700 transition-all">
+          <div class="rounded-2xl bg-white border border-slate-200 p-6 flex flex-col justify-between shadow-xl hover:border-slate-700 transition-all">
             <div>
               <!-- Top Row: Student info & Aptitude Badge -->
               <div class="flex items-start justify-between gap-4 mb-4">
                 <div>
                   <div class="flex items-center gap-2">
-                    <h3 class="font-extrabold text-base text-white">{ev.student_name}</h3>
-                    <span class="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 font-semibold border border-slate-700">
+                    <h3 class="font-extrabold text-base text-slate-950">{ev.student_name}</h3>
+                    <span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-800 font-semibold border border-slate-700">
                       {ev.grade_level}
                     </span>
                   </div>
-                  <div class="text-xs text-slate-400 mt-1 flex items-center gap-1.5">
-                    <span>👨‍🏫 GV: <strong class="text-slate-200">{ev.teacher_name}</strong></span>
+                  <div class="text-xs text-slate-600 mt-1 flex items-center gap-1.5">
+                    <span>👨‍🏫 GV: <strong class="text-slate-900">{ev.teacher_name}</strong></span>
                     <span>•</span>
                     <span>{new Date(ev.created_at).toLocaleDateString('vi-VN')}</span>
                   </div>
@@ -608,30 +608,30 @@
               </div>
 
               <!-- 5-Skill Score Radar Bars -->
-              <div class="space-y-2 py-3 border-y border-slate-800/80 my-3">
-                <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+              <div class="space-y-2 py-3 border-y border-slate-200 my-3">
+                <div class="text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
                   Điểm số 5 Kỹ Năng Đo Lường (Thang điểm 10):
                 </div>
 
                 <div class="grid grid-cols-5 gap-2 text-center text-xs">
-                  <div class="p-2 rounded-xl bg-slate-800/80 border border-slate-700/50">
-                    <div class="text-[10px] text-slate-400">🎧 Nghe</div>
+                  <div class="p-2 rounded-xl bg-sky-50 border border-sky-200">
+                    <div class="text-[10px] text-slate-700">🎧 Nghe</div>
                     <div class="font-black text-blue-400 text-sm">{ev.listening_score}</div>
                   </div>
-                  <div class="p-2 rounded-xl bg-slate-800/80 border border-slate-700/50">
-                    <div class="text-[10px] text-slate-400">📖 Đọc</div>
+                  <div class="p-2 rounded-xl bg-sky-50 border border-sky-200">
+                    <div class="text-[10px] text-slate-700">📖 Đọc</div>
                     <div class="font-black text-cyan-400 text-sm">{ev.reading_score}</div>
                   </div>
-                  <div class="p-2 rounded-xl bg-slate-800/80 border border-slate-700/50">
-                    <div class="text-[10px] text-slate-400">✍️ Viết</div>
+                  <div class="p-2 rounded-xl bg-sky-50 border border-sky-200">
+                    <div class="text-[10px] text-slate-700">✍️ Viết</div>
                     <div class="font-black text-purple-400 text-sm">{ev.writing_score}</div>
                   </div>
-                  <div class="p-2 rounded-xl bg-slate-800/80 border border-slate-700/50">
-                    <div class="text-[10px] text-slate-400">🗣️ Nói</div>
+                  <div class="p-2 rounded-xl bg-sky-50 border border-sky-200">
+                    <div class="text-[10px] text-slate-700">🗣️ Nói</div>
                     <div class="font-black text-rose-400 text-sm">{ev.speaking_score}</div>
                   </div>
-                  <div class="p-2 rounded-xl bg-slate-800/80 border border-slate-700/50">
-                    <div class="text-[10px] text-slate-400">🧠 Ngữ Pháp</div>
+                  <div class="p-2 rounded-xl bg-sky-50 border border-sky-200">
+                    <div class="text-[10px] text-slate-700">🧠 Ngữ Pháp</div>
                     <div class="font-black text-amber-400 text-sm">{ev.grammar_vocab_score}</div>
                   </div>
                 </div>
@@ -640,27 +640,27 @@
               <!-- Strengths & Weaknesses Preview -->
               <div class="space-y-2 text-xs">
                 {#if ev.strengths}
-                  <div class="text-slate-300">
-                    <strong class="text-emerald-400">💪 Điểm mạnh:</strong> {ev.strengths}
+                  <div class="text-slate-800">
+                    <strong class="text-emerald-800">💪 Điểm mạnh:</strong> {ev.strengths}
                   </div>
                 {/if}
                 {#if ev.weaknesses}
-                  <div class="text-slate-300">
+                  <div class="text-slate-800">
                     <strong class="text-rose-400">⚠️ Điểm cần khắc phục:</strong> {ev.weaknesses}
                   </div>
                 {/if}
                 {#if ev.action_plan}
-                  <div class="text-slate-300 bg-indigo-950/30 p-2.5 rounded-xl border border-indigo-500/20">
-                    <strong class="text-indigo-400">🚀 Kế hoạch hành động cụ thể:</strong>
-                    <div class="whitespace-pre-line text-slate-300 mt-1">{ev.action_plan}</div>
+                  <div class="text-slate-800 bg-indigo-50 p-2.5 rounded-xl border border-indigo-500/20">
+                    <strong class="text-indigo-800">🚀 Kế hoạch hành động cụ thể:</strong>
+                    <div class="whitespace-pre-line text-slate-800 mt-1">{ev.action_plan}</div>
                   </div>
                 {/if}
               </div>
 
               <!-- Attendance & In-Class Log Pill -->
-              <div class="p-3 rounded-2xl bg-slate-950 border border-slate-800 space-y-1.5 text-xs my-3">
+              <div class="p-3 rounded-2xl bg-white border border-slate-200 space-y-1.5 text-xs my-3">
                 <div class="flex items-center justify-between text-[11px]">
-                  <span class="text-emerald-400 font-bold flex items-center gap-1">
+                  <span class="text-emerald-800 font-bold flex items-center gap-1">
                     <span>⏱️</span>
                     <span>{ev.attendance_summary || 'Chuyên cần: 100%'}</span>
                   </span>
@@ -676,14 +676,14 @@
               <!-- Leader Cô Dung & Teacher Dual Feedback -->
               <div class="space-y-2 text-xs mb-3">
                 {#if ev.teacher_direct_feedback || ev.teacher_feedback}
-                  <div class="p-3 rounded-2xl bg-slate-950 border border-teal-500/20 text-slate-300">
+                  <div class="p-3 rounded-2xl bg-teal-50 border border-teal-200 text-slate-800">
                     <strong class="text-teal-400 block mb-0.5">👩‍🏫 Nhận xét giáo viên ({ev.teacher_name}):</strong>
                     {ev.teacher_direct_feedback || ev.teacher_feedback}
                   </div>
                 {/if}
 
                 {#if ev.leader_codung_feedback}
-                  <div class="p-3 rounded-2xl bg-amber-950/20 border border-amber-500/30 text-amber-200">
+                  <div class="p-3 rounded-2xl bg-amber-50 border border-amber-300 text-amber-950">
                     <strong class="text-amber-400 block mb-0.5">👑 Định hướng chuyên môn từ Cô Dung Leader:</strong>
                     {ev.leader_codung_feedback}
                   </div>
@@ -695,7 +695,7 @@
             </div>
 
             <!-- Footer Actions -->
-            <div class="mt-5 pt-3 border-t border-slate-800/80 flex items-center justify-between gap-3">
+            <div class="mt-5 pt-3 border-t border-slate-200 flex items-center justify-between gap-3">
               <div class="text-[11px] text-slate-400 flex items-center gap-1.5">
                 <span>📱 Phụ huynh: <strong>{ev.parent_name || 'Chưa cập nhật'}</strong></span>
                 {#if ev.parent_phone && currentUser?.role !== 'student'}
@@ -707,7 +707,7 @@
                 {#if currentUser && isTeacherOrAdmin(currentUser)}
                   <button
                     onclick={() => openEvaluationModal({ id: ev.student_id, name: ev.student_name }, ev)}
-                    class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold"
+                    class="px-3 py-1.5 rounded-lg bg-white hover:bg-slate-100 text-slate-900 border border-slate-300 text-xs font-semibold"
                   >
                     Sửa
                   </button>
@@ -794,13 +794,13 @@
                   <img src={s.avatar} alt="" class="w-8 h-8 rounded-full object-cover ring-1 ring-slate-300 dark:ring-slate-700" />
                   <div>
                     <div>{s.name}</div>
-                    <div class="text-[10px] text-slate-400 font-normal">{s.email}</div>
+                    <div class="text-[10px] text-slate-700 font-normal">{s.email}</div>
                   </div>
                 </td>
                 <td class="p-3">
                   <span class="font-semibold text-slate-800 dark:text-slate-200">{meta.grade || 'Lớp 7'}</span>
                   {#if meta.school}
-                    <div class="text-[10px] text-slate-400">{meta.school}</div>
+                    <div class="text-[10px] text-slate-700">{meta.school}</div>
                   {/if}
                 </td>
                 <td class="p-3">
@@ -828,7 +828,7 @@
                 </td>
                 <td class="p-3">
                   <div class="font-medium text-slate-800 dark:text-slate-200">{meta.parent_name || '—'}</div>
-                  <div class="text-[10px] text-slate-400">SĐT: {meta.parent_phone || '—'}</div>
+                  <div class="text-[10px] text-slate-700">SĐT: {meta.parent_phone || '—'}</div>
                   {#if meta.parent_zalo_id}
                     <div class="text-[10px] text-emerald-600 dark:text-emerald-400">Zalo: {meta.parent_zalo_id}</div>
                   {/if}
@@ -891,7 +891,7 @@
             <div>
               <div class="flex justify-between font-bold text-slate-900 mb-1">
                 <span>🎧 Kỹ năng Nghe (Listening)</span>
-                <span class="text-blue-400 font-bold">{evalForm.listening_score}</span>
+                <span class="text-blue-800 font-extrabold">{evalForm.listening_score}</span>
               </div>
               <input type="range" min="0" max="10" step="0.5" bind:value={evalForm.listening_score} class="w-full accent-blue-500" />
             </div>
@@ -900,7 +900,7 @@
             <div>
               <div class="flex justify-between font-bold text-slate-900 mb-1">
                 <span>📖 Kỹ năng Đọc (Reading)</span>
-                <span class="text-cyan-400 font-bold">{evalForm.reading_score}</span>
+                <span class="text-cyan-800 font-extrabold">{evalForm.reading_score}</span>
               </div>
               <input type="range" min="0" max="10" step="0.5" bind:value={evalForm.reading_score} class="w-full accent-cyan-500" />
             </div>
@@ -909,7 +909,7 @@
             <div>
               <div class="flex justify-between font-bold text-slate-900 mb-1">
                 <span>✍️ Kỹ năng Viết (Writing)</span>
-                <span class="text-purple-400 font-bold">{evalForm.writing_score}</span>
+                <span class="text-purple-800 font-extrabold">{evalForm.writing_score}</span>
               </div>
               <input type="range" min="0" max="10" step="0.5" bind:value={evalForm.writing_score} class="w-full accent-purple-500" />
             </div>
@@ -918,7 +918,7 @@
             <div>
               <div class="flex justify-between font-bold text-slate-900 mb-1">
                 <span>🗣️ Kỹ năng Nói (Speaking)</span>
-                <span class="text-rose-400 font-bold">{evalForm.speaking_score}</span>
+                <span class="text-rose-800 font-extrabold">{evalForm.speaking_score}</span>
               </div>
               <input type="range" min="0" max="10" step="0.5" bind:value={evalForm.speaking_score} class="w-full accent-rose-500" />
             </div>
@@ -927,7 +927,7 @@
             <div class="md:col-span-2">
               <div class="flex justify-between font-bold text-slate-900 mb-1">
                 <span>🧠 Ngữ Pháp &amp; Từ Vựng (Grammar &amp; Vocabulary)</span>
-                <span class="text-amber-400 font-bold">{evalForm.grammar_vocab_score}</span>
+                <span class="text-amber-800 font-extrabold">{evalForm.grammar_vocab_score}</span>
               </div>
               <input type="range" min="0" max="10" step="0.5" bind:value={evalForm.grammar_vocab_score} class="w-full accent-amber-500" />
             </div>
@@ -960,7 +960,7 @@
           <!-- Chuyên Cần & Sổ Đầu Bài Tức Thời -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3 p-3.5 rounded-xl bg-sky-50 border border-sky-200">
             <div>
-              <label class="block font-bold text-emerald-400 mb-1">⏱️ Tổng Hợp Điểm Danh &amp; Chuyên Cần:</label>
+              <label class="block font-extrabold text-emerald-900 mb-1">⏱️ Tổng Hợp Điểm Danh &amp; Chuyên Cần:</label>
               <input
                 type="text"
                 bind:value={evalForm.attendance_summary}
@@ -969,7 +969,7 @@
               />
             </div>
             <div>
-              <label class="block font-bold text-teal-400 mb-1">📓 Tổng Hợp Sổ Đầu Bài Tức Thời:</label>
+              <label class="block font-extrabold text-teal-900 mb-1">📓 Tổng Hợp Sổ Đầu Bài Tức Thời:</label>
               <input
                 type="text"
                 bind:value={evalForm.in_class_attitude_summary}
@@ -981,7 +981,7 @@
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label class="block font-bold text-teal-300 mb-1">👩‍🏫 Nhận Xét Trực Tiếp Từ Giáo Viên Bộ Môn / Bản Ngữ:</label>
+              <label class="block font-extrabold text-teal-900 mb-1">👩‍🏫 Nhận Xét Trực Tiếp Từ Giáo Viên Bộ Môn / Bản Ngữ:</label>
               <textarea
                 bind:value={evalForm.teacher_direct_feedback}
                 rows="3"
@@ -990,7 +990,7 @@
               ></textarea>
             </div>
             <div>
-              <label class="block font-bold text-amber-300 mb-1">👑 Nhận Xét &amp; Định Hướng Từ Cô Dung Leader:</label>
+              <label class="block font-extrabold text-amber-900 mb-1">👑 Nhận Xét &amp; Định Hướng Từ Cô Dung Leader:</label>
               <textarea
                 bind:value={evalForm.leader_codung_feedback}
                 rows="3"
@@ -1001,7 +1001,7 @@
           </div>
 
           <div>
-            <label class="block font-bold text-indigo-300 mb-1">🚀 Kế Hoạch Hành Động Cụ Thể (Lộ Trình 1-3 Tháng):</label>
+            <label class="block font-extrabold text-indigo-900 mb-1">🚀 Kế Hoạch Hành Động Cụ Thể (Lộ Trình 1-3 Tháng):</label>
             <textarea
               bind:value={evalForm.action_plan}
               rows="3"
@@ -1013,7 +1013,7 @@
           <!-- Parent Information Linking -->
           <div class="p-3.5 rounded-xl bg-violet-50 border border-violet-200 space-y-2">
             <div class="flex items-center justify-between text-[11px]">
-              <span class="font-bold text-purple-300">👨‍👩‍👧 Thông Tin Phụ Huynh Liên Kết (Tự Động Trích Xuất Hoặc Nhập Tay):</span>
+              <span class="font-extrabold text-violet-900">👨‍👩‍👧 Thông Tin Phụ Huynh Liên Kết (Tự Động Trích Xuất Hoặc Nhập Tay):</span>
               {#if evalForm.linked_parent_id}
                 <span class="px-2 py-0.5 rounded-full bg-purple-900 text-purple-200 font-bold text-[10px]">
                   ✓ Đã đồng bộ tài khoản phụ huynh
@@ -1023,7 +1023,7 @@
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div>
-                <label class="block font-semibold text-slate-400 mb-1">Họ Tên Phụ Huynh:</label>
+                <label class="block font-bold text-slate-800 mb-1">Họ Tên Phụ Huynh:</label>
                 <input
                   type="text"
                   bind:value={evalForm.parent_name}
@@ -1031,7 +1031,7 @@
                 />
               </div>
               <div>
-                <label class="block font-semibold text-slate-400 mb-1">SĐT Phụ Huynh:</label>
+                <label class="block font-bold text-slate-800 mb-1">SĐT Phụ Huynh:</label>
                 <input
                   type="text"
                   bind:value={evalForm.parent_phone}
@@ -1039,7 +1039,7 @@
                 />
               </div>
               <div>
-                <label class="block font-semibold text-slate-400 mb-1">Zalo ID / Số Zalo:</label>
+                <label class="block font-bold text-slate-800 mb-1">Zalo ID / Số Zalo:</label>
                 <input
                   type="text"
                   bind:value={evalForm.parent_zalo_id}
@@ -1073,14 +1073,14 @@
 
   <!-- MODAL 2: PARENT REPORT CARD PREVIEW & DISPATCH -->
   {#if showReportModal}
-    <div class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-      <div class="bg-slate-900 border border-slate-700 rounded-3xl w-full max-w-2xl p-6 md:p-8 shadow-2xl space-y-6">
-        <div class="flex items-start justify-between border-b border-slate-800 pb-4">
+    <div class="fixed inset-0 z-50 bg-slate-900/45 backdrop-blur-sm flex items-center justify-center p-4">
+      <div class="bg-white border border-sky-200 rounded-2xl w-full max-w-2xl p-6 md:p-8 shadow-2xl space-y-6">
+        <div class="flex items-start justify-between border-b border-slate-200 pb-4">
           <div>
-            <span class="text-xs font-bold text-emerald-400">PHIẾU BÁO CÁO PHỤ HUYNH CHUẨN ZALO / SMS</span>
-            <h2 class="text-xl font-black text-white mt-1">Xuất Báo Cáo Học Tập &amp; Kế Hoạch</h2>
+            <span class="text-xs font-bold text-emerald-900">PHIẾU BÁO CÁO PHỤ HUYNH CHUẨN ZALO / SMS</span>
+            <h2 class="text-xl font-black text-slate-950 mt-1">Xuất Báo Cáo Học Tập &amp; Kế Hoạch</h2>
           </div>
-          <button onclick={() => showReportModal = false} class="text-slate-400 hover:text-white text-lg">✕</button>
+          <button onclick={() => showReportModal = false} class="text-slate-700 hover:text-slate-950 text-lg">✕</button>
         </div>
 
         <!-- Formatted Report Text Area -->
@@ -1089,19 +1089,19 @@
             readonly
             bind:value={currentReportText}
             rows="14"
-            class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-xs font-mono text-emerald-300 selection:bg-emerald-600 leading-relaxed focus:outline-none"
+            class="w-full bg-white border border-slate-200 rounded-2xl p-4 text-xs font-mono text-slate-900 selection:bg-emerald-600 leading-relaxed focus:outline-none"
           ></textarea>
         </div>
 
-        <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-slate-800">
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-slate-200">
           <div class="text-[11px] text-slate-400">
-            📱 Gửi đến Zalo: <strong class="text-slate-200">{currentEvalTarget?.parent_phone || currentEvalTarget?.parent_zalo_id || 'Chưa có SĐT'}</strong>
+            📱 Gửi đến Zalo: <strong class="text-slate-900">{currentEvalTarget?.parent_phone || currentEvalTarget?.parent_zalo_id || 'Chưa có SĐT'}</strong>
           </div>
 
           <div class="flex items-center gap-2">
             <button
               onclick={copyReportText}
-              class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold flex items-center gap-1.5"
+              class="px-4 py-2 rounded-xl bg-white hover:bg-slate-100 text-slate-900 border border-slate-300 text-xs font-bold flex items-center gap-1.5"
             >
               <span>📋 Sao Chép Nội Dung</span>
             </button>
@@ -1119,33 +1119,33 @@
 
   <!-- MODAL 3: ADD NEW STUDENT -->
   {#if showAddStudentModal}
-    <div class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-      <div class="bg-slate-900 border border-slate-700 rounded-3xl w-full max-w-lg p-6 md:p-8 shadow-2xl space-y-5">
-        <div class="flex items-start justify-between border-b border-slate-800 pb-3">
+    <div class="fixed inset-0 z-50 bg-slate-900/45 backdrop-blur-sm flex items-center justify-center p-4">
+      <div class="bg-white border border-sky-200 rounded-2xl w-full max-w-lg p-6 md:p-8 shadow-2xl space-y-5">
+        <div class="flex items-start justify-between border-b border-slate-200 pb-3">
           <div>
-            <span class="text-xs font-bold text-indigo-400">QUẢN TRỊ VIÊN &amp; GIÁO VIÊN</span>
-            <h2 class="text-lg font-black text-white mt-1">Thêm Học Sinh Mới Vào Danh Sách</h2>
+            <span class="text-xs font-bold text-indigo-900">QUẢN TRỊ VIÊN &amp; GIÁO VIÊN</span>
+            <h2 class="text-lg font-black text-slate-950 mt-1">Thêm Học Sinh Mới Vào Danh Sách</h2>
           </div>
-          <button onclick={() => showAddStudentModal = false} class="text-slate-400 hover:text-white text-lg">✕</button>
+          <button onclick={() => showAddStudentModal = false} class="text-slate-700 hover:text-slate-950 text-lg">✕</button>
         </div>
 
         <div class="space-y-3 text-xs">
           <div>
-            <label class="block font-bold text-slate-300 mb-1">Họ Và Tên Học Sinh (*):</label>
+            <label class="block font-bold text-slate-900 mb-1">Họ Và Tên Học Sinh (*):</label>
             <input
               type="text"
               bind:value={newStudentForm.name}
               placeholder="VD: Hoàng Minh Châu"
-              class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-indigo-500"
+              class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-950 focus:outline-none focus:border-indigo-500"
             />
           </div>
 
           <div class="grid grid-cols-2 gap-3">
             <div>
-              <label class="block font-semibold text-slate-400 mb-1">Khối Lớp:</label>
+              <label class="block font-bold text-slate-800 mb-1">Khối Lớp:</label>
               <select
                 bind:value={newStudentForm.grade}
-                class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200"
+                class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-950"
               >
                 <option value="Lớp 1">Lớp 1</option>
                 <option value="Lớp 2">Lớp 2</option>
@@ -1164,43 +1164,43 @@
               </select>
             </div>
             <div>
-              <label class="block font-semibold text-slate-400 mb-1">Trường Đang Học:</label>
+              <label class="block font-bold text-slate-800 mb-1">Trường Đang Học:</label>
               <input
                 type="text"
                 bind:value={newStudentForm.school}
                 placeholder="VD: THCS Đoàn Thị Điểm"
-                class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200"
+                class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-950"
               />
             </div>
           </div>
 
           <div>
-            <label class="block font-semibold text-slate-400 mb-1">Mục Tiêu Học Tập / Chứng Chỉ:</label>
+            <label class="block font-bold text-slate-800 mb-1">Mục Tiêu Học Tập / Chứng Chỉ:</label>
             <input
               type="text"
               bind:value={newStudentForm.target}
               placeholder="VD: Đạt 9.0 học kỳ 1, thi Chuyên Anh, IELTS 6.5+"
-              class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200"
+              class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-950"
             />
           </div>
 
           <div class="grid grid-cols-2 gap-3">
             <div>
-              <label class="block font-semibold text-slate-400 mb-1">Tên Phụ Huynh:</label>
+              <label class="block font-bold text-slate-800 mb-1">Tên Phụ Huynh:</label>
               <input
                 type="text"
                 bind:value={newStudentForm.parent_name}
                 placeholder="VD: Bác Hoàng Văn Nam"
-                class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200"
+                class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-950"
               />
             </div>
             <div>
-              <label class="block font-semibold text-slate-400 mb-1">SĐT / Zalo Phụ Huynh:</label>
+              <label class="block font-bold text-slate-800 mb-1">SĐT / Zalo Phụ Huynh:</label>
               <input
                 type="text"
                 bind:value={newStudentForm.parent_phone}
                 placeholder="0912..."
-                class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200"
+                class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-950"
               />
             </div>
           </div>
@@ -1209,7 +1209,7 @@
         <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-800">
           <button
             onclick={() => showAddStudentModal = false}
-            class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold"
+            class="px-4 py-2 rounded-xl bg-white hover:bg-slate-100 border border-slate-300 text-slate-900 text-xs font-semibold"
           >
             Hủy Bỏ
           </button>
@@ -1226,7 +1226,7 @@
 
   <!-- MODAL 4: ASSIGN MULTI-TEACHERS (LEAD, NATIVE, ASSISTANT) -->
   {#if showAssignTeacherModal && studentToAssign}
-    <div class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="fixed inset-0 z-50 bg-slate-900/45 backdrop-blur-sm flex items-center justify-center p-4">
       <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-3xl w-full max-w-lg p-6 shadow-2xl space-y-5 text-xs text-slate-800 dark:text-slate-100">
         <div class="flex items-start justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
           <div>

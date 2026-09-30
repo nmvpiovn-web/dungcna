@@ -16,9 +16,10 @@
   let leaves = $state([]);
   let advances = $state([]);
   let recruitment = $state([]);
+  let parentLinks = $state([]);
   let loading = $state(true);
   let errorMessage = $state('');
-  let activeTab = $state('overview'); // 'overview' | 'leaves' | 'advances' | 'recruitment'
+  let activeTab = $state('overview');
   let selectedCampus = $state('all');
   let lang = $state('vi');
 
@@ -48,17 +49,19 @@
       const token = typeof window !== 'undefined' ? localStorage.getItem('tienganh_token') : '';
       const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
 
-      const [hwRes, campRes, wfRes, staffRes] = await Promise.all([
+      const [hwRes, campRes, wfRes, staffRes, parentLinksRes] = await Promise.all([
         fetch('/api/homework', { headers }),
         fetch('/api/campuses?streams=true', { headers }),
         fetch('/api/teachers/workflows?type=all', { headers }),
-        fetch('/api/teachers/staff', { headers })
+        fetch('/api/teachers/staff', { headers }),
+        fetch('/api/parents/children?status=pending', { headers })
       ]);
 
       const hwData = await hwRes.json();
       const campData = await campRes.json();
       const wfData = await wfRes.json();
       const staffData = await staffRes.json();
+      const parentLinksData = await parentLinksRes.json();
 
       if (hwData.success) {
         assignments = hwData.assignments || [];
@@ -84,6 +87,7 @@
         }
         syncSelectedTeacherSalary();
       }
+      if (parentLinksData.success) parentLinks = parentLinksData.links || [];
     } catch (e) {
       console.error('Failed to load leader data:', e);
       errorMessage = 'Lỗi kết nối máy chủ. Vui lòng tải lại trang.';
@@ -398,6 +402,27 @@
       isLockingPayroll = false;
     }
   }
+
+  async function decideParentLink(linkId, verificationStatus) {
+    if (isProcessing) return;
+    isProcessing = true;
+    try {
+      const token = getAuthToken();
+      const res = await fetch('/api/parents/children', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ link_id: linkId, verification_status: verificationStatus })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error || 'Không thể cập nhật liên kết');
+      parentLinks = parentLinks.filter(link => link.link_id !== linkId);
+      showMessage(verificationStatus === 'verified' ? 'Đã xác minh liên kết phụ huynh–học sinh' : 'Đã từ chối yêu cầu liên kết');
+    } catch (error) {
+      showMessage(error.message, false);
+    } finally {
+      isProcessing = false;
+    }
+  }
 </script>
 
 <div class="space-y-6 max-w-full overflow-x-hidden">
@@ -472,6 +497,15 @@
       <span class="px-1.5 py-0.2 rounded bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 text-[11px] font-semibold tabular-nums">
         {recruitment.length}
       </span>
+    </button>
+    <button 
+      onclick={() => activeTab = 'parent-links'}
+      class="whitespace-nowrap shrink-0 flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-md text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 {activeTab === 'parent-links' ? 'bg-sky-600 text-white' : 'text-slate-600 hover:bg-slate-100'}"
+    >
+      <span>Liên Kết Phụ Huynh</span>
+      {#if parentLinks.length > 0}
+        <span class="px-1.5 py-0.5 rounded bg-amber-600 text-white text-[11px] font-bold tabular-nums">{parentLinks.length}</span>
+      {/if}
     </button>
     <button 
       onclick={() => { activeTab = 'payroll'; if (!leaderPayrollData) fetchLeaderPayroll(); }}
@@ -723,6 +757,39 @@
         </div>
       {/if}
     </div>
+
+  {:else if activeTab === 'parent-links'}
+    <section class="space-y-4" aria-labelledby="parent-links-heading">
+      <div>
+        <h2 id="parent-links-heading" class="text-base font-bold text-slate-900">Xác Minh Liên Kết Phụ Huynh – Học Sinh</h2>
+        <p class="text-xs text-slate-600 mt-1">Chỉ sau khi được duyệt, phụ huynh mới xem được hồ sơ và tiến độ của học sinh.</p>
+      </div>
+      {#if parentLinks.length === 0}
+        <div class="rounded-lg border border-slate-200 bg-white p-10 text-center">
+          <p class="font-semibold text-slate-800">Không có yêu cầu đang chờ duyệt</p>
+          <p class="mt-1 text-xs text-slate-600">Các liên kết đã xác minh sẽ không còn xuất hiện trong danh sách này.</p>
+        </div>
+      {:else}
+        <div class="grid gap-3">
+          {#each parentLinks as link}
+            <article class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+              <div class="min-w-0">
+                <div class="font-bold text-slate-900">{link.parent_name || link.parent_username || link.parent_user_id}</div>
+                <div class="mt-1 text-sm text-slate-700">
+                  Yêu cầu liên kết với <strong>{link.student_name || link.student_username || link.student_user_id}</strong>
+                  {#if link.student_grade}<span class="text-slate-500"> • {link.student_grade}</span>{/if}
+                </div>
+                <div class="mt-1 text-xs text-slate-500">Mã yêu cầu: {link.link_id}</div>
+              </div>
+              <div class="flex gap-2 shrink-0">
+                <button type="button" onclick={() => decideParentLink(link.link_id, 'rejected')} disabled={isProcessing} class="min-h-11 px-4 rounded-md border border-rose-300 bg-white text-rose-800 font-bold hover:bg-rose-50 disabled:opacity-50">Từ chối</button>
+                <button type="button" onclick={() => decideParentLink(link.link_id, 'verified')} disabled={isProcessing} class="min-h-11 px-4 rounded-md bg-sky-700 text-white font-bold hover:bg-sky-800 disabled:opacity-50">Xác minh</button>
+              </div>
+            </article>
+          {/each}
+        </div>
+      {/if}
+    </section>
 
   <!-- TAB 4: RECRUITMENT PIPELINE -->
   {:else if activeTab === 'recruitment'}

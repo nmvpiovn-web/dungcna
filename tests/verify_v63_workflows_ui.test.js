@@ -86,6 +86,13 @@ test('V63-PARENT-01: pending link is redacted, manager verifies it, then parent 
   assert.equal(data.children[0].username, null);
   assert.equal(data.children[0].name, 'Yêu cầu liên kết đang chờ xác minh');
 
+  req = request('http://local/api/parents/children?status=pending', 'GET', adminToken);
+  res = await childrenGet({ request: req, url: new URL(req.url), platform });
+  data = await res.json();
+  assert.equal(data.total, 1);
+  assert.equal(data.links[0].parent_name, 'Phụ huynh');
+  assert.equal(data.links[0].student_name, 'Học sinh thật');
+
   req = request('http://local/api/parents/children', 'PATCH', parentToken, { link_id: 'link_1', verification_status: 'verified' });
   res = await childrenPatch({ request: req, platform });
   assert.equal(res.status, 403);

@@ -55,6 +55,35 @@ export async function GET({ request, platform, url }) {
   const db = platform?.env?.DB;
   if (db) {
     try {
+      const requestedStatus = url.searchParams.get('status');
+      if (isLinkManager(user) && requestedStatus) {
+        if (!['pending', 'verified', 'rejected', 'all'].includes(requestedStatus)) {
+          return json({ success: false, error: 'Trạng thái liên kết không hợp lệ' }, { status: 400 });
+        }
+        const statusClause = requestedStatus === 'all' ? '' : 'WHERE psl.verification_status = ?';
+        const statement = db.prepare(`
+          SELECT psl.id AS link_id, psl.parent_user_id, psl.student_user_id,
+                 psl.verification_status, psl.created_at AS requested_at,
+                 parent.name AS parent_name, parent.username AS parent_username,
+                 student.name AS student_name, student.username AS student_username,
+                 student.grade AS student_grade
+          FROM parent_student_links psl
+          LEFT JOIN users parent ON parent.id = psl.parent_user_id
+          LEFT JOIN users student ON student.id = psl.student_user_id
+          ${statusClause}
+          ORDER BY psl.created_at ASC
+        `);
+        const linksRes = requestedStatus === 'all'
+          ? await statement.all()
+          : await statement.bind(requestedStatus).all();
+        return json({
+          success: true,
+          links: linksRes?.results || [],
+          total: linksRes?.results?.length || 0,
+          source: 'cloudflare_d1'
+        });
+      }
+
       // Query parent_student_links from Cloudflare D1
       // P1-REG-02 Fix: Pending links return ONLY request metadata; private profile is redacted until verified
       const requestedParentId = url.searchParams.get('parent_id');
