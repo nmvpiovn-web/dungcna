@@ -87,6 +87,20 @@
   }
 
   onMount(() => {
+    // RB-C1 (2026-09-30): server-side admin guards redirect here with ?login=1
+    // when the session is missing/insufficient. The repo has no dedicated /login
+    // route — login happens via the global AuthModal, so open it automatically.
+    try {
+      const loginParams = new URLSearchParams(window.location.search);
+      if (loginParams.get('login') === '1') {
+        showAuthModal = true;
+        canDismiss = true;
+        loginParams.delete('login');
+        const qs = loginParams.toString();
+        window.history.replaceState({}, '', window.location.pathname + (qs ? `?${qs}` : ''));
+      }
+    } catch {}
+
     allUsers = getAllUsers();
     currentUser = getCurrentUser();
     currentTheme = getTheme();

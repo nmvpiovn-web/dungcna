@@ -5,7 +5,7 @@ import { createSignedToken, sanitizeUser, getAuthSecret, verifyPassword, hashPas
 
 export const prerender = false;
 
-export async function POST({ request, platform }) {
+export async function POST({ request, platform, cookies }) {
   try {
     const secret = getAuthSecret(platform);
     if (!secret) {
@@ -15,8 +15,14 @@ export async function POST({ request, platform }) {
       }, { status: 500 });
     }
 
-    const body = await request.json();
-    const { username, password } = body;
+    // EP-L2: malformed JSON body must be a 400, not a 500
+    let body;
+    try {
+      body = await request.json();
+    } catch {
+      return json({ success: false, error: 'JSON không hợp lệ' }, { status: 400 });
+    }
+    const { username, password } = body || {};
 
     if (!username || !password) {
       return json({ success: false, error: 'Thiếu tên đăng nhập hoặc mật khẩu' }, { status: 400 });
@@ -96,6 +102,18 @@ export async function POST({ request, platform }) {
 
     const token = await createSignedToken(user, secret, 7 * 86400 * 1000, sid);
     const safeUser = sanitizeUser(user);
+
+    // N1 (2026-09-30): the session cookie is set server-side with HttpOnly + Secure.
+    // Client-side JS cannot set HttpOnly, so the old document.cookie writes in
+    // unifiedStore.js have been removed — the token in localStorage remains as a
+    // fallback for API Authorization headers (residual XSS-steal risk, out of scope).
+    cookies.set('session_token', token, {
+      path: '/',
+      httpOnly: true,
+      secure: true,
+      sameSite: 'lax',
+      maxAge: 7 * 86400
+    });
 
     return json({
       success: true,

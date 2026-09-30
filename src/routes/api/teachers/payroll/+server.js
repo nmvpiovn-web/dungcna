@@ -1,13 +1,8 @@
 import { json } from '@sveltejs/kit';
-import { verifyServerAuth, isStaffUser } from '../../../../lib/server/auth.js';
+import { verifyServerAuth, isStaffUser, isManager } from '../../../../lib/server/auth.js';
 import { calculateTeacherMonthlyPayroll } from '../../../../lib/server/payrollEngine.js';
 
 export const prerender = false;
-
-function isManager(user) {
-  if (!user) return false;
-  return user.role === 'superadmin' || user.role === 'leader' || user.role === 'admin';
-}
 
 function getPreviousBillingCycle(cycle) {
   const [yearStr, monthStr] = cycle.split('-');

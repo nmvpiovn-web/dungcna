@@ -221,6 +221,36 @@ export function isStaffUser(user) {
 }
 
 /**
+ * Check if a user has manager-level privileges (superadmin, admin, leader).
+ * Single source of truth for isManager() — replaces the per-endpoint definitions
+ * that used to disagree (tuition excluded 'admin' while staff/payroll/students included it).
+ * Role is normalized to lowercase; the union of all legacy role sets is used so
+ * nobody silently loses access (EP-M2 fix, 2026-09-30).
+ */
+export function isManager(user) {
+  if (!user) return false;
+  const role = String(user.role || '').toLowerCase();
+  return role === 'superadmin' || role === 'admin' || role === 'leader';
+}
+
+/**
+ * Route guard helper for admin layout load() functions (RB-C1 fix, 2026-09-30).
+ * Verifies the signed session token (Authorization header or session_token cookie)
+ * and checks the user's role against the allowed set (case-insensitive).
+ * Pass allowedRoles = null/[] to require authentication with any role.
+ * Returns { ok, user } — the caller redirects to login when !ok.
+ */
+export async function guardRouteAuth(request, platform, allowedRoles) {
+  const auth = await verifyServerAuth(request, platform);
+  if (!auth.authenticated || !auth.user) return { ok: false, user: null };
+  if (!allowedRoles || allowedRoles.length === 0) return { ok: true, user: auth.user };
+  const role = String(auth.user.role || '').toLowerCase();
+  const allowed = allowedRoles.map((r) => String(r).toLowerCase());
+  if (!allowed.includes(role)) return { ok: false, user: null };
+  return { ok: true, user: auth.user };
+}
+
+/**
  * Verify server-side authentication
  * Requires a cryptographically valid HMAC token in Authorization header or session cookie.
  * Strictly prevents header spoofing and closes all arbitrary bypass paths.

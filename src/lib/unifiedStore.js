@@ -215,7 +215,8 @@ export function logoutUser() {
     sessionStorage.removeItem('tienganh_auth_token');
     sessionStorage.removeItem('tienganh_token');
     sessionStorage.removeItem('tienganh_session_verified');
-    document.cookie = 'session_token=; path=/; max-age=0; SameSite=Lax';
+    // N1 (2026-09-30): session_token is now an HttpOnly cookie set/deleted by the
+    // server (/api/auth/token, /api/auth/logout) — JS cannot touch it.
     window.dispatchEvent(new CustomEvent('tienganh:auth-change', { detail: null }));
   }
 }
@@ -252,7 +253,7 @@ export async function loginUser(identifier, password) {
         localStorage.setItem('tienganh_token', apiData.token);
         sessionStorage.setItem('tienganh_auth_token', apiData.token);
         sessionStorage.setItem('tienganh_token', apiData.token);
-        document.cookie = `session_token=${encodeURIComponent(apiData.token)}; path=/; max-age=${7 * 86400}; SameSite=Lax`;
+        // N1: session_token cookie is set server-side (HttpOnly + Secure) by /api/auth/token.
       }
       setCurrentUser(apiData.user, apiData.token);
       return { success: true, user: apiData.user, token: apiData.token };
@@ -325,7 +326,7 @@ export async function registerUser({ usernameOrPhone, name, password, role = 'st
       if (typeof window !== 'undefined') {
         localStorage.setItem('tienganh_auth_token', data.token);
         sessionStorage.setItem('tienganh_auth_token', data.token);
-        document.cookie = `session_token=${encodeURIComponent(data.token)}; path=/; max-age=${7 * 86400}; SameSite=Lax`;
+        // N1: session_token cookie is set server-side (HttpOnly + Secure) by /api/auth/token.
       }
       setCurrentUser(data.user, data.token);
 

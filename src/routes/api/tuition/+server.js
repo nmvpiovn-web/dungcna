@@ -1,5 +1,5 @@
 import { json } from '@sveltejs/kit';
-import { verifyServerAuth, isStaffUser } from '../../../lib/server/auth.js';
+import { verifyServerAuth, isStaffUser, isManager } from '../../../lib/server/auth.js';
 import { getAllTuitionBills, saveTuitionBill, dispatchBotReport } from '../../../lib/unifiedStore.js';
 
 export const prerender = false;
@@ -64,11 +64,6 @@ async function ensureStarLedgerTable(db) {
       SELECT RAISE(ABORT, 'INSUFFICIENT_STARS: stars_balance cannot be negative');
     END;
   `).run();
-}
-
-function isManager(user) {
-  if (!user) return false;
-  return user.role === 'superadmin' || user.role === 'leader';
 }
 
 export async function GET({ url, request, platform }) {

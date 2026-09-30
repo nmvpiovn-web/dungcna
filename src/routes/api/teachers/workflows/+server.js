@@ -1,13 +1,10 @@
 import { json } from '@sveltejs/kit';
-import { verifyServerAuth, isStaffUser } from '../../../../lib/server/auth.js';
+import { verifyServerAuth, isStaffUser, isManager } from '../../../../lib/server/auth.js';
 
 export const prerender = false;
 
 // salary.manage contract: superadmin, admin, and leader can manage workflows
-function isManager(user) {
-  if (!user) return false;
-  return user.role === 'superadmin' || user.role === 'admin' || user.role === 'leader';
-}
+// (isManager is now the shared helper in lib/server/auth.js — EP-M2)
 
 async function ensurePayrollTable(db) {
   if (!db) return;

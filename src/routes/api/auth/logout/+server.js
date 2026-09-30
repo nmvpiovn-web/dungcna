@@ -4,7 +4,7 @@ import { verifyServerAuth } from '$lib/server/auth.js';
 
 export const prerender = false;
 
-export async function POST({ request, platform }) {
+export async function POST({ request, platform, cookies }) {
   const auth = await verifyServerAuth(request, platform);
   if (!auth.authenticated) {
     return json({ success: false, error: auth.error || 'Unauthorized' }, {
@@ -27,6 +27,11 @@ export async function POST({ request, platform }) {
       });
     }
   }
+
+  // N1 (2026-09-30): session_token is HttpOnly — only the server can clear it.
+  // The client logout flow (layout handleLogout → POST /api/auth/logout) already
+  // calls this endpoint, so the cookie is properly deleted here.
+  cookies.delete('session_token', { path: '/' });
 
   return json({
     success: true,

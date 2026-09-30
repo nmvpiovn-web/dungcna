@@ -76,15 +76,21 @@
     return streams.filter(s => s.campus_id === selectedCampusFilter);
   });
 
-  // Cross Reminders Scanner
+  // Cross Reminders Scanner — honest version (RB-M3 pattern fix, 2026-09-30):
+  // runs the REAL scan engines (schedule/attendance + tuition) and reports the
+  // actual number of alerts generated. No more sleep(800) fake success.
   async function triggerCrossRemindersScan() {
     isScanning = true;
     scanToast = '';
     try {
-      // Simulate scanning pending deadlines (< 12h) and delayed gradings (> 24h)
-      await new Promise(r => setTimeout(r, 800));
-      const pendingCount = assignments.length;
-      scanToast = `✅ Quét thành công: Đã kích hoạt cơ chế nhắc nhở chéo cho ${pendingCount} bài tập! Gửi tin nhắn tới phụ huynh và nhắc nhở giáo viên kịp thời.`;
+      const scheduleNotifs = scanScheduleAndAttendanceForLeader() || [];
+      const tuitionNotifs = scanTuitionDueAlerts() || [];
+      const total = scheduleNotifs.length + tuitionNotifs.length;
+      if (total > 0) {
+        scanToast = `✅ Quét xong: phát hiện ${total} cảnh báo (${scheduleNotifs.length} lịch học/chấm bài, ${tuitionNotifs.length} học phí) — đã tạo thông báo trong Trung Tâm Báo Cáo Leader.`;
+      } else {
+        scanToast = '✅ Quét xong: không phát hiện deadline quá hạn hay giáo viên chậm chấm trong phạm vi dữ liệu hiện tại.';
+      }
       playAudioFeedback(true);
     } catch (e) {
       scanToast = 'Lỗi quét: ' + e.message;

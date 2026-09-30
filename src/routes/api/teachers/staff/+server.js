@@ -1,5 +1,5 @@
 import { json } from '@sveltejs/kit';
-import { verifyServerAuth, isStaffUser } from '../../../../lib/server/auth.js';
+import { verifyServerAuth, isStaffUser, isManager } from '../../../../lib/server/auth.js';
 import {
   getAllTeacherProfiles,
   getTeacherProfile,
@@ -99,10 +99,7 @@ async function ensureTeacherProfilesTable(db) {
 }
 
 // salary.manage contract: superadmin, admin, and leader can manage staff profiles
-function isManager(user) {
-  if (!user) return false;
-  return user.role === 'superadmin' || user.role === 'admin' || user.role === 'leader';
-}
+// (isManager is now the shared helper in lib/server/auth.js — EP-M2)
 
 export async function GET({ url, request, platform }) {
   try {

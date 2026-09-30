@@ -1,11 +1,10 @@
 import { json } from '@sveltejs/kit';
 import { getAllUsers, addStudent, removeStudent, updateUserGradeAndClass, enrollStudentAdditionalGrade, removeStudentEnrolledGrade, requestUnlockClass } from '../../../lib/unifiedStore.js';
-import { verifyServerAuth, isStaffUser, sanitizeUser, sanitizeUserList, hashPassword } from '../../../lib/server/auth.js';
+import { verifyServerAuth, isStaffUser, isManager, sanitizeUser, sanitizeUserList, hashPassword } from '../../../lib/server/auth.js';
 
 export const prerender = false;
-const MANAGER_ROLES = new Set(['superadmin', 'admin', 'leader']);
+// EP-M2: isManager is now the shared, lowercase-normalized helper in lib/server/auth.js
 const GRADE_ACTIONS = new Set(['change_grade', 'add_enrolled_grade', 'remove_enrolled_grade']);
-const isManager = (user) => MANAGER_ROLES.has(String(user?.role || '').toLowerCase());
 const localMockEnabled = (platform) => platform?.env?.ENABLE_LOCAL_MOCK === 'true' || (typeof process !== 'undefined' && process.env?.ENABLE_LOCAL_MOCK === 'true');
 const parseMetadata = (value) => { try { return typeof value === 'string' ? JSON.parse(value || '{}') : { ...(value || {}) }; } catch { return {}; } };
 const dbError = () => json({ success: false, error: 'DatabaseError: Thao tác Cloudflare D1 thất bại.' }, { status: 503 });
