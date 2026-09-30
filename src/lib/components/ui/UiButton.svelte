@@ -1,6 +1,9 @@
 <!-- src/lib/components/ui/UiButton.svelte -->
 <script>
-  let { variant = 'primary', size = 'md', href = null, disabled = false, onclick = null, type = 'button', children, ...rest } = $props();
+  // P1 FIX (2026-10-01): destructure `class` out of props and merge it into cls.
+  // Before, `class` fell into ...rest and the {...rest} spread (placed after
+  // class={cls}) wiped out the entire computed variant styling.
+  let { variant = 'primary', size = 'md', href = null, disabled = false, onclick = null, type = 'button', children, class: className = '', ...rest } = $props();
 
   const variants = {
     primary: 'bg-brand-600 hover:bg-brand-700 dark:bg-brand-700 text-white shadow-sm',
@@ -14,7 +17,7 @@
     lg: 'px-7 py-3.5 text-base rounded-2xl',
     kid: 'px-6 py-3 text-base rounded-[1.25rem] btn-kid font-extrabold'
   };
-  const cls = `inline-flex items-center justify-center gap-2 font-bold transition-all disabled:opacity-50 disabled:pointer-events-none ${variants[variant] || variants.primary} ${sizes[size] || sizes.md} ${rest.class || ''}`;
+  const cls = `inline-flex items-center justify-center gap-2 font-bold transition-all disabled:opacity-50 disabled:pointer-events-none ${variants[variant] || variants.primary} ${sizes[size] || sizes.md} ${className}`;
 </script>
 
 {#if href}

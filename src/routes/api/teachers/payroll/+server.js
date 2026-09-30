@@ -1,6 +1,6 @@
 import { json } from '@sveltejs/kit';
 import { verifyServerAuth, isStaffUser, isManager } from '../../../../lib/server/auth.js';
-import { calculateTeacherMonthlyPayroll } from '../../../../lib/server/payrollEngine.js';
+import { calculateTeacherMonthlyPayroll, buildRateModelFromProfile } from '../../../../lib/server/payrollEngine.js';
 
 export const prerender = false;
 
@@ -240,14 +240,32 @@ export async function GET({ url, request, platform }) {
       }
     }
 
-    // 5. Run calculation engine for draft/unlocked period
+    // 5. Load teacher salary profile -> custom rate model.
+    // P0 FIX (2026-10-01): salary configured by admin/leader via
+    // /api/teachers/staff (update_role_salary) was persisted to teacher_profiles
+    // but never fed into the engine, so it was silently ignored.
+    let customRateModel = null;
+    if (db) {
+      try {
+        const prof = await db.prepare(`
+          SELECT salary_type, base_salary_vnd, rate_per_session_vnd
+          FROM teacher_profiles WHERE teacher_id = ?
+        `).bind(targetTeacherId).first();
+        customRateModel = buildRateModelFromProfile(prof);
+      } catch {
+        customRateModel = null;
+      }
+    }
+
+    // 6. Run calculation engine for draft/unlocked period
     const payroll = calculateTeacherMonthlyPayroll({
       teacherId: targetTeacherId,
       billingCycle,
       sessions,
       advances,
       previousDebtBalance,
-      existingPeriod: existingRecord
+      existingPeriod: existingRecord,
+      customRateModel
     });
 
     return json({
@@ -1035,7 +1053,13 @@ export async function POST({ request, platform }) {
       sessions,
       advances,
       previousDebtBalance,
-      existingPeriod: existing
+      existingPeriod: existing,
+      customRateModel: buildRateModelFromProfile(
+        await db?.prepare(`
+          SELECT salary_type, base_salary_vnd, rate_per_session_vnd
+          FROM teacher_profiles WHERE teacher_id = ?
+        `).bind(teacherId).first().catch(() => null)
+      )
     });
 
     // If pure preview, return calculated data with zero persistence

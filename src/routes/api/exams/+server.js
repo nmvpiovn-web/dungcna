@@ -309,14 +309,45 @@ export async function POST({ request, platform }) {
         return json({ success: false, error: 'Forbidden: Chỉ giáo viên hoặc quản trị viên mới có quyền chấm điểm theo ca' }, { status: 403 });
       }
 
-      const savedList = saveBatchExamAttempts(
-        body.session_id,
-        body.class_id || '',
-        body.exam_id,
-        body.exam_title,
-        body.student_scores,
-        body.teacher || null
-      );
+      // P1 FIX (2026-10-01): persist batch grades to D1 exam_attempts.
+      // Before, saveBatchExamAttempts() only wrote to localStorage (client-only),
+      // so on the server grades silently vanished while returning fake success.
+      const db = platform?.env?.DB;
+      if (!db) {
+        return json({ success: false, error: 'DatabaseUnavailable: Không thể lưu điểm khi thiếu kết nối D1' }, { status: 503 });
+      }
+
+      const savedList = [];
+      const now = new Date().toISOString();
+      for (const s of body.student_scores) {
+        // exam_attempts.session_id is UNIQUE — use composite key per student
+        const attemptId = `batch_${body.session_id}_${s.student_id}_${Date.now()}`;
+        const compositeSessionId = `${body.session_id}::${s.student_id}`;
+        await db.prepare(`
+          INSERT INTO exam_attempts
+            (id, session_id, user_id, user_name, user_email, exam_id, exam_title, class_id,
+             score, max_score, answers_json, duration_seconds, status, created_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'completed', ?)
+          ON CONFLICT(session_id) DO UPDATE SET
+            score = excluded.score, max_score = excluded.max_score,
+            answers_json = excluded.answers_json, created_at = excluded.created_at
+        `).bind(
+          attemptId,
+          compositeSessionId,
+          s.student_id,
+          s.student_name || '',
+          s.student_email || '',
+          body.exam_id || '',
+          body.exam_title || '',
+          body.class_id || '',
+          Number(s.score) || 0,
+          Number(s.max_score) || 10,
+          JSON.stringify(s.answers || { note: s.note || 'Giáo viên chấm điểm trực tiếp tại lớp' }),
+          Number(s.duration_seconds) || 900,
+          now
+        ).run();
+        savedList.push({ student_id: s.student_id, score: Number(s.score) || 0 });
+      }
       return json({
         success: true,
         message: `Đã chấm điểm thành công cho ${savedList.length} học sinh có mặt!`,

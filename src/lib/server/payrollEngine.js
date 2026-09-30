@@ -41,6 +41,31 @@ export function calculateSessionPay(session, rateModel = DEFAULT_RATE_MODEL) {
 }
 
 /**
+ * Builds a payroll engine rate model from a teacher_profiles salary config.
+ * P0 FIX (2026-10-01): salary set via /api/teachers/staff (update_role_salary)
+ * was persisted but never read — the engine always used DEFAULT_RATE_MODEL.
+ * Maps the profile's salary_type to the engine's mode system:
+ *   per_session            -> { mode: 'per_session', rate_per_session }
+ *   monthly*               -> { mode: 'fixed_monthly', fixed_monthly_base }
+ *   anything else / empty  -> null (fall back to default hourly model)
+ * Returns null when no usable salary config exists so callers keep old behavior.
+ */
+export function buildRateModelFromProfile(profile) {
+  if (!profile) return null;
+  const salaryType = String(profile.salary_type || '').trim();
+  const baseSalary = Math.round(Number(profile.base_salary_vnd) || 0);
+  const ratePerSession = Math.round(Number(profile.rate_per_session_vnd) || 0);
+
+  if (salaryType === 'per_session' && ratePerSession > 0) {
+    return { mode: 'per_session', rate_per_session: ratePerSession };
+  }
+  if ((salaryType === 'monthly' || salaryType === 'monthly_lead' || salaryType === 'monthly_with_allowance') && baseSalary > 0) {
+    return { mode: 'fixed_monthly', fixed_monthly_base: baseSalary };
+  }
+  return null;
+}
+
+/**
  * Runs the complete payroll calculation for a teacher in a billing cycle
  * @param {Object} params
  * @param {string} params.teacherId
@@ -151,7 +176,9 @@ export function calculateTeacherMonthlyPayroll({
     }
     // Only deduct if actually disbursed to the teacher
     if (adv.status === 'disbursed') {
-      const advAmount = Math.round(Number(adv.amount || 0));
+      // P0 FIX (2026-10-01): D1 column is amount_vnd (migration 0004), not amount.
+      // Reading adv.amount always yielded undefined -> 0, so advances were never deducted.
+      const advAmount = Math.round(Number(adv.amount_vnd ?? adv.amount ?? 0));
       totalDisbursedAdvances += advAmount;
       advanceDetails.push({
         advance_id: adv.id,

@@ -3197,7 +3197,7 @@
   <SessionRollCallModal
     bind:isOpen={showRollCallModal}
     session={activeRollCallSession}
-    onCompleted={handleRollCallCompleted}
+    onSaved={handleRollCallCompleted}
   />
 
   <!-- MODAL 8: HÓA ĐƠN HỌC PHÍ & PREVIEW 5 MẪU PDF (TuitionBillReport) -->

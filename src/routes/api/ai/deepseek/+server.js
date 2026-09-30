@@ -1,4 +1,5 @@
 import { json } from '@sveltejs/kit';
+import { verifyServerAuth } from '../../../../lib/server/auth.js';
 
 export const prerender = false;
 
@@ -172,6 +173,13 @@ const VERIFIED_OFFLINE_DICTIONARY = {
 };
 
 export async function POST({ request, platform, getClientAddress }) {
+  // 0. Auth required (P1 FIX 2026-10-01): unauthenticated callers were burning
+  // the owner's DEEPSEEK_API_KEY with no account attribution.
+  const auth = await verifyServerAuth(request, platform);
+  if (!auth.authenticated) {
+    return json({ success: false, error: auth.error || 'Unauthorized: Vui lòng đăng nhập' }, { status: auth.status || 401 });
+  }
+
   // 1. Rate Limiting Check
   let clientIp = '127.0.0.1';
   try {

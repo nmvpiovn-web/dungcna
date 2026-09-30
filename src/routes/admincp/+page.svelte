@@ -4,7 +4,7 @@
 
 <script>
   import { onMount } from 'svelte';
-  import { getCurrentUser, isSuperAdmin } from '$lib/unifiedStore';
+  import { getCurrentUser, isSuperAdmin, scanScheduleAndAttendanceForLeader, scanTuitionDueAlerts } from '$lib/unifiedStore';
   import { currentLang, toggleLanguage, t } from '$lib/i18n';
   import { playAudioFeedback } from '$lib/speech';
 
