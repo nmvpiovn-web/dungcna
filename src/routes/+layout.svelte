@@ -648,19 +648,16 @@
 
         <!-- Right Side Controls: Theme Switcher, Star Counter & User Avatar -->
         <div class="flex items-center gap-1 sm:gap-2 shrink-0">
-          <!-- Theme Switcher: Xanh Nhẹ / Sáng / Tối -->
+          <!-- Theme Switcher: Xanh Nhẹ / Sáng -->
           <button
             onclick={handleThemeToggle}
             class="h-8 w-8 sm:h-9 sm:w-auto p-1 sm:px-2.5 rounded-md border border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 hover:text-sky-600 dark:hover:text-sky-400 flex items-center justify-center gap-1.5 text-xs font-semibold transition-all shadow-xs"
-            title="Đổi Giao diện: Xanh Nhẹ (Sky) / Sáng / Tối"
+            title="Đổi giao diện sáng: Xanh Nhẹ / Sáng"
             aria-label="Toggle Theme"
           >
             {#if currentTheme === 'sky'}
               <span>🩵</span>
               <span class="hidden sm:inline text-xs text-sky-700 dark:text-sky-300 font-semibold">Xanh Nhẹ</span>
-            {:else if currentTheme === 'dark'}
-              <span>🌙</span>
-              <span class="hidden sm:inline text-xs text-slate-400 font-semibold">Tối</span>
             {:else}
               <span>☀️</span>
               <span class="hidden sm:inline text-xs text-amber-600 font-semibold">Sáng</span>

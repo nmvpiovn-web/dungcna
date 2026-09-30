@@ -48,6 +48,7 @@
   let reminderUrgency = $state('medium'); // 'low' | 'medium' | 'high'
 
   let toastMsg = $state('');
+  let saveError = $state('');
 
   $effect(() => {
     if (isOpen) {
@@ -59,7 +60,7 @@
   function loadProfile() {
     const all = getAllTeacherProfiles();
     const targetId = teacherId || staffProfile?.teacher_id || (currentUser?.role === 'teacher' ? currentUser.id : all[0]?.teacher_id);
-    profile = all.find(p => p.teacher_id === targetId) || (staffProfile?.teacher_id === targetId ? staffProfile : all[0]);
+    profile = (staffProfile?.teacher_id === targetId ? staffProfile : null) || all.find(p => p.teacher_id === targetId) || all[0];
 
     if (profile) {
       roleType = profile.role_type || profile.role_level || 'lead';
@@ -87,6 +88,7 @@
   async function handleSaveRoleSalary() {
     if (!profile) return;
     isSaving = true;
+    saveError = '';
     const updates = {
       role_type: roleType,
       role_level: roleType,
@@ -118,18 +120,13 @@
       if (!res.ok || !data.success) {
         throw new Error(data.error || 'Lỗi từ máy chủ');
       }
-      updateTeacherRoleAndSalary(profile.teacher_id, updates, currentUser);
-      loadProfile();
+      profile = data.profile || { ...profile, ...updates };
       showToast(data.source === 'cloudflare_d1' ? 'Đã lưu phân quyền & lương vào Cloudflare D1 thành công!' : 'Đã cập nhật phân quyền và mức lương thành công!');
       onUpdated();
       onSaved();
     } catch (err) {
-      console.warn('Fallback to local store:', err);
-      updateTeacherRoleAndSalary(profile.teacher_id, updates, currentUser);
-      loadProfile();
-      showToast('Đã lưu thông tin (kết nối máy chủ: ' + err.message + ')');
-      onUpdated();
-      onSaved();
+      saveError = 'Không lưu được vào D1: ' + err.message;
+      showToast(saveError);
     } finally {
       isSaving = false;
     }

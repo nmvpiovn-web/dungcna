@@ -269,30 +269,30 @@ export function getTheme() {
   if (typeof window === 'undefined') return 'sky';
   try {
     const saved = localStorage.getItem('tienganh_theme');
-    if (saved) return saved;
+    if (saved === 'light' || saved === 'sky') return saved;
     return 'sky'; // Mặc định giao diện Xanh Nhẹ thanh thoát, thân thiện
   } catch {}
   return 'sky';
 }
 
 export function setTheme(theme) {
+  const safeTheme = theme === 'light' ? 'light' : 'sky';
   if (typeof window !== 'undefined') {
-    localStorage.setItem('tienganh_theme', theme);
+    localStorage.setItem('tienganh_theme', safeTheme);
     document.documentElement.classList.remove('dark', 'theme-sky');
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else if (theme === 'sky') {
+    if (safeTheme === 'sky') {
       document.documentElement.classList.add('theme-sky');
     }
-    window.dispatchEvent(new CustomEvent('tienganh:theme-change', { detail: theme }));
+    document.documentElement.style.colorScheme = 'light';
+    window.dispatchEvent(new CustomEvent('tienganh:theme-change', { detail: safeTheme }));
   }
-  return theme;
+  return safeTheme;
 }
 
 export function toggleTheme() {
   const current = getTheme();
-  // Vòng lặp: sky (Xanh Nhẹ) -> light (Sáng Tối Giản) -> dark (Tối Dịu Mắt) -> sky
-  const next = current === 'sky' ? 'light' : (current === 'light' ? 'dark' : 'sky');
+  // Chỉ duy trì hai giao diện sáng: xanh học đường và sáng tối giản.
+  const next = current === 'sky' ? 'light' : 'sky';
   return setTheme(next);
 }
 

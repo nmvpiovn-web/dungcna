@@ -48,15 +48,17 @@
       const token = typeof window !== 'undefined' ? localStorage.getItem('tienganh_token') : '';
       const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
 
-      const [hwRes, campRes, wfRes] = await Promise.all([
+      const [hwRes, campRes, wfRes, staffRes] = await Promise.all([
         fetch('/api/homework', { headers }),
         fetch('/api/campuses?streams=true', { headers }),
-        fetch('/api/teachers/workflows?type=all', { headers })
+        fetch('/api/teachers/workflows?type=all', { headers }),
+        fetch('/api/teachers/staff', { headers })
       ]);
 
       const hwData = await hwRes.json();
       const campData = await campRes.json();
       const wfData = await wfRes.json();
+      const staffData = await staffRes.json();
 
       if (hwData.success) {
         assignments = hwData.assignments || [];
@@ -70,6 +72,17 @@
         leaves = wfData.leaves || [];
         advances = wfData.advances || [];
         recruitment = wfData.recruitment || [];
+      }
+      if (staffData.success) {
+        knownTeachers = (staffData.profiles || []).map(profile => ({
+          id: profile.teacher_id,
+          name: `${profile.teacher_name} (@${profile.username})`,
+          profile
+        }));
+        if (knownTeachers.length > 0 && !knownTeachers.some(t => t.id === payrollTeacherId)) {
+          payrollTeacherId = knownTeachers[0].id;
+        }
+        syncSelectedTeacherSalary();
       }
     } catch (e) {
       console.error('Failed to load leader data:', e);
@@ -250,19 +263,62 @@
   }
 
   // Leader Payroll Management state
-  let payrollTeacherId = $state('teacher_01');
+  let payrollTeacherId = $state('');
   let payrollCycle = $state('2026-09');
   let leaderPayrollData = $state(null);
   let isFetchingPayroll = $state(false);
   let isLockingPayroll = $state(false);
 
-  const knownTeachers = [
-    { id: 'teacher_01', name: 'Cô Đỗ Hương (teacher_01)' },
-    { id: 'teacher_02', name: 'Thầy Minh Tuấn (teacher_02)' },
-    { id: 'teacher_dung', name: 'Cô Dung (teacher_dung)' },
-    { id: 'teacher_huong', name: 'Cô Hương (teacher_huong)' },
-    { id: 'substitute_teacher_99', name: 'Dạy Thay 99 (substitute_teacher_99)' }
-  ];
+  let knownTeachers = $state([]);
+  let salaryBaseVnd = $state(0);
+  let salaryRatePerSessionVnd = $state(0);
+  let salaryType = $state('per_session');
+  let isSavingSalary = $state(false);
+
+  function syncSelectedTeacherSalary() {
+    const selected = knownTeachers.find(t => t.id === payrollTeacherId)?.profile;
+    if (!selected) return;
+    salaryBaseVnd = Number(selected.base_salary_vnd) || 0;
+    salaryRatePerSessionVnd = Number(selected.rate_per_session_vnd) || 0;
+    salaryType = selected.salary_type || 'per_session';
+  }
+
+  async function saveSelectedTeacherSalary() {
+    const selected = knownTeachers.find(t => t.id === payrollTeacherId)?.profile;
+    if (!selected) {
+      showMessage('Không tìm thấy hồ sơ giáo viên thật trên D1', false);
+      return;
+    }
+    isSavingSalary = true;
+    try {
+      const token = getAuthToken();
+      const res = await fetch('/api/teachers/staff', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({
+          action: 'update_role_salary',
+          teacher_id: selected.teacher_id,
+          teacher_name: selected.teacher_name,
+          username: selected.username,
+          role_type: selected.role_type,
+          role_title: selected.role_title,
+          salary_type: salaryType,
+          base_salary_vnd: Number(salaryBaseVnd),
+          rate_per_session_vnd: Number(salaryRatePerSessionVnd),
+          leader_rating: selected.leader_rating
+        })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success || !data.persisted) throw new Error(data.error || 'D1 không xác nhận lưu dữ liệu');
+      knownTeachers = knownTeachers.map(t => t.id === payrollTeacherId ? { ...t, profile: data.profile } : t);
+      showMessage('Đã cập nhật mức lương giáo viên trên D1');
+      await fetchLeaderPayroll();
+    } catch (error) {
+      showMessage('Không cập nhật được lương: ' + error.message, false);
+    } finally {
+      isSavingSalary = false;
+    }
+  }
 
   async function fetchLeaderPayroll() {
     isFetchingPayroll = true;
@@ -754,6 +810,7 @@
             <select
               id="leader-payroll-teacher-select"
               bind:value={payrollTeacherId}
+              onchange={() => { syncSelectedTeacherSalary(); leaderPayrollData = null; }}
               class="w-full p-2.5 rounded-md bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 font-medium text-slate-800 dark:text-slate-200"
             >
               {#each knownTeachers as t}
@@ -787,6 +844,32 @@
               class="w-full py-2.5 px-4 rounded-md font-semibold bg-sky-600 hover:bg-sky-700 text-white disabled:opacity-50 transition-colors shadow-sm"
             >
               {isFetchingPayroll ? 'Đang tính toán...' : 'Đối Soát &amp; Tính Bảng Lương'}
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 p-4 rounded-lg bg-sky-50 border border-sky-200 text-xs">
+          <div>
+            <label for="leader-salary-base" class="block font-bold text-slate-800 mb-1">Lương cơ bản (VNĐ)</label>
+            <input id="leader-salary-base" type="number" min="0" step="10000" bind:value={salaryBaseVnd} class="w-full p-2.5 rounded-md bg-white border border-slate-300 text-slate-950 font-semibold" />
+          </div>
+          <div>
+            <label for="leader-salary-rate" class="block font-bold text-slate-800 mb-1">Đơn giá/ca (VNĐ)</label>
+            <input id="leader-salary-rate" type="number" min="0" step="10000" bind:value={salaryRatePerSessionVnd} class="w-full p-2.5 rounded-md bg-white border border-slate-300 text-slate-950 font-semibold" />
+          </div>
+          <div>
+            <label for="leader-salary-type" class="block font-bold text-slate-800 mb-1">Cách tính</label>
+            <select id="leader-salary-type" bind:value={salaryType} class="w-full p-2.5 rounded-md bg-white border border-slate-300 text-slate-950 font-semibold">
+              <option value="per_session">Theo ca dạy</option>
+              <option value="monthly">Lương tháng</option>
+              <option value="monthly_lead">Lương tháng Leader</option>
+              <option value="monthly_with_allowance">Lương tháng + phụ cấp</option>
+              <option value="hourly_temp">Theo giờ/thời vụ</option>
+            </select>
+          </div>
+          <div class="flex items-end">
+            <button type="button" onclick={saveSelectedTeacherSalary} disabled={isSavingSalary || !payrollTeacherId} class="w-full min-h-11 px-4 rounded-md bg-sky-700 hover:bg-sky-800 text-white font-bold disabled:opacity-50">
+              {isSavingSalary ? 'Đang lưu D1...' : 'Lưu Mức Lương'}
             </button>
           </div>
         </div>

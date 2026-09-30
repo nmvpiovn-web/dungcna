@@ -31,7 +31,11 @@ const defaultLinkedChildren = [
   }
 ];
 
-export async function GET({ request, platform }) {
+function isLinkManager(user) {
+  return user?.role === 'superadmin' || user?.role === 'admin' || user?.role === 'leader';
+}
+
+export async function GET({ request, platform, url }) {
   const auth = await verifyServerAuth(request, platform);
   if (!auth.authenticated) {
     return json({ success: false, error: auth.error || 'Vui lòng đăng nhập' }, { status: auth.status || 401 });
@@ -53,13 +57,18 @@ export async function GET({ request, platform }) {
     try {
       // Query parent_student_links from Cloudflare D1
       // P1-REG-02 Fix: Pending links return ONLY request metadata; private profile is redacted until verified
+      const requestedParentId = url.searchParams.get('parent_id');
+      if (requestedParentId && !isLinkManager(user)) {
+        return json({ success: false, error: 'Forbidden: Không được xem liên kết của phụ huynh khác' }, { status: 403 });
+      }
+      const parentId = requestedParentId || user.id;
       const linksRes = await db.prepare(`
         SELECT psl.id as link_id, psl.student_user_id, psl.verification_status, psl.created_at as requested_at,
                u.id, u.name, u.username, u.avatar, u.grade, u.status
         FROM parent_student_links psl
         LEFT JOIN users u ON psl.student_user_id = u.id
         WHERE psl.parent_user_id = ?;
-      `).bind(user.id).all();
+      `).bind(parentId).all();
 
       const children = (linksRes?.results || []).map(r => {
         const isVerified = r.verification_status === 'verified';
@@ -141,8 +150,13 @@ export async function POST({ request, platform }) {
       }
 
       // Check if already linked
+      const parentId = isLinkManager(user) && body.parent_id ? body.parent_id : user.id;
+      if (isLinkManager(user) && body.parent_id) {
+        const parent = await db.prepare("SELECT id FROM users WHERE id = ? AND role = 'parent'").bind(parentId).first();
+        if (!parent) return json({ success: false, error: 'Không tìm thấy tài khoản phụ huynh hợp lệ' }, { status: 404 });
+      }
       const existing = await db.prepare('SELECT id, verification_status FROM parent_student_links WHERE parent_user_id = ? AND student_user_id = ?')
-        .bind(user.id, targetUser.id).first();
+        .bind(parentId, targetUser.id).first();
       if (existing) {
         return json({ 
           success: true, 
@@ -159,7 +173,7 @@ export async function POST({ request, platform }) {
       await db.prepare(`
         INSERT INTO parent_student_links (id, parent_user_id, student_user_id, verification_status, created_at) 
         VALUES (?, ?, ?, 'pending', CURRENT_TIMESTAMP)
-      `).bind(linkId, user.id, targetUser.id).run();
+      `).bind(linkId, parentId, targetUser.id).run();
 
       return json({
         success: true,
@@ -175,8 +189,38 @@ export async function POST({ request, platform }) {
 
   // Fallback in-memory
   return json({
-    success: true,
-    message: `Đã liên kết thành công học sinh (demo: ${targetId})`,
-    student_id: targetId
-  });
+    success: false,
+    error: 'DatabaseUnavailable: Không thể tạo liên kết khi thiếu Cloudflare D1'
+  }, { status: 503 });
+}
+
+export async function PATCH({ request, platform }) {
+  const auth = await verifyServerAuth(request, platform);
+  if (!auth.authenticated) {
+    return json({ success: false, error: auth.error || 'Vui lòng đăng nhập' }, { status: auth.status || 401 });
+  }
+  if (!isLinkManager(auth.user)) {
+    return json({ success: false, error: 'Forbidden: Chỉ Leader/Admin được xác minh liên kết phụ huynh' }, { status: 403 });
+  }
+  const db = platform?.env?.DB;
+  if (!db) return json({ success: false, error: 'DatabaseUnavailable' }, { status: 503 });
+
+  let body;
+  try { body = await request.json(); } catch {
+    return json({ success: false, error: 'InvalidJSON' }, { status: 400 });
+  }
+  const status = body.verification_status;
+  if (!body.link_id || !['verified', 'rejected', 'pending'].includes(status)) {
+    return json({ success: false, error: 'Cần link_id và verification_status hợp lệ' }, { status: 400 });
+  }
+  const verifiedAt = status === 'verified' ? new Date().toISOString() : null;
+  const result = await db.prepare(`
+    UPDATE parent_student_links
+    SET verification_status = ?, verified_at = ?, updated_at = CURRENT_TIMESTAMP
+    WHERE id = ?
+  `).bind(status, verifiedAt, body.link_id).run();
+  if (!result.meta?.changes) {
+    return json({ success: false, error: 'Không tìm thấy yêu cầu liên kết' }, { status: 404 });
+  }
+  return json({ success: true, link_id: body.link_id, verification_status: status });
 }

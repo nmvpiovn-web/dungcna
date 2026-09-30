@@ -518,7 +518,7 @@ try {
     return { profileEditVerified: true };
   }, { username: 'hocsinh' });
 
-  await runBrowserCase('STUDENT-04', 'Student generates random D1 grammar exam, checks option text shape, answers and submits', 'Student', async (page) => {
+  await runBrowserCase('STUDENT-04', 'Student generates distinct random D1 variants, checks option text shape, answers and submits', 'Student', async (page) => {
     await page.goto(base + '/exam', { waitUntil: 'networkidle' });
 
     // 1. Open Random Builder tab via explicit ID
@@ -563,7 +563,27 @@ try {
     await resultBanner.waitFor({ state: 'visible', timeout: 8000 });
     assert.ok(await resultBanner.isVisible(), 'Exam result card banner must appear after submission');
 
-    return { randomExamCreated: true, optionTextClean: true, submittedAndGraded: true };
+    // 9. Generate multiple real D1 instances and prove the test is not replaying one fixed fixture.
+    const variants = await page.evaluate(async () => {
+      const token = localStorage.getItem('tienganh_token');
+      const generated = [];
+      for (let i = 0; i < 4; i++) {
+        const response = await fetch('/api/exams/random?action=create', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', 'authorization': `Bearer ${token}` },
+          body: JSON.stringify({ action: 'create', exam_type: '15m', grade: 'lop_7', skill_category: 'grammar' })
+        });
+        generated.push(await response.json());
+      }
+      return generated.map(exam => ({
+        instanceId: exam.instance_id,
+        signature: (exam.items || []).map(item => item.question_id).join('|')
+      }));
+    });
+    assert.equal(new Set(variants.map(v => v.instanceId)).size, 4, 'Each generation must create a unique D1 exam instance');
+    assert.ok(new Set(variants.map(v => v.signature)).size > 1, 'Four generations must contain more than one question/order variant');
+
+    return { randomExamCreated: true, optionTextClean: true, submittedAndGraded: true, distinctVariants: true };
   }, { username: 'hocsinh' });
 
   await runBrowserCase('STUDENT-05', 'Student logout revokes session and resets header to guest', 'Student', async (page) => {

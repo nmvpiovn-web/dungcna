@@ -12,10 +12,9 @@
   let loading = $state(true);
   let errorMessage = $state('');
   let activeTab = $state('homework'); // 'homework' | 'tuition'
-  let selectedStudentId = $state('all');
-  let linkedStudents = $state([
-    { id: 'all', name: 'Tất cả học sinh liên kết' }
-  ]);
+  let selectedStudentId = $state('');
+  let linkedStudents = $state([]);
+  let pendingLinks = $state([]);
 
   // Audio player preview for parent
   let currentAudioPlaying = $state(null);
@@ -49,14 +48,19 @@
       });
       if (res.ok) {
         const data = await res.json();
-        if (data.success && data.children && data.children.length > 0) {
+        if (data.success) {
+          const verified = (data.children || []).filter(c => c.is_verified === true);
+          pendingLinks = (data.children || []).filter(c => c.is_verified !== true);
           linkedStudents = [
-            { id: 'all', name: 'Tất cả học sinh liên kết' },
-            ...data.children.filter(c => c.is_verified === true).map(c => ({
+            ...(verified.length > 1 ? [{ id: 'all', name: 'Tất cả học sinh đã xác minh' }] : []),
+            ...verified.map(c => ({
               id: c.id,
               name: `${c.name} (${c.grade || 'Chưa xác định khối'})`
             }))
           ];
+          if (!linkedStudents.some(student => student.id === selectedStudentId)) {
+            selectedStudentId = linkedStudents[0]?.id || '';
+          }
         }
       }
     } catch (err) {
@@ -72,6 +76,11 @@
     loading = true;
     errorMessage = '';
     currentUser = getCurrentUser();
+
+    if (linkedStudents.length === 0 || !selectedStudentId) {
+      loading = false;
+      return;
+    }
 
     try {
       const token = getAuthToken();
@@ -149,6 +158,20 @@
   </header>
 
   <!-- Navigation Tabs & Verified Child Selector -->
+  {#if pendingLinks.length > 0}
+    <div class="p-4 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-300 dark:border-amber-800 text-xs text-amber-900 dark:text-amber-200" data-testid="pending-child-links">
+      <div class="font-semibold">Có {pendingLinks.length} yêu cầu liên kết đang chờ nhà trường xác minh.</div>
+      <div class="mt-1">Dữ liệu học tập và học phí chỉ mở sau khi Leader/Admin xác minh đúng học sinh.</div>
+    </div>
+  {/if}
+
+  {#if linkedStudents.length === 0}
+    <div class="p-6 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center" data-testid="no-verified-child">
+      <div class="font-semibold text-slate-800 dark:text-slate-200">Chưa có học sinh nào được xác minh liên kết</div>
+      <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Vui lòng gửi mã học sinh và chờ Leader/Admin duyệt yêu cầu liên kết.</p>
+    </div>
+  {/if}
+
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-3">
     <nav class="flex items-center gap-2 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0" aria-label="Các mục sổ phụ huynh">
       <button 
@@ -173,7 +196,11 @@
         bind:value={selectedStudentId}
         onchange={handleChildChange}
         class="flex-1 sm:flex-none text-xs font-medium px-3 py-1.5 rounded-md bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 truncate"
+        disabled={linkedStudents.length === 0}
       >
+        {#if linkedStudents.length === 0}
+          <option value="">Chưa có học sinh đã xác minh</option>
+        {/if}
         {#each linkedStudents as stu}
           <option value={stu.id}>{stu.name}</option>
         {/each}
@@ -182,7 +209,9 @@
   </div>
 
   <!-- STATE 1: LOADING SKELETON -->
-  {#if loading}
+  {#if linkedStudents.length === 0}
+    <!-- Link state is shown above; no child data may be requested or displayed. -->
+  {:else if loading}
     <div class="academic-loading-skeleton space-y-4" aria-busy="true" aria-label="Đang tải dữ liệu học tập">
       <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 space-y-3">
         <div class="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/3 animate-pulse"></div>

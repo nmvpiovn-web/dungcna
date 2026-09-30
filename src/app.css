@@ -4,6 +4,7 @@
 /* ========================================================================= */
 
 :root {
+  color-scheme: light;
   /* Bảng màu chuẩn mực Sổ học vụ */
   --primary: #0284c7;           /* Sky 600 */
   --primary-hover: #0369a1;     /* Sky 700 */
@@ -75,99 +76,6 @@ html.theme-sky body {
 html.theme-sky .academic-card,
 html.theme-sky .card-soft {
   border-color: #bae6fd;
-}
-
-/* ========================================================================= */
-/* THEME DARK (CHẾ ĐỘ TỐI DỊU MẮT, ĐỒNG NHẤT TOÀN DIỆN) */
-/* ========================================================================= */
-html.dark {
-  --primary: #38bdf8;
-  --primary-hover: #0284c7;
-  --primary-light: #0c4a6e;
-  --primary-border: #0369a1;
-
-  --secondary: #94a3b8;
-  --secondary-hover: #cbd5e1;
-  --secondary-light: #1e293b;
-  --secondary-border: #334155;
-
-  --text-main: #f8fafc;
-  --text-muted: #cbd5e1;
-  --text-sub: #94a3b8;
-
-  --bg-page: #0b1329;
-  --bg-card: #0f172a;
-  --bg-surface: #1e293b;
-  --border-color: #334155;
-
-  --danger-light: #450a0a;
-  --danger-border: #7f1d1d;
-  --success-light: #052e16;
-  --success-border: #14532d;
-  --warning-light: #451a03;
-  --warning-border: #78350f;
-}
-
-html.dark body {
-  background-color: #0b1329 !important;
-  color: #f8fafc !important;
-}
-
-.dark input,
-.dark select,
-.dark textarea {
-  background-color: #1e293b !important;
-  color: #f8fafc !important;
-  border-color: #334155 !important;
-}
-
-.dark input::placeholder,
-.dark textarea::placeholder {
-  color: #64748b !important;
-}
-
-.dark .academic-card,
-.dark .card-soft {
-  background-color: #0f172a !important;
-  border-color: #334155 !important;
-  color: #f8fafc !important;
-}
-
-.dark .academic-table {
-  background: #0f172a !important;
-  border-color: #334155 !important;
-}
-
-.dark .academic-table th {
-  background-color: #1e293b !important;
-  color: #cbd5e1 !important;
-  border-color: #334155 !important;
-}
-
-.dark .academic-table td {
-  border-color: #334155 !important;
-  color: #f1f5f9 !important;
-}
-
-.dark .academic-table tr:hover td {
-  background-color: #1e293b !important;
-}
-
-.dark .btn-secondary {
-  background: #1e293b !important;
-  color: #f8fafc !important;
-  border-color: #334155 !important;
-}
-
-.dark .btn-secondary:hover {
-  background: #334155 !important;
-  border-color: #475569 !important;
-}
-
-.dark .academic-empty-state {
-  background-color: #0f172a !important;
-  border-color: #334155 !important;
-  color: #f8fafc !important;
 }
 
 * {

@@ -375,6 +375,21 @@
       webhookForm = { ...webhooks[0] };
     }
     loadAdminWorkflows();
+    loadTeacherProfilesFromServer();
+  }
+
+  async function loadTeacherProfilesFromServer() {
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('tienganh_token') : '';
+      if (!token) return;
+      const res = await fetch('/api/teachers/staff', { headers: { 'Authorization': `Bearer ${token}` } });
+      const data = await res.json();
+      if (res.ok && data.success && Array.isArray(data.profiles)) {
+        teacherProfiles = data.profiles;
+      }
+    } catch (error) {
+      console.error('Không tải được hồ sơ lương D1:', error);
+    }
   }
 
   async function handleAdminRequestPwa() {

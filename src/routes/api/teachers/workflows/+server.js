@@ -197,6 +197,18 @@ async function insertTeacherRecruitment(db, data) {
     fields.push('interview_notes');
     values.push(data.interview_notes || '');
   }
+  for (const [field, value] of [
+    ['selected_grades_json', data.selected_grades_json],
+    ['selected_subjects_json', data.selected_subjects_json],
+    ['interview_preference', data.interview_preference],
+    ['availability', data.availability],
+    ['cv_link', data.cv_link]
+  ]) {
+    if (cols.has(field)) {
+      fields.push(field);
+      values.push(value ?? null);
+    }
+  }
 
   const placeholders = fields.map(() => '?').join(', ');
   const sql = `INSERT INTO teacher_recruitment (${fields.join(', ')}) VALUES (${placeholders});`;
@@ -264,7 +276,12 @@ export async function POST({ request, platform }) {
         experience_years: Number(experience_years) || 0,
         certificates: certificates || '',
         status: 'applied',
-        interview_notes: JSON.stringify(structuredPayload)
+        interview_notes: JSON.stringify(structuredPayload),
+        selected_grades_json: JSON.stringify(structuredPayload.selected_grades),
+        selected_subjects_json: JSON.stringify(structuredPayload.selected_subjects),
+        interview_preference: structuredPayload.interview_preference,
+        availability: structuredPayload.availability,
+        cv_link: structuredPayload.cv_link
       });
 
       // Notify Leader of new applicant

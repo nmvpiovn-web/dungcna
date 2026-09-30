@@ -857,19 +857,21 @@
 
   <!-- MODAL 1: EVALUATION EDITOR -->
   {#if showEvalModal}
-    <div class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-      <div class="bg-slate-900 border border-slate-700 rounded-3xl w-full max-w-3xl p-6 md:p-8 shadow-2xl space-y-6 my-8 max-h-[90vh] overflow-y-auto">
+    <div class="fixed inset-0 z-50 bg-slate-900/45 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4" role="presentation" onclick={() => showEvalModal = false}>
+      <div class="evaluation-modal bg-white border-2 border-sky-200 rounded-2xl w-full max-w-4xl shadow-2xl max-h-[calc(100vh-1rem)] sm:max-h-[calc(100vh-2rem)] overflow-hidden flex flex-col text-slate-900" role="dialog" aria-modal="true" aria-labelledby="evaluation-modal-title" tabindex="-1" onclick={(event) => event.stopPropagation()} onkeydown={(event) => event.stopPropagation()}>
         <!-- Header -->
-        <div class="flex items-start justify-between border-b border-slate-800 pb-4">
+        <div class="flex items-start justify-between gap-4 border-b border-sky-200 bg-sky-50 p-4 sm:px-6 shrink-0">
           <div>
-            <span class="text-xs font-bold text-indigo-400">BIỂU MẪU ĐÁNH GIÁ NĂNG KHIẾU &amp; LẬP KẾ HOẠCH</span>
-            <h2 class="text-xl font-black text-white mt-1">Đánh Giá Học Sinh: {evalForm.student_name}</h2>
+            <span class="text-xs font-extrabold text-sky-800">BIỂU MẪU ĐÁNH GIÁ NĂNG KHIẾU &amp; LẬP KẾ HOẠCH</span>
+            <h2 id="evaluation-modal-title" class="text-lg sm:text-xl font-black text-slate-950 mt-1">Đánh Giá Học Sinh: {evalForm.student_name}</h2>
           </div>
-          <button onclick={() => showEvalModal = false} class="text-slate-400 hover:text-white text-lg">✕</button>
+          <button type="button" onclick={() => showEvalModal = false} class="min-h-11 px-4 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 text-slate-900 text-sm font-extrabold shadow-sm" aria-label="Đóng bảng đánh giá">✕ Đóng</button>
         </div>
 
+        <div class="overflow-y-auto overscroll-contain p-4 sm:p-6 space-y-5">
+
         <!-- Live Aptitude Preview Banner -->
-        <div class="p-4 rounded-2xl border {liveAptitude.badgeColor} flex items-center justify-between gap-4">
+        <div class="p-4 rounded-xl border border-sky-300 bg-sky-50 text-sky-950 flex items-center justify-between gap-4">
           <div>
             <div class="text-xs font-bold uppercase tracking-wider">Hệ Thống Tự Động Định Hình Thiên Hướng:</div>
             <div class="text-base font-black mt-0.5">{liveAptitude.label}</div>
@@ -879,15 +881,15 @@
         </div>
 
         <!-- 5-Skill Sliders -->
-        <div class="space-y-4 bg-slate-950 p-5 rounded-2xl border border-slate-800">
-          <div class="font-bold text-xs text-slate-300 uppercase tracking-wider">
+        <div class="space-y-4 bg-white p-4 sm:p-5 rounded-xl border-2 border-slate-200 shadow-sm">
+          <div class="font-extrabold text-xs text-slate-900 uppercase tracking-wider">
             Thang Điểm 5 Kỹ Năng Độc Lập (0.0 - 10.0):
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
             <!-- Listening -->
             <div>
-              <div class="flex justify-between font-semibold mb-1">
+              <div class="flex justify-between font-bold text-slate-900 mb-1">
                 <span>🎧 Kỹ năng Nghe (Listening)</span>
                 <span class="text-blue-400 font-bold">{evalForm.listening_score}</span>
               </div>
@@ -896,7 +898,7 @@
 
             <!-- Reading -->
             <div>
-              <div class="flex justify-between font-semibold mb-1">
+              <div class="flex justify-between font-bold text-slate-900 mb-1">
                 <span>📖 Kỹ năng Đọc (Reading)</span>
                 <span class="text-cyan-400 font-bold">{evalForm.reading_score}</span>
               </div>
@@ -905,7 +907,7 @@
 
             <!-- Writing -->
             <div>
-              <div class="flex justify-between font-semibold mb-1">
+              <div class="flex justify-between font-bold text-slate-900 mb-1">
                 <span>✍️ Kỹ năng Viết (Writing)</span>
                 <span class="text-purple-400 font-bold">{evalForm.writing_score}</span>
               </div>
@@ -914,7 +916,7 @@
 
             <!-- Speaking -->
             <div>
-              <div class="flex justify-between font-semibold mb-1">
+              <div class="flex justify-between font-bold text-slate-900 mb-1">
                 <span>🗣️ Kỹ năng Nói (Speaking)</span>
                 <span class="text-rose-400 font-bold">{evalForm.speaking_score}</span>
               </div>
@@ -923,7 +925,7 @@
 
             <!-- Grammar -->
             <div class="md:col-span-2">
-              <div class="flex justify-between font-semibold mb-1">
+              <div class="flex justify-between font-bold text-slate-900 mb-1">
                 <span>🧠 Ngữ Pháp &amp; Từ Vựng (Grammar &amp; Vocabulary)</span>
                 <span class="text-amber-400 font-bold">{evalForm.grammar_vocab_score}</span>
               </div>
@@ -936,34 +938,34 @@
         <div class="space-y-4 text-xs">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label class="block font-bold text-slate-300 mb-1">💪 Điểm Mạnh Nổi Bật:</label>
+              <label class="block font-extrabold text-slate-900 mb-1">💪 Điểm Mạnh Nổi Bật:</label>
               <textarea
                 bind:value={evalForm.strengths}
                 rows="2"
                 placeholder="VD: Khả năng phản xạ âm thanh tốt, vốn từ vựng phong phú, tự tin giao tiếp..."
-                class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-200 focus:outline-none focus:border-indigo-500"
+                class="w-full bg-white border-2 border-slate-300 rounded-lg p-3 text-slate-950 placeholder:text-slate-500 focus:outline-none focus:border-sky-600"
               ></textarea>
             </div>
             <div>
-              <label class="block font-bold text-slate-300 mb-1">⚠️ Khía Cạnh Cần Khắc Phục Sớm:</label>
+              <label class="block font-extrabold text-slate-900 mb-1">⚠️ Khía Cạnh Cần Khắc Phục Sớm:</label>
               <textarea
                 bind:value={evalForm.weaknesses}
                 rows="2"
                 placeholder="VD: Lỗi chia thì quá khứ đơn, hay nhầm mạo từ, thiếu từ nối khi viết đoạn văn..."
-                class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-200 focus:outline-none focus:border-indigo-500"
+                class="w-full bg-white border-2 border-slate-300 rounded-lg p-3 text-slate-950 placeholder:text-slate-500 focus:outline-none focus:border-sky-600"
               ></textarea>
             </div>
           </div>
 
           <!-- Chuyên Cần & Sổ Đầu Bài Tức Thời -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 p-3.5 rounded-2xl bg-slate-950 border border-slate-800">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 p-3.5 rounded-xl bg-sky-50 border border-sky-200">
             <div>
               <label class="block font-bold text-emerald-400 mb-1">⏱️ Tổng Hợp Điểm Danh &amp; Chuyên Cần:</label>
               <input
                 type="text"
                 bind:value={evalForm.attendance_summary}
                 placeholder="Ví dụ: Chuyên cần 100% (12/12 buổi)"
-                class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-slate-200"
+                class="w-full bg-white border-2 border-slate-300 rounded-lg px-3 py-2 text-slate-950"
               />
             </div>
             <div>
@@ -972,7 +974,7 @@
                 type="text"
                 bind:value={evalForm.in_class_attitude_summary}
                 placeholder="Nhận xét từ các buổi học: Hăng hái, phát âm chuẩn..."
-                class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-slate-200"
+                class="w-full bg-white border-2 border-slate-300 rounded-lg px-3 py-2 text-slate-950"
               />
             </div>
           </div>
@@ -984,7 +986,7 @@
                 bind:value={evalForm.teacher_direct_feedback}
                 rows="3"
                 placeholder="Nhận xét trực tiếp về phát âm, sự tương tác phản xạ và làm bài tập về nhà..."
-                class="w-full bg-slate-950 border border-teal-500/30 rounded-xl p-3 text-slate-200 focus:outline-none focus:border-teal-500"
+                class="w-full bg-white border-2 border-teal-300 rounded-lg p-3 text-slate-950 placeholder:text-slate-500 focus:outline-none focus:border-teal-600"
               ></textarea>
             </div>
             <div>
@@ -993,7 +995,7 @@
                 bind:value={evalForm.leader_codung_feedback}
                 rows="3"
                 placeholder="Cô Dung duyệt kế hoạch chiến lược: Mục tiêu band điểm, bổ trợ chuyên đề ngữ pháp/luyện thi..."
-                class="w-full bg-slate-950 border border-amber-500/30 rounded-xl p-3 text-slate-200 focus:outline-none focus:border-amber-500"
+                class="w-full bg-white border-2 border-amber-300 rounded-lg p-3 text-slate-950 placeholder:text-slate-500 focus:outline-none focus:border-amber-600"
               ></textarea>
             </div>
           </div>
@@ -1004,12 +1006,12 @@
               bind:value={evalForm.action_plan}
               rows="3"
               placeholder="1. Lộ trình tuần 1-4...&#10;2. Mục tiêu điểm số...&#10;3. Báo cáo định kỳ..."
-              class="w-full bg-slate-950 border border-indigo-500/40 rounded-xl p-3 text-slate-200 focus:outline-none focus:border-indigo-500 font-mono text-[11px]"
+              class="w-full bg-white border-2 border-sky-300 rounded-lg p-3 text-slate-950 placeholder:text-slate-500 focus:outline-none focus:border-sky-600 font-mono text-[11px]"
             ></textarea>
           </div>
 
           <!-- Parent Information Linking -->
-          <div class="p-3.5 rounded-2xl bg-purple-950/20 border border-purple-500/20 space-y-2">
+          <div class="p-3.5 rounded-xl bg-violet-50 border border-violet-200 space-y-2">
             <div class="flex items-center justify-between text-[11px]">
               <span class="font-bold text-purple-300">👨‍👩‍👧 Thông Tin Phụ Huynh Liên Kết (Tự Động Trích Xuất Hoặc Nhập Tay):</span>
               {#if evalForm.linked_parent_id}
@@ -1025,7 +1027,7 @@
                 <input
                   type="text"
                   bind:value={evalForm.parent_name}
-                  class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200"
+                  class="w-full bg-white border-2 border-slate-300 rounded-lg px-3 py-2 text-slate-950"
                 />
               </div>
               <div>
@@ -1033,7 +1035,7 @@
                 <input
                   type="text"
                   bind:value={evalForm.parent_phone}
-                  class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200"
+                  class="w-full bg-white border-2 border-slate-300 rounded-lg px-3 py-2 text-slate-950"
                 />
               </div>
               <div>
@@ -1042,18 +1044,19 @@
                   type="text"
                   bind:value={evalForm.parent_zalo_id}
                   placeholder="Để bot tự động gửi tin"
-                  class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200"
+                  class="w-full bg-white border-2 border-slate-300 rounded-lg px-3 py-2 text-slate-950"
                 />
               </div>
             </div>
           </div>
         </div>
+        </div>
 
         <!-- Modal Footer Actions -->
-        <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
+        <div class="flex items-center justify-end gap-3 p-4 sm:px-6 border-t border-sky-200 bg-sky-50 shrink-0">
           <button
             onclick={() => showEvalModal = false}
-            class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold"
+            class="min-h-11 px-4 py-2 rounded-lg bg-white hover:bg-slate-100 border border-slate-300 text-slate-900 text-xs font-extrabold"
           >
             Hủy Bỏ
           </button>

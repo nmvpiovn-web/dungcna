@@ -76,10 +76,19 @@
   function markProgress(status) {
     if (!currentWord) return;
     try {
-      currentWord.status = status;
-      saveUserProgress(currentWord.id, status);
+      const wordId = currentWord.id;
+      const wasVisibleAfterChange = studyFilter === 'all' ||
+        (studyFilter === 'mastered' && status === 'mastered') ||
+        (studyFilter === 'need_review' && status !== 'mastered');
+      words = words.map(word => word.id === wordId ? { ...word, status } : word);
+      saveUserProgress(wordId, status);
       playAudioFeedback(status === 'mastered' ? 'correct' : 'wrong');
-      nextCard();
+      if (wasVisibleAfterChange) {
+        nextCard();
+      } else {
+        currentIndex = Math.min(currentIndex, Math.max(0, displayWords.length - 1));
+        isFlipped = false;
+      }
     } catch (e) {
       console.error(e);
     }
@@ -213,6 +222,10 @@
           class="flashcard"
           class:flipped={isFlipped}
           onclick={flipCard}
+          role="button"
+          tabindex="0"
+          aria-label={isFlipped ? 'Lật về mặt trước của thẻ' : 'Lật sang mặt đáp án của thẻ'}
+          aria-pressed={isFlipped}
         >
           <!-- ================= FRONT FACE ================= -->
           <div class="card-face card-front">
@@ -547,7 +560,7 @@
   .card-container {
     max-width: 680px;
     width: 100%;
-    height: 520px;
+    min-height: 640px;
     perspective: 1200px;
     position: relative;
     margin: 0 auto;
@@ -555,8 +568,9 @@
 
   .flashcard {
     width: 100%;
-    height: 100%;
+    min-height: 640px;
     position: relative;
+    display: grid;
     transform-style: preserve-3d;
     transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
@@ -567,14 +581,13 @@
   }
 
   .card-face {
-    position: absolute;
-    top: 0;
-    left: 0;
+    position: relative;
+    grid-area: 1 / 1;
     width: 100%;
-    height: 100%;
+    min-height: 640px;
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
-    overflow-y: auto;
+    overflow: visible;
     background: white;
     border-radius: var(--border-radius-lg, 20px);
     border: 2px solid var(--border-color, #e2e8f0);
@@ -594,11 +607,24 @@
   .card-front {
     transform: rotateY(0deg);
     z-index: 2;
+    visibility: visible;
   }
 
   .card-back {
     transform: rotateY(180deg);
     z-index: 1;
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  .flashcard.flipped .card-front {
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  .flashcard.flipped .card-back {
+    visibility: visible;
+    pointer-events: auto;
   }
 
   .card-header {
@@ -1074,6 +1100,11 @@
   }
 
   @media (max-width: 680px) {
+    .card-container,
+    .flashcard,
+    .card-face {
+      min-height: 760px;
+    }
     .phonics-row {
       grid-template-columns: 1fr;
     }
@@ -1108,6 +1139,30 @@
     }
     .card-face {
       padding: 16px 12px;
+    }
+    .card-container,
+    .flashcard,
+    .card-face {
+      min-height: 820px;
+    }
+    .card-header,
+    .example-header {
+      align-items: flex-start;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .audio-controls {
+      width: 100%;
+      flex-wrap: wrap;
+    }
+    .mastery-actions {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 6px;
+    }
+    .btn-action {
+      padding: 8px;
+      justify-content: center;
     }
   }
 </style>

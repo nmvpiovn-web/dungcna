@@ -376,6 +376,23 @@ test('RANDOM-EXAM-API-06: Blank D1 with migrations 0001-0005 has populated quest
   const json = await createRes.json();
   assert.strictEqual(json.success, true);
   assert.strictEqual(json.items.length, 15);
+
+  const variants = new Set([json.items.map(item => item.question_id).join('|')]);
+  const instanceIds = new Set([json.instance_id]);
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const variantReq = new Request('http://localhost/api/exams/random?action=create', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'authorization': `Bearer ${token}` },
+      body: JSON.stringify({ action: 'create', exam_type: '15m', grade: 'lop_7', skill_category: 'grammar' })
+    });
+    const variantRes = await randomExamPost({ request: variantReq, url: new URL('http://localhost/api/exams/random?action=create'), platform });
+    assert.strictEqual(variantRes.status, 200);
+    const variant = await variantRes.json();
+    variants.add(variant.items.map(item => item.question_id).join('|'));
+    instanceIds.add(variant.instance_id);
+  }
+  assert.strictEqual(instanceIds.size, 5, 'each generation must create a distinct exam instance');
+  assert.ok(variants.size > 1, 'five generations must contain more than one question/order variant');
 });
 
 test('RANDOM-EXAM-UI-07: 5-minute choice uses the 5m matrix and API failures do not silently fall back to mixed local questions', () => {

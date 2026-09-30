@@ -21,7 +21,7 @@
   let notes = $state('');
 
   const allAvailableGrades = [
-    'Lớp 3', 'Lớp 4', 'Lớp 5',
+    'Lớp 1', 'Lớp 2', 'Lớp 3', 'Lớp 4', 'Lớp 5',
     'Lớp 6', 'Lớp 7', 'Lớp 8', 'Lớp 9',
     'Lớp 10', 'Lớp 11', 'Lớp 12',
     'IELTS Academic', 'Tiếng Anh Giao Tiếp'
@@ -287,12 +287,17 @@
           <span class="block font-semibold text-slate-700 dark:text-slate-300">
             Khối lớp Thầy/Cô có thể nhận dạy (Chọn nhiều khối) (*):
           </span>
+          <span class="block text-[11px] text-sky-700 dark:text-sky-300" data-testid="selected-grades-count">
+            Đã chọn {selectedGrades.length} khối/chương trình: {selectedGrades.join(', ')}
+          </span>
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {#each allAvailableGrades as gr}
               {@const isChecked = selectedGrades.includes(gr)}
               <button
                 type="button"
                 onclick={() => toggleGrade(gr)}
+                aria-pressed={isChecked}
+                data-grade={gr}
                 class="flex items-center gap-2 p-2 rounded-md border text-left transition-colors {isChecked ? 'bg-sky-50 dark:bg-sky-950/60 border-sky-400 dark:border-sky-600 text-sky-800 dark:text-sky-200 font-semibold' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-medium hover:bg-slate-50 dark:hover:bg-slate-700'}"
               >
                 <span>{isChecked ? '☑' : '☐'}</span>

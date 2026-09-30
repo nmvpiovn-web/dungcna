@@ -1,5 +1,5 @@
 import { json } from '@sveltejs/kit';
-import { verifyServerAuth, isStaffUser } from '$lib/server/auth';
+import { verifyServerAuth, isStaffUser } from '../../../../lib/server/auth.js';
 import {
   getAllTeacherProfiles,
   getTeacherProfile,
@@ -8,7 +8,7 @@ import {
   addTeacherBonus,
   addTeacherPrivateReminder,
   acknowledgeTeacherReminder
-} from '$lib/unifiedStore';
+} from '../../../../lib/unifiedStore.js';
 
 export const prerender = false;
 
@@ -213,8 +213,11 @@ export async function POST({ request, platform }) {
     if (platform?.env?.DB) {
       await ensureTeacherProfilesTable(platform.env.DB);
       if (action === 'update_role_salary') {
-        const baseSalary = Number(body.base_salary_vnd) || 0;
-        const ratePerSession = Number(body.rate_per_session_vnd) || 0;
+        const baseSalary = Number(body.base_salary_vnd);
+        const ratePerSession = Number(body.rate_per_session_vnd);
+        if (!Number.isSafeInteger(baseSalary) || baseSalary < 0 || !Number.isSafeInteger(ratePerSession) || ratePerSession < 0) {
+          return json({ success: false, persisted: false, error: 'Mức lương và đơn giá ca phải là số nguyên VNĐ không âm' }, { status: 400 });
+        }
         const roleType = body.role_type || 'lead';
         const roleTitle = body.role_title || 'Giáo viên';
         const salaryType = body.salary_type || 'per_session';
@@ -222,26 +225,18 @@ export async function POST({ request, platform }) {
 
         try {
           const sql = `
-            INSERT INTO teacher_profiles (
-              teacher_id, teacher_name, username, role_type, role_title,
-              salary_type, base_salary_vnd, rate_per_session_vnd, leader_rating, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-            ON CONFLICT(teacher_id) DO UPDATE SET
-              role_type = excluded.role_type,
-              role_title = excluded.role_title,
-              salary_type = excluded.salary_type,
-              base_salary_vnd = excluded.base_salary_vnd,
-              rate_per_session_vnd = excluded.rate_per_session_vnd,
-              leader_rating = excluded.leader_rating,
-              updated_at = CURRENT_TIMESTAMP;
+            UPDATE teacher_profiles SET
+              role_type = ?, role_title = ?, salary_type = ?,
+              base_salary_vnd = ?, rate_per_session_vnd = ?, leader_rating = ?,
+              updated_at = CURRENT_TIMESTAMP
+            WHERE teacher_id = ?;
           `;
-          const teacherName = body.teacher_name || 'Giáo viên';
-          const username = body.username || 'teacher';
-
-          await platform.env.DB.prepare(sql).bind(
-            teacherId, teacherName, username, roleType, roleTitle,
-            salaryType, baseSalary, ratePerSession, leaderRating
+          const write = await platform.env.DB.prepare(sql).bind(
+            roleType, roleTitle, salaryType, baseSalary, ratePerSession, leaderRating, teacherId
           ).run();
+          if (!write.meta?.changes) {
+            return json({ success: false, persisted: false, error: 'Không tìm thấy hồ sơ giáo viên thật để cập nhật' }, { status: 404 });
+          }
 
           const row = await platform.env.DB.prepare('SELECT * FROM teacher_profiles WHERE teacher_id = ?').bind(teacherId).first();
           if (!row) {
