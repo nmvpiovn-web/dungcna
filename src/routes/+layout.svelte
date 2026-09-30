@@ -2,13 +2,13 @@
   import '../app.css';
   import { page } from '$app/stores';
   import { onMount } from 'svelte';
-  import { 
-    getAllUsers, 
-    getCurrentUser, 
-    setCurrentUser, 
+  import {
+    getAllUsers,
+    getCurrentUser,
+    setCurrentUser,
     logoutUser,
     isLoggedIn,
-    isSuperAdmin, 
+    isSuperAdmin,
     isTeacherOrAdmin,
     getTheme,
     setTheme,
@@ -174,8 +174,19 @@
     currentTheme = toggleTheme();
   }
 
-  function handleLogout() {
+  async function handleLogout() {
     showUserDropdown = false;
+    const token = typeof window !== 'undefined' ? (localStorage.getItem('tienganh_token') || localStorage.getItem('tienganh_auth_token')) : null;
+    if (token) {
+      try {
+        await fetch('/api/auth/logout', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+      } catch (e) {
+        console.warn('Logout API failed:', e);
+      }
+    }
     logoutUser();
     currentUser = null;
     showAuthModal = false;
@@ -237,7 +248,7 @@
   <header class="sticky top-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 shadow-xs transition-colors duration-250 w-full">
     <div class="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
       <div class="flex items-center justify-between h-16 gap-2 sm:gap-3 min-w-0">
-        
+
         <!-- Brand Logo (Academic Ledger Style) -->
         <a href="/" onclick={closeAllDropdowns} class="flex items-center gap-2 sm:gap-3 group shrink min-w-0">
           <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-sky-700 flex items-center justify-center text-white text-base sm:text-xl border border-sky-800 shadow-xs group-hover:scale-105 transition-transform duration-200 shrink-0">
@@ -1096,7 +1107,7 @@
           </div>
         </div>
       </div>
-      <div class="flex items-center gap-4 text-[11px]">
+      <div class="flex flex-wrap items-center justify-center md:justify-end gap-x-3 gap-y-1.5 text-[11px]">
         <span class="text-emerald-700 dark:text-emerald-400 flex items-center gap-1 font-semibold">
           <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
           Cloudflare D1 APAC Active

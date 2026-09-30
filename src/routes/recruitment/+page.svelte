@@ -227,13 +227,13 @@
         </div>
       {/if}
 
-      <form onsubmit={handleApply} class="space-y-4 text-xs">
+      <form id="recruitment-form" onsubmit={handleApply} novalidate class="space-y-4 text-xs">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label for="cand-name" class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Họ và tên (*):</label>
-            <input 
+            <input
               id="cand-name"
-              type="text" 
+              type="text"
               required
               bind:value={candidateName}
               oninput={saveDraft}
@@ -243,9 +243,9 @@
           </div>
           <div>
             <label for="cand-phone" class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Số điện thoại / Zalo (*):</label>
-            <input 
+            <input
               id="cand-phone"
-              type="tel" 
+              type="tel"
               required
               bind:value={phone}
               oninput={saveDraft}
@@ -258,9 +258,9 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label for="cand-email" class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Email liên hệ:</label>
-            <input 
+            <input
               id="cand-email"
-              type="email" 
+              type="email"
               bind:value={email}
               oninput={saveDraft}
               placeholder="VD: gv.tienganh@gmail.com"
@@ -269,7 +269,7 @@
           </div>
           <div>
             <label for="cand-role" class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Hình thức hợp đồng:</label>
-            <select 
+            <select
               id="cand-role"
               bind:value={roleType}
               onchange={saveDraft}
@@ -325,9 +325,9 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label for="cand-exp" class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Số năm kinh nghiệm giảng dạy:</label>
-            <input 
+            <input
               id="cand-exp"
-              type="number" 
+              type="number"
               min="0"
               max="40"
               bind:value={experienceYears}
@@ -337,9 +337,9 @@
           </div>
           <div>
             <label for="cand-certs" class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Chứng chỉ chuyên môn (IELTS/TESOL/Cử nhân):</label>
-            <input 
+            <input
               id="cand-certs"
-              type="text" 
+              type="text"
               bind:value={certificates}
               oninput={saveDraft}
               placeholder="VD: IELTS 7.5, TESOL 120h, ĐH Sư Phạm TP.HCM"
@@ -351,7 +351,7 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label for="cand-interview" class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Hình thức phỏng vấn mong muốn:</label>
-            <select 
+            <select
               id="cand-interview"
               bind:value={interviewPreference}
               onchange={saveDraft}
@@ -363,9 +363,9 @@
           </div>
           <div>
             <label for="cand-avail" class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Lịch rảnh có thể nhận lớp (Availability):</label>
-            <input 
+            <input
               id="cand-avail"
-              type="text" 
+              type="text"
               bind:value={availability}
               oninput={saveDraft}
               placeholder="VD: Tối 2-4-6 từ 17h30, hoặc Sáng T7-CN"
@@ -376,9 +376,9 @@
 
         <div>
           <label for="cand-cv" class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Đường dẫn CV / Hồ sơ năng lực (Google Drive / Dropbox):</label>
-          <input 
+          <input
             id="cand-cv"
-            type="url" 
+            type="url"
             bind:value={cvLink}
             oninput={saveDraft}
             placeholder="https://drive.google.com/file/d/..."
@@ -388,7 +388,7 @@
 
         <div>
           <label for="cand-notes-input" class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Giới thiệu ngắn gọn về thế mạnh & phương pháp giảng dạy:</label>
-          <textarea 
+          <textarea
             id="cand-notes-input"
             bind:value={notes}
             oninput={saveDraft}
@@ -402,7 +402,8 @@
           <span class="text-[11px] text-slate-500">
             Hồ sơ được gửi trực tiếp đến Leader Cô Dung để xét duyệt.
           </span>
-          <button 
+          <button
+            id="btn-submit-recruitment"
             type="submit"
             disabled={isSubmitting}
             class="px-6 py-2.5 rounded-md font-semibold bg-sky-600 hover:bg-sky-700 text-white disabled:opacity-50 transition-colors shadow-sm"

@@ -1,5 +1,5 @@
 import { json } from '@sveltejs/kit';
-import { verifyServerAuth } from '$lib/server/auth.js';
+import { verifyServerAuth } from '#lib/server/auth.js';
 
 export const prerender = false;
 
@@ -80,6 +80,16 @@ async function handleCreateExam({ body, platform, auth }) {
   const db = platform.env.DB;
   const examType = body.exam_type || body.type || 'thpt_qg';
   const grade = body.grade || (examType === 'thpt_qg' ? 'lop_12' : 'lop_7');
+  const skillCategory = String(body.skill_category || body.skill || 'all').toLowerCase().trim();
+
+  // Validate skill_category allowlist
+  const VALID_SKILLS = new Set(['all', 'grammar', 'vocabulary', 'phonics', 'reading']);
+  if (!VALID_SKILLS.has(skillCategory)) {
+    return json({
+      success: false,
+      error: `InvalidSkillCategory: Nhóm kỹ năng không hợp lệ '${skillCategory}'. Danh sách hợp lệ gồm: all, grammar, vocabulary, phonics, reading.`
+    }, { status: 400 });
+  }
 
   if (!grade || grade === 'all') {
     return json({
@@ -101,20 +111,29 @@ async function handleCreateExam({ body, platform, auth }) {
   for (const [cogLevel, requiredCount] of Object.entries(matrix.distribution)) {
     if (requiredCount <= 0) continue;
 
-    // Strict query: exact grade_level match, published questions only
-    const query = `
-      SELECT id FROM question_bank 
-      WHERE status = 'published' AND grade_level = ? AND cognitive_level = ?
-      ORDER BY RANDOM() LIMIT ?;
+    const cleanGrade = String(grade).replace('lop_', '').replace('grade_', '');
+    const fullGrade = `lop_${cleanGrade}`;
+    let query = `
+      SELECT id FROM question_bank
+      WHERE status = 'published' AND (grade_level = ? OR grade_level = ?) AND cognitive_level = ?
     `;
-    const res = await db.prepare(query).bind(grade, cogLevel, requiredCount).all();
+    const queryParams = [fullGrade, cleanGrade, cogLevel];
+    if (skillCategory !== 'all') {
+      query += ` AND skill_category = ?`;
+      queryParams.push(skillCategory);
+    }
+    query += ` ORDER BY RANDOM() LIMIT ?;`;
+    queryParams.push(requiredCount);
+
+    const res = await db.prepare(query).bind(...queryParams).all();
     const rows = res.results || [];
 
     // STRICT CHECK: Reject with exact shortage count if bank lacks questions
     if (rows.length < requiredCount) {
+      const skillNote = skillCategory !== 'all' ? ` kỹ năng '${skillCategory}' và` : '';
       return json({
         success: false,
-        error: `Ngân hàng câu hỏi không đủ số lượng cho mức nhận thức '${cogLevel}'. Khối '${grade}' yêu cầu ${requiredCount} câu, hiện chỉ có ${rows.length} câu đã duyệt.`
+        error: `Ngân hàng câu hỏi không đủ số lượng cho${skillNote} mức nhận thức '${cogLevel}'. Khối '${grade}' yêu cầu ${requiredCount} câu, hiện chỉ có ${rows.length} câu đã duyệt.`
       }, { status: 400 });
     }
 
@@ -142,11 +161,11 @@ async function handleCreateExam({ body, platform, auth }) {
   try {
     const insertInstanceStmt = db.prepare(`
       INSERT INTO exam_instances (id, exam_type, grade_level, title, total_questions, duration_minutes, created_by, status, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, 'in_progress', CURRENT_TIMESTAMP);
+      VALUES (?, ?, ?, ?, ?, ?, ?, 'in_progress', strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));
     `).bind(instanceId, examType, grade, title, selectedQuestions.length, matrix.duration_minutes, auth.user.id);
 
     const insertItemStmt = db.prepare(`
-      INSERT INTO exam_instance_items 
+      INSERT INTO exam_instance_items
       (instance_id, item_order, question_id, question_text, options_json, correct_option_id, explanation, reading_passage)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?);
     `);
@@ -189,11 +208,23 @@ async function handleCreateExam({ body, platform, auth }) {
       options = [];
     }
 
+    // Standardize options to provide both id, text, and formatted label
+    const standardizedOptions = (options || []).map((o, oIdx) => {
+      const letter = (typeof o === 'object' && o && o.id) ? o.id : (typeof o === 'string' && /^[A-D]\./i.test(o.trim())) ? o.trim().charAt(0).toUpperCase() : String.fromCharCode(65 + oIdx);
+      const text = (typeof o === 'object' && o) ? (o.text || o.content || '') : (typeof o === 'string') ? o.replace(/^[A-D]\.\s*/i, '') : String(o);
+      return {
+        id: letter,
+        text: text,
+        label: `${letter}. ${text}`
+      };
+    });
+
     return {
       item_order: idx + 1,
       question_id: q.id,
       question_text: q.question_text,
-      options: options,
+      options: standardizedOptions,
+      skill_category: q.skill_category || skillCategory,
       reading_passage: q.reading_passage || null
     };
   });
@@ -270,8 +301,8 @@ async function handleSubmitExam({ body, platform, auth }) {
   if (instance.status === 'completed') {
     if (instance.answers_json) {
       const itemsRes = await db.prepare(`
-        SELECT * FROM exam_instance_items 
-        WHERE instance_id = ? 
+        SELECT * FROM exam_instance_items
+        WHERE instance_id = ?
         ORDER BY item_order ASC;
       `).bind(instance_id).all();
       const items = itemsRes.results || [];
@@ -283,7 +314,14 @@ async function handleSubmitExam({ body, platform, auth }) {
       }
       let correctCount = 0;
       const detailedResults = items.map(item => {
-        const studentAns = savedAnswers[String(item.item_order)] || savedAnswers[item.question_id] || '';
+        const studentAns = (
+          savedAnswers[String(item.item_order)] ??
+          savedAnswers[item.item_order] ??
+          savedAnswers[String(item.item_order - 1)] ??
+          savedAnswers[item.item_order - 1] ??
+          savedAnswers[item.question_id] ??
+          ''
+        ).trim().toUpperCase();
         const isCorrect = studentAns === item.correct_option_id;
         if (isCorrect) correctCount++;
         return {
@@ -316,7 +354,11 @@ async function handleSubmitExam({ body, platform, auth }) {
   }
 
   // 5. Server Deadline / Timeout Check
-  const createdAtMs = new Date(instance.created_at).getTime();
+  const rawCreatedAt = String(instance.created_at || '');
+  const isoCreatedAt = (rawCreatedAt.endsWith('Z') || rawCreatedAt.includes('+'))
+    ? rawCreatedAt
+    : (rawCreatedAt.replace(' ', 'T') + 'Z');
+  const createdAtMs = new Date(isoCreatedAt).getTime();
   const maxAllowedDurationMs = (instance.duration_minutes * 60 + 300) * 1000; // duration + 5 mins buffer
   const elapsedMs = Date.now() - createdAtMs;
 
@@ -329,8 +371,8 @@ async function handleSubmitExam({ body, platform, auth }) {
 
   // 6. Fetch snapshot items to grade
   const itemsRes = await db.prepare(`
-    SELECT * FROM exam_instance_items 
-    WHERE instance_id = ? 
+    SELECT * FROM exam_instance_items
+    WHERE instance_id = ?
     ORDER BY item_order ASC;
   `).bind(instance_id).all();
 
@@ -344,7 +386,14 @@ async function handleSubmitExam({ body, platform, auth }) {
   const detailedResults = [];
 
   for (const item of items) {
-    const studentAns = (answers[item.item_order] || answers[String(item.item_order)] || '').trim().toUpperCase();
+    const studentAns = (
+      answers[item.item_order] ??
+      answers[String(item.item_order)] ??
+      answers[item.item_order - 1] ??
+      answers[String(item.item_order - 1)] ??
+      answers[item.question_id] ??
+      ''
+    ).trim().toUpperCase();
     const isCorrect = studentAns === item.correct_option_id.trim().toUpperCase();
     if (isCorrect) correctCount++;
 
@@ -370,10 +419,10 @@ async function handleSubmitExam({ body, platform, auth }) {
   // 8. ATOMIC CONDITIONAL UPDATE: Enforces ownership, in_progress status AND deadline condition at write time
   // duration_minutes * 60 + 300 seconds (5 min buffer)
   const updateRes = await db.prepare(`
-    UPDATE exam_instances 
+    UPDATE exam_instances
     SET status = 'completed', score = ?, answers_json = ?, submitted_at = CURRENT_TIMESTAMP
-    WHERE id = ? 
-      AND created_by = ? 
+    WHERE id = ?
+      AND created_by = ?
       AND status = 'in_progress'
       AND (strftime('%s', 'now') - strftime('%s', created_at)) <= (duration_minutes * 60 + 300);
   `).bind(score, JSON.stringify(answers), instance_id, auth.user.id).run();

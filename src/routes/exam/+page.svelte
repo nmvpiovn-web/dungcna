@@ -1,10 +1,10 @@
 <script>
   import { onMount, onDestroy } from 'svelte';
   import { playAudioFeedback, speakWord } from '$lib/speech.js';
-  import { 
-    getCurrentUser, 
+  import {
+    getCurrentUser,
     getAuthToken,
-    saveExamAttempt, 
+    saveExamAttempt,
     saveBatchExamAttempts,
     logSnapshot,
     dispatchBotReport,
@@ -28,8 +28,8 @@
   let dynamicExam = $state(null);
   let dynamicQuestions = $state([]);
   let currentExam = $derived(
-    dynamicExam && selectedExamId === dynamicExam.id 
-      ? dynamicExam 
+    dynamicExam && selectedExamId === dynamicExam.id
+      ? dynamicExam
       : (data.exams.find(e => e.id === selectedExamId) || data.exams[0])
   );
 
@@ -174,16 +174,17 @@
 
   function isExamEnrolledForUser(user, exam) {
     if (!user || user.role !== 'student') return true;
+    if (!exam) return false;
     const grades = getUserEnrolledGrades(user);
-    const title = (exam.title || '').toLowerCase();
-    const curriculumId = (exam.curriculum_id || '').toLowerCase();
+    const title = String(exam.title || '').toLowerCase();
+    const curriculumId = String(exam.curriculum_id || '').toLowerCase();
 
     return grades.some(g => {
-      const clean = g.toLowerCase().trim();
-      const match = clean.match(/lớp\s*([0-9]+)/i) || clean.match(/grade-?([0-9]+)/i);
+      const clean = String(g || '').toLowerCase().trim();
+      const match = clean.match(/lớp\s*([0-9]+)/i) || clean.match(/grade-?([0-9]+)/i) || clean.match(/^([0-9]+)$/);
       if (match) {
         const num = Number(match[1]);
-        if (Number(exam.grade) === num || title.includes(`lớp ${num}`)) return true;
+        if (Number(exam.grade) === num || title.includes(`lớp ${num}`) || title.includes(`lop ${num}`)) return true;
       }
       if (clean.includes('ielts') && (curriculumId.includes('ielts') || title.includes('ielts') || exam.format_type === 'ielts_academic')) return true;
       if (clean.includes('toeic') && (curriculumId.includes('toeic') || title.includes('toeic') || exam.format_type === 'toeic_lr')) return true;
@@ -356,31 +357,35 @@
     activeServerDeadline = Date.now() + (timeLeftSeconds * 1000);
 
     // Call server API to initiate authoritative exam session (P1-EXAM-04)
-    try {
-      const res = await fetch('/api/exams', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(getAuthToken() ? { 'Authorization': `Bearer ${getAuthToken()}` } : {})
-        },
-        body: JSON.stringify({
-          action: 'start_session',
-          exam_id: currentExam?.id,
-          duration_minutes: durationMins
-        })
-      });
-      if (res.ok) {
-        const resData = await res.json();
-        if (resData.success && resData.session_instance) {
-          activeSessionId = resData.session_instance.instance_id;
-          if (resData.session_instance.deadline_at) {
-            activeServerDeadline = new Date(resData.session_instance.deadline_at).getTime();
-            timeLeftSeconds = Math.max(0, Math.floor((activeServerDeadline - Date.now()) / 1000));
+    if (currentExam?.is_random || currentExam?.instance_id) {
+      activeSessionId = currentExam.instance_id || currentExam.id;
+    } else {
+      try {
+        const res = await fetch('/api/exams', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(getAuthToken() ? { 'Authorization': `Bearer ${getAuthToken()}` } : {})
+          },
+          body: JSON.stringify({
+            action: 'start_session',
+            exam_id: currentExam?.id,
+            duration_minutes: durationMins
+          })
+        });
+        if (res.ok) {
+          const resData = await res.json();
+          if (resData.success && resData.session_instance) {
+            activeSessionId = resData.session_instance.instance_id;
+            if (resData.session_instance.deadline_at) {
+              activeServerDeadline = new Date(resData.session_instance.deadline_at).getTime();
+              timeLeftSeconds = Math.max(0, Math.floor((activeServerDeadline - Date.now()) / 1000));
+            }
           }
         }
+      } catch (apiErr) {
+        console.warn('Exam server session initiation notice:', apiErr);
       }
-    } catch (apiErr) {
-      console.warn('Exam server session initiation notice:', apiErr);
     }
 
     if (typeof window !== 'undefined') {
@@ -402,7 +407,7 @@
         localStorage.setItem('tienganh_active_exam_backup', JSON.stringify(backupData));
       } catch {}
     }
-    
+
     if (timerInterval) clearInterval(timerInterval);
     timerInterval = setInterval(() => {
       if (activeServerDeadline) {
@@ -445,8 +450,16 @@
     return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
   }
 
-  // Category Filter & Exam Derivation
-  let activeExamCategory = $state('all'); // 'all' | 'my_grade' | 'primary' | 'g7' | 'g9' | 'highschool' | 'ielts' | 'toeic' | 'toefl' | 'quick_5m' | 'quick_15m' | 'standard_45m' | 'random_builder'
+  // Group / Group-Tree Hierarchy
+  let activeExamGroup = $state('k12'); // 'k12' | 'intl' | 'periodic' | 'random_builder' | 'my_grade'
+  let activeExamCategory = $state('all'); // Sub-category filter within group
+
+  const examGroups = [
+    { id: 'k12', label: '🎒 Khung K12 Phổ Thông', desc: 'Tiểu học (L1-5) • THCS (L6-9) • THPT (L10-12)', icon: '🎒' },
+    { id: 'intl', label: '🌍 Chứng Chỉ Quốc Tế', desc: 'IELTS Academic • TOEIC L&R • TOEFL iBT', icon: '🌍' },
+    { id: 'periodic', label: '⏱️ Đề Thi Theo Thời Gian', desc: '5 Phút Khởi Động • 15 Phút • 45 Phút 1 Tiết', icon: '⏱️' },
+    { id: 'random_builder', label: '🎲 Tạo Đề Random Theo Nhóm', desc: 'Sinh Đề Ngẫu Nhiên D1 Chuẩn Ma Trận', icon: '🎲' }
+  ];
 
   // Random Test Generator State
   let randomDuration = $state(15); // 5 | 15 | 45 | 50
@@ -460,8 +473,8 @@
     if (currentUser?.role === 'student') {
       const enrolledGrades = getUserEnrolledGrades(currentUser);
       const isAllowed = enrolledGrades.some(g => {
-        const clean = g.toLowerCase().trim();
-        const match = clean.match(/lớp\s*([0-9]+)/i);
+        const clean = String(g || '').toLowerCase().trim();
+        const match = clean.match(/lớp\s*([0-9]+)/i) || clean.match(/^([0-9]+)$/);
         if (match && Number(match[1]) === Number(randomGrade)) return true;
         if (randomGrade === 0 && (clean.includes('ielts') || clean.includes('ket') || clean.includes('pet'))) return true;
         if (randomDuration === 50 && (clean.includes('12') || clean.includes('thpt'))) return true;
@@ -480,10 +493,15 @@
       let apiType = '15m';
       if (randomDuration === 50) apiType = 'thpt_qg';
       else if (randomDuration === 45) apiType = '45m';
-      else if (randomDuration === 5) apiType = '15m';
+      else if (randomDuration === 5) apiType = '5m';
 
       const gradeQuery = randomGrade > 0 ? `lop_${randomGrade}` : (apiType === 'thpt_qg' ? 'lop_12' : 'lop_7');
       const token = getAuthToken();
+      if (!token) {
+        lockedExamAlert = '🔐 Vui lòng đăng nhập để tạo đề ngẫu nhiên từ ngân hàng D1.';
+        playAudioFeedback(false);
+        return;
+      }
       const headers = {
         'Content-Type': 'application/json',
         ...(token ? { 'Authorization': `Bearer ${token}` } : {})
@@ -491,19 +509,30 @@
       const res = await fetch(`/api/exams/random?action=create`, {
         method: 'POST',
         headers,
-        body: JSON.stringify({ action: 'create', exam_type: apiType, grade: gradeQuery })
+        body: JSON.stringify({
+          action: 'create',
+          exam_type: apiType,
+          grade: gradeQuery,
+          skill_category: randomSkill
+        })
       });
       const dataJson = await res.json();
 
-      if (dataJson.success && dataJson.items && dataJson.items.length > 0) {
-        const gradeLabel = randomGrade > 0 ? `Lớp ${randomGrade}` : 'Quốc Tế (Cambridge & IELTS)';
+      if (!res.ok || !dataJson.success) {
+        lockedExamAlert = `⚠️ ${dataJson.error || 'Không thể tạo đề từ ngân hàng câu hỏi.'}`;
+        playAudioFeedback(false);
+        setTimeout(() => lockedExamAlert = '', 8000);
+        return;
+      }
+
+      if (dataJson.items && dataJson.items.length > 0) {
         const dynId = dataJson.instance_id;
         dynamicExam = {
           id: dynId,
           instance_id: dynId,
           curriculum_id: randomGrade > 0 ? `curr_g${randomGrade}` : 'curr_thptqg',
           title: dataJson.title || `🎲 Đề Thi Ngẫu Nhiên D1 (${dataJson.total_questions} câu)`,
-          description: `Đề thi trắc nghiệm được Cloudflare D1 sinh tự động theo ma trận năng lực GDPT 2025. Bản chụp lưu máy chủ: #${dynId.slice(-6)}.`,
+          description: `Đề thi trắc nghiệm được Cloudflare D1 sinh tự động theo nhóm kỹ năng ${randomSkill.toUpperCase()} và ma trận nhận thức GDPT. Bản chụp lưu máy chủ: #${dynId.slice(-6)}.`,
           grade: randomDuration === 50 ? 12 : randomGrade,
           format_type: apiType === 'thpt_qg' ? 'standard_45m' : (apiType === '45m' ? 'standard_45m' : 'quick_15m'),
           skill_category: randomSkill,
@@ -516,16 +545,28 @@
           created_at: new Date().toISOString()
         };
 
-        dynamicQuestions = dataJson.items.map((item, idx) => ({
-          id: item.question_id,
-          exam_id: dynId,
-          question_index: item.item_order || idx + 1,
-          prompt: item.question_text,
-          options_json: JSON.stringify(item.options.map(o => `${o.id}. ${o.text}`)),
-          skill: 'random_d1',
-          type: 'multiple_choice',
-          reading_passage: item.reading_passage
-        }));
+        dynamicQuestions = dataJson.items.map((item, idx) => {
+          const normOpts = (item.options || []).map((o, oIdx) => {
+            if (typeof o === 'string') return o;
+            if (o && typeof o === 'object') {
+              if (o.label) return o.label;
+              const letter = o.id || String.fromCharCode(65 + oIdx);
+              const text = o.text || o.content || '';
+              return `${letter}. ${text}`;
+            }
+            return String(o);
+          });
+          return {
+            id: item.question_id,
+            exam_id: dynId,
+            question_index: item.item_order || idx + 1,
+            prompt: item.question_text,
+            options_json: JSON.stringify(normOpts),
+            skill: item.skill_category || item.skill || (randomSkill !== 'all' ? randomSkill : 'grammar'),
+            type: 'multiple_choice',
+            reading_passage: item.reading_passage
+          };
+        });
 
         selectedExamId = dynId;
         lockedExamAlert = '';
@@ -535,44 +576,17 @@
         setTimeout(() => randomSuccessNotice = '', 6000);
         return;
       }
+      lockedExamAlert = '⚠️ Máy chủ không trả về câu hỏi cho cấu hình đã chọn.';
+      playAudioFeedback(false);
+      return;
     } catch (apiErr) {
-      console.warn('API /api/exams/random unavailable, using client-side fallback:', apiErr);
+      console.warn('API /api/exams/random unavailable:', apiErr);
+      lockedExamAlert = '⚠️ Không kết nối được ngân hàng đề thi. Vui lòng thử lại sau.';
+      playAudioFeedback(false);
+      return;
     } finally {
       isGeneratingRandom = false;
     }
-
-    // Client-side fallback if offline
-    let pool = [...data.allQuestions];
-    if (randomGrade > 0) {
-      pool = pool.filter(q => Number(q.grade) === Number(randomGrade));
-    }
-    if (pool.length === 0) pool = data.allQuestions.slice(0, 30);
-    const targetCount = randomDuration === 5 ? 5 : (randomDuration === 15 ? 15 : (randomDuration === 50 ? 40 : 25));
-    const shuffled = [...pool].sort(() => Math.random() - 0.5);
-    const chosen = shuffled.slice(0, Math.min(targetCount, shuffled.length)).map((q, idx) => ({
-      ...q,
-      question_index: idx + 1
-    }));
-    const dynId = `dyn_local_${Date.now()}`;
-    dynamicExam = {
-      id: dynId,
-      title: `🎲 Đề Ngẫu Nhiên Offline (#${Math.floor(Math.random() * 900 + 100)})`,
-      description: `Đề thi trắc nghiệm ngẫu nhiên từ ngân hàng offline (${chosen.length} câu).`,
-      grade: randomGrade,
-      format_type: 'quick_15m',
-      duration_minutes: randomDuration,
-      total_questions: chosen.length,
-      pass_percentage: 70,
-      created_by: 'Hệ Thống Trực Tuyến',
-      is_published: 1,
-      is_random: true,
-      created_at: new Date().toISOString()
-    };
-    dynamicQuestions = chosen;
-    selectedExamId = dynId;
-    lockedExamAlert = '';
-    resetExamState();
-    startExam();
   }
 
   let enrolledExamsCount = $derived(
@@ -581,19 +595,27 @@
 
   let filteredExams = $derived(
     data.exams.filter(e => {
-      if (activeExamCategory === 'my_grade') return isExamEnrolledForUser(currentUser, e);
-      if (activeExamCategory === 'all') return true;
-      if (activeExamCategory === 'primary') return (e.grade >= 1 && e.grade <= 5) || e.title.includes('Lớp 1') || e.title.includes('Lớp 2') || e.title.includes('Lớp 3') || e.title.includes('Lớp 4') || e.title.includes('Lớp 5');
-      if (activeExamCategory === 'g7') return e.grade === 7 || e.title.includes('Lớp 7') || e.curriculum_id === 'curr_g7';
-      if (activeExamCategory === 'g9') return e.grade === 9 || e.title.includes('Vào 10') || e.curriculum_id === 'curr_g9';
-      if (activeExamCategory === 'highschool') return (e.grade >= 10 && e.grade <= 12) || e.title.includes('Lớp 10') || e.title.includes('Lớp 11') || e.title.includes('Lớp 12') || e.title.includes('THPT');
-      if (activeExamCategory === 'ielts') return e.format_type === 'ielts_academic' || e.curriculum_id === 'curr_ielts';
-      if (activeExamCategory === 'toeic') return e.format_type === 'toeic_lr' || e.curriculum_id === 'curr_toeic';
-      if (activeExamCategory === 'toefl') return e.format_type === 'toefl_ibt' || e.curriculum_id === 'curr_toefl';
-      if (activeExamCategory === 'quick_5m') return e.format_type === 'quick_5m' || e.duration_minutes === 5;
-      if (activeExamCategory === 'quick_15m') return e.format_type === 'quick_15m' || e.duration_minutes === 15;
-      if (activeExamCategory === 'standard_45m') return e.format_type === 'standard_45m' || e.duration_minutes === 45;
-      if (activeExamCategory === 'random_builder') return false;
+      if (activeExamGroup === 'random_builder') return false;
+      if (activeExamGroup === 'my_grade') return isExamEnrolledForUser(currentUser, e);
+      if (activeExamGroup === 'k12') {
+        if (activeExamCategory === 'primary') return (e.grade >= 1 && e.grade <= 5) || e.title.includes('Lớp 1') || e.title.includes('Lớp 2') || e.title.includes('Lớp 3') || e.title.includes('Lớp 4') || e.title.includes('Lớp 5');
+        if (activeExamCategory === 'g7') return e.grade === 7 || e.title.includes('Lớp 7') || e.curriculum_id === 'curr_g7';
+        if (activeExamCategory === 'g9') return e.grade === 9 || e.title.includes('Vào 10') || e.curriculum_id === 'curr_g9';
+        if (activeExamCategory === 'highschool') return (e.grade >= 10 && e.grade <= 12) || e.title.includes('Lớp 10') || e.title.includes('Lớp 11') || e.title.includes('Lớp 12') || e.title.includes('THPT');
+        return (e.grade >= 1 && e.grade <= 12) || e.curriculum_id?.startsWith('curr_g') || e.curriculum_id === 'curr_thptqg' || !['ielts_academic', 'toeic_lr', 'toefl_ibt'].includes(e.format_type);
+      }
+      if (activeExamGroup === 'intl') {
+        if (activeExamCategory === 'ielts') return e.format_type === 'ielts_academic' || e.curriculum_id === 'curr_ielts';
+        if (activeExamCategory === 'toeic') return e.format_type === 'toeic_lr' || e.curriculum_id === 'curr_toeic';
+        if (activeExamCategory === 'toefl') return e.format_type === 'toefl_ibt' || e.curriculum_id === 'curr_toefl';
+        return ['ielts_academic', 'toeic_lr', 'toefl_ibt'].includes(e.format_type) || ['curr_ielts', 'curr_toeic', 'curr_toefl'].includes(e.curriculum_id);
+      }
+      if (activeExamGroup === 'periodic') {
+        if (activeExamCategory === 'quick_5m') return e.format_type === 'quick_5m' || e.duration_minutes === 5;
+        if (activeExamCategory === 'quick_15m') return e.format_type === 'quick_15m' || e.duration_minutes === 15;
+        if (activeExamCategory === 'standard_45m') return e.format_type === 'standard_45m' || e.duration_minutes === 45;
+        return true;
+      }
       return true;
     })
   );
@@ -692,31 +714,75 @@
 
     // Authoritative Server Submission to D1 (P1-EXAM-04)
     try {
-      const res = await fetch('/api/exams', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(getAuthToken() ? { 'Authorization': `Bearer ${getAuthToken()}` } : {})
-        },
-        body: JSON.stringify({
-          exam_id: currentExam.id,
-          instance_id: activeSessionId,
-          session_id: activeSessionId,
-          user_id: selectedStudentId || currentUser?.id,
-          answers: finalAnswers,
-          duration_seconds: durationSecs
-        })
-      });
+      const isRandomExam = Boolean(currentExam?.is_random || currentExam?.instance_id);
+      const token = getAuthToken();
+      const headers = {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      };
 
-      const resData = await res.json();
-      if (res.ok && resData.success) {
-        serverCommitSuccess = true;
-        committedAttempt = resData.attempt;
-        if (resData.server_calculated_score !== undefined) {
-          serverCalculatedScoreOverride = resData.server_calculated_score;
+      if (isRandomExam) {
+        // Direct authoritative submission to /api/exams/random
+        const randomAnswerPayload = {};
+        activeQuestions.forEach((q, idx) => {
+          const ans = userAnswers[idx] || '';
+          if (ans) {
+            randomAnswerPayload[idx + 1] = ans; // 1-based order
+            randomAnswerPayload[idx] = ans;     // 0-based index
+            if (q.id) randomAnswerPayload[q.id] = ans;
+          }
+        });
+
+        const res = await fetch('/api/exams/random', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            action: 'submit',
+            instance_id: currentExam.instance_id || currentExam.id,
+            answers: randomAnswerPayload,
+            duration_seconds: durationSecs
+          })
+        });
+
+        const resData = await res.json();
+        if (res.ok && resData.success) {
+          serverCommitSuccess = true;
+          committedAttempt = {
+            id: resData.instance_id,
+            score: resData.score,
+            percentage: resData.percentage,
+            correct_count: resData.correct_count
+          };
+          if (resData.score !== undefined) {
+            serverCalculatedScoreOverride = resData.score;
+          }
+        } else {
+          submitError = resData.error || 'Máy chủ không tiếp nhận bài thi ngẫu nhiên.';
         }
       } else {
-        submitError = resData.error || 'Máy chủ không tiếp nhận bài thi.';
+        const res = await fetch('/api/exams', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            exam_id: currentExam.id,
+            instance_id: activeSessionId,
+            session_id: activeSessionId,
+            user_id: selectedStudentId || currentUser?.id,
+            answers: finalAnswers,
+            duration_seconds: durationSecs
+          })
+        });
+
+        const resData = await res.json();
+        if (res.ok && resData.success) {
+          serverCommitSuccess = true;
+          committedAttempt = resData.attempt;
+          if (resData.server_calculated_score !== undefined) {
+            serverCalculatedScoreOverride = resData.server_calculated_score;
+          }
+        } else {
+          submitError = resData.error || 'Máy chủ không tiếp nhận bài thi.';
+        }
       }
     } catch (netErr) {
       console.error('Submit exam network error:', netErr);
@@ -832,7 +898,7 @@
   }
 </script>
 
-<div class="space-y-6">
+<div class="space-y-6 min-w-0 max-w-full overflow-x-hidden">
   {#if currentUser?.role === 'teacher' || currentUser?.role === 'superadmin' || isSuperAdmin(currentUser)}
     <!-- Teacher & Leader Attendance-Linked Exam Panel -->
     <div class="rounded-3xl bg-slate-900 border border-emerald-500/30 p-5 md:p-6 shadow-xl space-y-4">
@@ -961,7 +1027,8 @@
       {/if}
     </div>
   {:else if currentUser?.role === 'student'}
-    {@const isOfficial = currentUser.approval_status === 'official' || (currentUser.status === 'active' && !currentUser.is_trial && !currentUser.metadata?.includes('"is_trial":true'))}
+    {@const isTrialUser = Boolean(currentUser.is_trial) || (typeof currentUser.metadata === 'string' ? currentUser.metadata.includes('"is_trial":true') : Boolean(currentUser.metadata?.is_trial))}
+    {@const isOfficial = currentUser.approval_status === 'official' || (currentUser.status === 'active' && !isTrialUser)}
     {@const primaryGrade = currentUser.grade || 'Lớp 7'}
     <!-- Student Header Badge -->
     <div class="rounded-2xl bg-indigo-950/40 border border-indigo-500/30 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg">
@@ -1005,112 +1072,164 @@
     </div>
   {/if}
 
-  <!-- Exam Selector Ribbon -->
-  <div class="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 md:p-6 shadow-xl space-y-4">
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-      <div class="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider flex items-center gap-2">
-        <span>👩‍🏫</span>
-        <span>HỆ THỐNG PHÒNG THI &amp; ĐÁNH GIÁ NĂNG LỰC CHUẨN 2026 (IELTS • TOEIC • TOEFL • 15P • 45P):</span>
+  <!-- Exam Selector Ribbon: Structured Group-Tree Navigation -->
+  <div class="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 md:p-6 shadow-xl space-y-4">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-w-0 max-w-full pb-2 border-b border-slate-200 dark:border-slate-800">
+      <div>
+        <div class="text-xs font-bold text-sky-600 dark:text-sky-400 uppercase tracking-wider flex items-center gap-2">
+          <span>👩‍🏫</span>
+          <span>PHÂN HỆ PHÒNG THI &amp; ĐÁNH GIÁ NĂNG LỰC CHUẨN 2026:</span>
+        </div>
+        <h2 class="text-xl sm:text-2xl font-heading font-semibold text-slate-900 dark:text-white mt-0.5">
+          Danh Mục Đề Thi Theo Cây Phân Cấp (Group-Tree)
+        </h2>
       </div>
 
-      <!-- Category Filter Tabs -->
-      <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs font-bold">
+      <!-- Quick Action Utilities -->
+      <div class="flex items-center gap-2 flex-wrap">
         <button
           id="guest-exam-btn"
           data-testid="guest-exam-btn"
           type="button"
           onclick={() => showGuestModal = true}
-          class="px-3.5 py-1.5 rounded-xl transition-all whitespace-nowrap flex items-center gap-1.5 bg-sky-600 hover:bg-sky-500 text-white font-medium shadow-sm"
+          class="px-3.5 py-2 rounded-xl transition-all flex items-center gap-1.5 bg-sky-600 hover:bg-sky-500 text-white font-semibold text-xs shadow-sm hover:scale-105"
         >
           <span>🎓 Thi Thử Cho Khách</span>
-          <span class="px-1.5 py-0.2 rounded-full bg-white/20 text-[9px]">Tự Do</span>
+          <span class="px-1.5 py-0.5 rounded-full bg-white/20 text-[10px]">Tự Do</span>
         </button>
+
         {#if currentUser?.role === 'student'}
           <button
-            onclick={() => activeExamCategory = 'my_grade'}
-            class="px-3 py-1.5 rounded-xl transition-all whitespace-nowrap {activeExamCategory === 'my_grade' ? 'bg-sky-600 text-white shadow-sm font-bold' : 'bg-sky-50/70 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-sky-100 dark:hover:bg-slate-700'}"
+            onclick={() => { activeExamGroup = 'my_grade'; activeExamCategory = 'all'; }}
+            class="px-3.5 py-2 rounded-xl transition-all flex items-center gap-1.5 text-xs font-bold {activeExamGroup === 'my_grade' ? 'bg-amber-600 text-white shadow-md ring-2 ring-amber-400/40' : 'bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800 hover:bg-amber-100'}"
           >
-            🎯 Đề Khối Của Em ({enrolledExamsCount})
+            <span>🎯 Đề Khối Của Em ({enrolledExamsCount})</span>
           </button>
         {/if}
+      </div>
+    </div>
+
+    <!-- LEVEL 1: Main Groups Selection (Group Cards) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
+      {#each examGroups as grp}
         <button
-          onclick={() => activeExamCategory = 'random_builder'}
-          class="px-3.5 py-1.5 rounded-xl transition-all whitespace-nowrap flex items-center gap-1.5 {activeExamCategory === 'random_builder' ? 'bg-gradient-to-r from-sky-500 to-blue-600 text-white shadow-md shadow-sky-500/25 ring-2 ring-sky-300 font-bold' : 'bg-sky-100/70 text-sky-800 dark:bg-sky-950/60 dark:text-sky-300 border border-sky-200 dark:border-sky-800 hover:bg-sky-200/70'}"
+          id="group-tab-{grp.id}"
+          data-testid="group-tab-{grp.id}"
+          type="button"
+          onclick={() => { activeExamGroup = grp.id; activeExamCategory = 'all'; }}
+          class="p-3.5 rounded-2xl text-left border transition-all flex items-start gap-3 group {activeExamGroup === grp.id ? 'bg-sky-50 dark:bg-sky-950/70 border-sky-500 dark:border-sky-400 shadow-md ring-2 ring-sky-400/30' : 'bg-slate-50/60 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800 hover:border-sky-300 dark:hover:border-slate-700'}"
         >
-          <span>🎲 Tạo Đề Random (5p • 15p • 45p)</span>
-          <span class="px-1.5 py-0.2 rounded-full bg-white/20 text-[9px]">Mới</span>
+          <span class="text-2xl p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 group-hover:scale-110 transition-transform shrink-0">
+            {grp.icon}
+          </span>
+          <div class="min-w-0">
+            <div class="font-heading font-semibold text-xs sm:text-sm text-slate-900 dark:text-white truncate {activeExamGroup === grp.id ? 'text-sky-700 dark:text-sky-300' : ''}">
+              {grp.label}
+            </div>
+            <div class="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5">
+              {grp.desc}
+            </div>
+          </div>
+        </button>
+      {/each}
+    </div>
+
+    <!-- LEVEL 2: Sub-Tree Hierarchy Pills for Active Group -->
+    {#if activeExamGroup === 'k12'}
+      <div class="pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center gap-2 overflow-x-auto pb-1 text-xs">
+        <span class="text-slate-500 font-bold uppercase text-[10px] whitespace-nowrap">Khối lớp con:</span>
+        <button
+          onclick={() => activeExamCategory = 'all'}
+          class="px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-colors {activeExamCategory === 'all' ? 'bg-sky-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200'}"
+        >
+          Tất Cả K12
+        </button>
+        <button
+          onclick={() => activeExamCategory = 'primary'}
+          class="px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-colors {activeExamCategory === 'primary' ? 'bg-sky-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200'}"
+        >
+          🎒 Tiểu Học (Lớp 1 - 5)
+        </button>
+        <button
+          onclick={() => activeExamCategory = 'g7'}
+          class="px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-colors {activeExamCategory === 'g7' ? 'bg-sky-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200'}"
+        >
+          🌱 Lớp 7 (Global Success &amp; KET)
+        </button>
+        <button
+          onclick={() => activeExamCategory = 'g9'}
+          class="px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-colors {activeExamCategory === 'g9' ? 'bg-sky-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200'}"
+        >
+          🎯 Vào 10 (Lớp 9 Chuyên)
+        </button>
+        <button
+          onclick={() => activeExamCategory = 'highschool'}
+          class="px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-colors {activeExamCategory === 'highschool' ? 'bg-sky-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200'}"
+        >
+          🏢 THPT (Lớp 10 - 12)
+        </button>
+      </div>
+    {:else if activeExamGroup === 'intl'}
+      <div class="pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center gap-2 overflow-x-auto pb-1 text-xs">
+        <span class="text-slate-500 font-bold uppercase text-[10px] whitespace-nowrap">Chứng chỉ con:</span>
+        <button
+          onclick={() => activeExamCategory = 'all'}
+          class="px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-colors {activeExamCategory === 'all' ? 'bg-sky-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200'}"
+        >
+          Tất Cả Chứng Chỉ
+        </button>
+        <button
+          onclick={() => activeExamCategory = 'ielts'}
+          class="px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-colors {activeExamCategory === 'ielts' ? 'bg-sky-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200'}"
+        >
+          🌍 IELTS Academic (4 Kỹ Năng)
+        </button>
+        <button
+          onclick={() => activeExamCategory = 'toeic'}
+          class="px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-colors {activeExamCategory === 'toeic' ? 'bg-sky-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200'}"
+        >
+          💼 TOEIC Listening &amp; Reading
+        </button>
+        <button
+          onclick={() => activeExamCategory = 'toefl'}
+          class="px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-colors {activeExamCategory === 'toefl' ? 'bg-sky-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200'}"
+        >
+          🎓 TOEFL iBT Quốc Tế
+        </button>
+      </div>
+    {:else if activeExamGroup === 'periodic'}
+      <div class="pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center gap-2 overflow-x-auto pb-1 text-xs">
+        <span class="text-slate-500 font-bold uppercase text-[10px] whitespace-nowrap">Thời lượng con:</span>
+        <button
+          onclick={() => activeExamCategory = 'all'}
+          class="px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-colors {activeExamCategory === 'all' ? 'bg-sky-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200'}"
+        >
+          Tất Cả Định Dạng
         </button>
         <button
           onclick={() => activeExamCategory = 'quick_5m'}
-          class="px-3 py-1.5 rounded-xl transition-all whitespace-nowrap {activeExamCategory === 'quick_5m' ? 'bg-sky-600 text-white shadow-sm font-bold' : 'bg-sky-50/70 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-sky-100 dark:hover:bg-slate-700'}"
+          class="px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-colors {activeExamCategory === 'quick_5m' ? 'bg-sky-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200'}"
         >
           ⚡ Đề 5 Phút (Khởi Động)
         </button>
         <button
           onclick={() => activeExamCategory = 'quick_15m'}
-          class="px-3 py-1.5 rounded-xl transition-all whitespace-nowrap {activeExamCategory === 'quick_15m' ? 'bg-sky-600 text-white shadow-sm font-bold' : 'bg-sky-50/70 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-sky-100 dark:hover:bg-slate-700'}"
+          class="px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-colors {activeExamCategory === 'quick_15m' ? 'bg-sky-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200'}"
         >
           ⏱️ Đề 15 Phút (Thường Xuyên)
         </button>
         <button
           onclick={() => activeExamCategory = 'standard_45m'}
-          class="px-3 py-1.5 rounded-xl transition-all whitespace-nowrap {activeExamCategory === 'standard_45m' ? 'bg-sky-600 text-white shadow-sm font-bold' : 'bg-sky-50/70 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-sky-100 dark:hover:bg-slate-700'}"
+          class="px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-colors {activeExamCategory === 'standard_45m' ? 'bg-sky-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200'}"
         >
           📝 Đề 45 Phút (1 Tiết Chuẩn)
         </button>
-        <button
-          onclick={() => activeExamCategory = 'all'}
-          class="px-3 py-1.5 rounded-xl transition-all whitespace-nowrap {activeExamCategory === 'all' ? 'bg-sky-600 text-white shadow-sm font-bold' : 'bg-sky-50/70 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-sky-100 dark:hover:bg-slate-700'}"
-        >
-          🌟 Tất Cả ({data.exams.length})
-        </button>
-        <button
-          onclick={() => activeExamCategory = 'primary'}
-          class="px-3 py-1.5 rounded-xl transition-all whitespace-nowrap {activeExamCategory === 'primary' ? 'bg-sky-600 text-white shadow-sm font-bold' : 'bg-sky-50/70 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-sky-100 dark:hover:bg-slate-700'}"
-        >
-          🎒 Tiểu Học (L1-5)
-        </button>
-        <button
-          onclick={() => activeExamCategory = 'g7'}
-          class="px-3 py-1.5 rounded-xl transition-all whitespace-nowrap {activeExamCategory === 'g7' ? 'bg-sky-600 text-white shadow-sm font-bold' : 'bg-sky-50/70 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-sky-100 dark:hover:bg-slate-700'}"
-        >
-          🌱 Lớp 7 (HSG &amp; KET)
-        </button>
-        <button
-          onclick={() => activeExamCategory = 'g9'}
-          class="px-3 py-1.5 rounded-xl transition-all whitespace-nowrap {activeExamCategory === 'g9' ? 'bg-sky-600 text-white shadow-sm font-bold' : 'bg-sky-50/70 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-sky-100 dark:hover:bg-slate-700'}"
-        >
-          🎯 Vào 10 (Lớp 9)
-        </button>
-        <button
-          onclick={() => activeExamCategory = 'highschool'}
-          class="px-3 py-1.5 rounded-xl transition-all whitespace-nowrap {activeExamCategory === 'highschool' ? 'bg-sky-600 text-white shadow-sm font-bold' : 'bg-sky-50/70 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-sky-100 dark:hover:bg-slate-700'}"
-        >
-          🏢 THPT &amp; ĐH (L10-12)
-        </button>
-        <button
-          onclick={() => activeExamCategory = 'ielts'}
-          class="px-3 py-1.5 rounded-xl transition-all whitespace-nowrap {activeExamCategory === 'ielts' ? 'bg-sky-600 text-white shadow-sm font-bold' : 'bg-sky-50/70 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-sky-100 dark:hover:bg-slate-700'}"
-        >
-          🌍 IELTS
-        </button>
-        <button
-          onclick={() => activeExamCategory = 'toeic'}
-          class="px-3 py-1.5 rounded-xl transition-all whitespace-nowrap {activeExamCategory === 'toeic' ? 'bg-sky-600 text-white shadow-sm font-bold' : 'bg-sky-50/70 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-sky-100 dark:hover:bg-slate-700'}"
-        >
-          💼 TOEIC
-        </button>
-        <button
-          onclick={() => activeExamCategory = 'toefl'}
-          class="px-3 py-1.5 rounded-xl transition-all whitespace-nowrap {activeExamCategory === 'toefl' ? 'bg-sky-600 text-white shadow-sm font-bold' : 'bg-sky-50/70 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-sky-100 dark:hover:bg-slate-700'}"
-        >
-          🎓 TOEFL iBT
-        </button>
       </div>
-    </div>
+    {/if}
+  </div>
 
-    <!-- RANDOM EXAM GENERATOR INTERACTIVE PANEL -->
-    {#if activeExamCategory === 'random_builder'}
+  <!-- RANDOM EXAM GENERATOR INTERACTIVE PANEL -->
+  {#if activeExamGroup === 'random_builder'}
       <div class="rounded-2xl bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950/60 border border-amber-500/40 p-5 md:p-6 shadow-2xl space-y-5 animate-in fade-in duration-200">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
           <div class="space-y-1">
@@ -1226,6 +1345,8 @@
           </div>
 
           <button
+            id="start-random-exam-btn"
+            data-testid="start-random-exam-btn"
             type="button"
             onclick={generateRandomExam}
             disabled={isGeneratingRandom}
@@ -1260,7 +1381,7 @@
     {/if}
 
     <!-- Exam Cards Grid -->
-    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
+    <div class="grid grid-cols-1 min-[380px]:grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
       {#each filteredExams as ex}
         {@const isEnrolled = isExamEnrolledForUser(currentUser, ex)}
         {@const isSelected = selectedExamId === ex.id}
@@ -1292,26 +1413,25 @@
         </button>
       {/each}
     </div>
-  </div>
 
   <!-- Active Exam Details & Status Header -->
-  <div class="rounded-3xl bg-gradient-to-r from-slate-900 via-indigo-950/40 to-slate-900 border border-slate-800 p-6 shadow-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-    <div class="space-y-1">
+  <div class="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 sm:p-6 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6 min-w-0 max-w-full">
+    <div class="space-y-1 min-w-0 max-w-full">
       <div class="flex items-center gap-2">
-        <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 uppercase">
+        <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-sky-100 dark:bg-sky-950/60 text-sky-800 dark:text-sky-300 border border-sky-200 dark:border-sky-800 uppercase">
           {currentExam.format_type}
         </span>
-        <span class="text-xs text-slate-400">Giáo viên ra đề: <strong>{currentExam.created_by}</strong></span>
+        <span class="text-xs text-slate-500 dark:text-slate-400">Giáo viên ra đề: <strong class="text-slate-700 dark:text-slate-300">{currentExam.created_by}</strong></span>
       </div>
-      <h1 class="text-xl md:text-2xl font-black text-white">{currentExam.title}</h1>
-      <p class="text-xs text-slate-300 max-w-2xl">{currentExam.description}</p>
+      <h1 class="text-xl md:text-2xl font-heading font-semibold text-slate-900 dark:text-white">{currentExam.title}</h1>
+      <p class="text-xs text-slate-600 dark:text-slate-300 max-w-2xl">{currentExam.description}</p>
     </div>
 
     <!-- Timer & Main Action -->
-    <div class="flex items-center gap-4 flex-shrink-0">
-      <div class="text-center bg-slate-950 px-5 py-3 rounded-2xl border border-slate-800 shadow-inner">
-        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Thời Gian Còn Lại</div>
-        <div class="text-2xl font-black font-mono {timeLeftSeconds < 300 ? 'text-rose-500 animate-pulse' : 'text-emerald-400'}">
+    <div class="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+      <div class="text-center bg-slate-50 dark:bg-slate-950 px-5 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-inner w-full sm:w-auto">
+        <div class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Thời Gian Còn Lại</div>
+        <div class="text-2xl font-black font-mono {timeLeftSeconds < 300 ? 'text-rose-500 animate-pulse' : 'text-sky-600 dark:text-emerald-400'}">
           {formatTime(timeLeftSeconds)}
         </div>
       </div>
@@ -1319,7 +1439,7 @@
       {#if !isStarted}
         <button
           onclick={startExam}
-          class="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-sm shadow-xl shadow-emerald-600/30 transition-all hover:scale-105"
+          class="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-sm shadow-xl shadow-sky-600/30 transition-all hover:scale-105"
         >
           🚀 Bắt Đầu Làm Bài
         </button>
@@ -1328,9 +1448,9 @@
           {#if submitError}
             <div class="p-3 bg-rose-950/90 border border-rose-500 rounded-xl text-rose-300 text-xs flex items-center justify-between gap-3 max-w-md">
               <span>⚠️ {submitError}</span>
-              <button 
-                onclick={submitExam} 
-                disabled={isSubmitting} 
+              <button
+                onclick={submitExam}
+                disabled={isSubmitting}
                 class="px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded font-bold text-xs shrink-0 shadow"
               >
                 {isSubmitting ? 'Đang gửi...' : 'Thử Nộp Lại'}
@@ -1358,7 +1478,7 @@
 
   <!-- RESULT CARD BANNER (After submission) -->
   {#if isSubmitted}
-    <div class="p-6 md:p-8 rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl space-y-4 animate-in zoom-in-95 duration-200">
+    <div id="exam-result-banner" class="p-6 md:p-8 rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl space-y-4 animate-in zoom-in-95 duration-200">
       <div class="flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-slate-800 pb-4">
         <div>
           <span class="text-xs font-bold text-emerald-400 uppercase tracking-wider">KẾT QUẢ ĐÁNH GIÁ LỘ TRÌNH CHÍNH THỨC</span>
@@ -1413,7 +1533,7 @@
       <div class="text-5xl">📝</div>
       <h2 class="text-xl font-bold text-white">Bạn Đã Sẵn Sàng Làm Bài?</h2>
       <p class="text-xs text-slate-400 max-w-lg mx-auto leading-relaxed">
-        Bài thi gồm {activeQuestions.length} câu hỏi. Thời gian làm bài là {currentExam.duration_minutes} phút. 
+        Bài thi gồm {activeQuestions.length} câu hỏi. Thời gian làm bài là {currentExam.duration_minutes} phút.
         Đồng hồ sẽ bắt đầu đếm ngược ngay khi bạn bấm nút bên dưới.
       </p>
       <button
@@ -1532,116 +1652,199 @@
         </div>
       </div>
 
-    <!-- MODULE: STANDARD MULTIPLE CHOICE / READING / QUICK 15M / 45M -->
+    <!-- MODULE: STANDARD MULTIPLE CHOICE / READING / QUICK 15M / 45M (2-COLUMN EXAM HALL) -->
     {:else}
-      <div class="space-y-6">
-        {#each activeQuestions as q, idx}
-          {@const parsedOptions = q.options_json ? JSON.parse(q.options_json) : []}
-          {@const isCorrect = isSubmitted && userAnswers[idx]?.trim().toUpperCase() === q.correct_answer?.trim().toUpperCase()}
-          {@const isWrong = isSubmitted && userAnswers[idx] && !isCorrect}
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <!-- Main Column: Questions List (8 Cols) -->
+        <div class="lg:col-span-8 space-y-6">
+          {#each activeQuestions as q, idx}
+            {@const parsedOptions = (() => {
+              if (!q.options_json) return [];
+              try {
+                const arr = typeof q.options_json === 'string' ? JSON.parse(q.options_json) : q.options_json;
+                return (arr || []).map((o, oIdx) => {
+                  if (typeof o === 'string') return o;
+                  if (o && typeof o === 'object') {
+                    if (o.label) return o.label;
+                    const letter = o.id || String.fromCharCode(65 + oIdx);
+                    const text = o.text || o.content || '';
+                    return `${letter}. ${text}`;
+                  }
+                  return String(o);
+                });
+              } catch {
+                return [];
+              }
+            })()}
+            {@const isCorrect = isSubmitted && userAnswers[idx]?.trim().toUpperCase() === q.correct_answer?.trim().toUpperCase()}
+            {@const isWrong = isSubmitted && userAnswers[idx] && !isCorrect}
 
-          <div class="p-6 rounded-3xl bg-slate-900 border {isCorrect ? 'border-emerald-500/60 bg-emerald-950/10' : isWrong ? 'border-rose-500/60 bg-rose-950/10' : 'border-slate-800'} space-y-4 transition-all">
-            <!-- Header of Question -->
-            <div class="flex items-center justify-between gap-3 text-xs">
-              <div class="flex items-center gap-2">
-                <span class="w-7 h-7 rounded-xl bg-slate-800 text-indigo-400 font-bold flex items-center justify-center">
-                  #{idx + 1}
-                </span>
-                <span class="font-bold text-slate-300 uppercase tracking-wider">{q.skill}</span>
-                {#if q.cambridge_level}
-                  <span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-indigo-300 font-semibold border border-indigo-500/20">
-                    {q.cambridge_level}
+            <div id="q-{idx}" class="p-6 rounded-3xl bg-white dark:bg-slate-900 border {isCorrect ? 'border-emerald-500 bg-emerald-50/20 dark:bg-emerald-950/20' : isWrong ? 'border-rose-500 bg-rose-50/20 dark:bg-rose-950/20' : 'border-slate-200 dark:border-slate-800 shadow-sm'} space-y-4 transition-all scroll-mt-24">
+              <!-- Header of Question -->
+              <div class="flex items-center justify-between gap-3 text-xs">
+                <div class="flex items-center gap-2">
+                  <span class="w-8 h-8 rounded-xl bg-sky-100 dark:bg-slate-800 text-sky-700 dark:text-sky-300 font-bold flex items-center justify-center border border-sky-200 dark:border-slate-700">
+                    #{idx + 1}
+                  </span>
+                  <span class="font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">{q.skill}</span>
+                  {#if q.cambridge_level}
+                    <span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-sky-700 dark:text-sky-300 font-semibold border border-sky-200 dark:border-slate-700">
+                      {q.cambridge_level}
+                    </span>
+                  {/if}
+                </div>
+
+                {#if isSubmitted}
+                  <span class="font-bold {isCorrect ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}">
+                    {isCorrect ? '✓ Đúng (+1.0 điểm)' : '✕ Sai (Đáp án đúng: ' + q.correct_answer + ')'}
                   </span>
                 {/if}
               </div>
 
-              {#if isSubmitted}
-                <span class="font-bold {isCorrect ? 'text-emerald-400' : 'text-rose-400'}">
-                  {isCorrect ? '✓ Đúng (+1.0 điểm)' : '✕ Sai (Đáp án: ' + q.correct_answer + ')'}
-                </span>
+              <!-- Reading Passage if present -->
+              {#if q.passage}
+                <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-300 leading-relaxed font-sans max-h-64 overflow-y-auto whitespace-pre-line">
+                  <strong class="text-sky-700 dark:text-sky-400 block mb-1">📖 Đoạn Văn Đọc Hiểu / Ngữ Cảnh:</strong>
+                  {q.passage}
+                </div>
+              {/if}
+
+              <!-- Question Photo / Diagram (e.g. TOEIC Part 1) -->
+              {#if q.image_url}
+                <div class="my-3 text-center bg-slate-50 dark:bg-slate-950/60 p-3 rounded-2xl border border-slate-200 dark:border-slate-800">
+                  <img
+                    src={q.image_url}
+                    alt="Question Diagram or Scene"
+                    class="max-h-64 rounded-xl border border-slate-300 dark:border-slate-700/60 object-cover shadow-sm mx-auto"
+                  />
+                  <span class="text-[11px] text-slate-500 dark:text-slate-400 mt-2 block font-medium">📷 Hình ảnh ngữ cảnh bài thi</span>
+                </div>
+              {/if}
+
+              <!-- Audio Listening Track -->
+              {#if q.audio_url}
+                <div class="my-2 p-3.5 rounded-2xl bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800 flex items-center justify-between gap-3 shadow-xs">
+                  <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-sky-600/10 text-sky-600 dark:text-sky-400 border border-sky-300 dark:border-sky-700 flex items-center justify-center text-lg">
+                      🎧
+                    </div>
+                    <div>
+                      <div class="text-xs font-bold text-sky-800 dark:text-sky-300">Listening Audio Track (Bản Nghe Đề Thi)</div>
+                      <div class="text-[10px] text-slate-500 dark:text-slate-400">Bấm nút để nghe đoạn audio / hội thoại của bài thi</div>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onclick={() => playQuestionAudio(q.audio_url)}
+                    class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all hover:scale-105 active:scale-95"
+                  >
+                    <span>🔊 Phát Audio</span>
+                  </button>
+                </div>
+              {/if}
+
+              <!-- Question Prompt -->
+              <div class="text-sm font-heading font-semibold text-slate-900 dark:text-white flex items-center justify-between gap-3">
+                <span>{q.prompt}</span>
+                <button
+                  onclick={() => speakWord(q.prompt)}
+                  class="text-xs p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-sky-600 dark:hover:text-white shrink-0 border border-slate-200 dark:border-slate-700"
+                  title="Phát âm câu hỏi"
+                >
+                  🔊
+                </button>
+              </div>
+
+              <!-- Options Grid -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                {#each parsedOptions as opt}
+                  {@const optLetter = opt.substring(0, 1).toUpperCase()}
+                  {@const isSelected = userAnswers[idx] === optLetter}
+                  {@const isThisCorrect = isSubmitted && q.correct_answer === optLetter}
+
+                  <button
+                    disabled={isSubmitted}
+                    onclick={() => selectOption(idx, optLetter)}
+                    class="p-3.5 rounded-2xl border text-left text-xs font-semibold transition-all {isThisCorrect ? 'bg-emerald-100 dark:bg-emerald-950/60 border-emerald-500 text-emerald-800 dark:text-emerald-200 font-bold ring-2 ring-emerald-400' : isSelected && isWrong ? 'bg-rose-100 dark:bg-rose-950/60 border-rose-500 text-rose-800 dark:text-rose-200 font-bold' : isSelected ? 'bg-sky-600 border-sky-600 text-white font-bold shadow-md ring-2 ring-sky-300 dark:ring-sky-500' : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 hover:border-sky-400 hover:bg-sky-50 dark:hover:bg-slate-800'}"
+                  >
+                    {opt}
+                  </button>
+                {/each}
+              </div>
+
+              <!-- Review Explanation (After submission) -->
+              {#if isSubmitted && q.explanation}
+                <div class="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-xs text-amber-900 dark:text-amber-200 space-y-1">
+                  <strong class="text-amber-700 dark:text-amber-400 block font-bold">💡 Giải thích chi tiết:</strong>
+                  <div class="text-slate-700 dark:text-slate-300 font-sans">{q.explanation}</div>
+                </div>
               {/if}
             </div>
+          {/each}
+        </div>
 
-            <!-- Reading Passage if present (Split-view or card) -->
-            {#if q.passage}
-              <div class="p-4 rounded-2xl bg-slate-950 border border-slate-800/80 text-xs text-slate-300 leading-relaxed font-sans max-h-64 overflow-y-auto whitespace-pre-line">
-                <strong class="text-cyan-400 block mb-1">📖 Đoạn Văn Đọc Hiểu / Ngữ Cảnh:</strong>
-                {q.passage}
+        <!-- Sticky Sidebar: Exam Room Navigation Palette (4 Cols) -->
+        <div class="lg:col-span-4 sticky top-20 space-y-4">
+          <div class="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-lg space-y-4">
+            <!-- Header of Sidebar -->
+            <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+              <div class="text-xs font-bold text-sky-600 dark:text-sky-400 uppercase tracking-wider">
+                📋 TIẾN ĐỘ PHÒNG THI
               </div>
-            {/if}
-
-            <!-- Question Photo / Diagram (e.g. TOEIC Part 1) -->
-            {#if q.image_url}
-              <div class="my-3 text-center bg-slate-950/60 p-3 rounded-2xl border border-slate-800">
-                <img 
-                  src={q.image_url} 
-                  alt="Question Diagram or Scene" 
-                  class="max-h-64 rounded-xl border border-slate-700/60 object-cover shadow-lg mx-auto" 
-                />
-                <span class="text-[11px] text-slate-400 mt-2 block font-medium">📷 Hình ảnh ngữ cảnh bài thi</span>
+              <div class="text-xs font-mono font-bold {timeLeftSeconds < 300 ? 'text-rose-500 animate-pulse' : 'text-sky-600 dark:text-sky-400'}">
+                ⏱️ {formatTime(timeLeftSeconds)}
               </div>
-            {/if}
+            </div>
 
-            <!-- Audio Listening Track (e.g. TOEIC Part 1 / TOEFL Lecture / Listening Exam) -->
-            {#if q.audio_url}
-              <div class="my-2 p-3.5 rounded-2xl bg-indigo-950/40 border border-indigo-500/30 flex items-center justify-between gap-3 shadow-inner">
-                <div class="flex items-center gap-2.5">
-                  <div class="w-9 h-9 rounded-xl bg-indigo-600/30 text-indigo-400 border border-indigo-500/40 flex items-center justify-center text-lg">
-                    🎧
-                  </div>
-                  <div>
-                    <div class="text-xs font-bold text-indigo-300">Listening Audio Track (Bản Nghe Đề Thi)</div>
-                    <div class="text-[10px] text-slate-400">Bấm nút để nghe đoạn audio / hội thoại của bài thi</div>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onclick={() => playQuestionAudio(q.audio_url)}
-                  class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-indigo-600/30 transition-all hover:scale-105 active:scale-95"
-                >
-                  <span>🔊 Phát Audio</span>
-                </button>
+            <!-- Candidate summary -->
+            <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 space-y-1 text-xs">
+              <div class="flex items-center justify-between">
+                <span class="text-slate-500 dark:text-slate-400">Thí sinh:</span>
+                <span class="font-bold text-slate-900 dark:text-white truncate max-w-[140px]">{studentName}</span>
               </div>
-            {/if}
+              <div class="flex items-center justify-between">
+                <span class="text-slate-500 dark:text-slate-400">Đã trả lời:</span>
+                <span class="font-bold text-emerald-600 dark:text-emerald-400">
+                  {Object.values(userAnswers).filter(a => !!a).length} / {activeQuestions.length} câu
+                </span>
+              </div>
+              <!-- Progress Bar -->
+              <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1.5 overflow-hidden mt-1.5">
+                <div class="bg-sky-600 h-1.5 rounded-full transition-all duration-300" style="width: {(Object.values(userAnswers).filter(a => !!a).length / (activeQuestions.length || 1)) * 100}%"></div>
+              </div>
+            </div>
 
-            <!-- Question Prompt -->
-            <div class="text-sm font-bold text-white flex items-center justify-between gap-3">
-              <span>{q.prompt}</span>
+            <!-- Question Jump Matrix -->
+            <div class="space-y-2">
+              <div class="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase">
+                Ma trận câu hỏi (Bấm để nhảy đến):
+              </div>
+              <div class="grid grid-cols-5 gap-1.5 max-h-56 overflow-y-auto p-1">
+                {#each activeQuestions as _, idx}
+                  {@const isAns = !!userAnswers[idx]}
+                  <button
+                    type="button"
+                    onclick={() => document.getElementById(`q-${idx}`)?.scrollIntoView({ behavior: 'smooth' })}
+                    class="h-8 rounded-lg text-xs font-bold transition-all flex items-center justify-center border {isAns ? 'bg-sky-600 text-white border-sky-600 shadow-xs' : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-sky-400'}"
+                  >
+                    {idx + 1}
+                  </button>
+                {/each}
+              </div>
+            </div>
+
+            <!-- Submit CTA Button -->
+            {#if !isSubmitted}
               <button
-                onclick={() => speakWord(q.prompt)}
-                class="text-xs p-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white"
-                title="Phát âm câu hỏi"
+                onclick={submitExam}
+                disabled={isSubmitting}
+                class="w-full py-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-md shadow-emerald-600/25 transition-all hover:scale-[1.02] flex items-center justify-center gap-2 disabled:opacity-50"
               >
-                🔊
+                <span>{isSubmitting ? '⏳ Đang nộp bài...' : '🏁 Nộp Bài & Chấm Điểm'}</span>
               </button>
-            </div>
-
-            <!-- Options Grid -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
-              {#each parsedOptions as opt}
-                {@const optLetter = opt.substring(0, 1).toUpperCase()}
-                {@const isSelected = userAnswers[idx] === optLetter}
-                {@const isThisCorrect = isSubmitted && q.correct_answer === optLetter}
-
-                <button
-                  disabled={isSubmitted}
-                  onclick={() => selectOption(idx, optLetter)}
-                  class="p-3 rounded-2xl border text-left text-xs font-medium transition-all {isThisCorrect ? 'bg-emerald-600/30 border-emerald-500 text-emerald-200 font-bold' : isSelected && isWrong ? 'bg-rose-600/30 border-rose-500 text-rose-200 font-bold' : isSelected ? 'bg-indigo-600 border-indigo-500 text-white font-bold shadow-md' : 'bg-slate-950 border-slate-800 text-slate-300 hover:bg-slate-800'}"
-                >
-                  {opt}
-                </button>
-              {/each}
-            </div>
-
-            <!-- Review Explanation (After submission) -->
-            {#if isSubmitted && q.explanation}
-              <div class="p-3.5 rounded-2xl bg-slate-950 border border-indigo-500/20 text-xs text-indigo-300 space-y-1">
-                <strong class="text-indigo-400 block font-bold">💡 Giải thích chi tiết:</strong>
-                <div class="text-slate-300 font-sans">{q.explanation}</div>
-              </div>
             {/if}
           </div>
-        {/each}
+        </div>
       </div>
     {/if}
   {/if}

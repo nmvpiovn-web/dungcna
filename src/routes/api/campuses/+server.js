@@ -95,14 +95,24 @@ async function ensureTables(db) {
       `)
     ]);
   } catch (e) {
-    console.warn('Campuses table init notice:', e.message);
+    throw e;
   }
 }
 
 export async function GET({ request, url, platform }) {
   const auth = await verifyServerAuth(request, platform);
+  if (!auth.authenticated) return json({ success: false, error: auth.error }, { status: auth.status || 401 });
+
+  const view = url.searchParams.get('view');
+  const isSummary = view === 'summary';
+
+  // If not summary, require staff privilege
+  if (!isSummary && !isStaffUser(auth.user)) {
+    return json({ success: false, error: 'Forbidden: Chỉ staff được xem dữ liệu cơ sở đầy đủ.' }, { status: 403 });
+  }
+
   const campusId = url.searchParams.get('campus_id') || 'all';
-  const includeStreams = url.searchParams.get('streams') === 'true';
+  const includeStreams = !isSummary && (url.searchParams.get('streams') === 'true');
   const limit = Math.min(100, Math.max(1, parseInt(url.searchParams.get('limit') || '30', 10)));
 
   const db = platform?.env?.DB;
@@ -111,7 +121,20 @@ export async function GET({ request, url, platform }) {
     try {
       await ensureTables(db);
       const campusesRes = await db.prepare('SELECT * FROM campuses WHERE is_active = 1 ORDER BY id ASC').all();
-      const campuses = campusesRes.results || FALLBACK_CAMPUSES;
+      let campuses = campusesRes.results || [];
+
+      if (isSummary) {
+        campuses = campuses.map(c => ({
+          id: c.id,
+          name: c.name,
+          short_code: c.short_code
+        }));
+        return json({
+          success: true,
+          campuses,
+          streams: []
+        });
+      }
 
       let streams = [];
       if (includeStreams) {
@@ -134,10 +157,27 @@ export async function GET({ request, url, platform }) {
       });
     } catch (e) {
       console.error('Error fetching campuses from D1:', e);
+      return json({ success: false, error: 'DatabaseError: Không thể đọc dữ liệu cơ sở.' }, { status: 503 });
     }
   }
 
+  if (platform?.env?.ENABLE_LOCAL_MOCK !== 'true') return json({ success: false, error: 'DatabaseUnavailable: Thiếu D1 binding.' }, { status: 503 });
+
   // Local fallback
+  let campuses = FALLBACK_CAMPUSES;
+  if (isSummary) {
+    campuses = campuses.map(c => ({
+      id: c.id,
+      name: c.name,
+      short_code: c.short_code
+    }));
+    return json({
+      success: true,
+      campuses,
+      streams: []
+    });
+  }
+
   let streams = inMemoryStreams;
   if (campusId !== 'all') {
     streams = streams.filter(s => s.campus_id === campusId);
@@ -146,14 +186,15 @@ export async function GET({ request, url, platform }) {
 
   return json({
     success: true,
-    campuses: FALLBACK_CAMPUSES,
+    campuses,
     streams
   });
 }
 
 export async function POST({ request, platform }) {
   const auth = await verifyServerAuth(request, platform);
-  if (!auth.authenticated || !isStaffUser(auth.user)) {
+  if (!auth.authenticated) return json({ success: false, error: auth.error }, { status: auth.status || 401 });
+  if (!isStaffUser(auth.user)) {
     return json({ success: false, error: 'Forbidden: Bạn không có quyền quản lý cơ sở hoặc tạo sự kiện' }, { status: 403 });
   }
 
@@ -166,6 +207,7 @@ export async function POST({ request, platform }) {
 
   const { action } = body;
   const db = platform?.env?.DB;
+  if (!db && platform?.env?.ENABLE_LOCAL_MOCK !== 'true') return json({ success: false, error: 'DatabaseUnavailable: Thiếu D1 binding.' }, { status: 503 });
 
   if (action === 'log_stream') {
     const { campus_id, activity_type, title, detail, reference_id } = body;
@@ -206,11 +248,14 @@ export async function POST({ request, platform }) {
         ).run();
       } catch (e) {
         console.error('Failed to log stream to D1:', e);
+        return json({ success: false, error: 'DatabaseError: Không thể lưu sự kiện cơ sở.' }, { status: 503 });
       }
     }
 
-    inMemoryStreams.unshift(streamItem);
-    if (inMemoryStreams.length > 200) inMemoryStreams = inMemoryStreams.slice(0, 200);
+    if (!db) {
+      inMemoryStreams.unshift(streamItem);
+      if (inMemoryStreams.length > 200) inMemoryStreams = inMemoryStreams.slice(0, 200);
+    }
 
     return json({ success: true, message: 'Đã ghi nhận sự kiện luồng cơ sở thành công', stream: streamItem });
   }

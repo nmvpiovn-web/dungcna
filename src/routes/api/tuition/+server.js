@@ -107,7 +107,7 @@ export async function GET({ url, request, platform }) {
         // Exclusively query parent_student_links based on parent_user_id.
         // Names and phone numbers are NEVER used to establish parental access rights.
         const linksRes = await db.prepare(`
-          SELECT student_user_id FROM parent_student_links 
+          SELECT student_user_id FROM parent_student_links
           WHERE parent_user_id = ? AND verification_status = 'verified';
         `).bind(user.id).all();
 
@@ -130,8 +130,8 @@ export async function GET({ url, request, platform }) {
           // If no specific child is requested, query ONLY the set of verified child IDs
           const placeholders = linkedStudentIds.map(() => '?').join(',');
           const d1Res = await db.prepare(`
-            SELECT * FROM tuition_bills 
-            WHERE student_id IN (${placeholders}) 
+            SELECT * FROM tuition_bills
+            WHERE student_id IN (${placeholders})
             ORDER BY created_at DESC;
           `).bind(...linkedStudentIds).all();
 
@@ -443,8 +443,9 @@ export async function POST({ request, platform }) {
               growth_notes, eval_listening, eval_reading, eval_writing,
               eval_speaking, eval_grammar, test_score_15m, test_score_45m,
               template_id, status, superadmin_notes, approved_by,
-              parent_name, parent_phone, parent_zalo_id
-            ) VALUES (?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, (SELECT stars_balance FROM student_stars WHERE student_id = ?), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+              parent_name, parent_phone, parent_zalo_id,
+              month_label, amount, total_amount
+            ) VALUES (?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, (SELECT stars_balance FROM student_stars WHERE student_id = ?), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
           `).bind(
             billData.id, billData.student_id, billData.student_name, billData.age || 13, billData.grade_level || 'Lớp 7',
             billData.program_name || 'Tiếng Anh K12', billData.billing_period || 'Tháng 10/2026',
@@ -457,7 +458,10 @@ export async function POST({ request, platform }) {
             billData.eval_speaking || 8.0, billData.eval_grammar || 8.0, billData.test_score_15m || 8.0,
             billData.test_score_45m || 8.5, billData.template_id || 1, billData.status,
             billData.superadmin_notes || '', billData.approved_by,
-            billData.parent_name || '', billData.parent_phone || '', billData.parent_zalo_id || ''
+            billData.parent_name || '', billData.parent_phone || '', billData.parent_zalo_id || '',
+            billData.billing_period || 'Tháng 10/2026',
+            billData.final_amount_vnd || billData.base_tuition_vnd || 0,
+            billData.final_amount_vnd || billData.base_tuition_vnd || 0
           );
 
           statements.push(stmtStars, stmtLedger, stmtBill);
@@ -605,8 +609,9 @@ export async function POST({ request, platform }) {
               growth_notes, eval_listening, eval_reading, eval_writing,
               eval_speaking, eval_grammar, test_score_15m, test_score_45m,
               template_id, status, superadmin_notes, approved_by,
-              parent_name, parent_phone, parent_zalo_id
-            ) VALUES (?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, (SELECT stars_balance FROM student_stars WHERE student_id = ?), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+              parent_name, parent_phone, parent_zalo_id,
+              month_label, amount, total_amount
+            ) VALUES (?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, (SELECT stars_balance FROM student_stars WHERE student_id = ?), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
           `).bind(
             billData.id, billData.student_id, billData.student_name, billData.age || 13, billData.grade_level || 'Lớp 7',
             billData.program_name || 'Tiếng Anh K12', billData.billing_period || 'Tháng 10/2026',
@@ -619,7 +624,10 @@ export async function POST({ request, platform }) {
             billData.eval_speaking || 8.0, billData.eval_grammar || 8.0, billData.test_score_15m || 8.0,
             billData.test_score_45m || 8.5, billData.template_id || 1, billData.status,
             billData.superadmin_notes || '', billData.approved_by,
-            billData.parent_name || '', billData.parent_phone || '', billData.parent_zalo_id || ''
+            billData.parent_name || '', billData.parent_phone || '', billData.parent_zalo_id || '',
+            billData.billing_period || 'Tháng 10/2026',
+            billData.final_amount_vnd || billData.base_tuition_vnd || 0,
+            billData.final_amount_vnd || billData.base_tuition_vnd || 0
           );
           statements.push(stmtBill);
         }
@@ -674,8 +682,8 @@ export async function POST({ request, platform }) {
 
     return json({
       success: true,
-      message: manager 
-        ? `Lập và ${targetStatus === 'approved' ? 'duyệt' : targetStatus} phiếu báo học phí thành công!` 
+      message: manager
+        ? `Lập và ${targetStatus === 'approved' ? 'duyệt' : targetStatus} phiếu báo học phí thành công!`
         : 'Đã lập dự thảo phiếu báo học phí thành công. Đang chờ Ban Quản Lý phê duyệt!',
       bill: billData
     });

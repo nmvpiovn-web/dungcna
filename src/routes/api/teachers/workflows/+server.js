@@ -62,7 +62,7 @@ export async function GET({ url, request, platform }) {
         leaves = res.results || [];
       } else {
         const res = await db.prepare(`
-          SELECT * FROM teacher_leave_requests 
+          SELECT * FROM teacher_leave_requests
           WHERE teacher_id = ? OR substitute_teacher_id = ?
           ORDER BY created_at DESC;
         `).bind(auth.user.id, auth.user.id).all();
@@ -79,7 +79,7 @@ export async function GET({ url, request, platform }) {
         advances = res.results || [];
       } else {
         const res = await db.prepare(`
-          SELECT * FROM teacher_salary_advances 
+          SELECT * FROM teacher_salary_advances
           WHERE teacher_id = ?
           ORDER BY created_at DESC;
         `).bind(auth.user.id).all();
@@ -119,7 +119,7 @@ export async function GET({ url, request, platform }) {
         sessions = res.results || [];
       } else {
         const res = await db.prepare(`
-          SELECT * FROM class_sessions 
+          SELECT * FROM class_sessions
           WHERE teacher_id = ? OR substitute_teacher_id = ?
           ORDER BY session_date DESC, start_time ASC LIMIT 50;
         `).bind(auth.user.id, auth.user.id).all();
@@ -142,6 +142,67 @@ export async function GET({ url, request, platform }) {
   }
 }
 
+async function insertTeacherRecruitment(db, data) {
+  let cols = new Set();
+  try {
+    const info = await db.prepare('PRAGMA table_info(teacher_recruitment);').all();
+    const rows = info.results || info || [];
+    cols = new Set(rows.map(r => r.name));
+  } catch {}
+
+  const fields = ['id'];
+  const values = [data.id];
+
+  if (cols.size === 0 || cols.has('full_name')) {
+    fields.push('full_name');
+    values.push(data.candidate_name);
+  }
+  if (cols.size === 0 || cols.has('candidate_name')) {
+    fields.push('candidate_name');
+    values.push(data.candidate_name);
+  }
+  if (cols.size === 0 || cols.has('phone')) {
+    fields.push('phone');
+    values.push(data.phone);
+  }
+  if (cols.size === 0 || cols.has('email')) {
+    fields.push('email');
+    values.push(data.email || null);
+  }
+  if (cols.size === 0 || cols.has('role_type')) {
+    fields.push('role_type');
+    values.push(data.role_type || 'lead');
+  }
+  if (cols.size === 0 || cols.has('experience_years')) {
+    fields.push('experience_years');
+    values.push(data.experience_years || 0);
+  }
+  if (cols.size === 0 || cols.has('certificates')) {
+    fields.push('certificates');
+    values.push(data.certificates || '');
+  }
+  if (cols.size === 0 || cols.has('status')) {
+    fields.push('status');
+    values.push(data.status || 'applied');
+  }
+  if (cols.has('interview_time') && data.interview_time !== undefined) {
+    fields.push('interview_time');
+    values.push(data.interview_time || null);
+  }
+  if (cols.has('interviewer_name') && data.interviewer_name !== undefined) {
+    fields.push('interviewer_name');
+    values.push(data.interviewer_name || null);
+  }
+  if (cols.size === 0 || cols.has('interview_notes')) {
+    fields.push('interview_notes');
+    values.push(data.interview_notes || '');
+  }
+
+  const placeholders = fields.map(() => '?').join(', ');
+  const sql = `INSERT INTO teacher_recruitment (${fields.join(', ')}) VALUES (${placeholders});`;
+  return db.prepare(sql).bind(...values).run();
+}
+
 export async function POST({ request, platform }) {
   let body = {};
   try {
@@ -159,19 +220,19 @@ export async function POST({ request, platform }) {
 
   // PUBLIC ACTION: CANDIDATE JOB APPLICATION (Does not require staff login)
   if (action === 'candidate_apply' || action === 'apply_job') {
-    const { 
-      candidate_name, 
-      phone, 
-      email, 
-      role_type, 
-      experience_years, 
-      certificates, 
-      selected_grades, 
-      selected_subjects, 
-      interview_preference, 
-      availability, 
-      cv_link, 
-      notes 
+    const {
+      candidate_name,
+      phone,
+      email,
+      role_type,
+      experience_years,
+      certificates,
+      selected_grades,
+      selected_subjects,
+      interview_preference,
+      availability,
+      cv_link,
+      notes
     } = body;
 
     if (!candidate_name || !phone) {
@@ -194,20 +255,17 @@ export async function POST({ request, platform }) {
     };
 
     try {
-      await db.prepare(`
-        INSERT INTO teacher_recruitment 
-        (id, candidate_name, phone, email, role_type, experience_years, certificates, status, interview_notes)
-        VALUES (?, ?, ?, ?, ?, ?, ?, 'applied', ?);
-      `).bind(
-        recId,
-        candidate_name.trim(),
-        phone.trim(),
-        email ? email.trim() : null,
-        role_type || 'lead',
-        Number(experience_years) || 0,
-        certificates || '',
-        JSON.stringify(structuredPayload)
-      ).run();
+      await insertTeacherRecruitment(db, {
+        id: recId,
+        candidate_name: candidate_name.trim(),
+        phone: phone.trim(),
+        email: email ? email.trim() : null,
+        role_type: role_type || 'lead',
+        experience_years: Number(experience_years) || 0,
+        certificates: certificates || '',
+        status: 'applied',
+        interview_notes: JSON.stringify(structuredPayload)
+      });
 
       // Notify Leader of new applicant
       await db.prepare(`
@@ -262,11 +320,11 @@ export async function POST({ request, platform }) {
     // Time-Interval Conflict Check: Overlap occurs if startA < endB AND endA > startB
     if (substitute_teacher_id) {
       const conflictRes = await db.prepare(`
-        SELECT id, class_name, start_time, end_time FROM class_sessions 
-        WHERE (teacher_id = ? OR substitute_teacher_id = ?) 
-          AND session_date = ? 
+        SELECT id, class_name, start_time, end_time FROM class_sessions
+        WHERE (teacher_id = ? OR substitute_teacher_id = ?)
+          AND session_date = ?
           AND status != 'cancelled'
-          AND start_time < ? 
+          AND start_time < ?
           AND end_time > ?;
       `).bind(substitute_teacher_id, substitute_teacher_id, sessionDate, session.end_time, session.start_time).all();
 
@@ -284,7 +342,7 @@ export async function POST({ request, platform }) {
 
     try {
       await db.prepare(`
-        INSERT INTO teacher_leave_requests 
+        INSERT INTO teacher_leave_requests
         (id, teacher_id, teacher_name, session_id, session_date, reason, substitute_teacher_id, substitute_teacher_name, substitute_status, admin_status)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending');
       `).bind(
@@ -346,7 +404,7 @@ export async function POST({ request, platform }) {
 
     try {
       await db.prepare(`
-        UPDATE teacher_leave_requests 
+        UPDATE teacher_leave_requests
         SET substitute_status = ?, updated_at = CURRENT_TIMESTAMP
         WHERE id = ?;
       `).bind(decision, leave_id).run();
@@ -376,7 +434,7 @@ export async function POST({ request, platform }) {
 
     const { leave_id, decision, admin_notes } = body;
     const targetDecision = (decision === 'approve' || decision === 'approved') ? 'approved' : (decision === 'reject' || decision === 'rejected') ? 'rejected' : null;
-    
+
     if (!leave_id || !targetDecision) {
       return json({ success: false, error: 'Mã đơn hoặc quyết định duyệt không hợp lệ' }, { status: 400 });
     }
@@ -403,9 +461,9 @@ export async function POST({ request, platform }) {
 
     // STRICT 2-STEP WORKFLOW ENFORCEMENT:
     if (targetDecision === 'approved' && leave.substitute_teacher_id && leave.substitute_status !== 'accepted') {
-      return json({ 
-        success: false, 
-        error: 'PreconditionFailed: Chưa thể duyệt đơn khi giáo viên dạy thay chưa bấm xác nhận đồng ý nhận ca' 
+      return json({
+        success: false,
+        error: 'PreconditionFailed: Chưa thể duyệt đơn khi giáo viên dạy thay chưa bấm xác nhận đồng ý nhận ca'
       }, { status: 400 });
     }
 
@@ -453,54 +511,54 @@ export async function POST({ request, platform }) {
         const subId = leave.substitute_teacher_id || '';
 
         const stmtLeave = subId ? db.prepare(`
-          UPDATE teacher_leave_requests 
+          UPDATE teacher_leave_requests
           SET admin_status = ?, admin_notes = ?, updated_at = CURRENT_TIMESTAMP
           WHERE id = ? AND admin_status = 'pending'
             AND EXISTS (
-              SELECT 1 FROM class_sessions 
+              SELECT 1 FROM class_sessions
               WHERE id = ? AND teacher_id = ? AND status = 'scheduled'
                 AND NOT EXISTS (
-                  SELECT 1 FROM class_sessions s2 
+                  SELECT 1 FROM class_sessions s2
                   WHERE (s2.teacher_id = ? OR s2.substitute_teacher_id = ?)
                     AND s2.session_date = class_sessions.session_date
                     AND s2.id != class_sessions.id
                     AND s2.status != 'cancelled'
-                    AND s2.start_time < class_sessions.end_time 
+                    AND s2.start_time < class_sessions.end_time
                     AND s2.end_time > class_sessions.start_time
                 )
             );
         `).bind(
-          targetDecision, 
-          admin_notes || '', 
-          leave_id, 
-          leave.session_id, 
+          targetDecision,
+          admin_notes || '',
+          leave_id,
+          leave.session_id,
           leave.teacher_id,
           subId,
           subId
         ) : db.prepare(`
-          UPDATE teacher_leave_requests 
+          UPDATE teacher_leave_requests
           SET admin_status = ?, admin_notes = ?, updated_at = CURRENT_TIMESTAMP
           WHERE id = ? AND admin_status = 'pending'
             AND EXISTS (
-              SELECT 1 FROM class_sessions 
+              SELECT 1 FROM class_sessions
               WHERE id = ? AND teacher_id = ? AND status = 'scheduled'
             );
         `).bind(targetDecision, admin_notes || '', leave_id, leave.session_id, leave.teacher_id);
         const stmtSession = subId ? db.prepare(`
-          UPDATE class_sessions 
-          SET substitute_teacher_id = ?, 
-              substitute_teacher_name = ?, 
+          UPDATE class_sessions
+          SET substitute_teacher_id = ?,
+              substitute_teacher_name = ?,
               substitute_notes = ?,
               status = 'substitute_assigned',
               updated_at = CURRENT_TIMESTAMP
           WHERE id = ? AND teacher_id = ? AND status = 'scheduled'
             AND NOT EXISTS (
-              SELECT 1 FROM class_sessions s2 
+              SELECT 1 FROM class_sessions s2
               WHERE (s2.teacher_id = ? OR s2.substitute_teacher_id = ?)
                 AND s2.session_date = class_sessions.session_date
                 AND s2.id != class_sessions.id
                 AND s2.status != 'cancelled'
-                AND s2.start_time < class_sessions.end_time 
+                AND s2.start_time < class_sessions.end_time
                 AND s2.end_time > class_sessions.start_time
             );
         `).bind(
@@ -512,8 +570,8 @@ export async function POST({ request, platform }) {
           subId,
           subId
         ) : db.prepare(`
-          UPDATE class_sessions 
-          SET status = 'cancelled', 
+          UPDATE class_sessions
+          SET status = 'cancelled',
               substitute_notes = ?,
               updated_at = CURRENT_TIMESTAMP
           WHERE id = ? AND teacher_id = ? AND status = 'scheduled';
@@ -528,7 +586,7 @@ export async function POST({ request, platform }) {
           // Compensatory reversal ONLY if stmtLeave changed in this execution
           if (batchRes && batchRes[0].meta?.changes === 1) {
             await db.prepare(`
-              UPDATE teacher_leave_requests 
+              UPDATE teacher_leave_requests
               SET admin_status = 'pending', admin_notes = 'Tự động hoàn tác: Lỗi phân công ca học', updated_at = CURRENT_TIMESTAMP
               WHERE id = ? AND admin_status = ?;
             `).bind(leave_id, targetDecision).run();
@@ -541,7 +599,7 @@ export async function POST({ request, platform }) {
         }
       } else {
         const updateLeave = await db.prepare(`
-          UPDATE teacher_leave_requests 
+          UPDATE teacher_leave_requests
           SET admin_status = ?, admin_notes = ?, updated_at = CURRENT_TIMESTAMP
           WHERE id = ? AND admin_status = 'pending';
         `).bind(targetDecision, admin_notes || '', leave_id).run();
@@ -572,7 +630,7 @@ export async function POST({ request, platform }) {
   }
 
   // ACTION 4: REQUEST SALARY ADVANCE (Teacher or Manager) - Phase 1: Pending
-  if (action === 'request_salary_advance') {
+  if (action === 'request_salary_advance' || action === 'request_advance') {
     const { amount_vnd, reason, billing_cycle } = body;
     const amount = Number(amount_vnd);
     if (!amount || amount <= 0 || amount > 20000000) {
@@ -587,7 +645,7 @@ export async function POST({ request, platform }) {
 
     try {
       await db.prepare(`
-        INSERT INTO teacher_salary_advances 
+        INSERT INTO teacher_salary_advances
         (id, teacher_id, teacher_name, amount_vnd, reason, billing_cycle, status)
         VALUES (?, ?, ?, ?, ?, ?, 'pending');
       `).bind(advanceId, auth.user.id, auth.user.name, amount, reason.trim(), cycle).run();
@@ -631,7 +689,7 @@ export async function POST({ request, platform }) {
     try {
       // Must be pending! Cannot approve an already disbursed or deducted advance!
       const updateRes = await db.prepare(`
-        UPDATE teacher_salary_advances 
+        UPDATE teacher_salary_advances
         SET status = ?, approved_by = ?, approved_at = CURRENT_TIMESTAMP, admin_notes = ?
         WHERE id = ? AND status = 'pending';
       `).bind(targetDecision, auth.user.name, admin_notes || '', advance_id).run();
@@ -694,14 +752,14 @@ export async function POST({ request, platform }) {
 
     try {
       const stmt1 = db.prepare(`
-        UPDATE teacher_salary_advances 
+        UPDATE teacher_salary_advances
         SET status = 'disbursed', disbursed_at = CURRENT_TIMESTAMP, disbursed_by = ?, disbursement_ref = ?
         WHERE id = ? AND status = 'approved'
           AND (SELECT COUNT(*) FROM salary_transactions WHERE transaction_type = 'advance_disbursed' AND ref_id = ?) = 0;
       `).bind(auth.user.name, refCode, advance_id, advance_id);
 
       const stmt2 = db.prepare(`
-        INSERT INTO salary_transactions 
+        INSERT INTO salary_transactions
         (id, teacher_id, teacher_name, transaction_type, amount_vnd, billing_cycle, status, ref_id, notes, created_by)
         SELECT ?, teacher_id, teacher_name, 'advance_disbursed', amount_vnd, billing_cycle, 'completed', id, ?, ?
         FROM teacher_salary_advances
@@ -722,7 +780,7 @@ export async function POST({ request, platform }) {
         // Compensatory rollback ONLY if stmt1 changed in this execution
         if (batchRes && batchRes[0].meta?.changes === 1) {
           await db.prepare(`
-            UPDATE teacher_salary_advances 
+            UPDATE teacher_salary_advances
             SET status = 'approved', disbursed_at = NULL, disbursed_by = NULL, disbursement_ref = NULL, updated_at = CURRENT_TIMESTAMP
             WHERE id = ? AND status = 'disbursed';
           `).bind(advance_id).run();
@@ -808,19 +866,19 @@ export async function POST({ request, platform }) {
 
     try {
       const stmt1 = db.prepare(`
-        UPDATE teacher_salary_advances 
+        UPDATE teacher_salary_advances
         SET status = 'deducted', deducted_at = CURRENT_TIMESTAMP, deducted_payroll_id = ?
         WHERE id = ? AND status = 'disbursed'
           AND EXISTS (
-            SELECT 1 FROM teacher_payrolls p 
-            WHERE p.id = ? AND p.teacher_id = ? AND p.billing_cycle = ? 
+            SELECT 1 FROM teacher_payrolls p
+            WHERE p.id = ? AND p.teacher_id = ? AND p.billing_cycle = ?
               AND p.status NOT IN ('locked', 'closed', 'paid')
           )
           AND (SELECT COUNT(*) FROM salary_transactions WHERE transaction_type = 'advance_deduction' AND ref_id = ?) = 0;
       `).bind(payroll_id, advance_id, payroll_id, advance.teacher_id, advance.billing_cycle, advance_id);
 
       const stmt2 = db.prepare(`
-        INSERT INTO salary_transactions 
+        INSERT INTO salary_transactions
         (id, teacher_id, teacher_name, transaction_type, amount_vnd, billing_cycle, status, ref_id, notes, created_by)
         SELECT ?, teacher_id, teacher_name, 'advance_deduction', amount_vnd, ?, 'completed', id, ?, ?
         FROM teacher_salary_advances
@@ -842,7 +900,7 @@ export async function POST({ request, platform }) {
         // Compensatory rollback ONLY if stmt1 changed in this execution
         if (batchRes && batchRes[0].meta?.changes === 1) {
           await db.prepare(`
-            UPDATE teacher_salary_advances 
+            UPDATE teacher_salary_advances
             SET status = 'disbursed', deducted_at = NULL, deducted_payroll_id = NULL, updated_at = CURRENT_TIMESTAMP
             WHERE id = ? AND status = 'deducted';
           `).bind(advance_id).run();
@@ -880,23 +938,19 @@ export async function POST({ request, platform }) {
       const combinedNotes = [notes, cv_link ? `Link CV: ${cv_link}` : null, interview_notes].filter(Boolean).join('\n');
 
       try {
-        await db.prepare(`
-          INSERT INTO teacher_recruitment 
-          (id, candidate_name, phone, email, role_type, experience_years, certificates, status, interview_time, interviewer_name, interview_notes)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
-        `).bind(
-          recId,
-          candidate_name.trim(),
-          phone.trim(),
-          email || null,
-          resolvedRoleType,
-          Number(experience_years) || 0,
-          certificates || '',
+        await insertTeacherRecruitment(db, {
+          id: recId,
+          candidate_name: candidate_name.trim(),
+          phone: phone.trim(),
+          email: email || null,
+          role_type: resolvedRoleType,
+          experience_years: Number(experience_years) || 0,
+          certificates: certificates || '',
           status,
-          interview_time || null,
-          auth.user.name,
-          combinedNotes
-        ).run();
+          interview_time: interview_time || null,
+          interviewer_name: auth.user.name,
+          interview_notes: combinedNotes
+        });
 
         return json({ success: true, message: 'Đã thêm hồ sơ ứng viên thành công', recruitment_id: recId });
       } catch (e) {
@@ -910,7 +964,7 @@ export async function POST({ request, platform }) {
 
       try {
         await db.prepare(`
-          UPDATE teacher_recruitment 
+          UPDATE teacher_recruitment
           SET status = COALESCE(?, status),
               interview_time = COALESCE(?, interview_time),
               interviewer_name = COALESCE(?, interviewer_name),

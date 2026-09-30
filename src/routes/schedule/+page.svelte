@@ -5,12 +5,12 @@
 
 <script>
   import { onMount } from 'svelte';
-  import { 
-    getCurrentUser, 
-    isTeacherOrAdmin, 
+  import {
+    getCurrentUser,
+    isTeacherOrAdmin,
     isSuperAdmin,
-    getAllClassSessions, 
-    deleteClassSession, 
+    getAllClassSessions,
+    deleteClassSession,
     getSessionsForUser,
     triggerScheduleNotification,
     getAllAttendanceRecords,
@@ -60,6 +60,18 @@
     if (currentUser?.role === 'student' || currentUser?.role === 'parent') {
       activeTabFilter = 'my_schedule';
     }
+
+    const token = typeof window !== 'undefined' ? localStorage.getItem('tienganh_token') : null;
+    if (token) {
+      fetch('/api/schedule', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      }).then(r => r.json()).then(data => {
+        if (data.success && Array.isArray(data.sessions)) {
+          sessions = data.sessions;
+        }
+      }).catch(err => console.error('Failed to load schedule from server:', err));
+    }
+
     loadTeacherWorkflows();
   }
 
@@ -73,7 +85,7 @@
       });
       const data = await res.json();
       if (data.success) {
-        mySubstituteRequests = (data.leaves || []).filter(l => 
+        mySubstituteRequests = (data.leaves || []).filter(l =>
           l.substitute_teacher_id === currentUser.id && l.substitute_status === 'pending'
         );
         myRecentWorkflows = {
@@ -464,7 +476,7 @@
       {@const notifyTimeStr = `${String(notifyH).padStart(2, '0')}:${String(notifyM).padStart(2, '0')}`}
 
       <div class="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-4">
-        
+
         <!-- Header of Card -->
         <div class="space-y-2">
           <div class="flex items-center justify-between gap-2">

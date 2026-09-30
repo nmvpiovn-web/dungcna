@@ -16,6 +16,7 @@
   let searchQuery = $state('');
   let selectedUnit = $state('all');
   let selectedGrade = $state('all');
+  let selectedTopicGroup = $state('all'); // 'all' | 'hobbies' | 'health' | 'community' | 'school' | 'world'
   let selectedPos = $state('all'); // 'all' | 'noun' | 'verb' | 'adjective' | 'adverb' | 'verb phrase'
   let selectedCefr = $state('all'); // 'all' | 'A1' | 'A2' | 'B1' | 'B2' | 'C1'
   let viewMode = $state('active'); // 'active' | 'review_due' | 'mastered'
@@ -53,9 +54,36 @@
   let newExampleVi = $state('');
   let newUnit = $state('unit1');
 
-  // Load persistence
+  export function parseStudentGrade(raw) {
+    if (!raw && raw !== 0) return null;
+    if (typeof raw === 'number' && raw >= 1 && raw <= 12) {
+      return `Lớp ${raw}`;
+    }
+    const s = String(raw).trim().toLowerCase();
+    const m = s.match(/(?:lớp|grade|khoi)?\s*([0-9]+)/);
+    if (m) {
+      const n = parseInt(m[1], 10);
+      if (n >= 1 && n <= 12) return `Lớp ${n}`;
+    }
+    return null;
+  }
+
+  // Load persistence and auto-scope vocabulary to student enrolled grade
   onMount(() => {
     currentUser = getCurrentUser();
+    if (currentUser?.role === 'student') {
+      let g = currentUser.grade;
+      if (!g && currentUser.metadata) {
+        try {
+          const meta = typeof currentUser.metadata === 'string' ? JSON.parse(currentUser.metadata) : currentUser.metadata;
+          g = meta.grade;
+        } catch {}
+      }
+      const parsed = parseStudentGrade(g);
+      if (parsed) {
+        selectedGrade = parsed;
+      }
+    }
     try {
       const stored = localStorage.getItem('tienganh_mastered_words');
       if (stored) {
@@ -140,11 +168,29 @@
       const matchGrade = selectedGrade === 'all' || (w.grade && w.grade.toLowerCase().includes(selectedGrade.toLowerCase()));
       // POS filter
       const matchPos = selectedPos === 'all' || (w.pos && w.pos.toLowerCase().includes(selectedPos.toLowerCase()));
+      // Topic Group filter
+      let matchTopic = true;
+      if (selectedTopicGroup !== 'all') {
+        const u = (w.unit_id || '').toLowerCase();
+        const m = (w.meaning_vi || '').toLowerCase();
+        const t = (w.term || '').toLowerCase();
+        if (selectedTopicGroup === 'hobbies') {
+          matchTopic = u.includes('unit1') || u.includes('hobby') || m.includes('sở thích') || m.includes('chơi') || m.includes('thể thao');
+        } else if (selectedTopicGroup === 'health') {
+          matchTopic = u.includes('unit2') || u.includes('health') || m.includes('sức khỏe') || m.includes('bệnh') || m.includes('ăn');
+        } else if (selectedTopicGroup === 'community') {
+          matchTopic = u.includes('unit3') || u.includes('community') || m.includes('cộng đồng') || m.includes('tình nguyện') || m.includes('giúp');
+        } else if (selectedTopicGroup === 'school') {
+          matchTopic = u.includes('grammar') || u.includes('phonics') || m.includes('học') || m.includes('trường') || m.includes('sách');
+        } else if (selectedTopicGroup === 'world') {
+          matchTopic = u.includes('world') || u.includes('travel') || m.includes('thế giới') || m.includes('du lịch') || m.includes('môi trường');
+        }
+      }
       // Search query
       const q = searchQuery.toLowerCase().trim();
       const matchSearch = !q || w.term.toLowerCase().includes(q) || (w.meaning_vi && w.meaning_vi.toLowerCase().includes(q));
 
-      return matchUnit && matchGrade && matchPos && matchSearch;
+      return matchUnit && matchGrade && matchPos && matchTopic && matchSearch;
     });
   });
 
@@ -356,10 +402,10 @@
       const audioCtx = new AudioCtx();
       const arrayBuf = await blob.arrayBuffer();
       const audioBuf = await audioCtx.decodeAudioData(arrayBuf);
-      
+
       const duration = audioBuf.duration;
       const rawData = audioBuf.getChannelData(0);
-      
+
       // Calculate real RMS volume energy
       let sumSq = 0;
       let activeSamples = 0;
@@ -483,7 +529,7 @@
   }
 </script>
 
-<div class="space-y-6">
+<div class="space-y-6 min-w-0 max-w-full overflow-x-hidden">
   <!-- Top Banner: Academic Ledger Header with Gamification & Badges -->
   <header class="bg-slate-900 border border-slate-800 rounded-lg p-6 text-slate-100 shadow-sm relative">
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -502,7 +548,7 @@
       </div>
 
       <!-- Gamification Badge Card -->
-      <div class="bg-slate-800/80 border border-slate-700/60 rounded-md p-4 min-w-[260px] space-y-2">
+      <div class="bg-slate-800/80 border border-slate-700/60 rounded-md p-4 min-w-0 sm:min-w-[260px] w-full sm:w-auto space-y-2">
         <div class="flex items-center justify-between text-xs">
           <span class="text-slate-400 font-medium">Danh hiệu hiện tại:</span>
           <span class="text-amber-400 font-semibold tabular-nums" title="Điểm sao thưởng chính thức được ghi nhận qua bài kiểm tra & bài tập chính khóa">⭐ {officialStars} sao</span>
@@ -528,8 +574,8 @@
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
       <div class="relative flex-1">
         <span class="absolute left-3 top-2.5 text-slate-400 text-sm">🔍</span>
-        <input 
-          type="text" 
+        <input
+          type="text"
           bind:value={searchQuery}
           placeholder="Tra cứu từ vựng tiếng Anh, phiên âm IPA hoặc nghĩa tiếng Việt..."
           class="w-full pl-9 pr-8 py-2 rounded-md text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
@@ -540,7 +586,7 @@
       </div>
 
       <div class="flex items-center gap-2">
-        <button 
+        <button
           onclick={handleShuffleWords}
           class="px-3.5 py-2 rounded-md text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 transition-colors flex items-center gap-1.5"
           title="Trộn ngẫu nhiên danh sách để học nhanh"
@@ -548,7 +594,7 @@
           <span>🎲</span>
           <span>Học Ngẫu Nhiên</span>
         </button>
-        <button 
+        <button
           onclick={() => showAddModal = true}
           class="px-4 py-2 rounded-md text-xs font-semibold bg-sky-600 hover:bg-sky-700 text-white transition-colors"
         >
@@ -558,34 +604,34 @@
     </div>
 
     <!-- Row 2: View Mode Tabs (Active vs SRS Due vs Mastered) -->
-    <div class="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3 text-xs">
-      <button 
+    <div class="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3 text-xs overflow-x-auto max-w-full">
+      <button
         onclick={() => viewMode = 'active'}
-        class="px-3 py-1.5 rounded-md font-semibold transition-colors {viewMode === 'active' ? 'bg-sky-600 text-white' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}"
+        class="px-3 py-1.5 rounded-md font-semibold transition-colors whitespace-nowrap {viewMode === 'active' ? 'bg-sky-600 text-white' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}"
       >
         Đang Học ({words.length - masteredCount})
       </button>
-      <button 
+      <button
         onclick={() => viewMode = 'review_due'}
-        class="px-3 py-1.5 rounded-md font-semibold transition-colors {viewMode === 'review_due' ? 'bg-amber-600 text-white' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}"
+        class="px-3 py-1.5 rounded-md font-semibold transition-colors whitespace-nowrap {viewMode === 'review_due' ? 'bg-amber-600 text-white' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}"
       >
         Cần Ôn Hôm Nay (SRS)
       </button>
-      <button 
+      <button
         onclick={() => viewMode = 'mastered'}
-        class="px-3 py-1.5 rounded-md font-semibold transition-colors {viewMode === 'mastered' ? 'bg-emerald-600 text-white' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}"
+        class="px-3 py-1.5 rounded-md font-semibold transition-colors whitespace-nowrap {viewMode === 'mastered' ? 'bg-emerald-600 text-white' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}"
       >
         Từ Đã Chinh Phục (Ẩn) ({masteredCount})
       </button>
     </div>
 
     <!-- Row 3: Part of Speech & Grade Selectors -->
-    <div class="flex flex-wrap items-center gap-4 text-xs">
+    <div class="flex flex-wrap items-center gap-3 text-xs max-w-full">
       <div class="flex items-center gap-1.5">
         <span class="text-slate-500 font-medium">Từ loại:</span>
-        <select 
+        <select
           bind:value={selectedPos}
-          class="p-1.5 rounded-md bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 font-medium"
+          class="p-1.5 rounded-md bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 font-medium max-w-[160px] truncate"
         >
           <option value="all">Tất cả từ loại</option>
           <option value="noun">Danh từ (Noun)</option>
@@ -597,16 +643,45 @@
       </div>
 
       <div class="flex items-center gap-1.5">
-        <span class="text-slate-500 font-medium">Khối lớp:</span>
-        <select 
+        <span class="text-slate-500 font-medium">Khối lớp (Theo Role):</span>
+        <select
           bind:value={selectedGrade}
-          class="p-1.5 rounded-md bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 font-medium"
+          class="p-1.5 rounded-md bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 font-medium max-w-[160px] truncate"
         >
-          <option value="all">Toàn bộ K12</option>
-          <option value="Lớp 3">Tiểu học (Lớp 3 - 5)</option>
-          <option value="Lớp 7">THCS Chuyên Sâu (Lớp 7)</option>
-          <option value="Lớp 10">THPT Cơ Bản (Lớp 10)</option>
-          <option value="Lớp 12">Luyện Thi Tốt Nghiệp THPT (Lớp 12)</option>
+          <option value="all">🌟 Toàn bộ K12</option>
+          <optgroup label="🎒 Tiểu Học">
+            <option value="Lớp 1">Lớp 1 (Starters)</option>
+            <option value="Lớp 2">Lớp 2 (Starters)</option>
+            <option value="Lớp 3">Lớp 3 (Movers)</option>
+            <option value="Lớp 4">Lớp 4 (Movers)</option>
+            <option value="Lớp 5">Lớp 5 (Flyers)</option>
+          </optgroup>
+          <optgroup label="🌱 THCS">
+            <option value="Lớp 6">Lớp 6</option>
+            <option value="Lớp 7">Lớp 7</option>
+            <option value="Lớp 8">Lớp 8</option>
+            <option value="Lớp 9">Lớp 9 (Luyện Thi Vào 10)</option>
+          </optgroup>
+          <optgroup label="🏢 THPT">
+            <option value="Lớp 10">Lớp 10</option>
+            <option value="Lớp 11">Lớp 11</option>
+            <option value="Lớp 12">Luyện Thi Tốt Nghiệp THPT (Lớp 12)</option>
+          </optgroup>
+        </select>
+      </div>
+
+      <div class="flex items-center gap-1.5">
+        <span class="text-slate-500 font-medium">Nhóm từ liên quan:</span>
+        <select
+          bind:value={selectedTopicGroup}
+          class="p-1.5 rounded-md bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 font-medium max-w-[160px] truncate"
+        >
+          <option value="all">🌟 Tất cả nhóm từ</option>
+          <option value="hobbies">🎨 Sở thích, Thể thao & Giải trí</option>
+          <option value="health">🥗 Sức khỏe & Lối sống lành mạnh</option>
+          <option value="community">🤝 Hoạt động Cộng đồng & Tình nguyện</option>
+          <option value="school">🏫 Học tập, Trường lớp & Ngữ pháp</option>
+          <option value="world">🌍 Môi trường, Du lịch & Bản ngữ</option>
         </select>
       </div>
     </div>
@@ -645,7 +720,7 @@
                 </div>
               </div>
 
-              <button 
+              <button
                 onclick={() => speakWord(word.term, 0.9)}
                 class="w-9 h-9 rounded-md bg-slate-100 hover:bg-sky-50 dark:bg-slate-800 dark:hover:bg-sky-950/60 text-slate-600 hover:text-sky-600 dark:text-slate-300 dark:hover:text-sky-400 flex items-center justify-center text-sm border border-slate-200 dark:border-slate-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
                 title="Nghe phát âm chuẩn Cambridge"
@@ -673,7 +748,7 @@
 
           <!-- Action Footer: Deep Breakdown & Stealth Hide Button -->
           <div class="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2 text-xs">
-            <button 
+            <button
               id="btn-open-deep-modal"
               onclick={() => openDeepModal(word)}
               class="px-3 py-1.5 rounded-md font-semibold text-sky-600 dark:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-950/60 transition-colors"
@@ -681,7 +756,7 @@
               Phân Tích Sâu 🔍
             </button>
 
-            <button 
+            <button
               onclick={() => handleToggleMaster(word)}
               class="px-3 py-1.5 rounded-md font-semibold transition-colors {isMastered ? 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300' : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'}"
             >
@@ -724,7 +799,7 @@
             <span>🎙️</span>
             <span>Luyện Phát Âm Đối Chiếu Rubric Tiêu Chuẩn</span>
           </span>
-          <button 
+          <button
             onclick={() => speakWord(selectedWordForDeep.term, 0.9)}
             class="px-2.5 py-1 rounded bg-white dark:bg-slate-800 text-sky-600 dark:text-sky-400 font-semibold border border-slate-200 dark:border-slate-700 hover:bg-slate-100"
           >
@@ -740,7 +815,7 @@
 
         <div class="flex flex-wrap items-center gap-3">
           {#if !isRecording}
-            <button 
+            <button
               id="btn-dict-start-record"
               onclick={startRecording}
               class="px-4 py-2 rounded-md font-semibold bg-rose-600 hover:bg-rose-700 text-white transition-colors flex items-center gap-1.5 shadow-sm"
@@ -749,7 +824,7 @@
               <span>Bắt Đầu Ghi Âm</span>
             </button>
           {:else}
-            <button 
+            <button
               id="btn-dict-stop-record"
               onclick={stopRecording}
               class="px-4 py-2 rounded-md font-semibold bg-slate-900 hover:bg-slate-800 text-white transition-colors flex items-center gap-1.5 animate-pulse"
@@ -881,20 +956,20 @@
         <div class="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-md border border-slate-200 dark:border-slate-700 space-y-2">
           {#if deepAnalysisData?.synonyms}
             <div>
-              <strong>Từ đồng nghĩa:</strong>
+              <strong class="text-slate-800 dark:text-slate-200">Từ đồng nghĩa liên quan (Tối đa 3 từ):</strong>
               <div class="flex flex-wrap gap-1.5 mt-1">
-                {#each deepAnalysisData.synonyms as syn}
-                  <span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 font-medium">{syn}</span>
+                {#each deepAnalysisData.synonyms.slice(0, 3) as syn}
+                  <span class="px-2.5 py-1 rounded bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 font-semibold">{syn}</span>
                 {/each}
               </div>
             </div>
           {/if}
           {#if deepAnalysisData?.antonyms}
             <div>
-              <strong>Từ trái nghĩa:</strong>
+              <strong class="text-slate-800 dark:text-slate-200">Từ trái nghĩa liên quan (Tối đa 3 từ):</strong>
               <div class="flex flex-wrap gap-1.5 mt-1">
-                {#each deepAnalysisData.antonyms as ant}
-                  <span class="px-2 py-0.5 rounded bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 font-medium">{ant}</span>
+                {#each deepAnalysisData.antonyms.slice(0, 3) as ant}
+                  <span class="px-2.5 py-1 rounded bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 font-semibold">{ant}</span>
                 {/each}
               </div>
             </div>

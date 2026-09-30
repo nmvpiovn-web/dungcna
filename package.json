@@ -14,7 +14,8 @@
     "prepare": "svelte-kit sync || echo ''",
     "gen": "wrangler types",
     "check": "npx --yes svelte-check --threshold error && wrangler types --check",
-    "test": "node --test tests/*.test.js"
+    "test": "node --test tests/*.test.js",
+    "test:v5-gate": "node scripts/run_v5_module_gate.mjs"
   },
   "devDependencies": {
     "@sveltejs/adapter-cloudflare": "^7.2.9",

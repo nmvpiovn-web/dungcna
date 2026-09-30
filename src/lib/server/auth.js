@@ -66,7 +66,7 @@ export function base64UrlDecode(str) {
  * Create a cryptographically signed auth token.
  * Requires an explicit, non-empty secret.
  */
-export async function createSignedToken(user, secret, expiresInMs = 7 * 86400 * 1000) {
+export async function createSignedToken(user, secret, expiresInMs = 7 * 86400 * 1000, sessionId = null) {
   if (!user || !user.id) return null;
   if (!secret || typeof secret !== 'string' || secret.trim() === '') {
     throw new Error('Cannot mint token: AUTH_SECRET is not configured (Fail-Closed)');
@@ -76,6 +76,7 @@ export async function createSignedToken(user, secret, expiresInMs = 7 * 86400 * 
     id: user.id,
     username: user.username || '',
     role: user.role || 'student',
+    sid: sessionId || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2)),
     exp: Date.now() + expiresInMs
   };
   const payloadStr = base64UrlEncode(JSON.stringify(payload));
@@ -301,6 +302,48 @@ export async function verifyServerAuth(request, platform) {
           user: null,
           error: 'Forbidden: Tài khoản đã bị khóa hoặc vô hiệu hóa.'
         };
+      }
+
+      // Check session revocation if sid exists (Fail-Closed)
+      const sid = verifiedPayload.sid;
+      if (sid) {
+        try {
+          const session = await platform.env.DB.prepare(`
+            SELECT id, revoked_at, expires_at FROM auth_sessions WHERE id = ? LIMIT 1
+          `).bind(sid).first();
+          if (!session) {
+            return {
+              authenticated: false,
+              status: 401,
+              user: null,
+              error: 'Unauthorized: Phiên đăng nhập không tồn tại hoặc đã bị hủy.'
+            };
+          }
+          if (session.revoked_at) {
+            return {
+              authenticated: false,
+              status: 401,
+              user: null,
+              error: 'Unauthorized: Phiên đăng nhập đã bị thu hồi hoặc đã đăng xuất.'
+            };
+          }
+          if (session.expires_at && new Date(session.expires_at).getTime() <= Date.now()) {
+            return {
+              authenticated: false,
+              status: 401,
+              user: null,
+              error: 'Unauthorized: Phiên đăng nhập đã hết hạn.'
+            };
+          }
+        } catch (sessErr) {
+          console.error('Session verification query error (Fail-Closed):', sessErr);
+          return {
+            authenticated: false,
+            status: 401,
+            user: null,
+            error: 'Unauthorized: Lỗi kiểm tra phiên đăng nhập trên hệ thống.'
+          };
+        }
       }
 
       return {

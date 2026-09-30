@@ -32,7 +32,7 @@ export async function POST({ request, platform }) {
       return json({ success: false, error: 'Nội dung phản biện hoặc câu hỏi không được để trống' }, { status: 400 });
     }
 
-    const created = addEvaluationComment({ ...body, user_id: access.user.id, author_id: access.user.id, author_name: access.user.name || access.user.username, author_role: access.user.role });
+    const created = addEvaluationComment({ ...body, user_id: access.user.id, author_id: access.user.id, author_name: access.user.name || access.user.username, author_role: access.user.role }, access.user);
     return json({ success: true, message: 'Đã gửi ý kiến phản biện / thảo luận!', comment: created });
   } catch (err) {
     return json({ success: false, error: err.message }, { status: 500 });

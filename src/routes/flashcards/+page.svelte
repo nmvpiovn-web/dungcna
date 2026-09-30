@@ -61,12 +61,14 @@
   }
 
   function shuffleCards() {
-    const array = [...displayWords];
-    for (let i = array.length - 1; i > 0; i--) {
+    const currentIds = new Set(displayWords.map(w => w.id));
+    const currentSub = [...displayWords];
+    for (let i = currentSub.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
-      [array[i], array[j]] = [array[j], array[i]];
+      [currentSub[i], currentSub[j]] = [currentSub[j], currentSub[i]];
     }
-    words = array;
+    const otherWords = words.filter(w => !currentIds.has(w.id));
+    words = [...currentSub, ...otherWords];
     currentIndex = 0;
     isFlipped = false;
   }
@@ -438,14 +440,23 @@
     color: var(--text-main);
   }
 
+  .flashcards-page button,
+  .flashcards-page select {
+    min-height: 44px;
+    min-width: 44px;
+    box-sizing: border-box;
+  }
+
   .filter-group select {
-    padding: 7px 12px;
+    padding: 8px 14px;
     border-radius: var(--border-radius-sm);
     border: 1px solid var(--border-color);
     background: white;
     font-size: 0.88rem;
     outline: none;
     cursor: pointer;
+    min-height: 44px;
+    min-width: 44px;
   }
 
   .filter-group select:focus {
@@ -459,7 +470,7 @@
   }
 
   .btn-tool {
-    padding: 7px 14px;
+    padding: 8px 16px;
     border-radius: var(--border-radius-sm);
     border: 1px solid var(--border-color);
     background: white;
@@ -467,6 +478,11 @@
     font-weight: 600;
     color: var(--text-main);
     transition: all 0.15s;
+    min-height: 44px;
+    min-width: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .btn-tool:hover {
@@ -519,28 +535,70 @@
     transition: width 0.3s ease;
   }
 
-  /* Card Area */
+  /* Card Area & 3D Flip */
   .card-area {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 20px;
+    width: 100%;
   }
 
   .card-container {
     max-width: 680px;
     width: 100%;
-    height: 480px;
+    height: 520px;
+    perspective: 1200px;
+    position: relative;
+    margin: 0 auto;
   }
 
   .flashcard {
+    width: 100%;
     height: 100%;
-    min-height: 480px;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+  }
+
+  .flashcard.flipped {
+    transform: rotateY(180deg);
   }
 
   .card-face {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
     height: 100%;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
     overflow-y: auto;
+    background: white;
+    border-radius: var(--border-radius-lg, 20px);
+    border: 2px solid var(--border-color, #e2e8f0);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+  }
+
+  :global(.dark) .card-face {
+    background: #0f172a;
+    border-color: #334155;
+    color: #f8fafc;
+  }
+
+  .card-front {
+    transform: rotateY(0deg);
+    z-index: 2;
+  }
+
+  .card-back {
+    transform: rotateY(180deg);
+    z-index: 1;
   }
 
   .card-header {
@@ -565,18 +623,39 @@
 
   .audio-controls {
     display: flex;
-    gap: 6px;
+    gap: 8px;
+    align-items: center;
   }
 
-  .btn-audio-pill {
-    padding: 4px 10px;
+  .btn-audio {
+    padding: 8px 12px;
     border-radius: 9999px;
     background: var(--primary-light);
     color: var(--primary-hover);
     border: 1px solid var(--primary-border);
-    font-size: 0.78rem;
+    font-size: 1.1rem;
+    min-height: 44px;
+    min-width: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+
+  .btn-audio-pill {
+    padding: 8px 14px;
+    border-radius: 9999px;
+    background: var(--primary-light);
+    color: var(--primary-hover);
+    border: 1px solid var(--primary-border);
+    font-size: 0.8rem;
     font-weight: 700;
     transition: all 0.15s;
+    min-height: 44px;
+    min-width: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .btn-audio-pill:hover {
@@ -617,7 +696,7 @@
   .meaning-large {
     font-size: 2.2rem;
     font-weight: 800;
-    color: #0f172a;
+    color: var(--text-main);
     font-family: 'Lexend', sans-serif;
     margin-bottom: 16px;
     line-height: 1.3;
@@ -658,23 +737,31 @@
   .term-title {
     font-size: 1.9rem;
     font-weight: 800;
-    color: #047857;
+    color: var(--primary);
     font-family: 'Lexend', sans-serif;
   }
 
   .ipa-pill {
-    background: #f1f5f9;
-    color: #334155;
+    background: var(--bg-surface);
+    color: var(--text-main);
     padding: 3px 10px;
     border-radius: 6px;
     font-family: monospace;
     font-size: 1.05rem;
     font-weight: 700;
+    border: 1px solid var(--border-color);
+  }
+
+  :global(.dark) .ipa-pill {
+    background: #1e293b;
+    color: #38bdf8;
+    border-color: #334155;
   }
 
   .syllables-pill {
-    background: #e0f2fe;
-    color: #0369a1;
+    background: var(--primary-light);
+    color: var(--primary-hover);
+    border: 1px solid var(--primary-border);
     padding: 3px 10px;
     border-radius: 6px;
     font-size: 0.8rem;
@@ -683,11 +770,16 @@
 
   .vietnamese-def {
     font-size: 1.05rem;
-    color: #1e293b;
-    background: #f8fafc;
+    color: var(--text-main);
+    background: var(--bg-surface);
     padding: 8px 12px;
     border-radius: var(--border-radius-sm);
     border-left: 4px solid var(--primary);
+  }
+
+  :global(.dark) .vietnamese-def {
+    background: #1e293b;
+    border-left-color: #38bdf8;
   }
 
   .def-label {
@@ -699,18 +791,23 @@
 
   .def-text {
     font-weight: 700;
-    color: #0f172a;
+    color: var(--text-main);
   }
 
   /* PHONICS BREAKDOWN BOX */
   .phonics-breakdown-box {
-    background: #ffffff;
-    border: 1px solid #cbd5e1;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
     border-radius: var(--border-radius-md);
     padding: 12px;
     display: flex;
     flex-direction: column;
     gap: 10px;
+  }
+
+  :global(.dark) .phonics-breakdown-box {
+    background: #1e293b;
+    border-color: #334155;
   }
 
   .phonics-row {
@@ -720,7 +817,11 @@
   }
 
   .phonics-row-divider {
-    background: #e2e8f0;
+    background: var(--border-color);
+  }
+
+  :global(.dark) .phonics-row-divider {
+    background: #334155;
   }
 
   .phonics-tag {
@@ -737,13 +838,25 @@
   }
 
   .tag-consonant {
-    color: #1d4ed8;
+    color: #0284c7;
+  }
+
+  :global(.dark) .tag-vowel {
+    color: #fbbf24;
+  }
+
+  :global(.dark) .tag-consonant {
+    color: #38bdf8;
   }
 
   .phonics-desc {
     font-size: 0.82rem;
     line-height: 1.45;
-    color: #334155;
+    color: var(--text-muted);
+  }
+
+  :global(.dark) .phonics-desc {
+    color: #cbd5e1;
   }
 
   .phonics-note {
@@ -758,12 +871,23 @@
     gap: 6px;
   }
 
+  :global(.dark) .phonics-note {
+    background: #2e1065;
+    border-color: #581c87;
+    color: #d8b4fe;
+  }
+
   /* EXAMPLE SENTENCE BOX */
   .example-box {
-    background: #f0fdf4;
-    border: 1px solid #bbf7d0;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
     border-radius: var(--border-radius-md);
     padding: 10px 14px;
+  }
+
+  :global(.dark) .example-box {
+    background: #0f172a;
+    border-color: #334155;
   }
 
   .example-header {
@@ -776,34 +900,54 @@
   .example-title {
     font-size: 0.78rem;
     font-weight: 800;
-    color: #166534;
+    color: var(--primary);
     text-transform: uppercase;
   }
 
-  .btn-speak-example {
-    font-size: 0.75rem;
-    color: #15803d;
-    font-weight: 700;
-    padding: 2px 8px;
-    border-radius: 4px;
-    background: #dcfce7;
+  :global(.dark) .example-title {
+    color: #38bdf8;
   }
 
-  .btn-speak-example:hover {
-    background: #bbf7d0;
+  .btn-speak-example {
+    font-size: 0.8rem;
+    color: #15803d;
+    font-weight: 700;
+    padding: 8px 12px;
+    border-radius: 6px;
+    background: #dcfce7;
+    min-height: 44px;
+    min-width: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+
+  :global(.dark) .btn-speak-example {
+    background: #14532d;
+    color: #86efac;
   }
 
   .example-en {
-    font-size: 0.92rem;
-    font-weight: 600;
-    color: #14532d;
-    font-style: italic;
+    font-size: 0.88rem;
+    color: var(--text-main);
+  }
+
+  :global(.dark) .example-en {
+    color: #f8fafc;
   }
 
   .example-vi {
     font-size: 0.82rem;
-    color: #166534;
-    margin-top: 2px;
+    color: var(--text-muted);
+  }
+
+  :global(.dark) .example-vi {
+    color: #94a3b8;
+  }
+
+  .btn-speak-example:hover {
+    background: #bbf7d0;
   }
 
   .card-footer {
@@ -908,6 +1052,27 @@
     margin-bottom: 12px;
   }
 
+  .btn-primary {
+    min-height: 44px;
+    min-width: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 20px;
+    border-radius: var(--border-radius-md, 8px);
+    background: var(--primary, #4f46e5);
+    color: white;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s;
+  }
+
+  .btn-primary:hover {
+    background: var(--primary-hover, #4338ca);
+  }
+
   @media (max-width: 680px) {
     .phonics-row {
       grid-template-columns: 1fr;
@@ -921,6 +1086,28 @@
     .mastery-actions {
       width: 100%;
       justify-content: center;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .page-top {
+      padding: 16px 12px;
+    }
+    .filter-group {
+      width: 100%;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .filter-group select {
+      width: 100%;
+    }
+    .action-buttons {
+      width: 100%;
+      justify-content: flex-start;
+      margin-left: 0;
+    }
+    .card-face {
+      padding: 16px 12px;
     }
   }
 </style>

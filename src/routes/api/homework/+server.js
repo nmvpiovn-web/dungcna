@@ -157,7 +157,7 @@ async function ensureTables(db) {
       INSERT INTO student_star_ledger (
         id, student_id, bill_id, reference_id, delta_stars, amount, balance_after, debt_delta, debt_after, action_type, reason, note, created_at
       )
-      SELECT 
+      SELECT
         'ledger_mig_base_' || s.student_id,
         s.student_id,
         NULL,
@@ -172,9 +172,9 @@ async function ensureTables(db) {
         'Automated baseline reconciliation from legacy student_stars',
         s.last_updated
       FROM student_stars s
-      WHERE s.star_debt > 0 
+      WHERE s.star_debt > 0
         AND NOT EXISTS (
-          SELECT 1 FROM student_star_ledger l 
+          SELECT 1 FROM student_star_ledger l
           WHERE l.student_id = s.student_id AND l.action_type = 'migration_baseline'
         )
         AND (
@@ -333,7 +333,7 @@ export async function GET({ request, url, platform }) {
       } else if (role === 'student') {
         // Student only sees assignments of classes they are actively enrolled in
         sql += ` AND class_id IN (
-          SELECT class_id FROM class_enrollments 
+          SELECT class_id FROM class_enrollments
           WHERE user_id = ? AND status = 'active'
         )`;
         params.push(user.id);
@@ -343,7 +343,7 @@ export async function GET({ request, url, platform }) {
           sql += ` AND class_id IN (
             SELECT ce.class_id FROM class_enrollments ce
             JOIN parent_student_links psl ON psl.student_user_id = ce.user_id
-            WHERE psl.parent_user_id = ? AND psl.student_user_id = ? 
+            WHERE psl.parent_user_id = ? AND psl.student_user_id = ?
               AND psl.verification_status = 'verified' AND ce.status = 'active'
           )`;
           params.push(user.id, requestedChildId);
@@ -534,7 +534,7 @@ export async function POST({ request, platform }) {
 
         // Fetch verified parents of students actively enrolled in this class
         const linksRes = await db.prepare(`
-          SELECT DISTINCT psl.parent_user_id 
+          SELECT DISTINCT psl.parent_user_id
           FROM parent_student_links psl
           JOIN class_enrollments ce ON ce.user_id = psl.student_user_id
           WHERE psl.verification_status = 'verified'
@@ -546,7 +546,7 @@ export async function POST({ request, platform }) {
 
         // Fetch students actively enrolled in this class
         const studentRes = await db.prepare(`
-          SELECT user_id as id FROM class_enrollments 
+          SELECT user_id as id FROM class_enrollments
           WHERE class_id = ? AND status = 'active';
         `).bind(class_id).all();
         const classStudents = [...new Set((studentRes.results || []).map(r => r.id).filter(Boolean))];
@@ -560,15 +560,17 @@ export async function POST({ request, platform }) {
             INSERT INTO homework_assignments (
               id, session_id, class_id, class_name, teacher_id, teacher_name, campus_id,
               skill_type, title, description, obsidian_note_id, obsidian_note_title,
-              assigned_date, deadline_date, deadline_time, max_score, star_reward_on_time, status, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+              assigned_date, deadline_date, deadline_time, max_score, star_reward_on_time, status, created_at,
+              due_date, created_by
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
           `).bind(
             newAssignment.id, newAssignment.session_id, newAssignment.class_id, newAssignment.class_name,
             newAssignment.teacher_id, newAssignment.teacher_name, newAssignment.campus_id,
             newAssignment.skill_type, newAssignment.title, newAssignment.description,
             newAssignment.obsidian_note_id, newAssignment.obsidian_note_title,
             newAssignment.assigned_date, newAssignment.deadline_date, newAssignment.deadline_time,
-            newAssignment.max_score, newAssignment.star_reward_on_time, newAssignment.status, newAssignment.created_at
+            newAssignment.max_score, newAssignment.star_reward_on_time, newAssignment.status, newAssignment.created_at,
+            newAssignment.deadline_date, user.id
           )
         );
 
@@ -620,9 +622,9 @@ export async function POST({ request, platform }) {
 
       } catch (e) {
         console.error('Failed to save assignment to D1:', e);
-        return json({ 
-          success: false, 
-          error: `DatabaseError: Lỗi ghi bài tập vào cơ sở dữ liệu. ${e.message || ''}`.trim() 
+        return json({
+          success: false,
+          error: `DatabaseError: Lỗi ghi bài tập vào cơ sở dữ liệu. ${e.message || ''}`.trim()
         }, { status: 503 });
       }
     }
@@ -659,7 +661,7 @@ export async function POST({ request, platform }) {
     // Authorization check: student must be actively enrolled in assignment's class
     if (db && user.role === 'student') {
       const isEnrolled = await db.prepare(`
-        SELECT 1 FROM class_enrollments 
+        SELECT 1 FROM class_enrollments
         WHERE user_id = ? AND class_id = ? AND status = 'active' LIMIT 1;
       `).bind(user.id, assignment.class_id).first();
       if (!isEnrolled) {
@@ -740,9 +742,9 @@ export async function POST({ request, platform }) {
 
       } catch (e) {
         console.error('Failed to save submission to D1:', e);
-        return json({ 
-          success: false, 
-          error: `DatabaseError: Lỗi ghi bài nộp vào cơ sở dữ liệu. ${e.message || ''}`.trim() 
+        return json({
+          success: false,
+          error: `DatabaseError: Lỗi ghi bài nộp vào cơ sở dữ liệu. ${e.message || ''}`.trim()
         }, { status: 503 });
       }
     }
@@ -844,7 +846,7 @@ export async function POST({ request, platform }) {
         if (isRegrade) {
           // Regrade / revision: verify previous version and status match snapshot
           casSql = `
-            UPDATE homework_submissions 
+            UPDATE homework_submissions
             SET graded_by_teacher_id = ?,
                 graded_by_teacher_name = ?,
                 graded_at = ?,
@@ -866,7 +868,7 @@ export async function POST({ request, platform }) {
         } else {
           // Initial grading: verify submission is in 'submitted' status and version matches snapshot
           casSql = `
-            UPDATE homework_submissions 
+            UPDATE homework_submissions
             SET graded_by_teacher_id = ?,
                 graded_by_teacher_name = ?,
                 graded_at = ?,
@@ -904,7 +906,7 @@ export async function POST({ request, platform }) {
               )
               SELECT ?, ?, ?, 0, 0, CURRENT_TIMESTAMP
               WHERE EXISTS (
-                SELECT 1 FROM homework_submissions 
+                SELECT 1 FROM homework_submissions
                 WHERE id = ? AND grading_token = ?
               )
               ON CONFLICT(student_id) DO UPDATE SET
@@ -923,7 +925,7 @@ export async function POST({ request, platform }) {
               )
               SELECT ?, 0, 0, 0, ?, CURRENT_TIMESTAMP
               WHERE EXISTS (
-                SELECT 1 FROM homework_submissions 
+                SELECT 1 FROM homework_submissions
                 WHERE id = ? AND grading_token = ?
               )
               ON CONFLICT(student_id) DO UPDATE SET
@@ -946,13 +948,13 @@ export async function POST({ request, platform }) {
               INSERT INTO student_star_ledger (
                 id, student_id, bill_id, reference_id, delta_stars, amount, balance_after, debt_delta, debt_after, action_type, reason, note
               )
-              SELECT ?, ?, NULL, ?, ?, ?, 
+              SELECT ?, ?, NULL, ?, ?, ?,
                      (SELECT stars_balance FROM student_stars WHERE student_id = ?),
                      (SELECT star_debt FROM student_stars WHERE student_id = ?) - COALESCE((SELECT debt_after FROM student_star_ledger WHERE student_id = ? ORDER BY rowid DESC LIMIT 1), (SELECT star_debt FROM student_stars WHERE student_id = ?)),
                      (SELECT star_debt FROM student_stars WHERE student_id = ?),
                      ?, ?, ?
               WHERE EXISTS (
-                SELECT 1 FROM homework_submissions 
+                SELECT 1 FROM homework_submissions
                 WHERE id = ? AND grading_token = ?
               );
             `).bind(
@@ -977,7 +979,7 @@ export async function POST({ request, platform }) {
             INSERT INTO system_notifications (id, target_role, target_user_id, title, body, category, reference_id)
             SELECT ?, 'student', ?, ?, ?, 'homework', ?
             WHERE EXISTS (
-              SELECT 1 FROM homework_submissions 
+              SELECT 1 FROM homework_submissions
               WHERE id = ? AND grading_token = ?
             )
             ON CONFLICT(id) DO UPDATE SET
@@ -995,8 +997,8 @@ export async function POST({ request, platform }) {
 
         // 5. Deterministic Parent Notifications (Verified only), conditional on gradingToken
         const parentLinks = await db.prepare(`
-          SELECT parent_user_id 
-          FROM parent_student_links 
+          SELECT parent_user_id
+          FROM parent_student_links
           WHERE student_user_id = ? AND verification_status = 'verified';
         `).bind(submission.student_id).all();
 
@@ -1008,7 +1010,7 @@ export async function POST({ request, platform }) {
               INSERT INTO system_notifications (id, target_role, target_user_id, title, body, category, reference_id)
               SELECT ?, 'parent', ?, ?, ?, 'homework', ?
               WHERE EXISTS (
-                SELECT 1 FROM homework_submissions 
+                SELECT 1 FROM homework_submissions
                 WHERE id = ? AND grading_token = ?
               )
               ON CONFLICT(id) DO UPDATE SET
@@ -1054,9 +1056,9 @@ export async function POST({ request, platform }) {
 
       } catch (e) {
         console.error('Failed to grade submission in D1:', e);
-        return json({ 
-          success: false, 
-          error: `DatabaseError: Lỗi chấm bài vào cơ sở dữ liệu. ${e.message || ''}`.trim() 
+        return json({
+          success: false,
+          error: `DatabaseError: Lỗi chấm bài vào cơ sở dữ liệu. ${e.message || ''}`.trim()
         }, { status: 503 });
       }
     }

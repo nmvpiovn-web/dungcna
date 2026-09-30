@@ -2,11 +2,11 @@
   import { onMount } from 'svelte';
   import { page } from '$app/state';
   import { speakWord, playAudioFeedback } from '$lib/speech.js';
-  import { 
-    getCurrentUser, 
-    isLoggedIn, 
-    getLinkedStudentForParent, 
-    getSimilarProfileRecommendations, 
+  import {
+    getCurrentUser,
+    isLoggedIn,
+    getLinkedStudentForParent,
+    getSimilarProfileRecommendations,
     getStudentStars,
     isSuperAdmin,
     isTeacherOrAdmin,
@@ -173,13 +173,13 @@
   });
 
   const categoryLabels = [
-    { key: 'all', label: 'Tất Cả Lộ Trình (19 Môn)', icon: '🌟' },
-    { key: 'primary', label: 'Tiểu Học (Lớp 1 - 5)', icon: '🎒' },
-    { key: 'secondary', label: 'THCS (Lớp 6 - 9)', icon: '🌱' },
-    { key: 'high_school', label: 'THPT (Lớp 10 - 12)', icon: '🏢' },
-    { key: 'exam_prep', label: 'Ôn Thi Đại Học', icon: '🔥' },
-    { key: 'certificate', label: 'IELTS • TOEIC • TOEFL', icon: '🌍' },
-    { key: 'pedagogy', label: 'Phương Pháp Bản Ngữ & 5512', icon: '👨‍🏫' }
+    { key: 'all', label: 'Tất Cả Lộ Trình', sub: '19 Môn Học Chuẩn K12 & Quốc Tế', icon: '🌟' },
+    { key: 'primary', label: 'Tiểu Học (Lớp 1 - 5)', sub: 'Phonics, Cambridge Starters, Movers, Flyers', icon: '🎒' },
+    { key: 'secondary', label: 'THCS (Lớp 6 - 9)', sub: 'Global Success, KET & Luyện Thi Vào 10', icon: '🌱' },
+    { key: 'high_school', label: 'THPT (Lớp 10 - 12)', sub: 'Kiến Thức Nền Tảng & Nâng Cao Chuyên Sâu', icon: '🏢' },
+    { key: 'exam_prep', label: 'Ôn Thi Đại Học', sub: 'Tốt Nghiệp THPT QG & Đánh Giá Năng Lực', icon: '🔥' },
+    { key: 'certificate', label: 'Chứng Chỉ Quốc Tế', sub: 'Luyện Thi IELTS • TOEIC • TOEFL iBT', icon: '🌍' },
+    { key: 'pedagogy', label: 'Sư Phạm & Giáo Án 5512', sub: 'Phương Pháp Bản Ngữ & Co-Teaching 2026', icon: '👨‍🏫' }
   ];
 
   let filteredCurricula = $derived(
@@ -995,7 +995,7 @@
               Khóa Học Của Em: {enrolledGrades.join(' • ') || 'Lớp 7'} 🎓
             </h2>
             <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-1">
-              Học viên: <strong class="text-emerald-700 dark:text-emerald-400">{(targetStudentUser || currentUser)?.name || 'Học viên'}</strong> • 
+              Học viên: <strong class="text-emerald-700 dark:text-emerald-400">{(targetStudentUser || currentUser)?.name || 'Học viên'}</strong> •
               Hệ thống được thiết kế độc quyền riêng cho khối lớp của em. Hoàn thành đề thi và từ vựng mỗi ngày để nhận Sao!
             </p>
           </div>
@@ -1150,10 +1150,10 @@
   {:else}
     <!-- ================= TEACHER / ADMIN / GUEST VIEW: FULL CATALOG EXPLORER ================= -->
     <div id="curriculum-section" class="space-y-6 scroll-mt-20">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-slate-200 dark:border-slate-800">
         <div>
           <div class="flex items-center gap-2">
-            <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">HỆ THỐNG PHÂN CẤP ĐÀO TẠO</span>
+            <span class="text-xs font-bold text-sky-600 dark:text-sky-400 uppercase tracking-wider">HỆ THỐNG PHÂN CẤP ĐÀO TẠO</span>
             {#if isTeacherOrAdmin(currentUser)}
               <span class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/30">
                 👨‍🏫 Toàn Quyền Quản Lý 19 Khối Lớp
@@ -1162,19 +1162,29 @@
           </div>
           <h2 class="text-2xl font-heading font-semibold text-slate-900 dark:text-white mt-0.5">Khung Chương Trình Toàn Cấp K12 &amp; Lộ Trình 2026</h2>
         </div>
+      </div>
 
-        <!-- Category Filter Tabs -->
-        <div class="flex items-center gap-1.5 overflow-x-auto pb-1">
-          {#each categoryLabels as tab}
-            <button
-              onclick={() => activeCurriculumTab = tab.key}
-              class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap {activeCurriculumTab === tab.key ? 'bg-emerald-600 text-white shadow-md' : 'bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 hover:text-emerald-700 dark:hover:text-white border border-slate-300 dark:border-slate-700'}"
-            >
-              <span>{tab.icon}</span>
-              <span class="ml-1">{tab.label}</span>
-            </button>
-          {/each}
-        </div>
+      <!-- 2-Row Category Selection Deck -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 my-4">
+        {#each categoryLabels as tab}
+          <button
+            type="button"
+            onclick={() => activeCurriculumTab = tab.key}
+            class="p-4 rounded-2xl text-left border transition-all flex items-start gap-3.5 group {activeCurriculumTab === tab.key ? 'bg-sky-50/90 dark:bg-sky-950/70 border-sky-500 dark:border-sky-400 shadow-md ring-2 ring-sky-400/30' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-sky-300 dark:hover:border-slate-700 hover:shadow-sm'}"
+          >
+            <span class="text-2xl p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 group-hover:scale-110 transition-transform shrink-0">
+              {tab.icon}
+            </span>
+            <div class="min-w-0">
+              <div class="font-heading font-semibold text-xs sm:text-sm text-slate-900 dark:text-white truncate {activeCurriculumTab === tab.key ? 'text-sky-700 dark:text-sky-300' : ''}">
+                {tab.label}
+              </div>
+              <div class="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5">
+                {tab.sub}
+              </div>
+            </div>
+          </button>
+        {/each}
       </div>
 
       <!-- Curricula Cards Grid -->
@@ -1254,7 +1264,7 @@
       <!-- Visual Aptitude Badges Preview Box -->
       <div class="w-full lg:w-96 p-6 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-3">
         <div class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">5 Thiên Hướng Năng Lực Chuẩn:</div>
-        
+
         <div class="p-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-700 dark:text-blue-300 text-xs font-bold flex items-center gap-2">
           <span>🎧</span>
           <span>Thiên hướng Nghe - Nói Phản Xạ</span>

@@ -190,8 +190,8 @@
     if (currentNote.backlinks && currentNote.backlinks.length > 0) {
       return currentNote.backlinks;
     }
-    return vaultNotes.filter(n => 
-      n.id !== currentNote.id && 
+    return vaultNotes.filter(n =>
+      n.id !== currentNote.id &&
       Array.isArray(n.wikilinks) && n.wikilinks.some(wl => wl.target === currentNote.id || wl.target === currentNote.title)
     );
   });
@@ -407,10 +407,10 @@
   {:else}
     <!-- Main Dual-Pane Workspace -->
     <div class="max-w-7xl mx-auto w-full flex-1 flex flex-col sm:flex-row p-4 sm:p-6 gap-6 relative">
-    
+
     <!-- LEFT SIDEBAR: Index & Filter -->
     <aside class="w-full sm:w-80 md:w-96 flex-shrink-0 flex flex-col space-y-4 {isMobileSidebarOpen ? 'block' : 'hidden sm:flex'}">
-      
+
       <!-- Search Input -->
       <div class="relative">
         <input
@@ -511,7 +511,7 @@
     </aside>
 
     <!-- RIGHT MAIN: Markdown Note Reader & Knowledge Connections -->
-    <main class="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col min-w-0 max-h-[85vh] overflow-y-auto">
+    <div class="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col min-w-0 max-h-[85vh] overflow-y-auto">
       {#if currentNote}
         <!-- Breadcrumb & History Navigation -->
         <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4 mb-6">
@@ -643,7 +643,7 @@
           Vui lòng chọn một ghi chú từ danh mục bên trái.
         </div>
       {/if}
-    </main>
+    </div>
   </div>
   {/if}
 </div>

@@ -1,10 +1,10 @@
 <script>
   import { onMount } from 'svelte';
-  import { 
-    getAllUsers, 
-    getCurrentUser, 
-    isTeacherOrAdmin, 
-    saveClassSession 
+  import {
+    getAllUsers,
+    getCurrentUser,
+    isTeacherOrAdmin,
+    saveClassSession
   } from '$lib/unifiedStore';
 
   let { isOpen = $bindable(false), session = null, onSaved = () => {} } = $props();
@@ -45,41 +45,48 @@
     { value: 0, label: 'Chủ Nhật' }
   ];
 
+  let wasOpen = false;
+
   $effect(() => {
     if (isOpen) {
-      currentUser = getCurrentUser();
-      const users = getAllUsers();
-      allStudents = users.filter(u => u.role === 'student');
-      allTeachers = users.filter(u => u.role === 'teacher' || u.role === 'superadmin');
+      if (!wasOpen) {
+        wasOpen = true;
+        currentUser = getCurrentUser();
+        const users = getAllUsers();
+        allStudents = users.filter(u => u.role === 'student');
+        allTeachers = users.filter(u => u.role === 'teacher' || u.role === 'superadmin');
 
-      if (session) {
-        form = {
-          ...session,
-          student_ids: session.student_ids ? [...session.student_ids] : []
-        };
-      } else {
-        form = {
-          id: '',
-          class_id: 'L7_GLOBAL_SUCCESS_A1',
-          class_name: 'Lớp 7 - Global Success & KET A2',
-          grade_level: 'Lớp 7',
-          subject_topic: 'Chuyên đề Ngữ pháp & Giao tiếp phản xạ',
-          teacher_id: 'usr_super_2',
-          teacher_name: 'Ms. Dung',
-          teacher_role: 'lead',
-          assistant_teacher_id: 'usr_teach_1',
-          assistant_teacher_name: 'Mr. Johnathan Miller',
-          location: 'Tại nhà Cô Dung (123 Phố Vọng, Hai Bà Trưng, Hà Nội)',
-          day_of_week: 1,
-          day_name: 'Thứ Hai',
-          start_time: '18:00',
-          end_time: '19:30',
-          notify_minutes_before: 10,
-          room_notes: 'Phòng VIP 201',
-          status: 'active',
-          student_ids: allStudents.slice(0, 3).map(s => s.id)
-        };
+        if (session) {
+          form = {
+            ...session,
+            student_ids: session.student_ids ? [...session.student_ids] : []
+          };
+        } else {
+          form = {
+            id: '',
+            class_id: 'L7_GLOBAL_SUCCESS_A1',
+            class_name: 'Lớp 7 - Global Success & KET A2',
+            grade_level: 'Lớp 7',
+            subject_topic: 'Chuyên đề Ngữ pháp & Giao tiếp phản xạ',
+            teacher_id: 'usr_super_2',
+            teacher_name: 'Ms. Dung',
+            teacher_role: 'lead',
+            assistant_teacher_id: 'usr_teach_1',
+            assistant_teacher_name: 'Mr. Johnathan Miller',
+            location: 'Tại nhà Cô Dung (123 Phố Vọng, Hai Bà Trưng, Hà Nội)',
+            day_of_week: 1,
+            day_name: 'Thứ Hai',
+            start_time: '18:00',
+            end_time: '19:30',
+            notify_minutes_before: 10,
+            room_notes: 'Phòng VIP 201',
+            status: 'active',
+            student_ids: allStudents.slice(0, 3).map(s => s.id)
+          };
+        }
       }
+    } else {
+      wasOpen = false;
     }
   });
 
@@ -91,7 +98,10 @@
     }
   }
 
-  function handleSave() {
+  let errorMessage = $state('');
+
+  async function handleSave() {
+    errorMessage = '';
     if (!form.class_name.trim() || !form.start_time) {
       alert('Vui lòng điền đầy đủ tên lớp và giờ học!');
       return;
@@ -106,7 +116,37 @@
     const aObj = allTeachers.find(t => t.id === form.assistant_teacher_id);
     if (aObj) form.assistant_teacher_name = aObj.name;
 
-    const saved = saveClassSession(form, currentUser);
+    const token = typeof window !== 'undefined' ? localStorage.getItem('tienganh_token') : null;
+    let savedData = { ...form };
+
+    if (token) {
+      try {
+        const res = await fetch('/api/schedule', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            action: 'save_session',
+            ...form
+          })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.success) {
+          errorMessage = data.error || `Lỗi máy chủ (${res.status})`;
+          return;
+        }
+        if (data.session) {
+          savedData = data.session;
+        }
+      } catch (err) {
+        errorMessage = err.message || 'Lỗi kết nối';
+        return;
+      }
+    }
+
+    const saved = saveClassSession(savedData, currentUser);
     onSaved(saved);
     isOpen = false;
   }
@@ -115,7 +155,7 @@
 {#if isOpen}
   <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in duration-200">
     <div class="w-full max-w-2xl rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl p-6 md:p-8 space-y-5 max-h-[90vh] overflow-y-auto">
-      
+
       <!-- Header -->
       <div class="flex items-start justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
         <div>
@@ -133,6 +173,12 @@
           ✕
         </button>
       </div>
+
+      {#if errorMessage}
+        <div class="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400 text-xs font-semibold">
+          ⚠️ {errorMessage}
+        </div>
+      {/if}
 
       <!-- Form Grid -->
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">

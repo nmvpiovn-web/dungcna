@@ -8,7 +8,7 @@ export const prerender = false;
 const ALLOWED_PUBLIC_ROLES = ['student', 'parent'];
 const RESERVED_USERNAMES = [
   'admin', 'superadmin', 'msdung', 'codung', 'teacher', 'leader',
-  'staff', 'system', 'root', 'codex', 'antigravity', 'moderator', 
+  'staff', 'system', 'root', 'codex', 'antigravity', 'moderator',
   'timbk', 'hocsinh', 'nmvpiovn', 'nmvpiovn_gmail_com', 'msdung_timbk_io_vn',
   'codung_tienganhcodung_edu_vn', 'quynh_tienganhcodung_edu_vn'
 ];
@@ -17,9 +17,9 @@ export async function POST({ request, platform }) {
   try {
     const secret = getAuthSecret(platform);
     if (!secret) {
-      return json({ 
-        success: false, 
-        error: 'Lỗi cấu hình hệ thống: AUTH_SECRET chưa được thiết lập trên server (Fail-Closed).' 
+      return json({
+        success: false,
+        error: 'Lỗi cấu hình hệ thống: AUTH_SECRET chưa được thiết lập trên server (Fail-Closed).'
       }, { status: 500 });
     }
 
@@ -30,14 +30,14 @@ export async function POST({ request, platform }) {
       return json({ success: false, error: 'InvalidJSON: Dữ liệu gửi lên không đúng định dạng JSON' }, { status: 400 });
     }
 
-    const { 
-      usernameOrPhone, 
-      name, 
-      password, 
-      role = 'student', 
-      grade = '', 
-      target = '', 
-      linkedStudentPhoneOrId = '' 
+    const {
+      usernameOrPhone,
+      name,
+      password,
+      role = 'student',
+      grade = '',
+      target = '',
+      linkedStudentPhoneOrId = ''
     } = body;
 
     // 1. Role allowlist enforcement (P0-REG-01: Public registration cannot self-grant privileged roles)
@@ -46,9 +46,9 @@ export async function POST({ request, platform }) {
     }
     const requestedRole = role.toLowerCase().trim();
     if (!ALLOWED_PUBLIC_ROLES.includes(requestedRole)) {
-      return json({ 
-        success: false, 
-        error: 'Quyền đăng ký không hợp lệ. Đăng ký công khai chỉ áp dụng cho Học viên (student) hoặc Phụ huynh (parent). Không cho phép đăng ký quyền đặc quyền.' 
+      return json({
+        success: false,
+        error: 'Quyền đăng ký không hợp lệ. Đăng ký công khai chỉ áp dụng cho Học viên (student) hoặc Phụ huynh (parent). Không cho phép đăng ký quyền đặc quyền.'
       }, { status: 400 });
     }
     const safeRole = requestedRole;
@@ -76,27 +76,27 @@ export async function POST({ request, platform }) {
 
     // Validate normalized username
     if (!/^[a-z0-9_]{3,30}$/.test(username)) {
-      return json({ 
-        success: false, 
-        error: 'Tên đăng nhập phải từ 3 đến 30 ký tự, chỉ chứa chữ cái thường (a-z), chữ số (0-9) hoặc gạch dưới (_).' 
+      return json({
+        success: false,
+        error: 'Tên đăng nhập phải từ 3 đến 30 ký tự, chỉ chứa chữ cái thường (a-z), chữ số (0-9) hoặc gạch dưới (_).'
       }, { status: 400 });
     }
 
     // Check reserved usernames (P0-REG-01)
     const lowerUser = username.toLowerCase();
-    const isReserved = RESERVED_USERNAMES.some(reserved => 
+    const isReserved = RESERVED_USERNAMES.some(reserved =>
       lowerUser === reserved || lowerUser.startsWith(reserved + '_') || lowerUser.startsWith(reserved + '.')
     );
     if (isReserved) {
-      return json({ 
-        success: false, 
-        error: 'Tên đăng nhập này thuộc danh mục bảo lưu hệ thống. Vui lòng chọn tên đăng nhập khác.' 
+      return json({
+        success: false,
+        error: 'Tên đăng nhập này thuộc danh mục bảo lưu hệ thống. Vui lòng chọn tên đăng nhập khác.'
       }, { status: 400 });
     }
 
     // Clean name
-    const cleanName = (name && typeof name === 'string' && name.trim()) 
-      ? name.trim() 
+    const cleanName = (name && typeof name === 'string' && name.trim())
+      ? name.trim()
       : (safeRole === 'parent' ? `Phụ huynh ${username}` : `Học viên ${username}`);
 
     const nowIso = new Date().toISOString();
@@ -113,7 +113,7 @@ export async function POST({ request, platform }) {
       password: hashedPassword,
       role: safeRole,
       grade: (grade && typeof grade === 'string' && grade.trim()) ? grade.trim() : null,
-      avatar: safeRole === 'parent' 
+      avatar: safeRole === 'parent'
         ? 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150'
         : `https://api.dicebear.com/7.x/bottts/svg?seed=${username}`,
       status: 'trial',
@@ -133,9 +133,9 @@ export async function POST({ request, platform }) {
     if (!platform?.env?.DB) {
       const isMockAllowed = platform?.env?.ENABLE_LOCAL_MOCK === 'true' || process?.env?.ENABLE_LOCAL_MOCK === 'true';
       if (!isMockAllowed) {
-        return json({ 
-          success: false, 
-          error: 'Cơ sở dữ liệu Cloudflare D1 tạm thời không khả dụng (503 Service Unavailable). Không thể tạo tài khoản (Fail-Closed).' 
+        return json({
+          success: false,
+          error: 'Cơ sở dữ liệu Cloudflare D1 tạm thời không khả dụng (503 Service Unavailable). Không thể tạo tài khoản (Fail-Closed).'
         }, { status: 503 });
       }
     }
@@ -149,9 +149,9 @@ export async function POST({ request, platform }) {
         `).bind(username, phone, phone).first();
 
         if (existing) {
-          return json({ 
-            success: false, 
-            error: 'Tên đăng nhập hoặc Số điện thoại này đã được sử dụng! Vui lòng chọn Đăng nhập.' 
+          return json({
+            success: false,
+            error: 'Tên đăng nhập hoặc Số điện thoại này đã được sử dụng! Vui lòng chọn Đăng nhập.'
           }, { status: 409 });
         }
 
@@ -177,9 +177,9 @@ export async function POST({ request, platform }) {
         } catch (insertErr) {
           const msg = (insertErr?.message || '').toLowerCase();
           if (msg.includes('unique') || msg.includes('constraint')) {
-            return json({ 
-              success: false, 
-              error: 'Tên đăng nhập hoặc Số điện thoại này đã được sử dụng! Vui lòng chọn Đăng nhập.' 
+            return json({
+              success: false,
+              error: 'Tên đăng nhập hoặc Số điện thoại này đã được sử dụng! Vui lòng chọn Đăng nhập.'
             }, { status: 409 });
           }
           throw insertErr;
@@ -207,9 +207,9 @@ export async function POST({ request, platform }) {
         }
       } catch (d1Err) {
         console.error('D1 registration insert error:', d1Err);
-        return json({ 
-          success: false, 
-          error: 'Lỗi ghi nhận dữ liệu máy chủ D1: ' + (d1Err.message || String(d1Err)) 
+        return json({
+          success: false,
+          error: 'Lỗi ghi nhận dữ liệu máy chủ D1: ' + (d1Err.message || String(d1Err))
         }, { status: 500 });
       }
     } else {
@@ -224,7 +224,19 @@ export async function POST({ request, platform }) {
     }
 
     // 7. Mint signed token with verified role and sanitized user
-    const token = await createSignedToken(newUser, secret);
+    const sid = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2);
+    if (platform?.env?.DB) {
+      try {
+        const expiresAt = new Date(Date.now() + 7 * 86400 * 1000).toISOString();
+        await platform.env.DB.prepare(`
+          INSERT INTO auth_sessions (id, user_id, created_at, expires_at, revoked_at)
+          VALUES (?, ?, CURRENT_TIMESTAMP, ?, NULL)
+        `).bind(sid, newUser.id, expiresAt).run();
+      } catch (sessErr) {
+        console.warn('Could not record auth session in D1:', sessErr);
+      }
+    }
+    const token = await createSignedToken(newUser, secret, 7 * 86400 * 1000, sid);
     const safeUser = sanitizeUser(newUser);
 
     return json({

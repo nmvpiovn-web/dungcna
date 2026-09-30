@@ -61,7 +61,10 @@ describe('SEPAY PAYMENT WEBHOOK CONTRACT AUDIT SUITE', () => {
         student_id TEXT NOT NULL,
         month TEXT NOT NULL,
         status TEXT NOT NULL DEFAULT 'draft',
-        total_amount INTEGER NOT NULL,
+        amount REAL DEFAULT 0,
+        final_amount_vnd REAL DEFAULT 0,
+        total_amount REAL NOT NULL,
+        vietqr_url TEXT,
         created_by TEXT,
         updated_at INTEGER
       );
@@ -72,7 +75,8 @@ describe('SEPAY PAYMENT WEBHOOK CONTRACT AUDIT SUITE', () => {
         bill_id TEXT,
         amount INTEGER NOT NULL,
         status TEXT NOT NULL,
-        gateway_name TEXT,
+        gateway TEXT DEFAULT 'sepay',
+        gateway_name TEXT DEFAULT 'sepay',
         gateway_transaction_id TEXT,
         reference_code TEXT,
         transfer_content TEXT,
@@ -89,9 +93,15 @@ describe('SEPAY PAYMENT WEBHOOK CONTRACT AUDIT SUITE', () => {
         created_at INTEGER NOT NULL
       );
 
-      -- Seed sample bill
-      INSERT INTO tuition_bills (id, student_id, month, status, total_amount, updated_at)
-      VALUES ('HP_001', 'stu_an', '09/2026', 'pending', 1500000, 1727390000);
+      -- Seed sample bills (HP_001, HP_002, and real bill IDs)
+      INSERT INTO tuition_bills (id, student_id, month, status, total_amount, amount, final_amount_vnd, vietqr_url, updated_at)
+      VALUES
+        ('HP_001', 'stu_an', '09/2026', 'pending', 1500000, 1500000, 1500000, NULL, 1727390000),
+        ('HP_002', 'stu_binh', '09/2026', 'pending', 2000000, 2000000, 2000000, NULL, 1727390000),
+        ('HP_G7_001', 'stu_g7', '10/2026', 'pending', 1200000, 1200000, 1200000, NULL, 1727390000),
+        ('bill_2026_10_001', 'stu_mai', '10/2026', 'pending', 1800000, 1800000, 1800000, NULL, 1727390000),
+        ('bill_1727702384912', 'stu_nam', '10/2026', 'pending', 2500000, 2500000, 2500000, NULL, 1727390000),
+        ('bill_oct_baoanh', 'BAOANH', '10/2026', 'pending', 1600000, 1600000, 1600000, 'https://img.vietqr.io/image/970422-0901234567-compact2.png?amount=1600000&addInfo=HP_BAOANH_T10&accountName=NGUYEN%20MINH%20VU', 1727390000);
     `);
 
     mockPlatform = {
@@ -215,5 +225,146 @@ describe('SEPAY PAYMENT WEBHOOK CONTRACT AUDIT SUITE', () => {
 
     const tx = sqliteDb.prepare('SELECT status FROM tuition_transactions WHERE gateway_transaction_id = ?').get('700102');
     assert.strictEqual(tx.status, 'reversed');
+  });
+
+  test('SP-06: Underpayment does not transition bill to paid', async () => {
+    const underpayReq = new Request('http://localhost/api/webhook/sepay', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${TEST_SEPAY_SECRET}`
+      },
+      body: JSON.stringify({
+        id: 700103,
+        gateway: 'MBBank',
+        transferType: 'in',
+        transferAmount: 500000, // Bill HP_002 is 2,000,000
+        content: 'Thanh toan mot phan HP_002',
+        referenceCode: 'MB.UNDERPAY.700103'
+      })
+    });
+
+    const res = await postSepayWebhook({ request: underpayReq, platform: mockPlatform });
+    assert.strictEqual(res.status, 200);
+    const json = await res.json();
+    assert.strictEqual(json.success, true);
+    assert.strictEqual(json.status, 'confirmed');
+    assert.strictEqual(json.matched_bill_id, 'HP_002');
+    assert.notStrictEqual(json.bill_status, 'paid', 'Bill status must NOT transition to paid on underpayment');
+
+    const bill = sqliteDb.prepare('SELECT status FROM tuition_bills WHERE id = ?').get('HP_002');
+    assert.strictEqual(bill.status, 'pending', 'Bill in DB must remain pending when payment is insufficient');
+  });
+
+  test('SP-07: Real seed bill HP_G7_001 matched and transitions to paid', async () => {
+    const req = new Request('http://localhost/api/webhook/sepay', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${TEST_SEPAY_SECRET}`
+      },
+      body: JSON.stringify({
+        id: 700104,
+        gateway: 'Vietcombank',
+        transferType: 'in',
+        transferAmount: 1200000,
+        content: 'Chuyen tien hoc HP_G7_001 tu Techcombank',
+        referenceCode: 'VCB.700104'
+      })
+    });
+
+    const res = await postSepayWebhook({ request: req, platform: mockPlatform });
+    assert.strictEqual(res.status, 200);
+    const json = await res.json();
+    assert.strictEqual(json.success, true);
+    assert.strictEqual(json.matched_bill_id, 'HP_G7_001', 'Must match exact seed bill HP_G7_001');
+    assert.strictEqual(json.bill_status, 'paid');
+
+    const bill = sqliteDb.prepare('SELECT status FROM tuition_bills WHERE id = ?').get('HP_G7_001');
+    assert.strictEqual(bill.status, 'paid');
+  });
+
+  test('SP-08: Real production bill bill_2026_10_001 matched and transitions to paid', async () => {
+    const req = new Request('http://localhost/api/webhook/sepay', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Apikey ${TEST_SEPAY_SECRET}`
+      },
+      body: JSON.stringify({
+        id: 700105,
+        gateway: 'MBBank',
+        transferType: 'in',
+        transferAmount: 1800000,
+        content: 'Thanh toan bill_2026_10_001 tien hoc thang 10',
+        referenceCode: 'MB.700105'
+      })
+    });
+
+    const res = await postSepayWebhook({ request: req, platform: mockPlatform });
+    assert.strictEqual(res.status, 200);
+    const json = await res.json();
+    assert.strictEqual(json.success, true);
+    assert.strictEqual(json.matched_bill_id, 'bill_2026_10_001', 'Must match exact bill bill_2026_10_001');
+    assert.strictEqual(json.bill_status, 'paid');
+
+    const bill = sqliteDb.prepare('SELECT status FROM tuition_bills WHERE id = ?').get('bill_2026_10_001');
+    assert.strictEqual(bill.status, 'paid');
+  });
+
+  test('SP-09: Timestamped bill bill_1727702384912 matched and transitions to paid', async () => {
+    const req = new Request('http://localhost/api/webhook/sepay', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${TEST_SEPAY_SECRET}`
+      },
+      body: JSON.stringify({
+        id: 700106,
+        gateway: 'VPBank',
+        transferType: 'in',
+        transferAmount: 2500000,
+        content: 'KH bill_1727702384912 chuyen hoc phi',
+        referenceCode: 'VPB.700106'
+      })
+    });
+
+    const res = await postSepayWebhook({ request: req, platform: mockPlatform });
+    assert.strictEqual(res.status, 200);
+    const json = await res.json();
+    assert.strictEqual(json.success, true);
+    assert.strictEqual(json.matched_bill_id, 'bill_1727702384912', 'Must match timestamped bill ID');
+    assert.strictEqual(json.bill_status, 'paid');
+
+    const bill = sqliteDb.prepare('SELECT status FROM tuition_bills WHERE id = ?').get('bill_1727702384912');
+    assert.strictEqual(bill.status, 'paid');
+  });
+
+  test('SP-10: VietQR addInfo HP_BAOANH_T10 matched to bill_oct_baoanh via QR link', async () => {
+    const req = new Request('http://localhost/api/webhook/sepay', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${TEST_SEPAY_SECRET}`
+      },
+      body: JSON.stringify({
+        id: 700107,
+        gateway: 'MBBank',
+        transferType: 'in',
+        transferAmount: 1600000,
+        content: 'HP_BAOANH_T10 MBVCB.700107',
+        referenceCode: 'MB.700107'
+      })
+    });
+
+    const res = await postSepayWebhook({ request: req, platform: mockPlatform });
+    assert.strictEqual(res.status, 200);
+    const json = await res.json();
+    assert.strictEqual(json.success, true);
+    assert.strictEqual(json.matched_bill_id, 'bill_oct_baoanh', 'Must match bill_oct_baoanh via VietQR addInfo');
+    assert.strictEqual(json.bill_status, 'paid');
+
+    const bill = sqliteDb.prepare('SELECT status FROM tuition_bills WHERE id = ?').get('bill_oct_baoanh');
+    assert.strictEqual(bill.status, 'paid');
   });
 });

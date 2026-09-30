@@ -9,9 +9,9 @@ export async function POST({ request, platform }) {
   try {
     const secret = getAuthSecret(platform);
     if (!secret) {
-      return json({ 
-        success: false, 
-        error: 'Lỗi cấu hình hệ thống: AUTH_SECRET chưa được thiết lập trên server (Fail-Closed).' 
+      return json({
+        success: false,
+        error: 'Lỗi cấu hình hệ thống: AUTH_SECRET chưa được thiết lập trên server (Fail-Closed).'
       }, { status: 500 });
     }
 
@@ -58,7 +58,7 @@ export async function POST({ request, platform }) {
     } else if (platform?.env?.ENABLE_LOCAL_MOCK === 'true' || process.env.ENABLE_LOCAL_MOCK === 'true') {
       // 2. Fallback to local store ONLY when ENABLE_LOCAL_MOCK is explicitly configured (isolated dev/testing)
       const allUsers = typeof getAllUsers === 'function' ? getAllUsers() : [];
-      const candidate = allUsers.find(u => 
+      const candidate = allUsers.find(u =>
         (u.username === username || u.email === username || u.phone === username)
       );
       if (!candidate || !(await verifyPassword(password, candidate.password))) {
@@ -77,7 +77,24 @@ export async function POST({ request, platform }) {
       return json({ success: false, error: 'Tài khoản của bạn đã bị khóa hoặc tạm ngưng.' }, { status: 403 });
     }
 
-    const token = await createSignedToken(user, secret);
+    const sid = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2);
+    if (platform?.env?.DB) {
+      try {
+        const expiresAt = new Date(Date.now() + 7 * 86400 * 1000).toISOString();
+        await platform.env.DB.prepare(`
+          INSERT INTO auth_sessions (id, user_id, created_at, expires_at, revoked_at)
+          VALUES (?, ?, CURRENT_TIMESTAMP, ?, NULL)
+        `).bind(sid, user.id, expiresAt).run();
+      } catch (sessErr) {
+        console.error('Could not record auth session in D1 (Fail-Closed):', sessErr);
+        return json({
+          success: false,
+          error: 'Lỗi máy chủ: Không thể ghi nhận phiên đăng nhập bảo mật (Fail-Closed).'
+        }, { status: 500 });
+      }
+    }
+
+    const token = await createSignedToken(user, secret, 7 * 86400 * 1000, sid);
     const safeUser = sanitizeUser(user);
 
     return json({

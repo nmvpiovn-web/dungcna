@@ -164,7 +164,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
           <span class="text-xs text-slate-400 font-medium">Điểm học:</span>
-          <select 
+          <select
             bind:value={selectedCampus}
             class="text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-2.5 py-1 rounded-md border border-slate-300 dark:border-slate-700 focus:outline-none focus:ring-1 focus:ring-sky-500"
           >
@@ -189,7 +189,7 @@
         {/if}
 
         <!-- Language Toggle Button -->
-        <button 
+        <button
           onclick={toggleLanguage}
           class="flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors border border-slate-200 dark:border-slate-700"
           title="Chuyển đổi ngôn ngữ / Switch Language"
@@ -198,8 +198,8 @@
         </button>
 
         <!-- Notification Bell -->
-        <a 
-          href="/cpanel/notifications" 
+        <a
+          href="/cpanel/notifications"
           class="relative p-1.5 sm:p-2 rounded-md text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           title="Thông báo"
         >
@@ -237,7 +237,7 @@
     <div class="max-w-7xl mx-auto flex items-center gap-2 overflow-x-auto pt-2 scrollbar-none w-full min-w-0">
       {#each navItems as item}
         {@const isActive = $page.url.pathname === item.path || ($page.url.hash && item.path.includes($page.url.hash))}
-        <a 
+        <a
           href={item.path}
           class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold whitespace-nowrap transition-all shrink-0 {isActive ? 'bg-sky-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}"
         >
@@ -248,7 +248,7 @@
   </header>
 
   <!-- Main Cpanel Body -->
-  <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 lg:p-8 min-w-0 overflow-x-hidden">
+  <div class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 lg:p-8 min-w-0 overflow-x-hidden">
     {@render children()}
-  </main>
+  </div>
 </div>

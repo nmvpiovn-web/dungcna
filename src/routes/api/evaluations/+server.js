@@ -43,7 +43,17 @@ export async function POST({ request, platform }) {
     }
     const localMock = platform?.env?.ENABLE_LOCAL_MOCK === 'true' || (typeof process !== 'undefined' && process.env?.ENABLE_LOCAL_MOCK === 'true');
     if (!platform?.env?.DB && !localMock) return json({ success: false, error: 'DatabaseUnavailable: Thiếu D1 binding.' }, { status: 503 });
-    const saved = saveEvaluation({ ...body, teacher_id: auth.user.id, teacher_name: auth.user.name || auth.user.username });
+    const payloadToSave = {
+      ...body,
+      id: body.id,
+      teacher_id: auth.user.id,
+      teacher_name: auth.user.name || auth.user.username,
+      teacher_feedback: body.teacher_feedback !== undefined ? body.teacher_feedback : (body.teacher_direct_feedback || ''),
+      action_plan: body.action_plan !== undefined ? body.action_plan : ''
+    };
+    const saved = saveEvaluation(payloadToSave, auth.user);
+    if (body.teacher_feedback !== undefined) saved.teacher_feedback = body.teacher_feedback;
+    if (body.action_plan !== undefined) saved.action_plan = body.action_plan;
     const parentReport = formatParentReportCard(saved);
 
     if (platform?.env?.DB) {
@@ -55,15 +65,49 @@ export async function POST({ request, platform }) {
             overall_score, primary_aptitude, secondary_aptitude, strengths, weaknesses,
             teacher_feedback, action_plan, recommended_materials, parent_name, parent_phone, parent_zalo_id
           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-          ON CONFLICT(id) DO UPDATE SET overall_score = excluded.overall_score, updated_at = CURRENT_TIMESTAMP;
+          ON CONFLICT(id) DO UPDATE SET
+            student_name = excluded.student_name,
+            grade_level = excluded.grade_level,
+            listening_score = excluded.listening_score,
+            reading_score = excluded.reading_score,
+            writing_score = excluded.writing_score,
+            speaking_score = excluded.speaking_score,
+            grammar_vocab_score = excluded.grammar_vocab_score,
+            overall_score = excluded.overall_score,
+            primary_aptitude = excluded.primary_aptitude,
+            secondary_aptitude = excluded.secondary_aptitude,
+            strengths = excluded.strengths,
+            weaknesses = excluded.weaknesses,
+            teacher_feedback = excluded.teacher_feedback,
+            action_plan = excluded.action_plan,
+            recommended_materials = excluded.recommended_materials,
+            parent_name = excluded.parent_name,
+            parent_phone = excluded.parent_phone,
+            parent_zalo_id = excluded.parent_zalo_id,
+            updated_at = CURRENT_TIMESTAMP;
         `).bind(
-          saved.id, saved.student_id, saved.student_name, auth.user.id,
-          auth.user.name || auth.user.username, saved.grade_level, saved.listening_score,
-          saved.reading_score, saved.writing_score, saved.speaking_score,
-          saved.grammar_vocab_score, saved.overall_score, saved.primary_aptitude,
-          saved.secondary_aptitude || '', saved.strengths || '', saved.weaknesses || '',
-          saved.teacher_feedback || '', saved.action_plan || '', saved.recommended_materials || '',
-          saved.parent_name || '', saved.parent_phone || '', saved.parent_zalo_id || ''
+          saved.id || body.id,
+          saved.student_id || body.student_id,
+          saved.student_name || body.student_name,
+          auth.user.id,
+          auth.user.name || auth.user.username || '',
+          saved.grade_level || body.grade_level || 'Lớp 7',
+          Number(saved.listening_score ?? body.listening_score ?? 0),
+          Number(saved.reading_score ?? body.reading_score ?? 0),
+          Number(saved.writing_score ?? body.writing_score ?? 0),
+          Number(saved.speaking_score ?? body.speaking_score ?? 0),
+          Number(saved.grammar_vocab_score ?? body.grammar_vocab_score ?? 0),
+          Number(saved.overall_score ?? body.overall_score ?? 0),
+          saved.primary_aptitude || body.primary_aptitude || 'General English',
+          saved.secondary_aptitude || body.secondary_aptitude || '',
+          saved.strengths || body.strengths || '',
+          saved.weaknesses || body.weaknesses || '',
+          saved.teacher_feedback || body.teacher_feedback || '',
+          saved.action_plan || body.action_plan || '',
+          saved.recommended_materials || body.recommended_materials || '',
+          saved.parent_name || body.parent_name || '',
+          saved.parent_phone || body.parent_phone || '',
+          saved.parent_zalo_id || body.parent_zalo_id || ''
         ).run();
       } catch (d1Err) {
         console.error('D1 evaluation insert error:', d1Err);

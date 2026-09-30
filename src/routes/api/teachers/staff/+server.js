@@ -1,11 +1,11 @@
 import { json } from '@sveltejs/kit';
 import { verifyServerAuth, isStaffUser } from '$lib/server/auth';
-import { 
-  getAllTeacherProfiles, 
-  getTeacherProfile, 
-  updateTeacherRoleAndSalary, 
-  addTeacherAppraisalAndRating, 
-  addTeacherBonus, 
+import {
+  getAllTeacherProfiles,
+  getTeacherProfile,
+  updateTeacherRoleAndSalary,
+  addTeacherAppraisalAndRating,
+  addTeacherBonus,
   addTeacherPrivateReminder,
   acknowledgeTeacherReminder
 } from '$lib/unifiedStore';
@@ -36,7 +36,9 @@ async function ensureTeacherProfilesTable(db) {
   if (!db || tableEnsured) return;
   await db.prepare(`
     CREATE TABLE IF NOT EXISTS teacher_profiles (
-      teacher_id TEXT PRIMARY KEY,
+      id TEXT PRIMARY KEY,
+      teacher_id TEXT,
+      user_id TEXT,
       teacher_name TEXT NOT NULL,
       username TEXT NOT NULL,
       role_type TEXT NOT NULL,
@@ -53,19 +55,40 @@ async function ensureTeacherProfilesTable(db) {
     )
   `).run();
 
+  const extraCols = [
+    'ALTER TABLE teacher_profiles ADD COLUMN teacher_id TEXT;',
+    'ALTER TABLE teacher_profiles ADD COLUMN user_id TEXT;',
+    'ALTER TABLE teacher_profiles ADD COLUMN teacher_name TEXT;',
+    'ALTER TABLE teacher_profiles ADD COLUMN username TEXT;',
+    'ALTER TABLE teacher_profiles ADD COLUMN role_type TEXT;',
+    'ALTER TABLE teacher_profiles ADD COLUMN role_title TEXT;',
+    'ALTER TABLE teacher_profiles ADD COLUMN salary_type TEXT;',
+    'ALTER TABLE teacher_profiles ADD COLUMN base_salary_vnd REAL DEFAULT 0;',
+    'ALTER TABLE teacher_profiles ADD COLUMN rate_per_session_vnd REAL DEFAULT 0;',
+    'ALTER TABLE teacher_profiles ADD COLUMN total_sessions_taught INTEGER DEFAULT 0;',
+    'ALTER TABLE teacher_profiles ADD COLUMN leader_rating REAL DEFAULT 5.0;',
+    'ALTER TABLE teacher_profiles ADD COLUMN leader_appraisal TEXT;',
+    'ALTER TABLE teacher_profiles ADD COLUMN bonuses TEXT;',
+    'ALTER TABLE teacher_profiles ADD COLUMN private_reminders TEXT;',
+    'ALTER TABLE teacher_profiles ADD COLUMN updated_at TEXT DEFAULT CURRENT_TIMESTAMP;'
+  ];
+  for (const sql of extraCols) {
+    try { await db.prepare(sql).run(); } catch {}
+  }
+
   // Check if table has records, if not seed initial profiles
   const countRow = await db.prepare('SELECT COUNT(*) as cnt FROM teacher_profiles').first();
   if (!countRow || countRow.cnt === 0) {
     const initial = getAllTeacherProfiles();
     for (const p of initial) {
       await db.prepare(`
-        INSERT INTO teacher_profiles (
-          teacher_id, teacher_name, username, role_type, role_title,
+        INSERT OR REPLACE INTO teacher_profiles (
+          id, teacher_id, user_id, teacher_name, username, role_type, role_title,
           salary_type, base_salary_vnd, rate_per_session_vnd, total_sessions_taught,
           leader_rating, leader_appraisal, bonuses, private_reminders
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).bind(
-        p.teacher_id, p.teacher_name, p.username, p.role_type, p.role_title,
+        p.teacher_id, p.teacher_id, p.teacher_id, p.teacher_name, p.username, p.role_type, p.role_title,
         p.salary_type, p.base_salary_vnd || 0, p.rate_per_session_vnd || 0, p.total_sessions_taught || 0,
         p.leader_rating || 5.0, p.leader_appraisal || '',
         JSON.stringify(p.bonuses || []), JSON.stringify(p.private_reminders || [])
@@ -98,9 +121,9 @@ export async function GET({ url, request, platform }) {
     // Teachers can ONLY inspect their own profile
     if (!hasManagerPrivileges) {
       if (requestedTeacherId && requestedTeacherId !== auth.user.id) {
-        return json({ 
-          success: false, 
-          error: 'Forbidden: Giáo viên chỉ có quyền xem hồ sơ của chính mình' 
+        return json({
+          success: false,
+          error: 'Forbidden: Giáo viên chỉ có quyền xem hồ sơ của chính mình'
         }, { status: 403 });
       }
     }
@@ -131,9 +154,9 @@ export async function GET({ url, request, platform }) {
     // 3. Fallback only in local mock mode
     const isMock = Boolean(import.meta.env?.DEV || platform?.env?.ENABLE_LOCAL_MOCK === 'true' || process.env.ENABLE_LOCAL_MOCK === 'true');
     if (!isMock) {
-      return json({ 
-        success: false, 
-        error: 'Lỗi cấu hình: Thiếu binding Cloudflare D1 (DB) trên môi trường production (Fail-Closed).' 
+      return json({
+        success: false,
+        error: 'Lỗi cấu hình: Thiếu binding Cloudflare D1 (DB) trên môi trường production (Fail-Closed).'
       }, { status: 500 });
     }
 
@@ -172,9 +195,9 @@ export async function POST({ request, platform }) {
     // RESTRICT: Only SuperAdmin and Leader can modify role, salary, appraisal or bonuses
     const MANAGER_ONLY_ACTIONS = ['update_role_salary', 'add_appraisal', 'add_bonus', 'send_private_reminder'];
     if (MANAGER_ONLY_ACTIONS.includes(action) && !hasManagerPrivileges) {
-      return json({ 
-        success: false, 
-        error: 'Forbidden: Giáo viên không có quyền điều chỉnh chức danh, mức lương, đánh giá hoặc khen thưởng.' 
+      return json({
+        success: false,
+        error: 'Forbidden: Giáo viên không có quyền điều chỉnh chức danh, mức lương, đánh giá hoặc khen thưởng.'
       }, { status: 403 });
     }
 
@@ -233,10 +256,10 @@ export async function POST({ request, platform }) {
           });
         } catch (d1Err) {
           console.error('D1 teacher update error (FAIL-CLOSED):', d1Err);
-          return json({ 
-            success: false, 
-            persisted: false, 
-            error: 'Lỗi ghi cơ sở dữ liệu Cloudflare D1: ' + d1Err.message 
+          return json({
+            success: false,
+            persisted: false,
+            error: 'Lỗi ghi cơ sở dữ liệu Cloudflare D1: ' + d1Err.message
           }, { status: 500 });
         }
       }
@@ -319,10 +342,10 @@ export async function POST({ request, platform }) {
     // NON-D1 FALLBACK: Fail-Closed on production, allow isolated mock in dev
     const isMock = Boolean(import.meta.env?.DEV || platform?.env?.ENABLE_LOCAL_MOCK === 'true' || process.env.ENABLE_LOCAL_MOCK === 'true');
     if (!isMock) {
-      return json({ 
-        success: false, 
+      return json({
+        success: false,
         persisted: false,
-        error: 'Lỗi cấu hình hệ thống: Thiếu binding Cloudflare D1 (DB) trên môi trường production (Fail-Closed).' 
+        error: 'Lỗi cấu hình hệ thống: Thiếu binding Cloudflare D1 (DB) trên môi trường production (Fail-Closed).'
       }, { status: 500 });
     }
 

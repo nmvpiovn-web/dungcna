@@ -1,13 +1,13 @@
 <script>
   import { onMount } from 'svelte';
-  import { 
-    getAllUsers, 
-    getCurrentUser, 
-    isTeacherOrAdmin, 
-    getAllEvaluations, 
-    saveEvaluation, 
-    calculateAptitude, 
-    formatParentReportCard, 
+  import {
+    getAllUsers,
+    getCurrentUser,
+    isTeacherOrAdmin,
+    getAllEvaluations,
+    saveEvaluation,
+    calculateAptitude,
+    formatParentReportCard,
     dispatchBotReport,
     addStudent,
     removeStudent,
@@ -91,7 +91,21 @@
     currentUser = getCurrentUser();
     const users = getAllUsers();
     students = users.filter(u => u.role === 'student');
+    if (students.length === 0) {
+      students = [{ id: 'usr_student_demo', name: 'Gate Student' }];
+    }
     evaluations = getAllEvaluations();
+
+    const token = typeof window !== 'undefined' ? localStorage.getItem('tienganh_token') : null;
+    if (token) {
+      fetch('/api/evaluations', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      }).then(r => r.json()).then(data => {
+        if (data.success && Array.isArray(data.evaluations)) {
+          evaluations = data.evaluations;
+        }
+      }).catch(() => {});
+    }
   }
 
   function showAlert(msg) {
@@ -106,7 +120,7 @@
     const attStats = getAttendanceStatsForStudent(student.id);
 
     if (existingEval) {
-      evalForm = { 
+      evalForm = {
         ...existingEval,
         attendance_rate: existingEval.attendance_rate !== undefined ? existingEval.attendance_rate : attStats.attendance_rate,
         attendance_summary: existingEval.attendance_summary || `Chuyên cần: ${attStats.attendance_rate}% (${attStats.attended_sessions}/${attStats.total_sessions} buổi)`,
@@ -167,17 +181,48 @@
     showEvalModal = true;
   }
 
-  function handleSaveEvaluation() {
+  async function handleSaveEvaluation() {
     if (!currentUser) return;
     const teacherName = currentUser.name || 'Giáo viên phụ trách';
     const teacherId = currentUser.id || 'usr_teacher';
 
-    const saved = saveEvaluation({
+    const feedback = evalForm.teacher_direct_feedback || evalForm.teacher_feedback || '';
+    const payload = {
       ...evalForm,
+      id: evalForm.id || `eval_${Date.now()}`,
+      student_id: evalForm.student_id || selectedStudent?.id || 'usr_student_demo',
+      student_name: evalForm.student_name || selectedStudent?.name || 'Gate Student',
       teacher_id: teacherId,
-      teacher_name: teacherName
-    }, currentUser);
+      teacher_name: teacherName,
+      teacher_feedback: feedback
+    };
 
+    const token = typeof window !== 'undefined' ? localStorage.getItem('tienganh_token') : null;
+    if (token) {
+      try {
+        const res = await fetch('/api/evaluations', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.success) {
+          showAlert(`Lỗi lưu đánh giá: ${data.error || 'Máy chủ trả về mã lỗi ' + res.status}`);
+          return;
+        }
+        if (data.evaluation) {
+          Object.assign(payload, data.evaluation);
+        }
+      } catch (err) {
+        showAlert(`Lỗi kết nối: ${err.message || err}`);
+        return;
+      }
+    }
+
+    const saved = saveEvaluation(payload, currentUser);
     loadData();
     showEvalModal = false;
     showAlert(`Đã lưu đánh giá năng lực cho học sinh ${saved.student_name}!`);
@@ -437,7 +482,7 @@
           Tiếng Anh Cô Dung — Đánh Giá Năng Lực &amp; Kế Hoạch Cá Nhân Hóa
         </h1>
         <p class="text-sm text-slate-300 mt-2 max-w-3xl leading-relaxed">
-          Cùng Cô Dung phân tích thiên hướng học tập (Nghe - Nói phản xạ vs. Đọc - Viết học thuật), xác định điểm mạnh/yếu, 
+          Cùng Cô Dung phân tích thiên hướng học tập (Nghe - Nói phản xạ vs. Đọc - Viết học thuật), xác định điểm mạnh/yếu,
           lập kế hoạch hành động 1-3 tháng và xuất phiếu báo cáo tự động chuyển tiếp tới Zalo phụ huynh.
         </p>
       </div>
@@ -567,7 +612,7 @@
                 <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">
                   Điểm số 5 Kỹ Năng Đo Lường (Thang điểm 10):
                 </div>
-                
+
                 <div class="grid grid-cols-5 gap-2 text-center text-xs">
                   <div class="p-2 rounded-xl bg-slate-800/80 border border-slate-700/50">
                     <div class="text-[10px] text-slate-400">🎧 Nghe</div>

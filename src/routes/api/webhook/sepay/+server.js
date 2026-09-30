@@ -81,18 +81,82 @@ export async function POST({ request, platform }) {
     }
 
     // 4. Bill Matching: Extract Bill / Order code from transfer content
-    // Regex looks for bill codes like HP_123, BILL_456, or STU_789
-    const match = content.match(/(HP[_-]?\d+|BILL[_-]?\d+|STU[_-]?\w+)/i);
-    const matchedRef = match ? match[0].toUpperCase() : null;
+    // Real system supports: HP_G7_001, bill_2026_10_001, bill_<timestamp>, HP_BAOANH_T10, HP_001, etc.
+    const cleanContent = (content || '').trim();
+    const tokenRegex = /(?:HP|BILL|STU)[_-][A-Za-z0-9_-]+/gi;
+    const rawTokens = cleanContent.match(tokenRegex) || [];
+    const candidateTokens = [...new Set(rawTokens.map(t => t.trim()))];
 
     let targetBill = null;
-    if (matchedRef) {
+    let matchedRef = null;
+
+    // A. First pass: Exact match on candidate tokens against tuition_bills.id
+    for (const token of candidateTokens) {
       targetBill = await db.prepare(`
-        SELECT id, student_id, total_amount, status
+        SELECT id, student_id, COALESCE(NULLIF(final_amount_vnd, 0), NULLIF(total_amount, 0), NULLIF(amount, 0), 0) as total_amount, status
         FROM tuition_bills
-        WHERE id = ? OR UPPER(id) = ?
+        WHERE UPPER(id) = UPPER(?)
         LIMIT 1;
-      `).bind(matchedRef, matchedRef).first();
+      `).bind(token).first();
+
+      if (targetBill) {
+        matchedRef = targetBill.id;
+        break;
+      }
+    }
+
+    // B. Second pass: VietQR addInfo pattern matching (e.g., token in vietqr_url)
+    if (!targetBill) {
+      for (const token of candidateTokens) {
+        targetBill = await db.prepare(`
+          SELECT id, student_id, COALESCE(NULLIF(final_amount_vnd, 0), NULLIF(total_amount, 0), NULLIF(amount, 0), 0) as total_amount, status
+          FROM tuition_bills
+          WHERE (vietqr_url IS NOT NULL AND INSTR(UPPER(vietqr_url), UPPER(?)) > 0)
+          LIMIT 1;
+        `).bind(token).first();
+
+        if (targetBill) {
+          matchedRef = targetBill.id;
+          break;
+        }
+      }
+    }
+
+    // C. Third pass: VietQR pattern HP_<student_id>_<period> -> match by student_id and pending status
+    if (!targetBill) {
+      for (const token of candidateTokens) {
+        const parts = token.split('_');
+        if (parts.length >= 2 && parts[0].toUpperCase() === 'HP') {
+          const studentPart = parts[1];
+          targetBill = await db.prepare(`
+            SELECT id, student_id, COALESCE(NULLIF(final_amount_vnd, 0), NULLIF(total_amount, 0), NULLIF(amount, 0), 0) as total_amount, status
+            FROM tuition_bills
+            WHERE (UPPER(student_id) = UPPER(?) OR UPPER(student_id) = UPPER(?))
+              AND status = 'pending'
+            ORDER BY created_at DESC
+            LIMIT 1;
+          `).bind(studentPart, `stu_${studentPart.toLowerCase()}`).first();
+
+          if (targetBill) {
+            matchedRef = targetBill.id;
+            break;
+          }
+        }
+      }
+    }
+
+    // D. Fourth pass: Direct check if entire content contains bill id
+    if (!targetBill) {
+      targetBill = await db.prepare(`
+        SELECT id, student_id, COALESCE(NULLIF(final_amount_vnd, 0), NULLIF(total_amount, 0), NULLIF(amount, 0), 0) as total_amount, status
+        FROM tuition_bills
+        WHERE INSTR(UPPER(?), UPPER(id)) > 0
+        LIMIT 1;
+      `).bind(cleanContent).first();
+
+      if (targetBill) {
+        matchedRef = targetBill.id;
+      }
     }
 
     // 5. Determine State Transition
@@ -103,8 +167,9 @@ export async function POST({ request, platform }) {
     if (transferType === 'out') {
       txStatus = 'reversed';
     } else if (targetBill) {
-      // If payment meets or exceeds bill amount, mark bill paid/confirmed
-      if (amount >= targetBill.total_amount) {
+      // Strictly require payment to meet or exceed positive bill amount
+      const billAmount = Number(targetBill.total_amount) || 0;
+      if (billAmount > 0 && amount >= billAmount) {
         billUpdated = true;
       }
     }
@@ -114,14 +179,15 @@ export async function POST({ request, platform }) {
       db.prepare(`
         INSERT INTO tuition_transactions (
           id, student_id, bill_id, amount, status,
-          gateway_name, gateway_transaction_id, reference_code, transfer_content, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+          gateway, gateway_name, gateway_transaction_id, reference_code, transfer_content, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
       `).bind(
         newTxId,
         targetBill?.student_id || 'unknown_student',
         targetBill?.id || matchedRef || null,
         amount,
         txStatus,
+        'sepay',
         'sepay',
         normalizedGatewayId,
         String(referenceCode || '').slice(0, 200),

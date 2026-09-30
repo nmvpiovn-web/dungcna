@@ -90,9 +90,9 @@ export function setSessionVerified(status, user = null) {
 
 export function getAuthToken() {
   if (typeof window === 'undefined') return null;
-  const token = localStorage.getItem('tienganh_auth_token') || 
-                localStorage.getItem('tienganh_token') || 
-                sessionStorage.getItem('tienganh_auth_token') || 
+  const token = localStorage.getItem('tienganh_auth_token') ||
+                localStorage.getItem('tienganh_token') ||
+                sessionStorage.getItem('tienganh_auth_token') ||
                 sessionStorage.getItem('tienganh_token');
   if (token) return token;
   try {
@@ -416,10 +416,10 @@ export function updateUserGradeAndClass(userId, grade, classId = '', operator = 
   const before = { ...user };
   let meta = {};
   try { meta = typeof user.metadata === 'string' ? JSON.parse(user.metadata) : (user.metadata || {}); } catch {}
-  
+
   meta.grade = grade;
   if (classId) meta.class_id = classId;
-  
+
   // Sync enrolled_grades array
   if (!Array.isArray(meta.enrolled_grades) || meta.enrolled_grades.length <= 1) {
     meta.enrolled_grades = [grade];
@@ -483,19 +483,24 @@ export function getUserEnrolledGrades(user) {
   } catch {}
 
   const list = [];
-  const baseGrade = user.grade || meta.grade;
-  if (baseGrade) list.push(baseGrade);
+  const rawBase = user.grade !== undefined && user.grade !== null && user.grade !== '' ? user.grade : meta.grade;
+  if (rawBase !== undefined && rawBase !== null && rawBase !== '') {
+    list.push(String(rawBase));
+  }
 
   if (Array.isArray(meta.enrolled_grades)) {
     for (const g of meta.enrolled_grades) {
-      if (g && !list.includes(g)) {
-        list.push(g);
+      if (g !== undefined && g !== null && g !== '') {
+        const str = String(g);
+        if (!list.includes(str)) {
+          list.push(str);
+        }
       }
     }
   }
 
-  if (list.length === 0 && user.role === 'student' && user.grade) {
-    list.push(user.grade);
+  if (list.length === 0 && user.role === 'student' && user.grade !== undefined && user.grade !== null) {
+    list.push(String(user.grade));
   }
   return list;
 }
@@ -833,7 +838,7 @@ export function getSimilarProfileRecommendations(student) {
   try {
     meta = typeof student.metadata === 'string' ? JSON.parse(student.metadata) : (student.metadata || {});
   } catch {}
-  
+
   const grade = meta.grade || 'Lớp 7';
   const isPrimary = /lớp [1-5]/i.test(grade);
   const isSecondary = /lớp [6-9]/i.test(grade);
@@ -1107,7 +1112,7 @@ export function saveEvaluation(evalData, evaluatorUser = null) {
   const currentUser = evaluatorUser || getCurrentUser();
   const evaluatorId = currentUser?.id || evalData.teacher_id || 'usr_super_2';
   const evaluatorName = currentUser?.name || evalData.teacher_name || 'Ms. Dung';
-  
+
   // Calculate alias tag & role
   let evaluatorRole = evalData.evaluator_role || 'lead';
   let evaluatorAlias = evalData.evaluator_alias;
@@ -1755,9 +1760,9 @@ export function updateUserProfile(userId, updates, operator = null) {
   // Regular students/parents cannot alter their assigned grade via profile edit.
   const activeUser = operator || getCurrentUser();
   const isAuthorizedAdmin = activeUser && (
-    activeUser.role === 'admin' || 
-    activeUser.role === 'teacher' || 
-    activeUser.role === 'leader' || 
+    activeUser.role === 'admin' ||
+    activeUser.role === 'teacher' ||
+    activeUser.role === 'leader' ||
     isTeacherOrAdmin(activeUser)
   );
 
@@ -2115,8 +2120,8 @@ export function getSessionsForUser(user) {
     const studentClassId = meta.class_id;
     const studentGrade = linkedChild.grade || meta.grade;
     const enrolledGrades = getUserEnrolledGrades(linkedChild);
-    return allSessions.filter(s => 
-      (s.student_ids && s.student_ids.includes(linkedChild.id)) || 
+    return allSessions.filter(s =>
+      (s.student_ids && s.student_ids.includes(linkedChild.id)) ||
       (studentClassId && s.class_id === studentClassId) ||
       (studentGrade && s.grade_level === studentGrade) ||
       (enrolledGrades.length > 0 && enrolledGrades.includes(s.grade_level))
@@ -2129,8 +2134,8 @@ export function getSessionsForUser(user) {
     const studentClassId = meta.class_id;
     const studentGrade = user.grade || meta.grade;
     const enrolledGrades = getUserEnrolledGrades(user);
-    return allSessions.filter(s => 
-      (s.student_ids && s.student_ids.includes(user.id)) || 
+    return allSessions.filter(s =>
+      (s.student_ids && s.student_ids.includes(user.id)) ||
       (studentClassId && s.class_id === studentClassId) ||
       (studentGrade && s.grade_level === studentGrade) ||
       (enrolledGrades.length > 0 && enrolledGrades.includes(s.grade_level))
@@ -2147,7 +2152,7 @@ export async function triggerScheduleNotification(sessionId, customMinutes = nul
   if (!session) return { success: false, error: 'Không tìm thấy buổi học' };
 
   const minutesBefore = customMinutes || session.notify_minutes_before || 10;
-  
+
   // Calculate notification time preview
   const [startH, startM] = session.start_time.split(':').map(Number);
   const notifyTotalMin = startH * 60 + startM - minutesBefore;
@@ -2350,7 +2355,7 @@ export function getAttendedStudentsForSession(sessionId, sessionDate) {
   const records = getAttendanceForSession(sessionId, sessionDate);
   const presentRecords = records.filter(r => r.status === 'present' || r.status === 'late');
   const users = getAllUsers();
-  
+
   if (presentRecords.length === 0) {
     // If not rolled call yet, return all students assigned to session
     const session = getAllClassSessions().find(s => s.id === sessionId);
