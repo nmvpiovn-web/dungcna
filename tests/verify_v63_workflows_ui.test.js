@@ -157,6 +157,8 @@ test('V63-UI-04: flashcard, evaluation modal, and site theme keep the repaired c
   assert.match(evaluation, /aria-label="Đóng bảng đánh giá"/);
   assert.match(evaluation, /max-h-\[calc\(100vh-1rem\)\]/);
   assert.match(evaluation, /evaluation-modal bg-white/);
+  assert.match(evaluation, /if \(!currentUser \|\| !token\)/);
+  assert.match(evaluation, /Phiếu năng lực và thông tin phụ huynh chỉ hiển thị/);
   assert.doesNotMatch(store, /classList\.add\('dark'\)/);
   assert.match(store, /saved === 'light' \|\| saved === 'sky'/);
 });

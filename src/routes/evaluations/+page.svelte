@@ -89,6 +89,12 @@
 
   function loadData() {
     currentUser = getCurrentUser();
+    const token = typeof window !== 'undefined' ? localStorage.getItem('tienganh_token') : null;
+    if (!currentUser || !token) {
+      students = [];
+      evaluations = [];
+      return;
+    }
     const users = getAllUsers();
     students = users.filter(u => u.role === 'student');
     if (students.length === 0) {
@@ -96,7 +102,6 @@
     }
     evaluations = getAllEvaluations();
 
-    const token = typeof window !== 'undefined' ? localStorage.getItem('tienganh_token') : null;
     if (token) {
       fetch('/api/evaluations', {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -511,6 +516,13 @@
   </div>
 
   <!-- Tabs Navigation -->
+  {#if !currentUser}
+    <div class="rounded-xl border border-sky-200 bg-white p-8 text-center shadow-sm">
+      <h2 class="text-lg font-black text-slate-950">Đăng nhập để xem phiếu đánh giá</h2>
+      <p class="mt-2 text-sm text-slate-700">Phiếu năng lực và thông tin phụ huynh chỉ hiển thị cho tài khoản đã được xác thực.</p>
+      <a href="/login" class="mt-5 inline-flex min-h-11 items-center rounded-lg bg-sky-700 px-5 font-bold text-white hover:bg-sky-800">Đăng nhập</a>
+    </div>
+  {:else}
   <div class="flex items-center justify-between border-b border-slate-200 pb-3">
     <div class="flex items-center gap-2">
       <button
@@ -853,6 +865,7 @@
         </table>
       </div>
     </div>
+  {/if}
   {/if}
 
   <!-- MODAL 1: EVALUATION EDITOR -->
