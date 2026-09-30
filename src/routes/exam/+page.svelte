@@ -17,6 +17,8 @@
     requestUnlockClass
   } from '$lib/unifiedStore';
   import GuestExamModal from '$lib/components/GuestExamModal.svelte';
+  // Academic Warmth Phase 3: test xep lop 3 phut cho khach (khong can login)
+  import PlacementTest from '$lib/components/ui/PlacementTest.svelte';
 
   let { data } = $props();
 
@@ -899,6 +901,11 @@
 </script>
 
 <div class="space-y-6 min-w-0 max-w-full overflow-x-hidden">
+  <!-- Academic Warmth Phase 3: Test xep lop 3 phut (khach, khong can login) -->
+  <section id="placement" class="scroll-mt-24">
+    <PlacementTest />
+  </section>
+
   {#if currentUser?.role === 'teacher' || currentUser?.role === 'superadmin' || isSuperAdmin(currentUser)}
     <!-- Teacher & Leader Attendance-Linked Exam Panel -->
     <div class="rounded-3xl bg-slate-900 border border-emerald-500/30 p-5 md:p-6 shadow-xl space-y-4">

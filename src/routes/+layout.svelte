@@ -12,7 +12,6 @@
     isTeacherOrAdmin,
     getTheme,
     setTheme,
-    toggleTheme,
     getStudentStars,
     getUnreadLeaderNotificationCount,
     scanScheduleAndAttendanceForLeader,
@@ -27,6 +26,7 @@
   import NotificationCenterModal from '$lib/components/NotificationCenterModal.svelte';
   import OnboardingTourModal from '$lib/components/OnboardingTourModal.svelte';
   import EducationNavigation from '$lib/components/EducationNavigation.svelte';
+  import ThemeSwitcher from '$lib/components/ui/ThemeSwitcher.svelte';
 
   let { children } = $props();
 
@@ -184,10 +184,6 @@
       window.removeEventListener('tienganh:leader-notification-new', handleLeaderNotifEvent);
     };
   });
-
-  function handleThemeToggle() {
-    currentTheme = toggleTheme();
-  }
 
   async function handleLogout() {
     showUserDropdown = false;
@@ -663,21 +659,16 @@
 
         <!-- Right Side Controls: Theme Switcher, Star Counter & User Avatar -->
         <div class="flex items-center gap-1 sm:gap-2 shrink-0">
-          <!-- Theme Switcher: Xanh Nhẹ / Sáng -->
-          <button
-            onclick={handleThemeToggle}
-            class="h-8 w-8 sm:h-9 sm:w-auto p-1 sm:px-2.5 rounded-md border border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 hover:text-sky-600 dark:hover:text-sky-400 flex items-center justify-center gap-1.5 text-xs font-semibold transition-all shadow-xs"
-            title="Đổi giao diện sáng: Xanh Nhẹ / Sáng"
-            aria-label="Toggle Theme"
+          <!-- Theme Switcher: Sáng / Xanh Nhẹ / Tối (Academic Warmth) -->
+          <ThemeSwitcher />
+
+          <!-- CTA Hoc thu mien phi — luon visible (sticky header) -->
+          <a
+            href="/exam#placement"
+            class="hidden md:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-accent-500 hover:brightness-105 text-white text-xs font-extrabold shadow-sm transition-all"
           >
-            {#if currentTheme === 'sky'}
-              <span>🩵</span>
-              <span class="hidden sm:inline text-xs text-sky-700 dark:text-sky-300 font-semibold">Xanh Nhẹ</span>
-            {:else}
-              <span>☀️</span>
-              <span class="hidden sm:inline text-xs text-amber-600 font-semibold">Sáng</span>
-            {/if}
-          </button>
+            🎁 Học thử miễn phí
+          </a>
 
           <!-- Universal Notification Bell (Cho mọi Role: Parent, Student, Teacher, Leader) -->
           {#if currentUser}

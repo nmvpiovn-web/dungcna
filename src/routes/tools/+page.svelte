@@ -91,10 +91,10 @@
   <!-- Grid of Tools -->
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
     {#each tools as tool}
-      <div class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 flex flex-col justify-between shadow-sm hover:shadow-xl hover:border-sky-500/50 dark:hover:border-sky-500/40 transition-all group">
+      <div class="rounded-2xl bg-surface-0 border border-line p-6 flex flex-col justify-between shadow-sm hover:shadow-xl hover:border-brand-200 transition-all group">
         <div class="space-y-4">
           <div class="flex items-center justify-between">
-            <span class="text-3xl p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 group-hover:scale-110 transition-transform">
+            <span class="text-3xl p-3 rounded-2xl bg-surface-1 border border-line group-hover:scale-110 transition-transform">
               {tool.icon}
             </span>
             <span class="text-[11px] font-extrabold px-2.5 py-1 rounded-full border {tool.tagColor}">
@@ -103,22 +103,22 @@
           </div>
 
           <div>
-            <div class="text-[11px] font-bold text-sky-700 dark:text-sky-400 uppercase tracking-wider mb-1">
+            <div class="text-[11px] font-bold text-brand-600 uppercase tracking-wider mb-1">
               {tool.tag}
             </div>
-            <h2 class="text-lg font-heading font-black text-slate-900 dark:text-white group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors">
+            <h2 class="text-lg font-heading font-black text-ink-900 group-hover:text-brand-600 transition-colors">
               {tool.title}
             </h2>
-            <p class="text-xs text-slate-600 dark:text-slate-300 mt-2 leading-relaxed font-normal">
+            <p class="text-xs text-ink-500 mt-2 leading-relaxed font-normal">
               {tool.description}
             </p>
           </div>
         </div>
 
-        <div class="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+        <div class="mt-6 pt-4 border-t border-line flex items-center justify-between">
           <a
             href={tool.href}
-            class="w-full py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-sky-600 dark:bg-slate-800 dark:hover:bg-sky-600 text-white font-bold text-xs shadow-sm transition-all flex items-center justify-center gap-2"
+            class="w-full py-2.5 px-4 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs shadow-sm transition-all flex items-center justify-center gap-2"
           >
             <span>Mở Công Cụ</span>
             <span>➔</span>
@@ -129,25 +129,25 @@
   </div>
 
   <!-- Quick Access Navigation -->
-  <div class="p-6 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+  <div class="p-6 rounded-2xl bg-surface-1 border border-line flex flex-col sm:flex-row sm:items-center justify-between gap-4">
     <div class="space-y-1">
-      <h3 class="font-heading font-bold text-base text-slate-900 dark:text-white">
+      <h3 class="font-heading font-bold text-base text-ink-900">
         Cần Hỗ Trợ Kỹ Thuật Hoặc Đề Xuất Công Cụ Mới?
       </h3>
-      <p class="text-xs text-slate-600 dark:text-slate-300 font-normal">
+      <p class="text-xs text-ink-500 font-normal">
         Hệ thống được phát triển chuyên biệt theo chương trình GDPT 2026. Mọi thắc mắc vui lòng liên hệ cô Dung.
       </p>
     </div>
     <div class="flex items-center gap-3">
       <a
         href="/courses"
-        class="px-4 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 font-bold text-xs hover:border-sky-500 transition-all"
+        class="px-4 py-2.5 rounded-xl bg-surface-0 border border-line text-ink-900 font-bold text-xs hover:border-brand-200 transition-all"
       >
         📚 Xem Lộ Trình 19 Khóa Học
       </a>
       <a
         href="/exam"
-        class="px-4 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-md transition-all"
+        class="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs shadow-md transition-all"
       >
         ⏱️ Vào Phòng Thi
       </a>

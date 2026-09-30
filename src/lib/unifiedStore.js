@@ -266,34 +266,40 @@ export async function loginUser(identifier, password) {
   }
 }
 
+// Academic Warmth (2026-09-30): 3 che do Sáng / Xanh Nhẹ / Tối, luu localStorage.
+// Fix bug cu: code co variant `dark:` nhung setTheme lai remove class `dark`.
+export const THEMES = ['light', 'sky', 'dark'];
+export const THEME_LABELS = { light: 'Sáng', sky: 'Xanh Nhẹ', dark: 'Tối' };
+
 export function getTheme() {
   if (typeof window === 'undefined') return 'sky';
   try {
     const saved = localStorage.getItem('tienganh_theme');
-    if (saved === 'light' || saved === 'sky') return saved;
+    if (saved === 'light' || saved === 'sky' || saved === 'dark') return saved;
     return 'sky'; // Mặc định giao diện Xanh Nhẹ thanh thoát, thân thiện
   } catch {}
   return 'sky';
 }
 
 export function setTheme(theme) {
-  const safeTheme = theme === 'light' ? 'light' : 'sky';
+  const safeTheme = theme === 'dark' ? 'dark' : theme === 'light' ? 'light' : 'sky';
   if (typeof window !== 'undefined') {
     localStorage.setItem('tienganh_theme', safeTheme);
     document.documentElement.classList.remove('dark', 'theme-sky');
     if (safeTheme === 'sky') {
       document.documentElement.classList.add('theme-sky');
+    } else if (safeTheme === 'dark') {
+      document.documentElement.classList.add('dark');
     }
-    document.documentElement.style.colorScheme = 'light';
+    document.documentElement.style.colorScheme = safeTheme === 'dark' ? 'dark' : 'light';
     window.dispatchEvent(new CustomEvent('tienganh:theme-change', { detail: safeTheme }));
   }
   return safeTheme;
 }
 
 export function toggleTheme() {
-  const current = getTheme();
-  // Chỉ duy trì hai giao diện sáng: xanh học đường và sáng tối giản.
-  const next = current === 'sky' ? 'light' : 'sky';
+  const order = ['light', 'sky', 'dark'];
+  const next = order[(order.indexOf(getTheme()) + 1) % order.length];
   return setTheme(next);
 }
 

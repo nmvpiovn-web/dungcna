@@ -27,18 +27,32 @@
 				theme: {
 					extend: {
 						colors: {
+							// Academic Warmth design tokens (2026-09-30): utilities an theo CSS variable,
+							// doi theo 3 theme Sáng / Xanh Nhẹ / Tối. Cam hardcode mau trong component moi.
 							brand: {
-								50: '#f0fdf4',
-								100: '#dcfce7',
-								200: '#bbf7d0',
-								300: '#86efac',
-								400: '#4ade80',
-								500: '#22c55e',
-								600: '#16a34a',
-								700: '#15803d',
-								800: '#166534',
-								900: '#14532d'
-							}
+								50: 'rgb(var(--brand-50-rgb) / <alpha-value>)',
+								200: 'rgb(var(--brand-200-rgb) / <alpha-value>)',
+								600: 'rgb(var(--brand-600-rgb) / <alpha-value>)',
+								700: 'rgb(var(--brand-700-rgb) / <alpha-value>)'
+							},
+							ink: {
+								500: 'rgb(var(--ink-500-rgb) / <alpha-value>)',
+								900: 'rgb(var(--ink-900-rgb) / <alpha-value>)'
+							},
+							surface: {
+								0: 'rgb(var(--surface-0-rgb) / <alpha-value>)',
+								1: 'rgb(var(--surface-1-rgb) / <alpha-value>)'
+							},
+							accent: {
+								500: 'rgb(var(--accent-500-rgb) / <alpha-value>)'
+							},
+							success: {
+								600: 'rgb(var(--success-600-rgb) / <alpha-value>)'
+							},
+							danger: {
+								600: 'rgb(var(--danger-600-rgb) / <alpha-value>)'
+							},
+							line: 'rgb(var(--line-rgb) / <alpha-value>)'
 						},
 						fontFamily: {
 							sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
