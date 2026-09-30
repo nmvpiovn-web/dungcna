@@ -1,0 +1,25 @@
+{
+  "generatedAt": "2026-09-30T01:53:11.698Z",
+  "migrations": [
+    "0001",
+    "0002",
+    "0003"
+  ],
+  "results": [
+    {
+      "id": "11-admin-login",
+      "outcome": "completed",
+      "detail": {
+        "verified": true
+      }
+    },
+    {
+      "id": "17-parent-cpanel",
+      "outcome": "completed",
+      "detail": {
+        "before": "SỔ PHỤ HUYNH\n•\nCỔNG THÔNG TIN HỌC VỤ GIA ĐÌNH\nBáo Cáo Tiến Độ Học Tập & Học Phí\n\nTheo dõi trực tiếp kết quả bài tập về nhà, bài viết tay, file ghi âm giọng nói của con và chi tiết đối trừ sao thưởng vào học phí định kỳ.\n\n0\nSao Tích Lũy\n0/0\nĐã Chấm\n0.0\nĐiểm TB\nBài Tập Về Nhà (0/0)\nSổ Học Phí & Đối Trừ Sao\nHọc sinh:\nTất cả học sinh liên kết\nĐã xảy ra lỗi khi tải dữ liệu\n\nLỗi kết nối máy chủ hoặc phiên đăng nhập đã hết hạn. Vui lòng tải lại.\n\nTải lại dữ liệu",
+        "tuition": "SỔ PHỤ HUYNH\n•\nCỔNG THÔNG TIN HỌC VỤ GIA ĐÌNH\nBáo Cáo Tiến Độ Học Tập & Học Phí\n\nTheo dõi trực tiếp kết quả bài tập về nhà, bài viết tay, file ghi âm giọng nói của con và chi tiết đối trừ sao thưởng vào học phí định kỳ.\n\n0\nSao Tích Lũy\n0/0\nĐã Chấm\n0.0\nĐiểm TB\nBài Tập Về Nhà (0/0)\nSổ Học Phí & Đối Trừ Sao\nHọc sinh:\nTất cả học sinh liên kết\nĐã xảy ra lỗi khi tải dữ liệu\n\nLỗi kết nối máy chủ hoặc phiên đăng nhập đã hết hạn. Vui lòng tải lại.\n\nTải lại dữ liệu"
+      }
+    }
+  ]
+}

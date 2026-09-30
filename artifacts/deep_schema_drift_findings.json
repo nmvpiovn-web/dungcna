@@ -1,0 +1,421 @@
+[
+  {
+    "type": "UNPROTECTED_MUTATION_ENDPOINT",
+    "file": "src/routes/api/ai/deepseek/+server.js",
+    "detail": "Mutation endpoint does not invoke verifyServerAuth"
+  },
+  {
+    "type": "UNPROTECTED_MUTATION_ENDPOINT",
+    "file": "src/routes/api/bot/zalo/+server.js",
+    "detail": "Mutation endpoint does not invoke verifyServerAuth"
+  },
+  {
+    "type": "COLUMN_DOES_NOT_EXIST_ON_SELECT",
+    "file": "src/routes/api/exams/+server.js",
+    "table": "exam_attempts",
+    "column": "duplicate_prior_attempt",
+    "sql": "INSERT OR IGNORE INTO exam_attempts_archive (\n            id, user_id, user_name, user_email, exam_i"
+  },
+  {
+    "type": "UNKNOWN_TABLE",
+    "file": "src/routes/api/exams/guest/+server.js",
+    "table": "guest_exam_sessions",
+    "sql": "INSERT OR REPLACE INTO guest_exam_sessions \r\n      (id, token, grade, curriculum"
+  },
+  {
+    "type": "UNPROTECTED_MUTATION_ENDPOINT",
+    "file": "src/routes/api/exams/guest/+server.js",
+    "detail": "Mutation endpoint does not invoke verifyServerAuth"
+  },
+  {
+    "type": "UNKNOWN_TABLE",
+    "file": "src/routes/api/exams/random/+server.js",
+    "table": "exam_instances",
+    "sql": "INSERT INTO exam_instances (id, exam_type, grade_level, title, total_questions, "
+  },
+  {
+    "type": "UNKNOWN_TABLE",
+    "file": "src/routes/api/exams/random/+server.js",
+    "table": "exam_instance_items",
+    "sql": "INSERT INTO exam_instance_items \n      (instance_id, item_order, question_id, qu"
+  },
+  {
+    "type": "COLUMN_DOES_NOT_EXIST_ON_SELECT",
+    "file": "src/routes/api/homework/+server.js",
+    "table": "class_enrollments",
+    "column": "1",
+    "sql": "SELECT 1 FROM class_enrollments WHERE user_id = ? AND class_id = ? AND status = \\'active\\' LIMIT 1"
+  },
+  {
+    "type": "COLUMN_DOES_NOT_EXIST_ON_SELECT",
+    "file": "src/routes/api/homework/+server.js",
+    "table": "class_enrollments",
+    "column": "1",
+    "sql": "SELECT 1 FROM class_enrollments ce\n            JOIN parent_student_links psl ON psl.student_user_id "
+  },
+  {
+    "type": "COLUMN_DOES_NOT_EXIST_ON_SELECT",
+    "file": "src/routes/api/homework/+server.js",
+    "table": "parent_student_links",
+    "column": "name",
+    "sql": "SELECT psl.student_user_id, u.name as student_name, u.grade, u.avatar\n          FROM parent_student_"
+  },
+  {
+    "type": "COLUMN_DOES_NOT_EXIST_ON_SELECT",
+    "file": "src/routes/api/homework/+server.js",
+    "table": "parent_student_links",
+    "column": "grade",
+    "sql": "SELECT psl.student_user_id, u.name as student_name, u.grade, u.avatar\n          FROM parent_student_"
+  },
+  {
+    "type": "COLUMN_DOES_NOT_EXIST_ON_SELECT",
+    "file": "src/routes/api/homework/+server.js",
+    "table": "parent_student_links",
+    "column": "avatar",
+    "sql": "SELECT psl.student_user_id, u.name as student_name, u.grade, u.avatar\n          FROM parent_student_"
+  },
+  {
+    "type": "COLUMN_DOES_NOT_EXIST_ON_SELECT",
+    "file": "src/routes/api/homework/+server.js",
+    "table": "class_enrollments",
+    "column": "1",
+    "sql": "SELECT 1 FROM class_enrollments \n        WHERE user_id = ? AND class_id = ? AND status = 'active' LI"
+  },
+  {
+    "type": "COLUMN_DOES_NOT_EXIST_ON_SELECT",
+    "file": "src/routes/api/homework/+server.js",
+    "table": "homework_submissions",
+    "column": "0",
+    "sql": "INSERT INTO student_stars (\n                student_id, stars_balance, total_earned_stars, stars_red"
+  },
+  {
+    "type": "COLUMN_DOES_NOT_EXIST_ON_SELECT",
+    "file": "src/routes/api/homework/+server.js",
+    "table": "homework_submissions",
+    "column": "0",
+    "sql": "INSERT INTO student_stars (\n                student_id, stars_balance, total_earned_stars, stars_red"
+  },
+  {
+    "type": "COLUMN_DOES_NOT_EXIST_ON_SELECT",
+    "file": "src/routes/api/homework/+server.js",
+    "table": "homework_submissions",
+    "column": "0",
+    "sql": "INSERT INTO student_stars (\n                student_id, stars_balance, total_earned_stars, stars_red"
+  },
+  {
+    "type": "COLUMN_DOES_NOT_EXIST_ON_SELECT",
+    "file": "src/routes/api/homework/+server.js",
+    "table": "homework_submissions",
+    "column": "0",
+    "sql": "INSERT INTO student_stars (\n                student_id, stars_balance, total_earned_stars, stars_red"
+  },
+  {
+    "type": "COLUMN_DOES_NOT_EXIST_ON_SELECT",
+    "file": "src/routes/api/homework/+server.js",
+    "table": "homework_submissions",
+    "column": "0",
+    "sql": "INSERT INTO student_stars (\n                student_id, stars_balance, total_earned_stars, stars_red"
+  },
+  {
+    "type": "COLUMN_DOES_NOT_EXIST_ON_SELECT",
+    "file": "src/routes/api/homework/+server.js",
+    "table": "student_stars",
+    "column": "NULL",
+    "sql": "INSERT INTO student_star_ledger (\n                id, student_id, bill_id, reference_id, delta_stars"
+  },
+  {
+    "type": "COLUMN_DOES_NOT_EXIST_ON_SELECT",
+    "file": "src/routes/api/homework/+server.js",
+    "table": "homework_submissions",
+    "column": "student",
+    "sql": "INSERT INTO system_notifications (id, target_role, target_user_id, title, body, category, reference_"
+  },
+  {
+    "type": "COLUMN_DOES_NOT_EXIST_ON_SELECT",
+    "file": "src/routes/api/homework/+server.js",
+    "table": "homework_submissions",
+    "column": "homework",
+    "sql": "INSERT INTO system_notifications (id, target_role, target_user_id, title, body, category, reference_"
+  },
+  {
+    "type": "COLUMN_DOES_NOT_EXIST_ON_SELECT",
+    "file": "src/routes/api/homework/+server.js",
+    "table": "homework_submissions",
+    "column": "parent",
+    "sql": "INSERT INTO system_notifications (id, target_role, target_user_id, title, body, category, reference_"
+  },
+  {
+    "type": "COLUMN_DOES_NOT_EXIST_ON_SELECT",
+    "file": "src/routes/api/homework/+server.js",
+    "table": "homework_submissions",
+    "column": "homework",
+    "sql": "INSERT INTO system_notifications (id, target_role, target_user_id, title, body, category, reference_"
+  },
+  {
+    "type": "COLUMN_DOES_NOT_EXIST_ON_SELECT",
+    "file": "src/routes/api/notifications/+server.js",
+    "table": "system_notifications",
+    "column": "CURRENT_TIMESTAMP",
+    "sql": "INSERT INTO system_notification_reads (notification_id, user_id, read_at)\n          SELECT n.id, ?, "
+  },
+  {
+    "type": "UNKNOWN_TABLE",
+    "file": "src/routes/api/notifications/+server.js",
+    "table": "system_notification_reads",
+    "sql": "INSERT INTO system_notification_reads (notification_id, user_id, read_at)\n      "
+  },
+  {
+    "type": "COLUMN_DOES_NOT_EXIST_ON_SELECT",
+    "file": "src/routes/api/parents/children/+server.js",
+    "table": "parent_student_links",
+    "column": "name",
+    "sql": "SELECT psl.id as link_id, psl.student_user_id, psl.verification_status, psl.created_at as requested_"
+  },
+  {
+    "type": "COLUMN_DOES_NOT_EXIST_ON_SELECT",
+    "file": "src/routes/api/parents/children/+server.js",
+    "table": "parent_student_links",
+    "column": "username",
+    "sql": "SELECT psl.id as link_id, psl.student_user_id, psl.verification_status, psl.created_at as requested_"
+  },
+  {
+    "type": "COLUMN_DOES_NOT_EXIST_ON_SELECT",
+    "file": "src/routes/api/parents/children/+server.js",
+    "table": "parent_student_links",
+    "column": "avatar",
+    "sql": "SELECT psl.id as link_id, psl.student_user_id, psl.verification_status, psl.created_at as requested_"
+  },
+  {
+    "type": "COLUMN_DOES_NOT_EXIST_ON_SELECT",
+    "file": "src/routes/api/parents/children/+server.js",
+    "table": "parent_student_links",
+    "column": "grade",
+    "sql": "SELECT psl.id as link_id, psl.student_user_id, psl.verification_status, psl.created_at as requested_"
+  },
+  {
+    "type": "COLUMN_DOES_NOT_EXIST_ON_SELECT",
+    "file": "src/routes/api/parents/children/+server.js",
+    "table": "parent_student_links",
+    "column": "status",
+    "sql": "SELECT psl.id as link_id, psl.student_user_id, psl.verification_status, psl.created_at as requested_"
+  },
+  {
+    "type": "COLUMN_DOES_NOT_EXIST_ON_SELECT",
+    "file": "src/routes/api/parents/tests/+server.js",
+    "table": "parent_student_links",
+    "column": "parent_manual",
+    "sql": "INSERT INTO parent_test_records (\n            id, parent_user_id, student_user_id, test_name, test_t"
+  },
+  {
+    "type": "COLUMN_DOES_NOT_EXIST_ON_SELECT",
+    "file": "src/routes/api/parents/tests/+server.js",
+    "table": "parent_student_links",
+    "column": "unverified",
+    "sql": "INSERT INTO parent_test_records (\n            id, parent_user_id, student_user_id, test_name, test_t"
+  },
+  {
+    "type": "COLUMN_DOES_NOT_EXIST_ON_SELECT",
+    "file": "src/routes/api/parents/tests/+server.js",
+    "table": "parent_student_links",
+    "column": "1",
+    "sql": "INSERT INTO parent_test_records (\n            id, parent_user_id, student_user_id, test_name, test_t"
+  },
+  {
+    "type": "COLUMN_DOES_NOT_EXIST_ON_SELECT",
+    "file": "src/routes/api/parents/tests/+server.js",
+    "table": "parent_student_links",
+    "column": "CURRENT_TIMESTAMP",
+    "sql": "INSERT INTO parent_test_records (\n            id, parent_user_id, student_user_id, test_name, test_t"
+  },
+  {
+    "type": "UNKNOWN_TABLE",
+    "file": "src/routes/api/parents/tests/+server.js",
+    "table": "parent_test_records",
+    "sql": "INSERT INTO parent_test_records (\n            id, parent_user_id, student_user_i"
+  },
+  {
+    "type": "COLUMN_DOES_NOT_EXIST_ON_SELECT",
+    "file": "src/routes/api/second-brain/+server.js",
+    "table": "knowledge_links",
+    "column": "from_id",
+    "sql": "SELECT kl.from_id as id, kv.title, kv.folder \n        FROM knowledge_links kl \n        JOIN knowledg"
+  },
+  {
+    "type": "COLUMN_DOES_NOT_EXIST_ON_SELECT",
+    "file": "src/routes/api/second-brain/+server.js",
+    "table": "knowledge_links",
+    "column": "title",
+    "sql": "SELECT kl.from_id as id, kv.title, kv.folder \n        FROM knowledge_links kl \n        JOIN knowledg"
+  },
+  {
+    "type": "COLUMN_DOES_NOT_EXIST_ON_SELECT",
+    "file": "src/routes/api/second-brain/+server.js",
+    "table": "knowledge_links",
+    "column": "folder",
+    "sql": "SELECT kl.from_id as id, kv.title, kv.folder \n        FROM knowledge_links kl \n        JOIN knowledg"
+  },
+  {
+    "type": "COLUMN_DOES_NOT_EXIST_ON_SELECT",
+    "file": "src/routes/api/second-brain/+server.js",
+    "table": "knowledge_links",
+    "column": "to_id",
+    "sql": "SELECT to_id as target FROM knowledge_links WHERE from_id = ?;"
+  },
+  {
+    "type": "COLUMN_DOES_NOT_EXIST_ON_SELECT",
+    "file": "src/routes/api/students/+server.js",
+    "table": "users",
+    "column": "0) profile_version",
+    "sql": "SELECT id, username, phone, email, name, role, avatar, status, metadata, COALESCE(profile_version,0)"
+  },
+  {
+    "type": "COLUMN_DOES_NOT_EXIST_ON_SELECT",
+    "file": "src/routes/api/students/+server.js",
+    "table": "users",
+    "column": "0) profile_version",
+    "sql": "SELECT id, username, phone, email, name, role, avatar, status, metadata, COALESCE(profile_version,0)"
+  },
+  {
+    "type": "COLUMN_DOES_NOT_EXIST_ON_SELECT",
+    "file": "src/routes/api/students/+server.js",
+    "table": "users",
+    "column": "0) profile_version",
+    "sql": "SELECT id,role,metadata,COALESCE(profile_version,0) profile_version FROM users WHERE id=? LIMIT 1"
+  },
+  {
+    "type": "COLUMN_DOES_NOT_EXIST_ON_SELECT",
+    "file": "src/routes/api/teachers/workflows/+server.js",
+    "table": "class_sessions",
+    "column": "1",
+    "sql": "UPDATE teacher_leave_requests \r\n          SET admin_status = ?, admin_notes = ?, updated_at = CURREN"
+  },
+  {
+    "type": "COLUMN_DOES_NOT_EXIST_ON_SELECT",
+    "file": "src/routes/api/teachers/workflows/+server.js",
+    "table": "class_sessions",
+    "column": "1",
+    "sql": "UPDATE teacher_leave_requests \r\n          SET admin_status = ?, admin_notes = ?, updated_at = CURREN"
+  },
+  {
+    "type": "COLUMN_DOES_NOT_EXIST_ON_SELECT",
+    "file": "src/routes/api/teachers/workflows/+server.js",
+    "table": "class_sessions",
+    "column": "1",
+    "sql": "UPDATE class_sessions \r\n          SET substitute_teacher_id = ?, \r\n              substitute_teacher_"
+  },
+  {
+    "type": "COLUMN_DOES_NOT_EXIST_ON_SELECT",
+    "file": "src/routes/api/teachers/workflows/+server.js",
+    "table": "teacher_salary_advances",
+    "column": "advance_disbursed",
+    "sql": "INSERT INTO salary_transactions \r\n        (id, teacher_id, teacher_name, transaction_type, amount_vn"
+  },
+  {
+    "type": "COLUMN_DOES_NOT_EXIST_ON_SELECT",
+    "file": "src/routes/api/teachers/workflows/+server.js",
+    "table": "teacher_salary_advances",
+    "column": "completed",
+    "sql": "INSERT INTO salary_transactions \r\n        (id, teacher_id, teacher_name, transaction_type, amount_vn"
+  },
+  {
+    "type": "COLUMN_DOES_NOT_EXIST_ON_SELECT",
+    "file": "src/routes/api/teachers/workflows/+server.js",
+    "table": "teacher_payrolls",
+    "column": "1",
+    "sql": "UPDATE teacher_salary_advances \r\n        SET status = 'deducted', deducted_at = CURRENT_TIMESTAMP, d"
+  },
+  {
+    "type": "COLUMN_DOES_NOT_EXIST_ON_SELECT",
+    "file": "src/routes/api/teachers/workflows/+server.js",
+    "table": "teacher_salary_advances",
+    "column": "advance_deduction",
+    "sql": "INSERT INTO salary_transactions \r\n        (id, teacher_id, teacher_name, transaction_type, amount_vn"
+  },
+  {
+    "type": "COLUMN_DOES_NOT_EXIST_ON_SELECT",
+    "file": "src/routes/api/teachers/workflows/+server.js",
+    "table": "teacher_salary_advances",
+    "column": "completed",
+    "sql": "INSERT INTO salary_transactions \r\n        (id, teacher_id, teacher_name, transaction_type, amount_vn"
+  },
+  {
+    "type": "COLUMN_DOES_NOT_EXIST_ON_SELECT",
+    "file": "src/routes/api/tuition/+server.js",
+    "table": "tuition_bills",
+    "column": "1",
+    "sql": "UPDATE student_stars\n            SET stars_balance = stars_balance - ?,\n                stars_redeem"
+  },
+  {
+    "type": "COLUMN_DOES_NOT_EXIST_ON_SELECT",
+    "file": "src/routes/api/tuition/+server.js",
+    "table": "student_stars",
+    "column": "0",
+    "sql": "INSERT INTO student_star_ledger (id, student_id, bill_id, reference_id, delta_stars, amount, balance"
+  },
+  {
+    "type": "COLUMN_DOES_NOT_EXIST_ON_SELECT",
+    "file": "src/routes/api/tuition/+server.js",
+    "table": "student_stars",
+    "column": "deduct",
+    "sql": "INSERT INTO student_star_ledger (id, student_id, bill_id, reference_id, delta_stars, amount, balance"
+  },
+  {
+    "type": "COLUMN_DOES_NOT_EXIST_ON_SELECT",
+    "file": "src/routes/api/tuition/+server.js",
+    "table": "tuition_bills",
+    "column": "1",
+    "sql": "UPDATE student_stars\n          SET stars_balance = stars_balance + ?,\n              stars_redeemed ="
+  },
+  {
+    "type": "COLUMN_DOES_NOT_EXIST_ON_SELECT",
+    "file": "src/routes/api/tuition/+server.js",
+    "table": "student_stars",
+    "column": "0",
+    "sql": "INSERT INTO student_star_ledger (id, student_id, bill_id, reference_id, delta_stars, amount, balance"
+  },
+  {
+    "type": "COLUMN_DOES_NOT_EXIST_ON_SELECT",
+    "file": "src/routes/api/tuition/+server.js",
+    "table": "student_stars",
+    "column": "refund",
+    "sql": "INSERT INTO student_star_ledger (id, student_id, bill_id, reference_id, delta_stars, amount, balance"
+  },
+  {
+    "type": "OMITTED_NOT_NULL_COLUMN",
+    "file": "src/routes/api/tuition/+server.js",
+    "table": "tuition_bills",
+    "omittedColumns": [
+      "month_label",
+      "amount"
+    ],
+    "sql": "INSERT INTO tuition_bills (\n              id, version, student_id, student_name, age, grade_level, p"
+  },
+  {
+    "type": "COLUMN_DOES_NOT_EXIST_ON_SELECT",
+    "file": "src/routes/api/tuition/+server.js",
+    "table": "tuition_bills",
+    "column": "1",
+    "sql": "UPDATE student_stars\n          SET stars_balance = stars_balance + ?,\n              stars_redeemed ="
+  },
+  {
+    "type": "COLUMN_DOES_NOT_EXIST_ON_SELECT",
+    "file": "src/routes/api/tuition/+server.js",
+    "table": "student_stars",
+    "column": "0",
+    "sql": "INSERT INTO student_star_ledger (id, student_id, bill_id, reference_id, delta_stars, amount, balance"
+  },
+  {
+    "type": "COLUMN_DOES_NOT_EXIST_ON_SELECT",
+    "file": "src/routes/api/tuition/+server.js",
+    "table": "student_stars",
+    "column": "refund",
+    "sql": "INSERT INTO student_star_ledger (id, student_id, bill_id, reference_id, delta_stars, amount, balance"
+  },
+  {
+    "type": "COLUMN_DOES_NOT_EXIST_ON_SELECT",
+    "file": "src/routes/api/webhook/sepay/+server.js",
+    "table": "tuition_bills",
+    "column": "0)",
+    "sql": "SELECT id, student_id, COALESCE(final_amount_vnd, total_amount, amount, 0) as total_amount, status\n "
+  }
+]

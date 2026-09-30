@@ -1,0 +1,56 @@
+{
+  "base": "https://timbk.io.vn",
+  "generatedAt": "2026-09-30T08:33:50.020Z",
+  "total": 4,
+  "passed": 1,
+  "failed": 3,
+  "results": [
+    {
+      "id": "public-modules",
+      "status": "PASS",
+      "durationMs": 6620,
+      "detail": {
+        "modules": [
+          {
+            "route": "/",
+            "status": 200,
+            "title": "Tiếng Anh Cô Dung - Hệ Thống Đào Tạo K12 & Lộ Trình Quốc Tế"
+          },
+          {
+            "route": "/flashcards",
+            "status": 200,
+            "title": "Tiếng Anh Cô Dung - Hệ Thống Đào Tạo K12 & Lộ Trình Quốc Tế"
+          },
+          {
+            "route": "/dictionary",
+            "status": 200,
+            "title": "Ngân Hàng Từ Vựng Sư Phạm & Stealth Pronunciation Engine • Tiếng Anh Cô Dung"
+          },
+          {
+            "route": "/exam",
+            "status": 200,
+            "title": "Tiếng Anh Cô Dung - Hệ Thống Đào Tạo K12 & Lộ Trình Quốc Tế"
+          }
+        ]
+      }
+    },
+    {
+      "id": "mobile-overflow",
+      "status": "FAIL",
+      "durationMs": 2364,
+      "error": "/flashcards overflows at 320px: 347"
+    },
+    {
+      "id": "teacher-login-and-read",
+      "status": "FAIL",
+      "durationMs": 12030,
+      "error": "locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#user-profile-btn') to be visible\u001b[22m\n"
+    },
+    {
+      "id": "leader-login-and-read",
+      "status": "FAIL",
+      "durationMs": 12947,
+      "error": "locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#user-profile-btn') to be visible\u001b[22m\n"
+    }
+  ]
+}

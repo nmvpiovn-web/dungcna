@@ -1,0 +1,572 @@
+{
+  "generatedAt": "2026-09-30T03:47:19.014Z",
+  "summary": {
+    "total": 55,
+    "passed": 40,
+    "failed": 15
+  },
+  "results": [
+    {
+      "id": "GUEST-01",
+      "title": "Landing page rendering, tabs, hero and FAQ interaction",
+      "persona": "Guest",
+      "status": "PASS",
+      "duration": 2460,
+      "detail": {
+        "title": "Tiếng Anh Cô Dung - Hệ Thống Đào Tạo K12 & Lộ Trình Quốc Tế",
+        "verified": true
+      }
+    },
+    {
+      "id": "GUEST-02",
+      "title": "Header desktop navigation and flyout submenus",
+      "persona": "Guest",
+      "status": "PASS",
+      "duration": 3131,
+      "detail": {
+        "dropdownsVerified": true,
+        "themeToggled": true
+      }
+    },
+    {
+      "id": "GUEST-03",
+      "title": "Mobile drawer menu navigation at 360px viewport",
+      "persona": "Guest",
+      "status": "PASS",
+      "duration": 2381,
+      "detail": {
+        "mobileDrawerToggled": true
+      }
+    },
+    {
+      "id": "GUEST-04",
+      "title": "Flashcard 3D flip, shuffle, unit filter and touch target size",
+      "persona": "Guest",
+      "status": "PASS",
+      "duration": 12543,
+      "detail": {
+        "backHit": true,
+        "totalCountText": "Thẻ 1 / 52",
+        "touchTargetPass": true
+      }
+    },
+    {
+      "id": "GUEST-05",
+      "title": "Exam room quiz start, timer decrement, question answer, submit",
+      "persona": "Guest",
+      "status": "PASS",
+      "duration": 2908,
+      "detail": {
+        "examWorkflowExecuted": true
+      }
+    },
+    {
+      "id": "GUEST-06",
+      "title": "Dictionary search, word breakdown modal and filter",
+      "persona": "Guest",
+      "status": "FAIL",
+      "duration": 11530,
+      "error": "locator.click: Timeout 9000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button').filter({ hasText: '✕' }).first()\u001b[22m\n\u001b[2m    - locator resolved to <button class=\"absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 text-xs\">✕</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"bg-slate-50 dark:bg-slate-800/40 rounded-lg p-4 border border-slate-200 dark:border-slate-700 space-y-3\">…</div> from <div class=\"fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"bg-slate-50 dark:bg-slate-800/40 rounded-lg p-4 border border-slate-200 dark:border-slate-700 space-y-3\">…</div> from <div class=\"fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    17 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is visible, enabled and stable\u001b[22m\n\u001b[2m       - scrolling into view if needed\u001b[22m\n\u001b[2m       - done scrolling\u001b[22m\n\u001b[2m       - <div class=\"bg-slate-50 dark:bg-slate-800/40 rounded-lg p-4 border border-slate-200 dark:border-slate-700 space-y-3\">…</div> from <div class=\"fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n",
+      "stack": "locator.click: Timeout 9000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button').filter({ hasText: '✕' }).first()\u001b[22m\n\u001b[2m    - locator resolved to <button class=\"absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 text-xs\">✕</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"bg-slate-50 dark:bg-slate-800/40 rounded-lg p-4 border border-slate-200 dark:border-slate-700 space-y-3\">…</div> from <div class=\"fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"bg-slate-50 dark:bg-slate-800/40 rounded-lg p-4 border border-slate-200 dark:border-slate-700 space-y-3\">…</div> from <div class=\"fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    17 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is visible, enabled and stable\u001b[22m\n\u001b[2m       - scrolling into view if needed\u001b[22m\n\u001b[2m       - done scrolling\u001b[22m\n\u001b[2m       - <div class=\"bg-slate-50 dark:bg-slate-800/40 rounded-lg p-4 border border-slate-200 dark:border-slate-700 space-y-3\">…</div> from <div class=\"fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n\n    at C:\\Users\\admin\\.gemini\\antigravity\\scratch\\tienganh7-sveltekit\\tests\\qa\\full_user_deep_audit.mjs:294:24\n    at async file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/qa/full_user_deep_audit.mjs:86:19\n    at async auditCase (C:\\Users\\admin\\.gemini\\antigravity\\scratch\\tienganh7-sveltekit\\tests\\qa\\full_user_deep_audit.mjs:44:20)\n    at async runBrowserCase (C:\\Users\\admin\\.gemini\\antigravity\\scratch\\tienganh7-sveltekit\\tests\\qa\\full_user_deep_audit.mjs:65:3)\n    at async file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/qa/full_user_deep_audit.mjs:275:3"
+    },
+    {
+      "id": "GUEST-07",
+      "title": "Games arena lobby and speed match game launch",
+      "persona": "Guest",
+      "status": "PASS",
+      "duration": 1775,
+      "detail": {
+        "gameLobbyVerified": true
+      }
+    },
+    {
+      "id": "GUEST-08",
+      "title": "Grammar topics, accordion expand, formula inspection and practice quiz",
+      "persona": "Guest",
+      "status": "PASS",
+      "duration": 2148,
+      "detail": {
+        "grammarVerified": true
+      }
+    },
+    {
+      "id": "GUEST-09",
+      "title": "Teacher recruitment form submission creates D1 application",
+      "persona": "Guest",
+      "status": "FAIL",
+      "duration": 10808,
+      "error": "locator.fill: Timeout 9000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[placeholder*=\"email\"]')\u001b[22m\n",
+      "stack": "locator.fill: Timeout 9000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[placeholder*=\"email\"]')\u001b[22m\n\n    at C:\\Users\\admin\\.gemini\\antigravity\\scratch\\tienganh7-sveltekit\\tests\\qa\\full_user_deep_audit.mjs:352:55\n    at async file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/qa/full_user_deep_audit.mjs:86:19\n    at async auditCase (C:\\Users\\admin\\.gemini\\antigravity\\scratch\\tienganh7-sveltekit\\tests\\qa\\full_user_deep_audit.mjs:44:20)\n    at async runBrowserCase (C:\\Users\\admin\\.gemini\\antigravity\\scratch\\tienganh7-sveltekit\\tests\\qa\\full_user_deep_audit.mjs:65:3)\n    at async file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/qa/full_user_deep_audit.mjs:347:3"
+    },
+    {
+      "id": "GUEST-10",
+      "title": "Courses catalog and Tools catalog rendering",
+      "persona": "Guest",
+      "status": "PASS",
+      "duration": 2540,
+      "detail": {
+        "courses": 5,
+        "tools": 7
+      }
+    },
+    {
+      "id": "GUEST-11",
+      "title": "Auth modal login and register tab switching with validation",
+      "persona": "Guest",
+      "status": "PASS",
+      "duration": 2371,
+      "detail": {
+        "authModalVerified": true
+      }
+    },
+    {
+      "id": "GUEST-12",
+      "title": "Document layout overflow check across all mobile viewports (320, 360, 390, 844)",
+      "persona": "Guest",
+      "status": "PASS",
+      "duration": 22269,
+      "detail": {
+        "checkedViewports": 4,
+        "checkedRoutes": 8,
+        "noOverflow": true
+      }
+    },
+    {
+      "id": "STUDENT-01",
+      "title": "Student UI Login, header profile badge, stars display and My Class link",
+      "persona": "Student",
+      "status": "PASS",
+      "duration": 3408,
+      "detail": {
+        "userRoleText": "🎒\nLê Bảo Anh (Học viên tiêu biểu)\nHỌC SINH • 7\n▼",
+        "starsVisible": true
+      }
+    },
+    {
+      "id": "STUDENT-02",
+      "title": "Student Cpanel homework list, submission modal and draft protection",
+      "persona": "Student",
+      "status": "FAIL",
+      "duration": 4369,
+      "error": "locator.innerText: Error: strict mode violation: locator('main') resolved to 2 elements:\n    1) <main class=\"flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6\">…</main> aka getByRole('main').filter({ hasText: 'D Tiếng Anh Cô Dung Hệ Thống' })\n    2) <main class=\"flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 lg:p-8 min-w-0 overflow-x-hidden\">…</main> aka getByRole('main').filter({ hasText: 'D Tiếng Anh Cô Dung Hệ Thống' }).getByRole('main')\n\nCall log:\n\u001b[2m  - waiting for locator('main')\u001b[22m\n",
+      "stack": "locator.innerText: Error: strict mode violation: locator('main') resolved to 2 elements:\n    1) <main class=\"flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6\">…</main> aka getByRole('main').filter({ hasText: 'D Tiếng Anh Cô Dung Hệ Thống' })\n    2) <main class=\"flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 lg:p-8 min-w-0 overflow-x-hidden\">…</main> aka getByRole('main').filter({ hasText: 'D Tiếng Anh Cô Dung Hệ Thống' }).getByRole('main')\n\nCall log:\n\u001b[2m  - waiting for locator('main')\u001b[22m\n\n    at runBrowserCase.username (C:\\Users\\admin\\.gemini\\antigravity\\scratch\\tienganh7-sveltekit\\tests\\qa\\full_user_deep_audit.mjs:442:49)\n    at async file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/qa/full_user_deep_audit.mjs:86:19\n    at async auditCase (C:\\Users\\admin\\.gemini\\antigravity\\scratch\\tienganh7-sveltekit\\tests\\qa\\full_user_deep_audit.mjs:44:20)\n    at async runBrowserCase (C:\\Users\\admin\\.gemini\\antigravity\\scratch\\tienganh7-sveltekit\\tests\\qa\\full_user_deep_audit.mjs:65:3)\n    at async file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/qa/full_user_deep_audit.mjs:440:3"
+    },
+    {
+      "id": "STUDENT-03",
+      "title": "Student Profile Edit Modal CAS version increment and persistence",
+      "persona": "Student",
+      "status": "FAIL",
+      "duration": 12969,
+      "error": "locator.click: Timeout 9000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#user-profile-btn')\u001b[22m\n",
+      "stack": "locator.click: Timeout 9000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#user-profile-btn')\u001b[22m\n\n    at runBrowserCase.username (C:\\Users\\admin\\.gemini\\antigravity\\scratch\\tienganh7-sveltekit\\tests\\qa\\full_user_deep_audit.mjs:468:45)\n    at async file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/qa/full_user_deep_audit.mjs:86:19\n    at async auditCase (C:\\Users\\admin\\.gemini\\antigravity\\scratch\\tienganh7-sveltekit\\tests\\qa\\full_user_deep_audit.mjs:44:20)\n    at async runBrowserCase (C:\\Users\\admin\\.gemini\\antigravity\\scratch\\tienganh7-sveltekit\\tests\\qa\\full_user_deep_audit.mjs:65:3)\n    at async file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/qa/full_user_deep_audit.mjs:466:3"
+    },
+    {
+      "id": "STUDENT-04",
+      "title": "Student logout revokes session and resets header to guest",
+      "persona": "Student",
+      "status": "FAIL",
+      "duration": 13192,
+      "error": "locator.click: Timeout 9000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#user-profile-btn')\u001b[22m\n",
+      "stack": "locator.click: Timeout 9000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#user-profile-btn')\u001b[22m\n\n    at runBrowserCase.username (C:\\Users\\admin\\.gemini\\antigravity\\scratch\\tienganh7-sveltekit\\tests\\qa\\full_user_deep_audit.mjs:489:45)\n    at async file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/qa/full_user_deep_audit.mjs:86:19\n    at async auditCase (C:\\Users\\admin\\.gemini\\antigravity\\scratch\\tienganh7-sveltekit\\tests\\qa\\full_user_deep_audit.mjs:44:20)\n    at async runBrowserCase (C:\\Users\\admin\\.gemini\\antigravity\\scratch\\tienganh7-sveltekit\\tests\\qa\\full_user_deep_audit.mjs:65:3)\n    at async file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/qa/full_user_deep_audit.mjs:487:3"
+    },
+    {
+      "id": "PARENT-01",
+      "title": "Parent UI Login, header badge, and Parent Portal access",
+      "persona": "Parent",
+      "status": "PASS",
+      "duration": 3548,
+      "detail": {
+        "parentLoginVerified": true
+      }
+    },
+    {
+      "id": "PARENT-02",
+      "title": "Parent Cpanel child selector, homework monitoring and tuition tab",
+      "persona": "Parent",
+      "status": "PASS",
+      "duration": 4855,
+      "detail": {
+        "parentCpanelVerified": true
+      }
+    },
+    {
+      "id": "TEACHER-01",
+      "title": "Teacher UI Login, Sổ Giáo Viên and Admin CP navigation",
+      "persona": "Teacher",
+      "status": "PASS",
+      "duration": 3452,
+      "detail": {
+        "teacherLoginVerified": true
+      }
+    },
+    {
+      "id": "TEACHER-02",
+      "title": "Schedule edit modal save persists session to D1 and calendar updates",
+      "persona": "Teacher",
+      "status": "PASS",
+      "duration": 5568,
+      "detail": {
+        "scheduleSaveD1Verified": true
+      }
+    },
+    {
+      "id": "TEACHER-03",
+      "title": "Student evaluations edit modal updates scores and feedback in D1",
+      "persona": "Teacher",
+      "status": "PASS",
+      "duration": 4270,
+      "detail": {
+        "evaluationSaveD1Verified": true
+      }
+    },
+    {
+      "id": "TEACHER-04",
+      "title": "Pedagogy handbook search and 5512 lesson plan inspection",
+      "persona": "Teacher",
+      "status": "PASS",
+      "duration": 4710,
+      "detail": {
+        "pedagogyVerified": true
+      }
+    },
+    {
+      "id": "TEACHER-05",
+      "title": "Teacher Cpanel grading tab, assignment creation and leave modal",
+      "persona": "Teacher",
+      "status": "PASS",
+      "duration": 4564,
+      "detail": {
+        "teacherCpanelVerified": true
+      }
+    },
+    {
+      "id": "ADMIN-01",
+      "title": "Admin UI Login, SuperAdmin badge and Admin CP dropdown",
+      "persona": "Admin",
+      "status": "PASS",
+      "duration": 3413,
+      "detail": {
+        "adminLoginVerified": true
+      }
+    },
+    {
+      "id": "ADMIN-02",
+      "title": "Admin CP tuition management, star deductions and user accounts",
+      "persona": "Admin",
+      "status": "FAIL",
+      "duration": 4344,
+      "error": "The expression evaluated to a falsy value:\n\n  assert.ok(headings.some(h => h.includes('Bảng Điều Hành') || h.includes('Admin CP')))\n",
+      "stack": "AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:\n\n  assert.ok(headings.some(h => h.includes('Bảng Điều Hành') || h.includes('Admin CP')))\n\n    at runBrowserCase.username (file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/qa/full_user_deep_audit.mjs:628:12)\n    at async file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/qa/full_user_deep_audit.mjs:86:19\n    at async auditCase (file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/qa/full_user_deep_audit.mjs:44:20)\n    at async runBrowserCase (file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/qa/full_user_deep_audit.mjs:65:3)\n    at async file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/qa/full_user_deep_audit.mjs:625:3"
+    },
+    {
+      "id": "ADMIN-03",
+      "title": "Obsidian Second Brain notes explorer and search",
+      "persona": "Admin",
+      "status": "PASS",
+      "duration": 4216,
+      "detail": {
+        "secondBrainVerified": true
+      }
+    },
+    {
+      "id": "ADMIN-04",
+      "title": "AdminCP Hub campuses management and streams filter",
+      "persona": "Admin",
+      "status": "PASS",
+      "duration": 4364,
+      "detail": {
+        "admincpHubVerified": true
+      }
+    },
+    {
+      "id": "API-01",
+      "title": "Contract: POST /api/auth/token",
+      "persona": "API",
+      "status": "PASS",
+      "duration": 75,
+      "detail": {
+        "status": 200,
+        "success": true
+      }
+    },
+    {
+      "id": "API-02",
+      "title": "Contract: POST /api/auth/logout",
+      "persona": "API",
+      "status": "PASS",
+      "duration": 36,
+      "detail": {
+        "status": 200,
+        "success": true
+      }
+    },
+    {
+      "id": "API-03",
+      "title": "Contract: GET /api/schedule",
+      "persona": "API",
+      "status": "PASS",
+      "duration": 14,
+      "detail": {
+        "status": 401,
+        "success": false
+      }
+    },
+    {
+      "id": "API-04",
+      "title": "Contract: GET /api/schedule",
+      "persona": "API",
+      "status": "PASS",
+      "duration": 21,
+      "detail": {
+        "status": 200,
+        "success": true
+      }
+    },
+    {
+      "id": "API-05",
+      "title": "Contract: POST /api/schedule/notify",
+      "persona": "API",
+      "status": "PASS",
+      "duration": 22,
+      "detail": {
+        "status": 401,
+        "success": false
+      }
+    },
+    {
+      "id": "API-06",
+      "title": "Contract: GET /api/evaluations",
+      "persona": "API",
+      "status": "PASS",
+      "duration": 10,
+      "detail": {
+        "status": 401,
+        "success": false
+      }
+    },
+    {
+      "id": "API-07",
+      "title": "Contract: GET /api/evaluations",
+      "persona": "API",
+      "status": "FAIL",
+      "duration": 31,
+      "error": "Expected 200, got HTTP 401: {\"success\":false,\"error\":\"Unauthorized: Phiên đăng nhập đã bị thu hồi hoặc đã đăng xuất.\"}",
+      "stack": "AssertionError [ERR_ASSERTION]: Expected 200, got HTTP 401: {\"success\":false,\"error\":\"Unauthorized: Phiên đăng nhập đã bị thu hồi hoặc đã đăng xuất.\"}\n    at file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/qa/full_user_deep_audit.mjs:710:14\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async auditCase (file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/qa/full_user_deep_audit.mjs:44:20)\n    at async file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/qa/full_user_deep_audit.mjs:708:5"
+    },
+    {
+      "id": "API-08",
+      "title": "Contract: GET /api/campuses",
+      "persona": "API",
+      "status": "PASS",
+      "duration": 21,
+      "detail": {
+        "status": 401,
+        "success": false
+      }
+    },
+    {
+      "id": "API-09",
+      "title": "Contract: GET /api/campuses?view=summary",
+      "persona": "API",
+      "status": "PASS",
+      "duration": 37,
+      "detail": {
+        "status": 200,
+        "success": true
+      }
+    },
+    {
+      "id": "API-10",
+      "title": "Contract: GET /api/campuses?view=summary",
+      "persona": "API",
+      "status": "PASS",
+      "duration": 39,
+      "detail": {
+        "status": 200,
+        "success": true
+      }
+    },
+    {
+      "id": "API-11",
+      "title": "Contract: GET /api/campuses",
+      "persona": "API",
+      "status": "FAIL",
+      "duration": 21,
+      "error": "Expected 200, got HTTP 401: {\"success\":false,\"error\":\"Unauthorized: Phiên đăng nhập đã bị thu hồi hoặc đã đăng xuất.\"}",
+      "stack": "AssertionError [ERR_ASSERTION]: Expected 200, got HTTP 401: {\"success\":false,\"error\":\"Unauthorized: Phiên đăng nhập đã bị thu hồi hoặc đã đăng xuất.\"}\n    at file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/qa/full_user_deep_audit.mjs:710:14\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async auditCase (file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/qa/full_user_deep_audit.mjs:44:20)\n    at async file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/qa/full_user_deep_audit.mjs:708:5"
+    },
+    {
+      "id": "API-12",
+      "title": "Contract: GET /api/students",
+      "persona": "API",
+      "status": "PASS",
+      "duration": 30,
+      "detail": {
+        "status": 403,
+        "success": false
+      }
+    },
+    {
+      "id": "API-13",
+      "title": "Contract: GET /api/students",
+      "persona": "API",
+      "status": "FAIL",
+      "duration": 27,
+      "error": "Expected 200, got HTTP 401: {\"success\":false,\"error\":\"Unauthorized: Phiên đăng nhập đã bị thu hồi hoặc đã đăng xuất.\"}",
+      "stack": "AssertionError [ERR_ASSERTION]: Expected 200, got HTTP 401: {\"success\":false,\"error\":\"Unauthorized: Phiên đăng nhập đã bị thu hồi hoặc đã đăng xuất.\"}\n    at file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/qa/full_user_deep_audit.mjs:710:14\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async auditCase (file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/qa/full_user_deep_audit.mjs:44:20)\n    at async file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/qa/full_user_deep_audit.mjs:708:5"
+    },
+    {
+      "id": "API-14",
+      "title": "Contract: GET /api/homework",
+      "persona": "API",
+      "status": "PASS",
+      "duration": 60,
+      "detail": {
+        "status": 200,
+        "success": true
+      }
+    },
+    {
+      "id": "API-15",
+      "title": "Contract: GET /api/homework",
+      "persona": "API",
+      "status": "PASS",
+      "duration": 64,
+      "detail": {
+        "status": 200,
+        "success": true
+      }
+    },
+    {
+      "id": "API-16",
+      "title": "Contract: GET /api/parents/children",
+      "persona": "API",
+      "status": "PASS",
+      "duration": 29,
+      "detail": {
+        "status": 200,
+        "success": true
+      }
+    },
+    {
+      "id": "API-17",
+      "title": "Contract: GET /api/parents/children",
+      "persona": "API",
+      "status": "PASS",
+      "duration": 28,
+      "detail": {
+        "status": 403,
+        "success": false
+      }
+    },
+    {
+      "id": "API-18",
+      "title": "Contract: GET /api/parents/tests?student_id=usr_student_demo",
+      "persona": "API",
+      "status": "FAIL",
+      "duration": 44,
+      "error": "Expected 200, got HTTP 403: {\"success\":false,\"error\":\"ForbiddenChildAccess: Học sinh chưa được xác thực liên kết với tài khoản phụ huynh này.\"}",
+      "stack": "AssertionError [ERR_ASSERTION]: Expected 200, got HTTP 403: {\"success\":false,\"error\":\"ForbiddenChildAccess: Học sinh chưa được xác thực liên kết với tài khoản phụ huynh này.\"}\n    at file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/qa/full_user_deep_audit.mjs:710:14\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async auditCase (file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/qa/full_user_deep_audit.mjs:44:20)\n    at async file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/qa/full_user_deep_audit.mjs:708:5"
+    },
+    {
+      "id": "API-19",
+      "title": "Contract: GET /api/teachers/workflows?type=all",
+      "persona": "API",
+      "status": "PASS",
+      "duration": 44,
+      "detail": {
+        "status": 200,
+        "success": true
+      }
+    },
+    {
+      "id": "API-20",
+      "title": "Contract: GET /api/teachers/staff",
+      "persona": "API",
+      "status": "FAIL",
+      "duration": 16,
+      "error": "Expected 200, got HTTP 401: {\"success\":false,\"error\":\"Unauthorized: Yêu cầu đăng nhập tài khoản hợp lệ\"}",
+      "stack": "AssertionError [ERR_ASSERTION]: Expected 200, got HTTP 401: {\"success\":false,\"error\":\"Unauthorized: Yêu cầu đăng nhập tài khoản hợp lệ\"}\n    at file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/qa/full_user_deep_audit.mjs:710:14\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async auditCase (file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/qa/full_user_deep_audit.mjs:44:20)\n    at async file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/qa/full_user_deep_audit.mjs:708:5"
+    },
+    {
+      "id": "API-21",
+      "title": "Contract: GET /api/teachers/payroll?billing_cycle=2026-09",
+      "persona": "API",
+      "status": "PASS",
+      "duration": 81,
+      "detail": {
+        "status": 200,
+        "success": true
+      }
+    },
+    {
+      "id": "API-22",
+      "title": "Contract: GET /api/notifications",
+      "persona": "API",
+      "status": "PASS",
+      "duration": 50,
+      "detail": {
+        "status": 200,
+        "success": true
+      }
+    },
+    {
+      "id": "API-23",
+      "title": "Contract: GET /api/tuition",
+      "persona": "API",
+      "status": "FAIL",
+      "duration": 20,
+      "error": "Expected 200, got HTTP 401: {\"success\":false,\"error\":\"Unauthorized: Phiên đăng nhập đã bị thu hồi hoặc đã đăng xuất.\"}",
+      "stack": "AssertionError [ERR_ASSERTION]: Expected 200, got HTTP 401: {\"success\":false,\"error\":\"Unauthorized: Phiên đăng nhập đã bị thu hồi hoặc đã đăng xuất.\"}\n    at file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/qa/full_user_deep_audit.mjs:710:14\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async auditCase (file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/qa/full_user_deep_audit.mjs:44:20)\n    at async file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/qa/full_user_deep_audit.mjs:708:5"
+    },
+    {
+      "id": "API-24",
+      "title": "Contract: GET /api/users/profile",
+      "persona": "API",
+      "status": "PASS",
+      "duration": 20,
+      "detail": {
+        "status": 200,
+        "success": true
+      }
+    },
+    {
+      "id": "API-25",
+      "title": "Contract: GET /api/second-brain",
+      "persona": "API",
+      "status": "PASS",
+      "duration": 28,
+      "detail": {
+        "status": 403,
+        "success": false
+      }
+    },
+    {
+      "id": "API-26",
+      "title": "Contract: GET /api/second-brain",
+      "persona": "API",
+      "status": "FAIL",
+      "duration": 26,
+      "error": "Expected 200, got HTTP 401: {\"success\":false,\"error\":\"Unauthorized: Phiên đăng nhập đã bị thu hồi hoặc đã đăng xuất.\"}",
+      "stack": "AssertionError [ERR_ASSERTION]: Expected 200, got HTTP 401: {\"success\":false,\"error\":\"Unauthorized: Phiên đăng nhập đã bị thu hồi hoặc đã đăng xuất.\"}\n    at file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/qa/full_user_deep_audit.mjs:710:14\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async auditCase (file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/qa/full_user_deep_audit.mjs:44:20)\n    at async file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/qa/full_user_deep_audit.mjs:708:5"
+    },
+    {
+      "id": "API-27",
+      "title": "Contract: POST /api/webhook",
+      "persona": "API",
+      "status": "FAIL",
+      "duration": 23,
+      "error": "Expected 401, got HTTP 503: {\"success\":false,\"error\":\"ServiceUnavailable: CENTRAL_WEBHOOK_SECRET chưa được cấu hình.\"}",
+      "stack": "AssertionError [ERR_ASSERTION]: Expected 401, got HTTP 503: {\"success\":false,\"error\":\"ServiceUnavailable: CENTRAL_WEBHOOK_SECRET chưa được cấu hình.\"}\n    at file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/qa/full_user_deep_audit.mjs:710:14\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async auditCase (file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/qa/full_user_deep_audit.mjs:44:20)\n    at async file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/qa/full_user_deep_audit.mjs:708:5"
+    },
+    {
+      "id": "API-28",
+      "title": "Contract: POST /api/webhook/sepay",
+      "persona": "API",
+      "status": "FAIL",
+      "duration": 16,
+      "error": "Expected 401, got HTTP 503: {\"success\":false,\"error\":\"ServiceUnavailable: SEPAY_WEBHOOK_SECRET chưa được cấu hình.\"}",
+      "stack": "AssertionError [ERR_ASSERTION]: Expected 401, got HTTP 503: {\"success\":false,\"error\":\"ServiceUnavailable: SEPAY_WEBHOOK_SECRET chưa được cấu hình.\"}\n    at file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/qa/full_user_deep_audit.mjs:710:14\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async auditCase (file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/qa/full_user_deep_audit.mjs:44:20)\n    at async file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/qa/full_user_deep_audit.mjs:708:5"
+    }
+  ]
+}

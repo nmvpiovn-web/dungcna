@@ -1,0 +1,19 @@
+{
+  "generatedAt": "2026-09-30T09:54:42.369Z",
+  "summary": {
+    "total": 1,
+    "passed": 0,
+    "failed": 1
+  },
+  "results": [
+    {
+      "id": "STUDENT-04",
+      "title": "Student generates random D1 grammar exam, checks option text shape, answers and submits",
+      "persona": "Student",
+      "status": "FAIL",
+      "duration": 13125,
+      "error": "locator.waitFor: Timeout 8000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#exam-result-banner') to be visible\u001b[22m\n",
+      "stack": "locator.waitFor: Timeout 8000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#exam-result-banner') to be visible\u001b[22m\n\n    at runBrowserCase.username (C:\\Users\\admin\\.gemini\\antigravity\\scratch\\tienganh7-sveltekit\\tests\\qa\\full_user_deep_audit.mjs:563:24)\n    at async file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/qa/full_user_deep_audit.mjs:89:21\n    at async auditCase (C:\\Users\\admin\\.gemini\\antigravity\\scratch\\tienganh7-sveltekit\\tests\\qa\\full_user_deep_audit.mjs:46:20)\n    at async runBrowserCase (C:\\Users\\admin\\.gemini\\antigravity\\scratch\\tienganh7-sveltekit\\tests\\qa\\full_user_deep_audit.mjs:67:3)\n    at async file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/qa/full_user_deep_audit.mjs:521:3"
+    }
+  ]
+}

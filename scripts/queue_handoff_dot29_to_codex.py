@@ -8,7 +8,7 @@ import os
 
 CODEX_BIN = r"C:\Users\admin\AppData\Local\OpenAI\Codex\bin\faa963e871dd422c\codex.exe"
 THREAD_ID = "01a0d8cb-e7f2-72e3-b105-e06c43009750"
-HANDOFF_FILE = r"C:\Users\admin\Documents\Codex\HANDOFF_DOT29_AUDIT_73998dd_EXT_REMEDIATED.md"
+HANDOFF_FILE = r"C:\Users\admin\Documents\Codex\HANDOFF_DOT29_303dd8c_EXT_REMEDIATED_V2.md"
 
 try:
     with open(HANDOFF_FILE, 'r', encoding='utf-8') as f:

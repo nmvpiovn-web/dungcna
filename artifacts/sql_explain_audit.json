@@ -1,0 +1,241 @@
+{
+  "totalQueries": 215,
+  "errorCount": 47,
+  "errors": [
+    {
+      "file": "src\\routes\\api\\exams\\+server.js",
+      "error": "near \"?\": syntax error",
+      "sql": "ALTER TABLE ?, ? ADD COLUMN ?, ?;"
+    },
+    {
+      "file": "src\\routes\\api\\exams\\+server.js",
+      "error": "no such table: exam_attempts_archive",
+      "sql": "INSERT OR IGNORE INTO exam_attempts_archive (\n            id, user_id, user_name, user_email, exam_id, exam_title,\n            score, max_score, answers_json, d"
+    },
+    {
+      "file": "src\\routes\\api\\exams\\+server.js",
+      "error": "no such table: exam_attempts_archive",
+      "sql": "DELETE FROM exam_attempts\n          WHERE id IN (\n            SELECT id FROM exam_attempts_archive\n            WHERE archive_reason = 'duplicate_prior_attempt'\n"
+    },
+    {
+      "file": "src\\routes\\api\\exams\\guest\\+server.js",
+      "error": "no such table: guest_exam_sessions",
+      "sql": "ALTER TABLE guest_exam_sessions ADD COLUMN curriculum TEXT NOT NULL DEFAULT 'global_success'"
+    },
+    {
+      "file": "src\\routes\\api\\exams\\guest\\+server.js",
+      "error": "no such table: guest_exam_sessions",
+      "sql": "ALTER TABLE guest_exam_sessions ADD COLUMN blueprint_json TEXT"
+    },
+    {
+      "file": "src\\routes\\api\\exams\\guest\\+server.js",
+      "error": "no such table: guest_exam_sessions",
+      "sql": "INSERT OR REPLACE INTO guest_exam_sessions \r\n      (id, token, grade, curriculum, blueprint_json, candidate_name, duration_minutes, start_time, expires_at, ques"
+    },
+    {
+      "file": "src\\routes\\api\\exams\\guest\\+server.js",
+      "error": "no such table: guest_exam_sessions",
+      "sql": "SELECT * FROM guest_exam_sessions WHERE id = ?"
+    },
+    {
+      "file": "src\\routes\\api\\exams\\guest\\+server.js",
+      "error": "no such table: guest_exam_sessions",
+      "sql": "UPDATE guest_exam_sessions \r\n      SET status = 'completed', answers_json = ?, result_json = ?, updated_at = '2026-09-30 00:00:00'\r\n      WHERE id = ? AND statu"
+    },
+    {
+      "file": "src\\routes\\api\\exams\\guest\\+server.js",
+      "error": "no such table: guest_exam_sessions",
+      "sql": "DELETE FROM guest_exam_sessions WHERE expires_at < ?"
+    },
+    {
+      "file": "src\\routes\\api\\exams\\random\\+server.js",
+      "error": "no such table: question_bank",
+      "sql": "SELECT * FROM question_bank WHERE id IN (?, ?);"
+    },
+    {
+      "file": "src\\routes\\api\\exams\\random\\+server.js",
+      "error": "no such table: exam_instances",
+      "sql": "INSERT INTO exam_instances (id, exam_type, grade_level, title, total_questions, duration_minutes, created_by, status, created_at)\n      VALUES (?, ?, ?, ?, ?, ?"
+    },
+    {
+      "file": "src\\routes\\api\\exams\\random\\+server.js",
+      "error": "no such table: exam_instance_items",
+      "sql": "INSERT INTO exam_instance_items \n      (instance_id, item_order, question_id, question_text, options_json, correct_option_id, explanation, reading_passage)\n    "
+    },
+    {
+      "file": "src\\routes\\api\\exams\\random\\+server.js",
+      "error": "no such table: exam_instances",
+      "sql": "SELECT * FROM exam_instances WHERE id = ? LIMIT 1;"
+    },
+    {
+      "file": "src\\routes\\api\\exams\\random\\+server.js",
+      "error": "no such table: exam_instance_items",
+      "sql": "SELECT * FROM exam_instance_items \n        WHERE instance_id = ? \n        ORDER BY item_order ASC;"
+    },
+    {
+      "file": "src\\routes\\api\\exams\\random\\+server.js",
+      "error": "no such table: exam_instance_items",
+      "sql": "SELECT * FROM exam_instance_items \n    WHERE instance_id = ? \n    ORDER BY item_order ASC;"
+    },
+    {
+      "file": "src\\routes\\api\\exams\\random\\+server.js",
+      "error": "no such table: exam_instances",
+      "sql": "UPDATE exam_instances \n    SET status = 'completed', score = ?, answers_json = ?, submitted_at = '2026-09-30 00:00:00'\n    WHERE id = ? \n      AND created_by = "
+    },
+    {
+      "file": "src\\routes\\api\\exams\\random\\+server.js",
+      "error": "no such table: exam_instances",
+      "sql": "SELECT status, created_at, duration_minutes FROM exam_instances WHERE id = ?"
+    },
+    {
+      "file": "src\\routes\\api\\homework\\+server.js",
+      "error": "ON CONFLICT clause does not match any PRIMARY KEY or UNIQUE constraint",
+      "sql": "INSERT INTO student_stars (\n                student_id, stars_balance, total_earned_stars, stars_redeemed, star_debt, last_updated\n              )\n             "
+    },
+    {
+      "file": "src\\routes\\api\\homework\\+server.js",
+      "error": "ON CONFLICT clause does not match any PRIMARY KEY or UNIQUE constraint",
+      "sql": "INSERT INTO student_stars (\n                student_id, stars_balance, total_earned_stars, stars_redeemed, star_debt, last_updated\n              )\n             "
+    },
+    {
+      "file": "src\\routes\\api\\notifications\\+server.js",
+      "error": "near \",\": syntax error",
+      "sql": "INSERT INTO system_notification_reads (notification_id, user_id, read_at)\n          SELECT n.id, ?, '2026-09-30 00:00:00'\n          FROM system_notifications n\n"
+    },
+    {
+      "file": "src\\routes\\api\\notifications\\+server.js",
+      "error": "row value misused",
+      "sql": "UPDATE system_notifications SET is_read = 1\n          WHERE id IN (\n            SELECT n.id FROM system_notifications n\n            WHERE n.target_user_id = ? A"
+    },
+    {
+      "file": "src\\routes\\api\\notifications\\+server.js",
+      "error": "row value misused",
+      "sql": "SELECT n.id, n.target_user_id FROM system_notifications n\n          WHERE n.id = ? AND (?, ?)"
+    },
+    {
+      "file": "src\\routes\\api\\notifications\\+server.js",
+      "error": "no such table: system_notification_reads",
+      "sql": "INSERT INTO system_notification_reads (notification_id, user_id, read_at)\n          VALUES (?, ?, '2026-09-30 00:00:00')\n          ON CONFLICT(notification_id, "
+    },
+    {
+      "file": "src\\routes\\api\\parents\\tests\\+server.js",
+      "error": "no such table: parent_test_records",
+      "sql": "ALTER TABLE parent_test_records ADD COLUMN payload_hash TEXT;"
+    },
+    {
+      "file": "src\\routes\\api\\parents\\tests\\+server.js",
+      "error": "no such table: main.parent_test_records",
+      "sql": "CREATE INDEX IF NOT EXISTS idx_parent_test_records_child \n    ON parent_test_records(parent_user_id, student_user_id);"
+    },
+    {
+      "file": "src\\routes\\api\\parents\\tests\\+server.js",
+      "error": "no such table: main.parent_test_records",
+      "sql": "CREATE UNIQUE INDEX IF NOT EXISTS idx_parent_test_records_idem \n    ON parent_test_records(parent_user_id, idempotency_key) \n    WHERE idempotency_key IS NOT NU"
+    },
+    {
+      "file": "src\\routes\\api\\parents\\tests\\+server.js",
+      "error": "no such table: parent_test_records",
+      "sql": "SELECT * FROM parent_test_records\n        WHERE parent_user_id = ? AND idempotency_key = ?\n        LIMIT 1;"
+    },
+    {
+      "file": "src\\routes\\api\\parents\\tests\\+server.js",
+      "error": "no such table: parent_test_records",
+      "sql": "INSERT INTO parent_test_records (\n            id, parent_user_id, student_user_id, test_name, test_type,\n            score, max_score, test_date, teacher_feedba"
+    },
+    {
+      "file": "src\\routes\\api\\parents\\tests\\+server.js",
+      "error": "no such table: parent_test_records",
+      "sql": "INSERT INTO parent_test_records (\n            id, parent_user_id, student_user_id, test_name, test_type,\n            score, max_score, test_date, teacher_feedba"
+    },
+    {
+      "file": "src\\routes\\api\\parents\\tests\\+server.js",
+      "error": "no such table: parent_test_records",
+      "sql": "SELECT * FROM parent_test_records\n          WHERE parent_user_id = ? AND idempotency_key = ?\n          LIMIT 1;"
+    },
+    {
+      "file": "src\\routes\\api\\parents\\tests\\+server.js",
+      "error": "no such table: parent_test_records",
+      "sql": "SELECT * FROM parent_test_records WHERE id = ?"
+    },
+    {
+      "file": "src\\routes\\api\\parents\\tests\\+server.js",
+      "error": "no such table: parent_test_records",
+      "sql": "DELETE FROM parent_test_records WHERE id = ?"
+    },
+    {
+      "file": "src\\routes\\api\\parents\\tests\\+server.js",
+      "error": "no such table: parent_test_records",
+      "sql": "DELETE FROM parent_test_records\n        WHERE id = ? AND parent_user_id = ?\n          AND student_user_id IN (\n            SELECT student_user_id FROM parent_st"
+    },
+    {
+      "file": "src\\routes\\api\\second-brain\\+server.js",
+      "error": "no such column: kl.from_id",
+      "sql": "SELECT kl.from_id as id, kv.title, kv.folder \n        FROM knowledge_links kl \n        JOIN knowledge_vault kv ON kl.from_id = kv.id \n        WHERE kl.to_id = ?"
+    },
+    {
+      "file": "src\\routes\\api\\second-brain\\+server.js",
+      "error": "no such column: to_id",
+      "sql": "SELECT to_id as target FROM knowledge_links WHERE from_id = ?;"
+    },
+    {
+      "file": "src\\routes\\api\\teachers\\payroll\\+server.js",
+      "error": "near \"?\": syntax error",
+      "sql": "ALTER TABLE teacher_payrolls ADD COLUMN ?, ?;"
+    },
+    {
+      "file": "src\\routes\\api\\teachers\\payroll\\+server.js",
+      "error": "no such column: adjustment_version",
+      "sql": "CREATE UNIQUE INDEX IF NOT EXISTS idx_finance_ledger_payroll_version ON finance_ledger(reference_id, adjustment_version) WHERE voucher_type = 'PAYROLL_ADJUSTMEN"
+    },
+    {
+      "file": "src\\routes\\api\\teachers\\payroll\\+server.js",
+      "error": "no such column: idempotency_key",
+      "sql": "SELECT * FROM finance_ledger WHERE idempotency_key = ? LIMIT 1;"
+    },
+    {
+      "file": "src\\routes\\api\\teachers\\payroll\\+server.js",
+      "error": "no such column: idempotency_key",
+      "sql": "SELECT * FROM finance_ledger WHERE idempotency_key = ? LIMIT 1"
+    },
+    {
+      "file": "src\\routes\\api\\teachers\\payroll\\+server.js",
+      "error": "no such column: adjustment_version",
+      "sql": "SELECT COALESCE(MAX(adjustment_version), (SELECT COUNT(*) FROM finance_ledger WHERE reference_id = ? AND voucher_type = 'PAYROLL_ADJUSTMENT')) as cnt\r\n         "
+    },
+    {
+      "file": "src\\routes\\api\\teachers\\payroll\\+server.js",
+      "error": "no such column: idempotency_key",
+      "sql": "SELECT * FROM finance_ledger WHERE idempotency_key = ? LIMIT 1"
+    },
+    {
+      "file": "src\\routes\\api\\teachers\\payroll\\+server.js",
+      "error": "no such column: idempotency_key",
+      "sql": "SELECT * FROM finance_ledger WHERE idempotency_key = ? LIMIT 1"
+    },
+    {
+      "file": "src\\routes\\api\\teachers\\payroll\\+server.js",
+      "error": "near \",\": syntax error",
+      "sql": "UPDATE teacher_payrolls\r\n        SET month_label = ?,\r\n            billing_cycle = ?,\r\n            gross_amount = ?,\r\n            net_amount = ?,\r\n            d"
+    },
+    {
+      "file": "src\\routes\\api\\teachers\\workflows\\+server.js",
+      "error": "no such column: substitute_teacher_name",
+      "sql": "UPDATE class_sessions \r\n          SET substitute_teacher_id = ?, \r\n              substitute_teacher_name = ?, \r\n              substitute_notes = ?,\r\n           "
+    },
+    {
+      "file": "src\\routes\\api\\teachers\\workflows\\+server.js",
+      "error": "no such column: substitute_notes",
+      "sql": "UPDATE class_sessions \r\n          SET status = 'cancelled', \r\n              substitute_notes = ?,\r\n              updated_at = '2026-09-30 00:00:00'\r\n          W"
+    },
+    {
+      "file": "src\\routes\\api\\teachers\\workflows\\+server.js",
+      "error": "no such column: trial_feedback",
+      "sql": "UPDATE teacher_recruitment \r\n          SET status = COALESCE(?, status),\r\n              interview_time = COALESCE(?, interview_time),\r\n              interviewer"
+    },
+    {
+      "file": "src\\routes\\api\\users\\profile\\+server.js",
+      "error": "duplicate column name: profile_version",
+      "sql": "ALTER TABLE users ADD COLUMN profile_version INTEGER NOT NULL DEFAULT 1"
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "generatedAt": "2026-09-30T09:50:49.838Z",
+  "summary": {
+    "total": 1,
+    "passed": 0,
+    "failed": 1
+  },
+  "results": [
+    {
+      "id": "STUDENT-04",
+      "title": "Student generates random D1 grammar exam, checks option text shape, answers and submits",
+      "persona": "Student",
+      "status": "FAIL",
+      "duration": 10412,
+      "error": "locator.waitFor: Timeout 6000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#group-tab-random_builder') to be visible\u001b[22m\n | BROWSER_ERRORS: e.toLowerCase is not a function",
+      "stack": "Error: locator.waitFor: Timeout 6000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#group-tab-random_builder') to be visible\u001b[22m\n | BROWSER_ERRORS: e.toLowerCase is not a function\n    at file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/qa/full_user_deep_audit.mjs:94:17\n    at async auditCase (file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/qa/full_user_deep_audit.mjs:46:20)\n    at async runBrowserCase (file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/qa/full_user_deep_audit.mjs:67:3)\n    at async file:///C:/Users/admin/.gemini/antigravity/scratch/tienganh7-sveltekit/tests/qa/full_user_deep_audit.mjs:521:3"
+    }
+  ]
+}

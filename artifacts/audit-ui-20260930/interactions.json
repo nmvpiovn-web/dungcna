@@ -1,0 +1,846 @@
+{
+  "generatedAt": "2026-09-30T01:48:48.569Z",
+  "results": [
+    {
+      "id": "01-dictionary-search",
+      "outcome": "completed",
+      "detail": {
+        "matched": [
+          "hobby"
+        ],
+        "noMatchCount": 0
+      },
+      "errors": []
+    },
+    {
+      "id": "02-grammar-answer",
+      "outcome": "completed",
+      "detail": {
+        "feedback": "📖\nCẨM NANG NGỮ PHÁP TOÀN DIỆN & PHONICS 2026\nNgân Hàng Chuyên Đề Ngữ Pháp & Công Thức Toàn Cấp\n\nHệ thống hóa toàn bộ 14 chuyên đề ngữ pháp từ Tiểu học đến THPTQG & HSG: Công thức toán học hóa, cạm bẫy thi cử, quy tắc ngữ âm đuôi và bài tập trắc nghiệm giải thích chi tiết.\n\n📐\n🔍\nCẤP HỌC:\nTất cả (35)\n🎒 Tiểu Học (Lớp 3-5)\n🌱 THCS (Lớp 6-9)\n🏢 THPT & HSG (Lớp 10-12)\nNHÓM:\nTất cả\nThì (Tenses)\nCấu trúc\nMệnh đề\n1\nHiện Tại Đơn & Hiện Tại Tiếp Diễn (Present Simple & Continuous)\nA1 - A2\n🎯 Lớp 3, 4, 5, 6, 7\n• 📚 Unit 1 - Unit 2\nThu gọn\n▾\n💡 Bản chất ngữ pháp: Thì hiện tại đơn diễn tả thói quen, chân lý sự thật. Hiện tại tiếp diễn diễn tả hành động đang xảy ra tại thời điểm nói hoặc kế hoạch tương lai.\n📐\nCÔNG THỨC TOÁN HỌC HÓA\nPRESENT SIMPLE\naffirmative: S + V(s/es) + O\nnegative: S + do/does + not + V_inf + O\ninterrogative: Do/Does + S + V_inf + O?\nPRESENT CONTINUOUS\naffirmative: S + am/is/are + V-ing + O\nnegative: S + am/is/are + not + V-ing + O\ninterrogative: Am/Is/Are + S + V-ing + O?\nAFFIRMATIVE\nS + V(s/es) + O\nNEGATIVE\nS + do/does + not + V_inf + O\nINTERROGATIVE\nDo/Does + S + V_inf + O?\n📌\nQUY TẮC ỨNG DỤNG\n•\nHiện tại đơn: Sự thật hiển nhiên, thói quen lặp đi lặp lại, lịch trình tàu xe.\n•\nHiện tại tiếp diễn: Hành động đang xảy ra lúc nói (now, at present), phàn nàn với 'always', kế hoạch đã sắp xếp.\n🏷️\nDẤU HIỆU NHẬN BIẾT\nPresent Simple: always, usually, often, sometimes, rarely, never, every day/week, once a week\nPresent Continuous: now, right now, at the moment, at present, Look!, Listen!, Be quiet!\n🗣️\nLIÊN KẾT NGỮ ÂM & PHÁT ÂM (PHONICS CONNECTION)\nQuy tắc phát âm đuôi -s/-es: /s/ sau âm vô thanh (/p, k, f, t, θ/), /ɪz/ sau âm xát (/s, z, ʃ, tʃ, dʒ/), /z/ sau các nguyên âm và phụ âm hữu thanh còn lại.\n⚠️\nCẠM BẪY THƯỜNG GẶP & TUYỆT CHIÊU TRÁNH SAI\n1. Quên thêm s/es với ngôi thứ 3 số ít (He, She, It).\n2. Dùng thì tiếp diễn với động từ chỉ trạng thái giác quan/cảm xúc (Stative verbs: know, like, want, believe, smell). Ví dụ sai: 'I am knowing him' -> Đúng: 'I know him'.\n💬\nVÍ DỤ SONG NGỮ MINH HỌA\n\"She volunteers at the nursing home every Saturday.\"\n↳ Cô ấy làm tình nguyện tại viện dưỡng lão vào mỗi thứ Bảy.\n\"Be quiet! The baby is sleeping in the bedroom.\"\n↳ Giữ im "
+      },
+      "errors": []
+    },
+    {
+      "id": "03-flashcard-basic",
+      "outcome": "completed",
+      "detail": {
+        "before": "Thẻ 1 / 52",
+        "after": "Thẻ 1 / 52",
+        "rapidFlips": 6
+      },
+      "errors": []
+    },
+    {
+      "id": "04-flashcard-mobile",
+      "outcome": "completed",
+      "detail": [
+        {
+          "viewport": [
+            320,
+            740
+          ],
+          "documentWidth": 347,
+          "faces": [
+            {
+              "class": "card-face card-front svelte-3pf8ly",
+              "height": 480,
+              "scrollHeight": 480,
+              "width": 288,
+              "scrollWidth": 288
+            },
+            {
+              "class": "card-face card-back svelte-3pf8ly",
+              "height": 480,
+              "scrollHeight": 694,
+              "width": 288,
+              "scrollWidth": 288
+            }
+          ],
+          "smallControls": [
+            {
+              "text": "Tất cả Unit (Tổng hợp đề thi)📚 Ngữ",
+              "w": 247,
+              "h": 36
+            },
+            {
+              "text": "Tất cả từ (52)Chưa thuộc (52)Đã thu",
+              "w": 154,
+              "h": 36
+            },
+            {
+              "text": "🇻🇳 Tiếng Việt (Khuyến nghị)🇬🇧 T",
+              "w": 226,
+              "h": 36
+            },
+            {
+              "text": "🔀 Xáo thẻ",
+              "w": 100.703125,
+              "h": 36.390625
+            },
+            {
+              "text": "▶️ Tự chạy",
+              "w": 101.15625,
+              "h": 36.390625
+            },
+            {
+              "text": "🔊 Đọc câu",
+              "w": 82.09375,
+              "h": 22
+            },
+            {
+              "text": "← Từ trước",
+              "w": 111.84375,
+              "h": 43.609375
+            },
+            {
+              "text": "Từ tiếp →",
+              "w": 100.9375,
+              "h": 43.609375
+            }
+          ]
+        },
+        {
+          "viewport": [
+            360,
+            800
+          ],
+          "documentWidth": 367,
+          "faces": [
+            {
+              "class": "card-face card-front svelte-3pf8ly",
+              "height": 480,
+              "scrollHeight": 480,
+              "width": 328,
+              "scrollWidth": 328
+            },
+            {
+              "class": "card-face card-back svelte-3pf8ly",
+              "height": 480,
+              "scrollHeight": 670,
+              "width": 328,
+              "scrollWidth": 328
+            }
+          ],
+          "smallControls": [
+            {
+              "text": "Tất cả Unit (Tổng hợp đề thi)📚 Ngữ",
+              "w": 247,
+              "h": 36
+            },
+            {
+              "text": "Tất cả từ (52)Chưa thuộc (52)Đã thu",
+              "w": 154,
+              "h": 36
+            },
+            {
+              "text": "🇻🇳 Tiếng Việt (Khuyến nghị)🇬🇧 T",
+              "w": 226,
+              "h": 36
+            },
+            {
+              "text": "🔀 Xáo thẻ",
+              "w": 100.703125,
+              "h": 36.390625
+            },
+            {
+              "text": "▶️ Tự chạy",
+              "w": 101.15625,
+              "h": 36.390625
+            },
+            {
+              "text": "🔊 Đọc câu",
+              "w": 82.09375,
+              "h": 22
+            },
+            {
+              "text": "← Từ trước",
+              "w": 111.84375,
+              "h": 43.609375
+            },
+            {
+              "text": "Từ tiếp →",
+              "w": 100.9375,
+              "h": 43.609375
+            }
+          ]
+        },
+        {
+          "viewport": [
+            390,
+            844
+          ],
+          "documentWidth": 390,
+          "faces": [
+            {
+              "class": "card-face card-front svelte-3pf8ly",
+              "height": 480,
+              "scrollHeight": 480,
+              "width": 358,
+              "scrollWidth": 358
+            },
+            {
+              "class": "card-face card-back svelte-3pf8ly",
+              "height": 480,
+              "scrollHeight": 614,
+              "width": 358,
+              "scrollWidth": 358
+            }
+          ],
+          "smallControls": [
+            {
+              "text": "Tất cả Unit (Tổng hợp đề thi)📚 Ngữ",
+              "w": 247,
+              "h": 36
+            },
+            {
+              "text": "Tất cả từ (52)Chưa thuộc (52)Đã thu",
+              "w": 154,
+              "h": 36
+            },
+            {
+              "text": "🇻🇳 Tiếng Việt (Khuyến nghị)🇬🇧 T",
+              "w": 226,
+              "h": 36
+            },
+            {
+              "text": "🔀 Xáo thẻ",
+              "w": 100.703125,
+              "h": 36.390625
+            },
+            {
+              "text": "▶️ Tự chạy",
+              "w": 101.15625,
+              "h": 36.390625
+            },
+            {
+              "text": "🔊 Đọc câu",
+              "w": 82.09375,
+              "h": 22
+            },
+            {
+              "text": "← Từ trước",
+              "w": 111.84375,
+              "h": 43.609375
+            },
+            {
+              "text": "Từ tiếp →",
+              "w": 100.9375,
+              "h": 43.609375
+            }
+          ]
+        },
+        {
+          "viewport": [
+            844,
+            390
+          ],
+          "documentWidth": 844,
+          "faces": [
+            {
+              "class": "card-face card-front svelte-3pf8ly",
+              "height": 480,
+              "scrollHeight": 480,
+              "width": 680,
+              "scrollWidth": 680
+            },
+            {
+              "class": "card-face card-back svelte-3pf8ly",
+              "height": 480,
+              "scrollHeight": 480,
+              "width": 680,
+              "scrollWidth": 680
+            }
+          ],
+          "smallControls": [
+            {
+              "text": "Tất cả Unit (Tổng hợp đề thi)📚 Ngữ",
+              "w": 247,
+              "h": 36
+            },
+            {
+              "text": "Tất cả từ (52)Chưa thuộc (52)Đã thu",
+              "w": 154,
+              "h": 36
+            },
+            {
+              "text": "🇻🇳 Tiếng Việt (Khuyến nghị)🇬🇧 T",
+              "w": 226,
+              "h": 36
+            },
+            {
+              "text": "🔀 Xáo thẻ",
+              "w": 100.703125,
+              "h": 36.390625
+            },
+            {
+              "text": "▶️ Tự chạy",
+              "w": 101.15625,
+              "h": 36.390625
+            },
+            {
+              "text": "🔊 Đọc chuẩn",
+              "w": 105.578125,
+              "h": 28.71875
+            },
+            {
+              "text": "🐢 Đọc chậm",
+              "w": 102.296875,
+              "h": 28.71875
+            },
+            {
+              "text": "🔊 Đọc câu",
+              "w": 82.09375,
+              "h": 22
+            },
+            {
+              "text": "← Từ trước",
+              "w": 111.84375,
+              "h": 43.609375
+            },
+            {
+              "text": "❌ Chưa nhớ",
+              "w": 128.4375,
+              "h": 43.109375
+            },
+            {
+              "text": "🔄 Lật lại",
+              "w": 102.75,
+              "h": 43.109375
+            },
+            {
+              "text": "✅ Đã thuộc",
+              "w": 124.703125,
+              "h": 43.109375
+            },
+            {
+              "text": "Từ tiếp →",
+              "w": 100.9375,
+              "h": 43.609375
+            }
+          ]
+        }
+      ],
+      "errors": []
+    },
+    {
+      "id": "05-flashcard-shuffle-unit",
+      "outcome": "completed",
+      "detail": {
+        "totalBefore": "Thẻ 1 / 52",
+        "filtered": "Thẻ 1 / 8",
+        "totalAfter": "Thẻ 1 / 8",
+        "otherUnitEmpty": true,
+        "defect": true
+      },
+      "errors": []
+    },
+    {
+      "id": "06-flashcard-mark-reload",
+      "outcome": "completed",
+      "detail": {
+        "beforeReload": "Thẻ 1 / 1",
+        "afterReload": "Thẻ 1 / 1",
+        "storageCount": 1
+      },
+      "errors": []
+    },
+    {
+      "id": "07-flashcard-autoplay-cleanup",
+      "outcome": "completed",
+      "detail": {
+        "autoFlip": true,
+        "pauseStable": true,
+        "unmountCleanup": "not instrumented"
+      },
+      "errors": []
+    },
+    {
+      "id": "08-quiz-complete",
+      "outcome": "completed",
+      "detail": {
+        "result": "💪\nHoàn Thành Bài Dò Từ Vựng!\n0 / 5\n0% Chính xác\n\nĐừng nản lòng! Hãy ôn lại qua Flashcard và chơi game ghép thẻ để thuộc từ nhanh hơn.\n\nChi tiết từng câu:\n✗\ndonate\n/dəʊˈneɪt/\n🔊\nquyên góp, ủng hộ, hiến tặng (tiền, máu, vật phẩm)\nBạn đã chọn/gõ: audit_wrong_answer\n✗\nregularly\n/ˈreɡjələli/\n🔊\nđều đặn, thường xuyên theo cữ\nBạn đã chọn/gõ: audit_wrong_answer\n✗\nenergy\n/ˈenədʒi/\n🔊\nnăng lượng, sức lực dồi dào\nBạn đã chọn/gõ: audit_wrong_answer\n✗\ninfrastructure\n/ˈɪnfrəstrʌktʃər/\n🔊\ncơ sở hạ tầng (đường xá, cầu cống, mạng lưới điện)\nBạn đã chọn/gõ: audit_wrong_answer\n✗\nplayground\n/ˈpleɪɡraʊnd/\n🔊\nsân chơi trường học\nBạn đã chọn/gõ: audit_wrong_answer\n⚙️ Cấu hình lại\n🔄 Làm lại đề mới"
+      },
+      "errors": []
+    },
+    {
+      "id": "09-auth-ui-login",
+      "outcome": "completed",
+      "detail": {
+        "role": "seed superadmin in isolated local D1",
+        "survivesReload": true
+      },
+      "errors": []
+    },
+    {
+      "id": "10-authenticated-cpanel-student",
+      "outcome": "completed",
+      "detail": {
+        "headings": [
+          "Xin chào, Nguyễn Minh Vũ (SuperAdmin Owner)! 👋"
+        ],
+        "buttons": [
+          "VI",
+          "⏳ Cần Làm (0)",
+          "✅ Đã Nộp (0)",
+          "Tất Cả (0)",
+          "🔄 Thử lại"
+        ],
+        "responses": [
+          {
+            "path": "/api/homework",
+            "status": 503
+          },
+          {
+            "path": "/api/campuses",
+            "status": 200
+          },
+          {
+            "path": "/api/notifications",
+            "status": 200
+          },
+          {
+            "path": "/api/auth/verify",
+            "status": 200
+          },
+          {
+            "path": "/api/homework",
+            "status": 503
+          },
+          {
+            "path": "/api/notifications",
+            "status": 200
+          },
+          {
+            "path": "/api/notifications",
+            "status": 200
+          }
+        ]
+      },
+      "errors": []
+    },
+    {
+      "id": "10-authenticated-cpanel-parent",
+      "outcome": "completed",
+      "detail": {
+        "headings": [
+          "Báo Cáo Tiến Độ Học Tập & Học Phí"
+        ],
+        "buttons": [
+          "VI",
+          "Bài Tập Về Nhà (0/0)",
+          "Sổ Học Phí & Đối Trừ Sao",
+          "Tải lại dữ liệu"
+        ],
+        "responses": [
+          {
+            "path": "/api/parents/children",
+            "status": 503
+          },
+          {
+            "path": "/api/auth/verify",
+            "status": 200
+          },
+          {
+            "path": "/api/campuses",
+            "status": 200
+          },
+          {
+            "path": "/api/notifications",
+            "status": 200
+          },
+          {
+            "path": "/api/homework",
+            "status": 503
+          },
+          {
+            "path": "/api/notifications",
+            "status": 200
+          },
+          {
+            "path": "/api/notifications",
+            "status": 200
+          }
+        ]
+      },
+      "errors": []
+    },
+    {
+      "id": "10-authenticated-cpanel-teacher",
+      "outcome": "completed",
+      "detail": {
+        "headings": [
+          "Bàn Làm Việc Giảng Dạy — Nguyễn Minh Vũ (SuperAdmin Owner)"
+        ],
+        "buttons": [
+          "VI",
+          "⚡ Ứng Lương",
+          "Chấm Điểm BTVN",
+          "Giao BTVN Mới",
+          "Lịch Ca Dạy (0)",
+          "Sổ Lương (0)",
+          "Chờ Chấm (0)",
+          "Đã Chấm (0)",
+          "Tất Cả (0)"
+        ],
+        "responses": [
+          {
+            "path": "/api/teachers/workflows",
+            "status": 500
+          },
+          {
+            "path": "/api/campuses",
+            "status": 200
+          },
+          {
+            "path": "/api/homework",
+            "status": 503
+          },
+          {
+            "path": "/api/teachers/payroll",
+            "status": 200
+          },
+          {
+            "path": "/api/auth/verify",
+            "status": 200
+          },
+          {
+            "path": "/api/campuses",
+            "status": 200
+          },
+          {
+            "path": "/api/notifications",
+            "status": 200
+          },
+          {
+            "path": "/api/notifications",
+            "status": 200
+          },
+          {
+            "path": "/api/notifications",
+            "status": 200
+          }
+        ]
+      },
+      "errors": []
+    },
+    {
+      "id": "10-authenticated-cpanel-leader",
+      "outcome": "completed",
+      "detail": {
+        "headings": [
+          "Quản Trị Nghiệp Vụ Sư Phạm & Nhân Sự",
+          "Dòng Hoạt Động Trực Tiếp Liên Cơ Sở "
+        ],
+        "buttons": [
+          "VI",
+          "Tổng Quan Sư Phạm & Sự Kiện",
+          "Duyệt Nghỉ Phép & Dạy Thay",
+          "Duyệt & Thực Chi Ứng Lương",
+          "Tuyển Dụng & Phỏng Vấn 0",
+          "Khóa Sổ & Bảng Lương"
+        ],
+        "responses": [
+          {
+            "path": "/api/teachers/workflows",
+            "status": 500
+          },
+          {
+            "path": "/api/campuses",
+            "status": 200
+          },
+          {
+            "path": "/api/campuses",
+            "status": 200
+          },
+          {
+            "path": "/api/notifications",
+            "status": 200
+          },
+          {
+            "path": "/api/homework",
+            "status": 503
+          },
+          {
+            "path": "/api/auth/verify",
+            "status": 200
+          },
+          {
+            "path": "/api/notifications",
+            "status": 200
+          },
+          {
+            "path": "/api/notifications",
+            "status": 200
+          }
+        ]
+      },
+      "errors": []
+    },
+    {
+      "id": "10-authenticated-cpanel-notifications",
+      "outcome": "completed",
+      "detail": {
+        "headings": [
+          "Thông Báo & Nhắc Nhở Chéo"
+        ],
+        "buttons": [
+          "VI",
+          "✓ Đánh dấu tất cả đã đọc",
+          "Tất cả (0)",
+          "Chưa đọc (0)"
+        ],
+        "responses": [
+          {
+            "path": "/api/notifications",
+            "status": 200
+          },
+          {
+            "path": "/api/auth/verify",
+            "status": 200
+          },
+          {
+            "path": "/api/campuses",
+            "status": 200
+          },
+          {
+            "path": "/api/notifications",
+            "status": 200
+          },
+          {
+            "path": "/api/notifications",
+            "status": 200
+          },
+          {
+            "path": "/api/notifications",
+            "status": 200
+          }
+        ]
+      },
+      "errors": []
+    },
+    {
+      "id": "10-authenticated-schedule",
+      "outcome": "completed",
+      "detail": {
+        "headings": [
+          "Lịch Học, Thời Khóa Biểu & Sổ Đầu Bài Tức Thời 📅"
+        ],
+        "buttons": [
+          "📝 Xin Nghỉ & Dạy Thay",
+          "💰 Đề Nghị Ứng Lương",
+          "👨‍🏫 Phân Quyền Leader & Lương",
+          "➕ Thêm Buổi Học Mới",
+          "🌟 Tất Cả Lớp (6)",
+          "👤 Lịch Học Của Tôi",
+          "🎒 Tiểu Học (Lớp 1 - 5)",
+          "📚 THCS (Lớp 6 - 9)",
+          "🎓 THPT & IELTS (Lớp 10 - 12)",
+          "Cả tuần",
+          "T2",
+          "T3",
+          "T4",
+          "T5",
+          "T6",
+          "T7",
+          "CN",
+          "🔔 Test Bot",
+          "📋 Điểm Danh",
+          "✏️ Sửa",
+          "🗑️",
+          "🔔 Test Bot",
+          "📋 Điểm Danh",
+          "✏️ Sửa",
+          "🗑️",
+          "🔔 Test Bot",
+          "📋 Điểm Danh",
+          "✏️ Sửa",
+          "🗑️",
+          "🔔 Test Bot",
+          "📋 Điểm Danh",
+          "✏️ Sửa",
+          "🗑️",
+          "🔔 Test Bot",
+          "📋 Điểm Danh"
+        ],
+        "responses": [
+          {
+            "path": "/api/auth/verify",
+            "status": 200
+          },
+          {
+            "path": "/api/teachers/workflows",
+            "status": 500
+          },
+          {
+            "path": "/api/notifications",
+            "status": 200
+          },
+          {
+            "path": "/api/notifications",
+            "status": 200
+          }
+        ]
+      },
+      "errors": []
+    },
+    {
+      "id": "10-authenticated-evaluations",
+      "outcome": "completed",
+      "detail": {
+        "headings": [
+          "Tiếng Anh Cô Dung — Đánh Giá Năng Lực & Kế Hoạch Cá Nhân Hóa"
+        ],
+        "buttons": [
+          "➕ Thêm Học Sinh",
+          "✍️ Tạo Đánh Giá Năng Lực Mới",
+          "📑 Danh Sách Đánh Giá Đã Lưu (3)",
+          "👥 Danh Sách Học Sinh (6)",
+          "💬 Bình Luận",
+          "⚖️ Phản Biện / Giải Trình",
+          "❓ Thắc Mắc",
+          "👑 Kết Luận Leader",
+          "Gửi Ý Kiến ➔",
+          "Sửa",
+          "📲 Phiếu Báo Cáo Zalo",
+          "💬 Bình Luận",
+          "⚖️ Phản Biện / Giải Trình",
+          "❓ Thắc Mắc",
+          "👑 Kết Luận Leader",
+          "Gửi Ý Kiến ➔",
+          "Sửa",
+          "📲 Phiếu Báo Cáo Zalo",
+          "💬 Bình Luận",
+          "⚖️ Phản Biện / Giải Trình",
+          "❓ Thắc Mắc",
+          "👑 Kết Luận Leader",
+          "Gửi Ý Kiến ➔",
+          "Sửa",
+          "📲 Phiếu Báo Cáo Zalo"
+        ],
+        "responses": [
+          {
+            "path": "/api/auth/verify",
+            "status": 200
+          },
+          {
+            "path": "/api/notifications",
+            "status": 200
+          },
+          {
+            "path": "/api/notifications",
+            "status": 200
+          }
+        ]
+      },
+      "errors": []
+    },
+    {
+      "id": "10-authenticated-admin",
+      "outcome": "completed",
+      "detail": {
+        "headings": [
+          "Bảng Điều Khiển Quản Trị Toàn Diện Tiếng Anh Cô Dung"
+        ],
+        "buttons": [
+          "🔔 Cảnh Báo Leader 8 mới",
+          "📋 Hàng Đợi Duyệt & Tuyển Dụng",
+          "🎒 Quản Lý Học Sinh 1 Trial",
+          "👨‍🏫 Giáo Viên & Lương Ca Dạy",
+          "📅 Thời Khóa Biểu & Ca Học",
+          "💰 Học Phí & Đổi Sao (VietQR)",
+          "👩‍🏫 Giáo Viên CP (Teacher Portal)",
+          "🎮 Đấu Trường Game KHÓA",
+          "📡 Webhook Bot",
+          "📜 Kiểm Toán (3)",
+          "➕ Thêm Học Sinh Mới",
+          "✏️ Set Lớp",
+          "+ / -",
+          "⭐",
+          "🔒",
+          "🗑️",
+          "✏️ Set Lớp",
+          "+ / -",
+          "⭐",
+          "🔒",
+          "🗑️",
+          "✏️ Set Lớp",
+          "+ / -",
+          "⭐",
+          "🔒",
+          "🗑️",
+          "✏️ Set Lớp",
+          "+ / -",
+          "⭐",
+          "🔒",
+          "🗑️",
+          "✏️ Set Lớp",
+          "+ / -",
+          "⭐",
+          "🔒"
+        ],
+        "responses": [
+          {
+            "path": "/api/teachers/workflows",
+            "status": 500
+          },
+          {
+            "path": "/api/auth/verify",
+            "status": 200
+          },
+          {
+            "path": "/api/teachers/workflows",
+            "status": 500
+          },
+          {
+            "path": "/api/notifications",
+            "status": 200
+          },
+          {
+            "path": "/api/notifications",
+            "status": 200
+          }
+        ]
+      },
+      "errors": []
+    },
+    {
+      "id": "10-authenticated-admincp",
+      "outcome": "completed",
+      "detail": {
+        "headings": [
+          "Trung Tâm Điều Hành Tối Cao Toàn Hệ Thống"
+        ],
+        "buttons": [
+          "🇻🇳 Tiếng Việt",
+          "🏢 Quản Lý Cơ Sở Đa Điểm (3)",
+          "📡 Dòng Hoạt Động Thời Gian Thực (0)",
+          "🔔 Nhắc Nhở Chéo (Cross-Reminders)",
+          "📁 Cây Thư Mục & Audit Bài Nộp"
+        ],
+        "responses": [
+          {
+            "path": "/api/campuses",
+            "status": 200
+          },
+          {
+            "path": "/api/homework",
+            "status": 503
+          },
+          {
+            "path": "/api/auth/verify",
+            "status": 200
+          },
+          {
+            "path": "/api/notifications",
+            "status": 200
+          },
+          {
+            "path": "/api/notifications",
+            "status": 200
+          }
+        ]
+      },
+      "errors": []
+    }
+  ]
+}

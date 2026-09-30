@@ -1,0 +1,3764 @@
+{
+  "users": [
+    {
+      "cid": 0,
+      "name": "id",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 1
+    },
+    {
+      "cid": 1,
+      "name": "username",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 2,
+      "name": "phone",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 3,
+      "name": "email",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 4,
+      "name": "name",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 5,
+      "name": "role",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 6,
+      "name": "avatar",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 7,
+      "name": "status",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": "'active'",
+      "pk": 0
+    },
+    {
+      "cid": 8,
+      "name": "metadata",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 9,
+      "name": "grade",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 10,
+      "name": "password",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 11,
+      "name": "approval_status",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": "'approved'",
+      "pk": 0
+    },
+    {
+      "cid": 12,
+      "name": "created_at",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": "CURRENT_TIMESTAMP",
+      "pk": 0
+    },
+    {
+      "cid": 13,
+      "name": "updated_at",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": "CURRENT_TIMESTAMP",
+      "pk": 0
+    },
+    {
+      "cid": 14,
+      "name": "profile_version",
+      "type": "INTEGER",
+      "notnull": 0,
+      "dflt_value": "0",
+      "pk": 0
+    }
+  ],
+  "campuses": [
+    {
+      "cid": 0,
+      "name": "id",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 1
+    },
+    {
+      "cid": 1,
+      "name": "name",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 2,
+      "name": "short_code",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 3,
+      "name": "address",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 4,
+      "name": "hotline",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 5,
+      "name": "manager_user_id",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 6,
+      "name": "is_active",
+      "type": "INTEGER",
+      "notnull": 0,
+      "dflt_value": "1",
+      "pk": 0
+    },
+    {
+      "cid": 7,
+      "name": "created_at",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": "CURRENT_TIMESTAMP",
+      "pk": 0
+    }
+  ],
+  "parent_student_links": [
+    {
+      "cid": 0,
+      "name": "id",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 1
+    },
+    {
+      "cid": 1,
+      "name": "parent_user_id",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 2,
+      "name": "student_user_id",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 3,
+      "name": "created_at",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": "CURRENT_TIMESTAMP",
+      "pk": 0
+    },
+    {
+      "cid": 4,
+      "name": "verification_status",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": "'pending'",
+      "pk": 0
+    }
+  ],
+  "class_sessions": [
+    {
+      "cid": 0,
+      "name": "id",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 1
+    },
+    {
+      "cid": 1,
+      "name": "class_id",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 2,
+      "name": "class_name",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 3,
+      "name": "teacher_id",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 4,
+      "name": "substitute_teacher_id",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 5,
+      "name": "session_date",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 6,
+      "name": "start_time",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 7,
+      "name": "end_time",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 8,
+      "name": "room",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 9,
+      "name": "topic",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 10,
+      "name": "status",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": "'scheduled'",
+      "pk": 0
+    },
+    {
+      "cid": 11,
+      "name": "attendance_taken",
+      "type": "INTEGER",
+      "notnull": 0,
+      "dflt_value": "0",
+      "pk": 0
+    },
+    {
+      "cid": 12,
+      "name": "payroll_rate",
+      "type": "REAL",
+      "notnull": 0,
+      "dflt_value": "250000",
+      "pk": 0
+    },
+    {
+      "cid": 13,
+      "name": "payroll_processed",
+      "type": "INTEGER",
+      "notnull": 0,
+      "dflt_value": "0",
+      "pk": 0
+    },
+    {
+      "cid": 14,
+      "name": "substitute_payroll_rate",
+      "type": "REAL",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 15,
+      "name": "substitute_payroll_processed",
+      "type": "INTEGER",
+      "notnull": 0,
+      "dflt_value": "0",
+      "pk": 0
+    },
+    {
+      "cid": 16,
+      "name": "created_at",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": "CURRENT_TIMESTAMP",
+      "pk": 0
+    },
+    {
+      "cid": 17,
+      "name": "updated_at",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": "CURRENT_TIMESTAMP",
+      "pk": 0
+    },
+    {
+      "cid": 18,
+      "name": "grade_level",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 19,
+      "name": "teacher_name",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 20,
+      "name": "day_of_week",
+      "type": "INTEGER",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 21,
+      "name": "day_name",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 22,
+      "name": "student_ids",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 23,
+      "name": "assistant_teacher_id",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    }
+  ],
+  "attendance_records": [
+    {
+      "cid": 0,
+      "name": "id",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 1
+    },
+    {
+      "cid": 1,
+      "name": "session_id",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 2,
+      "name": "student_id",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 3,
+      "name": "status",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 4,
+      "name": "notes",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 5,
+      "name": "recorded_at",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": "CURRENT_TIMESTAMP",
+      "pk": 0
+    }
+  ],
+  "student_stars": [
+    {
+      "cid": 0,
+      "name": "id",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 1
+    },
+    {
+      "cid": 1,
+      "name": "student_id",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 2,
+      "name": "stars",
+      "type": "INTEGER",
+      "notnull": 0,
+      "dflt_value": "0",
+      "pk": 0
+    },
+    {
+      "cid": 3,
+      "name": "reason",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 4,
+      "name": "awarded_by",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 5,
+      "name": "created_at",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": "CURRENT_TIMESTAMP",
+      "pk": 0
+    },
+    {
+      "cid": 6,
+      "name": "stars_balance",
+      "type": "INTEGER",
+      "notnull": 0,
+      "dflt_value": "0",
+      "pk": 0
+    },
+    {
+      "cid": 7,
+      "name": "total_earned_stars",
+      "type": "INTEGER",
+      "notnull": 0,
+      "dflt_value": "0",
+      "pk": 0
+    },
+    {
+      "cid": 8,
+      "name": "stars_redeemed",
+      "type": "INTEGER",
+      "notnull": 0,
+      "dflt_value": "0",
+      "pk": 0
+    },
+    {
+      "cid": 9,
+      "name": "star_debt",
+      "type": "INTEGER",
+      "notnull": 0,
+      "dflt_value": "0",
+      "pk": 0
+    },
+    {
+      "cid": 10,
+      "name": "last_updated",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": "CURRENT_TIMESTAMP",
+      "pk": 0
+    }
+  ],
+  "homework_assignments": [
+    {
+      "cid": 0,
+      "name": "id",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 1
+    },
+    {
+      "cid": 1,
+      "name": "session_id",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 2,
+      "name": "class_id",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 3,
+      "name": "class_name",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 4,
+      "name": "title",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 5,
+      "name": "description",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 6,
+      "name": "due_date",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 7,
+      "name": "total_points",
+      "type": "INTEGER",
+      "notnull": 0,
+      "dflt_value": "10",
+      "pk": 0
+    },
+    {
+      "cid": 8,
+      "name": "created_by",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 9,
+      "name": "created_at",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": "CURRENT_TIMESTAMP",
+      "pk": 0
+    },
+    {
+      "cid": 10,
+      "name": "teacher_id",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 11,
+      "name": "teacher_name",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 12,
+      "name": "campus_id",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": "'loc_codung'",
+      "pk": 0
+    },
+    {
+      "cid": 13,
+      "name": "skill_type",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 14,
+      "name": "obsidian_note_id",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 15,
+      "name": "obsidian_note_title",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 16,
+      "name": "assigned_date",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 17,
+      "name": "deadline_date",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 18,
+      "name": "deadline_time",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 19,
+      "name": "max_score",
+      "type": "REAL",
+      "notnull": 0,
+      "dflt_value": "10.0",
+      "pk": 0
+    },
+    {
+      "cid": 20,
+      "name": "star_reward_on_time",
+      "type": "INTEGER",
+      "notnull": 0,
+      "dflt_value": "50",
+      "pk": 0
+    },
+    {
+      "cid": 21,
+      "name": "status",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": "'published'",
+      "pk": 0
+    }
+  ],
+  "homework_submissions": [
+    {
+      "cid": 0,
+      "name": "id",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 1
+    },
+    {
+      "cid": 1,
+      "name": "assignment_id",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 2,
+      "name": "student_id",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 3,
+      "name": "student_name",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 4,
+      "name": "submitted_at",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": "CURRENT_TIMESTAMP",
+      "pk": 0
+    },
+    {
+      "cid": 5,
+      "name": "content",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 6,
+      "name": "score",
+      "type": "REAL",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 7,
+      "name": "feedback",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 8,
+      "name": "status",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": "'submitted'",
+      "pk": 0
+    },
+    {
+      "cid": 9,
+      "name": "submission_type",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 10,
+      "name": "content_text",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 11,
+      "name": "audio_url",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 12,
+      "name": "handwritten_image_url",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 13,
+      "name": "attachments_json",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 14,
+      "name": "is_on_time",
+      "type": "INTEGER",
+      "notnull": 0,
+      "dflt_value": "1",
+      "pk": 0
+    },
+    {
+      "cid": 15,
+      "name": "graded_by_teacher_id",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 16,
+      "name": "graded_by_teacher_name",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 17,
+      "name": "graded_at",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 18,
+      "name": "teacher_feedback",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 19,
+      "name": "audio_feedback_url",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 20,
+      "name": "stars_awarded",
+      "type": "INTEGER",
+      "notnull": 0,
+      "dflt_value": "0",
+      "pk": 0
+    },
+    {
+      "cid": 21,
+      "name": "star_awarded_reason",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 22,
+      "name": "version",
+      "type": "INTEGER",
+      "notnull": 0,
+      "dflt_value": "1",
+      "pk": 0
+    },
+    {
+      "cid": 23,
+      "name": "grading_token",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    }
+  ],
+  "tuition_bills": [
+    {
+      "cid": 0,
+      "name": "id",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 1
+    },
+    {
+      "cid": 1,
+      "name": "student_id",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 2,
+      "name": "student_name",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 3,
+      "name": "parent_id",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 4,
+      "name": "month_label",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 5,
+      "name": "amount",
+      "type": "REAL",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 6,
+      "name": "amount_paid",
+      "type": "REAL",
+      "notnull": 0,
+      "dflt_value": "0",
+      "pk": 0
+    },
+    {
+      "cid": 7,
+      "name": "status",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": "'pending'",
+      "pk": 0
+    },
+    {
+      "cid": 8,
+      "name": "due_date",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 9,
+      "name": "created_at",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": "CURRENT_TIMESTAMP",
+      "pk": 0
+    },
+    {
+      "cid": 10,
+      "name": "updated_at",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": "CURRENT_TIMESTAMP",
+      "pk": 0
+    },
+    {
+      "cid": 11,
+      "name": "version",
+      "type": "INTEGER",
+      "notnull": 0,
+      "dflt_value": "1",
+      "pk": 0
+    },
+    {
+      "cid": 12,
+      "name": "age",
+      "type": "INTEGER",
+      "notnull": 0,
+      "dflt_value": "13",
+      "pk": 0
+    },
+    {
+      "cid": 13,
+      "name": "grade_level",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": "'Lớp 7'",
+      "pk": 0
+    },
+    {
+      "cid": 14,
+      "name": "program_name",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": "'Tiếng Anh K12'",
+      "pk": 0
+    },
+    {
+      "cid": 15,
+      "name": "billing_period",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 16,
+      "name": "base_tuition_vnd",
+      "type": "REAL",
+      "notnull": 0,
+      "dflt_value": "0",
+      "pk": 0
+    },
+    {
+      "cid": 17,
+      "name": "attendance_total_sessions",
+      "type": "INTEGER",
+      "notnull": 0,
+      "dflt_value": "12",
+      "pk": 0
+    },
+    {
+      "cid": 18,
+      "name": "attendance_attended_sessions",
+      "type": "INTEGER",
+      "notnull": 0,
+      "dflt_value": "12",
+      "pk": 0
+    },
+    {
+      "cid": 19,
+      "name": "stars_available",
+      "type": "INTEGER",
+      "notnull": 0,
+      "dflt_value": "0",
+      "pk": 0
+    },
+    {
+      "cid": 20,
+      "name": "stars_deducted",
+      "type": "INTEGER",
+      "notnull": 0,
+      "dflt_value": "0",
+      "pk": 0
+    },
+    {
+      "cid": 21,
+      "name": "discount_vnd",
+      "type": "REAL",
+      "notnull": 0,
+      "dflt_value": "0",
+      "pk": 0
+    },
+    {
+      "cid": 22,
+      "name": "final_amount_vnd",
+      "type": "REAL",
+      "notnull": 0,
+      "dflt_value": "0",
+      "pk": 0
+    },
+    {
+      "cid": 23,
+      "name": "vietqr_url",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 24,
+      "name": "bank_name",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 25,
+      "name": "bank_account",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 26,
+      "name": "account_holder",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 27,
+      "name": "growth_status",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": "'normal'",
+      "pk": 0
+    },
+    {
+      "cid": 28,
+      "name": "growth_percentage",
+      "type": "REAL",
+      "notnull": 0,
+      "dflt_value": "0",
+      "pk": 0
+    },
+    {
+      "cid": 29,
+      "name": "growth_notes",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 30,
+      "name": "eval_listening",
+      "type": "REAL",
+      "notnull": 0,
+      "dflt_value": "8.0",
+      "pk": 0
+    },
+    {
+      "cid": 31,
+      "name": "eval_reading",
+      "type": "REAL",
+      "notnull": 0,
+      "dflt_value": "8.0",
+      "pk": 0
+    },
+    {
+      "cid": 32,
+      "name": "eval_writing",
+      "type": "REAL",
+      "notnull": 0,
+      "dflt_value": "8.0",
+      "pk": 0
+    },
+    {
+      "cid": 33,
+      "name": "eval_speaking",
+      "type": "REAL",
+      "notnull": 0,
+      "dflt_value": "8.0",
+      "pk": 0
+    },
+    {
+      "cid": 34,
+      "name": "eval_grammar",
+      "type": "REAL",
+      "notnull": 0,
+      "dflt_value": "8.0",
+      "pk": 0
+    },
+    {
+      "cid": 35,
+      "name": "test_score_15m",
+      "type": "REAL",
+      "notnull": 0,
+      "dflt_value": "8.0",
+      "pk": 0
+    },
+    {
+      "cid": 36,
+      "name": "test_score_45m",
+      "type": "REAL",
+      "notnull": 0,
+      "dflt_value": "8.5",
+      "pk": 0
+    },
+    {
+      "cid": 37,
+      "name": "template_id",
+      "type": "INTEGER",
+      "notnull": 0,
+      "dflt_value": "1",
+      "pk": 0
+    },
+    {
+      "cid": 38,
+      "name": "superadmin_notes",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 39,
+      "name": "approved_by",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 40,
+      "name": "parent_name",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 41,
+      "name": "parent_phone",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 42,
+      "name": "parent_zalo_id",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 43,
+      "name": "total_amount",
+      "type": "REAL",
+      "notnull": 0,
+      "dflt_value": "0",
+      "pk": 0
+    }
+  ],
+  "tuition_transactions": [
+    {
+      "cid": 0,
+      "name": "id",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 1
+    },
+    {
+      "cid": 1,
+      "name": "bill_id",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 2,
+      "name": "gateway_transaction_id",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 3,
+      "name": "gateway",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 4,
+      "name": "amount",
+      "type": "REAL",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 5,
+      "name": "payer_name",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 6,
+      "name": "payer_account",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 7,
+      "name": "status",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": "'confirmed'",
+      "pk": 0
+    },
+    {
+      "cid": 8,
+      "name": "raw_payload",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 9,
+      "name": "created_at",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": "CURRENT_TIMESTAMP",
+      "pk": 0
+    },
+    {
+      "cid": 10,
+      "name": "student_id",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 11,
+      "name": "gateway_name",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": "'sepay'",
+      "pk": 0
+    },
+    {
+      "cid": 12,
+      "name": "reference_code",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 13,
+      "name": "transfer_content",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    }
+  ],
+  "teacher_profiles": [
+    {
+      "cid": 0,
+      "name": "id",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 1
+    },
+    {
+      "cid": 1,
+      "name": "user_id",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 2,
+      "name": "bio",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 3,
+      "name": "degree",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 4,
+      "name": "certifications",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 5,
+      "name": "hourly_rate",
+      "type": "REAL",
+      "notnull": 0,
+      "dflt_value": "250000",
+      "pk": 0
+    },
+    {
+      "cid": 6,
+      "name": "is_native",
+      "type": "INTEGER",
+      "notnull": 0,
+      "dflt_value": "0",
+      "pk": 0
+    },
+    {
+      "cid": 7,
+      "name": "specialty",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 8,
+      "name": "created_at",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": "CURRENT_TIMESTAMP",
+      "pk": 0
+    },
+    {
+      "cid": 9,
+      "name": "teacher_id",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 10,
+      "name": "teacher_name",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 11,
+      "name": "username",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 12,
+      "name": "role_type",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 13,
+      "name": "role_title",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 14,
+      "name": "salary_type",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 15,
+      "name": "base_salary_vnd",
+      "type": "REAL",
+      "notnull": 0,
+      "dflt_value": "0",
+      "pk": 0
+    },
+    {
+      "cid": 16,
+      "name": "rate_per_session_vnd",
+      "type": "REAL",
+      "notnull": 0,
+      "dflt_value": "0",
+      "pk": 0
+    },
+    {
+      "cid": 17,
+      "name": "total_sessions_taught",
+      "type": "INTEGER",
+      "notnull": 0,
+      "dflt_value": "0",
+      "pk": 0
+    },
+    {
+      "cid": 18,
+      "name": "leader_rating",
+      "type": "REAL",
+      "notnull": 0,
+      "dflt_value": "5.0",
+      "pk": 0
+    },
+    {
+      "cid": 19,
+      "name": "leader_appraisal",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 20,
+      "name": "bonuses",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 21,
+      "name": "private_reminders",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 22,
+      "name": "updated_at",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": "CURRENT_TIMESTAMP",
+      "pk": 0
+    }
+  ],
+  "teacher_leave_requests": [
+    {
+      "cid": 0,
+      "name": "id",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 1
+    },
+    {
+      "cid": 1,
+      "name": "teacher_id",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 2,
+      "name": "session_id",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 3,
+      "name": "reason",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 4,
+      "name": "substitute_teacher_id",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 5,
+      "name": "substitute_status",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": "'pending'",
+      "pk": 0
+    },
+    {
+      "cid": 6,
+      "name": "admin_status",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": "'pending'",
+      "pk": 0
+    },
+    {
+      "cid": 7,
+      "name": "created_at",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": "CURRENT_TIMESTAMP",
+      "pk": 0
+    },
+    {
+      "cid": 8,
+      "name": "updated_at",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": "CURRENT_TIMESTAMP",
+      "pk": 0
+    },
+    {
+      "cid": 9,
+      "name": "admin_notes",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 10,
+      "name": "teacher_name",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 11,
+      "name": "session_date",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 12,
+      "name": "substitute_teacher_name",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    }
+  ],
+  "teacher_recruitment": [
+    {
+      "cid": 0,
+      "name": "id",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 1
+    },
+    {
+      "cid": 1,
+      "name": "full_name",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 2,
+      "name": "phone",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 3,
+      "name": "email",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 4,
+      "name": "degree",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 5,
+      "name": "status",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": "'new'",
+      "pk": 0
+    },
+    {
+      "cid": 6,
+      "name": "notes",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 7,
+      "name": "created_at",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": "CURRENT_TIMESTAMP",
+      "pk": 0
+    },
+    {
+      "cid": 8,
+      "name": "candidate_name",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 9,
+      "name": "role_type",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 10,
+      "name": "experience_years",
+      "type": "INTEGER",
+      "notnull": 0,
+      "dflt_value": "0",
+      "pk": 0
+    },
+    {
+      "cid": 11,
+      "name": "certificates",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 12,
+      "name": "interview_time",
+      "type": "DATETIME",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 13,
+      "name": "interviewer_name",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 14,
+      "name": "interview_notes",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 15,
+      "name": "updated_at",
+      "type": "DATETIME",
+      "notnull": 0,
+      "dflt_value": "CURRENT_TIMESTAMP",
+      "pk": 0
+    }
+  ],
+  "teacher_payrolls": [
+    {
+      "cid": 0,
+      "name": "id",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 1
+    },
+    {
+      "cid": 1,
+      "name": "teacher_id",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 2,
+      "name": "month_label",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 3,
+      "name": "base_pay",
+      "type": "REAL",
+      "notnull": 0,
+      "dflt_value": "0",
+      "pk": 0
+    },
+    {
+      "cid": 4,
+      "name": "teaching_pay",
+      "type": "REAL",
+      "notnull": 0,
+      "dflt_value": "0",
+      "pk": 0
+    },
+    {
+      "cid": 5,
+      "name": "substitute_pay",
+      "type": "REAL",
+      "notnull": 0,
+      "dflt_value": "0",
+      "pk": 0
+    },
+    {
+      "cid": 6,
+      "name": "deductions",
+      "type": "REAL",
+      "notnull": 0,
+      "dflt_value": "0",
+      "pk": 0
+    },
+    {
+      "cid": 7,
+      "name": "bonus",
+      "type": "REAL",
+      "notnull": 0,
+      "dflt_value": "0",
+      "pk": 0
+    },
+    {
+      "cid": 8,
+      "name": "total_net",
+      "type": "REAL",
+      "notnull": 0,
+      "dflt_value": "0",
+      "pk": 0
+    },
+    {
+      "cid": 9,
+      "name": "status",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": "'draft'",
+      "pk": 0
+    },
+    {
+      "cid": 10,
+      "name": "paid_at",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 11,
+      "name": "created_at",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": "CURRENT_TIMESTAMP",
+      "pk": 0
+    },
+    {
+      "cid": 12,
+      "name": "billing_cycle",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 13,
+      "name": "gross_amount",
+      "type": "INTEGER",
+      "notnull": 0,
+      "dflt_value": "0",
+      "pk": 0
+    },
+    {
+      "cid": 14,
+      "name": "net_amount",
+      "type": "INTEGER",
+      "notnull": 0,
+      "dflt_value": "0",
+      "pk": 0
+    },
+    {
+      "cid": 15,
+      "name": "disbursed_advances_deducted",
+      "type": "INTEGER",
+      "notnull": 0,
+      "dflt_value": "0",
+      "pk": 0
+    },
+    {
+      "cid": 16,
+      "name": "prior_debt_deducted",
+      "type": "INTEGER",
+      "notnull": 0,
+      "dflt_value": "0",
+      "pk": 0
+    },
+    {
+      "cid": 17,
+      "name": "carried_over_debt",
+      "type": "INTEGER",
+      "notnull": 0,
+      "dflt_value": "0",
+      "pk": 0
+    },
+    {
+      "cid": 18,
+      "name": "calculation_json",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 19,
+      "name": "approved_by",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 20,
+      "name": "approved_at",
+      "type": "DATETIME",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 21,
+      "name": "updated_at",
+      "type": "DATETIME",
+      "notnull": 0,
+      "dflt_value": "CURRENT_TIMESTAMP",
+      "pk": 0
+    }
+  ],
+  "knowledge_vault": [
+    {
+      "cid": 0,
+      "name": "id",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 1
+    },
+    {
+      "cid": 1,
+      "name": "title",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 2,
+      "name": "folder",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 3,
+      "name": "category",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 4,
+      "name": "tags",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 5,
+      "name": "content_markdown",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 6,
+      "name": "source_path",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 7,
+      "name": "source_hash",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 8,
+      "name": "status",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": "'active'",
+      "pk": 0
+    },
+    {
+      "cid": 9,
+      "name": "updated_at",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    }
+  ],
+  "knowledge_links": [
+    {
+      "cid": 0,
+      "name": "id",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 1
+    },
+    {
+      "cid": 1,
+      "name": "source_note_id",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 2,
+      "name": "target_note_id",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 3,
+      "name": "wikilink_text",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 4,
+      "name": "is_resolved",
+      "type": "INTEGER",
+      "notnull": 0,
+      "dflt_value": "0",
+      "pk": 0
+    },
+    {
+      "cid": 5,
+      "name": "created_at",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": "CURRENT_TIMESTAMP",
+      "pk": 0
+    }
+  ],
+  "exams": [
+    {
+      "cid": 0,
+      "name": "id",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 1
+    },
+    {
+      "cid": 1,
+      "name": "curriculum_id",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 2,
+      "name": "title",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 3,
+      "name": "description",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 4,
+      "name": "grade",
+      "type": "INTEGER",
+      "notnull": 0,
+      "dflt_value": "0",
+      "pk": 0
+    },
+    {
+      "cid": 5,
+      "name": "format_type",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 6,
+      "name": "skill_category",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 7,
+      "name": "duration_minutes",
+      "type": "INTEGER",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 8,
+      "name": "total_questions",
+      "type": "INTEGER",
+      "notnull": 0,
+      "dflt_value": "0",
+      "pk": 0
+    },
+    {
+      "cid": 9,
+      "name": "pass_percentage",
+      "type": "INTEGER",
+      "notnull": 0,
+      "dflt_value": "60",
+      "pk": 0
+    },
+    {
+      "cid": 10,
+      "name": "created_by",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 11,
+      "name": "is_published",
+      "type": "INTEGER",
+      "notnull": 0,
+      "dflt_value": "1",
+      "pk": 0
+    },
+    {
+      "cid": 12,
+      "name": "created_at",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": "CURRENT_TIMESTAMP",
+      "pk": 0
+    }
+  ],
+  "questions": [
+    {
+      "cid": 0,
+      "name": "id",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 1
+    },
+    {
+      "cid": 1,
+      "name": "exam_id",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 2,
+      "name": "question_index",
+      "type": "INTEGER",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 3,
+      "name": "skill",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 4,
+      "name": "type",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 5,
+      "name": "passage",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 6,
+      "name": "prompt",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 7,
+      "name": "audio_url",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 8,
+      "name": "image_url",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 9,
+      "name": "options_json",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 10,
+      "name": "correct_answer",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 11,
+      "name": "explanation",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 12,
+      "name": "cambridge_level",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 13,
+      "name": "rubric_json",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    }
+  ],
+  "exam_sessions": [
+    {
+      "cid": 0,
+      "name": "id",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 1
+    },
+    {
+      "cid": 1,
+      "name": "user_id",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 2,
+      "name": "exam_id",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 3,
+      "name": "status",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": "'in_progress'",
+      "pk": 0
+    },
+    {
+      "cid": 4,
+      "name": "score",
+      "type": "REAL",
+      "notnull": 0,
+      "dflt_value": "0",
+      "pk": 0
+    },
+    {
+      "cid": 5,
+      "name": "total_points",
+      "type": "REAL",
+      "notnull": 0,
+      "dflt_value": "10",
+      "pk": 0
+    },
+    {
+      "cid": 6,
+      "name": "duration_seconds",
+      "type": "INTEGER",
+      "notnull": 0,
+      "dflt_value": "0",
+      "pk": 0
+    },
+    {
+      "cid": 7,
+      "name": "deadline",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 8,
+      "name": "started_at",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": "CURRENT_TIMESTAMP",
+      "pk": 0
+    },
+    {
+      "cid": 9,
+      "name": "submitted_at",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    }
+  ],
+  "exam_attempts": [
+    {
+      "cid": 0,
+      "name": "id",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 1
+    },
+    {
+      "cid": 1,
+      "name": "session_id",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 2,
+      "name": "user_id",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 3,
+      "name": "user_name",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 4,
+      "name": "user_email",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 5,
+      "name": "exam_id",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 6,
+      "name": "exam_title",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 7,
+      "name": "class_id",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 8,
+      "name": "score",
+      "type": "REAL",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 9,
+      "name": "max_score",
+      "type": "REAL",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 10,
+      "name": "answers_json",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 11,
+      "name": "feedback_json",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 12,
+      "name": "duration_seconds",
+      "type": "INTEGER",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 13,
+      "name": "status",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": "'completed'",
+      "pk": 0
+    },
+    {
+      "cid": 14,
+      "name": "created_at",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": "CURRENT_TIMESTAMP",
+      "pk": 0
+    }
+  ],
+  "audit_logs": [
+    {
+      "cid": 0,
+      "name": "id",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 1
+    },
+    {
+      "cid": 1,
+      "name": "actor_id",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 2,
+      "name": "actor_role",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 3,
+      "name": "action",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 4,
+      "name": "details",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 5,
+      "name": "created_at",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": "CURRENT_TIMESTAMP",
+      "pk": 0
+    }
+  ],
+  "knowledge_fts": [
+    {
+      "cid": 0,
+      "name": "id",
+      "type": "",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 1,
+      "name": "title",
+      "type": "",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 2,
+      "name": "content_markdown",
+      "type": "",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 3,
+      "name": "tags",
+      "type": "",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 4,
+      "name": "folder",
+      "type": "",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    }
+  ],
+  "knowledge_fts_data": [
+    {
+      "cid": 0,
+      "name": "id",
+      "type": "INTEGER",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 1
+    },
+    {
+      "cid": 1,
+      "name": "block",
+      "type": "BLOB",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    }
+  ],
+  "knowledge_fts_idx": [
+    {
+      "cid": 0,
+      "name": "segid",
+      "type": "",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 1
+    },
+    {
+      "cid": 1,
+      "name": "term",
+      "type": "",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 2
+    },
+    {
+      "cid": 2,
+      "name": "pgno",
+      "type": "",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    }
+  ],
+  "knowledge_fts_content": [
+    {
+      "cid": 0,
+      "name": "id",
+      "type": "INTEGER",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 1
+    },
+    {
+      "cid": 1,
+      "name": "c0",
+      "type": "",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 2,
+      "name": "c1",
+      "type": "",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 3,
+      "name": "c2",
+      "type": "",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 4,
+      "name": "c3",
+      "type": "",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 5,
+      "name": "c4",
+      "type": "",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    }
+  ],
+  "knowledge_fts_docsize": [
+    {
+      "cid": 0,
+      "name": "id",
+      "type": "INTEGER",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 1
+    },
+    {
+      "cid": 1,
+      "name": "sz",
+      "type": "BLOB",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    }
+  ],
+  "knowledge_fts_config": [
+    {
+      "cid": 0,
+      "name": "k",
+      "type": "",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 1
+    },
+    {
+      "cid": 1,
+      "name": "v",
+      "type": "",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    }
+  ],
+  "exam_attempts_archive": [
+    {
+      "cid": 0,
+      "name": "id",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 1
+    },
+    {
+      "cid": 1,
+      "name": "user_id",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 2,
+      "name": "user_name",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 3,
+      "name": "user_email",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 4,
+      "name": "exam_id",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 5,
+      "name": "exam_title",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 6,
+      "name": "score",
+      "type": "REAL",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 7,
+      "name": "max_score",
+      "type": "REAL",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 8,
+      "name": "answers_json",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 9,
+      "name": "duration_seconds",
+      "type": "INTEGER",
+      "notnull": 0,
+      "dflt_value": "0",
+      "pk": 0
+    },
+    {
+      "cid": 10,
+      "name": "session_id",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 11,
+      "name": "class_id",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 12,
+      "name": "created_at",
+      "type": "DATETIME",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 13,
+      "name": "archived_at",
+      "type": "DATETIME",
+      "notnull": 0,
+      "dflt_value": "CURRENT_TIMESTAMP",
+      "pk": 0
+    },
+    {
+      "cid": 14,
+      "name": "archive_reason",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": "'pre_unique_migration_duplicate'",
+      "pk": 0
+    }
+  ],
+  "student_evaluations": [
+    {
+      "cid": 0,
+      "name": "id",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 1
+    },
+    {
+      "cid": 1,
+      "name": "student_id",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 2,
+      "name": "student_name",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 3,
+      "name": "teacher_id",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 4,
+      "name": "teacher_name",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 5,
+      "name": "grade_level",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 6,
+      "name": "listening_score",
+      "type": "REAL",
+      "notnull": 0,
+      "dflt_value": "0",
+      "pk": 0
+    },
+    {
+      "cid": 7,
+      "name": "reading_score",
+      "type": "REAL",
+      "notnull": 0,
+      "dflt_value": "0",
+      "pk": 0
+    },
+    {
+      "cid": 8,
+      "name": "writing_score",
+      "type": "REAL",
+      "notnull": 0,
+      "dflt_value": "0",
+      "pk": 0
+    },
+    {
+      "cid": 9,
+      "name": "speaking_score",
+      "type": "REAL",
+      "notnull": 0,
+      "dflt_value": "0",
+      "pk": 0
+    },
+    {
+      "cid": 10,
+      "name": "grammar_vocab_score",
+      "type": "REAL",
+      "notnull": 0,
+      "dflt_value": "0",
+      "pk": 0
+    },
+    {
+      "cid": 11,
+      "name": "overall_score",
+      "type": "REAL",
+      "notnull": 0,
+      "dflt_value": "0",
+      "pk": 0
+    },
+    {
+      "cid": 12,
+      "name": "primary_aptitude",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 13,
+      "name": "secondary_aptitude",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 14,
+      "name": "strengths",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 15,
+      "name": "weaknesses",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 16,
+      "name": "teacher_feedback",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 17,
+      "name": "action_plan",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 18,
+      "name": "recommended_materials",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 19,
+      "name": "parent_name",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 20,
+      "name": "parent_phone",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 21,
+      "name": "parent_zalo_id",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 22,
+      "name": "created_at",
+      "type": "DATETIME",
+      "notnull": 0,
+      "dflt_value": "CURRENT_TIMESTAMP",
+      "pk": 0
+    },
+    {
+      "cid": 23,
+      "name": "updated_at",
+      "type": "DATETIME",
+      "notnull": 0,
+      "dflt_value": "CURRENT_TIMESTAMP",
+      "pk": 0
+    }
+  ],
+  "teacher_salary_advances": [
+    {
+      "cid": 0,
+      "name": "id",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 1
+    },
+    {
+      "cid": 1,
+      "name": "teacher_id",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 2,
+      "name": "teacher_name",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 3,
+      "name": "amount_vnd",
+      "type": "INTEGER",
+      "notnull": 1,
+      "dflt_value": "0",
+      "pk": 0
+    },
+    {
+      "cid": 4,
+      "name": "reason",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 5,
+      "name": "billing_cycle",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 6,
+      "name": "status",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": "'pending'",
+      "pk": 0
+    },
+    {
+      "cid": 7,
+      "name": "approved_by",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 8,
+      "name": "approved_at",
+      "type": "DATETIME",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 9,
+      "name": "admin_notes",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 10,
+      "name": "disbursed_at",
+      "type": "DATETIME",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 11,
+      "name": "disbursed_by",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 12,
+      "name": "disbursement_ref",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 13,
+      "name": "deducted_at",
+      "type": "DATETIME",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 14,
+      "name": "deducted_payroll_id",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 15,
+      "name": "created_at",
+      "type": "DATETIME",
+      "notnull": 0,
+      "dflt_value": "CURRENT_TIMESTAMP",
+      "pk": 0
+    },
+    {
+      "cid": 16,
+      "name": "updated_at",
+      "type": "DATETIME",
+      "notnull": 0,
+      "dflt_value": "CURRENT_TIMESTAMP",
+      "pk": 0
+    }
+  ],
+  "salary_transactions": [
+    {
+      "cid": 0,
+      "name": "id",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 1
+    },
+    {
+      "cid": 1,
+      "name": "teacher_id",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 2,
+      "name": "teacher_name",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 3,
+      "name": "transaction_type",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 4,
+      "name": "amount_vnd",
+      "type": "INTEGER",
+      "notnull": 1,
+      "dflt_value": "0",
+      "pk": 0
+    },
+    {
+      "cid": 5,
+      "name": "billing_cycle",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 6,
+      "name": "status",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": "'completed'",
+      "pk": 0
+    },
+    {
+      "cid": 7,
+      "name": "ref_id",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 8,
+      "name": "notes",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 9,
+      "name": "created_by",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 10,
+      "name": "created_at",
+      "type": "DATETIME",
+      "notnull": 0,
+      "dflt_value": "CURRENT_TIMESTAMP",
+      "pk": 0
+    }
+  ],
+  "student_star_ledger": [
+    {
+      "cid": 0,
+      "name": "id",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 1
+    },
+    {
+      "cid": 1,
+      "name": "student_id",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 2,
+      "name": "bill_id",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 3,
+      "name": "reference_id",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 4,
+      "name": "delta_stars",
+      "type": "INTEGER",
+      "notnull": 1,
+      "dflt_value": "0",
+      "pk": 0
+    },
+    {
+      "cid": 5,
+      "name": "amount",
+      "type": "INTEGER",
+      "notnull": 1,
+      "dflt_value": "0",
+      "pk": 0
+    },
+    {
+      "cid": 6,
+      "name": "balance_after",
+      "type": "INTEGER",
+      "notnull": 1,
+      "dflt_value": "0",
+      "pk": 0
+    },
+    {
+      "cid": 7,
+      "name": "debt_delta",
+      "type": "INTEGER",
+      "notnull": 0,
+      "dflt_value": "0",
+      "pk": 0
+    },
+    {
+      "cid": 8,
+      "name": "debt_after",
+      "type": "INTEGER",
+      "notnull": 0,
+      "dflt_value": "0",
+      "pk": 0
+    },
+    {
+      "cid": 9,
+      "name": "action_type",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 10,
+      "name": "reason",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 11,
+      "name": "note",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 12,
+      "name": "created_at",
+      "type": "DATETIME",
+      "notnull": 0,
+      "dflt_value": "CURRENT_TIMESTAMP",
+      "pk": 0
+    }
+  ],
+  "class_enrollments": [
+    {
+      "cid": 0,
+      "name": "id",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 1
+    },
+    {
+      "cid": 1,
+      "name": "user_id",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 2,
+      "name": "class_id",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 3,
+      "name": "enrolled_at",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": "CURRENT_TIMESTAMP",
+      "pk": 0
+    },
+    {
+      "cid": 4,
+      "name": "status",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": "'active'",
+      "pk": 0
+    }
+  ],
+  "system_notifications": [
+    {
+      "cid": 0,
+      "name": "id",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 1
+    },
+    {
+      "cid": 1,
+      "name": "target_role",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 2,
+      "name": "target_user_id",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 3,
+      "name": "title",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 4,
+      "name": "body",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 5,
+      "name": "category",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 6,
+      "name": "reference_id",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 7,
+      "name": "is_read",
+      "type": "INTEGER",
+      "notnull": 0,
+      "dflt_value": "0",
+      "pk": 0
+    },
+    {
+      "cid": 8,
+      "name": "created_at",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": "CURRENT_TIMESTAMP",
+      "pk": 0
+    }
+  ],
+  "location_activity_streams": [
+    {
+      "cid": 0,
+      "name": "id",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 1
+    },
+    {
+      "cid": 1,
+      "name": "campus_id",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 2,
+      "name": "actor_id",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 3,
+      "name": "actor_name",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 4,
+      "name": "actor_role",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 5,
+      "name": "activity_type",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 6,
+      "name": "title",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 7,
+      "name": "detail",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 8,
+      "name": "reference_id",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 9,
+      "name": "created_at",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": "CURRENT_TIMESTAMP",
+      "pk": 0
+    }
+  ],
+  "auth_sessions": [
+    {
+      "cid": 0,
+      "name": "id",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 1
+    },
+    {
+      "cid": 1,
+      "name": "user_id",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 2,
+      "name": "token_hash",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 3,
+      "name": "created_at",
+      "type": "DATETIME",
+      "notnull": 0,
+      "dflt_value": "CURRENT_TIMESTAMP",
+      "pk": 0
+    },
+    {
+      "cid": 4,
+      "name": "expires_at",
+      "type": "DATETIME",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 5,
+      "name": "revoked_at",
+      "type": "DATETIME",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 6,
+      "name": "last_active_at",
+      "type": "DATETIME",
+      "notnull": 0,
+      "dflt_value": "CURRENT_TIMESTAMP",
+      "pk": 0
+    }
+  ],
+  "finance_ledger": [
+    {
+      "cid": 0,
+      "name": "id",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 1
+    },
+    {
+      "cid": 1,
+      "name": "voucher_type",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 2,
+      "name": "reference_id",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 3,
+      "name": "teacher_id",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 4,
+      "name": "actor_id",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 5,
+      "name": "amount",
+      "type": "INTEGER",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 6,
+      "name": "payment_method",
+      "type": "TEXT",
+      "notnull": 0,
+      "dflt_value": "'bank_transfer'",
+      "pk": 0
+    },
+    {
+      "cid": 7,
+      "name": "billing_cycle",
+      "type": "TEXT",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 0
+    },
+    {
+      "cid": 8,
+      "name": "created_at",
+      "type": "DATETIME",
+      "notnull": 0,
+      "dflt_value": "CURRENT_TIMESTAMP",
+      "pk": 0
+    }
+  ]
+}

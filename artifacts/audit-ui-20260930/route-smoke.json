@@ -1,0 +1,1067 @@
+{
+  "generatedAt": "2026-09-30T01:45:30.358Z",
+  "base": "http://127.0.0.1:4173",
+  "sourceCommit": "8390ea946338288e5e916c4c705ee9b4043d8be0",
+  "scope": "guest route rendering only; not full functional acceptance",
+  "results": [
+    {
+      "route": "/",
+      "errors": [],
+      "failedRequests": [],
+      "status": 200,
+      "title": "Tiếng Anh Cô Dung - Hệ Thống Đào Tạo K12 & Lộ Trình Quốc Tế",
+      "headings": [
+        "Học Viện Tiếng Anh Cô Dung  Đào Tạo & Lộ Trình Chuẩn Quốc Tế",
+        "Khung Chương Trình Toàn Cấp K12 & Lộ Trình 2026",
+        "Phân Tích Năng Khiếu Đa Chiều & Báo Cáo Sớm Cho Phụ Huynh"
+      ],
+      "buttons": [
+        "🌟 Tất Cả Lộ Trình (19 Môn)",
+        "🎒 Tiểu Học (Lớp 1 - 5)",
+        "🌱 THCS (Lớp 6 - 9)",
+        "🏢 THPT (Lớp 10 - 12)",
+        "🔥 Ôn Thi Đại Học",
+        "🌍 IELTS • TOEIC • TOEFL",
+        "👨‍🏫 Phương Pháp Bản Ngữ & 5512"
+      ],
+      "text": "TIẾNG ANH CÔ DUNG • CHƯƠNG TRÌNH 2026\nK12 Toàn Cấp (Lớp 1 - 12) • Ôn Thi ĐH • IELTS • TOEIC\n⭐ 100 Sao = 1.000đ Trừ Học Phí\nHọc Viện Tiếng Anh Cô Dung\nĐào Tạo & Lộ Trình Chuẩn Quốc Tế\n\nNền tảng học Tiếng Anh bám sát chương trình Giáo khoa hiện hành 2026 kết hợp giáo viên bản ngữ, ngân hàng đề kiểm tra 15p - 45p, cơ chế tích Sao đổi học phí và hệ thống báo cáo đa chiều cho phụ huynh qua Zalo.\n\n⚡ Thi Thử Nhanh 15 Phút\n⏱️ Đề 1 Tiết 45 Phút Chuẩn Bộ\n📊 Đánh Giá Năng Lực Học Viên\n👨‍🏫 Cẩm Nang Bản Ngữ & 5512\n📚\n19\nCẤP BẬC & CHƯƠNG TRÌNH\n📝\n87\nBỘ ĐỀ THI 15P - 45P\n📊\n3\nHỒ SƠ NĂNG KHIẾU\n⭐\n100 : 1.000\nTỶ LỆ ĐỔI HỌC PHÍ\nHỆ THỐNG PHÂN CẤP ĐÀO TẠO\nKhung Chương Trình Toàn Cấp K12 & Lộ Trình 2026\n🌟 Tất Cả Lộ Trình (19 Môn)\n🎒 Tiểu Học (Lớp 1 - 5)\n🌱 THCS (Lớp 6 - 9)\n🏢 THPT (Lớp 10 - 12)\n🔥 Ôn Thi Đại Học\n🌍 IELTS • TOEIC • TOEFL\n👨‍🏫 Phương Pháp Bản Ngữ & 5512\n🎒\nPRIMARY\nTiếng Anh Lớp 1\n\nChương trình làm quen Tiếng Anh tiểu học chuẩn 2026 Bộ GD&ĐT (Phonics, Từ vựng hình ảnh, TPR)\n\nVào Làm Bài Test\n➔\nMã: grade-1\n🎨\nPRIMARY\nTiếng Anh Lớp 2\n\nPhát triển phản xạ nghe nói tự nhiên, nhận diện mặt chữ và phát âm chuẩn bản ngữ\n\nVào Làm Bài Test\n➔\nMã: grade-2\n✏️\nPRIMARY\nTiếng Anh Lớp 3\n\nBắt đầu chương trình chính khóa Global Success / Family and Friends, cấu trúc câu căn bản\n\nVào Làm Bài Test\n➔\nMã: grade-3\n📘\nPRIMARY\nTiếng Anh Lớp 4\n\nMở rộng vốn từ vựng gia đình, trường học, sở thích và kỹ năng đọc hiểu mẩu chuyện ngắn\n\nVào Làm Bài Test\n➔\nMã: grade-4\n🏆\nPRIMARY\nTiếng Anh Lớp 5\n\nHoàn thiện khối Tiểu học, chuẩn bị chuyển cấp THCS, luyện kỹ năng viết đoạn văn ngắn\n\nVào Làm Bài Test\n➔\nMã: grade-5\n🌱\nSECONDARY\nTiếng Anh Lớp 6\n\nBước đệm THCS: Global Success, Friends Plus, i-Learn Smart World với 12 Unit chủ điểm\n\nVào Làm Bài Test\n➔\nMã: grade-6\n🚀\nSECONDARY\nTiếng Anh Lớp 7\n\nCủng cố ngữ pháp thời h",
+      "desktopOverflow": {
+        "viewport": 1366,
+        "scroll": 1366
+      },
+      "mobileOverflow": {
+        "viewport": 360,
+        "scroll": 367,
+        "elements": [
+          {
+            "tag": "DIV",
+            "class": "absolute -right-20 -top-20 w-80 h-80 rounded-full bg-emerald-500/5 dark:bg-emerald-500/10 "
+          },
+          {
+            "tag": "DIV",
+            "class": "absolute -left-20 -bottom-20 w-80 h-80 rounded-full bg-teal-500/5 dark:bg-cyan-500/10 blur"
+          },
+          {
+            "tag": "BUTTON",
+            "class": "px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap bg-white dark:bg"
+          },
+          {
+            "tag": "BUTTON",
+            "class": "px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap bg-white dark:bg"
+          },
+          {
+            "tag": "SPAN",
+            "class": ""
+          },
+          {
+            "tag": "SPAN",
+            "class": "ml-1"
+          },
+          {
+            "tag": "BUTTON",
+            "class": "px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap bg-white dark:bg"
+          },
+          {
+            "tag": "SPAN",
+            "class": ""
+          }
+        ]
+      },
+      "screenshot": "artifacts/audit-ui-20260930/_-360.png"
+    },
+    {
+      "route": "/courses",
+      "errors": [],
+      "failedRequests": [],
+      "status": 200,
+      "title": "Khóa Học Tiếng Anh - Tiếng Anh Cô Dung (timbk.io.vn)",
+      "headings": [
+        "Chương Trình Khóa Học & Lộ Trình Phát Triển",
+        "Tiếng Anh Lớp 7 - Chuyên Sâu & Luyện Đề Bộ GD&ĐT 2025",
+        "Tiếng Anh Lớp 8 - Nâng Cao & Tư Duy Ngôn Ngữ Phản Xạ",
+        "Tiếng Anh Lớp 9 - Ôn Thi Vào 10 Chuyên & Công Lập",
+        "IELTS Foundation (Band 4.5 - 6.0) Dành Cho Học Sinh THCS"
+      ],
+      "buttons": [],
+      "text": "HỆ THỐNG ĐÀO TẠO K12 CHUẨN BỘ GD&ĐT\nChương Trình Khóa Học & Lộ Trình Phát Triển\n\nPhương pháp giảng dạy hiện đại kết hợp hệ sinh thái học tập số: ngân hàng đề thi D1, sổ học vụ điện tử và bảng sao tích lũy.\n\n🎙️\nKho Audio Bài Nghe Google Drive (2.254 tracks)\nHệ thống đang đồng bộ kho âm thanh gốc từ Google Drive về máy chủ. Các bài học hiện sử dụng bài đọc IPA và bản phiên âm chuẩn.\nĐANG ĐỒNG BỘ\nLớp 7\nTrình độ: A2 - B1\nTiếng Anh Lớp 7 - Chuyên Sâu & Luyện Đề Bộ GD&ĐT 2025\n\nChương trình phát triển toàn diện 4 kỹ năng, làm chủ 12 chuyên đề ngữ pháp trọng tâm và chuẩn bị cho các kỳ thi học sinh giỏi, khảo sát chất lượng.\n\nLịch học: 3 buổi/tuần\nThời lượng: 90 phút/buổi\nHọc phí chuẩn: 1.200.000đ/tháng (chưa trừ sao thưởng)\nĐIỂM NỔI BẬT:\nChuẩn đề 40 câu 50 phút 2025\nNgân hàng đề thi D1 cá nhân hóa\nĐánh giá phát âm bản ngữ AI\nTheo dõi điểm tích lũy Sao\nLàm bài thi thử 40 câu →\nXem Phương Pháp\nLớp 8\nTrình độ: B1\nTiếng Anh Lớp 8 - Nâng Cao & Tư Duy Ngôn Ngữ Phản Xạ\n\nMở rộng vốn từ vựng học thuật Oxford 3000, kỹ năng đọc hiểu bài dài, phân tích cấu trúc phức và thuyết trình tiếng Anh tự tin.\n\nLịch học: 3 buổi/tuần\nThời lượng: 90 phút/buổi\nHọc phí chuẩn: 1.350.000đ/tháng (chưa trừ sao thưởng)\nĐIỂM NỔI BẬT:\nFTS5 Vocabulary Vault\nViết luận ngắn Academic\nRèn luyện phản xạ Speaking 1-1\nBáo cáo học vụ tự động cho phụ huynh\nLàm bài thi thử 40 câu →\nXem Phương Pháp\nLớp 9\nTrình độ: B1 - B2\nTiếng Anh Lớp 9 - Ôn Thi Vào 10 Chuyên & Công Lập\n\nLuyện chiến thuật giải đề thi vào 10 chuyên và công lập top đầu Hà Nội, bao phủ 100% dạng bài ngữ âm, từ vựng, đọc hiểu và sửa lỗi sai.\n\nLịch học: 3 buổi/tuần\nThời lượng: 105 phút/buổi\nHọc phí chuẩn: 1.500.000đ/tháng (chưa trừ sao thưởng)\nĐIỂM NỔI BẬT:\nBộ đề thi thử thực chiến\nChiến thuật bẫy trắc nghiệm\nChấm bài viết chi tiết theo rubric\nCam kết đầu ra ",
+      "desktopOverflow": {
+        "viewport": 1366,
+        "scroll": 1366
+      },
+      "mobileOverflow": {
+        "viewport": 360,
+        "scroll": 367,
+        "elements": []
+      },
+      "screenshot": "artifacts/audit-ui-20260930/_courses-360.png"
+    },
+    {
+      "route": "/dictionary",
+      "errors": [],
+      "failedRequests": [],
+      "status": 200,
+      "title": "Tiếng Anh Cô Dung - Hệ Thống Đào Tạo K12 & Lộ Trình Quốc Tế",
+      "headings": [
+        "Từ Điển Chuyên Sâu, Phonics & Đánh Giá Phát Âm",
+        "hobby",
+        "creative",
+        "gardening",
+        "dollhouse",
+        "collect",
+        "enjoy",
+        "cartoon",
+        "delicious",
+        "keep fit",
+        "suncream",
+        "sunburn",
+        "overweight",
+        "disease",
+        "energy",
+        "skip breakfast",
+        "dim light",
+        "stay up late",
+        "vegetable",
+        "regularly",
+        "community service",
+        "benefit",
+        "organization",
+        "homeless",
+        "environment",
+        "donate",
+        "nursing home",
+        "elderly",
+        "volunteer",
+        "orphanage",
+        "mountain village",
+        "plant",
+        "unpaid work",
+        "rubbish",
+        "school bag",
+        "pencil case",
+        "computer room",
+        "acne",
+        "pedestrian zone",
+        "carbon footprint",
+        "infrastructure",
+        "sustainable",
+        "liveable",
+        "ruler",
+        "playground",
+        "waterfall",
+        "renewable energy",
+        "look down on",
+        "environmentally friendly",
+        "mountainous",
+        "inexplicable",
+        "pedestrian",
+        "stative verb"
+      ],
+      "buttons": [
+        "🎲 Học Ngẫu Nhiên",
+        "+ Thêm Từ Mới",
+        "Đang Học (52)",
+        "Cần Ôn Hôm Nay (SRS)",
+        "Từ Đã Chinh Phục (Ẩn) (0)",
+        "🔊",
+        "Phân Tích Sâu 🔍",
+        "Đã Thuộc (Ẩn Từ)",
+        "🔊",
+        "Phân Tích Sâu 🔍",
+        "Đã Thuộc (Ẩn Từ)",
+        "🔊",
+        "Phân Tích Sâu 🔍",
+        "Đã Thuộc (Ẩn Từ)",
+        "🔊",
+        "Phân Tích Sâu 🔍",
+        "Đã Thuộc (Ẩn Từ)",
+        "🔊",
+        "Phân Tích Sâu 🔍",
+        "Đã Thuộc (Ẩn Từ)",
+        "🔊",
+        "Phân Tích Sâu 🔍",
+        "Đã Thuộc (Ẩn Từ)",
+        "🔊",
+        "Phân Tích Sâu 🔍",
+        "Đã Thuộc (Ẩn Từ)",
+        "🔊",
+        "Phân Tích Sâu 🔍",
+        "Đã Thuộc (Ẩn Từ)",
+        "🔊"
+      ],
+      "text": "NGÂN HÀNG TỪ VỰNG SƯ PHẠM\n•\nSTEALTH VOCABULARY & PRONUNCIATION ENGINE\nTừ Điển Chuyên Sâu, Phonics & Đánh Giá Phát Âm\n\nTách âm tiết, phân tích biến thể ngữ pháp, luyện nói đối chiếu Microphone rubric 3 tiêu chí và cơ chế ẩn từ giãn cách Spaced Repetition (SRS).\n\nDanh hiệu hiện tại:\n⭐ 0 sao\n🌱\nTân Binh Học Ngữ\nĐã chinh phục: 0 từ vựng\n🔍\n🎲\nHọc Ngẫu Nhiên\n+ Thêm Từ Mới\nĐang Học (52)\nCần Ôn Hôm Nay (SRS)\nTừ Đã Chinh Phục (Ẩn) (0)\nTừ loại:\nTất cả từ loại\nDanh từ (Noun)\nĐộng từ (Verb)\nTính từ (Adjective)\nTrạng từ (Adverb)\nCụm động từ (Phrasal Verb)\nKhối lớp:\nToàn bộ K12\nTiểu học (Lớp 3 - 5)\nTHCS Chuyên Sâu (Lớp 7)\nTHPT Cơ Bản (Lớp 10)\nLuyện Thi Tốt Nghiệp THPT (Lớp 12)\nVừa (KET_A2)\nnoun\nhobby\n/ˈhɒbi/\n🔊\nsở thích, thú vui lúc rảnh rỗi\n\n\"What is your hobby? - I enjoy collecting stamps.\"\n\n↳ Sở thích của bạn là gì? - Mình rất thích sưu tầm tem thư.\n\nPhân Tích Sâu 🔍\nĐã Thuộc (Ẩn Từ)\nVừa (KET_A2)\nadjective\ncreative\n/kriˈeɪtɪv/\n🔊\nsáng tạo, có óc tưởng tượng phong phú\n\n\"My daughter is very creative. She can make new things easily.\"\n\n↳ Con gái tôi rất sáng tạo. Bé có thể tự làm những món đồ mới rất dễ dàng.\n\nPhân Tích Sâu 🔍\nĐã Thuộc (Ẩn Từ)\nVừa (KET_A2)\nnoun\ngardening\n/ˈɡɑːdnɪŋ/\n🔊\nviệc làm vườn, sở thích trồng trọt\n\n\"Gardening gives us plants, flowers and fresh vegetables.\"\n\n↳ Làm vườn mang lại cho chúng ta cây xanh, hoa tươi và rau sạch.\n\nPhân Tích Sâu 🔍\nĐã Thuộc (Ẩn Từ)\nVừa (KET_A2)\nnoun\ndollhouse\n/ˈdɒlhaʊs/\n🔊\nngôi nhà búp bê (mô hình nhà nhỏ)\n\n\"She enjoys building dollhouses in her free time.\"\n\n↳ Cô ấy thích tự lắp ráp những ngôi nhà búp bê vào thời gian rảnh.\n\nPhân Tích Sâu 🔍\nĐã Thuộc (Ẩn Từ)\nVừa (KET_A2)\nverb\ncollect\n/kəˈlekt/\n🔊\nsưu tầm, gom nhặt, thu thập\n\n\"She loves collecting old comic books.\"\n\n↳ Cô bé rất yêu thích việc sưu tầm những cuốn truyện tranh cổ.\n\nPhân Tích ",
+      "desktopOverflow": {
+        "viewport": 1366,
+        "scroll": 1366
+      },
+      "mobileOverflow": {
+        "viewport": 360,
+        "scroll": 367,
+        "elements": []
+      },
+      "screenshot": "artifacts/audit-ui-20260930/_dictionary-360.png"
+    },
+    {
+      "route": "/grammar",
+      "errors": [],
+      "failedRequests": [],
+      "status": 200,
+      "title": "Tiếng Anh Cô Dung - Hệ Thống Đào Tạo K12 & Lộ Trình Quốc Tế",
+      "headings": [
+        "Ngân Hàng Chuyên Đề Ngữ Pháp & Công Thức Toàn Cấp"
+      ],
+      "buttons": [
+        "Tất cả (35)",
+        "🎒 Tiểu Học (Lớp 3-5)",
+        "🌱 THCS (Lớp 6-9)",
+        "🏢 THPT & HSG (Lớp 10-12)",
+        "Tất cả",
+        "Thì (Tenses)",
+        "Cấu trúc",
+        "Mệnh đề",
+        "1 Hiện Tại Đơn & Hiện Tại Tiếp Diễn (Present Simple & Continuous) A1 - A2 🎯 Lớp 3, 4, 5, 6, 7 • 📚 Unit 1 - Unit 2 Thu gọn ▾",
+        "A. plays",
+        "B. is playing",
+        "C. played",
+        "D. has played",
+        "A. boil",
+        "B. boils",
+        "C. is boiling",
+        "D. boiled",
+        "2 Quá Khứ Đơn & Quá Khứ Tiếp Diễn (Past Simple & Continuous) A2 - B1 🎯 Lớp 6, 7, 8, 9 • 📚 Unit 3 - Unit 4 Xem chi tiết ▾",
+        "3 Hiện Tại Hoàn Thành & Quá Khứ Hoàn Thành (Present & Past Perfect) B1 - B2 🎯 Lớp 7, 8, 9, 10, 11 • 📚 Unit 5 - Unit 6 Xem chi tiết ▾",
+        "4 Câu Bị Động Toàn Diện (Passive Voice: Basic to Advanced) B1 - B2 🎯 Lớp 7, 8, 9, 10, 11, 12 • 📚 Unit 7 - Unit 8 Xem chi tiết ▾",
+        "5 Câu Điều Kiện & Mệnh Đề Ước (Conditionals Type 1, 2, 3 & Wish Clauses) B1 - B2 🎯 Lớp 8, 9, 10, 11, 12 • 📚 Unit 9 - Unit 10 Xem chi tiết ▾",
+        "6 Mệnh Đề Quan Hệ (Relative Clauses: Who, Whom, Which, That, Whose, Where, When) B1 - B2 🎯 Lớp 8, 9, 10, 11, 12 • 📚 Unit 11 Xem chi tiết ▾",
+        "7 Danh Động Từ & Động Từ Nguyên Mẫu (Gerunds & Infinitives: V-ing vs To V) A2 - B2 🎯 Lớp 7, 8, 9, 10, 11 • 📚 Unit 1 - Unit 3 Xem chi tiết ▾",
+        "8 Các Cấu Trúc So Sánh (Comparisons: Equal, Comparative, Superlative & Double Comparative) A2 - B1 🎯 Lớp 6, 7, 8, 9, 10 • 📚 Unit 4 - Unit 5 Xem chi tiết ▾",
+        "9 Động Từ Khuyết Thiếu (Modal Verbs: Can, Could, Must, Have to, Should, May, Might) A2 - B1 🎯 Lớp 6, 7, 8, 9, 10 • 📚 Unit 6 - Unit 7 Xem chi tiết ▾",
+        "10 Mệnh Đề Trạng Ngữ (Adverbial Clauses: Reason, Concession, Purpose, Result) B1 🎯 Lớp 7, 8, 9, 10 • 📚 Unit 7 - Unit 9 Xem chi tiết ▾",
+        "11 Mạo Từ & Lượng Từ (Articles & Quantifiers: A/An/The, Many/Much, A Few/A Little) A1 - B1 🎯 Lớp 3, 4, 5, 6, 7, 8 • 📚 Unit 2 - Unit 4 Xem chi tiết ▾",
+        "12 Câu Tường Thuật (Reported Speech: Statements, Questions & Commands) B1 - B2 🎯 Lớp 8, 9, 10, 11, 12 • 📚 Unit 10 - Unit 12 Xem chi tiết ▾",
+        "13 Động Từ Trạng Thái & Hành Động (Stative vs Dynamic Verbs) B1 - B2 🎯 Lớp 11 - Lớp 12 • 📚 Unit 3: Cities of the Future Xem chi tiết ▾",
+        "14 Cấu trúc 'Used to' Chỉ Thói Quen Quá Khứ A2 - B1 🎯 Lớp 7 - Lớp 9 • 📚 Unit 7: Traffic Xem chi tiết ▾"
+      ],
+      "text": "📖\nCẨM NANG NGỮ PHÁP TOÀN DIỆN & PHONICS 2026\nNgân Hàng Chuyên Đề Ngữ Pháp & Công Thức Toàn Cấp\n\nHệ thống hóa toàn bộ 14 chuyên đề ngữ pháp từ Tiểu học đến THPTQG & HSG: Công thức toán học hóa, cạm bẫy thi cử, quy tắc ngữ âm đuôi và bài tập trắc nghiệm giải thích chi tiết.\n\n📐\n🔍\nCẤP HỌC:\nTất cả (35)\n🎒 Tiểu Học (Lớp 3-5)\n🌱 THCS (Lớp 6-9)\n🏢 THPT & HSG (Lớp 10-12)\nNHÓM:\nTất cả\nThì (Tenses)\nCấu trúc\nMệnh đề\n1\nHiện Tại Đơn & Hiện Tại Tiếp Diễn (Present Simple & Continuous)\nA1 - A2\n🎯 Lớp 3, 4, 5, 6, 7\n• 📚 Unit 1 - Unit 2\nThu gọn\n▾\n💡 Bản chất ngữ pháp: Thì hiện tại đơn diễn tả thói quen, chân lý sự thật. Hiện tại tiếp diễn diễn tả hành động đang xảy ra tại thời điểm nói hoặc kế hoạch tương lai.\n📐\nCÔNG THỨC TOÁN HỌC HÓA\nPRESENT SIMPLE\naffirmative: S + V(s/es) + O\nnegative: S + do/does + not + V_inf + O\ninterrogative: Do/Does + S + V_inf + O?\nPRESENT CONTINUOUS\naffirmative: S + am/is/are + V-ing + O\nnegative: S + am/is/are + not + V-ing + O\ninterrogative: Am/Is/Are + S + V-ing + O?\nAFFIRMATIVE\nS + V(s/es) + O\nNEGATIVE\nS + do/does + not + V_inf + O\nINTERROGATIVE\nDo/Does + S + V_inf + O?\n📌\nQUY TẮC ỨNG DỤNG\n•\nHiện tại đơn: Sự thật hiển nhiên, thói quen lặp đi lặp lại, lịch trình tàu xe.\n•\nHiện tại tiếp diễn: Hành động đang xảy ra lúc nói (now, at present), phàn nàn với 'always', kế hoạch đã sắp xếp.\n🏷️\nDẤU HIỆU NHẬN BIẾT\nPresent Simple: always, usually, often, sometimes, rarely, never, every day/week, once a week\nPresent Continuous: now, right now, at the moment, at present, Look!, Listen!, Be quiet!\n🗣️\nLIÊN KẾT NGỮ ÂM & PHÁT ÂM (PHONICS CONNECTION)\nQuy tắc phát âm đuôi -s/-es: /s/ sau âm vô thanh (/p, k, f, t, θ/), /ɪz/ sau âm xát (/s, z, ʃ, tʃ, dʒ/), /z/ sau các nguyên âm và phụ âm hữu thanh còn lại.\n⚠️\nCẠM BẪY THƯỜNG GẶP & TUYỆT CHIÊU TRÁNH SAI\n1. Quên thêm s/es với n",
+      "desktopOverflow": {
+        "viewport": 1366,
+        "scroll": 1366
+      },
+      "mobileOverflow": {
+        "viewport": 360,
+        "scroll": 367,
+        "elements": [
+          {
+            "tag": "DIV",
+            "class": "absolute -right-10 -bottom-10 text-9xl opacity-10 select-none pointer-events-none"
+          }
+        ]
+      },
+      "screenshot": "artifacts/audit-ui-20260930/_grammar-360.png"
+    },
+    {
+      "route": "/flashcards",
+      "errors": [],
+      "failedRequests": [],
+      "status": 200,
+      "title": "Tiếng Anh Cô Dung - Hệ Thống Đào Tạo K12 & Lộ Trình Quốc Tế",
+      "headings": [
+        "Tiếng Anh Cô Dung — Flashcard Từ Vựng Chuẩn Ngữ Âm",
+        "sở thích, thú vui lúc rảnh rỗi",
+        "hobby"
+      ],
+      "buttons": [
+        "🔀 Xáo thẻ",
+        "▶️ Tự chạy",
+        "🔊 Đọc chuẩn",
+        "🐢 Đọc chậm",
+        "🔊 Đọc câu",
+        "← Từ trước",
+        "❌ Chưa nhớ",
+        "🔄 Lật thẻ",
+        "✅ Đã thuộc",
+        "Từ tiếp →"
+      ],
+      "text": "🗂️ CHẾ ĐỘ LẬT THẺ THÔNG MINH\nTiếng Anh Cô Dung — Flashcard Từ Vựng Chuẩn Ngữ Âm\n\nHọc từ vựng đa giác quan cùng Tiếng Anh Cô Dung: 1 mặt tiếng Việt gợi nhớ, 1 mặt tiếng Anh phát âm bản xứ, phân tích chi tiết nguyên âm, phụ âm, trọng âm và câu ví dụ ngữ cảnh.\n\nChủ điểm:\nTất cả Unit (Tổng hợp đề thi)\n📚 Ngữ pháp & Giao tiếp\n🔊 Ngữ âm & Trọng âm\n🎨 Unit 1: Hobbies\n🥗 Unit 2: Healthy Living\n🤝 Unit 3: Community Service\nTrạng thái:\nTất cả từ (52)\nChưa thuộc (52)\nĐã thuộc (0)\nMặt trước:\n🇻🇳 Tiếng Việt (Khuyến nghị)\n🇬🇧 Tiếng Anh\n🔀 Xáo thẻ\n▶️ Tự chạy\nThẻ 1 / 52\n💡 Phím tắt: [Space] Lật thẻ • [← / →] Đổi thẻ • [A] Nghe phát âm\nUNIT1\nnoun\n🔄 Click hoặc Space để lật\nMẶT TIẾNG VIỆT (GỢI NHỚ NGHĨA)\nsở thích, thú vui lúc rảnh rỗi\nCấu trúc từ: hob-by (2 âm tiết)\nBạn có nhớ từ tiếng Anh và cách phát âm của từ này không?\nBấm vào thẻ để xem đáp án & phân tích ngữ âm ➔\nMẶT TIẾNG ANH & PHONICS\nnoun\n🔊 Đọc chuẩn\n🐢 Đọc chậm\nhobby\n/ˈhɒbi/\nhob-by (2 âm tiết)\nNghĩa tiếng Việt: sở thích, thú vui lúc rảnh rỗi\n🟡 MÔ TẢ NGUYÊN ÂM:\n\nNguyên âm ngắn /ɒ/ (âm \"o\" ngắn, tròn môi) ở âm tiết 1; nguyên âm ngắn /i/ (âm \"i\" ngắn nhẹ) ở âm tiết 2.\n\n🔵 MÔ TẢ PHỤ ÂM:\n\nPhụ âm bật môi /h/, phụ âm kép \"bb\" phát âm thành 1 âm hữu thanh /b/.\n\n📌\nQuy tắc trọng âm: Trọng âm rơi vào âm tiết thứ nhất (âm 1: HOB-by).\n💡 VÍ DỤ THỰC TẾ:\n🔊 Đọc câu\n\"What is your hobby? - I enjoy collecting stamps.\"\n↳ Sở thích của bạn là gì? - Mình rất thích sưu tầm tem thư.\n🔄 Bấm để lật lại mặt trước\n← Từ trước\n❌\nChưa nhớ\n🔄\nLật thẻ\n✅\nĐã thuộc\nTừ tiếp →",
+      "desktopOverflow": {
+        "viewport": 1366,
+        "scroll": 1366
+      },
+      "mobileOverflow": {
+        "viewport": 360,
+        "scroll": 367,
+        "elements": []
+      },
+      "screenshot": "artifacts/audit-ui-20260930/_flashcards-360.png"
+    },
+    {
+      "route": "/quiz",
+      "errors": [],
+      "failedRequests": [],
+      "status": 200,
+      "title": "Tiếng Anh Cô Dung - Hệ Thống Đào Tạo K12 & Lộ Trình Quốc Tế",
+      "headings": [
+        "Tiếng Anh Cô Dung — Kiểm Tra & Dò Bài Từ Vựng"
+      ],
+      "buttons": [
+        "⌨️ Gõ chính tả (Spelling) Hiện nghĩa tiếng Việt, học sinh tự gõ lại từ tiếng Anh chính xác (Khuyên dùng để thuộc từ)",
+        "🔘 Trắc nghiệm 4 lựa chọn (MCQ) Luyện phản xạ nhanh, chọn từ tiếng Anh tương ứng với nghĩa",
+        "📝 Điền từ vào câu ngữ cảnh Áp dụng từ vào câu ví dụ thực tế trong đề thi lớp 7",
+        "5 câu",
+        "10 câu",
+        "15 câu",
+        "20 câu",
+        "🚀 Bắt đầu dò từ ngay"
+      ],
+      "text": "✍️ CHẾ ĐỘ DÒ TỪ VỰNG\nTiếng Anh Cô Dung — Kiểm Tra & Dò Bài Từ Vựng\n\nCông cụ đắc lực của Tiếng Anh Cô Dung giúp giáo viên kiểm tra miệng hoặc học sinh tự kiểm tra độ nhớ từ. Đa dạng hình thức từ gõ chính tả (Spelling), trắc nghiệm 4 đáp án đến điền từ vào câu ngữ cảnh thực tế.\n\n1. Chọn hình thức dò từ:\n⌨️\nGõ chính tả (Spelling)\nHiện nghĩa tiếng Việt, học sinh tự gõ lại từ tiếng Anh chính xác (Khuyên dùng để thuộc từ)\n🔘\nTrắc nghiệm 4 lựa chọn (MCQ)\nLuyện phản xạ nhanh, chọn từ tiếng Anh tương ứng với nghĩa\n📝\nĐiền từ vào câu ngữ cảnh\nÁp dụng từ vào câu ví dụ thực tế trong đề thi lớp 7\n2. Chọn phạm vi ôn tập:\nChủ điểm bài học:\nTất cả bài học (52 từ)\n📚 Ngữ pháp & Giao tiếp\n🔊 Ngữ âm & Trọng âm\n🎨 Unit 1: Hobbies\n🥗 Unit 2: Healthy Living\n🤝 Unit 3: Community Service\nSố lượng câu kiểm tra:\n5 câu\n10 câu\n15 câu\n20 câu\n🚀 Bắt đầu dò từ ngay",
+      "desktopOverflow": {
+        "viewport": 1366,
+        "scroll": 1366
+      },
+      "mobileOverflow": {
+        "viewport": 360,
+        "scroll": 367,
+        "elements": []
+      },
+      "screenshot": "artifacts/audit-ui-20260930/_quiz-360.png"
+    },
+    {
+      "route": "/games",
+      "errors": [],
+      "failedRequests": [],
+      "status": 200,
+      "title": "Tiếng Anh Cô Dung - Hệ Thống Đào Tạo K12 & Lộ Trình Quốc Tế",
+      "headings": [
+        "Đấu Trường Trò Chơi Hiện Đang Đóng"
+      ],
+      "buttons": [],
+      "text": "🔒\nKHU VỰC KIỂM SOÁT LỚP HỌC\nĐấu Trường Trò Chơi Hiện Đang Đóng\n\n🔒 Đấu trường trò chơi hiện đang đóng. Chỉ được mở theo hiệu lệnh của Cô Dung / Giáo viên trong giờ học!\n\n💡 Gợi ý: Hãy hoàn thành bài tập Unit chính khóa hoặc bài test 15 phút để tích lũy sao thưởng. Khi cô giáo bấm lệnh mở, màn hình này sẽ tự động mở ngay!\n🚀 Về Bài Học Lớp Của Tôi\n⏱️ Làm Đề Thi 15p Chuẩn Bộ",
+      "desktopOverflow": {
+        "viewport": 1366,
+        "scroll": 1366
+      },
+      "mobileOverflow": {
+        "viewport": 360,
+        "scroll": 367,
+        "elements": []
+      },
+      "screenshot": "artifacts/audit-ui-20260930/_games-360.png"
+    },
+    {
+      "route": "/exam",
+      "errors": [],
+      "failedRequests": [],
+      "status": 200,
+      "title": "Tiếng Anh Cô Dung - Hệ Thống Đào Tạo K12 & Lộ Trình Quốc Tế",
+      "headings": [
+        "Kiểm Tra 15 Phút Nhanh - Unit 1: Hobbies & Health (Lớp 7)",
+        "Bạn Đã Sẵn Sàng Làm Bài?"
+      ],
+      "buttons": [
+        "🎓 Thi Thử Cho Khách Tự Do",
+        "🎲 Tạo Đề Random (5p • 15p • 45p) Mới",
+        "⚡ Đề 5 Phút (Khởi Động)",
+        "⏱️ Đề 15 Phút (Thường Xuyên)",
+        "📝 Đề 45 Phút (1 Tiết Chuẩn)",
+        "🌟 Tất Cả (87)",
+        "🎒 Tiểu Học (L1-5)",
+        "🌱 Lớp 7 (HSG & KET)",
+        "🎯 Vào 10 (Lớp 9)",
+        "🏢 THPT & ĐH (L10-12)",
+        "🌍 IELTS",
+        "💼 TOEIC",
+        "🎓 TOEFL iBT",
+        "🎲 Mở Bộ Tạo Đề",
+        "⏱️ 15 Phút 15' Kiểm Tra 15 Phút Nhanh - Unit 1: Hobbies & Health (Lớp 7) 10 câu mixed",
+        "📝 45 Phút 45' Đề Kiểm Tra 1 Tiết 45 Phút - Giữa Học Kỳ 1 (Lớp 7 Global Success) 25 câu mixed",
+        "📝 45 Phút 50' Đề Khảo Sát Ôn Thi Tốt Nghiệp THPT QG 2026 - Chuẩn Format Mới 40 câu mixed",
+        "🌍 IELTS 60' IELTS Academic Reading Test: The Future of Renewable Energy & AI in Education 15 câu reading",
+        "🌍 IELTS 60' IELTS Writing Task 2 & Task 1: Academic Argumentative Essay 2 câu writing",
+        "⏱️ 15 Phút 15' IELTS Speaking Full Mock Exam (Part 1, 2, 3) với Giảng Viên Bản Ngữ 3 câu speaking",
+        "💼 TOEIC 30' TOEIC Mini Simulation Test (Listening & Reading 450 - 850) 20 câu mixed",
+        "🎓 TOEFL 35' TOEFL iBT Academic Listening & Reading Diagnostic 15 câu mixed",
+        "📜 Thi Đánh Giá 40' VSTEP B1 - B2 Đọc Hiểu & Viết Luận (Khung 6 Bậc Ngoại Ngữ VN) 15 câu mixed",
+        "📝 45 Phút 35' Đề Kiểm Tra Cuối Học Kỳ 1 Tiếng Anh 3 (Tiểu Học Long Giang) 10 câu listening_reading",
+        "📝 45 Phút 35' Đề Kiểm Tra Cuối Học Kỳ 1 Tiếng Anh 4 Global Success 10 câu listening_reading",
+        "📝 45 Phút 35' Đề Kiểm Tra Cuối Học Kỳ 1 Tiếng Anh 5 (Chuyển Cấp Lên Lớp 6) 12 câu mixed",
+        "📝 45 Phút 45' Đề Kiểm Tra Định Kỳ Giữa Học Kỳ 1 Tiếng Anh 7 Global Success 15 câu mixed",
+        "📜 Thi Đánh Giá 90' Đề Thi Chọn Học Sinh Giỏi Cấp Huyện Lớp 7 THCS Huyện Yên Lập (Chính Thức) 25 câu mixed",
+        "📝 45 Phút 60' Đề Khảo Sát Năng Khiếu Học Sinh Giỏi Tiếng Anh Lớp 8 20 câu mixed",
+        "📜 Thi Đánh Giá 60' Đề Tuyển Sinh Vào Lớp 10 Chuyên Anh & Đại Trà Chuẩn Bộ GD&ĐT 40 câu use_of_english"
+      ],
+      "text": "👩‍🏫\nHỆ THỐNG PHÒNG THI & ĐÁNH GIÁ NĂNG LỰC CHUẨN 2026 (IELTS • TOEIC • TOEFL • 15P • 45P):\n🎓 Thi Thử Cho Khách\nTự Do\n🎲 Tạo Đề Random (5p • 15p • 45p)\nMới\n⚡ Đề 5 Phút (Khởi Động)\n⏱️ Đề 15 Phút (Thường Xuyên)\n📝 Đề 45 Phút (1 Tiết Chuẩn)\n🌟 Tất Cả (87)\n🎒 Tiểu Học (L1-5)\n🌱 Lớp 7 (HSG & KET)\n🎯 Vào 10 (Lớp 9)\n🏢 THPT & ĐH (L10-12)\n🌍 IELTS\n💼 TOEIC\n🎓 TOEFL iBT\n🎲\nCần bài tập nhanh không trùng lặp? Hãy thử Bộ Tạo Đề Ngẫu Nhiên 5p • 15p • 45p từ kho 573 câu hỏi!\n🎲 Mở Bộ Tạo Đề\n⏱️ 15 PHÚT\n15'\nKiểm Tra 15 Phút Nhanh - Unit 1: Hobbies & Health (Lớp 7)\n10 câu\nMIXED\n📝 45 PHÚT\n45'\nĐề Kiểm Tra 1 Tiết 45 Phút - Giữa Học Kỳ 1 (Lớp 7 Global Success)\n25 câu\nMIXED\n📝 45 PHÚT\n50'\nĐề Khảo Sát Ôn Thi Tốt Nghiệp THPT QG 2026 - Chuẩn Format Mới\n40 câu\nMIXED\n🌍 IELTS\n60'\nIELTS Academic Reading Test: The Future of Renewable Energy & AI in Education\n15 câu\nREADING\n🌍 IELTS\n60'\nIELTS Writing Task 2 & Task 1: Academic Argumentative Essay\n2 câu\nWRITING\n⏱️ 15 PHÚT\n15'\nIELTS Speaking Full Mock Exam (Part 1, 2, 3) với Giảng Viên Bản Ngữ\n3 câu\nSPEAKING\n💼 TOEIC\n30'\nTOEIC Mini Simulation Test (Listening & Reading 450 - 850)\n20 câu\nMIXED\n🎓 TOEFL\n35'\nTOEFL iBT Academic Listening & Reading Diagnostic\n15 câu\nMIXED\n📜 THI ĐÁNH GIÁ\n40'\nVSTEP B1 - B2 Đọc Hiểu & Viết Luận (Khung 6 Bậc Ngoại Ngữ VN)\n15 câu\nMIXED\n📝 45 PHÚT\n35'\nĐề Kiểm Tra Cuối Học Kỳ 1 Tiếng Anh 3 (Tiểu Học Long Giang)\n10 câu\nLISTENING_READING\n📝 45 PHÚT\n35'\nĐề Kiểm Tra Cuối Học Kỳ 1 Tiếng Anh 4 Global Success\n10 câu\nLISTENING_READING\n📝 45 PHÚT\n35'\nĐề Kiểm Tra Cuối Học Kỳ 1 Tiếng Anh 5 (Chuyển Cấp Lên Lớp 6)\n12 câu\nMIXED\n📝 45 PHÚT\n45'\nĐề Kiểm Tra Định Kỳ Giữa Học Kỳ 1 Tiếng Anh 7 Global Success\n15 câu\nMIXED\n📜 THI ĐÁNH GIÁ\n90'\nĐề Thi Chọn Học Sinh Giỏi Cấp Huyện Lớp 7 THCS Huyện Yên Lập (Chính Thức)\n25 câu\nMIXED\n📝 45 PHÚT\n60'\nĐề Khả",
+      "desktopOverflow": {
+        "viewport": 1366,
+        "scroll": 1366
+      },
+      "mobileOverflow": {
+        "viewport": 360,
+        "scroll": 369,
+        "elements": [
+          {
+            "tag": "BUTTON",
+            "class": "px-3.5 py-1.5 rounded-xl transition-all whitespace-nowrap flex items-center gap-1.5 bg-sky"
+          },
+          {
+            "tag": "SPAN",
+            "class": ""
+          },
+          {
+            "tag": "SPAN",
+            "class": "px-1.5 py-0.2 rounded-full bg-white/20 text-[9px]"
+          },
+          {
+            "tag": "BUTTON",
+            "class": "px-3 py-1.5 rounded-xl transition-all whitespace-nowrap bg-sky-50/70 dark:bg-slate-800 tex"
+          },
+          {
+            "tag": "BUTTON",
+            "class": "px-3 py-1.5 rounded-xl transition-all whitespace-nowrap bg-sky-50/70 dark:bg-slate-800 tex"
+          },
+          {
+            "tag": "BUTTON",
+            "class": "px-3 py-1.5 rounded-xl transition-all whitespace-nowrap bg-sky-50/70 dark:bg-slate-800 tex"
+          },
+          {
+            "tag": "BUTTON",
+            "class": "px-3 py-1.5 rounded-xl transition-all whitespace-nowrap bg-sky-600 text-white shadow-sm fo"
+          },
+          {
+            "tag": "BUTTON",
+            "class": "px-3 py-1.5 rounded-xl transition-all whitespace-nowrap bg-sky-50/70 dark:bg-slate-800 tex"
+          }
+        ]
+      },
+      "screenshot": "artifacts/audit-ui-20260930/_exam-360.png"
+    },
+    {
+      "route": "/tools",
+      "errors": [],
+      "failedRequests": [],
+      "status": 200,
+      "title": "Bộ Công Cụ Học Tập & Lộ Trình Đa Giác Quan - Tiếng Anh Cô Dung",
+      "headings": [
+        "Bộ Công Cụ Học Tập & Lộ Trình Đa Giác Quan",
+        "Từ Điển Cambridge & Phonics IPA",
+        "Flashcard 3D & Ghi Nhớ Lặp Lại (SRS)",
+        "Đấu Trường Trò Chơi Game Hub 2026",
+        "Chuyên Đề Ngữ Pháp & Sơ Đồ Tư Duy Mindmap",
+        "Cẩm Nang Phương Pháp Bản Ngữ & K12 5512",
+        "Phòng Luyện Đề & Bấm Giờ Tự Động"
+      ],
+      "buttons": [],
+      "text": "🛠️\n⚡ TRUNG TÂM TIỆN ÍCH HỌC TẬP THẾ HỆ MỚI\nBộ Công Cụ Học Tập & Lộ Trình Đa Giác Quan\n\nHệ sinh thái công cụ hỗ trợ học sinh từ Tiểu Học, THCS, THPT đến Luyện thi IELTS/TOEIC. Tích hợp âm thanh bản ngữ, thẻ nhớ phản xạ và phòng thi bấm giờ chuẩn quy cách 2026.\n\n📖\nBản Ngữ Chuẩn\nPHÁT ÂM & IPA\nTừ Điển Cambridge & Phonics IPA\n\nTra cứu phát âm chuẩn Anh - Mỹ, phiên âm quốc tế IPA, bảng nguyên âm, phụ âm và phân tích ngữ âm tự động.\n\nMở Công Cụ\n➔\n🗂️\nĐa Giác Quan\nGHI NHỚ NÃO BỘ\nFlashcard 3D & Ghi Nhớ Lặp Lại (SRS)\n\nHệ thống thẻ học thông minh lặp lại ngắt quãng (Spaced Repetition), hình ảnh trực quan cho từ vựng K12 và Cambridge.\n\nMở Công Cụ\n➔\n🎮\nTích Sao Thưởng\nHỌC QUA TRÒ CHƠI\nĐấu Trường Trò Chơi Game Hub 2026\n\nCổng trò chơi tương tác giáo dục: Speed Match, Meteor Rush, Đố vui có thưởng tích Sao đổi trừ học phí hàng tháng.\n\nMở Công Cụ\n➔\n📐\nK12 2026\nNGỮ PHÁP CỐT LÕI\nChuyên Đề Ngữ Pháp & Sơ Đồ Tư Duy Mindmap\n\n14 chuyên đề ngữ pháp toàn cấp K12, tổng hợp công thức, bảng thì, cạm bẫy trắc nghiệm và bài tập thực hành kèm đáp án.\n\nMở Công Cụ\n➔\n👨‍🏫\nGiáo Viên & Lãnh Đạo\nSƯ PHẠM CHUẨN BỘ\nCẩm Nang Phương Pháp Bản Ngữ & K12 5512\n\nMô hình giảng dạy Co-Teaching phối hợp Giáo viên Bản ngữ và Giáo viên Chủ nhiệm, chuẩn hóa công văn 5512 Bộ GD&ĐT.\n\nMở Công Cụ\n➔\n⏱️\nChấm Tự Động\nLUYỆN ĐỀ\nPhòng Luyện Đề & Bấm Giờ Tự Động\n\nKiểm tra nhanh 15 phút, đề 1 tiết 45 phút chuẩn ma trận và phòng thi mô phỏng IELTS 4 kỹ năng có ghi âm và chấm điểm.\n\nMở Công Cụ\n➔\nCần Hỗ Trợ Kỹ Thuật Hoặc Đề Xuất Công Cụ Mới?\n\nHệ thống được phát triển chuyên biệt theo chương trình GDPT 2026. Mọi thắc mắc vui lòng liên hệ cô Dung.\n\n📚 Xem Lộ Trình 19 Khóa Học\n⏱️ Vào Phòng Thi",
+      "desktopOverflow": {
+        "viewport": 1366,
+        "scroll": 1366
+      },
+      "mobileOverflow": {
+        "viewport": 360,
+        "scroll": 367,
+        "elements": [
+          {
+            "tag": "DIV",
+            "class": "absolute -right-10 -bottom-10 opacity-10 text-9xl select-none pointer-events-none"
+          }
+        ]
+      },
+      "screenshot": "artifacts/audit-ui-20260930/_tools-360.png"
+    },
+    {
+      "route": "/pedagogy",
+      "errors": [],
+      "failedRequests": [],
+      "status": 200,
+      "title": "Tiếng Anh Cô Dung - Hệ Thống Đào Tạo K12 & Lộ Trình Quốc Tế",
+      "headings": [
+        "Tiếng Anh Cô Dung — Phương Pháp Sư Phạm Hiện Đại & Kế Hoạch Bài Dạy 5512",
+        "Mô hình Đồng giảng dạy (Co-Teaching Model) Giữa Giáo viên Việt Nam và Bản ngữ"
+      ],
+      "buttons": [
+        "Tất Cả (36)",
+        "👨‍🏫 Đồng Giảng Bản Ngữ (Co-Teaching)",
+        "📋 Giáo Án Kế Hoạch 5512",
+        "Đồng Giảng Bản Ngữ K12 Toàn Cấp Mô hình Đồng giảng dạy (Co-Teaching Model) Giữa Giáo viên Việt Nam và Bản ngữ #co-teaching#native speaker#giao vien ban ngu",
+        "Kế Hoạch 5512 THCS / THPT Khung Kế Hoạch Bài Dạy Tiếng Anh 5512 Chuẩn 4 Bước Hiện Hành 2026 #giao an 5512#ke hoach bai day#lesson plan",
+        "Kế Hoạch 5512 K12 Toàn Cấp 1000 Cau Trac Nghiem Ngu Phap Hsg #1000 cau trac nghiem ngu phap hsg#1000 cau trac nghiem ngu phap hsg#exams",
+        "Kế Hoạch 5512 K12 Toàn Cấp 1000 Word Formation #1000 word formation#1000 word formation#vocabulary",
+        "Kế Hoạch 5512 THCS / THPT 22000 Tu Toefl Ielts Harold Levine #22000 tu toefl ielts harold levine#22000 tu toefl ielts harold levine#vocabulary",
+        "Kế Hoạch 5512 K12 Toàn Cấp Viet Lai Cau - Thi Hsg Lop 10 11 12 #viet lai cau - thi hsg lop 10 11 12#31  viet lai cau   thi hsg lop 10 11 12#exams",
+        "Kế Hoạch 5512 K12 Toàn Cấp Chuyen De So 1 Viet Lai Cau - Thi Hsg Lop 10 11 12 #chuyen de so 1 viet lai cau - thi hsg lop 10 11 12#chuyen de so 1 viet lai cau   thi hsg lop 10 11 12#exams",
+        "Kế Hoạch 5512 THCS / THPT Ioe Lop 5 Tron Bo #ioe lop 5 tron bo#ioe lop 5 tron bo#exams",
+        "Kế Hoạch 5512 K12 Toàn Cấp Key- Chuyen De So 1 Viet Lai Cau Thi Hsg 10 11 12 #key- chuyen de so 1 viet lai cau thi hsg 10 11 12#key  chuyen de so 1 viet lai cau thi hsg 10 11 12#exams",
+        "Kế Hoạch 5512 K12 Toàn Cấp Nhóm 7. Chuyên Đề Phối Hợp Thì Thpt Hương Khê #nhóm 7. chuyên đề phối hợp thì thpt hương khê#nh m  7  chuy n    ph i h p th  thpt h  ng kh#curriculum",
+        "Kế Hoạch 5512 K12 Toàn Cấp Phrasal Verbs #phrasal verbs#phrasal verbs#grammar",
+        "Kế Hoạch 5512 K12 Toàn Cấp Photo Quiz Reading-Giaoandethitienganh.Info #photo quiz reading-giaoandethitienganh.info#photo quiz reading giaoandethitienganh info#curriculum",
+        "Kế Hoạch 5512 K12 Toàn Cấp Speaking Test 4 Units 9-10 #speaking test 4 units 9-10#speaking test 4  units 9 10#exams",
+        "Kế Hoạch 5512 K12 Toàn Cấp Unit 5 - Lesson 5D - Speaking - Page 73 #unit 5 - lesson 5d - speaking - page 73#unit 5   lesson 5d   speaking   page 73#curriculum",
+        "Kế Hoạch 5512 K12 Toàn Cấp Unit 5 - Lesson 5F - Skills Reading - Page 76 #unit 5 - lesson 5f - skills reading - page 76#unit 5   lesson 5f   skills reading   page 76#curriculum",
+        "Kế Hoạch 5512 K12 Toàn Cấp Although Despite Key #although despite key#although despite key#curriculum",
+        "Kế Hoạch 5512 K12 Toàn Cấp Because Because Of Key #because because of key#because because of key#curriculum",
+        "Kế Hoạch 5512 K12 Toàn Cấp Becoming Independent Vocab #becoming independent vocab#becoming independent vocab#vocabulary",
+        "Kế Hoạch 5512 K12 Toàn Cấp Chuyen De Ngu Phap #chuyen de ngu phap#chuyen de ngu phap#exams",
+        "Kế Hoạch 5512 K12 Toàn Cấp Cities Urbanisation Vocab #cities urbanisation vocab#cities urbanisation vocab#vocabulary",
+        "Kế Hoạch 5512 K12 Toàn Cấp Conditional Sentences Key #conditional sentences key#conditional sentences key#grammar",
+        "Kế Hoạch 5512 THCS / THPT G3 Ck1 Test #g3 ck1 test#g3 ck1 test#exams",
+        "Kế Hoạch 5512 THCS / THPT G4 Ck1 Test #g4 ck1 test#g4 ck1 test#exams",
+        "Kế Hoạch 5512 THCS / THPT G5 Ck1 Test #g5 ck1 test#g5 ck1 test#exams",
+        "Kế Hoạch 5512 THCS / THPT G7 Hsg De2 #g7 hsg de2#g7 hsg de2#exams",
+        "Kế Hoạch 5512 K12 Toàn Cấp Hsg Lop 11 #hsg lop 11#hsg lop 11#exams",
+        "Kế Hoạch 5512 K12 Toàn Cấp Hsg Lop 12 Quang Nam #hsg lop 12 quang nam#hsg lop 12 quang nam#exams"
+      ],
+      "text": "Giáo Viên Bản Ngữ & Kế Hoạch 5512\nNội Suy & Tra Cứu Tức Thì\nTiếng Anh Cô Dung — Phương Pháp Sư Phạm Hiện Đại & Kế Hoạch Bài Dạy 5512\n\nKho học liệu nội bộ Tiếng Anh Cô Dung kết hợp thực tiễn Việt Nam: Mô hình đồng giảng dạy (Co-Teaching), phương pháp phản xạ toàn thân (TPR), tiếp cận giao tiếp (CLT), cấu trúc giáo án 4 bước theo Công văn 5512/BGDĐT.\n\n🔍\nTìm kiếm đa chiều theo ngữ nghĩa\n36 kết quả\nTất Cả (36)\n👨‍🏫 Đồng Giảng Bản Ngữ (Co-Teaching)\n📋 Giáo Án Kế Hoạch 5512\nĐỒNG GIẢNG BẢN NGỮ\nK12 TOÀN CẤP\nMô hình Đồng giảng dạy (Co-Teaching Model) Giữa Giáo viên Việt Nam và Bản ngữ\n#co-teaching\n#native speaker\n#giao vien ban ngu\nKẾ HOẠCH 5512\nTHCS / THPT\nKhung Kế Hoạch Bài Dạy Tiếng Anh 5512 Chuẩn 4 Bước Hiện Hành 2026\n#giao an 5512\n#ke hoach bai day\n#lesson plan\nKẾ HOẠCH 5512\nK12 TOÀN CẤP\n1000 Cau Trac Nghiem Ngu Phap Hsg\n#1000 cau trac nghiem ngu phap hsg\n#1000 cau trac nghiem ngu phap hsg\n#exams\nKẾ HOẠCH 5512\nK12 TOÀN CẤP\n1000 Word Formation\n#1000 word formation\n#1000 word formation\n#vocabulary\nKẾ HOẠCH 5512\nTHCS / THPT\n22000 Tu Toefl Ielts Harold Levine\n#22000 tu toefl ielts harold levine\n#22000 tu toefl ielts harold levine\n#vocabulary\nKẾ HOẠCH 5512\nK12 TOÀN CẤP\nViet Lai Cau - Thi Hsg Lop 10 11 12\n#viet lai cau - thi hsg lop 10 11 12\n#31 viet lai cau thi hsg lop 10 11 12\n#exams\nKẾ HOẠCH 5512\nK12 TOÀN CẤP\nChuyen De So 1 Viet Lai Cau - Thi Hsg Lop 10 11 12\n#chuyen de so 1 viet lai cau - thi hsg lop 10 11 12\n#chuyen de so 1 viet lai cau thi hsg lop 10 11 12\n#exams\nKẾ HOẠCH 5512\nTHCS / THPT\nIoe Lop 5 Tron Bo\n#ioe lop 5 tron bo\n#ioe lop 5 tron bo\n#exams\nKẾ HOẠCH 5512\nK12 TOÀN CẤP\nKey- Chuyen De So 1 Viet Lai Cau Thi Hsg 10 11 12\n#key- chuyen de so 1 viet lai cau thi hsg 10 11 12\n#key chuyen de so 1 viet lai cau thi hsg 10 11 12\n#exams\nKẾ HOẠCH 5512\nK12 TOÀN CẤP\nNhóm 7. Chuyê",
+      "desktopOverflow": {
+        "viewport": 1366,
+        "scroll": 1366
+      },
+      "mobileOverflow": {
+        "viewport": 360,
+        "scroll": 367,
+        "elements": [
+          {
+            "tag": "BUTTON",
+            "class": "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap bg-slate-900 t"
+          },
+          {
+            "tag": "BUTTON",
+            "class": "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap bg-slate-900 t"
+          }
+        ]
+      },
+      "screenshot": "artifacts/audit-ui-20260930/_pedagogy-360.png"
+    },
+    {
+      "route": "/second-brain",
+      "errors": [],
+      "failedRequests": [],
+      "status": 200,
+      "title": "Second Brain Tri Thức - Tiếng Anh Cô Dung (Obsidian Knowledge Vault)",
+      "headings": [
+        "Obsidian Second Brain",
+        "Khu Vực Tri Thức Nội Bộ (Obsidian Second Brain)"
+      ],
+      "buttons": [
+        "📂 Danh mục"
+      ],
+      "text": "🧠\nObsidian Second Brain\nv2.2.0\n\nLớp tri thức thứ hai • Bản đồ liên kết WikiLinks [[...]] chuẩn GDPT & CEFR\n\n🟣\nMở Vault Obsidian Máy\n🔒\nKhu Vực Tri Thức Nội Bộ (Obsidian Second Brain)\n\nKho tài liệu và ma trận bài giảng chuyên sâu này dành riêng cho Ban Giám Hiệu (Cô Dung, SuperAdmin) và đội ngũ Giáo viên. Tài khoản học sinh của bạn chỉ được truy cập vào phần bài tập và lộ trình đào tạo chính quy.\n\nQuay Về Trang Chủ Học Tập",
+      "desktopOverflow": {
+        "viewport": 1366,
+        "scroll": 1366
+      },
+      "mobileOverflow": {
+        "viewport": 360,
+        "scroll": 367,
+        "elements": []
+      },
+      "screenshot": "artifacts/audit-ui-20260930/_second-brain-360.png"
+    },
+    {
+      "route": "/recruitment",
+      "errors": [],
+      "failedRequests": [],
+      "status": 200,
+      "title": "Tuyển Dụng Giáo Viên Tiếng Anh • Tiếng Anh Cô Dung",
+      "headings": [
+        "Gia Nhập Đội Ngũ Giáo Viên Tiếng Anh",
+        "Phiếu Đăng Ký Ứng Tuyển Sư Phạm"
+      ],
+      "buttons": [
+        "☐ Lớp 3",
+        "☐ Lớp 4",
+        "☐ Lớp 5",
+        "☑ Lớp 6",
+        "☑ Lớp 7",
+        "☐ Lớp 8",
+        "☐ Lớp 9",
+        "☐ Lớp 10",
+        "☐ Lớp 11",
+        "☐ Lớp 12",
+        "☐ IELTS Academic",
+        "☐ Tiếng Anh Giao Tiếp",
+        "☑ Ngữ Pháp & Luyện Thi",
+        "☐ Phát Âm Chuẩn Phonics",
+        "☐ 4 Kỹ Năng IELTS",
+        "☐ Luyện Thi Vào 10 Chuyên",
+        "☐ Tiếng Anh Tiểu Học Khởi Động",
+        "Nộp Hồ Sơ Ứng Tuyển Giáo Viên"
+      ],
+      "text": "CỔNG TUYỂN DỤNG SƯ PHẠM • TIẾNG ANH CÔ DUNG\nGia Nhập Đội Ngũ Giáo Viên Tiếng Anh\n\nChúng tôi tìm kiếm các Thầy/Cô có chuyên môn vững vàng, phát âm chuẩn quốc tế và đam mê truyền cảm hứng cho học sinh từ Lớp 3 đến Lớp 12 tại cụm trường Đào Sơn Tây - Thủ Đức.\n\nPhiếu Đăng Ký Ứng Tuyển Sư Phạm\n\nHồ sơ được tự động lưu bản nháp trên trình duyệt để tránh mất dữ liệu khi làm mới trang.\n\nHọ và tên (*):\nSố điện thoại / Zalo (*):\nEmail liên hệ:\nHình thức hợp đồng:\nGiáo Viên Cơ Hữu (Permanent / Biên Chế)\nGiáo Viên Thời Vụ / Nhận Ca Dạy Thay (Contractor)\nTrợ Giảng Sư Phạm (Teaching Assistant)\nKhối lớp Thầy/Cô có thể nhận dạy (Chọn nhiều khối) (*):\n☐\nLớp 3\n☐\nLớp 4\n☐\nLớp 5\n☑\nLớp 6\n☑\nLớp 7\n☐\nLớp 8\n☐\nLớp 9\n☐\nLớp 10\n☐\nLớp 11\n☐\nLớp 12\n☐\nIELTS Academic\n☐\nTiếng Anh Giao Tiếp\nLĩnh vực chuyên môn giảng dạy thế mạnh:\n☑\nNgữ Pháp & Luyện Thi\n☐\nPhát Âm Chuẩn Phonics\n☐\n4 Kỹ Năng IELTS\n☐\nLuyện Thi Vào 10 Chuyên\n☐\nTiếng Anh Tiểu Học Khởi Động\nSố năm kinh nghiệm giảng dạy:\nChứng chỉ chuyên môn (IELTS/TESOL/Cử nhân):\nHình thức phỏng vấn mong muốn:\nPhỏng vấn Trực Tuyến (Online Google Meet / Zoom)\nPhỏng vấn Trực Tiếp tại Cơ Sở (Thủ Đức)\nLịch rảnh có thể nhận lớp (Availability):\nĐường dẫn CV / Hồ sơ năng lực (Google Drive / Dropbox):\nGiới thiệu ngắn gọn về thế mạnh & phương pháp giảng dạy:\nHồ sơ được gửi trực tiếp đến Leader Cô Dung để xét duyệt.\nNộp Hồ Sơ Ứng Tuyển Giáo Viên",
+      "desktopOverflow": {
+        "viewport": 1366,
+        "scroll": 1366
+      },
+      "mobileOverflow": {
+        "viewport": 360,
+        "scroll": 367,
+        "elements": []
+      },
+      "screenshot": "artifacts/audit-ui-20260930/_recruitment-360.png"
+    },
+    {
+      "route": "/cpanel/student",
+      "errors": [],
+      "failedRequests": [
+        {
+          "path": "/api/homework",
+          "status": 401
+        },
+        {
+          "path": "/api/campuses",
+          "status": 401
+        }
+      ],
+      "status": 200,
+      "title": "Bàn Học Của Em • Cpanel Học Sinh • Tiếng Anh Cô Dung",
+      "headings": [
+        "Xin chào, Học Sinh! 👋"
+      ],
+      "buttons": [
+        "VI",
+        "⏳ Cần Làm (0)",
+        "✅ Đã Nộp (0)",
+        "Tất Cả (0)",
+        "🔄 Thử lại"
+      ],
+      "text": "👩‍🏫\nTiếng Anh Cô Dung\nK12 & Lộ Trình Chuẩn Quốc Tế\n📚\nLộ Trình\n▾\n⏱️\nPhòng Thi\n▾\n🛠️\nCông Cụ\n▾\n📅\nThời Khóa Biểu\n🩵\nXanh Nhẹ\n🔑\nĐăng Nhập\nD\nTIẾNG ANH CÔ DUNG\nHệ Thống Cpanel\nstudent\nĐiểm học:\nTất cả cơ sở\nVI\nU\nKhách\nUser\nBàn Học Của Em\nBài Tập Về Nhà\nPhòng Luyện Thi\nThời Khóa Biểu\n🎒 KHÔNG GIAN HỌC TẬP CỦA EM\n•\nCHƯA PHÂN LỚP\nXin chào, Học Sinh! 👋\n\nHãy hoàn thành bài tập về nhà trước buổi học tiếp theo để nhận sao thưởng tích lũy học phí và được cô giáo nhận xét nhé!\n\n⭐\n0\nSao Tích Lũy\n0/0\nBài Hoàn Thành\n⏳ Cần Làm (0)\n✅ Đã Nộp (0)\nTất Cả (0)\nKỹ năng:\nTất cả kỹ năng\n✍️ Viết (Writing)\n📖 Đọc hiểu (Reading)\n🎙️ Nói (Speaking)\n⚠️\nLỗi kết nối máy chủ hoặc phiên đăng nhập đã hết hạn. Vui lòng tải lại.\n\nĐã dừng hiển thị danh sách để bảo đảm tính chính xác của phiên học tập.\n\n🔄 Thử lại\nCD\nTiếng Anh Cô Dung — Hệ Thống Lộ Trình & Đào Tạo Toàn Diện 2026\nChương trình GDPT 2018 (Lớp 1-12) • Ôn thi THPT Quốc Gia • IELTS Cambridge • Co-Teaching Bản Ngữ\nCloudflare D1 APAC Active\n•\nĐánh giá học sinh\n•\nGiáo án 5512\n•\n❓\nHướng Dẫn & Tầm Nhìn\n•\n📶\nCập Nhật APK (Wi-Fi)",
+      "desktopOverflow": {
+        "viewport": 1366,
+        "scroll": 1366
+      },
+      "mobileOverflow": {
+        "viewport": 360,
+        "scroll": 367,
+        "elements": [
+          {
+            "tag": "A",
+            "class": "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold whitespace-nowrap t"
+          },
+          {
+            "tag": "SPAN",
+            "class": ""
+          },
+          {
+            "tag": "A",
+            "class": "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold whitespace-nowrap t"
+          },
+          {
+            "tag": "SPAN",
+            "class": ""
+          }
+        ]
+      },
+      "screenshot": "artifacts/audit-ui-20260930/_cpanel_student-360.png"
+    },
+    {
+      "route": "/cpanel/parent",
+      "errors": [],
+      "failedRequests": [
+        {
+          "path": "/api/parents/children",
+          "status": 401
+        },
+        {
+          "path": "/api/campuses",
+          "status": 401
+        },
+        {
+          "path": "/api/homework",
+          "status": 401
+        }
+      ],
+      "status": 200,
+      "title": "Sổ Phụ Huynh • Cpanel Giám Sát Học Tập • Tiếng Anh Cô Dung",
+      "headings": [
+        "Báo Cáo Tiến Độ Học Tập & Học Phí"
+      ],
+      "buttons": [
+        "VI",
+        "Bài Tập Về Nhà (0/0)",
+        "Sổ Học Phí & Đối Trừ Sao",
+        "Tải lại dữ liệu"
+      ],
+      "text": "👩‍🏫\nTiếng Anh Cô Dung\nK12 & Lộ Trình Chuẩn Quốc Tế\n📚\nLộ Trình\n▾\n⏱️\nPhòng Thi\n▾\n🛠️\nCông Cụ\n▾\n📅\nThời Khóa Biểu\n🩵\nXanh Nhẹ\n🔑\nĐăng Nhập\nD\nTIẾNG ANH CÔ DUNG\nHệ Thống Cpanel\nstudent\nĐiểm học:\nTất cả cơ sở\nVI\nU\nKhách\nUser\nBàn Học Của Em\nBài Tập Về Nhà\nPhòng Luyện Thi\nThời Khóa Biểu\nSỔ PHỤ HUYNH\n•\nCỔNG THÔNG TIN HỌC VỤ GIA ĐÌNH\nBáo Cáo Tiến Độ Học Tập & Học Phí\n\nTheo dõi trực tiếp kết quả bài tập về nhà, bài viết tay, file ghi âm giọng nói của con và chi tiết đối trừ sao thưởng vào học phí định kỳ.\n\n0\nSao Tích Lũy\n0/0\nĐã Chấm\n0.0\nĐiểm TB\nBài Tập Về Nhà (0/0)\nSổ Học Phí & Đối Trừ Sao\nHọc sinh:\nTất cả học sinh liên kết\nĐã xảy ra lỗi khi tải dữ liệu\n\nLỗi kết nối máy chủ hoặc phiên đăng nhập đã hết hạn. Vui lòng tải lại.\n\nTải lại dữ liệu\nCD\nTiếng Anh Cô Dung — Hệ Thống Lộ Trình & Đào Tạo Toàn Diện 2026\nChương trình GDPT 2018 (Lớp 1-12) • Ôn thi THPT Quốc Gia • IELTS Cambridge • Co-Teaching Bản Ngữ\nCloudflare D1 APAC Active\n•\nĐánh giá học sinh\n•\nGiáo án 5512\n•\n❓\nHướng Dẫn & Tầm Nhìn\n•\n📶\nCập Nhật APK (Wi-Fi)",
+      "desktopOverflow": {
+        "viewport": 1366,
+        "scroll": 1366
+      },
+      "mobileOverflow": {
+        "viewport": 360,
+        "scroll": 367,
+        "elements": [
+          {
+            "tag": "A",
+            "class": "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold whitespace-nowrap t"
+          },
+          {
+            "tag": "SPAN",
+            "class": ""
+          },
+          {
+            "tag": "A",
+            "class": "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold whitespace-nowrap t"
+          },
+          {
+            "tag": "SPAN",
+            "class": ""
+          }
+        ]
+      },
+      "screenshot": "artifacts/audit-ui-20260930/_cpanel_parent-360.png"
+    },
+    {
+      "route": "/cpanel/teacher",
+      "errors": [],
+      "failedRequests": [
+        {
+          "path": "/api/homework",
+          "status": 401
+        },
+        {
+          "path": "/api/campuses",
+          "status": 401
+        },
+        {
+          "path": "/api/teachers/workflows?type=all",
+          "status": 401
+        },
+        {
+          "path": "/api/teachers/payroll?billing_cycle=2026-09",
+          "status": 401
+        },
+        {
+          "path": "/api/campuses",
+          "status": 401
+        }
+      ],
+      "status": 200,
+      "title": "Tiếng Anh Cô Dung - Hệ Thống Đào Tạo K12 & Lộ Trình Quốc Tế",
+      "headings": [
+        "Bàn Làm Việc Giảng Dạy — Giáo Viên"
+      ],
+      "buttons": [
+        "VI",
+        "⚡ Ứng Lương",
+        "Chấm Điểm BTVN",
+        "Giao BTVN Mới",
+        "Lịch Ca Dạy (0)",
+        "Sổ Lương (0)"
+      ],
+      "text": "👩‍🏫\nTiếng Anh Cô Dung\nK12 & Lộ Trình Chuẩn Quốc Tế\n📚\nLộ Trình\n▾\n⏱️\nPhòng Thi\n▾\n🛠️\nCông Cụ\n▾\n📅\nThời Khóa Biểu\n🩵\nXanh Nhẹ\n🔑\nĐăng Nhập\nD\nTIẾNG ANH CÔ DUNG\nHệ Thống Cpanel\nstudent\nĐiểm học:\nTất cả cơ sở\nVI\nU\nKhách\nUser\nBàn Học Của Em\nBài Tập Về Nhà\nPhòng Luyện Thi\nThời Khóa Biểu\nSỔ GIÁO VIÊN\n•\nKHÔNG GIAN SƯ PHẠM & NGHIỆP VỤ\nBàn Làm Việc Giảng Dạy — Giáo Viên\n\nQuản lý ca dạy thực tế, chấm bài tập về nhà (viết tay & thu âm), gửi đề nghị dạy thay theo ca và theo dõi tạm ứng lương.\n\n0\nChờ Chấm\n0\nĐã Giao\n⚡\nỨng Lương\nChấm Điểm BTVN\nGiao BTVN Mới\nLịch Ca Dạy (0)\nSổ Lương (0)\nKhông thể tải dữ liệu giáo viên\n\nPhiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.\n\nThử lại\nCD\nTiếng Anh Cô Dung — Hệ Thống Lộ Trình & Đào Tạo Toàn Diện 2026\nChương trình GDPT 2018 (Lớp 1-12) • Ôn thi THPT Quốc Gia • IELTS Cambridge • Co-Teaching Bản Ngữ\nCloudflare D1 APAC Active\n•\nĐánh giá học sinh\n•\nGiáo án 5512\n•\n❓\nHướng Dẫn & Tầm Nhìn\n•\n📶\nCập Nhật APK (Wi-Fi)",
+      "desktopOverflow": {
+        "viewport": 1366,
+        "scroll": 1366
+      },
+      "mobileOverflow": {
+        "viewport": 360,
+        "scroll": 367,
+        "elements": [
+          {
+            "tag": "A",
+            "class": "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold whitespace-nowrap t"
+          },
+          {
+            "tag": "SPAN",
+            "class": ""
+          },
+          {
+            "tag": "A",
+            "class": "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold whitespace-nowrap t"
+          },
+          {
+            "tag": "SPAN",
+            "class": ""
+          },
+          {
+            "tag": "BUTTON",
+            "class": "whitespace-nowrap shrink-0 px-3 sm:px-4 py-2 rounded-md text-xs font-semibold transition-c"
+          },
+          {
+            "tag": "BUTTON",
+            "class": "whitespace-nowrap shrink-0 px-3 sm:px-4 py-2 rounded-md text-xs font-semibold transition-c"
+          }
+        ]
+      },
+      "screenshot": "artifacts/audit-ui-20260930/_cpanel_teacher-360.png"
+    },
+    {
+      "route": "/cpanel/leader",
+      "errors": [],
+      "failedRequests": [
+        {
+          "path": "/api/homework",
+          "status": 401
+        },
+        {
+          "path": "/api/campuses?streams=true",
+          "status": 401
+        },
+        {
+          "path": "/api/teachers/workflows?type=all",
+          "status": 401
+        },
+        {
+          "path": "/api/campuses",
+          "status": 401
+        }
+      ],
+      "status": 200,
+      "title": "Ban Điều Hành Chuyên Môn • Cpanel Leader • Tiếng Anh Cô Dung",
+      "headings": [
+        "Quản Trị Nghiệp Vụ Sư Phạm & Nhân Sự",
+        "Dòng Hoạt Động Trực Tiếp Liên Cơ Sở "
+      ],
+      "buttons": [
+        "VI",
+        "Tổng Quan Sư Phạm & Sự Kiện",
+        "Duyệt Nghỉ Phép & Dạy Thay",
+        "Duyệt & Thực Chi Ứng Lương",
+        "Tuyển Dụng & Phỏng Vấn 0",
+        "Khóa Sổ & Bảng Lương"
+      ],
+      "text": "👩‍🏫\nTiếng Anh Cô Dung\nK12 & Lộ Trình Chuẩn Quốc Tế\n📚\nLộ Trình\n▾\n⏱️\nPhòng Thi\n▾\n🛠️\nCông Cụ\n▾\n📅\nThời Khóa Biểu\n🩵\nXanh Nhẹ\n🔑\nĐăng Nhập\nD\nTIẾNG ANH CÔ DUNG\nHệ Thống Cpanel\nstudent\nĐiểm học:\nTất cả cơ sở\nVI\nU\nKhách\nUser\nBàn Học Của Em\nBài Tập Về Nhà\nPhòng Luyện Thi\nThời Khóa Biểu\nTRUNG TÂM ĐIỀU HÀNH CHUYÊN MÔN\n•\nBAN GIÁM SÁT SƯ PHẠM\nQuản Trị Nghiệp Vụ Sư Phạm & Nhân Sự\n\nKiểm soát lộ trình giảng dạy theo Obsidian Second-Brain, tỷ lệ hoàn thành BTVN, ngân hàng Bài Test / Kiểm Tra, phê duyệt đơn xin nghỉ & phân công dạy thay, duyệt hạn mức ứng lương và quy trình tuyển dụng giáo viên.\n\nMở AdminCP Tổng\nTổng Quan Sư Phạm & Sự Kiện\nDuyệt Nghỉ Phép & Dạy Thay\nDuyệt & Thực Chi Ứng Lương\nTuyển Dụng & Phỏng Vấn\n0\nKhóa Sổ & Bảng Lương\nLọc cơ sở:\nToàn bộ cơ sở (Nhà Cô Dung, Sunshine, Thầy Vũ)\nBTVN đang mở: 0\nTỔNG BÀI TẬP ĐÃ GIAO\n0\nGắn chặt ca học & giáo án Obsidian\nBÀI HỌC SINH ĐÃ NỘP\n0\nĐã chấm điểm: 0 bài\nKHO GIÁO ÁN OBSIDIAN\n102 Notes\nĐã đồng bộ D1 FTS5 & Backlinks\nDòng Hoạt Động Trực Tiếp Liên Cơ Sở\n\nTheo dõi luồng giao bài, nộp bài, điểm danh và dạy thay chéo giữa các điểm dạy.\n\nChưa có sự kiện mới nào được ghi nhận trong phiên hôm nay.\nCD\nTiếng Anh Cô Dung — Hệ Thống Lộ Trình & Đào Tạo Toàn Diện 2026\nChương trình GDPT 2018 (Lớp 1-12) • Ôn thi THPT Quốc Gia • IELTS Cambridge • Co-Teaching Bản Ngữ\nCloudflare D1 APAC Active\n•\nĐánh giá học sinh\n•\nGiáo án 5512\n•\n❓\nHướng Dẫn & Tầm Nhìn\n•\n📶\nCập Nhật APK (Wi-Fi)",
+      "desktopOverflow": {
+        "viewport": 1366,
+        "scroll": 1366
+      },
+      "mobileOverflow": {
+        "viewport": 360,
+        "scroll": 367,
+        "elements": [
+          {
+            "tag": "A",
+            "class": "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold whitespace-nowrap t"
+          },
+          {
+            "tag": "SPAN",
+            "class": ""
+          },
+          {
+            "tag": "A",
+            "class": "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold whitespace-nowrap t"
+          },
+          {
+            "tag": "SPAN",
+            "class": ""
+          },
+          {
+            "tag": "BUTTON",
+            "class": "whitespace-nowrap shrink-0 flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-md text-xs "
+          },
+          {
+            "tag": "SPAN",
+            "class": ""
+          },
+          {
+            "tag": "BUTTON",
+            "class": "whitespace-nowrap shrink-0 flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-md text-xs "
+          },
+          {
+            "tag": "SPAN",
+            "class": ""
+          }
+        ]
+      },
+      "screenshot": "artifacts/audit-ui-20260930/_cpanel_leader-360.png"
+    },
+    {
+      "route": "/cpanel/notifications",
+      "errors": [],
+      "failedRequests": [
+        {
+          "path": "/api/notifications",
+          "status": 401
+        },
+        {
+          "path": "/api/campuses",
+          "status": 401
+        }
+      ],
+      "status": 200,
+      "title": "Thông Báo Hệ Thống | Cpanel Tiếng Anh Cô Dung",
+      "headings": [
+        "Thông Báo & Nhắc Nhở Chéo"
+      ],
+      "buttons": [
+        "VI",
+        "✓ Đánh dấu tất cả đã đọc",
+        "Tất cả (0)",
+        "Chưa đọc (0)"
+      ],
+      "text": "👩‍🏫\nTiếng Anh Cô Dung\nK12 & Lộ Trình Chuẩn Quốc Tế\n📚\nLộ Trình\n▾\n⏱️\nPhòng Thi\n▾\n🛠️\nCông Cụ\n▾\n📅\nThời Khóa Biểu\n🩵\nXanh Nhẹ\n🔑\nĐăng Nhập\nD\nTIẾNG ANH CÔ DUNG\nHệ Thống Cpanel\nstudent\nĐiểm học:\nTất cả cơ sở\nVI\nU\nKhách\nUser\nBàn Học Của Em\nBài Tập Về Nhà\nPhòng Luyện Thi\nThời Khóa Biểu\nTRUNG TÂM THÔNG BÁO / NOTIFICATION HUB\nThông Báo & Nhắc Nhở Chéo\n\nCập nhật lịch học, BTVN, phiếu bài tập viết tay, và tin nhắn học tập đa cơ sở.\n\n✓ Đánh dấu tất cả đã đọc\nTất cả (0)\nChưa đọc (0)\nKhông có thông báo mới\n\nBạn đã cập nhật toàn bộ tin tức và bài tập mới nhất!\n\nCD\nTiếng Anh Cô Dung — Hệ Thống Lộ Trình & Đào Tạo Toàn Diện 2026\nChương trình GDPT 2018 (Lớp 1-12) • Ôn thi THPT Quốc Gia • IELTS Cambridge • Co-Teaching Bản Ngữ\nCloudflare D1 APAC Active\n•\nĐánh giá học sinh\n•\nGiáo án 5512\n•\n❓\nHướng Dẫn & Tầm Nhìn\n•\n📶\nCập Nhật APK (Wi-Fi)",
+      "desktopOverflow": {
+        "viewport": 1366,
+        "scroll": 1366
+      },
+      "mobileOverflow": {
+        "viewport": 360,
+        "scroll": 367,
+        "elements": [
+          {
+            "tag": "A",
+            "class": "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold whitespace-nowrap t"
+          },
+          {
+            "tag": "SPAN",
+            "class": ""
+          },
+          {
+            "tag": "A",
+            "class": "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold whitespace-nowrap t"
+          },
+          {
+            "tag": "SPAN",
+            "class": ""
+          }
+        ]
+      },
+      "screenshot": "artifacts/audit-ui-20260930/_cpanel_notifications-360.png"
+    },
+    {
+      "route": "/schedule",
+      "errors": [],
+      "failedRequests": [],
+      "status": 200,
+      "title": "Thời Khóa Biểu & Sổ Điểm Danh • Tiếng Anh Cô Dung",
+      "headings": [
+        "Lịch Học, Thời Khóa Biểu & Sổ Đầu Bài Tức Thời 📅"
+      ],
+      "buttons": [
+        "🌟 Tất Cả Lớp (6)",
+        "🎒 Tiểu Học (Lớp 1 - 5)",
+        "📚 THCS (Lớp 6 - 9)",
+        "🎓 THPT & IELTS (Lớp 10 - 12)",
+        "Cả tuần",
+        "T2",
+        "T3",
+        "T4",
+        "T5",
+        "T6",
+        "T7",
+        "CN",
+        "🔔 Đăng Ký Nhắc Lịch Học (Zalo)",
+        "🔔 Đăng Ký Nhắc Lịch Học (Zalo)",
+        "🔔 Đăng Ký Nhắc Lịch Học (Zalo)",
+        "🔔 Đăng Ký Nhắc Lịch Học (Zalo)",
+        "🔔 Đăng Ký Nhắc Lịch Học (Zalo)",
+        "🔔 Đăng Ký Nhắc Lịch Học (Zalo)"
+      ],
+      "text": "HỆ THỐNG THỜI KHÓA BIỂU & ĐIỂM DANH 2026\nThông Báo Phụ Huynh 10 Phút Trước Ca Học\nLịch Học, Thời Khóa Biểu & Sổ Đầu Bài Tức Thời 📅\n\nQuản lý toàn bộ ca học tại nhà Cô Dung và trực tuyến. Tự động gửi tin nhắn Zalo cho phụ huynh đưa đón trước 10 phút, giáo viên điểm danh trực tiếp và gán học sinh vào bài kiểm tra theo sĩ số có mặt thực tế.\n\n⏰\nCơ Chế Báo Lịch Đưa Đón Tự Động (API Schedule Webhook):\nVí dụ ca học 18:00 tại nhà Cô Dung sẽ tự động bắn tin nhắn Zalo lúc 17:50 (trước 10 phút) để bố mẹ chuẩn bị đưa đón các con đúng giờ!\nĐang Hoạt Động (10m Lead Time)\n🌟 Tất Cả Lớp (6)\n🎒 Tiểu Học (Lớp 1 - 5)\n📚 THCS (Lớp 6 - 9)\n🎓 THPT & IELTS (Lớp 10 - 12)\nCả tuần\nT2\nT3\nT4\nT5\nT6\nT7\nCN\nLớp 7\nThứ Hai\n•\n18:00 - 19:30\nLớp 7 - Global Success & KET A2\n\n📖 Chủ đề: Unit 7: Traffic & Phonics /θ/ vs /ð/ - Ngữ pháp Used to\n\n📍\nTại nhà Cô Dung (123 Phố Vọng, Hai Bà Trưng, Hà Nội)\n👩‍🏫\nMs. Dung & Mr. Johnathan Miller\n⏰\nNHẮC PHỤ HUYNH ĐƯA ĐÓN:\n17:50 (10p trước giờ học)\n👥\n2 học sinh trong lớp\nHôm nay: Chưa điểm danh\n🔔 Đăng Ký Nhắc Lịch Học (Zalo)\nLớp 12\nThứ Ba\n•\n19:30 - 21:00\nLớp 12 - Luyện Thi Đại Học THPTQG & IELTS 7.5+\n\n📖 Chủ đề: Chuyên đề Đọc Hiểu Skimming & Scanning - Ma trận Đề THPT 2026\n\n📍\nTại nhà Cô Dung (123 Phố Vọng, Hai Bà Trưng, Hà Nội)\n👩‍🏫\nMs. Dung & Thầy Trần Mai\n⏰\nNHẮC PHỤ HUYNH ĐƯA ĐÓN:\n19:20 (10p trước giờ học)\n👥\n2 học sinh trong lớp\nHôm nay: Chưa điểm danh\n🔔 Đăng Ký Nhắc Lịch Học (Zalo)\nLớp 9\nThứ Tư\n•\n18:00 - 19:30\nLớp 9 - Ôn Thi Vào 10 Chuyên Ngoại Ngữ & Sư Phạm\n\n📖 Chủ đề: Bẫy Ngữ Pháp Câu Bị Động Kép & Đảo Ngữ Trong Đề Chuyên\n\n📍\nTại nhà Cô Dung (123 Phố Vọng, Hai Bà Trưng, Hà Nội)\n👩‍🏫\nCô Nguyễn Hương & Ms. Dung\n⏰\nNHẮC PHỤ HUYNH ĐƯA ĐÓN:\n17:50 (10p trước giờ học)\n👥\n1 học sinh trong lớp\nHôm nay: Chưa điểm danh\n🔔 Đăng Ký Nhắc Lịch Học (Zalo)\nLớp 7\nThứ Năm\n•\n18:0",
+      "desktopOverflow": {
+        "viewport": 1366,
+        "scroll": 1366
+      },
+      "mobileOverflow": {
+        "viewport": 360,
+        "scroll": 367,
+        "elements": [
+          {
+            "tag": "BUTTON",
+            "class": "px-3.5 py-1.5 rounded-xl transition-all whitespace-nowrap bg-slate-100 dark:bg-slate-800 t"
+          },
+          {
+            "tag": "BUTTON",
+            "class": "px-3.5 py-1.5 rounded-xl transition-all whitespace-nowrap bg-slate-100 dark:bg-slate-800 t"
+          }
+        ]
+      },
+      "screenshot": "artifacts/audit-ui-20260930/_schedule-360.png"
+    },
+    {
+      "route": "/evaluations",
+      "errors": [],
+      "failedRequests": [],
+      "status": 200,
+      "title": "Tiếng Anh Cô Dung - Hệ Thống Đào Tạo K12 & Lộ Trình Quốc Tế",
+      "headings": [
+        "Tiếng Anh Cô Dung — Đánh Giá Năng Lực & Kế Hoạch Cá Nhân Hóa"
+      ],
+      "buttons": [
+        "📑 Danh Sách Đánh Giá Đã Lưu (3)",
+        "💬 Bình Luận",
+        "⚖️ Phản Biện / Giải Trình",
+        "❓ Thắc Mắc",
+        "Gửi Ý Kiến ➔",
+        "📲 Phiếu Báo Cáo Zalo",
+        "💬 Bình Luận",
+        "⚖️ Phản Biện / Giải Trình",
+        "❓ Thắc Mắc",
+        "Gửi Ý Kiến ➔",
+        "📲 Phiếu Báo Cáo Zalo",
+        "💬 Bình Luận",
+        "⚖️ Phản Biện / Giải Trình",
+        "❓ Thắc Mắc",
+        "Gửi Ý Kiến ➔",
+        "📲 Phiếu Báo Cáo Zalo"
+      ],
+      "text": "TIẾNG ANH CÔ DUNG • KHUNG ĐÁNH GIÁ 2026\nTích Hợp Bot Zalo Phụ Huynh\nTiếng Anh Cô Dung — Đánh Giá Năng Lực & Kế Hoạch Cá Nhân Hóa\n\nCùng Cô Dung phân tích thiên hướng học tập (Nghe - Nói phản xạ vs. Đọc - Viết học thuật), xác định điểm mạnh/yếu, lập kế hoạch hành động 1-3 tháng và xuất phiếu báo cáo tự động chuyển tiếp tới Zalo phụ huynh.\n\n📑 Danh Sách Đánh Giá Đã Lưu (3)\n🔍 Tất Cả Thiên Hướng\n🎧 Thiên về Nghe - Nói\n📖 Thiên về Đọc - Viết\n🧠 Phân Tích Ngữ Pháp\n🌟 Năng Khiếu Toàn Diện\n🛡️ Cần Củng Cố Nền Tảng\nLê Bảo Anh\nLớp 12 / IELTS Target 7.5\n👨‍🏫 GV: Mr. Johnathan Miller (Native ESL Trainer)\n•\n25/9/2026\nThiên hướng Đọc - Viết & Học thuật (Academic/Literary)\nĐIỂM SỐ 5 KỸ NĂNG ĐO LƯỜNG (THANG ĐIỂM 10):\n🎧 Nghe\n7\n📖 Đọc\n8.5\n✍️ Viết\n8\n🗣️ Nói\n6.5\n🧠 Ngữ Pháp\n8.5\n💪 Điểm mạnh: Vốn từ vựng C1 phong phú, khả năng paraphrase đa dạng, tốc độ đọc lướt (skimming/scanning) nhanh vượt trội.\n⚠️ Điểm cần khắc phục: Phản xạ phát âm còn hơi ngập ngừng ở Speaking Part 3 do thói quen dịch nhẩm trong đầu trước khi phát âm. Cần cải thiện ngữ điệu tự nhiên.\n🚀 Kế hoạch hành động cụ thể:\n1. Giao 3 buổi luyện phản xạ Speaking 1-on-1 với giáo viên bản ngữ mỗi tuần.\n2. Thu âm và gửi bài luyện phát âm Part 2 vào thư mục Drive nội bộ.\n3. Duy trì làm 2 đề Reading Cambridge IELTS 19 mỗi tuần để giữ nhịp độ.\n⏱️\nChuyên cần: 100%\nTỷ lệ: 100%\n👩‍🏫 Nhận xét giáo viên (Mr. Johnathan Miller (Native ESL Trainer)):\nBảo Anh possesses tremendous academic potential. She analyzes complex texts with great precision. To break into the Band 7.5 - 8.0 overall, she needs to boost speaking confidence through daily 15-minute voice recordings with native prompts.\n💬\nKHU VỰC THẢO LUẬN & PHẢN BIỆN ĐÁNH GIÁ (0)\nTương tác trực tiếp giữa Học sinh ↔ Giáo viên ↔ Cô Dung Leader\nChưa có ý kiến thảo luận hoặc phản biện nào cho",
+      "desktopOverflow": {
+        "viewport": 1366,
+        "scroll": 1366
+      },
+      "mobileOverflow": {
+        "viewport": 360,
+        "scroll": 367,
+        "elements": []
+      },
+      "screenshot": "artifacts/audit-ui-20260930/_evaluations-360.png"
+    },
+    {
+      "route": "/admin",
+      "errors": [],
+      "failedRequests": [],
+      "status": 200,
+      "title": "Bảng Điều Hành Admin CP & Leader • Tiếng Anh Cô Dung",
+      "headings": [
+        "Yêu Cầu Đăng Nhập Tài Khoản Giáo Viên / Quản Lý"
+      ],
+      "buttons": [],
+      "text": "🔒\nYêu Cầu Đăng Nhập Tài Khoản Giáo Viên / Quản Lý\n\nBạn cần đăng nhập bằng tài khoản Giáo viên hoặc Leader Cô Dung để truy cập bảng điều khiển Admin CP.\n\n🏠 Về Trang Chủ",
+      "desktopOverflow": {
+        "viewport": 1366,
+        "scroll": 1366
+      },
+      "mobileOverflow": {
+        "viewport": 360,
+        "scroll": 367,
+        "elements": []
+      },
+      "screenshot": "artifacts/audit-ui-20260930/_admin-360.png"
+    },
+    {
+      "route": "/admincp",
+      "errors": [],
+      "failedRequests": [
+        {
+          "path": "/api/campuses?streams=true",
+          "status": 401
+        },
+        {
+          "path": "/api/homework",
+          "status": 401
+        }
+      ],
+      "status": 200,
+      "title": "AdminCP Tổng • Quản Trị Hệ Thống Toàn Quyền • Tiếng Anh Cô Dung",
+      "headings": [
+        "Trung Tâm Điều Hành Tối Cao Toàn Hệ Thống"
+      ],
+      "buttons": [
+        "🇻🇳 Tiếng Việt",
+        "🏢 Quản Lý Cơ Sở Đa Điểm (0)",
+        "📡 Dòng Hoạt Động Thời Gian Thực (0)",
+        "🔔 Nhắc Nhở Chéo (Cross-Reminders)",
+        "📁 Cây Thư Mục & Audit Bài Nộp"
+      ],
+      "text": "⚡\nMS. DUNG MASTER ADMINCP\nSUPERADMIN\nTrung Tâm Điều Hành Tối Cao Toàn Hệ Thống\n🇻🇳 Tiếng Việt\n🎒 Học Sinh\n👨‍👩‍👧 Phụ Huynh\n👩‍🏫 Giáo Viên\n👑 Leader & Bài Test\n🏠 Trang Chủ\nCƠ SỞ DẠY HỌC\n0\nĐa điểm liên kết\nSỰ KIỆN TRỰC TIẾP\n0\nGhi nhận đa cơ sở\nBÀI TẬP VỀ NHÀ\n0\nĐã phát hành\nBÀI NỘP HỌC SINH\n0\nViết tay & Ghi âm nói\n🏢 Quản Lý Cơ Sở Đa Điểm (0)\n📡 Dòng Hoạt Động Thời Gian Thực (0)\n🔔 Nhắc Nhở Chéo (Cross-Reminders)\n📁 Cây Thư Mục & Audit Bài Nộp\nLọc cơ sở:\n🌐 Toàn bộ cơ sở",
+      "desktopOverflow": {
+        "viewport": 1366,
+        "scroll": 1366
+      },
+      "mobileOverflow": {
+        "viewport": 360,
+        "scroll": 367,
+        "elements": []
+      },
+      "screenshot": "artifacts/audit-ui-20260930/_admincp-360.png"
+    }
+  ]
+}

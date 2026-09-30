@@ -1,0 +1,275 @@
+{
+  "flipBefore": {
+    ".flashcard": {
+      "y": 418.8125,
+      "height": 480,
+      "display": "block",
+      "visibility": "visible",
+      "position": "static",
+      "transform": "none",
+      "backfaceVisibility": "visible",
+      "class": "flashcard svelte-3pf8ly"
+    },
+    ".card-front": {
+      "y": 418.8125,
+      "height": 480,
+      "display": "block",
+      "visibility": "visible",
+      "position": "static",
+      "transform": "none",
+      "backfaceVisibility": "visible",
+      "class": "card-face card-front svelte-3pf8ly"
+    },
+    ".card-back": {
+      "y": 898.8125,
+      "height": 480,
+      "display": "block",
+      "visibility": "visible",
+      "position": "static",
+      "transform": "none",
+      "backfaceVisibility": "visible",
+      "class": "card-face card-back svelte-3pf8ly"
+    }
+  },
+  "flipAfter": {
+    ".flashcard": {
+      "y": -59.796875,
+      "height": 480,
+      "display": "block",
+      "visibility": "visible",
+      "position": "static",
+      "transform": "none",
+      "backfaceVisibility": "visible",
+      "class": "flashcard svelte-3pf8ly flipped"
+    },
+    ".card-front": {
+      "y": -59.796875,
+      "height": 480,
+      "display": "block",
+      "visibility": "visible",
+      "position": "static",
+      "transform": "none",
+      "backfaceVisibility": "visible",
+      "class": "card-face card-front svelte-3pf8ly"
+    },
+    ".card-back": {
+      "y": 420.203125,
+      "height": 480,
+      "display": "block",
+      "visibility": "visible",
+      "position": "static",
+      "transform": "none",
+      "backfaceVisibility": "visible",
+      "class": "card-face card-back svelte-3pf8ly"
+    }
+  },
+  "mobileOverflow": {
+    "width": 360,
+    "scroll": 367,
+    "candidates": [
+      {
+        "tag": "BUTTON",
+        "text": "🔥 Ôn Thi Đại Học",
+        "class": "px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap bg-white dark:bg-slate-900",
+        "right": 824.84375,
+        "width": 135.515625,
+        "position": "static"
+      },
+      {
+        "tag": "SPAN",
+        "text": "🔥",
+        "class": "",
+        "right": 720.8125,
+        "width": 16.484375,
+        "position": "static"
+      },
+      {
+        "tag": "SPAN",
+        "text": "Ôn Thi Đại Học",
+        "class": "ml-1",
+        "right": 809.84375,
+        "width": 82.921875,
+        "position": "static"
+      },
+      {
+        "tag": "BUTTON",
+        "text": "🌍 IELTS • TOEIC • TOEFL",
+        "class": "px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap bg-white dark:bg-slate-900",
+        "right": 1010.640625,
+        "width": 179.796875,
+        "position": "static"
+      },
+      {
+        "tag": "SPAN",
+        "text": "🌍",
+        "class": "",
+        "right": 862.328125,
+        "width": 16.484375,
+        "position": "static"
+      },
+      {
+        "tag": "SPAN",
+        "text": "IELTS • TOEIC • TOEFL",
+        "class": "ml-1",
+        "right": 995.640625,
+        "width": 127.203125,
+        "position": "static"
+      },
+      {
+        "tag": "BUTTON",
+        "text": "👨‍🏫 Phương Pháp Bản Ngữ & 5512",
+        "class": "px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap bg-white dark:bg-slate-900",
+        "right": 1239.40625,
+        "width": 222.765625,
+        "position": "static"
+      },
+      {
+        "tag": "SPAN",
+        "text": "👨‍🏫",
+        "class": "",
+        "right": 1048.125,
+        "width": 16.484375,
+        "position": "static"
+      },
+      {
+        "tag": "SPAN",
+        "text": "Phương Pháp Bản Ngữ & 5512",
+        "class": "ml-1",
+        "right": 1224.40625,
+        "width": 170.171875,
+        "position": "static"
+      },
+      {
+        "tag": "DIV",
+        "text": "Cloudflare D1 APAC Active • Đánh giá học",
+        "class": "flex items-center gap-4 text-[11px]",
+        "right": 366.546875,
+        "width": 373.078125,
+        "position": "static"
+      },
+      {
+        "tag": "BUTTON",
+        "text": "📶 Cập Nhật APK (Wi-Fi)",
+        "class": "hover:text-sky-600 dark:hover:text-sky-400 flex items-center gap-1 font-semibold text-sky-700 dark:t",
+        "right": 366.546875,
+        "width": 44.5,
+        "position": "static"
+      },
+      {
+        "tag": "SPAN",
+        "text": "Cập Nhật APK (Wi-Fi)",
+        "class": "",
+        "right": 366.546875,
+        "width": 25.390625,
+        "position": "static"
+      }
+    ]
+  },
+  "schema": {
+    "users": [
+      "id",
+      "username",
+      "phone",
+      "email",
+      "name",
+      "role",
+      "avatar",
+      "status",
+      "metadata",
+      "grade",
+      "password",
+      "approval_status",
+      "created_at",
+      "updated_at"
+    ],
+    "homework_assignments": [
+      "id",
+      "session_id",
+      "class_id",
+      "class_name",
+      "title",
+      "description",
+      "due_date",
+      "total_points",
+      "created_by",
+      "created_at"
+    ],
+    "homework_submissions": [
+      "id",
+      "assignment_id",
+      "student_id",
+      "student_name",
+      "submitted_at",
+      "content",
+      "score",
+      "feedback",
+      "status",
+      "version",
+      "grading_token"
+    ],
+    "student_evaluations": [],
+    "teacher_salary_advances": [],
+    "salary_transactions": [],
+    "exam_attempts": [
+      "id",
+      "session_id",
+      "user_id",
+      "user_name",
+      "user_email",
+      "exam_id",
+      "exam_title",
+      "class_id",
+      "score",
+      "max_score",
+      "answers_json",
+      "feedback_json",
+      "duration_seconds",
+      "status",
+      "created_at"
+    ]
+  },
+  "authenticatedEndpoints": [
+    {
+      "role": "teacher",
+      "path": "/api/homework",
+      "status": 503,
+      "error": "DatabaseError: Lỗi khi truy vấn bài tập về nhà"
+    },
+    {
+      "role": "teacher",
+      "path": "/api/teachers/workflows?type=all",
+      "status": 500,
+      "error": "DatabaseError: Lỗi khi truy vấn dữ liệu nghiệp vụ giáo viên"
+    },
+    {
+      "role": "teacher",
+      "path": "/api/teachers/payroll?billing_cycle=2026-09",
+      "status": 200
+    },
+    {
+      "role": "teacher",
+      "path": "/api/campuses",
+      "status": 200
+    },
+    {
+      "role": "parent",
+      "path": "/api/parents/children",
+      "status": 503,
+      "error": "DatabaseError: Không thể lấy danh sách con liên kết. Vui lòng thử lại sau."
+    },
+    {
+      "role": "parent",
+      "path": "/api/homework",
+      "status": 503,
+      "error": "DatabaseError: Lỗi khi truy vấn bài tập về nhà"
+    },
+    {
+      "role": "parent",
+      "path": "/api/campuses",
+      "status": 403,
+      "error": "Forbidden: Chỉ staff được xem dữ liệu cơ sở."
+    }
+  ],
+  "sourceCommit": "8390ea946338288e5e916c4c705ee9b4043d8be0",
+  "workingTree": " M scripts/queue_handoff_dot29_to_codex.py\n M src/routes/api/campuses/+server.js\n M src/routes/api/discussions/+server.js\n M src/routes/api/evaluations/+server.js\n?? AUDIT_V5_PRIORITY_2026-09-29.md\n?? HANDOFF_ANTIGRAVITY_LIGHT_V5_2026-09-29.md\n?? artifacts/\n?? scripts/audit_ui_finalize_20260930.mjs\n?? scripts/audit_ui_interactions_20260930.mjs\n?? scripts/audit_ui_modules_20260930.mjs\n?? scripts/audit_ui_sequential_20260930.mjs\n?? scripts/audit_v5_priority.mjs\n?? tests/v5_priority_audit_current.json\n?? tests/v5_priority_audit_evidence.json\n?? tests/verify_v5_priority_fixes.test.js\n"
+}

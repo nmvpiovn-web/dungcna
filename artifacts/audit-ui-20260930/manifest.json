@@ -1,0 +1,307 @@
+[
+  {
+    "file": "_-360.png",
+    "bytes": 73292,
+    "sha256": "3FB10572367F8334F9FFA36E02C34E8C9B7733AE1D28F886DF977208B70D644C"
+  },
+  {
+    "file": "_admin-360.png",
+    "bytes": 52113,
+    "sha256": "56D10B4D9E7ED5D5AC87E3B1E144D04394886E2C8EEC00E3B6E087E43429A197"
+  },
+  {
+    "file": "_admincp-360.png",
+    "bytes": 55060,
+    "sha256": "E9E55707E6092C6A15AF55523053FF656AE2BC0547A064DE5C27BE5BEE1F8985"
+  },
+  {
+    "file": "_courses-360.png",
+    "bytes": 57738,
+    "sha256": "878CFE316B9B24C04291B7766D5B72ACAF392B295A1BC1C4A7F8F362FAD6FA69"
+  },
+  {
+    "file": "_cpanel_leader-360.png",
+    "bytes": 58567,
+    "sha256": "F5D315EC25559255F2F8B973FBBFC761DD9F21EB60E81707B8FA1371AC55CF3E"
+  },
+  {
+    "file": "_cpanel_notifications-360.png",
+    "bytes": 41233,
+    "sha256": "ED02B321F541A779461ADB116DDED76A762E04AA96E82CF4E3E598E13A90EB20"
+  },
+  {
+    "file": "_cpanel_parent-360.png",
+    "bytes": 56292,
+    "sha256": "2029D7E5A7DD7DEE522DD36055968125CF7CAB9E45A8BEDE54F02D374B3A992B"
+  },
+  {
+    "file": "_cpanel_student-360.png",
+    "bytes": 52420,
+    "sha256": "6F127D78D5008F2D490BE2E6E9654C9F14C8E0E1E52749D29EADAA9DEA53B34F"
+  },
+  {
+    "file": "_cpanel_teacher-360.png",
+    "bytes": 51446,
+    "sha256": "9327DB09EF52747DAE2F21E779D985101686A4F380E6EFAF7171E2C377A3AC9C"
+  },
+  {
+    "file": "_dictionary-360.png",
+    "bytes": 56721,
+    "sha256": "C0AE34EF62C19AABF33686888AF1ADCD59B8E013C9A06365E0E005B4154C82F5"
+  },
+  {
+    "file": "_evaluations-360.png",
+    "bytes": 116272,
+    "sha256": "CAF1F4E835F655F40A8ECB2E69F5EA63140CFD68E162F6C42F89E087691E0595"
+  },
+  {
+    "file": "_exam-360.png",
+    "bytes": 79765,
+    "sha256": "7207643F541266BAD0F58623984DBE7E9BE17569A43C54FCCAC1E39DDC9B2E38"
+  },
+  {
+    "file": "_flashcards-360.png",
+    "bytes": 62752,
+    "sha256": "DFFD82452CD4B8F61650625162CE4335F53976108083E5A4A140B0EF580EAA6D"
+  },
+  {
+    "file": "_games-360.png",
+    "bytes": 47253,
+    "sha256": "95B293F1B41AEDDE77E93B823403A686A0FBAA5010380D7B41C1AB06619B0F19"
+  },
+  {
+    "file": "_grammar-360.png",
+    "bytes": 98449,
+    "sha256": "10B7C041836AFDF72DB9094F592923AAED6F1E661F68E6D31AB30FA74AA4DDB1"
+  },
+  {
+    "file": "_pedagogy-360.png",
+    "bytes": 147622,
+    "sha256": "3C173C7104F66E23671087784C326E3D792EEA6B11497B89F0EDAE8F18D14753"
+  },
+  {
+    "file": "_quiz-360.png",
+    "bytes": 62315,
+    "sha256": "27777BE6897215BD2F1B83970948DBDDA979B01132186166338C4A3235A4ED6E"
+  },
+  {
+    "file": "_recruitment-360.png",
+    "bytes": 54372,
+    "sha256": "52DAD098A1E2320BC9BE346B761D007462A4B93F3C68740E197C759E1D02CB69"
+  },
+  {
+    "file": "_schedule-360.png",
+    "bytes": 112926,
+    "sha256": "5F542067A91431DB039A1A7D4A59A9BAACCEA1ED5ABEECF9C98C3E306D908C0B"
+  },
+  {
+    "file": "_second-brain-360.png",
+    "bytes": 72119,
+    "sha256": "C64E940E64B7AEC5F463D56A846B7D0131EE679D00A2D6C4FFEED01BC53AB138"
+  },
+  {
+    "file": "_tools-360.png",
+    "bytes": 122963,
+    "sha256": "54BDAF548C092F2E5EDB8BF3988BFA4FCD20BD83D0B283517FF762F2BFD97606"
+  },
+  {
+    "file": "01-dictionary-search.png",
+    "bytes": 103535,
+    "sha256": "CD7BB70610DB6B06C21A638B1466B713E4CF1864614BFDA70A8A703CA091E069"
+  },
+  {
+    "file": "02-grammar-answer.png",
+    "bytes": 100780,
+    "sha256": "A5D97EF9C7319E5BB82C1510EF776EAC8BD48C2936011132B71C1926475F7640"
+  },
+  {
+    "file": "03-flashcard-basic.png",
+    "bytes": 118666,
+    "sha256": "89554989ED41AB511F748244783E7B2F1EAF4E88B12DE7962C53598A23823DAE"
+  },
+  {
+    "file": "04-flashcard-mobile.png",
+    "bytes": 118110,
+    "sha256": "CED04C132C2D7EECC7D5069F056ADFF14ECF6764B05AC381A8DBCFBAC060C910"
+  },
+  {
+    "file": "05-flashcard-shuffle-unit.png",
+    "bytes": 105688,
+    "sha256": "440E0589F218D4CE777C380D67352ADD7758B4A3EC4A2A6EC82F33CADB7BDE9C"
+  },
+  {
+    "file": "06-flashcard-mark-reload.png",
+    "bytes": 118981,
+    "sha256": "CB133417E1AA88FB2606F78D43A85CCA09AF80AD205882486316159E06A8FE95"
+  },
+  {
+    "file": "07-flashcard-autoplay-cleanup.png",
+    "bytes": 102429,
+    "sha256": "84DCBD4E5E8F3B2D1698755A125565D9797C8ADC50669D2C54195933B42BFBFB"
+  },
+  {
+    "file": "08-quiz-complete.png",
+    "bytes": 81093,
+    "sha256": "CC2560B3CBD463EBC6BFDEBA5358C3E39FCDCD6147F7D9FFD261314226809C6F"
+  },
+  {
+    "file": "09-auth-ui-login.png",
+    "bytes": 166886,
+    "sha256": "58797379E4319D1A3AD7C3CBA632E6A3E7191762823E5F93BC908B59042FC5CF"
+  },
+  {
+    "file": "10-authenticated-admin.png",
+    "bytes": 205171,
+    "sha256": "224DAA5E9F892314EAC6670F3599FA6046E500B06F09F6630B9AB77BF8AF4F5F"
+  },
+  {
+    "file": "10-authenticated-admincp.png",
+    "bytes": 129998,
+    "sha256": "AB0AA4C0F18B58243DFBBFFD2EB8C9F3CBDDF795B3D5DA096B51D806ADA5146C"
+  },
+  {
+    "file": "10-authenticated-cpanel-leader.png",
+    "bytes": 136488,
+    "sha256": "5CC7E8D20C25FCF2FC2BB2DC8053B86ACA21E0C1CE0815967A302389AFAD99B5"
+  },
+  {
+    "file": "10-authenticated-cpanel-notifications.png",
+    "bytes": 83372,
+    "sha256": "7055102C9C12895861C1B1980DB1E888A08D39C4769DF5B302ACC08D5B0DC699"
+  },
+  {
+    "file": "10-authenticated-cpanel-parent.png",
+    "bytes": 99161,
+    "sha256": "1FE82A7B072CD919F4387B7721B0845AE7B9E8D8FCCE9A0A39E540869C4D596B"
+  },
+  {
+    "file": "10-authenticated-cpanel-student.png",
+    "bytes": 112457,
+    "sha256": "8DC4089D462D9FB8B3361022AE1F64D304192474C1ADC10282FD2C4837F3DDF2"
+  },
+  {
+    "file": "10-authenticated-cpanel-teacher.png",
+    "bytes": 105958,
+    "sha256": "40EA0C54162755752D52201AD41368D6AB7766E07EA6502CCA023433B8E0E674"
+  },
+  {
+    "file": "10-authenticated-evaluations.png",
+    "bytes": 327695,
+    "sha256": "F58FF3A55DF6D2ED97B67B11079A8867464DC6AE07CEBA14211C2E57772CFCCF"
+  },
+  {
+    "file": "10-authenticated-schedule.png",
+    "bytes": 298725,
+    "sha256": "6677E61FA89C6A9125CE59ABFEFA33AF88F39A838B222824074FD2F54FEF2D78"
+  },
+  {
+    "file": "11-admin-login.png",
+    "bytes": 166886,
+    "sha256": "58797379E4319D1A3AD7C3CBA632E6A3E7191762823E5F93BC908B59042FC5CF"
+  },
+  {
+    "file": "12-api-schema-after-all-migrations.png",
+    "bytes": 166886,
+    "sha256": "58797379E4319D1A3AD7C3CBA632E6A3E7191762823E5F93BC908B59042FC5CF"
+  },
+  {
+    "file": "13-schedule-ui-save-vs-server.png",
+    "bytes": 299566,
+    "sha256": "5E9209194C6968915AA685F411E567EAE419FB56861448E3FB62B71C2B4469CC"
+  },
+  {
+    "file": "14-evaluation-ui-save-vs-server.png",
+    "bytes": 180470,
+    "sha256": "69FB90C7078EEAE3F1E05EF265B8AD60ADF34F948C67BA043CE20EC92F163D45"
+  },
+  {
+    "file": "15-logout-replay.png",
+    "bytes": 172804,
+    "sha256": "3849D19DC80FC8725F860BD320702F8671D2C39D9220888B15E9E26295ED23EE"
+  },
+  {
+    "file": "16-student-cpanel-role.png",
+    "bytes": 107127,
+    "sha256": "73B69CC951A8684737E5CD19F1942E3D8636FCC24139D049805ECAAE326F8FD0"
+  },
+  {
+    "file": "17-parent-cpanel.png",
+    "bytes": 91277,
+    "sha256": "5A4A36206260398564D23516049DB19D86B155D3384EA36B55A9AA9592859F66"
+  },
+  {
+    "file": "18-guest-exam-start.png",
+    "bytes": 60448,
+    "sha256": "FB6BE27E7D0D8FE39A8CBAC26130FAF937CDB465D8D8F3460B237AE444AD6C08"
+  },
+  {
+    "file": "19-recruitment-draft.png",
+    "bytes": 59962,
+    "sha256": "89903934F582C017B815FA38BDE3A98DF00235CBF72A143110111071E3EACB4E"
+  },
+  {
+    "file": "20-registration-ui.png",
+    "bytes": 75219,
+    "sha256": "BBA8BE9DBA573B59A3C1FB0238DB4010B7CBB105BD6A01F9C17DC38FEF11F3C7"
+  },
+  {
+    "file": "backend-regression.log",
+    "bytes": 10194,
+    "sha256": "80C4169FA97E4EF4B90DA15DA2FBD8D8C100F2C372474CE25BA487BAB72ADA0D"
+  },
+  {
+    "file": "final-verification.json",
+    "bytes": 7478,
+    "sha256": "40B7EB665222596FADF0CC9A218F9068D2BFFB0A72B10879C9D64C23B6DB8A6A"
+  },
+  {
+    "file": "flashcard-back-320x740.png",
+    "bytes": 132533,
+    "sha256": "FEC258DB75D25E4C514596311A5CEFEAA2CCC610F2D814315CF09AE332FBD163"
+  },
+  {
+    "file": "flashcard-back-360x800.png",
+    "bytes": 131843,
+    "sha256": "DA35658A1279A6E5A43FDA8EF98C2D9AC8052F669DE5E1A7627E7B5C0A2C0EC0"
+  },
+  {
+    "file": "flashcard-back-390x844.png",
+    "bytes": 135215,
+    "sha256": "6895BE089116F39AC619C78349815F475B06B1064516EC6E56C5E3484F9D87B8"
+  },
+  {
+    "file": "flashcard-back-844x390.png",
+    "bytes": 166146,
+    "sha256": "DDF9D43E37DFF226AE1E980D2D2BE45ECEFCFFA31CE6A05FE5E2CECA206A0F61"
+  },
+  {
+    "file": "flashcard-desktop-flipped.png",
+    "bytes": 175341,
+    "sha256": "108B949FAAE5BD86EF1B532A94707894AE3DB76B57CA1F11E0931A2DB791FBF9"
+  },
+  {
+    "file": "interactions.json",
+    "bytes": 24864,
+    "sha256": "CA0D3FD09AC699714AADA55600058F81A3E8138C5D40F175E19AE86F13207C48"
+  },
+  {
+    "file": "modules-recheck.json",
+    "bytes": 1665,
+    "sha256": "6A9A77298198F1251136476AA5A122824063F22460F7DA20E73238D375245BC8"
+  },
+  {
+    "file": "modules.json",
+    "bytes": 6220,
+    "sha256": "66D2229D71966FB79AA09FAB14741FBAFCB2DC4BB708011CBD39635CF5C04DF2"
+  },
+  {
+    "file": "route-smoke.json",
+    "bytes": 72082,
+    "sha256": "DE5D8AC8E18C11243B7C61400DA934DEE96C0BB0D89984F94A356155FA59B1DF"
+  },
+  {
+    "file": "sepay-last.log",
+    "bytes": 672,
+    "sha256": "71A0E1DC8624899C60863573938454E1D151105867C7417EEB2DBBE035157FC8"
+  }
+]

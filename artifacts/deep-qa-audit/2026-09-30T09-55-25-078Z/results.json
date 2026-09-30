@@ -1,0 +1,22 @@
+{
+  "generatedAt": "2026-09-30T09:56:11.382Z",
+  "summary": {
+    "total": 1,
+    "passed": 1,
+    "failed": 0
+  },
+  "results": [
+    {
+      "id": "STUDENT-04",
+      "title": "Student generates random D1 grammar exam, checks option text shape, answers and submits",
+      "persona": "Student",
+      "status": "PASS",
+      "duration": 5415,
+      "detail": {
+        "randomExamCreated": true,
+        "optionTextClean": true,
+        "submittedAndGraded": true
+      }
+    }
+  ]
+}

@@ -1,0 +1,150 @@
+{
+  "results": [
+    {
+      "id": "G3-students",
+      "title": "Fresh migrations support /api/students",
+      "status": "FAIL",
+      "message": "HTTP 503: DatabaseError: Thao tác Cloudflare D1 thất bại."
+    },
+    {
+      "id": "G3-homework",
+      "title": "Fresh migrations support /api/homework",
+      "status": "FAIL",
+      "message": "HTTP 503: DatabaseError: Lỗi khi truy vấn bài tập về nhà"
+    },
+    {
+      "id": "G3-workflows",
+      "title": "Fresh migrations support /api/teachers/workflows?type=all",
+      "status": "FAIL",
+      "message": "HTTP 500: DatabaseError: Lỗi khi truy vấn dữ liệu nghiệp vụ giáo viên"
+    },
+    {
+      "id": "G3-evaluations",
+      "title": "Fresh migrations support /api/evaluations",
+      "status": "FAIL",
+      "message": "HTTP 503: DatabaseError: Không thể đọc đánh giá."
+    },
+    {
+      "id": "G3-parent-links",
+      "title": "Fresh migrations support /api/parents/children",
+      "status": "FAIL",
+      "message": "HTTP 503: DatabaseError: Không thể lấy danh sách con liên kết. Vui lòng thử lại sau."
+    },
+    {
+      "id": "G1-schedule-auth",
+      "title": "Anonymous schedule reads rejected",
+      "status": "FAIL",
+      "message": "Expected values to be strictly equal:\n\n200 !== 401\n"
+    },
+    {
+      "id": "G1-notify-auth",
+      "title": "Anonymous schedule notify rejected",
+      "status": "FAIL",
+      "message": "Expected values to be strictly equal:\n\n200 !== 401\n"
+    },
+    {
+      "id": "G1-schedule-api",
+      "title": "Schedule POST survives a new authenticated reader",
+      "status": "FAIL",
+      "message": "Schedule returned success but a new reader cannot find the saved session"
+    },
+    {
+      "id": "G1-evaluation-upsert",
+      "title": "Evaluation update persists changed feedback, not only score",
+      "status": "FAIL",
+      "message": "HTTP 503: DatabaseError: Không thể lưu đánh giá."
+    },
+    {
+      "id": "G6-campus-anonymous",
+      "title": "Campus data stays protected for guests",
+      "status": "PASS"
+    },
+    {
+      "id": "G6-campus-summary-hocsinh",
+      "title": "Scoped campus labels for hocsinh",
+      "status": "FAIL",
+      "message": "HTTP 403: Forbidden: Chỉ staff được xem dữ liệu cơ sở."
+    },
+    {
+      "id": "G6-campus-summary-phuhuynh",
+      "title": "Scoped campus labels for phuhuynh",
+      "status": "FAIL",
+      "message": "HTTP 403: Forbidden: Chỉ staff được xem dữ liệu cơ sở."
+    },
+    {
+      "id": "G2-logout",
+      "title": "UI logout revokes current token while another login remains valid",
+      "status": "FAIL",
+      "message": "Logged-out token still authorizes requests\n\n200 !== 401\n"
+    },
+    {
+      "id": "G1-ui-schedule",
+      "title": "UI schedule sends server write and is visible in a fresh context",
+      "status": "FAIL",
+      "message": "Save performed no API write"
+    },
+    {
+      "id": "G1-ui-schedule-503",
+      "title": "Failed schedule save keeps draft and editor open",
+      "status": "FAIL",
+      "message": "Save bypassed server even with a failed API contract"
+    },
+    {
+      "id": "G1-ui-evaluations",
+      "title": "UI evaluations sends server write and is visible in a fresh context",
+      "status": "FAIL",
+      "message": "Save performed no API write"
+    },
+    {
+      "id": "G1-ui-evaluations-503",
+      "title": "Failed evaluations save keeps draft and editor open",
+      "status": "FAIL",
+      "message": "Save bypassed server even with a failed API contract"
+    },
+    {
+      "id": "G4-flip",
+      "title": "Flip changes the physically presented face, not just a class",
+      "status": "FAIL",
+      "message": "Back face not presented at card center: {\"backAtCenter\":false,\"frontY\":210.203125,\"backY\":690.203125}"
+    },
+    {
+      "id": "G5-shuffle",
+      "title": "Shuffle of a filtered unit preserves the complete word pool",
+      "status": "FAIL",
+      "message": "Filtered shuffle discarded words outside Unit 1\n+ actual - expected\n\n+ 'Thẻ 1 / 8'\n- 'Thẻ 1 / 52'\n           ^\n"
+    },
+    {
+      "id": "G6-layout-320",
+      "title": "No document overflow at 320px",
+      "status": "FAIL",
+      "message": "Horizontal overflow: [{\"route\":\"/\",\"width\":320,\"scroll\":347},{\"route\":\"/flashcards\",\"width\":320,\"scroll\":347},{\"route\":\"/exam\",\"width\":320,\"scroll\":349}]\n+ actual - expected\n\n+ [\n+   {\n+     route: '/',\n+     scroll: 347,\n+     width: 320\n+   },\n+   {\n+     route: '/flashcards',\n+     scroll: 347,\n+     width: 320\n+   },\n+   {\n+     route: '/exam',\n+     scroll: 349,\n+     width: 320\n+   }\n+ ]\n- []\n"
+    },
+    {
+      "id": "G6-layout-360",
+      "title": "No document overflow at 360px",
+      "status": "FAIL",
+      "message": "Horizontal overflow: [{\"route\":\"/\",\"width\":360,\"scroll\":367},{\"route\":\"/flashcards\",\"width\":360,\"scroll\":367},{\"route\":\"/exam\",\"width\":360,\"scroll\":369}]\n+ actual - expected\n\n+ [\n+   {\n+     route: '/',\n+     scroll: 367,\n+     width: 360\n+   },\n+   {\n+     route: '/flashcards',\n+     scroll: 367,\n+     width: 360\n+   },\n+   {\n+     route: '/exam',\n+     scroll: 369,\n+     width: 360\n+   }\n+ ]\n- []\n"
+    },
+    {
+      "id": "G6-layout-390",
+      "title": "No document overflow at 390px",
+      "status": "PASS"
+    },
+    {
+      "id": "G6-layout-844",
+      "title": "No document overflow at 844px",
+      "status": "PASS"
+    },
+    {
+      "id": "G6-touch",
+      "title": "Flashcard controls meet the handoff 44px target",
+      "status": "FAIL",
+      "message": "Undersized touch targets: [{\"text\":\"Tất cả Unit (Tổng hợp đề thi\",\"width\":240,\"height\":37},{\"text\":\"Tất cả từ (52)Chưa thuộc (52\",\"width\":149,\"height\":37},{\"text\":\"🇻🇳 Tiếng Việt (Khuyến nghị\",\"width\":224,\"height\":37},{\"text\":\"🔀 Xáo thẻ\",\"width\":99.859375,\"height\":36.390625},{\"text\":\"▶️ Tự chạy\",\"width\":100.46875,\"height\":36.390625},{\"text\":\"🔊 Đọc câu\",\"width\":80.53125,\"height\":22}]\n+ actual - expected\n\n+ [\n+   {\n+     height: 37,\n+     text: 'Tất cả Unit (Tổng hợp đề thi',\n+     width: 240\n+   },\n+   {\n+     height: 37,\n+     text: 'Tất cả từ (52)Chưa thuộc (52',\n+     width: 149\n+   },\n+   {\n+     height: 37,\n+     text: '🇻🇳 Tiếng Việt (Khuyến nghị',\n+     width: 224\n+   },\n+   {\n+     height: 36.390625,\n+     text: '🔀 Xáo thẻ',\n+     width: 99.859375\n+   },\n+   {\n+     height: 36.390625,\n+     text: '▶️ Tự chạy',\n+     width: 100.46875\n+   },\n+   {\n+     height: 22,\n+     text: '🔊 Đọc câu',\n+     width: 80.53125\n+   }\n+ ]\n- []\n"
+    }
+  ],
+  "summary": {
+    "total": 24,
+    "passed": 3,
+    "failed": 21
+  }
+}

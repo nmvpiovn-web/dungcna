@@ -1,0 +1,62 @@
+{
+  "kind": "diagnostic_observations_not_acceptance_tests",
+  "generatedAt": "2026-09-29T14:51:48.885Z",
+  "findings": [
+    {
+      "id": "schedule-anonymous-read",
+      "status": 200,
+      "exposed": true,
+      "count": 6
+    },
+    {
+      "id": "notify-anonymous",
+      "status": 200,
+      "success": true,
+      "containsSession": true
+    },
+    {
+      "id": "campuses-anonymous-read",
+      "status": 200,
+      "success": true,
+      "count": 4
+    },
+    {
+      "id": "campuses-write-failure",
+      "status": 200,
+      "falseSuccess": true
+    },
+    {
+      "id": "schedule-write-no-persistence",
+      "status": 200,
+      "success": true,
+      "persistedInStore": false
+    },
+    {
+      "id": "discussion-actor-and-persistence",
+      "status": 200,
+      "success": true,
+      "expectedActor": "audit_teacher",
+      "actualActor": "usr_super_1",
+      "persistedInStore": false
+    },
+    {
+      "id": "evaluation-failed-write",
+      "status": 503,
+      "success": false,
+      "persistedInStore": false
+    },
+    {
+      "id": "evaluation-response-actor",
+      "status": 200,
+      "success": true,
+      "expectedActor": "audit_teacher",
+      "actualActor": "usr_super_1"
+    },
+    {
+      "id": "sepay-replay-changed-payload",
+      "status": 200,
+      "success": true,
+      "replayStatus": "already_processed"
+    }
+  ]
+}

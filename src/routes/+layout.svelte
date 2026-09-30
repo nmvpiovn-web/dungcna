@@ -26,6 +26,7 @@
   import LeaderNotificationDrawer from '$lib/components/LeaderNotificationDrawer.svelte';
   import NotificationCenterModal from '$lib/components/NotificationCenterModal.svelte';
   import OnboardingTourModal from '$lib/components/OnboardingTourModal.svelte';
+  import EducationNavigation from '$lib/components/EducationNavigation.svelte';
 
   let { children } = $props();
 

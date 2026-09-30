@@ -1,0 +1,143 @@
+{
+  "generatedAt": "2026-09-30T01:52:36.181Z",
+  "migrations": [
+    "0001",
+    "0002",
+    "0003"
+  ],
+  "results": [
+    {
+      "id": "11-admin-login",
+      "outcome": "completed",
+      "detail": {
+        "verified": true
+      }
+    },
+    {
+      "id": "12-api-schema-after-all-migrations",
+      "outcome": "completed",
+      "detail": [
+        {
+          "path": "/api/homework",
+          "status": 503,
+          "error": "DatabaseError: Lỗi khi truy vấn bài tập về nhà"
+        },
+        {
+          "path": "/api/teachers/workflows?type=all",
+          "status": 500,
+          "error": "DatabaseError: Lỗi khi truy vấn dữ liệu nghiệp vụ giáo viên"
+        },
+        {
+          "path": "/api/teachers/payroll?billing_cycle=2026-09",
+          "status": 200
+        },
+        {
+          "path": "/api/evaluations",
+          "status": 503,
+          "error": "DatabaseError: Không thể đọc đánh giá."
+        },
+        {
+          "path": "/api/students",
+          "status": 503,
+          "error": "DatabaseError: Thao tác Cloudflare D1 thất bại."
+        },
+        {
+          "path": "/api/campuses",
+          "status": 200
+        },
+        {
+          "path": "/api/notifications",
+          "status": 200
+        }
+      ]
+    },
+    {
+      "id": "13-schedule-ui-save-vs-server",
+      "outcome": "completed",
+      "detail": {
+        "uiVisible": true,
+        "apiPosts": [],
+        "server": {
+          "status": 200,
+          "contains": false
+        }
+      }
+    },
+    {
+      "id": "14-evaluation-ui-save-vs-server",
+      "outcome": "completed",
+      "detail": {
+        "apiPosts": [],
+        "localSaved": true,
+        "successMessage": true
+      }
+    },
+    {
+      "id": "15-logout-replay",
+      "outcome": "completed",
+      "detail": {
+        "uiLoggedOut": true,
+        "oldTokenStatus": 200,
+        "oldTokenAuthenticated": true
+      }
+    },
+    {
+      "id": "16-student-cpanel-role",
+      "outcome": "completed",
+      "detail": {
+        "ownHeading": [
+          "Xin chào, Lê Bảo Anh (Học viên tiêu biểu)! 👋"
+        ],
+        "campuses": {
+          "status": 403,
+          "body": {
+            "success": false,
+            "error": "Forbidden: Chỉ staff được xem dữ liệu cơ sở."
+          }
+        },
+        "teacherPageHeading": [
+          "Xin chào, Lê Bảo Anh (Học viên tiêu biểu)! 👋"
+        ],
+        "teacherButtons": [
+          "VI",
+          "⏳ Cần Làm (0)",
+          "✅ Đã Nộp (0)",
+          "Tất Cả (0)",
+          "🔄 Thử lại"
+        ]
+      }
+    },
+    {
+      "id": "17-parent-cpanel",
+      "outcome": "failed",
+      "error": "locator.innerText: Error: strict mode violation: locator('main') resolved to 2 elements:\n    1) <main class=\"flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6\">…</main> aka getByRole('main').filter({ hasText: 'D Tiếng Anh Cô Dung Hệ Thống' })\n    2) <main class=\"flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 lg:p-8 min-w-0 overflow-x-hidden\">…</main> aka getByRole('main').filter({ hasText: 'D Tiếng Anh Cô Dung Hệ Thống' }).getByRole('main')\n\nCall log:\n\u001b[2m  - waiting for locator('main')\u001b[22m\n"
+    },
+    {
+      "id": "18-guest-exam-start",
+      "outcome": "completed",
+      "detail": {
+        "first": "KHẢO SÁT NĂNG LỰC TRỰC TUYẾN (THI THỬ MIỄN PHÍ)\nDành Cho Khách\n✕\nAudit Local Guest • Khối: Lớp 7 • Global Success\nThời gian:\n04:59\n✕ Thoát\nCâu 1 / 5\n✍️ Trắc Nghiệm\nShe _____ English every day because she wants to study abroad.\nA. practices\nB. practice\nC. practiced\nD. practicing\nCâu 2 / 5\n🎧 Bài Nghe\n🔊\nNghe Phát Âm\nBấm để nghe đoạn âm thanh mẫu\nNghe đoạn phát âm và chọn từ có trọng âm rơi vào âm tiết thứ hai:\nA. energy (/ˈenədʒi/)\nB. pollute (/pəˈluːt/)\nC. solar (/ˈsəʊlə(r)/)\nD. source (/sɔːs/)\nCâu 3 / 5\n📖 Điền Từ\n\"Solar energy is renewable, clean and abundant. It does not cause (1)_____ to the environment like coal or oil.\"\nTự luận điền từ: Nhập danh từ thích hợp vào chỗ trống (1):\nCâu 4 / 5\n✍️ Trắc Nghiệm\nMy sister really enjoys _____ origami paper flowers in her free time.\nA. making\nB. to make\nC. make\nD. made\nCâu 5 / 5\n📖 Điền Từ\n\"Dao Son Tay school in Thu Duc has modern facilities and an active English club for students who (2)_____ to improve speaking.\"\nTự luận điền từ: Nhập động",
+        "second": "KHẢO SÁT NĂNG LỰC TRỰC TUYẾN (THI THỬ MIỄN PHÍ)\nDành Cho Khách\n✕\nAudit Local Guest • Khối: Lớp 7 • Global Success\nThời gian:\n04:57\n✕ Thoát\nCâu 1 / 5\n✍️ Trắc Nghiệm\nShe _____ English every day because she wants to study abroad.\nA. practices\nB. practice\nC. practiced\nD. practicing\nCâu 2 / 5\n🎧 Bài Nghe\n🔊\nNghe Phát Âm\nBấm để nghe đoạn âm thanh mẫu\nNghe đoạn phát âm và chọn từ có trọng âm rơi vào âm tiết thứ hai:\nA. energy (/ˈenədʒi/)\nB. pollute (/pəˈluːt/)\nC. solar (/ˈsəʊlə(r)/)\nD. source (/sɔːs/)\nCâu 3 / 5\n📖 Điền Từ\n\"Solar energy is renewable, clean and abundant. It does not cause (1)_____ to the environment like coal or oil.\"\nTự luận điền từ: Nhập danh từ thích hợp vào chỗ trống (1):\nCâu 4 / 5\n✍️ Trắc Nghiệm\nMy sister really enjoys _____ origami paper flowers in her free time.\nA. making\nB. to make\nC. make\nD. made\nCâu 5 / 5\n📖 Điền Từ\n\"Dao Son Tay school in Thu Duc has modern facilities and an active English club for students who (2)_____ to improve speaking.\"\nTự luận điền từ: Nhập động",
+        "changesOverTime": true
+      }
+    },
+    {
+      "id": "19-recruitment-draft",
+      "outcome": "completed",
+      "detail": {
+        "value": "Audit Local Applicant",
+        "busy": [
+          "dirty_form_recruitment"
+        ],
+        "invalidInputs": 1
+      }
+    },
+    {
+      "id": "20-registration-ui",
+      "outcome": "completed",
+      "detail": {
+        "reloadLoggedIn": true
+      }
+    }
+  ]
+}

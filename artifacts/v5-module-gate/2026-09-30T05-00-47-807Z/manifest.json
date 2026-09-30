@@ -1,0 +1,47 @@
+{
+  "runId": "2026-09-30T05-00-47-807Z",
+  "output": "C:\\Users\\admin\\.gemini\\antigravity\\scratch\\tienganh7-sveltekit\\artifacts\\v5-module-gate\\2026-09-30T05-00-47-807Z",
+  "temp": "C:\\Users\\admin\\AppData\\Local\\Temp\\tienganh7-v5-gate-QJl2N6",
+  "localOnly": true,
+  "sourceCommit": "8390ea946338288e5e916c4c705ee9b4043d8be0",
+  "sourceDiffSha256": "c126d39f8cbe469f484c8c95a16d7d02be5fc1fbbc1a4dd3d630e4794b3d3638",
+  "stages": [
+    {
+      "logName": "build.log",
+      "code": 0
+    },
+    {
+      "logName": "migration-0001_initial_schema.sql.log",
+      "code": 0
+    },
+    {
+      "logName": "migration-0002_create_knowledge_fts.sql.log",
+      "code": 0
+    },
+    {
+      "logName": "migration-0003_exam_attempts_dedup_and_archive.sql.log",
+      "code": 0
+    },
+    {
+      "logName": "migration-0004_v5_schema_alignment.sql.log",
+      "code": 0
+    },
+    {
+      "logName": "fixture.log",
+      "code": 0
+    },
+    {
+      "logName": "gate.log",
+      "code": 0
+    }
+  ],
+  "gateSha256": "5f3d072c117a60a511908f38117473ed395ae12657fbd8b39a7bef544c031cb6",
+  "migrations": [
+    "0001_initial_schema.sql",
+    "0002_create_knowledge_fts.sql",
+    "0003_exam_attempts_dedup_and_archive.sql",
+    "0004_v5_schema_alignment.sql"
+  ],
+  "base": "http://127.0.0.1:49675",
+  "finishedAt": "2026-09-30T05:02:23.954Z"
+}

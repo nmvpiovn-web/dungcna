@@ -1,0 +1,135 @@
+{
+  "results": [
+    {
+      "id": "G3-students",
+      "title": "Fresh migrations support /api/students",
+      "status": "PASS"
+    },
+    {
+      "id": "G3-homework",
+      "title": "Fresh migrations support /api/homework",
+      "status": "PASS"
+    },
+    {
+      "id": "G3-workflows",
+      "title": "Fresh migrations support /api/teachers/workflows?type=all",
+      "status": "PASS"
+    },
+    {
+      "id": "G3-evaluations",
+      "title": "Fresh migrations support /api/evaluations",
+      "status": "PASS"
+    },
+    {
+      "id": "G3-parent-links",
+      "title": "Fresh migrations support /api/parents/children",
+      "status": "PASS"
+    },
+    {
+      "id": "G1-schedule-auth",
+      "title": "Anonymous schedule reads rejected",
+      "status": "PASS"
+    },
+    {
+      "id": "G1-notify-auth",
+      "title": "Anonymous schedule notify rejected",
+      "status": "PASS"
+    },
+    {
+      "id": "G1-schedule-api",
+      "title": "Schedule POST survives a new authenticated reader",
+      "status": "PASS"
+    },
+    {
+      "id": "G1-evaluation-upsert",
+      "title": "Evaluation update persists changed feedback, not only score",
+      "status": "FAIL",
+      "message": "HTTP 503: DatabaseError: Không thể lưu đánh giá."
+    },
+    {
+      "id": "G6-campus-anonymous",
+      "title": "Campus data stays protected for guests",
+      "status": "PASS"
+    },
+    {
+      "id": "G6-campus-summary-hocsinh",
+      "title": "Scoped campus labels for hocsinh",
+      "status": "PASS"
+    },
+    {
+      "id": "G6-campus-summary-phuhuynh",
+      "title": "Scoped campus labels for phuhuynh",
+      "status": "PASS"
+    },
+    {
+      "id": "G2-logout",
+      "title": "UI logout revokes current token while another login remains valid",
+      "status": "PASS"
+    },
+    {
+      "id": "G1-ui-schedule",
+      "title": "UI schedule sends server write and is visible in a fresh context",
+      "status": "FAIL",
+      "message": "Uncaught browser errors\n+ actual - expected\n\n+ [\n+   'https://svelte.dev/e/effect_update_depth_exceeded'\n+ ]\n- []\n"
+    },
+    {
+      "id": "G1-ui-schedule-503",
+      "title": "Failed schedule save keeps draft and editor open",
+      "status": "FAIL",
+      "message": "Expected values to be strictly equal:\n+ actual - expected\n\n+ 'Lớp 7 - Global Success & KET A2'\n- 'UNSAVED_ab472e7f'\n"
+    },
+    {
+      "id": "G1-ui-evaluations",
+      "title": "UI evaluations sends server write and is visible in a fresh context",
+      "status": "FAIL",
+      "message": "API write failed with HTTP 503"
+    },
+    {
+      "id": "G1-ui-evaluations-503",
+      "title": "Failed evaluations save keeps draft and editor open",
+      "status": "PASS"
+    },
+    {
+      "id": "G4-flip",
+      "title": "Flip changes the physically presented face, not just a class",
+      "status": "PASS"
+    },
+    {
+      "id": "G5-shuffle",
+      "title": "Shuffle of a filtered unit preserves the complete word pool",
+      "status": "PASS"
+    },
+    {
+      "id": "G6-layout-320",
+      "title": "No document overflow at 320px",
+      "status": "FAIL",
+      "message": "Horizontal overflow: [{\"route\":\"/exam\",\"width\":320,\"scroll\":349}]\n+ actual - expected\n\n+ [\n+   {\n+     route: '/exam',\n+     scroll: 349,\n+     width: 320\n+   }\n+ ]\n- []\n"
+    },
+    {
+      "id": "G6-layout-360",
+      "title": "No document overflow at 360px",
+      "status": "FAIL",
+      "message": "Horizontal overflow: [{\"route\":\"/exam\",\"width\":360,\"scroll\":369}]\n+ actual - expected\n\n+ [\n+   {\n+     route: '/exam',\n+     scroll: 369,\n+     width: 360\n+   }\n+ ]\n- []\n"
+    },
+    {
+      "id": "G6-layout-390",
+      "title": "No document overflow at 390px",
+      "status": "PASS"
+    },
+    {
+      "id": "G6-layout-844",
+      "title": "No document overflow at 844px",
+      "status": "PASS"
+    },
+    {
+      "id": "G6-touch",
+      "title": "Flashcard controls meet the handoff 44px target",
+      "status": "PASS"
+    }
+  ],
+  "summary": {
+    "total": 24,
+    "passed": 18,
+    "failed": 6
+  }
+}

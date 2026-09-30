@@ -1,5 +1,6 @@
 <script>
   import { onMount } from 'svelte';
+  import GameCelebration from '$lib/components/GameCelebration.svelte';
   import { speakWord, playAudioFeedback } from '$lib/speech.js';
   import { saveGameScoreLocally } from '$lib/staticDb.js';
   import { 
@@ -24,6 +25,7 @@
   let studentStarBalance = $state(850);
   let starRewardToast = $state('');
   let teacherNotice = $state('');
+  let completionStreak = $state(0);
 
   let isTeacher = $derived(isTeacherOrAdmin(currentUser));
   let isPortalOpen = $derived(gameSettings.is_portal_open);
@@ -61,6 +63,11 @@
         setTimeout(() => starRewardToast = '', 5000);
       }
     }
+  }
+
+  function recordGameCompletion(reason) {
+    completionStreak += 1;
+    awardStars(gameSettings.reward_stars_per_game || 20, reason);
   }
 
   // Teacher Control Handlers
@@ -147,7 +154,7 @@
             clearInterval(matchInterval);
             matchCompleted = true;
             playAudioFeedback('win');
-            awardStars(gameSettings.reward_stars_per_game || 20, 'Chiến thắng Speed Match');
+            recordGameCompletion('Chiến thắng Speed Match');
           }
         }, 250);
       } else {
@@ -221,7 +228,7 @@
           } else {
             scrambleFinished = true;
             playAudioFeedback('win');
-            awardStars(gameSettings.reward_stars_per_game || 20, 'Chiến thắng Word Scramble');
+            recordGameCompletion('Chiến thắng Word Scramble');
           }
         }, 1200);
       } else {
@@ -283,7 +290,7 @@
       clearInterval(meteorTimer);
       meteorFinished = true;
       playAudioFeedback('win');
-      awardStars(gameSettings.reward_stars_per_game || 20, 'Chiến thắng Meteor Rush');
+      recordGameCompletion('Chiến thắng Meteor Rush');
       return;
     }
 
@@ -423,7 +430,7 @@
         } else {
           sentenceFinished = true;
           playAudioFeedback('win');
-          awardStars(gameSettings.reward_stars_per_game || 20, 'Chiến thắng Sentence Builder Ngữ Pháp');
+          recordGameCompletion('Chiến thắng Sentence Builder Ngữ Pháp');
         }
       }, 1800);
     } else {
@@ -484,7 +491,7 @@
       clearInterval(tenseTimer);
       tenseFinished = true;
       playAudioFeedback('win');
-      awardStars(gameSettings.reward_stars_per_game || 20, 'Chiến thắng Grammar Tense Master');
+      recordGameCompletion('Chiến thắng Grammar Tense Master');
       return;
     }
 
@@ -585,7 +592,7 @@
           if (memoryPairsFound >= memoryTotalPairs) {
             memoryFinished = true;
             playAudioFeedback('win');
-            awardStars(gameSettings.reward_stars_per_game || 20, 'Chiến thắng Memory Flip 3D Thẻ Bài');
+            recordGameCompletion('Chiến thắng Memory Flip 3D Thẻ Bài');
           }
         }, 300);
       } else {
@@ -1120,15 +1127,18 @@
         </div>
       {:else}
         <!-- Victory Finish -->
-        <div class="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-8 text-center space-y-4 shadow-xl">
-          <div class="text-5xl">🏆</div>
-          <h3 class="text-2xl font-black text-slate-900 dark:text-white">Hoàn Thành Thử Thách Cấu Trúc Câu!</h3>
-          <p class="text-xs text-slate-500">Bạn đã xuất sắc vượt qua toàn bộ các mẫu câu ngữ pháp K12.</p>
-          <div class="text-xl font-black text-emerald-600">Tổng điểm: {sentenceScore} điểm • +{gameSettings.reward_stars_per_game || 20} ⭐</div>
-          <button onclick={() => activeGame = 'menu'} class="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md">
-            Trở Về Menu Đấu Trường
-          </button>
-        </div>
+        <GameCelebration
+          title="Hoàn thành thử thách cấu trúc câu!"
+          score={sentenceScore}
+          maxScore={sentenceBank.length * 150}
+          rewardStars={gameSettings.reward_stars_per_game || 20}
+          streak={completionStreak}
+          metric={`Đã hoàn thành ${sentenceBank.length} mẫu câu tiếng Anh`}
+          icon="🏆"
+          accent="emerald"
+          onReplay={startSentenceGame}
+          onMenu={() => activeGame = 'menu'}
+        />
       {/if}
     </div>
 
@@ -1184,14 +1194,18 @@
           {/if}
         </div>
       {:else}
-        <div class="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-8 text-center space-y-4 shadow-xl">
-          <div class="text-5xl">⚡</div>
-          <h3 class="text-2xl font-black text-slate-900 dark:text-white">Hoàn Thành Thách Thức Ngữ Pháp!</h3>
-          <div class="text-xl font-black text-emerald-600">Tổng điểm: {tenseScore} điểm • +{gameSettings.reward_stars_per_game || 20} ⭐</div>
-          <button onclick={() => activeGame = 'menu'} class="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md">
-            Trở Về Menu Đấu Trường
-          </button>
-        </div>
+        <GameCelebration
+          title="Hoàn thành thách thức ngữ pháp!"
+          score={tenseScore}
+          maxScore={tenseQuestions.length * 100}
+          rewardStars={gameSettings.reward_stars_per_game || 20}
+          streak={completionStreak}
+          metric={`Đã luyện ${tenseQuestions.length} câu ngữ pháp`}
+          icon="⚡"
+          accent="amber"
+          onReplay={startTenseGame}
+          onMenu={() => activeGame = 'menu'}
+        />
       {/if}
     </div>
 
@@ -1232,15 +1246,18 @@
           {/each}
         </div>
       {:else}
-        <div class="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-8 text-center space-y-4 shadow-xl">
-          <div class="text-5xl">🎉</div>
-          <h3 class="text-2xl font-black text-slate-900 dark:text-white">Xuất Sắc! Hoàn Thành Thẻ Bài Trí Nhớ 3D!</h3>
-          <p class="text-xs text-slate-500">Bạn đã tìm đúng toàn bộ 8 cặp thẻ chỉ sau {memoryMoves} lượt lật.</p>
-          <div class="text-xl font-black text-emerald-600">+{gameSettings.reward_stars_per_game || 20} ⭐ Sao Thưởng Khấu Trừ Học Phí</div>
-          <button onclick={() => activeGame = 'menu'} class="px-6 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs shadow-md">
-            Trở Về Menu Đấu Trường
-          </button>
-        </div>
+        <GameCelebration
+          title="Xuất sắc! Hoàn thành thẻ bài trí nhớ!"
+          score={Math.max(0, memoryTotalPairs * 100 - Math.max(0, memoryMoves - memoryTotalPairs) * 10)}
+          maxScore={memoryTotalPairs * 100}
+          rewardStars={gameSettings.reward_stars_per_game || 20}
+          streak={completionStreak}
+          metric={`Ghép đúng ${memoryTotalPairs} cặp sau ${memoryMoves} lượt lật`}
+          icon="🎴"
+          accent="violet"
+          onReplay={startMemoryGame}
+          onMenu={() => activeGame = 'menu'}
+        />
       {/if}
     </div>
 
@@ -1275,14 +1292,18 @@
           {/each}
         </div>
       {:else}
-        <div class="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-8 text-center space-y-4 shadow-xl">
-          <div class="text-5xl">⚡</div>
-          <h3 class="text-2xl font-black text-slate-900 dark:text-white">Kỷ Lục Tốc Độ Hoàn Thành!</h3>
-          <p class="text-xs text-slate-500">Thời gian: {matchTimer} giây • +{gameSettings.reward_stars_per_game || 20} ⭐</p>
-          <button onclick={() => activeGame = 'menu'} class="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md">
-            Trở Về Menu Đấu Trường
-          </button>
-        </div>
+        <GameCelebration
+          title="Kỷ lục tốc độ hoàn thành!"
+          score={Math.max(100, Math.round(1000 - Number(matchTimer) * 10))}
+          maxScore={1000}
+          rewardStars={gameSettings.reward_stars_per_game || 20}
+          streak={completionStreak}
+          metric={`Ghép ${matchTotalPairs} cặp trong ${matchTimer} giây`}
+          icon="⚡"
+          accent="sky"
+          onReplay={startMatchGame}
+          onMenu={() => activeGame = 'menu'}
+        />
       {/if}
     </div>
 
@@ -1333,14 +1354,18 @@
           </div>
         </div>
       {:else}
-        <div class="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-8 text-center space-y-4 shadow-xl">
-          <div class="text-5xl">🔤</div>
-          <h3 class="text-2xl font-black text-slate-900 dark:text-white">Hoàn Thành Sắp Xếp Chữ Cái!</h3>
-          <div class="text-xl font-black text-emerald-600">Tổng điểm: {scrambleScore} • +{gameSettings.reward_stars_per_game || 20} ⭐</div>
-          <button onclick={() => activeGame = 'menu'} class="px-6 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs shadow-md">
-            Trở Về Menu Đấu Trường
-          </button>
-        </div>
+        <GameCelebration
+          title="Hoàn thành sắp xếp chữ cái!"
+          score={scrambleScore}
+          maxScore={scrambleWordList.length * 100}
+          rewardStars={gameSettings.reward_stars_per_game || 20}
+          streak={completionStreak}
+          metric={`Đã ghép đúng ${scrambleWordList.length} từ tiếng Anh`}
+          icon="🔤"
+          accent="amber"
+          onReplay={startScrambleGame}
+          onMenu={() => activeGame = 'menu'}
+        />
       {/if}
     </div>
 
@@ -1388,14 +1413,18 @@
           {/if}
         </div>
       {:else}
-        <div class="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-8 text-center space-y-4 shadow-xl">
-          <div class="text-5xl">☄️</div>
-          <h3 class="text-2xl font-black text-slate-900 dark:text-white">Hoàn Thành Đua Tốc Độ!</h3>
-          <div class="text-xl font-black text-emerald-600">Tổng điểm: {meteorScore} • +{gameSettings.reward_stars_per_game || 20} ⭐</div>
-          <button onclick={() => activeGame = 'menu'} class="px-6 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow-md">
-            Trở Về Menu Đấu Trường
-          </button>
-        </div>
+        <GameCelebration
+          title="Hoàn thành đua tốc độ!"
+          score={meteorScore}
+          maxScore={meteorQuestions.length * 300}
+          rewardStars={gameSettings.reward_stars_per_game || 20}
+          streak={completionStreak}
+          metric={`Đã phản xạ với ${meteorQuestions.length} từ vựng`}
+          icon="☄️"
+          accent="rose"
+          onReplay={startMeteorGame}
+          onMenu={() => activeGame = 'menu'}
+        />
       {/if}
     </div>
   {/if}

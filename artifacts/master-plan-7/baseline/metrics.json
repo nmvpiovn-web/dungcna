@@ -1,0 +1,666 @@
+{
+  "base": "https://timbk.io.vn",
+  "generatedAt": "2026-09-30T12:34:56.453Z",
+  "results": [
+    {
+      "route": "/",
+      "viewport": "mobile",
+      "screenshot": "artifacts/master-plan-7/baseline/home-mobile.png",
+      "errors": [],
+      "title": "Tiếng Anh Cô Dung - Hệ Thống Đào Tạo K12 & Lộ Trình Quốc Tế",
+      "width": 390,
+      "viewportWidth": 390,
+      "height": 7288,
+      "overflowX": 0,
+      "headings": 22,
+      "cards": 71,
+      "links": 28,
+      "buttons": 15,
+      "interactive": 39,
+      "tinyTargets": 28,
+      "fixed": [
+        {
+          "tag": "HEADER",
+          "text": "👩‍🏫 Tiếng Anh Cô Dung 2026 CTGDPT K12 & Lộ Trình Chuẩn Quốc Tế 📚 Lộ Trình ▾  ",
+          "top": 0,
+          "bottom": 65
+        }
+      ],
+      "mobileMenuButton": 1,
+      "mobileDrawerVisible": true,
+      "mobileDrawerLinks": 12
+    },
+    {
+      "route": "/flashcards",
+      "viewport": "mobile",
+      "screenshot": "artifacts/master-plan-7/baseline/flashcards-mobile.png",
+      "errors": [],
+      "title": "Tiếng Anh Cô Dung - Hệ Thống Đào Tạo K12 & Lộ Trình Quốc Tế",
+      "width": 390,
+      "viewportWidth": 390,
+      "height": 2043,
+      "overflowX": 0,
+      "headings": 3,
+      "cards": 15,
+      "links": 4,
+      "buttons": 18,
+      "interactive": 18,
+      "tinyTargets": 8,
+      "fixed": [
+        {
+          "tag": "HEADER",
+          "text": "👩‍🏫 Tiếng Anh Cô Dung 2026 CTGDPT K12 & Lộ Trình Chuẩn Quốc Tế 📚 Lộ Trình ▾  ",
+          "top": 0,
+          "bottom": 65
+        }
+      ],
+      "mobileMenuButton": 1,
+      "mobileDrawerVisible": true,
+      "mobileDrawerLinks": 12
+    },
+    {
+      "route": "/dictionary",
+      "viewport": "mobile",
+      "screenshot": "artifacts/master-plan-7/baseline/dictionary-mobile.png",
+      "errors": [],
+      "title": "Ngân Hàng Từ Vựng Sư Phạm & Stealth Pronunciation Engine • Tiếng Anh Cô Dung",
+      "width": 390,
+      "viewportWidth": 390,
+      "height": 16968,
+      "overflowX": 0,
+      "headings": 53,
+      "cards": 52,
+      "links": 4,
+      "buttons": 169,
+      "interactive": 173,
+      "tinyTargets": 173,
+      "fixed": [
+        {
+          "tag": "HEADER",
+          "text": "👩‍🏫 Tiếng Anh Cô Dung 2026 CTGDPT K12 & Lộ Trình Chuẩn Quốc Tế 📚 Lộ Trình ▾  ",
+          "top": 0,
+          "bottom": 65
+        },
+        {
+          "tag": "HEADER",
+          "text": "Ngân Hàng Từ Vựng Sư Phạm • Stealth Vocabulary & Pronunciation Engine Từ Điển Ch",
+          "top": 89,
+          "bottom": 506.5
+        }
+      ],
+      "mobileMenuButton": 1,
+      "mobileDrawerVisible": true,
+      "mobileDrawerLinks": 12
+    },
+    {
+      "route": "/grammar",
+      "viewport": "mobile",
+      "screenshot": "artifacts/master-plan-7/baseline/grammar-mobile.png",
+      "errors": [],
+      "title": "Chuyên Đề Ngữ Pháp Toàn Diện K12 & HSG — Tiếng Anh Cô Dung",
+      "width": 390,
+      "viewportWidth": 390,
+      "height": 11375,
+      "overflowX": 0,
+      "headings": 36,
+      "cards": 88,
+      "links": 4,
+      "buttons": 59,
+      "interactive": 60,
+      "tinyTargets": 24,
+      "fixed": [
+        {
+          "tag": "HEADER",
+          "text": "👩‍🏫 Tiếng Anh Cô Dung 2026 CTGDPT K12 & Lộ Trình Chuẩn Quốc Tế 📚 Lộ Trình ▾  ",
+          "top": 0,
+          "bottom": 65
+        }
+      ],
+      "mobileMenuButton": 1,
+      "mobileDrawerVisible": true,
+      "mobileDrawerLinks": 12
+    },
+    {
+      "route": "/exam",
+      "viewport": "mobile",
+      "screenshot": "artifacts/master-plan-7/baseline/exam-mobile.png",
+      "errors": [],
+      "title": "Tiếng Anh Cô Dung - Hệ Thống Đào Tạo K12 & Lộ Trình Quốc Tế",
+      "width": 390,
+      "viewportWidth": 390,
+      "height": 7123,
+      "overflowX": 0,
+      "headings": 3,
+      "cards": 101,
+      "links": 4,
+      "buttons": 103,
+      "interactive": 103,
+      "tinyTargets": 15,
+      "fixed": [
+        {
+          "tag": "HEADER",
+          "text": "👩‍🏫 Tiếng Anh Cô Dung 2026 CTGDPT K12 & Lộ Trình Chuẩn Quốc Tế 📚 Lộ Trình ▾  ",
+          "top": 0,
+          "bottom": 65
+        }
+      ],
+      "mobileMenuButton": 1,
+      "mobileDrawerVisible": true,
+      "mobileDrawerLinks": 12
+    },
+    {
+      "route": "/games",
+      "viewport": "mobile",
+      "screenshot": "artifacts/master-plan-7/baseline/games-mobile.png",
+      "errors": [],
+      "title": "Tiếng Anh Cô Dung - Hệ Thống Đào Tạo K12 & Lộ Trình Quốc Tế",
+      "width": 390,
+      "viewportWidth": 390,
+      "height": 941,
+      "overflowX": 0,
+      "headings": 1,
+      "cards": 3,
+      "links": 6,
+      "buttons": 8,
+      "interactive": 10,
+      "tinyTargets": 10,
+      "fixed": [
+        {
+          "tag": "HEADER",
+          "text": "👩‍🏫 Tiếng Anh Cô Dung 2026 CTGDPT K12 & Lộ Trình Chuẩn Quốc Tế 📚 Lộ Trình ▾  ",
+          "top": 0,
+          "bottom": 65
+        }
+      ],
+      "mobileMenuButton": 1,
+      "mobileDrawerVisible": true,
+      "mobileDrawerLinks": 12
+    },
+    {
+      "route": "/evaluations",
+      "viewport": "mobile",
+      "screenshot": "artifacts/master-plan-7/baseline/evaluations-mobile.png",
+      "errors": [],
+      "title": "Tiếng Anh Cô Dung - Hệ Thống Đào Tạo K12 & Lộ Trình Quốc Tế",
+      "width": 390,
+      "viewportWidth": 390,
+      "height": 890,
+      "overflowX": 0,
+      "headings": 2,
+      "cards": 1,
+      "links": 5,
+      "buttons": 8,
+      "interactive": 9,
+      "tinyTargets": 8,
+      "fixed": [
+        {
+          "tag": "HEADER",
+          "text": "👩‍🏫 Tiếng Anh Cô Dung 2026 CTGDPT K12 & Lộ Trình Chuẩn Quốc Tế 📚 Lộ Trình ▾  ",
+          "top": 0,
+          "bottom": 65
+        }
+      ],
+      "mobileMenuButton": 1,
+      "mobileDrawerVisible": true,
+      "mobileDrawerLinks": 12
+    },
+    {
+      "route": "/courses",
+      "viewport": "mobile",
+      "screenshot": "artifacts/master-plan-7/baseline/courses-mobile.png",
+      "errors": [],
+      "title": "Khóa Học Tiếng Anh - Tiếng Anh Cô Dung (timbk.io.vn)",
+      "width": 390,
+      "viewportWidth": 390,
+      "height": 3688,
+      "overflowX": 0,
+      "headings": 6,
+      "cards": 16,
+      "links": 12,
+      "buttons": 8,
+      "interactive": 16,
+      "tinyTargets": 16,
+      "fixed": [
+        {
+          "tag": "HEADER",
+          "text": "👩‍🏫 Tiếng Anh Cô Dung 2026 CTGDPT K12 & Lộ Trình Chuẩn Quốc Tế 📚 Lộ Trình ▾  ",
+          "top": 0,
+          "bottom": 65
+        },
+        {
+          "tag": "HEADER",
+          "text": "Hệ Thống Đào Tạo K12 Chuẩn Bộ GD&ĐT Chương Trình Khóa Học & Lộ Trình Phát Triển ",
+          "top": 121,
+          "bottom": 352
+        }
+      ],
+      "mobileMenuButton": 1,
+      "mobileDrawerVisible": true,
+      "mobileDrawerLinks": 12
+    },
+    {
+      "route": "/",
+      "viewport": "tablet",
+      "screenshot": "artifacts/master-plan-7/baseline/home-tablet.png",
+      "errors": [],
+      "title": "Tiếng Anh Cô Dung - Hệ Thống Đào Tạo K12 & Lộ Trình Quốc Tế",
+      "width": 768,
+      "viewportWidth": 768,
+      "height": 4461,
+      "overflowX": 0,
+      "headings": 22,
+      "cards": 71,
+      "links": 28,
+      "buttons": 15,
+      "interactive": 39,
+      "tinyTargets": 28,
+      "fixed": [
+        {
+          "tag": "HEADER",
+          "text": "👩‍🏫 Tiếng Anh Cô Dung 2026 CTGDPT K12 & Lộ Trình Chuẩn Quốc Tế 📚 Lộ Trình ▾  ",
+          "top": 0,
+          "bottom": 65
+        }
+      ]
+    },
+    {
+      "route": "/flashcards",
+      "viewport": "tablet",
+      "screenshot": "artifacts/master-plan-7/baseline/flashcards-tablet.png",
+      "errors": [],
+      "title": "Tiếng Anh Cô Dung - Hệ Thống Đào Tạo K12 & Lộ Trình Quốc Tế",
+      "width": 768,
+      "viewportWidth": 768,
+      "height": 1379,
+      "overflowX": 0,
+      "headings": 3,
+      "cards": 15,
+      "links": 4,
+      "buttons": 18,
+      "interactive": 18,
+      "tinyTargets": 8,
+      "fixed": [
+        {
+          "tag": "HEADER",
+          "text": "👩‍🏫 Tiếng Anh Cô Dung 2026 CTGDPT K12 & Lộ Trình Chuẩn Quốc Tế 📚 Lộ Trình ▾  ",
+          "top": 0,
+          "bottom": 65
+        }
+      ]
+    },
+    {
+      "route": "/dictionary",
+      "viewport": "tablet",
+      "screenshot": "artifacts/master-plan-7/baseline/dictionary-tablet.png",
+      "errors": [],
+      "title": "Ngân Hàng Từ Vựng Sư Phạm & Stealth Pronunciation Engine • Tiếng Anh Cô Dung",
+      "width": 768,
+      "viewportWidth": 768,
+      "height": 8870,
+      "overflowX": 0,
+      "headings": 53,
+      "cards": 52,
+      "links": 4,
+      "buttons": 169,
+      "interactive": 173,
+      "tinyTargets": 173,
+      "fixed": [
+        {
+          "tag": "HEADER",
+          "text": "👩‍🏫 Tiếng Anh Cô Dung 2026 CTGDPT K12 & Lộ Trình Chuẩn Quốc Tế 📚 Lộ Trình ▾  ",
+          "top": 0,
+          "bottom": 65
+        },
+        {
+          "tag": "HEADER",
+          "text": "Ngân Hàng Từ Vựng Sư Phạm • Stealth Vocabulary & Pronunciation Engine Từ Điển Ch",
+          "top": 89,
+          "bottom": 319.25
+        }
+      ]
+    },
+    {
+      "route": "/grammar",
+      "viewport": "tablet",
+      "screenshot": "artifacts/master-plan-7/baseline/grammar-tablet.png",
+      "errors": [],
+      "title": "Chuyên Đề Ngữ Pháp Toàn Diện K12 & HSG — Tiếng Anh Cô Dung",
+      "width": 768,
+      "viewportWidth": 768,
+      "height": 7892,
+      "overflowX": 0,
+      "headings": 36,
+      "cards": 88,
+      "links": 4,
+      "buttons": 59,
+      "interactive": 60,
+      "tinyTargets": 24,
+      "fixed": [
+        {
+          "tag": "HEADER",
+          "text": "👩‍🏫 Tiếng Anh Cô Dung 2026 CTGDPT K12 & Lộ Trình Chuẩn Quốc Tế 📚 Lộ Trình ▾  ",
+          "top": 0,
+          "bottom": 65
+        }
+      ]
+    },
+    {
+      "route": "/exam",
+      "viewport": "tablet",
+      "screenshot": "artifacts/master-plan-7/baseline/exam-tablet.png",
+      "errors": [],
+      "title": "Tiếng Anh Cô Dung - Hệ Thống Đào Tạo K12 & Lộ Trình Quốc Tế",
+      "width": 768,
+      "viewportWidth": 768,
+      "height": 4819,
+      "overflowX": 0,
+      "headings": 3,
+      "cards": 101,
+      "links": 4,
+      "buttons": 103,
+      "interactive": 103,
+      "tinyTargets": 14,
+      "fixed": [
+        {
+          "tag": "HEADER",
+          "text": "👩‍🏫 Tiếng Anh Cô Dung 2026 CTGDPT K12 & Lộ Trình Chuẩn Quốc Tế 📚 Lộ Trình ▾  ",
+          "top": 0,
+          "bottom": 65
+        }
+      ]
+    },
+    {
+      "route": "/games",
+      "viewport": "tablet",
+      "screenshot": "artifacts/master-plan-7/baseline/games-tablet.png",
+      "errors": [],
+      "title": "Tiếng Anh Cô Dung - Hệ Thống Đào Tạo K12 & Lộ Trình Quốc Tế",
+      "width": 768,
+      "viewportWidth": 768,
+      "height": 1024,
+      "overflowX": 0,
+      "headings": 1,
+      "cards": 3,
+      "links": 6,
+      "buttons": 8,
+      "interactive": 10,
+      "tinyTargets": 10,
+      "fixed": [
+        {
+          "tag": "HEADER",
+          "text": "👩‍🏫 Tiếng Anh Cô Dung 2026 CTGDPT K12 & Lộ Trình Chuẩn Quốc Tế 📚 Lộ Trình ▾  ",
+          "top": 0,
+          "bottom": 65
+        }
+      ]
+    },
+    {
+      "route": "/evaluations",
+      "viewport": "tablet",
+      "screenshot": "artifacts/master-plan-7/baseline/evaluations-tablet.png",
+      "errors": [],
+      "title": "Tiếng Anh Cô Dung - Hệ Thống Đào Tạo K12 & Lộ Trình Quốc Tế",
+      "width": 768,
+      "viewportWidth": 768,
+      "height": 1024,
+      "overflowX": 0,
+      "headings": 2,
+      "cards": 1,
+      "links": 5,
+      "buttons": 8,
+      "interactive": 9,
+      "tinyTargets": 8,
+      "fixed": [
+        {
+          "tag": "HEADER",
+          "text": "👩‍🏫 Tiếng Anh Cô Dung 2026 CTGDPT K12 & Lộ Trình Chuẩn Quốc Tế 📚 Lộ Trình ▾  ",
+          "top": 0,
+          "bottom": 65
+        }
+      ]
+    },
+    {
+      "route": "/courses",
+      "viewport": "tablet",
+      "screenshot": "artifacts/master-plan-7/baseline/courses-tablet.png",
+      "errors": [],
+      "title": "Khóa Học Tiếng Anh - Tiếng Anh Cô Dung (timbk.io.vn)",
+      "width": 768,
+      "viewportWidth": 768,
+      "height": 2112,
+      "overflowX": 0,
+      "headings": 6,
+      "cards": 16,
+      "links": 12,
+      "buttons": 8,
+      "interactive": 16,
+      "tinyTargets": 16,
+      "fixed": [
+        {
+          "tag": "HEADER",
+          "text": "👩‍🏫 Tiếng Anh Cô Dung 2026 CTGDPT K12 & Lộ Trình Chuẩn Quốc Tế 📚 Lộ Trình ▾  ",
+          "top": 0,
+          "bottom": 65
+        },
+        {
+          "tag": "HEADER",
+          "text": "Hệ Thống Đào Tạo K12 Chuẩn Bộ GD&ĐT Chương Trình Khóa Học & Lộ Trình Phát Triển ",
+          "top": 121,
+          "bottom": 300
+        }
+      ]
+    },
+    {
+      "route": "/",
+      "viewport": "desktop",
+      "screenshot": "artifacts/master-plan-7/baseline/home-desktop.png",
+      "errors": [],
+      "title": "Tiếng Anh Cô Dung - Hệ Thống Đào Tạo K12 & Lộ Trình Quốc Tế",
+      "width": 1440,
+      "viewportWidth": 1440,
+      "height": 3233,
+      "overflowX": 0,
+      "headings": 22,
+      "cards": 71,
+      "links": 28,
+      "buttons": 15,
+      "interactive": 42,
+      "tinyTargets": 31,
+      "fixed": [
+        {
+          "tag": "HEADER",
+          "text": "👩‍🏫 Tiếng Anh Cô Dung 2026 CTGDPT K12 & Lộ Trình Chuẩn Quốc Tế 📚 Lộ Trình ▾  ",
+          "top": 0,
+          "bottom": 65
+        }
+      ]
+    },
+    {
+      "route": "/flashcards",
+      "viewport": "desktop",
+      "screenshot": "artifacts/master-plan-7/baseline/flashcards-desktop.png",
+      "errors": [],
+      "title": "Tiếng Anh Cô Dung - Hệ Thống Đào Tạo K12 & Lộ Trình Quốc Tế",
+      "width": 1440,
+      "viewportWidth": 1440,
+      "height": 1267,
+      "overflowX": 0,
+      "headings": 3,
+      "cards": 15,
+      "links": 4,
+      "buttons": 18,
+      "interactive": 21,
+      "tinyTargets": 11,
+      "fixed": [
+        {
+          "tag": "HEADER",
+          "text": "👩‍🏫 Tiếng Anh Cô Dung 2026 CTGDPT K12 & Lộ Trình Chuẩn Quốc Tế 📚 Lộ Trình ▾  ",
+          "top": 0,
+          "bottom": 65
+        }
+      ]
+    },
+    {
+      "route": "/dictionary",
+      "viewport": "desktop",
+      "screenshot": "artifacts/master-plan-7/baseline/dictionary-desktop.png",
+      "errors": [],
+      "title": "Ngân Hàng Từ Vựng Sư Phạm & Stealth Pronunciation Engine • Tiếng Anh Cô Dung",
+      "width": 1440,
+      "viewportWidth": 1440,
+      "height": 6099,
+      "overflowX": 0,
+      "headings": 53,
+      "cards": 52,
+      "links": 4,
+      "buttons": 169,
+      "interactive": 176,
+      "tinyTargets": 176,
+      "fixed": [
+        {
+          "tag": "HEADER",
+          "text": "👩‍🏫 Tiếng Anh Cô Dung 2026 CTGDPT K12 & Lộ Trình Chuẩn Quốc Tế 📚 Lộ Trình ▾  ",
+          "top": 0,
+          "bottom": 65
+        },
+        {
+          "tag": "HEADER",
+          "text": "Ngân Hàng Từ Vựng Sư Phạm • Stealth Vocabulary & Pronunciation Engine Từ Điển Ch",
+          "top": 89,
+          "bottom": 248.5
+        }
+      ]
+    },
+    {
+      "route": "/grammar",
+      "viewport": "desktop",
+      "screenshot": "artifacts/master-plan-7/baseline/grammar-desktop.png",
+      "errors": [],
+      "title": "Chuyên Đề Ngữ Pháp Toàn Diện K12 & HSG — Tiếng Anh Cô Dung",
+      "width": 1440,
+      "viewportWidth": 1440,
+      "height": 5856,
+      "overflowX": 0,
+      "headings": 36,
+      "cards": 88,
+      "links": 4,
+      "buttons": 59,
+      "interactive": 63,
+      "tinyTargets": 27,
+      "fixed": [
+        {
+          "tag": "HEADER",
+          "text": "👩‍🏫 Tiếng Anh Cô Dung 2026 CTGDPT K12 & Lộ Trình Chuẩn Quốc Tế 📚 Lộ Trình ▾  ",
+          "top": 0,
+          "bottom": 65
+        }
+      ]
+    },
+    {
+      "route": "/exam",
+      "viewport": "desktop",
+      "screenshot": "artifacts/master-plan-7/baseline/exam-desktop.png",
+      "errors": [],
+      "title": "Tiếng Anh Cô Dung - Hệ Thống Đào Tạo K12 & Lộ Trình Quốc Tế",
+      "width": 1440,
+      "viewportWidth": 1440,
+      "height": 3217,
+      "overflowX": 0,
+      "headings": 3,
+      "cards": 101,
+      "links": 4,
+      "buttons": 103,
+      "interactive": 106,
+      "tinyTargets": 18,
+      "fixed": [
+        {
+          "tag": "HEADER",
+          "text": "👩‍🏫 Tiếng Anh Cô Dung 2026 CTGDPT K12 & Lộ Trình Chuẩn Quốc Tế 📚 Lộ Trình ▾  ",
+          "top": 0,
+          "bottom": 65
+        }
+      ]
+    },
+    {
+      "route": "/games",
+      "viewport": "desktop",
+      "screenshot": "artifacts/master-plan-7/baseline/games-desktop.png",
+      "errors": [],
+      "title": "Tiếng Anh Cô Dung - Hệ Thống Đào Tạo K12 & Lộ Trình Quốc Tế",
+      "width": 1440,
+      "viewportWidth": 1440,
+      "height": 1000,
+      "overflowX": 0,
+      "headings": 1,
+      "cards": 3,
+      "links": 6,
+      "buttons": 8,
+      "interactive": 13,
+      "tinyTargets": 13,
+      "fixed": [
+        {
+          "tag": "HEADER",
+          "text": "👩‍🏫 Tiếng Anh Cô Dung 2026 CTGDPT K12 & Lộ Trình Chuẩn Quốc Tế 📚 Lộ Trình ▾  ",
+          "top": 0,
+          "bottom": 65
+        }
+      ]
+    },
+    {
+      "route": "/evaluations",
+      "viewport": "desktop",
+      "screenshot": "artifacts/master-plan-7/baseline/evaluations-desktop.png",
+      "errors": [],
+      "title": "Tiếng Anh Cô Dung - Hệ Thống Đào Tạo K12 & Lộ Trình Quốc Tế",
+      "width": 1440,
+      "viewportWidth": 1440,
+      "height": 1000,
+      "overflowX": 0,
+      "headings": 2,
+      "cards": 1,
+      "links": 5,
+      "buttons": 8,
+      "interactive": 12,
+      "tinyTargets": 11,
+      "fixed": [
+        {
+          "tag": "HEADER",
+          "text": "👩‍🏫 Tiếng Anh Cô Dung 2026 CTGDPT K12 & Lộ Trình Chuẩn Quốc Tế 📚 Lộ Trình ▾  ",
+          "top": 0,
+          "bottom": 65
+        }
+      ]
+    },
+    {
+      "route": "/courses",
+      "viewport": "desktop",
+      "screenshot": "artifacts/master-plan-7/baseline/courses-desktop.png",
+      "errors": [],
+      "title": "Khóa Học Tiếng Anh - Tiếng Anh Cô Dung (timbk.io.vn)",
+      "width": 1440,
+      "viewportWidth": 1440,
+      "height": 1767,
+      "overflowX": 0,
+      "headings": 6,
+      "cards": 16,
+      "links": 12,
+      "buttons": 8,
+      "interactive": 19,
+      "tinyTargets": 19,
+      "fixed": [
+        {
+          "tag": "HEADER",
+          "text": "👩‍🏫 Tiếng Anh Cô Dung 2026 CTGDPT K12 & Lộ Trình Chuẩn Quốc Tế 📚 Lộ Trình ▾  ",
+          "top": 0,
+          "bottom": 65
+        },
+        {
+          "tag": "HEADER",
+          "text": "Hệ Thống Đào Tạo K12 Chuẩn Bộ GD&ĐT Chương Trình Khóa Học & Lộ Trình Phát Triển ",
+          "top": 121,
+          "bottom": 260
+        }
+      ]
+    }
+  ]
+}

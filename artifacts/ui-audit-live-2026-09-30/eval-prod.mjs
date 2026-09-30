@@ -1,0 +1,3 @@
+import { chromium } from 'playwright';
+const b=await chromium.launch({headless:true,executablePath:'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'});
+const p=await b.newPage({viewport:{width:1440,height:1000}}); await p.goto('https://timbk.io.vn/evaluations',{waitUntil:'networkidle'}); console.log(await p.evaluate(()=>({commit:performance.getEntriesByType('resource').length,bg:getComputedStyle(document.body).backgroundColor,text:getComputedStyle(document.body).color,overflow:document.documentElement.scrollWidth-document.documentElement.clientWidth,height:document.documentElement.scrollHeight}))); await p.screenshot({path:'artifacts/ui-audit-live-2026-09-30/evaluations-production-light.png',fullPage:true}); await b.close();
