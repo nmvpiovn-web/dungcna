@@ -155,7 +155,7 @@
     id: '',
     name: 'Telegram & Zalo Central Bot Reporter',
     url: 'https://api.timbk.io.vn/api/webhook',
-    secret: 'wh_sec_tienganh_2026_superadmin_fomo',
+    secret: '',
     event_types: 'student_evaluated, test_submitted, daily_report, system_alert, teacher_operation',
     is_active: 1
   });
@@ -868,6 +868,13 @@
   }
 
   // Webhook Handlers
+  function generateWebhookSecret() {
+    const bytes = new Uint8Array(24);
+    crypto.getRandomValues(bytes);
+    webhookForm.secret = 'wh_' + Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+    showToast('Đã tạo secret ngẫu nhiên mới — nhớ lưu cấu hình!');
+  }
+
   function handleSaveWebhook() {
     saveWebhook(webhookForm);
     loadData();
@@ -2688,6 +2695,25 @@
               bind:value={webhookForm.event_types}
               class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-white font-mono focus:outline-none focus:border-emerald-500"
             />
+          </div>
+
+          <div>
+            <label class="block font-bold text-slate-300 mb-1" for="wh-secret">Secret Key (ký webhook):</label>
+            <div class="flex gap-2">
+              <input
+                id="wh-secret"
+                type="password"
+                bind:value={webhookForm.secret}
+                placeholder="Để trống hoặc bấm Tạo mới"
+                autocomplete="new-password"
+                class="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-white font-mono focus:outline-none focus:border-emerald-500"
+              />
+              <button
+                onclick={generateWebhookSecret}
+                class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs whitespace-nowrap"
+              >🎲 Tạo mới</button>
+            </div>
+            <p class="text-[11px] text-slate-500 mt-1">Secret phải trùng với giá trị cấu hình ở phía nhận webhook. Không hardcode secret trong code.</p>
           </div>
         </div>
 
