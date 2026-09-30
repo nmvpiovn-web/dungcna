@@ -2,8 +2,6 @@
   import RoadmapCard from '$lib/components/ui/RoadmapCard.svelte';
   import SectionHeading from '$lib/components/ui/SectionHeading.svelte';
   import UiButton from '$lib/components/ui/UiButton.svelte';
-  import ZaloCta from '$lib/components/ui/ZaloCta.svelte';
-  import BottomNav from '$lib/components/ui/BottomNav.svelte';
 
   // Du lieu that tu trang courses cu (kiem chung 2026-09-30)
   const courses = [
@@ -107,5 +105,3 @@
   </section>
 </div>
 
-<ZaloCta />
-<BottomNav />

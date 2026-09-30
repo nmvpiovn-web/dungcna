@@ -5,8 +5,6 @@
   import StreakBadge from '$lib/components/ui/StreakBadge.svelte';
   import XpPill from '$lib/components/ui/XpPill.svelte';
   import UiButton from '$lib/components/ui/UiButton.svelte';
-  import ZaloCta from '$lib/components/ui/ZaloCta.svelte';
-  import BottomNav from '$lib/components/ui/BottomNav.svelte';
   import { CEFR_BADGES } from '$lib/gamification.js';
 
   const commitments = [
@@ -66,7 +64,7 @@
     <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
       {#each howTo as h}
         <div class="rounded-3xl bg-surface-0 border border-line p-5 shadow-sm relative">
-          <div class="absolute top-4 right-4 w-8 h-8 rounded-full bg-brand-600 text-white flex items-center justify-center font-extrabold text-sm">{h.step}</div>
+          <div class="absolute top-4 right-4 w-8 h-8 rounded-full bg-brand-600 dark:bg-brand-700 text-white flex items-center justify-center font-extrabold text-sm">{h.step}</div>
           <div class="text-3xl mb-2">{h.emoji}</div>
           <div class="font-extrabold text-ink-900 text-sm mb-1">{h.title}</div>
           <div class="text-xs text-ink-500 leading-relaxed">{h.desc}</div>
@@ -76,7 +74,7 @@
   </section>
 
   <!-- Cam ket chuong trinh -->
-  <section class="rounded-3xl bg-brand-600 text-white p-6 sm:p-10 shadow-sm relative overflow-hidden">
+  <section class="rounded-3xl bg-brand-600 dark:bg-brand-700 text-white p-6 sm:p-10 shadow-sm relative overflow-hidden">
     <div class="absolute -right-16 -top-16 w-64 h-64 rounded-full bg-white/10 blur-2xl pointer-events-none"></div>
     <div class="relative z-10">
       <SectionHeading eyebrow="Cam kết" title="Điều chúng tôi đảm bảo với mỗi học viên" dark />
@@ -93,5 +91,3 @@
   </section>
 </div>
 
-<ZaloCta />
-<BottomNav />

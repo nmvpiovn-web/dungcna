@@ -3,7 +3,7 @@
   let { variant = 'primary', size = 'md', href = null, disabled = false, onclick = null, type = 'button', children, ...rest } = $props();
 
   const variants = {
-    primary: 'bg-brand-600 hover:bg-brand-700 text-white shadow-sm',
+    primary: 'bg-brand-600 hover:bg-brand-700 dark:bg-brand-700 text-white shadow-sm',
     accent: 'bg-accent-500 hover:brightness-105 text-white shadow-sm',
     ghost: 'bg-transparent hover:bg-brand-50 text-brand-600 border border-line',
     danger: 'bg-danger-600 hover:brightness-95 text-white shadow-sm'

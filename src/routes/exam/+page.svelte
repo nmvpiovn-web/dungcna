@@ -1018,7 +1018,7 @@
       <!-- Quick Pill Selector -->
       {#if eligibleStudents.length > 0}
         <div class="flex items-center gap-2 overflow-x-auto pb-1 pt-1 text-xs">
-          <span class="text-slate-400 whitespace-nowrap text-[11px] font-medium">Chọn nhanh thí sinh:</span>
+          <span class="text-ink-500 whitespace-nowrap text-[11px] font-medium">Chọn nhanh thí sinh:</span>
           {#each eligibleStudents as st}
             {@const isChosen = selectedStudentId === st.id}
             <button
@@ -1026,7 +1026,7 @@
               onclick={() => { selectedStudentId = st.id; handleStudentChange(); }}
               class="px-2.5 py-1 rounded-lg border font-semibold text-[11px] transition-all whitespace-nowrap flex items-center gap-1.5 {isChosen ? 'bg-emerald-500/20 border-emerald-400 text-emerald-300 shadow-sm ring-1 ring-emerald-400/50' : 'bg-slate-950/80 border-slate-800 text-slate-400 hover:text-white hover:border-slate-700'}"
             >
-              <span class="w-1.5 h-1.5 rounded-full {isChosen ? 'bg-emerald-400' : 'bg-slate-600'}"></span>
+              <span class="w-1.5 h-1.5 rounded-full {isChosen ? 'bg-emerald-400' : 'bg-ink-500'}"></span>
               <span>{st.name}</span>
             </button>
           {/each}
@@ -1056,7 +1056,7 @@
               </span>
             {/if}
           </div>
-          <div class="text-xs text-slate-400">
+          <div class="text-xs text-ink-500">
             Tài khoản: <strong class="text-slate-200">@{currentUser.username}</strong> • Chương trình: <strong class="text-emerald-400">{primaryGrade} GDPT 2026</strong>
           </div>
         </div>
@@ -1080,14 +1080,14 @@
   {/if}
 
   <!-- Exam Selector Ribbon: Structured Group-Tree Navigation -->
-  <div class="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 md:p-6 shadow-xl space-y-4">
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-w-0 max-w-full pb-2 border-b border-slate-200 dark:border-slate-800">
+  <div class="rounded-3xl bg-surface-0 dark:bg-surface-0 border border-line dark:border-line p-5 md:p-6 shadow-xl space-y-4">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-w-0 max-w-full pb-2 border-b border-line dark:border-line">
       <div>
-        <div class="text-xs font-bold text-sky-600 dark:text-sky-400 uppercase tracking-wider flex items-center gap-2">
+        <div class="text-xs font-bold text-brand-600 dark:text-brand-600 uppercase tracking-wider flex items-center gap-2">
           <span>👩‍🏫</span>
           <span>PHÂN HỆ PHÒNG THI &amp; ĐÁNH GIÁ NĂNG LỰC CHUẨN 2026:</span>
         </div>
-        <h2 class="text-xl sm:text-2xl font-heading font-semibold text-slate-900 dark:text-white mt-0.5">
+        <h2 class="text-xl sm:text-2xl font-heading font-semibold text-ink-900 mt-0.5">
           Danh Mục Đề Thi Theo Cây Phân Cấp (Group-Tree)
         </h2>
       </div>
@@ -1099,7 +1099,7 @@
           data-testid="guest-exam-btn"
           type="button"
           onclick={() => showGuestModal = true}
-          class="px-3.5 py-2 rounded-xl transition-all flex items-center gap-1.5 bg-sky-600 hover:bg-sky-500 text-white font-semibold text-xs shadow-sm hover:scale-105"
+          class="px-3.5 py-2 rounded-xl transition-all flex items-center gap-1.5 bg-brand-600 hover:bg-brand-500 text-white font-semibold text-xs shadow-sm hover:scale-105"
         >
           <span>🎓 Thi Thử Cho Khách</span>
           <span class="px-1.5 py-0.5 rounded-full bg-white/20 text-[10px]">Tự Do</span>
@@ -1124,16 +1124,16 @@
           data-testid="group-tab-{grp.id}"
           type="button"
           onclick={() => { activeExamGroup = grp.id; activeExamCategory = 'all'; }}
-          class="p-3.5 rounded-2xl text-left border transition-all flex items-start gap-3 group {activeExamGroup === grp.id ? 'bg-sky-50 dark:bg-sky-950/70 border-sky-500 dark:border-sky-400 shadow-md ring-2 ring-sky-400/30' : 'bg-slate-50/60 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800 hover:border-sky-300 dark:hover:border-slate-700'}"
+          class="p-3.5 rounded-2xl text-left border transition-all flex items-start gap-3 group {activeExamGroup === grp.id ? 'bg-brand-50 dark:bg-brand-50/70 border-brand-600 dark:border-brand-200 shadow-md ring-2 ring-brand-200/30' : 'bg-surface-1/60 dark:bg-surface-1/40 border-line dark:border-line hover:border-brand-200 dark:hover:border-line'}"
         >
-          <span class="text-2xl p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 group-hover:scale-110 transition-transform shrink-0">
+          <span class="text-2xl p-2 rounded-xl bg-surface-0 dark:bg-surface-1 border border-line dark:border-line group-hover:scale-110 transition-transform shrink-0">
             {grp.icon}
           </span>
           <div class="min-w-0">
-            <div class="font-heading font-semibold text-xs sm:text-sm text-slate-900 dark:text-white truncate {activeExamGroup === grp.id ? 'text-sky-700 dark:text-sky-300' : ''}">
+            <div class="font-heading font-semibold text-xs sm:text-sm text-ink-900 truncate {activeExamGroup === grp.id ? 'text-brand-700 dark:text-brand-600' : ''}">
               {grp.label}
             </div>
-            <div class="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5">
+            <div class="text-[11px] text-ink-500 dark:text-ink-500 line-clamp-1 mt-0.5">
               {grp.desc}
             </div>
           </div>
@@ -1143,91 +1143,91 @@
 
     <!-- LEVEL 2: Sub-Tree Hierarchy Pills for Active Group -->
     {#if activeExamGroup === 'k12'}
-      <div class="pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center gap-2 overflow-x-auto pb-1 text-xs">
-        <span class="text-slate-500 font-bold uppercase text-[10px] whitespace-nowrap">Khối lớp con:</span>
+      <div class="pt-3 border-t border-line dark:border-line flex items-center gap-2 overflow-x-auto pb-1 text-xs">
+        <span class="text-ink-500 font-bold uppercase text-[10px] whitespace-nowrap">Khối lớp con:</span>
         <button
           onclick={() => activeExamCategory = 'all'}
-          class="px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-colors {activeExamCategory === 'all' ? 'bg-sky-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200'}"
+          class="px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-colors {activeExamCategory === 'all' ? 'bg-brand-600 text-white shadow-xs' : 'bg-surface-1 dark:bg-surface-1 text-ink-500 hover:bg-line'}"
         >
           Tất Cả K12
         </button>
         <button
           onclick={() => activeExamCategory = 'primary'}
-          class="px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-colors {activeExamCategory === 'primary' ? 'bg-sky-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200'}"
+          class="px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-colors {activeExamCategory === 'primary' ? 'bg-brand-600 text-white shadow-xs' : 'bg-surface-1 dark:bg-surface-1 text-ink-500 hover:bg-line'}"
         >
           🎒 Tiểu Học (Lớp 1 - 5)
         </button>
         <button
           onclick={() => activeExamCategory = 'g7'}
-          class="px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-colors {activeExamCategory === 'g7' ? 'bg-sky-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200'}"
+          class="px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-colors {activeExamCategory === 'g7' ? 'bg-brand-600 text-white shadow-xs' : 'bg-surface-1 dark:bg-surface-1 text-ink-500 hover:bg-line'}"
         >
           🌱 Lớp 7 (Global Success &amp; KET)
         </button>
         <button
           onclick={() => activeExamCategory = 'g9'}
-          class="px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-colors {activeExamCategory === 'g9' ? 'bg-sky-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200'}"
+          class="px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-colors {activeExamCategory === 'g9' ? 'bg-brand-600 text-white shadow-xs' : 'bg-surface-1 dark:bg-surface-1 text-ink-500 hover:bg-line'}"
         >
           🎯 Vào 10 (Lớp 9 Chuyên)
         </button>
         <button
           onclick={() => activeExamCategory = 'highschool'}
-          class="px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-colors {activeExamCategory === 'highschool' ? 'bg-sky-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200'}"
+          class="px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-colors {activeExamCategory === 'highschool' ? 'bg-brand-600 text-white shadow-xs' : 'bg-surface-1 dark:bg-surface-1 text-ink-500 hover:bg-line'}"
         >
           🏢 THPT (Lớp 10 - 12)
         </button>
       </div>
     {:else if activeExamGroup === 'intl'}
-      <div class="pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center gap-2 overflow-x-auto pb-1 text-xs">
-        <span class="text-slate-500 font-bold uppercase text-[10px] whitespace-nowrap">Chứng chỉ con:</span>
+      <div class="pt-3 border-t border-line dark:border-line flex items-center gap-2 overflow-x-auto pb-1 text-xs">
+        <span class="text-ink-500 font-bold uppercase text-[10px] whitespace-nowrap">Chứng chỉ con:</span>
         <button
           onclick={() => activeExamCategory = 'all'}
-          class="px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-colors {activeExamCategory === 'all' ? 'bg-sky-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200'}"
+          class="px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-colors {activeExamCategory === 'all' ? 'bg-brand-600 text-white shadow-xs' : 'bg-surface-1 dark:bg-surface-1 text-ink-500 hover:bg-line'}"
         >
           Tất Cả Chứng Chỉ
         </button>
         <button
           onclick={() => activeExamCategory = 'ielts'}
-          class="px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-colors {activeExamCategory === 'ielts' ? 'bg-sky-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200'}"
+          class="px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-colors {activeExamCategory === 'ielts' ? 'bg-brand-600 text-white shadow-xs' : 'bg-surface-1 dark:bg-surface-1 text-ink-500 hover:bg-line'}"
         >
           🌍 IELTS Academic (4 Kỹ Năng)
         </button>
         <button
           onclick={() => activeExamCategory = 'toeic'}
-          class="px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-colors {activeExamCategory === 'toeic' ? 'bg-sky-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200'}"
+          class="px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-colors {activeExamCategory === 'toeic' ? 'bg-brand-600 text-white shadow-xs' : 'bg-surface-1 dark:bg-surface-1 text-ink-500 hover:bg-line'}"
         >
           💼 TOEIC Listening &amp; Reading
         </button>
         <button
           onclick={() => activeExamCategory = 'toefl'}
-          class="px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-colors {activeExamCategory === 'toefl' ? 'bg-sky-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200'}"
+          class="px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-colors {activeExamCategory === 'toefl' ? 'bg-brand-600 text-white shadow-xs' : 'bg-surface-1 dark:bg-surface-1 text-ink-500 hover:bg-line'}"
         >
           🎓 TOEFL iBT Quốc Tế
         </button>
       </div>
     {:else if activeExamGroup === 'periodic'}
-      <div class="pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center gap-2 overflow-x-auto pb-1 text-xs">
-        <span class="text-slate-500 font-bold uppercase text-[10px] whitespace-nowrap">Thời lượng con:</span>
+      <div class="pt-3 border-t border-line dark:border-line flex items-center gap-2 overflow-x-auto pb-1 text-xs">
+        <span class="text-ink-500 font-bold uppercase text-[10px] whitespace-nowrap">Thời lượng con:</span>
         <button
           onclick={() => activeExamCategory = 'all'}
-          class="px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-colors {activeExamCategory === 'all' ? 'bg-sky-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200'}"
+          class="px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-colors {activeExamCategory === 'all' ? 'bg-brand-600 text-white shadow-xs' : 'bg-surface-1 dark:bg-surface-1 text-ink-500 hover:bg-line'}"
         >
           Tất Cả Định Dạng
         </button>
         <button
           onclick={() => activeExamCategory = 'quick_5m'}
-          class="px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-colors {activeExamCategory === 'quick_5m' ? 'bg-sky-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200'}"
+          class="px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-colors {activeExamCategory === 'quick_5m' ? 'bg-brand-600 text-white shadow-xs' : 'bg-surface-1 dark:bg-surface-1 text-ink-500 hover:bg-line'}"
         >
           ⚡ Đề 5 Phút (Khởi Động)
         </button>
         <button
           onclick={() => activeExamCategory = 'quick_15m'}
-          class="px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-colors {activeExamCategory === 'quick_15m' ? 'bg-sky-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200'}"
+          class="px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-colors {activeExamCategory === 'quick_15m' ? 'bg-brand-600 text-white shadow-xs' : 'bg-surface-1 dark:bg-surface-1 text-ink-500 hover:bg-line'}"
         >
           ⏱️ Đề 15 Phút (Thường Xuyên)
         </button>
         <button
           onclick={() => activeExamCategory = 'standard_45m'}
-          class="px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-colors {activeExamCategory === 'standard_45m' ? 'bg-sky-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200'}"
+          class="px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-colors {activeExamCategory === 'standard_45m' ? 'bg-brand-600 text-white shadow-xs' : 'bg-surface-1 dark:bg-surface-1 text-ink-500 hover:bg-line'}"
         >
           📝 Đề 45 Phút (1 Tiết Chuẩn)
         </button>
@@ -1244,7 +1244,7 @@
               <span class="text-lg">🎲</span>
               <span>BỘ TẠO ĐỀ THI TRẮC NGHIỆM NGẪU NHIÊN THEO THỜI LƯỢNG (DYNAMIC TEST BUILDER)</span>
             </div>
-            <p class="text-xs text-slate-400">
+            <p class="text-xs text-ink-500">
               Hệ thống xáo trộn ngẫu nhiên từ kho <strong>{data.allQuestions?.length || 573} câu hỏi</strong> chuẩn GDPT 2018 &amp; Cambridge. Mỗi lần tạo là một đề thi hoàn toàn mới!
             </p>
           </div>
@@ -1263,7 +1263,7 @@
               <button
                 type="button"
                 onclick={() => randomDuration = 5}
-                class="py-2 px-1.5 rounded-xl font-bold text-xs text-center border transition-all {randomDuration === 5 ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-md shadow-amber-500/30 font-black' : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700'}"
+                class="py-2 px-1.5 rounded-xl font-bold text-xs text-center border transition-all {randomDuration === 5 ? 'bg-amber-500 text-ink-900 border-amber-400 shadow-md shadow-amber-500/30 font-black' : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700'}"
               >
                 <div>⚡ 5 Phút</div>
                 <div class="text-[10px] opacity-80 font-normal">5 câu</div>
@@ -1346,7 +1346,7 @@
 
         <!-- Action Button -->
         <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
-          <div class="text-xs text-slate-400 flex items-center gap-2">
+          <div class="text-xs text-ink-500 flex items-center gap-2">
             <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
             <span>Sinh đề ngẫu nhiên chuẩn ma trận nhận thức D1 (Nhận biết • Thông hiểu • Vận dụng).</span>
           </div>
@@ -1380,7 +1380,7 @@
         <button
           type="button"
           onclick={() => activeExamCategory = 'random_builder'}
-          class="px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs whitespace-nowrap self-start sm:self-auto shadow-sm"
+          class="px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-ink-900 font-black text-xs whitespace-nowrap self-start sm:self-auto shadow-sm"
         >
           🎲 Mở Bộ Tạo Đề
         </button>
@@ -1397,23 +1397,23 @@
         {@const is45m = ex.format_type === 'standard_45m' || ex.duration_minutes === 45}
         <button
           onclick={() => handleSelectExam(ex)}
-          class="p-3.5 rounded-2xl border text-left transition-all duration-200 hover-lift flex flex-col justify-between {isSelected ? 'bg-gradient-to-br from-sky-600 to-blue-600 border-sky-400 text-white shadow-lg shadow-sky-600/25 ring-2 ring-sky-300/80 font-semibold' : (isEnrolled ? 'bg-white/90 dark:bg-slate-900/90 border-sky-100 dark:border-slate-800 text-slate-800 dark:text-slate-200 hover:border-sky-300 dark:hover:border-sky-700 hover:shadow-md' : 'bg-slate-50 dark:bg-slate-950/60 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-slate-400 dark:hover:border-slate-700')}"
+          class="p-3.5 rounded-2xl border text-left transition-all duration-200 hover-lift flex flex-col justify-between {isSelected ? 'bg-gradient-to-br from-brand-600 to-brand-700 border-brand-200 text-white shadow-lg shadow-brand-600/25 ring-2 ring-brand-200/80 font-semibold' : (isEnrolled ? 'bg-surface-0/90 dark:bg-surface-0/90 border-brand-50 dark:border-line text-ink-900 hover:border-brand-200 dark:hover:border-line hover:shadow-md' : 'bg-surface-1 dark:bg-surface-0/60 border-line dark:border-line text-ink-500 hover:border-slate-400 dark:hover:border-line')}"
         >
           <div>
             <div class="flex items-center justify-between text-[10px] font-bold uppercase mb-1.5">
-              <span class="{isSelected ? 'text-sky-100' : (isEnrolled ? (is5m ? 'text-amber-500 font-extrabold' : (is15m ? 'text-sky-600 dark:text-sky-400 font-extrabold' : 'text-blue-600 dark:text-blue-400 font-extrabold')) : 'text-slate-600 dark:text-slate-400 font-semibold')}">
+              <span class="{isSelected ? 'text-brand-200' : (isEnrolled ? (is5m ? 'text-amber-500 font-extrabold' : (is15m ? 'text-brand-600 dark:text-brand-600 font-extrabold' : 'text-brand-600 dark:text-brand-600 font-extrabold')) : 'text-ink-500 dark:text-ink-500 font-semibold')}">
                 {#if !isEnrolled}🔒 {/if}
                 {is5m ? '⚡ 5 Phút' : (is15m ? '⏱️ 15 Phút' : (is45m ? '📝 45 Phút' : (ex.format_type === 'ielts_academic' ? '🌍 IELTS' : (ex.format_type === 'toeic_lr' ? '💼 TOEIC' : (ex.format_type === 'toefl_ibt' ? '🎓 TOEFL' : '📜 Thi Đánh Giá')))))}
               </span>
               {#if !isEnrolled}
                 <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold border border-amber-500/20">Khóa</span>
               {:else}
-                <span class="opacity-80 font-mono text-[10px] px-1.5 py-0.2 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">{ex.duration_minutes}'</span>
+                <span class="opacity-80 font-mono text-[10px] px-1.5 py-0.2 rounded-md bg-surface-1 dark:bg-surface-1 text-ink-500">{ex.duration_minutes}'</span>
               {/if}
             </div>
             <div class="font-bold text-xs line-clamp-2 leading-snug">{ex.title}</div>
           </div>
-          <div class="mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-800/80 text-[10px] opacity-75 flex items-center justify-between">
+          <div class="mt-2.5 pt-2 border-t border-line dark:border-line/80 text-[10px] opacity-75 flex items-center justify-between">
             <span>{ex.total_questions} câu</span>
             <span class="uppercase font-semibold">{ex.skill_category}</span>
           </div>
@@ -1422,23 +1422,23 @@
     </div>
 
   <!-- Active Exam Details & Status Header -->
-  <div class="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 sm:p-6 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6 min-w-0 max-w-full">
+  <div class="rounded-3xl bg-surface-0 dark:bg-surface-0 border border-line dark:border-line p-5 sm:p-6 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6 min-w-0 max-w-full">
     <div class="space-y-1 min-w-0 max-w-full">
       <div class="flex items-center gap-2">
-        <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-sky-100 dark:bg-sky-950/60 text-sky-800 dark:text-sky-300 border border-sky-200 dark:border-sky-800 uppercase">
+        <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-brand-50 dark:bg-brand-50/60 text-brand-700 dark:text-brand-600 border border-brand-200 dark:border-brand-700 uppercase">
           {currentExam.format_type}
         </span>
-        <span class="text-xs text-slate-500 dark:text-slate-400">Giáo viên ra đề: <strong class="text-slate-700 dark:text-slate-300">{currentExam.created_by}</strong></span>
+        <span class="text-xs text-ink-500 dark:text-ink-500">Giáo viên ra đề: <strong class="text-ink-500">{currentExam.created_by}</strong></span>
       </div>
-      <h1 class="text-xl md:text-2xl font-heading font-semibold text-slate-900 dark:text-white">{currentExam.title}</h1>
-      <p class="text-xs text-slate-600 dark:text-slate-300 max-w-2xl">{currentExam.description}</p>
+      <h1 class="text-xl md:text-2xl font-heading font-semibold text-ink-900">{currentExam.title}</h1>
+      <p class="text-xs text-ink-500 max-w-2xl">{currentExam.description}</p>
     </div>
 
     <!-- Timer & Main Action -->
     <div class="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
-      <div class="text-center bg-slate-50 dark:bg-slate-950 px-5 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-inner w-full sm:w-auto">
-        <div class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Thời Gian Còn Lại</div>
-        <div class="text-2xl font-black font-mono {timeLeftSeconds < 300 ? 'text-rose-500 animate-pulse' : 'text-sky-600 dark:text-emerald-400'}">
+      <div class="text-center bg-surface-1 dark:bg-surface-0 px-5 py-3 rounded-2xl border border-line dark:border-line shadow-inner w-full sm:w-auto">
+        <div class="text-[10px] font-bold text-ink-500 dark:text-ink-500 uppercase tracking-wider">Thời Gian Còn Lại</div>
+        <div class="text-2xl font-black font-mono {timeLeftSeconds < 300 ? 'text-rose-500 animate-pulse' : 'text-brand-600 dark:text-emerald-400'}">
           {formatTime(timeLeftSeconds)}
         </div>
       </div>
@@ -1446,7 +1446,7 @@
       {#if !isStarted}
         <button
           onclick={startExam}
-          class="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-sm shadow-xl shadow-sky-600/30 transition-all hover:scale-105"
+          class="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-brand-600 hover:bg-brand-500 text-white font-bold text-sm shadow-xl shadow-brand-600/30 transition-all hover:scale-105"
         >
           🚀 Bắt Đầu Làm Bài
         </button>
@@ -1490,25 +1490,25 @@
         <div>
           <span class="text-xs font-bold text-emerald-400 uppercase tracking-wider">KẾT QUẢ ĐÁNH GIÁ LỘ TRÌNH CHÍNH THỨC</span>
           <h2 class="text-2xl font-black text-white mt-1">Thí Sinh: {studentName}</h2>
-          <div class="text-xs text-slate-400 mt-0.5">Thời gian hoàn thành: {Math.floor(((currentExam.duration_minutes * 60) - timeLeftSeconds) / 60)} phút {((currentExam.duration_minutes * 60) - timeLeftSeconds) % 60} giây</div>
+          <div class="text-xs text-ink-500 mt-0.5">Thời gian hoàn thành: {Math.floor(((currentExam.duration_minutes * 60) - timeLeftSeconds) / 60)} phút {((currentExam.duration_minutes * 60) - timeLeftSeconds) % 60} giây</div>
         </div>
 
         <div class="flex flex-wrap items-center gap-3">
           <div class="text-center p-3 rounded-2xl bg-slate-950 border border-indigo-500/30 min-w-[130px] shadow-lg">
-            <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{formattedResultBadge.scaleName}</div>
+            <div class="text-[10px] text-ink-500 font-bold uppercase tracking-wider">{formattedResultBadge.scaleName}</div>
             <div class="text-2xl font-black {formattedResultBadge.badgeColor}">
               {formattedResultBadge.value}
             </div>
-            <div class="text-[10px] font-semibold text-slate-400 mt-0.5">{formattedResultBadge.sub}</div>
+            <div class="text-[10px] font-semibold text-ink-500 mt-0.5">{formattedResultBadge.sub}</div>
           </div>
           <div class="text-center p-3 rounded-2xl bg-slate-950 border border-slate-800 min-w-[80px]">
-            <div class="text-[10px] text-slate-400 font-bold uppercase">Hệ 10</div>
+            <div class="text-[10px] text-ink-500 font-bold uppercase">Hệ 10</div>
             <div class="text-2xl font-black {parseFloat(calculatedScore) >= 7.0 ? 'text-emerald-400' : 'text-amber-400'}">
               {calculatedScore}
             </div>
           </div>
           <div class="text-center p-3 rounded-2xl bg-slate-950 border border-slate-800 min-w-[80px]">
-            <div class="text-[10px] text-slate-400 font-bold uppercase">Số Câu Đúng</div>
+            <div class="text-[10px] text-ink-500 font-bold uppercase">Số Câu Đúng</div>
             <div class="text-2xl font-black text-indigo-400">
               {correctCount}/{activeQuestions.length}
             </div>
@@ -1539,7 +1539,7 @@
     <div class="p-8 rounded-3xl bg-slate-900 border border-slate-800 text-center space-y-4">
       <div class="text-5xl">📝</div>
       <h2 class="text-xl font-bold text-white">Bạn Đã Sẵn Sàng Làm Bài?</h2>
-      <p class="text-xs text-slate-400 max-w-lg mx-auto leading-relaxed">
+      <p class="text-xs text-ink-500 max-w-lg mx-auto leading-relaxed">
         Bài thi gồm {activeQuestions.length} câu hỏi. Thời gian làm bài là {currentExam.duration_minutes} phút.
         Đồng hồ sẽ bắt đầu đếm ngược ngay khi bạn bấm nút bên dưới.
       </p>
@@ -1558,7 +1558,7 @@
         <div class="rounded-3xl bg-slate-900 border border-slate-800 p-6 space-y-4">
           <div class="flex items-center justify-between border-b border-slate-800 pb-3">
             <span class="text-xs font-bold text-purple-400">WRITING TASK 2 PROMPT</span>
-            <span class="text-xs font-bold text-slate-400">Yêu cầu tối thiểu: 250 từ</span>
+            <span class="text-xs font-bold text-ink-500">Yêu cầu tối thiểu: 250 từ</span>
           </div>
 
           <div class="p-4 rounded-2xl bg-slate-950 border border-slate-800 text-xs text-slate-200 leading-relaxed font-sans whitespace-pre-line">
@@ -1596,7 +1596,7 @@
             class="w-full flex-1 bg-slate-950 border border-slate-800 rounded-2xl p-4 text-xs font-sans text-slate-100 placeholder-slate-500 focus:outline-none focus:border-purple-500 leading-relaxed resize-none"
           ></textarea>
 
-          <div class="flex justify-between items-center text-xs text-slate-400 pt-2">
+          <div class="flex justify-between items-center text-xs text-ink-500 pt-2">
             <span>Hệ thống tự động lưu từng ký tự</span>
             {#if !isSubmitted}
               <button
@@ -1686,16 +1686,16 @@
             {@const isCorrect = isSubmitted && userAnswers[idx]?.trim().toUpperCase() === q.correct_answer?.trim().toUpperCase()}
             {@const isWrong = isSubmitted && userAnswers[idx] && !isCorrect}
 
-            <div id="q-{idx}" class="p-6 rounded-3xl bg-white dark:bg-slate-900 border {isCorrect ? 'border-emerald-500 bg-emerald-50/20 dark:bg-emerald-950/20' : isWrong ? 'border-rose-500 bg-rose-50/20 dark:bg-rose-950/20' : 'border-slate-200 dark:border-slate-800 shadow-sm'} space-y-4 transition-all scroll-mt-24">
+            <div id="q-{idx}" class="p-6 rounded-3xl bg-surface-0 dark:bg-surface-0 border {isCorrect ? 'border-emerald-500 bg-emerald-50/20 dark:bg-emerald-950/20' : isWrong ? 'border-rose-500 bg-rose-50/20 dark:bg-rose-950/20' : 'border-line dark:border-line shadow-sm'} space-y-4 transition-all scroll-mt-24">
               <!-- Header of Question -->
               <div class="flex items-center justify-between gap-3 text-xs">
                 <div class="flex items-center gap-2">
-                  <span class="w-8 h-8 rounded-xl bg-sky-100 dark:bg-slate-800 text-sky-700 dark:text-sky-300 font-bold flex items-center justify-center border border-sky-200 dark:border-slate-700">
+                  <span class="w-8 h-8 rounded-xl bg-brand-50 dark:bg-surface-1 text-brand-700 dark:text-brand-600 font-bold flex items-center justify-center border border-brand-200 dark:border-line">
                     #{idx + 1}
                   </span>
-                  <span class="font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">{q.skill}</span>
+                  <span class="font-bold text-ink-500 uppercase tracking-wider">{q.skill}</span>
                   {#if q.cambridge_level}
-                    <span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-sky-700 dark:text-sky-300 font-semibold border border-sky-200 dark:border-slate-700">
+                    <span class="text-[10px] px-2 py-0.5 rounded-full bg-surface-1 dark:bg-surface-1 text-brand-700 dark:text-brand-600 font-semibold border border-brand-200 dark:border-line">
                       {q.cambridge_level}
                     </span>
                   {/if}
@@ -1710,40 +1710,40 @@
 
               <!-- Reading Passage if present -->
               {#if q.passage}
-                <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-300 leading-relaxed font-sans max-h-64 overflow-y-auto whitespace-pre-line">
-                  <strong class="text-sky-700 dark:text-sky-400 block mb-1">📖 Đoạn Văn Đọc Hiểu / Ngữ Cảnh:</strong>
+                <div class="p-4 rounded-2xl bg-surface-1 dark:bg-surface-0 border border-line dark:border-line text-xs text-ink-500 leading-relaxed font-sans max-h-64 overflow-y-auto whitespace-pre-line">
+                  <strong class="text-brand-700 dark:text-brand-600 block mb-1">📖 Đoạn Văn Đọc Hiểu / Ngữ Cảnh:</strong>
                   {q.passage}
                 </div>
               {/if}
 
               <!-- Question Photo / Diagram (e.g. TOEIC Part 1) -->
               {#if q.image_url}
-                <div class="my-3 text-center bg-slate-50 dark:bg-slate-950/60 p-3 rounded-2xl border border-slate-200 dark:border-slate-800">
+                <div class="my-3 text-center bg-surface-1 dark:bg-surface-0/60 p-3 rounded-2xl border border-line dark:border-line">
                   <img
                     src={q.image_url}
                     alt="Question Diagram or Scene"
-                    class="max-h-64 rounded-xl border border-slate-300 dark:border-slate-700/60 object-cover shadow-sm mx-auto"
+                    class="max-h-64 rounded-xl border border-line dark:border-line/60 object-cover shadow-sm mx-auto"
                   />
-                  <span class="text-[11px] text-slate-500 dark:text-slate-400 mt-2 block font-medium">📷 Hình ảnh ngữ cảnh bài thi</span>
+                  <span class="text-[11px] text-ink-500 dark:text-ink-500 mt-2 block font-medium">📷 Hình ảnh ngữ cảnh bài thi</span>
                 </div>
               {/if}
 
               <!-- Audio Listening Track -->
               {#if q.audio_url}
-                <div class="my-2 p-3.5 rounded-2xl bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800 flex items-center justify-between gap-3 shadow-xs">
+                <div class="my-2 p-3.5 rounded-2xl bg-brand-50 dark:bg-brand-50/40 border border-brand-200 dark:border-brand-700 flex items-center justify-between gap-3 shadow-xs">
                   <div class="flex items-center gap-2.5">
-                    <div class="w-9 h-9 rounded-xl bg-sky-600/10 text-sky-600 dark:text-sky-400 border border-sky-300 dark:border-sky-700 flex items-center justify-center text-lg">
+                    <div class="w-9 h-9 rounded-xl bg-brand-600/10 text-brand-600 dark:text-brand-600 border border-brand-200 dark:border-line flex items-center justify-center text-lg">
                       🎧
                     </div>
                     <div>
-                      <div class="text-xs font-bold text-sky-800 dark:text-sky-300">Listening Audio Track (Bản Nghe Đề Thi)</div>
-                      <div class="text-[10px] text-slate-500 dark:text-slate-400">Bấm nút để nghe đoạn audio / hội thoại của bài thi</div>
+                      <div class="text-xs font-bold text-brand-700 dark:text-brand-600">Listening Audio Track (Bản Nghe Đề Thi)</div>
+                      <div class="text-[10px] text-ink-500 dark:text-ink-500">Bấm nút để nghe đoạn audio / hội thoại của bài thi</div>
                     </div>
                   </div>
                   <button
                     type="button"
                     onclick={() => playQuestionAudio(q.audio_url)}
-                    class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all hover:scale-105 active:scale-95"
+                    class="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all hover:scale-105 active:scale-95"
                   >
                     <span>🔊 Phát Audio</span>
                   </button>
@@ -1751,11 +1751,11 @@
               {/if}
 
               <!-- Question Prompt -->
-              <div class="text-sm font-heading font-semibold text-slate-900 dark:text-white flex items-center justify-between gap-3">
+              <div class="text-sm font-heading font-semibold text-ink-900 flex items-center justify-between gap-3">
                 <span>{q.prompt}</span>
                 <button
                   onclick={() => speakWord(q.prompt)}
-                  class="text-xs p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-sky-600 dark:hover:text-white shrink-0 border border-slate-200 dark:border-slate-700"
+                  class="text-xs p-2 rounded-lg bg-surface-1 dark:bg-surface-1 text-ink-500 hover:text-brand-600 dark:hover:text-white shrink-0 border border-line dark:border-line"
                   title="Phát âm câu hỏi"
                 >
                   🔊
@@ -1772,7 +1772,7 @@
                   <button
                     disabled={isSubmitted}
                     onclick={() => selectOption(idx, optLetter)}
-                    class="p-3.5 rounded-2xl border text-left text-xs font-semibold transition-all {isThisCorrect ? 'bg-emerald-100 dark:bg-emerald-950/60 border-emerald-500 text-emerald-800 dark:text-emerald-200 font-bold ring-2 ring-emerald-400' : isSelected && isWrong ? 'bg-rose-100 dark:bg-rose-950/60 border-rose-500 text-rose-800 dark:text-rose-200 font-bold' : isSelected ? 'bg-sky-600 border-sky-600 text-white font-bold shadow-md ring-2 ring-sky-300 dark:ring-sky-500' : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 hover:border-sky-400 hover:bg-sky-50 dark:hover:bg-slate-800'}"
+                    class="p-3.5 rounded-2xl border text-left text-xs font-semibold transition-all {isThisCorrect ? 'bg-emerald-100 dark:bg-emerald-950/60 border-emerald-500 text-emerald-800 dark:text-emerald-200 font-bold ring-2 ring-emerald-400' : isSelected && isWrong ? 'bg-rose-100 dark:bg-rose-950/60 border-rose-500 text-rose-800 dark:text-rose-200 font-bold' : isSelected ? 'bg-brand-600 border-brand-600 text-white font-bold shadow-md ring-2 ring-brand-200 dark:ring-brand-600' : 'bg-surface-1 dark:bg-surface-1/60 border-line dark:border-line text-ink-900 hover:border-brand-200 hover:bg-brand-50 dark:hover:bg-surface-1'}"
                   >
                     {opt}
                   </button>
@@ -1783,7 +1783,7 @@
               {#if isSubmitted && q.explanation}
                 <div class="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-xs text-amber-900 dark:text-amber-200 space-y-1">
                   <strong class="text-amber-700 dark:text-amber-400 block font-bold">💡 Giải thích chi tiết:</strong>
-                  <div class="text-slate-700 dark:text-slate-300 font-sans">{q.explanation}</div>
+                  <div class="text-ink-500 font-sans">{q.explanation}</div>
                 </div>
               {/if}
             </div>
@@ -1792,38 +1792,38 @@
 
         <!-- Sticky Sidebar: Exam Room Navigation Palette (4 Cols) -->
         <div class="lg:col-span-4 sticky top-20 space-y-4">
-          <div class="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-lg space-y-4">
+          <div class="rounded-3xl bg-surface-0 dark:bg-surface-0 border border-line dark:border-line p-5 shadow-lg space-y-4">
             <!-- Header of Sidebar -->
-            <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
-              <div class="text-xs font-bold text-sky-600 dark:text-sky-400 uppercase tracking-wider">
+            <div class="flex items-center justify-between border-b border-line dark:border-line pb-3">
+              <div class="text-xs font-bold text-brand-600 dark:text-brand-600 uppercase tracking-wider">
                 📋 TIẾN ĐỘ PHÒNG THI
               </div>
-              <div class="text-xs font-mono font-bold {timeLeftSeconds < 300 ? 'text-rose-500 animate-pulse' : 'text-sky-600 dark:text-sky-400'}">
+              <div class="text-xs font-mono font-bold {timeLeftSeconds < 300 ? 'text-rose-500 animate-pulse' : 'text-brand-600 dark:text-brand-600'}">
                 ⏱️ {formatTime(timeLeftSeconds)}
               </div>
             </div>
 
             <!-- Candidate summary -->
-            <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 space-y-1 text-xs">
+            <div class="p-3 rounded-2xl bg-surface-1 dark:bg-surface-1/60 border border-line dark:border-line/80 space-y-1 text-xs">
               <div class="flex items-center justify-between">
-                <span class="text-slate-500 dark:text-slate-400">Thí sinh:</span>
-                <span class="font-bold text-slate-900 dark:text-white truncate max-w-[140px]">{studentName}</span>
+                <span class="text-ink-500 dark:text-ink-500">Thí sinh:</span>
+                <span class="font-bold text-ink-900 truncate max-w-[140px]">{studentName}</span>
               </div>
               <div class="flex items-center justify-between">
-                <span class="text-slate-500 dark:text-slate-400">Đã trả lời:</span>
+                <span class="text-ink-500 dark:text-ink-500">Đã trả lời:</span>
                 <span class="font-bold text-emerald-600 dark:text-emerald-400">
                   {Object.values(userAnswers).filter(a => !!a).length} / {activeQuestions.length} câu
                 </span>
               </div>
               <!-- Progress Bar -->
-              <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1.5 overflow-hidden mt-1.5">
-                <div class="bg-sky-600 h-1.5 rounded-full transition-all duration-300" style="width: {(Object.values(userAnswers).filter(a => !!a).length / (activeQuestions.length || 1)) * 100}%"></div>
+              <div class="w-full bg-slate-200 dark:bg-surface-1 rounded-full h-1.5 overflow-hidden mt-1.5">
+                <div class="bg-brand-600 h-1.5 rounded-full transition-all duration-300" style="width: {(Object.values(userAnswers).filter(a => !!a).length / (activeQuestions.length || 1)) * 100}%"></div>
               </div>
             </div>
 
             <!-- Question Jump Matrix -->
             <div class="space-y-2">
-              <div class="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase">
+              <div class="text-[11px] font-bold text-ink-500 dark:text-ink-500 uppercase">
                 Ma trận câu hỏi (Bấm để nhảy đến):
               </div>
               <div class="grid grid-cols-5 gap-1.5 max-h-56 overflow-y-auto p-1">
@@ -1832,7 +1832,7 @@
                   <button
                     type="button"
                     onclick={() => document.getElementById(`q-${idx}`)?.scrollIntoView({ behavior: 'smooth' })}
-                    class="h-8 rounded-lg text-xs font-bold transition-all flex items-center justify-center border {isAns ? 'bg-sky-600 text-white border-sky-600 shadow-xs' : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-sky-400'}"
+                    class="h-8 rounded-lg text-xs font-bold transition-all flex items-center justify-center border {isAns ? 'bg-brand-600 text-white border-brand-600 shadow-xs' : 'bg-surface-1 dark:bg-surface-1 text-ink-500 border-line dark:border-line hover:border-brand-200'}"
                   >
                     {idx + 1}
                   </button>
@@ -1864,7 +1864,7 @@
           <div>
             <div class="text-xs font-bold text-emerald-400 uppercase tracking-wider">CHẤM ĐIỂM HÀNG LOẠT THEO ĐIỂM DANH</div>
             <h2 class="text-lg font-black text-white mt-0.5">{currentExam.title}</h2>
-            <div class="text-xs text-slate-400 mt-0.5">Lớp: {currentSession?.class_name} • Ngày: {selectedSessionDate} ({batchScores.length} học sinh có mặt)</div>
+            <div class="text-xs text-ink-500 mt-0.5">Lớp: {currentSession?.class_name} • Ngày: {selectedSessionDate} ({batchScores.length} học sinh có mặt)</div>
           </div>
           <button
             type="button"
@@ -1890,13 +1890,13 @@
                 </span>
                 <div>
                   <div class="text-xs font-bold text-white">{item.student_name}</div>
-                  <div class="text-[10px] text-slate-400">ID: {item.student_id}</div>
+                  <div class="text-[10px] text-ink-500">ID: {item.student_id}</div>
                 </div>
               </div>
 
               <div class="flex items-center gap-2">
                 <div class="flex items-center gap-1.5">
-                  <label class="text-[11px] font-bold text-slate-400" for="sc-{idx}">Điểm (0-10):</label>
+                  <label class="text-[11px] font-bold text-ink-500" for="sc-{idx}">Điểm (0-10):</label>
                   <input
                     id="sc-{idx}"
                     type="number"
@@ -1918,14 +1918,14 @@
             </div>
           {/each}
           {#if batchScores.length === 0}
-            <div class="text-center py-6 text-slate-400 text-xs">
+            <div class="text-center py-6 text-ink-500 text-xs">
               Không có học sinh nào đủ điều kiện điểm danh trong buổi học này.
             </div>
           {/if}
         </div>
 
         <div class="flex items-center justify-between border-t border-slate-800 pt-3">
-          <div class="text-[11px] text-slate-400">
+          <div class="text-[11px] text-ink-500">
             💡 Điểm từ 7.0 trở lên tự động cộng sao thưởng tích lũy (100 sao = 1.000 VNĐ trừ học phí)!
           </div>
           <div class="flex items-center gap-2">

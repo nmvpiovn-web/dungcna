@@ -159,13 +159,13 @@
         <label class="text-xs font-extrabold uppercase tracking-widest text-ink-500">1. Chọn khối lớp</label>
         <div class="flex gap-2">
           {#each GRADES as g}
-            <button type="button" onclick={() => selectGrade(g.key)} class={`flex-1 px-3 py-2.5 rounded-xl text-sm font-bold border transition-all ${grade === g.key ? 'bg-brand-600 border-brand-600 text-white' : 'bg-surface-1 border-line text-ink-900 hover:border-brand-200'}`}>{g.label}</button>
+            <button type="button" onclick={() => selectGrade(g.key)} class={`flex-1 px-3 py-2.5 rounded-xl text-sm font-bold border transition-all ${grade === g.key ? 'bg-brand-600 border-brand-600 dark:bg-brand-700 dark:border-brand-700 text-white' : 'bg-surface-1 border-line text-ink-900 hover:border-brand-200'}`}>{g.label}</button>
           {/each}
         </div>
         <label class="text-xs font-extrabold uppercase tracking-widest text-ink-500">2. Chọn chương trình</label>
         <div class="flex flex-wrap gap-2">
           {#each curricula as c}
-            <button type="button" onclick={() => (curriculum = c.key)} class={`px-3 py-2 rounded-xl text-sm font-bold border transition-all ${curriculum === c.key ? 'bg-brand-600 border-brand-600 text-white' : 'bg-surface-1 border-line text-ink-900 hover:border-brand-200'}`}>{c.label}</button>
+            <button type="button" onclick={() => (curriculum = c.key)} class={`px-3 py-2 rounded-xl text-sm font-bold border transition-all ${curriculum === c.key ? 'bg-brand-600 border-brand-600 dark:bg-brand-700 dark:border-brand-700 text-white' : 'bg-surface-1 border-line text-ink-900 hover:border-brand-200'}`}>{c.label}</button>
           {/each}
         </div>
       </div>
@@ -203,7 +203,7 @@
               onclick={() => answerCurrent(opt.id)}
               class={`w-full text-left px-4 py-3 rounded-2xl border-2 text-sm font-semibold transition-all ${answers[currentQ.id] === opt.id ? 'border-brand-600 bg-brand-50 text-ink-900' : 'border-line bg-surface-0 text-ink-900 hover:border-brand-200'}`}
             >
-              <span class="inline-flex w-7 h-7 mr-2 rounded-full items-center justify-center text-xs font-extrabold {answers[currentQ.id] === opt.id ? 'bg-brand-600 text-white' : 'bg-surface-1 text-ink-500 border border-line'}">{opt.id}</span>
+              <span class="inline-flex w-7 h-7 mr-2 rounded-full items-center justify-center text-xs font-extrabold {answers[currentQ.id] === opt.id ? 'bg-brand-600 dark:bg-brand-700 text-white' : 'bg-surface-1 text-ink-500 border border-line'}">{opt.id}</span>
               {opt.text}
             </button>
           {/each}
@@ -233,7 +233,7 @@
     <div class="max-w-2xl mx-auto text-center">
       <div class="text-4xl mb-2">🎉</div>
       <h3 class="font-heading text-xl sm:text-2xl font-extrabold text-ink-900">Kết quả xếp lớp của bạn</h3>
-      <div class="inline-flex items-center gap-2 mt-3 px-5 py-2.5 rounded-2xl bg-brand-600 text-white font-heading font-extrabold text-lg shadow-sm">
+      <div class="inline-flex items-center gap-2 mt-3 px-5 py-2.5 rounded-2xl bg-brand-600 dark:bg-brand-700 text-white font-heading font-extrabold text-lg shadow-sm">
         Trình độ {result.cefr_level}
       </div>
       <div class="text-sm text-ink-500 mt-2">{result.rank_title} • {result.correct_count}/{result.total_questions} câu đúng ({result.score_10}/10)</div>
@@ -258,7 +258,7 @@
 
       <div class="flex flex-col sm:flex-row items-center justify-center gap-3 mt-6">
         <UiButton href={roadmapHint.href}>Xem lộ trình chi tiết →</UiButton>
-        <a href={SITE_CONTACT.zaloUrl} target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl font-bold text-sm text-white bg-[#0068ff] hover:brightness-110 transition-all">💬 Nhận tư vấn Zalo</a>
+        <a href={SITE_CONTACT.zaloUrl} target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl font-bold text-sm text-white bg-brand-600 hover:bg-brand-700 dark:bg-brand-700 transition-all">💬 Nhận tư vấn Zalo</a>
       </div>
       <button type="button" onclick={() => { step = 'pick'; result = null; session = null; }} class="mt-4 text-xs font-bold text-ink-500 hover:text-brand-600 underline">Làm lại bài test</button>
     </div>

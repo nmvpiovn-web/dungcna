@@ -14,7 +14,7 @@
         aria-expanded={open === i}
       >
         <span class="font-bold text-sm sm:text-base text-ink-900">{item.q}</span>
-        <span class={`shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold transition-transform ${open === i ? 'bg-brand-600 text-white rotate-45' : 'bg-surface-1 text-ink-500 border border-line'}`}>+</span>
+        <span class={`shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold transition-transform ${open === i ? 'bg-brand-600 dark:bg-brand-700 text-white rotate-45' : 'bg-surface-1 text-ink-500 border border-line'}`}>+</span>
       </button>
       {#if open === i}
         <div class="px-4 sm:px-5 pb-4 text-sm text-ink-500 leading-relaxed">{item.a}</div>

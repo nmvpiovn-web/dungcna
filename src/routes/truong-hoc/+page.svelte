@@ -4,8 +4,6 @@
   import StatCounter from '$lib/components/ui/StatCounter.svelte';
   import FaqAccordion from '$lib/components/ui/FaqAccordion.svelte';
   import UiButton from '$lib/components/ui/UiButton.svelte';
-  import ZaloCta from '$lib/components/ui/ZaloCta.svelte';
-  import BottomNav from '$lib/components/ui/BottomNav.svelte';
   import { SITE_CONTACT } from '$lib/site.js';
 
   const roadmapNodes = [
@@ -41,7 +39,7 @@
 
 <div class="max-w-6xl mx-auto px-3 sm:px-4 py-6 sm:py-8 pb-24 lg:pb-10 space-y-10">
   <!-- Hero -->
-  <section class="rounded-3xl bg-brand-600 text-white p-6 sm:p-10 shadow-sm relative overflow-hidden">
+  <section class="rounded-3xl bg-brand-600 dark:bg-brand-700 text-white p-6 sm:p-10 shadow-sm relative overflow-hidden">
     <div class="absolute -right-16 -top-16 w-72 h-72 rounded-full bg-white/10 blur-3xl pointer-events-none"></div>
     <div class="absolute -left-10 -bottom-16 w-56 h-56 rounded-full bg-accent-500/20 blur-3xl pointer-events-none"></div>
     <div class="relative z-10 max-w-2xl">
@@ -104,5 +102,3 @@
   </section>
 </div>
 
-<ZaloCta />
-<BottomNav />

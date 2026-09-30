@@ -19,7 +19,7 @@
       <button
         type="button"
         onclick={() => choose(g.key)}
-        class={`px-4 py-2 rounded-full text-sm font-bold border transition-all ${picked === g.key ? 'bg-brand-600 border-brand-600 text-white shadow-sm' : 'bg-surface-1 border-line text-ink-900 hover:border-brand-200'}`}
+        class={`px-4 py-2 rounded-full text-sm font-bold border transition-all ${picked === g.key ? 'bg-brand-600 border-brand-600 dark:bg-brand-700 dark:border-brand-700 text-white shadow-sm' : 'bg-surface-1 border-line text-ink-900 hover:border-brand-200'}`}
       >
         {g.label}
       </button>

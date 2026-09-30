@@ -1,10 +1,24 @@
 // Service Worker for Tieng Anh Co Dung PWA
-// Architecture: Strict Network-Only for dynamic data/APIs; Cache-First for static immutable assets
+// Architecture: Strict Network-Only for dynamic data/APIs; Cache-First for static immutable assets;
+// Network-First (with offline fallback) for navigations.
 
-const CACHE_NAME = 'tienganh-academic-v3';
+const CACHE_NAME = 'tienganh-academic-v4';
+
+// App shell precache (offline fallback + icons + manifest). Individual failures must not break install.
+const PRECACHE_URLS = [
+  '/offline.html',
+  '/icon-192.png',
+  '/icon-512.png',
+  '/apple-touch-icon.png',
+  '/manifest.webmanifest'
+];
 
 self.addEventListener('install', (event) => {
-  self.skipWaiting();
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then((cache) => Promise.all(PRECACHE_URLS.map((u) => cache.add(u).catch(() => null))))
+      .then(() => self.skipWaiting())
+  );
 });
 
 // Clean up all obsolete caches from previous deployments (including tienganh-pro-v5)
@@ -35,8 +49,18 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 2. Navigation requests: Network only to guarantee immediate reflection of deployments
+  // 2. Navigation requests: Network-First so deployments reflect immediately,
+  //    with cache + offline.html fallback when the device is offline.
   if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .then((networkResponse) => networkResponse)
+        .catch(() =>
+          caches.match(event.request).then(
+            (cachedPage) => cachedPage || caches.match('/offline.html')
+          )
+        )
+    );
     return;
   }
 
@@ -82,8 +106,8 @@ self.addEventListener('push', (event) => {
   const title = data.title || 'Tiếng Anh Cô Dung';
   const options = {
     body: data.body || 'Bạn có thông báo mới trong hệ thống.',
-    icon: '/icon.svg',
-    badge: '/icon.svg',
+    icon: '/icon-192.png',
+    badge: '/icon-192.png',
     data: {
       url: data.url || '/cpanel/notifications',
       referenceId: data.referenceId
@@ -119,8 +143,8 @@ self.addEventListener('message', (event) => {
     const title = payload.title || 'Báo Cáo Leader';
     const options = {
       body: payload.body || 'Cập nhật lịch học và điểm danh mới.',
-      icon: '/icon.svg',
-      badge: '/icon.svg',
+      icon: '/icon-192.png',
+      badge: '/icon-192.png',
       data: {
         url: payload.url || '/admin?tab=leader_notifications'
       }

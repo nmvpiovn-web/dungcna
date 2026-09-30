@@ -27,8 +27,6 @@
   import UiButton from '$lib/components/ui/UiButton.svelte';
   import SectionHeading from '$lib/components/ui/SectionHeading.svelte';
   import EmptyState from '$lib/components/ui/EmptyState.svelte';
-  import ZaloCta from '$lib/components/ui/ZaloCta.svelte';
-  import BottomNav from '$lib/components/ui/BottomNav.svelte';
   import StreakBadge from '$lib/components/ui/StreakBadge.svelte';
   import XpPill from '$lib/components/ui/XpPill.svelte';
 
@@ -255,6 +253,14 @@
     { key: 'teacher', emoji: '👩‍🏫', title: 'Tôi là giáo viên', desc: 'Quản lý lớp, chấm bài, gửi báo cáo phụ huynh.', cta: '🛠️ Mở bảng điều khiển', href: '/cpanel' }
   ];
 
+  // ===== NeedQuiz: chon khoi lop -> goi y lo trinh (khong can login) =====
+  const quizGrades = [
+    { key: 'g1-5', label: 'Lớp 1 – 5', suggestion: 'Tiếng Anh tiểu học: phonics + từ vựng theo chủ đề', detail: 'Học qua game, bài hát và truyện tranh — 2 buổi/tuần.', href: '/courses' },
+    { key: 'g6-9', label: 'Lớp 6 – 9', suggestion: 'THCS: ngữ pháp nền + luyện đề Global Success', detail: 'Bám sát SGK, ngân hàng đề 15p – 45p, báo cáo Zalo hằng tuần.', href: '/courses' },
+    { key: 'g10-12', label: 'Lớp 10 – 12', suggestion: 'THPT: ôn thi tốt nghiệp & vào 10/ĐH', detail: 'Chiến thuật giải đề, chấm writing theo rubric, cam kết đầu ra.', href: '/courses' },
+    { key: 'ielts', label: 'IELTS / TOEIC', suggestion: 'Chứng chỉ quốc tế: IELTS Foundation band 5.5 → 6.5+', detail: '4 kỹ năng, mock test định kỳ, GV bản ngữ + chuyên ngữ.', href: '/bang-gia' }
+  ];
+
   const proofStats = [
     { value: data.stats?.totalQuestions ?? 1375, suffix: '', label: 'Câu hỏi ngân hàng đề', icon: '📝' },
     { value: data.stats?.totalWords ?? 222, suffix: '', label: 'Từ vựng minh họa', icon: '🔤' },
@@ -393,7 +399,7 @@
   />
 
   <!-- ===== 2. Need Quiz ===== -->
-  <NeedQuiz />
+  <NeedQuiz grades={quizGrades} />
 
   <!-- ===== 3. Proof bar (số liệu thật) ===== -->
   <section>
@@ -442,7 +448,7 @@
   </section>
 
   <!-- ===== 7. Hall of Fame teaser (trung thực: cam kết chương trình) ===== -->
-  <section class="rounded-3xl bg-brand-600 text-white p-6 sm:p-10 shadow-sm relative overflow-hidden">
+  <section class="rounded-3xl bg-brand-600 dark:bg-brand-700 text-white p-6 sm:p-10 shadow-sm relative overflow-hidden">
     <div class="absolute -right-16 -top-16 w-64 h-64 rounded-full bg-white/10 blur-2xl pointer-events-none"></div>
     <div class="relative z-10">
       <SectionHeading eyebrow="Hall of Fame" title="Điều chúng tôi cam kết với mỗi học viên" dark />
@@ -471,7 +477,7 @@
         <button
           type="button"
           onclick={() => activeCurriculumTab = cat.key}
-          class={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-extrabold border transition-all ${activeCurriculumTab === cat.key ? 'bg-brand-600 border-brand-600 text-white shadow-sm' : 'bg-surface-0 border-line text-ink-900 hover:border-brand-200'}`}
+          class={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-extrabold border transition-all ${activeCurriculumTab === cat.key ? 'bg-brand-600 border-brand-600 dark:bg-brand-700 dark:border-brand-700 text-white shadow-sm' : 'bg-surface-0 border-line text-ink-900 hover:border-brand-200'}`}
         >
           {cat.icon} {cat.label}
         </button>
@@ -579,8 +585,6 @@
 
 </div>
 
-<ZaloCta />
-<BottomNav />
 
 {#if showOcrModal && linkedChild}
   <ParentTestOcrModal student={linkedChild} onclose={() => showOcrModal = false} />

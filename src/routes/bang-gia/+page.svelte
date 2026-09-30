@@ -3,8 +3,6 @@
   import CountdownTimer from '$lib/components/ui/CountdownTimer.svelte';
   import SectionHeading from '$lib/components/ui/SectionHeading.svelte';
   import FaqAccordion from '$lib/components/ui/FaqAccordion.svelte';
-  import ZaloCta from '$lib/components/ui/ZaloCta.svelte';
-  import BottomNav from '$lib/components/ui/BottomNav.svelte';
   import { SITE_CONTACT } from '$lib/site.js';
 
   // Gia that tu /courses (kiem chung 2026-09-30)
@@ -97,7 +95,7 @@
         <button
           type="button"
           onclick={() => (billing = b.key)}
-          class={`px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-all ${billing === b.key ? 'bg-brand-600 text-white shadow-sm' : 'text-ink-500 hover:text-ink-900'}`}
+          class={`px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-all ${billing === b.key ? 'bg-brand-600 dark:bg-brand-700 text-white shadow-sm' : 'text-ink-500 hover:text-ink-900'}`}
         >
           {b.label}
         </button>
@@ -112,8 +110,10 @@
         gradeBand={p.gradeBand}
         price={p.monthly * activeBilling.months}
         unit={activeBilling.unit}
+        periodMonths={activeBilling.months}
         oldPrice={p.oldMonthly * activeBilling.months}
         badge={p.badge}
+        featured={p.id === 'g9'}
         features={p.features}
         gifts={p.gifts}
         commitments={p.commitments}
@@ -160,5 +160,3 @@
   </section>
 </div>
 
-<ZaloCta />
-<BottomNav />
