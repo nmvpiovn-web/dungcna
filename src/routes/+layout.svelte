@@ -275,13 +275,13 @@
  <div class="flex items-center justify-between h-16 gap-2 sm:gap-3 min-w-0">
 
  <!-- Brand Logo (Academic Ledger Style) -->
- <a href="/" onclick={closeAllDropdowns} class="flex items-center gap-2 sm:gap-3 group shrink-0">
+ <a href="/" onclick={closeAllDropdowns} class="flex items-center gap-2 sm:gap-3 group min-w-0 shrink lg:shrink-0">
  <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-brand-700 flex items-center justify-center text-white text-base sm:text-xl border border-brand-700 shadow-xs group-hover:scale-105 transition-transform duration-200 shrink-0">
  👩‍🏫
  </div>
- <div class="shrink-0">
+ <div class="min-w-0 lg:shrink-0">
  <div class="flex items-center gap-1.5">
- <span class="font-semibold text-xs sm:text-base tracking-tight text-ink-900 whitespace-nowrap">
+ <span class="font-semibold text-xs sm:text-base tracking-tight text-ink-900 truncate">
  Tiếng Anh Cô Dung
  </span>
  <span class="hidden 2xl:inline-block text-[11px] font-medium px-2 py-0.5 rounded bg-brand-50 text-brand-700 border border-brand-200 whitespace-nowrap">
