@@ -66,7 +66,7 @@ export async function GET({ request, platform, url }) {
                  psl.verification_status, psl.created_at AS requested_at,
                  parent.name AS parent_name, parent.username AS parent_username,
                  student.name AS student_name, student.username AS student_username,
-                 student.grade AS student_grade
+                 student.metadata AS student_metadata
           FROM parent_student_links psl
           LEFT JOIN users parent ON parent.id = psl.parent_user_id
           LEFT JOIN users student ON student.id = psl.student_user_id
@@ -76,10 +76,20 @@ export async function GET({ request, platform, url }) {
         const linksRes = requestedStatus === 'all'
           ? await statement.all()
           : await statement.bind(requestedStatus).all();
+        // grade nam trong users.metadata (JSON), khong co cot grade rieng
+        const links = (linksRes?.results || []).map(r => {
+          let student_grade = null;
+          try {
+            const meta = typeof r.student_metadata === 'string' ? JSON.parse(r.student_metadata) : r.student_metadata;
+            student_grade = meta?.grade || null;
+          } catch {}
+          const { student_metadata, ...rest } = r;
+          return { ...rest, student_grade };
+        });
         return json({
           success: true,
-          links: linksRes?.results || [],
-          total: linksRes?.results?.length || 0,
+          links,
+          total: links.length,
           source: 'cloudflare_d1'
         });
       }
@@ -93,7 +103,7 @@ export async function GET({ request, platform, url }) {
       const parentId = requestedParentId || user.id;
       const linksRes = await db.prepare(`
         SELECT psl.id as link_id, psl.student_user_id, psl.verification_status, psl.created_at as requested_at,
-               u.id, u.name, u.username, u.avatar, u.grade, u.status
+               u.id, u.name, u.username, u.avatar, u.metadata, u.status
         FROM parent_student_links psl
         LEFT JOIN users u ON psl.student_user_id = u.id
         WHERE psl.parent_user_id = ?;
@@ -101,6 +111,12 @@ export async function GET({ request, platform, url }) {
 
       const children = (linksRes?.results || []).map(r => {
         const isVerified = r.verification_status === 'verified';
+        // grade nam trong users.metadata (JSON), khong co cot grade rieng
+        let grade = null;
+        try {
+          const meta = typeof r.metadata === 'string' ? JSON.parse(r.metadata) : r.metadata;
+          grade = meta?.grade || null;
+        } catch {}
         return {
           id: r.student_user_id || r.id,
           link_id: r.link_id,
@@ -110,7 +126,7 @@ export async function GET({ request, platform, url }) {
           // Private child profile ONLY revealed if link is formally verified
           name: isVerified ? (r.name || 'Học sinh liên kết') : 'Yêu cầu liên kết đang chờ xác minh',
           username: isVerified ? (r.username || '') : null,
-          grade: isVerified ? (r.grade || null) : null,
+          grade: isVerified ? grade : null,
           avatar: isVerified ? (r.avatar || '') : null,
           status: isVerified ? (r.status || 'active') : 'pending_verification',
           stars_total: 0

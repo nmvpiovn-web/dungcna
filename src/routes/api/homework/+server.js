@@ -369,12 +369,21 @@ export async function GET({ request, url, platform }) {
         submissions = subRes.results || [];
       } else if (role === 'parent') {
         const linksRes = await db.prepare(`
-          SELECT psl.student_user_id, u.name as student_name, u.grade, u.avatar
+          SELECT psl.student_user_id, u.name as student_name, u.metadata as student_metadata, u.avatar
           FROM parent_student_links psl
           LEFT JOIN users u ON psl.student_user_id = u.id
           WHERE psl.parent_user_id = ? AND psl.verification_status = 'verified'
         `).bind(user.id).all();
-        linkedChildren = linksRes.results || [];
+        // grade nam trong users.metadata (JSON), khong co cot grade rieng
+        linkedChildren = (linksRes.results || []).map(r => {
+          let grade = null;
+          try {
+            const meta = typeof r.student_metadata === 'string' ? JSON.parse(r.student_metadata) : r.student_metadata;
+            grade = meta?.grade || null;
+          } catch {}
+          const { student_metadata, ...rest } = r;
+          return { ...rest, grade };
+        });
         const studentIds = linkedChildren.map(r => r.student_user_id).filter(Boolean);
 
         if (studentIds.length === 0) {
