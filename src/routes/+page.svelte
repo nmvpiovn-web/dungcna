@@ -427,24 +427,23 @@
  </section>
 
  <!-- ===== 5. Roadmap ===== -->
- <section class="rounded-3xl bg-surface-0 border border-line p-5 sm:p-8 shadow-sm">
+ <section class="rounded-3xl bg-surface-0 border border-line p-4 sm:p-6 shadow-sm">
  <SectionHeading eyebrow="Lộ trình rõ ràng" title="Từ mất gốc đến IELTS: mỗi bước đều có đích" />
  <RoadmapPath nodes={roadmapNodes} />
- <div class="mt-4 flex flex-wrap gap-3">
- <UiButton href="/exam#placement">📝 Test xem con đang ở đâu</UiButton>
- <UiButton href="/courses" variant="ghost">Xem chương trình →</UiButton>
+ <div class="mt-3 flex flex-wrap gap-2 sm:gap-3">
+ <UiButton href="/exam#placement" size="sm">📝 Test xem con đang ở đâu</UiButton>
+ <UiButton href="/courses" variant="ghost" size="sm">Xem chương trình →</UiButton>
  </div>
  </section>
 
  <!-- ===== 6. Pricing teaser ===== -->
  <section>
- <SectionHeading eyebrow="Học phí minh bạch" title="Chọn lớp theo đúng trình độ của con" center actionLabel="Xem bảng giá đầy đủ →" actionHref="/bang-gia" />
+ <SectionHeading eyebrow="Học phí" title="Chọn lớp theo đúng trình độ của con" center actionLabel="Xem bảng giá đầy đủ →" actionHref="/bang-gia" />
  <div class="grid md:grid-cols-3 gap-3 sm:gap-4">
  {#each priceTeaser as c}
  <PriceCard {...c} />
  {/each}
  </div>
- <p class="text-center text-xs text-ink-500 mt-4">💡 Đóng theo học kỳ/năm được giảm thêm. Giá đã gồm toàn bộ học liệu & báo cáo Zalo.</p>
  </section>
 
  <!-- ===== 7. Hall of Fame teaser (trung thực: cam kết chương trình) ===== -->

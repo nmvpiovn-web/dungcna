@@ -1,7 +1,6 @@
 <!-- src/lib/components/ui/PriceCard.svelte — cong thuc Monkey/StepUp: gia gach + % giam + Xd/ngay + countdown -->
 <script>
   import UiButton from './UiButton.svelte';
-  import CountdownTimer from './CountdownTimer.svelte';
   import { SITE_CONTACT } from '$lib/site.js';
 
   let {
@@ -10,18 +9,16 @@
     price = 0,          // tong gia goi (VND)
     oldPrice = 0,       // gia goc (VND)
     unit = 'tháng',     // don vi hien thi: 'tháng' | '5 tháng' | 'năm học'
-    periodMonths = 1,   // so thang cua goi de tinh "Xd/ngay"
     features = [],
     gifts = [],
     commitments = [],
-    badge = 'Ưu đãi khai giảng',
+    badge = '',
     cta = 'Đăng ký ngay',
     href = '',
     featured = false
   } = $props();
 
   const discountPct = $derived(oldPrice > price ? Math.round(((oldPrice - price) / oldPrice) * 100) : 0);
-  const perDay = $derived(periodMonths > 0 ? Math.round(price / (periodMonths * 30)) : 0);
   const fmt = (v) => Number(v).toLocaleString('vi-VN');
 </script>
 
@@ -46,15 +43,6 @@
       <div class="text-sm text-ink-500 line-through">{fmt(oldPrice)}đ</div>
     {/if}
     <div class="font-heading text-3xl font-extrabold text-brand-600">{fmt(price)}đ<span class="text-sm font-bold text-ink-500">/{unit}</span></div>
-    {#if perDay > 0}
-      <div class="inline-flex items-center gap-1 mt-1 px-2.5 py-1 rounded-full bg-accent-500/15 text-accent-500 text-xs font-extrabold">
-        💰 Chỉ {fmt(perDay)}đ/ngày
-      </div>
-    {/if}
-  </div>
-
-  <div class="flex justify-center my-3">
-    <CountdownTimer />
   </div>
 
   {#if features.length}

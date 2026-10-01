@@ -1,38 +1,82 @@
-<!-- src/lib/components/ui/RoadmapPath.svelte — path node ziczac kieu Duolingo (SVG responsive) -->
+<!-- src/lib/components/ui/RoadmapPath.svelte — stepper ngang luy tien trai → phai, gon + hieu ung vao -->
 <script>
+  import { onMount } from 'svelte';
   // nodes: [{ label, sub, status: 'done' | 'current' | 'locked' }]
   let { nodes = [] } = $props();
 
-  const W = 360, ROW_H = 96, TOP = 48;
-  const H = $derived(TOP * 2 + nodes.length * ROW_H);
-  const pos = (i) => {
-    const x = i % 2 === 0 ? W * 0.28 : W * 0.72;
-    const y = TOP + i * ROW_H + ROW_H / 2;
-    return { x, y };
-  };
-  const path = $derived(
-    nodes.map((_, i) => `${i === 0 ? 'M' : 'L'} ${pos(i).x} ${pos(i).y}`).join(' ')
-  );
-  const statusStyle = {
-    done: 'fill: rgb(var(--success-600-rgb));',
-    current: 'fill: rgb(var(--accent-500-rgb));',
-    locked: 'fill: rgb(var(--ink-500-rgb)); opacity: .45;'
-  };
+  let track = $state(null);
+  let visible = $state(false);
+
+  onMount(() => {
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !visible) {
+          visible = true;
+          io.disconnect();
+        }
+      },
+      { threshold: 0.25 }
+    );
+    if (track) io.observe(track);
+    return () => io.disconnect();
+  });
+
   const statusEmoji = { done: '✅', current: '🎯', locked: '🔒' };
+  const nodeStyle = {
+    done: 'border-success-600 bg-success-600 text-white',
+    current: 'border-accent-500 bg-accent-500 text-white shadow-lg shadow-accent-500/30',
+    locked: 'border-line bg-surface-1 text-ink-500'
+  };
+  const labelStyle = {
+    done: 'text-ink-900',
+    current: 'text-ink-900',
+    locked: 'text-ink-500'
+  };
 </script>
 
-<svg viewBox={`0 0 ${W} ${H}`} class="w-full max-w-md mx-auto" role="img" aria-label="Lộ trình học">
-  <path d={path} fill="none" stroke="rgb(var(--brand-200-rgb))" stroke-width="5" stroke-linecap="round" stroke-dasharray="1 10" />
-  {#each nodes as n, i}
-    {@const p = pos(i)}
-    {@const lx = i % 2 === 0 ? p.x + 44 : p.x - 44}
-    {@const anchor = i % 2 === 0 ? 'start' : 'end'}
-    <circle cx={p.x} cy={p.y} r="26" style={statusStyle[n.status] || statusStyle.locked} />
-    <circle cx={p.x} cy={p.y} r="31" fill="none" stroke="rgb(var(--line-rgb))" stroke-width="2" />
-    <text x={p.x} y={p.y + 7} text-anchor="middle" font-size="20">{statusEmoji[n.status] || '🔒'}</text>
-    <text x={lx} y={p.y - 2} text-anchor={anchor} font-size="14" font-weight="800" fill="rgb(var(--ink-900-rgb))">{n.label}</text>
-    {#if n.sub}
-      <text x={lx} y={p.y + 16} text-anchor={anchor} font-size="11" fill="rgb(var(--ink-500-rgb))">{n.sub}</text>
-    {/if}
-  {/each}
-</svg>
+<div bind:this={track} class="relative py-2" role="img" aria-label="Lộ trình học">
+  <!-- Duong noi ngang -->
+  <div class="absolute top-[26px] left-[10%] right-[10%] h-[3px] rounded-full bg-line overflow-hidden" aria-hidden="true">
+    <div
+      class="h-full rounded-full bg-gradient-to-r from-success-600 via-accent-500 to-accent-500 transition-all duration-1000 ease-out"
+      style="width: {visible ? '100%' : '0%'}"
+    ></div>
+  </div>
+
+  <ol class="relative flex items-start justify-between gap-1 sm:gap-2">
+    {#each nodes as n, i}
+      <li
+        class="flex flex-col items-center text-center flex-1 min-w-0 transition-all duration-500 ease-out {visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}"
+        style="transition-delay: {i * 120}ms"
+      >
+        <div class="relative">
+          <div class="w-[52px] h-[52px] rounded-full border-[3px] flex items-center justify-center text-xl bg-surface-0 {nodeStyle[n.status] || nodeStyle.locked}">
+            {statusEmoji[n.status] || '🔒'}
+          </div>
+          {#if n.status === 'current'}
+            <span class="absolute -inset-1 rounded-full border-2 border-accent-500/50 animate-ping pointer-events-none"></span>
+          {/if}
+          <!-- So thu tu -->
+          <span class="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-ink-900 text-white text-[10px] font-extrabold flex items-center justify-center">
+            {i + 1}
+          </span>
+        </div>
+        <div class="mt-2 font-extrabold text-xs sm:text-sm whitespace-nowrap {labelStyle[n.status] || labelStyle.locked}">
+          {n.label}
+        </div>
+        {#if n.sub}
+          <div class="text-[10px] sm:text-[11px] text-ink-500 font-medium leading-tight mt-0.5 px-1">{n.sub}</div>
+        {/if}
+      </li>
+      {#if i < nodes.length - 1}
+        <div class="hidden sm:flex items-center pt-[14px] text-ink-500/60 text-lg shrink-0 transition-all duration-500 {visible ? 'opacity-100' : 'opacity-0'}" style="transition-delay: {i * 120 + 60}ms" aria-hidden="true">→</div>
+      {/if}
+    {/each}
+  </ol>
+</div>
+
+<style>
+  @media (prefers-reduced-motion: reduce) {
+    li, div { transition: none !important; }
+  }
+</style>
