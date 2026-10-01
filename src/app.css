@@ -439,53 +439,53 @@ input:focus, select:focus, textarea:focus {
 
 :root {
   /* ---- SANG (default) ---- */
-  --brand-600: #0284c7;  --brand-600-rgb: 2, 132, 199;
-  --brand-700: #0369a1;  --brand-700-rgb: 3, 105, 161;
-  --brand-50: #f0f9ff;   --brand-50-rgb: 240, 249, 255;
-  --brand-200: #bae6fd;  --brand-200-rgb: 186, 230, 253;
-  --accent-500: #f59e0b; --accent-500-rgb: 245, 158, 11;
-  --success-600: #16a34a; --success-600-rgb: 22, 163, 74;
-  --danger-600: #dc2626; --danger-600-rgb: 220, 38, 38;
-  --ink-900: #0f172a;    --ink-900-rgb: 15, 23, 42;
-  --ink-500: #64748b;    --ink-500-rgb: 100, 116, 139;
-  --surface-0: #ffffff;  --surface-0-rgb: 255, 255, 255;
-  --surface-1: #f8fafc;  --surface-1-rgb: 248, 250, 252;
-  --line: #e2e8f0;       --line-rgb: 226, 232, 240;
+  --brand-600: #0284c7;  --brand-600-rgb: 2 132 199;
+  --brand-700: #0369a1;  --brand-700-rgb: 3 105 161;
+  --brand-50: #f0f9ff;   --brand-50-rgb: 240 249 255;
+  --brand-200: #bae6fd;  --brand-200-rgb: 186 230 253;
+  --accent-500: #f59e0b; --accent-500-rgb: 245 158 11;
+  --success-600: #16a34a; --success-600-rgb: 22 163 74;
+  --danger-600: #dc2626; --danger-600-rgb: 220 38 38;
+  --ink-900: #0f172a;    --ink-900-rgb: 15 23 42;
+  --ink-500: #64748b;    --ink-500-rgb: 100 116 139;
+  --surface-0: #ffffff;  --surface-0-rgb: 255 255 255;
+  --surface-1: #f8fafc;  --surface-1-rgb: 248 250 252;
+  --line: #e2e8f0;       --line-rgb: 226 232 240;
 
   --radius-kid: 1.25rem; /* bo goc "do choi" cho mat hoc sinh */
 }
 
 /* ---- XANH NHE (theme-sky) ---- */
 html.theme-sky {
-  --brand-600: #0284c7;  --brand-600-rgb: 2, 132, 199;
-  --brand-700: #0369a1;  --brand-700-rgb: 3, 105, 161;
-  --brand-50: #e0f2fe;   --brand-50-rgb: 224, 242, 254;
-  --brand-200: #7dd3fc;  --brand-200-rgb: 125, 211, 252;
-  --accent-500: #f59e0b; --accent-500-rgb: 245, 158, 11;
-  --success-600: #16a34a; --success-600-rgb: 22, 163, 74;
-  --danger-600: #dc2626; --danger-600-rgb: 220, 38, 38;
-  --ink-900: #0c1a2b;    --ink-900-rgb: 12, 26, 43;
-  --ink-500: #475569;    --ink-500-rgb: 71, 85, 105;
-  --surface-0: #ffffff;  --surface-0-rgb: 255, 255, 255;
-  --surface-1: #f0f9ff;  --surface-1-rgb: 240, 249, 255;
-  --line: #bae6fd;       --line-rgb: 186, 230, 253;
+  --brand-600: #0284c7;  --brand-600-rgb: 2 132 199;
+  --brand-700: #0369a1;  --brand-700-rgb: 3 105 161;
+  --brand-50: #e0f2fe;   --brand-50-rgb: 224 242 254;
+  --brand-200: #7dd3fc;  --brand-200-rgb: 125 211 252;
+  --accent-500: #f59e0b; --accent-500-rgb: 245 158 11;
+  --success-600: #16a34a; --success-600-rgb: 22 163 74;
+  --danger-600: #dc2626; --danger-600-rgb: 220 38 38;
+  --ink-900: #0c1a2b;    --ink-900-rgb: 12 26 43;
+  --ink-500: #475569;    --ink-500-rgb: 71 85 105;
+  --surface-0: #ffffff;  --surface-0-rgb: 255 255 255;
+  --surface-1: #f0f9ff;  --surface-1-rgb: 240 249 255;
+  --line: #bae6fd;       --line-rgb: 186 230 253;
 }
 
 /* ---- TOI (dark) ---- */
 html.dark {
   color-scheme: dark;
-  --brand-600: #38bdf8;  --brand-600-rgb: 56, 189, 248;
-  --brand-700: #0284c7;  --brand-700-rgb: 2, 132, 199;
-  --brand-50: #0c1a2b;   --brand-50-rgb: 12, 26, 43;
-  --brand-200: #164e63;  --brand-200-rgb: 22, 78, 99;
-  --accent-500: #fbbf24; --accent-500-rgb: 251, 191, 36;
-  --success-600: #4ade80; --success-600-rgb: 74, 222, 128;
-  --danger-600: #f87171; --danger-600-rgb: 248, 113, 113;
-  --ink-900: #f1f5f9;    --ink-900-rgb: 241, 245, 249;
-  --ink-500: #94a3b8;    --ink-500-rgb: 148, 163, 184;
-  --surface-0: #0f172a;  --surface-0-rgb: 15, 23, 42;
-  --surface-1: #1e293b;  --surface-1-rgb: 30, 41, 59;
-  --line: #334155;       --line-rgb: 51, 65, 85;
+  --brand-600: #38bdf8;  --brand-600-rgb: 56 189 248;
+  --brand-700: #0284c7;  --brand-700-rgb: 2 132 199;
+  --brand-50: #0c1a2b;   --brand-50-rgb: 12 26 43;
+  --brand-200: #164e63;  --brand-200-rgb: 22 78 99;
+  --accent-500: #fbbf24; --accent-500-rgb: 251 191 36;
+  --success-600: #4ade80; --success-600-rgb: 74 222 128;
+  --danger-600: #f87171; --danger-600-rgb: 248 113 113;
+  --ink-900: #f1f5f9;    --ink-900-rgb: 241 245 249;
+  --ink-500: #94a3b8;    --ink-500-rgb: 148 163 184;
+  --surface-0: #0f172a;  --surface-0-rgb: 15 23 42;
+  --surface-1: #1e293b;  --surface-1-rgb: 30 41 59;
+  --line: #334155;       --line-rgb: 51 65 85;
 }
 
 /* Nut "do choi" mat hoc sinh: bong do day kieu Duolingo */

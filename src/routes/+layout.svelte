@@ -753,7 +753,7 @@
                 id="login-btn"
                 data-testid="login-btn"
                 onclick={openAuthModal}
-                class="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-md bg-brand-600 hover:bg-brand-500 text-white font-semibold text-xs shadow-xs transition-all"
+                class="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-md bg-brand-600 hover:bg-brand-700 text-white font-semibold text-xs shadow-xs transition-all"
               >
                 <span>🔑</span>
                 <span class="hidden sm:inline">Đăng Nhập</span>
