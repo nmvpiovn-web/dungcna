@@ -17,6 +17,32 @@
  let historyIndex = $state(0);
  let isMobileSidebarOpen = $state(false);
  let copiedPath = $state(false);
+ let syncing = $state(false);
+ let syncResult = $state('');
+
+ async function syncDatabase() {
+  if (syncing) return;
+  if (!confirm('Mount toàn bộ database (đề thi, câu hỏi, từ vựng, chương trình) vào kho tri thức?')) return;
+  syncing = true; syncResult = '';
+  try {
+   const token = getAuthToken();
+   const res = await fetch('/api/second-brain/sync', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` }
+   });
+   const data = await res.json();
+   if (data.success) {
+    syncResult = `✅ ${data.message}`;
+    await loadVault();
+   } else {
+    syncResult = `❌ ${data.error || 'Sync thất bại'}`;
+   }
+  } catch (e) {
+   syncResult = `❌ Lỗi: ${e.message}`;
+  } finally {
+   syncing = false;
+  }
+ }
 
  const LOCAL_VAULT_PATH = 'c:\\Users\\admin\\.gemini\\antigravity\\scratch\\tienganh7-sveltekit\\obsidian_vault';
 
@@ -172,7 +198,10 @@
  { id: '04_EXAMS_AND_QUESTION_BANK', name: '📝 04. Ngân Hàng Đề Thi', count: vaultNotes.filter(n => n.folder && n.folder.includes('04')).length },
  { id: '05_TEACHING_SOP_AND_PEDAGOGY', name: '👩‍🏫 05. Sư Phạm & SOP', count: vaultNotes.filter(n => n.folder && n.folder.includes('05')).length },
  { id: '06_CROSS_DISCIPLINARY_SYNAPSES', name: '⚡ 06. Mạng Nơ-ron & Synapses', count: vaultNotes.filter(n => n.folder && n.folder.includes('06')).length },
- { id: '07_GOOGLE_DRIVE_LIBRARY', name: '📄 07. Tài liệu Google Drive', count: vaultNotes.filter(n => n.folder === '07_GOOGLE_DRIVE_LIBRARY').length }
+ { id: '07_GOOGLE_DRIVE_LIBRARY', name: '📄 07. Tài liệu Google Drive', count: vaultNotes.filter(n => n.folder === '07_GOOGLE_DRIVE_LIBRARY').length },
+ { id: '08_EXAM_BANK', name: '📝 08. Đề Thi từ Database', count: vaultNotes.filter(n => n.folder === '08_EXAM_BANK').length },
+ { id: '09_VOCABULARY', name: '🔤 09. Từ Vựng / Flashcard từ DB', count: vaultNotes.filter(n => n.folder === '09_VOCABULARY').length },
+ { id: '01_CURRICULUM', name: '📚 01. Chương Trình từ DB', count: vaultNotes.filter(n => n.folder === '01_CURRICULUM').length }
  ];
  });
 
@@ -365,6 +394,20 @@
  >
  <span>🟣</span> Mở Vault Obsidian Máy
  </a>
+
+ <!-- Sync Database → Knowledge Vault -->
+ <button
+ type="button"
+ onclick={syncDatabase}
+ disabled={syncing}
+ class="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-600 disabled:opacity-50 text-white text-xs font-bold shadow-md shadow-emerald-900/30 transition-all hover:scale-[1.02]"
+ title="Mount toàn bộ database (đề thi, câu hỏi, từ vựng, chương trình) vào kho tri thức"
+ >
+ <span>{syncing ? '⏳' : '🔄'}</span> {syncing ? 'Đang sync...' : 'Sync DB → Vault'}
+ </button>
+ {#if syncResult}
+ <div class="text-xs px-3 py-1.5 rounded-lg {syncResult.startsWith('✅') ? 'bg-emerald-500/20 text-emerald-200' : 'bg-red-500/20 text-red-200'}">{syncResult}</div>
+ {/if}
 
  <!-- Mobile Toggle Button -->
  <button
