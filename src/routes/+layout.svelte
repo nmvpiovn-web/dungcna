@@ -288,12 +288,12 @@
  2026 CTGDPT
  </span>
  </div>
- <span class="hidden xl:block text-[11px] text-ink-500 font-medium -mt-0.5 whitespace-nowrap">K12 &amp; Lộ Trình Chuẩn Quốc Tế</span>
+ <span class="hidden 2xl:block text-[11px] text-ink-500 font-medium -mt-0.5 whitespace-nowrap">K12 &amp; Lộ Trình Chuẩn Quốc Tế</span>
  </div>
  </a>
 
  <!-- Desktop Navigation with Flyout Submenus -->
- <nav class="hidden lg:flex items-center gap-1 relative z-40 shrink-0">
+ <nav class="hidden 2xl:flex items-center gap-1 relative z-40 shrink-0">
  <!-- Item 1: Lộ Trình Đào Tạo Dropdown (Or Direct Student Course) -->
  {#if currentUser?.role === 'student'}
  <a
@@ -866,7 +866,7 @@
  id="mobile-menu-btn"
  data-testid="mobile-menu-btn"
  onclick={() => mobileMenuOpen = !mobileMenuOpen}
- class="lg:hidden p-1.5 sm:p-2 rounded-md bg-surface-1 text-ink-500 hover:text-ink-900 transition-colors"
+ class="2xl:hidden p-1.5 sm:p-2 rounded-md bg-surface-1 text-ink-500 hover:text-ink-900 transition-colors"
  aria-label="Toggle Menu"
  >
  <span class="text-base">{mobileMenuOpen ? '✕' : '☰'}</span>
@@ -877,7 +877,7 @@
 
  <!-- Mobile Navigation Drawer -->
  {#if mobileMenuOpen}
- <div id="mobile-drawer" data-testid="mobile-drawer" class="lg:hidden py-4 border-t border-line space-y-4 animate-in slide-in-from-top-2 duration-150 max-h-[82vh] overflow-y-auto">
+ <div id="mobile-drawer" data-testid="mobile-drawer" class="2xl:hidden py-4 border-t border-line space-y-4 animate-in slide-in-from-top-2 duration-150 max-h-[82vh] overflow-y-auto">
  <!-- Section 1: Khóa Học & Lộ Trình -->
  <div class="space-y-1.5">
  <div class="text-xs font-bold uppercase tracking-wider text-ink-500 px-1">

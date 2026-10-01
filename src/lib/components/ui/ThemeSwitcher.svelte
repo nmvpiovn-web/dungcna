@@ -25,7 +25,7 @@
  class={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-bold transition-all ${current === t ? 'bg-brand-600 text-white shadow-sm' : 'text-ink-500 hover:text-ink-900'}`}
  >
  <span>{icons[t]}</span>
- <span class="hidden sm:inline">{THEME_LABELS[t]}</span>
+ <span class="hidden 2xl:inline">{THEME_LABELS[t]}</span>
  </button>
  {/each}
 </div>
