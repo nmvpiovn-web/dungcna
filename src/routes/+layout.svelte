@@ -1147,7 +1147,7 @@
  <div class="flex flex-wrap items-center justify-center md:justify-end gap-x-3 gap-y-1.5 text-[11px]">
  <span class="text-emerald-700 flex items-center gap-1 font-semibold">
  <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
- Cloudflare D1 APAC Active
+ Hệ thống hoạt động ổn định
  </span>
  <span class="text-slate-300">•</span>
  <a href="/evaluations" class="hover:text-brand-600">Đánh giá học sinh</a>

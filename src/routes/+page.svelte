@@ -19,7 +19,6 @@
 
  // Academic Warmth UI (Phase 1)
  import IntentHero from '$lib/components/ui/IntentHero.svelte';
- import NeedQuiz from '$lib/components/ui/NeedQuiz.svelte';
  import StatCounter from '$lib/components/ui/StatCounter.svelte';
  import RoadmapPath from '$lib/components/ui/RoadmapPath.svelte';
  import FaqAccordion from '$lib/components/ui/FaqAccordion.svelte';
@@ -253,14 +252,6 @@
  { key: 'teacher', emoji: '👩‍🏫', title: 'Tôi là giáo viên', desc: 'Quản lý lớp, chấm bài, gửi báo cáo phụ huynh.', cta: '🛠️ Mở bảng điều khiển', href: '/cpanel' }
  ];
 
- // ===== NeedQuiz: chon khoi lop -> goi y lo trinh (khong can login) =====
- const quizGrades = [
- { key: 'g1-5', label: 'Lớp 1 – 5', suggestion: 'Tiếng Anh tiểu học: phonics + từ vựng theo chủ đề', detail: 'Học qua game, bài hát và truyện tranh — 2 buổi/tuần.', href: '/courses' },
- { key: 'g6-9', label: 'Lớp 6 – 9', suggestion: 'THCS: ngữ pháp nền + luyện đề Global Success', detail: 'Bám sát SGK, ngân hàng đề 15p – 45p, báo cáo Zalo hằng tuần.', href: '/courses' },
- { key: 'g10-12', label: 'Lớp 10 – 12', suggestion: 'THPT: ôn thi tốt nghiệp & vào 10/ĐH', detail: 'Chiến thuật giải đề, chấm writing theo rubric, cam kết đầu ra.', href: '/courses' },
- { key: 'ielts', label: 'IELTS / TOEIC', suggestion: 'Chứng chỉ quốc tế: IELTS Foundation band 5.5 → 6.5+', detail: '4 kỹ năng, mock test định kỳ, GV bản ngữ + chuyên ngữ.', href: '/bang-gia' }
- ];
-
  const proofStats = [
  { value: data.stats?.totalQuestions ?? 1375, suffix: '', label: 'Câu hỏi ngân hàng đề', icon: '📝' },
  { value: data.stats?.totalWords ?? 222, suffix: '', label: 'Từ vựng minh họa', icon: '🔤' },
@@ -398,10 +389,7 @@
  intents={heroIntents}
  />
 
- <!-- ===== 2. Need Quiz ===== -->
- <NeedQuiz grades={quizGrades} />
-
- <!-- ===== 3. Proof bar (số liệu thật) ===== -->
+ <!-- ===== 2. Proof bar (số liệu thật) ===== -->
  <section>
  <SectionHeading eyebrow="Con số biết nói" title="Học liệu thật, đo được" center />
  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
@@ -411,7 +399,7 @@
  </div>
  </section>
 
- <!-- ===== 4. Pain points ===== -->
+ <!-- ===== 3. Pain points ===== -->
  <section>
  <SectionHeading eyebrow="Thấu hiểu phụ huynh" title="3 nỗi lo thường gặp — và cách chúng tôi giải" center />
  <div class="grid md:grid-cols-3 gap-3 sm:gap-4">
@@ -426,9 +414,9 @@
  </div>
  </section>
 
- <!-- ===== 5. Roadmap ===== -->
+ <!-- ===== 4. Roadmap ===== -->
  <section class="rounded-3xl bg-surface-0 border border-line p-4 sm:p-6 shadow-sm">
- <SectionHeading eyebrow="Lộ trình rõ ràng" title="Từ mất gốc đến IELTS: mỗi bước đều có đích" />
+ <SectionHeading eyebrow="Lộ trình rõ ràng" title="5 bước từ nền tảng đến chứng chỉ quốc tế" />
  <RoadmapPath nodes={roadmapNodes} />
  <div class="mt-3 flex flex-wrap gap-2 sm:gap-3">
  <UiButton href="/exam#placement" size="sm">📝 Test xem con đang ở đâu</UiButton>
@@ -436,7 +424,7 @@
  </div>
  </section>
 
- <!-- ===== 6. Pricing teaser ===== -->
+ <!-- ===== 5. Pricing teaser ===== -->
  <section>
  <SectionHeading eyebrow="Học phí" title="Chọn lớp theo đúng trình độ của con" center actionLabel="Xem bảng giá đầy đủ →" actionHref="/bang-gia" />
  <div class="grid md:grid-cols-3 gap-3 sm:gap-4">
@@ -446,7 +434,7 @@
  </div>
  </section>
 
- <!-- ===== 7. Hall of Fame teaser (trung thực: cam kết chương trình) ===== -->
+ <!-- ===== 6. Hall of Fame teaser (trung thực: cam kết chương trình) ===== -->
  <section class="rounded-3xl hof-gradient text-white p-6 sm:p-10 shadow-sm relative overflow-hidden">
  <div class="absolute -right-16 -top-16 w-64 h-64 rounded-full bg-white/15 blur-2xl pointer-events-none"></div>
  <div class="absolute -left-20 -bottom-20 w-72 h-72 rounded-full bg-cx-200/40 blur-3xl pointer-events-none"></div>
@@ -469,7 +457,7 @@
  </div>
  </section>
 
- <!-- ===== 8. Curriculum explorer (giữ logic enrollment/unlock) ===== -->
+ <!-- ===== 7. Curriculum explorer (giữ logic enrollment/unlock) ===== -->
  <section id="curriculum-section" class="scroll-mt-24">
  <SectionHeading eyebrow="Chương trình học" title="Lộ trình K12 & chứng chỉ quốc tế" sub="Chọn đúng cấp học của con — tài khoản đã đăng ký lớp sẽ thấy nút vào học." />
  <div class="flex flex-wrap gap-2 mb-5">
@@ -548,7 +536,7 @@
  {/if}
  </section>
 
- <!-- ===== 9. Parent test records (giữ logic OCR) ===== -->
+ <!-- ===== 8. Parent test records (giữ logic OCR) ===== -->
  {#if currentUser?.role === 'parent' && linkedChild}
  <section class="rounded-3xl bg-surface-0 border border-line p-5 sm:p-6 shadow-sm">
  <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
@@ -577,7 +565,7 @@
  </section>
  {/if}
 
- <!-- ===== 10. FAQ ===== -->
+ <!-- ===== 9. FAQ ===== -->
  <section>
  <SectionHeading eyebrow="Hỏi đáp" title="Phụ huynh hay hỏi gì?" center />
  <FaqAccordion items={faqItems} />
