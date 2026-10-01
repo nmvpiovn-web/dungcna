@@ -177,9 +177,27 @@
  showEditModal = true;
  }
 
- function handleDelete(id, name) {
+ async function handleDelete(id, name) {
  if (confirm(`Bạn có chắc muốn xóa ca học "${name}" khỏi thời khóa biểu?`)) {
+ const token = typeof window !== 'undefined' ? localStorage.getItem('tienganh_token') : null;
+ if (token) {
+ try {
+ const res = await fetch(`/api/schedule?id=${encodeURIComponent(id)}`, {
+ method: 'DELETE',
+ headers: { 'Authorization': `Bearer ${token}` }
+ });
+ const data = await res.json().catch(() => ({}));
+ if (!res.ok || !data.success) {
+ showToast('Lỗi xóa: ' + (data.error || `mã ${res.status}`));
+ return;
+ }
+ } catch (e) {
+ showToast('Lỗi kết nối: ' + e.message);
+ return;
+ }
+ } else {
  deleteClassSession(id, currentUser);
+ }
  loadData();
  showToast('Đã xóa ca học khỏi thời khóa biểu');
  }

@@ -601,7 +601,9 @@
  if (activeExamGroup === 'my_grade') return isExamEnrolledForUser(currentUser, e);
  if (activeExamGroup === 'k12') {
  if (activeExamCategory === 'primary') return (e.grade >= 1 && e.grade <= 5) || e.title.includes('Lớp 1') || e.title.includes('Lớp 2') || e.title.includes('Lớp 3') || e.title.includes('Lớp 4') || e.title.includes('Lớp 5');
+ if (activeExamCategory === 'g6') return e.grade === 6 || e.title.includes('Lớp 6') || e.curriculum_id === 'curr_g6';
  if (activeExamCategory === 'g7') return e.grade === 7 || e.title.includes('Lớp 7') || e.curriculum_id === 'curr_g7';
+ if (activeExamCategory === 'g8') return e.grade === 8 || e.title.includes('Lớp 8') || e.curriculum_id === 'curr_g8';
  if (activeExamCategory === 'g9') return e.grade === 9 || e.title.includes('Vào 10') || e.curriculum_id === 'curr_g9';
  if (activeExamCategory === 'highschool') return (e.grade >= 10 && e.grade <= 12) || e.title.includes('Lớp 10') || e.title.includes('Lớp 11') || e.title.includes('Lớp 12') || e.title.includes('THPT');
  return (e.grade >= 1 && e.grade <= 12) || e.curriculum_id?.startsWith('curr_g') || e.curriculum_id === 'curr_thptqg' || !['ielts_academic', 'toeic_lr', 'toefl_ibt'].includes(e.format_type);
@@ -1158,10 +1160,22 @@
  🎒 Tiểu Học (Lớp 1 - 5)
  </button>
  <button
+ onclick={() => activeExamCategory = 'g6'}
+ class="px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-colors {activeExamCategory === 'g6' ? 'bg-brand-600 text-white shadow-xs' : 'bg-surface-1 text-ink-500 hover:bg-line'}"
+ >
+ 📚 Lớp 6 (THCS)
+ </button>
+ <button
  onclick={() => activeExamCategory = 'g7'}
  class="px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-colors {activeExamCategory === 'g7' ? 'bg-brand-600 text-white shadow-xs' : 'bg-surface-1 text-ink-500 hover:bg-line'}"
  >
  🌱 Lớp 7 (Global Success &amp; KET)
+ </button>
+ <button
+ onclick={() => activeExamCategory = 'g8'}
+ class="px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-colors {activeExamCategory === 'g8' ? 'bg-brand-600 text-white shadow-xs' : 'bg-surface-1 text-ink-500 hover:bg-line'}"
+ >
+ 📖 Lớp 8 (THCS)
  </button>
  <button
  onclick={() => activeExamCategory = 'g9'}

@@ -138,16 +138,36 @@ async function completeGuestSession(db, sessionId, answers, result, now = Date.n
 // Supported Curated Grade & Curriculum Matrix
 // Strictly declare what is verified. ZERO cloning, ZERO fake looping.
 const SUPPORTED_GRADES = {
+  lop_1: 'Lớp 1 (Tiểu học)',
+  lop_2: 'Lớp 2 (Tiểu học)',
+  lop_3: 'Lớp 3 (Tiểu học)',
+  lop_4: 'Lớp 4 (Tiểu học)',
+  lop_5: 'Lớp 5 (Tiểu học)',
+  lop_6: 'Lớp 6 (THCS)',
   lop_7: 'Lớp 7 (Nền Tảng THCS)',
+  lop_8: 'Lớp 8 (THCS)',
+  lop_9: 'Lớp 9 (Ôn thi vào 10)',
+  lop_10: 'Lớp 10 (THPT)',
+  lop_11: 'Lớp 11 (THPT)',
   lop_12: 'Lớp 12 (Thi THPT QG / IELTS)'
 };
 
 const SUPPORTED_CURRICULA = {
+  lop_1: { primary_english: 'Tiếng Anh Tiểu học - Phonics & Từ vựng' },
+  lop_2: { primary_english: 'Tiếng Anh Tiểu học - Phonics & Từ vựng' },
+  lop_3: { primary_english: 'Tiếng Anh Tiểu học - Ngữ pháp cơ bản' },
+  lop_4: { primary_english: 'Tiếng Anh Tiểu học - Ngữ pháp cơ bản' },
+  lop_5: { primary_english: 'Tiếng Anh Tiểu học - Nâng cao' },
+  lop_6: { global_success: 'Kết nối tri thức (Global Success)' },
   lop_7: {
     global_success: 'Kết nối tri thức (Global Success)',
     friends_plus: 'Chân trời sáng tạo (Friends Plus)',
     smart_world: 'i-Learn Smart World'
   },
+  lop_8: { global_success: 'Kết nối tri thức (Global Success)' },
+  lop_9: { global_success: 'Ôn thi vào 10 (Global Success)' },
+  lop_10: { thpt_foundation: 'Nền tảng THPT' },
+  lop_11: { thpt_foundation: 'Nền tảng THPT Nâng cao' },
   lop_12: {
     thpt_qg: 'Chương trình GDPT Chuẩn & Ôn thi THPT Quốc Gia',
     ielts_academic: 'Định hướng Học thuật & IELTS Foundation'
@@ -155,11 +175,21 @@ const SUPPORTED_CURRICULA = {
 };
 
 const SUPPORTED_CONFIGS = {
+  lop_1: { primary_english: { '5m': 5, '15m': 10 } },
+  lop_2: { primary_english: { '5m': 5, '15m': 10 } },
+  lop_3: { primary_english: { '5m': 5, '15m': 10 } },
+  lop_4: { primary_english: { '5m': 5, '15m': 10 } },
+  lop_5: { primary_english: { '5m': 5, '15m': 10 } },
+  lop_6: { global_success: { '5m': 5, '15m': 10 } },
   lop_7: {
     global_success: { '5m': 5, '15m': 10 },
     friends_plus: { '5m': 5 },
     smart_world: { '5m': 5 }
   },
+  lop_8: { global_success: { '5m': 5, '15m': 10 } },
+  lop_9: { global_success: { '5m': 5, '15m': 10 } },
+  lop_10: { thpt_foundation: { '5m': 5, '15m': 10 } },
+  lop_11: { thpt_foundation: { '5m': 5, '15m': 10 } },
   lop_12: {
     thpt_qg: { '5m': 5 },
     ielts_academic: { '5m': 5 }
@@ -557,7 +587,127 @@ const GUEST_QUESTION_BANK = {
         explanation: 'Cụm liên từ chỉ sự nhượng bộ: In spite of (mặc dù).'
       }
     ]
-  }
+  },
+lop_1: { primary_english: [
+{ id: 'gst_lop1_q1', type: 'mcq', skill: 'vocabulary', question_text: "What color is the sun?", options: [{ id: 'A', text: "Yellow" }, { id: 'B', text: "Blue" }, { id: 'C', text: "Green" }, { id: 'D', text: "Black" }], correct_option_id: 'A', explanation: "Mặt trời có màu vàng (yellow)." },
+{ id: 'gst_lop1_q2', type: 'mcq', skill: 'vocabulary', question_text: "Which animal says 'meow'?", options: [{ id: 'A', text: "Dog" }, { id: 'B', text: "Cat" }, { id: 'C', text: "Bird" }, { id: 'D', text: "Fish" }], correct_option_id: 'B', explanation: "Con mèo (cat) kêu 'meow'." },
+{ id: 'gst_lop1_q3', type: 'mcq', skill: 'vocabulary', question_text: "Choose the word that begins with the letter 'B'.", options: [{ id: 'A', text: "Apple" }, { id: 'B', text: "Ball" }, { id: 'C', text: "Cat" }, { id: 'D', text: "Dog" }], correct_option_id: 'B', explanation: "'Ball' (quả bóng) bắt đầu bằng chữ B." },
+{ id: 'gst_lop1_q4', type: 'mcq', skill: 'vocabulary', question_text: "My mother's son is my ___.", options: [{ id: 'A', text: "sister" }, { id: 'B', text: "brother" }, { id: 'C', text: "father" }, { id: 'D', text: "mother" }], correct_option_id: 'B', explanation: "Con trai của mẹ mình là anh/em trai (brother)." },
+{ id: 'gst_lop1_q5', type: 'mcq', skill: 'vocabulary', question_text: "How many fingers do you have on one hand?", options: [{ id: 'A', text: "Three" }, { id: 'B', text: "Four" }, { id: 'C', text: "Five" }, { id: 'D', text: "Six" }], correct_option_id: 'C', explanation: "Một bàn tay có 5 ngón (five)." },
+{ id: 'gst_lop1_q6', type: 'mcq', skill: 'grammar', question_text: "___ is a book.", options: [{ id: 'A', text: "This" }, { id: 'B', text: "These" }, { id: 'C', text: "Those" }, { id: 'D', text: "They" }], correct_option_id: 'A', explanation: "Dùng 'This' cho một vật ở gần, số ít." },
+{ id: 'gst_lop1_q7', type: 'mcq', skill: 'vocabulary', question_text: "What color is grass?", options: [{ id: 'A', text: "Red" }, { id: 'B', text: "Green" }, { id: 'C', text: "White" }, { id: 'D', text: "Pink" }], correct_option_id: 'B', explanation: "Cỏ có màu xanh lá (green)." },
+{ id: 'gst_lop1_q8', type: 'mcq', skill: 'vocabulary', question_text: "A ___ can fly in the sky.", options: [{ id: 'A', text: "fish" }, { id: 'B', text: "dog" }, { id: 'C', text: "bird" }, { id: 'D', text: "cat" }], correct_option_id: 'C', explanation: "Chim (bird) có thể bay trên trời." },
+{ id: 'gst_lop1_q9', type: 'mcq', skill: 'vocabulary', question_text: "Which word rhymes with 'cat'?", options: [{ id: 'A', text: "Dog" }, { id: 'B', text: "Hat" }, { id: 'C', text: "Pig" }, { id: 'D', text: "Cow" }], correct_option_id: 'B', explanation: "'Hat' vần với 'cat' (cùng âm -at)." },
+{ id: 'gst_lop1_q10', type: 'mcq', skill: 'grammar', question_text: "I ___ a boy.", options: [{ id: 'A', text: "is" }, { id: 'B', text: "are" }, { id: 'C', text: "am" }, { id: 'D', text: "be" }], correct_option_id: 'C', explanation: "Đi với 'I' dùng 'am'." }
+] },
+lop_2: { primary_english: [
+{ id: 'gst_lop2_q1', type: 'mcq', skill: 'vocabulary', question_text: "Elephants are very ___.", options: [{ id: 'A', text: "small" }, { id: 'B', text: "big" }, { id: 'C', text: "short" }, { id: 'D', text: "thin" }], correct_option_id: 'B', explanation: "Voi rất to lớn (big)." },
+{ id: 'gst_lop2_q2', type: 'mcq', skill: 'vocabulary', question_text: "Choose the fruit.", options: [{ id: 'A', text: "Apple" }, { id: 'B', text: "Car" }, { id: 'C', text: "Table" }, { id: 'D', text: "Chair" }], correct_option_id: 'A', explanation: "'Apple' (quả táo) là trái cây." },
+{ id: 'gst_lop2_q3', type: 'mcq', skill: 'grammar', question_text: "She ___ my teacher.", options: [{ id: 'A', text: "am" }, { id: 'B', text: "is" }, { id: 'C', text: "are" }, { id: 'D', text: "be" }], correct_option_id: 'B', explanation: "Đi với 'She' dùng 'is'." },
+{ id: 'gst_lop2_q4', type: 'mcq', skill: 'vocabulary', question_text: "The opposite of 'hot' is ___.", options: [{ id: 'A', text: "warm" }, { id: 'B', text: "cold" }, { id: 'C', text: "big" }, { id: 'D', text: "fast" }], correct_option_id: 'B', explanation: "Trái nghĩa với 'hot' (nóng) là 'cold' (lạnh)." },
+{ id: 'gst_lop2_q5', type: 'mcq', skill: 'vocabulary', question_text: "A baby dog is called a ___.", options: [{ id: 'A', text: "kitten" }, { id: 'B', text: "puppy" }, { id: 'C', text: "chick" }, { id: 'D', text: "lamb" }], correct_option_id: 'B', explanation: "Chó con gọi là 'puppy'." },
+{ id: 'gst_lop2_q6', type: 'mcq', skill: 'grammar', question_text: "They ___ happy today.", options: [{ id: 'A', text: "is" }, { id: 'B', text: "am" }, { id: 'C', text: "are" }, { id: 'D', text: "be" }], correct_option_id: 'C', explanation: "Đi với 'They' dùng 'are'." },
+{ id: 'gst_lop2_q7', type: 'mcq', skill: 'vocabulary', question_text: "Which one is a color?", options: [{ id: 'A', text: "Red" }, { id: 'B', text: "Run" }, { id: 'C', text: "Jump" }, { id: 'D', text: "Sing" }], correct_option_id: 'A', explanation: "'Red' (màu đỏ) là màu sắc." },
+{ id: 'gst_lop2_q8', type: 'mcq', skill: 'vocabulary', question_text: "We can ___ with our eyes.", options: [{ id: 'A', text: "hear" }, { id: 'B', text: "see" }, { id: 'C', text: "smell" }, { id: 'D', text: "taste" }], correct_option_id: 'B', explanation: "Chúng ta nhìn (see) bằng mắt." },
+{ id: 'gst_lop2_q9', type: 'mcq', skill: 'grammar', question_text: "___ are my friends.", options: [{ id: 'A', text: "This" }, { id: 'B', text: "These" }, { id: 'C', text: "That" }, { id: 'D', text: "It" }], correct_option_id: 'B', explanation: "Dùng 'These' cho nhiều người/vật ở gần." },
+{ id: 'gst_lop2_q10', type: 'mcq', skill: 'vocabulary', question_text: "Monday, Tuesday, Wednesday, ___.", options: [{ id: 'A', text: "Thursday" }, { id: 'B', text: "January" }, { id: 'C', text: "Morning" }, { id: 'D', text: "Night" }], correct_option_id: 'A', explanation: "Sau thứ Tư (Wednesday) là thứ Năm (Thursday)." }
+] },
+lop_3: { primary_english: [
+{ id: 'gst_lop3_q1', type: 'mcq', skill: 'grammar', question_text: "He ___ a student.", options: [{ id: 'A', text: "am" }, { id: 'B', text: "is" }, { id: 'C', text: "are" }, { id: 'D', text: "be" }], correct_option_id: 'B', explanation: "Đi với 'He' dùng 'is'." },
+{ id: 'gst_lop3_q2', type: 'mcq', skill: 'grammar', question_text: "She ___ two brothers.", options: [{ id: 'A', text: "have" }, { id: 'B', text: "has" }, { id: 'C', text: "haves" }, { id: 'D', text: "having" }], correct_option_id: 'B', explanation: "Ngôi thứ ba số ít (she) dùng 'has'." },
+{ id: 'gst_lop3_q3', type: 'mcq', skill: 'vocabulary', question_text: "A doctor works in a ___.", options: [{ id: 'A', text: "school" }, { id: 'B', text: "hospital" }, { id: 'C', text: "bank" }, { id: 'D', text: "park" }], correct_option_id: 'B', explanation: "Bác sĩ làm việc ở bệnh viện (hospital)." },
+{ id: 'gst_lop3_q4', type: 'mcq', skill: 'grammar', question_text: "They ___ football every Sunday.", options: [{ id: 'A', text: "plays" }, { id: 'B', text: "play" }, { id: 'C', text: "playing" }, { id: 'D', text: "played" }], correct_option_id: 'B', explanation: "Thì hiện tại đơn, chủ ngữ số nhiều dùng động từ nguyên thể." },
+{ id: 'gst_lop3_q5', type: 'mcq', skill: 'vocabulary', question_text: "It is ___ today. Take your umbrella!", options: [{ id: 'A', text: "sunny" }, { id: 'B', text: "rainy" }, { id: 'C', text: "windy" }, { id: 'D', text: "snowy" }], correct_option_id: 'B', explanation: "Trời mưa (rainy) nên cần mang ô." },
+{ id: 'gst_lop3_q6', type: 'mcq', skill: 'grammar', question_text: "___ you like apples?", options: [{ id: 'A', text: "Does" }, { id: 'B', text: "Do" }, { id: 'C', text: "Is" }, { id: 'D', text: "Are" }], correct_option_id: 'B', explanation: "Câu hỏi thì hiện tại đơn với 'you' dùng trợ động từ 'Do'." },
+{ id: 'gst_lop3_q7', type: 'mcq', skill: 'vocabulary', question_text: "The ___ is the king of the jungle.", options: [{ id: 'A', text: "lion" }, { id: 'B', text: "rabbit" }, { id: 'C', text: "mouse" }, { id: 'D', text: "frog" }], correct_option_id: 'A', explanation: "Sư tử (lion) được gọi là chúa tể rừng xanh." },
+{ id: 'gst_lop3_q8', type: 'mcq', skill: 'grammar', question_text: "My mother ___ in a bank.", options: [{ id: 'A', text: "work" }, { id: 'B', text: "works" }, { id: 'C', text: "working" }, { id: 'D', text: "worked" }], correct_option_id: 'B', explanation: "Ngôi thứ ba số ít, động từ thêm -s: 'works'." },
+{ id: 'gst_lop3_q9', type: 'mcq', skill: 'vocabulary', question_text: "We write with a ___.", options: [{ id: 'A', text: "book" }, { id: 'B', text: "pen" }, { id: 'C', text: "ruler" }, { id: 'D', text: "bag" }], correct_option_id: 'B', explanation: "Chúng ta viết bằng bút (pen)." },
+{ id: 'gst_lop3_q10', type: 'mcq', skill: 'grammar', question_text: "There ___ three cats in the garden.", options: [{ id: 'A', text: "is" }, { id: 'B', text: "are" }, { id: 'C', text: "am" }, { id: 'D', text: "be" }], correct_option_id: 'B', explanation: "Danh từ số nhiều (three cats) dùng 'There are'." }
+] },
+lop_4: { primary_english: [
+{ id: 'gst_lop4_q1', type: 'mcq', skill: 'grammar', question_text: "She ___ to school by bus every day.", options: [{ id: 'A', text: "go" }, { id: 'B', text: "goes" }, { id: 'C', text: "going" }, { id: 'D', text: "gone" }], correct_option_id: 'B', explanation: "Thì hiện tại đơn, ngôi thứ ba số ít: 'goes'." },
+{ id: 'gst_lop4_q2', type: 'mcq', skill: 'vocabulary', question_text: "A person who teaches students is a ___.", options: [{ id: 'A', text: "doctor" }, { id: 'B', text: "teacher" }, { id: 'C', text: "farmer" }, { id: 'D', text: "driver" }], correct_option_id: 'B', explanation: "Người dạy học sinh là giáo viên (teacher)." },
+{ id: 'gst_lop4_q3', type: 'mcq', skill: 'grammar', question_text: "___ there any milk in the fridge?", options: [{ id: 'A', text: "Is" }, { id: 'B', text: "Are" }, { id: 'C', text: "Do" }, { id: 'D', text: "Does" }], correct_option_id: 'A', explanation: "'Milk' là danh từ không đếm được, dùng 'Is there'." },
+{ id: 'gst_lop4_q4', type: 'mcq', skill: 'vocabulary', question_text: "The opposite of 'tall' is ___.", options: [{ id: 'A', text: "short" }, { id: 'B', text: "long" }, { id: 'C', text: "big" }, { id: 'D', text: "high" }], correct_option_id: 'A', explanation: "Trái nghĩa với 'tall' (cao) là 'short' (thấp)." },
+{ id: 'gst_lop4_q5', type: 'mcq', skill: 'grammar', question_text: "He doesn't ___ TV in the morning.", options: [{ id: 'A', text: "watches" }, { id: 'B', text: "watch" }, { id: 'C', text: "watching" }, { id: 'D', text: "watched" }], correct_option_id: 'B', explanation: "Sau 'doesn't' dùng động từ nguyên thể." },
+{ id: 'gst_lop4_q6', type: 'mcq', skill: 'vocabulary', question_text: "We celebrate Tet in ___.", options: [{ id: 'A', text: "summer" }, { id: 'B', text: "spring" }, { id: 'C', text: "autumn" }, { id: 'D', text: "winter" }], correct_option_id: 'B', explanation: "Tết Nguyên Đán diễn ra vào mùa xuân (spring)." },
+{ id: 'gst_lop4_q7', type: 'mcq', skill: 'grammar', question_text: "What time ___ she get up?", options: [{ id: 'A', text: "do" }, { id: 'B', text: "does" }, { id: 'C', text: "is" }, { id: 'D', text: "are" }], correct_option_id: 'B', explanation: "Câu hỏi thì hiện tại đơn với 'she' dùng 'does'." },
+{ id: 'gst_lop4_q8', type: 'mcq', skill: 'vocabulary', question_text: "A ___ is a place where you can borrow books.", options: [{ id: 'A', text: "library" }, { id: 'B', text: "museum" }, { id: 'C', text: "zoo" }, { id: 'D', text: "market" }], correct_option_id: 'A', explanation: "Thư viện (library) là nơi mượn sách." },
+{ id: 'gst_lop4_q9', type: 'mcq', skill: 'grammar', question_text: "My father ___ breakfast at 6 o'clock.", options: [{ id: 'A', text: "have" }, { id: 'B', text: "has" }, { id: 'C', text: "having" }, { id: 'D', text: "is have" }], correct_option_id: 'B', explanation: "Ngôi thứ ba số ít dùng 'has'." },
+{ id: 'gst_lop4_q10', type: 'mcq', skill: 'vocabulary', question_text: "We can see the ___ and stars at night.", options: [{ id: 'A', text: "sun" }, { id: 'B', text: "moon" }, { id: 'C', text: "cloud" }, { id: 'D', text: "rainbow" }], correct_option_id: 'B', explanation: "Ban đêm ta thấy mặt trăng (moon) và các ngôi sao." }
+] },
+lop_5: { primary_english: [
+{ id: 'gst_lop5_q1', type: 'mcq', skill: 'grammar', question_text: "Yesterday, we ___ to the zoo.", options: [{ id: 'A', text: "go" }, { id: 'B', text: "goes" }, { id: 'C', text: "went" }, { id: 'D', text: "going" }], correct_option_id: 'C', explanation: "Có 'yesterday' nên dùng thì quá khứ đơn: 'went'." },
+{ id: 'gst_lop5_q2', type: 'mcq', skill: 'vocabulary', question_text: "A ___ is someone who flies a plane.", options: [{ id: 'A', text: "pilot" }, { id: 'B', text: "sailor" }, { id: 'C', text: "driver" }, { id: 'D', text: "chef" }], correct_option_id: 'A', explanation: "Phi công (pilot) là người lái máy bay." },
+{ id: 'gst_lop5_q3', type: 'mcq', skill: 'grammar', question_text: "She has lived here ___ 2019.", options: [{ id: 'A', text: "for" }, { id: 'B', text: "since" }, { id: 'C', text: "from" }, { id: 'D', text: "at" }], correct_option_id: 'B', explanation: "Đi với mốc thời gian (2019) dùng 'since'." },
+{ id: 'gst_lop5_q4', type: 'mcq', skill: 'vocabulary', question_text: "The weather is very cold. Put on your ___.", options: [{ id: 'A', text: "coat" }, { id: 'B', text: "shirt" }, { id: 'C', text: "shorts" }, { id: 'D', text: "sandals" }], correct_option_id: 'A', explanation: "Trời lạnh nên mặc áo khoác (coat)." },
+{ id: 'gst_lop5_q5', type: 'mcq', skill: 'grammar', question_text: "___ your homework yet?", options: [{ id: 'A', text: "Do you finish" }, { id: 'B', text: "Have you finished" }, { id: 'C', text: "Did you finished" }, { id: 'D', text: "Are you finish" }], correct_option_id: 'B', explanation: "Có 'yet' nên dùng thì hiện tại hoàn thành: 'Have you finished'." },
+{ id: 'gst_lop5_q6', type: 'mcq', skill: 'vocabulary', question_text: "A synonym for 'happy' is ___.", options: [{ id: 'A', text: "sad" }, { id: 'B', text: "glad" }, { id: 'C', text: "angry" }, { id: 'D', text: "tired" }], correct_option_id: 'B', explanation: "'Glad' đồng nghĩa với 'happy' (vui vẻ)." },
+{ id: 'gst_lop5_q7', type: 'mcq', skill: 'grammar', question_text: "There ___ a lot of people at the party last night.", options: [{ id: 'A', text: "is" }, { id: 'B', text: "was" }, { id: 'C', text: "were" }, { id: 'D', text: "are" }], correct_option_id: 'C', explanation: "'Last night' là quá khứ, 'people' số nhiều nên dùng 'were'." },
+{ id: 'gst_lop5_q8', type: 'mcq', skill: 'vocabulary', question_text: "We use ___ to cut paper.", options: [{ id: 'A', text: "a knife" }, { id: 'B', text: "scissors" }, { id: 'C', text: "a spoon" }, { id: 'D', text: "a fork" }], correct_option_id: 'B', explanation: "Dùng kéo (scissors) để cắt giấy." },
+{ id: 'gst_lop5_q9', type: 'mcq', skill: 'grammar', question_text: "While I was cooking, the phone ___.", options: [{ id: 'A', text: "rings" }, { id: 'B', text: "rang" }, { id: 'C', text: "ring" }, { id: 'D', text: "ringing" }], correct_option_id: 'B', explanation: "Hành động xen vào trong quá khứ dùng quá khứ đơn: 'rang'." },
+{ id: 'gst_lop5_q10', type: 'mcq', skill: 'vocabulary', question_text: "The ___ is the largest animal in the world.", options: [{ id: 'A', text: "elephant" }, { id: 'B', text: "shark" }, { id: 'C', text: "blue whale" }, { id: 'D', text: "giraffe" }], correct_option_id: 'C', explanation: "Cá voi xanh (blue whale) là động vật lớn nhất thế giới." }
+] },
+lop_6: { global_success: [
+{ id: 'gst_lop6_q1', type: 'mcq', skill: 'grammar', question_text: "My brother ___ his homework yet.", options: [{ id: 'A', text: "hasn't finished" }, { id: 'B', text: "didn't finished" }, { id: 'C', text: "doesn't finish" }, { id: 'D', text: "isn't finish" }], correct_option_id: 'A', explanation: "Có 'yet' dùng hiện tại hoàn thành phủ định: 'hasn't finished'." },
+{ id: 'gst_lop6_q2', type: 'mcq', skill: 'grammar', question_text: "She is ___ than her sister.", options: [{ id: 'A', text: "tall" }, { id: 'B', text: "taller" }, { id: 'C', text: "tallest" }, { id: 'D', text: "more tall" }], correct_option_id: 'B', explanation: "So sánh hơn với tính từ ngắn: tall → taller." },
+{ id: 'gst_lop6_q3', type: 'mcq', skill: 'vocabulary', question_text: "Don't be ___. Share your toys with others!", options: [{ id: 'A', text: "generous" }, { id: 'B', text: "selfish" }, { id: 'C', text: "kind" }, { id: 'D', text: "friendly" }], correct_option_id: 'B', explanation: "Không nên ích kỷ (selfish) — hãy chia sẻ đồ chơi." },
+{ id: 'gst_lop6_q4', type: 'mcq', skill: 'grammar', question_text: "We ___ a picnic this Sunday if the weather is nice.", options: [{ id: 'A', text: "have" }, { id: 'B', text: "will have" }, { id: 'C', text: "had" }, { id: 'D', text: "having" }], correct_option_id: 'B', explanation: "Dự định tương lai dùng 'will': 'will have'." },
+{ id: 'gst_lop6_q5', type: 'mcq', skill: 'reading_cloze', question_text: "Tom ___ to the beach with his family last summer.", options: [{ id: 'A', text: "goes" }, { id: 'B', text: "went" }, { id: 'C', text: "go" }, { id: 'D', text: "going" }], correct_option_id: 'B', explanation: "'Last summer' là dấu hiệu của thì quá khứ đơn: 'went'." },
+{ id: 'gst_lop6_q6', type: 'mcq', skill: 'grammar', question_text: "This is the ___ book I have ever read.", options: [{ id: 'A', text: "interesting" }, { id: 'B', text: "more interesting" }, { id: 'C', text: "most interesting" }, { id: 'D', text: "interestinger" }], correct_option_id: 'C', explanation: "So sánh nhất với tính từ dài: the most interesting." },
+{ id: 'gst_lop6_q7', type: 'mcq', skill: 'vocabulary', question_text: "A ___ person is afraid of everything.", options: [{ id: 'A', text: "brave" }, { id: 'B', text: "coward" }, { id: 'C', text: "strong" }, { id: 'D', text: "smart" }], correct_option_id: 'B', explanation: "Người nhát gan, sợ mọi thứ là 'coward'." },
+{ id: 'gst_lop6_q8', type: 'mcq', skill: 'grammar', question_text: "Look! The children ___ in the garden.", options: [{ id: 'A', text: "play" }, { id: 'B', text: "are playing" }, { id: 'C', text: "played" }, { id: 'D', text: "plays" }], correct_option_id: 'B', explanation: "Có 'Look!' diễn tả hành động đang xảy ra: hiện tại tiếp diễn." },
+{ id: 'gst_lop6_q9', type: 'mcq', skill: 'vocabulary', question_text: "We should ___ water to protect the environment.", options: [{ id: 'A', text: "waste" }, { id: 'B', text: "save" }, { id: 'C', text: "pollute" }, { id: 'D', text: "spill" }], correct_option_id: 'B', explanation: "Nên tiết kiệm (save) nước để bảo vệ môi trường." },
+{ id: 'gst_lop6_q10', type: 'mcq', skill: 'reading_cloze', question_text: "My dream house ___ a big garden and a swimming pool.", options: [{ id: 'A', text: "has" }, { id: 'B', text: "have" }, { id: 'C', text: "is having" }, { id: 'D', text: "are having" }], correct_option_id: 'A', explanation: "Chủ ngữ số ít 'house' dùng 'has'." }
+] },
+lop_8: { global_success: [
+{ id: 'gst_lop8_q1', type: 'mcq', skill: 'grammar', question_text: "If it rains tomorrow, we ___ at home.", options: [{ id: 'A', text: "stay" }, { id: 'B', text: "will stay" }, { id: 'C', text: "stayed" }, { id: 'D', text: "staying" }], correct_option_id: 'B', explanation: "Câu điều kiện loại 1: If + hiện tại đơn, will + động từ." },
+{ id: 'gst_lop8_q2', type: 'mcq', skill: 'grammar', question_text: "The book ___ by my grandfather.", options: [{ id: 'A', text: "was written" }, { id: 'B', text: "wrote" }, { id: 'C', text: "is writing" }, { id: 'D', text: "writes" }], correct_option_id: 'A', explanation: "Câu bị động thì quá khứ đơn: was + V3." },
+{ id: 'gst_lop8_q3', type: 'mcq', skill: 'vocabulary', question_text: "Smoking is ___ to your health.", options: [{ id: 'A', text: "harmful" }, { id: 'B', text: "harmless" }, { id: 'C', text: "helpful" }, { id: 'D', text: "useful" }], correct_option_id: 'A', explanation: "Hút thuốc có hại (harmful) cho sức khỏe." },
+{ id: 'gst_lop8_q4', type: 'mcq', skill: 'grammar', question_text: "She asked me where ___.", options: [{ id: 'A', text: "I lived" }, { id: 'B', text: "did I live" }, { id: 'C', text: "I live" }, { id: 'D', text: "do I live" }], correct_option_id: 'A', explanation: "Câu tường thuật không đảo ngữ, lùi thì: 'I lived'." },
+{ id: 'gst_lop8_q5', type: 'mcq', skill: 'grammar', question_text: "He has worked here ___ five years.", options: [{ id: 'A', text: "since" }, { id: 'B', text: "for" }, { id: 'C', text: "from" }, { id: 'D', text: "at" }], correct_option_id: 'B', explanation: "Đi với khoảng thời gian (five years) dùng 'for'." },
+{ id: 'gst_lop8_q6', type: 'mcq', skill: 'vocabulary', question_text: "The word 'enormous' is closest in meaning to ___.", options: [{ id: 'A', text: "tiny" }, { id: 'B', text: "huge" }, { id: 'C', text: "small" }, { id: 'D', text: "short" }], correct_option_id: 'B', explanation: "'Enormous' nghĩa là khổng lồ, gần nghĩa với 'huge'." },
+{ id: 'gst_lop8_q7', type: 'mcq', skill: 'grammar', question_text: "I wish I ___ taller.", options: [{ id: 'A', text: "am" }, { id: 'B', text: "were" }, { id: 'C', text: "will be" }, { id: 'D', text: "have been" }], correct_option_id: 'B', explanation: "Ước ở hiện tại dùng quá khứ đơn: 'were' cho mọi ngôi." },
+{ id: 'gst_lop8_q8', type: 'mcq', skill: 'reading_cloze', question_text: "The Internet has ___ the way we communicate.", options: [{ id: 'A', text: "changed" }, { id: 'B', text: "change" }, { id: 'C', text: "changes" }, { id: 'D', text: "changing" }], correct_option_id: 'A', explanation: "Sau 'has' dùng quá khứ phân từ (V3): 'changed'." },
+{ id: 'gst_lop8_q9', type: 'mcq', skill: 'grammar', question_text: "Neither Tom nor his friends ___ coming.", options: [{ id: 'A', text: "is" }, { id: 'B', text: "are" }, { id: 'C', text: "was" }, { id: 'D', text: "am" }], correct_option_id: 'B', explanation: "Với 'neither...nor', động từ chia theo chủ ngữ gần nhất (friends → are)." },
+{ id: 'gst_lop8_q10', type: 'mcq', skill: 'vocabulary', question_text: "A person who doesn't eat meat is a ___.", options: [{ id: 'A', text: "vegetarian" }, { id: 'B', text: "butcher" }, { id: 'C', text: "farmer" }, { id: 'D', text: "chef" }], correct_option_id: 'A', explanation: "Người ăn chay (không ăn thịt) là 'vegetarian'." }
+] },
+lop_9: { global_success: [
+{ id: 'gst_lop9_q1', type: 'mcq', skill: 'grammar', question_text: "I ___ my keys. Can you help me find them?", options: [{ id: 'A', text: "lose" }, { id: 'B', text: "lost" }, { id: 'C', text: "have lost" }, { id: 'D', text: "am losing" }], correct_option_id: 'C', explanation: "Mất chìa khóa và vẫn chưa tìm thấy → hiện tại hoàn thành: 'have lost'." },
+{ id: 'gst_lop9_q2', type: 'mcq', skill: 'grammar', question_text: "The man ___ is standing over there is my uncle.", options: [{ id: 'A', text: "who" }, { id: 'B', text: "which" }, { id: 'C', text: "whose" }, { id: 'D', text: "whom" }], correct_option_id: 'A', explanation: "Mệnh đề quan hệ chỉ người, làm chủ ngữ: 'who'." },
+{ id: 'gst_lop9_q3', type: 'mcq', skill: 'vocabulary', question_text: "We need to ___ our environment from pollution.", options: [{ id: 'A', text: "protect" }, { id: 'B', text: "destroy" }, { id: 'C', text: "damage" }, { id: 'D', text: "pollute" }], correct_option_id: 'A', explanation: "Cần bảo vệ (protect) môi trường khỏi ô nhiễm." },
+{ id: 'gst_lop9_q4', type: 'mcq', skill: 'grammar', question_text: "She said she ___ to Ha Long Bay the following week.", options: [{ id: 'A', text: "will go" }, { id: 'B', text: "would go" }, { id: 'C', text: "goes" }, { id: 'D', text: "went" }], correct_option_id: 'B', explanation: "Câu tường thuật lùi thì: will → would." },
+{ id: 'gst_lop9_q5', type: 'mcq', skill: 'grammar', question_text: "The more you practice, the ___ you become.", options: [{ id: 'A', text: "good" }, { id: 'B', text: "better" }, { id: 'C', text: "best" }, { id: 'D', text: "well" }], correct_option_id: 'B', explanation: "Cấu trúc so sánh kép: the + so sánh hơn, the + so sánh hơn." },
+{ id: 'gst_lop9_q6', type: 'mcq', skill: 'vocabulary', question_text: "He was very ___ after running 10 kilometers.", options: [{ id: 'A', text: "exhausted" }, { id: 'B', text: "excited" }, { id: 'C', text: "relaxed" }, { id: 'D', text: "energetic" }], correct_option_id: 'A', explanation: "Chạy 10km xong thì kiệt sức (exhausted)." },
+{ id: 'gst_lop9_q7', type: 'mcq', skill: 'grammar', question_text: "This house ___ in 1990.", options: [{ id: 'A', text: "built" }, { id: 'B', text: "was built" }, { id: 'C', text: "is built" }, { id: 'D', text: "has built" }], correct_option_id: 'B', explanation: "Bị động quá khứ đơn với mốc thời gian 1990: 'was built'." },
+{ id: 'gst_lop9_q8', type: 'mcq', skill: 'reading_cloze', question_text: "Tet is the most important ___ in Vietnam.", options: [{ id: 'A', text: "festival" }, { id: 'B', text: "food" }, { id: 'C', text: "game" }, { id: 'D', text: "song" }], correct_option_id: 'A', explanation: "Tết là lễ hội (festival) quan trọng nhất ở Việt Nam." },
+{ id: 'gst_lop9_q9', type: 'mcq', skill: 'grammar', question_text: "If I ___ rich, I would travel around the world.", options: [{ id: 'A', text: "am" }, { id: 'B', text: "were" }, { id: 'C', text: "will be" }, { id: 'D', text: "have been" }], correct_option_id: 'B', explanation: "Câu điều kiện loại 2: If + quá khứ đơn (were cho mọi ngôi)." },
+{ id: 'gst_lop9_q10', type: 'mcq', skill: 'vocabulary', question_text: "The synonym of 'ancient' is ___.", options: [{ id: 'A', text: "modern" }, { id: 'B', text: "old" }, { id: 'C', text: "new" }, { id: 'D', text: "young" }], correct_option_id: 'B', explanation: "'Ancient' (cổ xưa) đồng nghĩa với 'old'." }
+] },
+lop_10: { thpt_foundation: [
+{ id: 'gst_lop10_q1', type: 'mcq', skill: 'grammar', question_text: "If she had studied harder, she ___ the exam.", options: [{ id: 'A', text: "would pass" }, { id: 'B', text: "would have passed" }, { id: 'C', text: "will pass" }, { id: 'D', text: "passes" }], correct_option_id: 'B', explanation: "Câu điều kiện loại 3: If + quá khứ hoàn thành, would have + V3." },
+{ id: 'gst_lop10_q2', type: 'mcq', skill: 'grammar', question_text: "The report ___ by the manager yesterday.", options: [{ id: 'A', text: "was completed" }, { id: 'B', text: "completed" }, { id: 'C', text: "is completed" }, { id: 'D', text: "has completed" }], correct_option_id: 'A', explanation: "Bị động quá khứ đơn: was + V3." },
+{ id: 'gst_lop10_q3', type: 'mcq', skill: 'vocabulary', question_text: "The government's new ___ aims to reduce unemployment.", options: [{ id: 'A', text: "policy" }, { id: 'B', text: "polite" }, { id: 'C', text: "police" }, { id: 'D', text: "politics" }], correct_option_id: 'A', explanation: "Chính sách (policy) mới của chính phủ nhằm giảm thất nghiệp." },
+{ id: 'gst_lop10_q4', type: 'mcq', skill: 'grammar', question_text: "___ the bad weather, the match went ahead.", options: [{ id: 'A', text: "Despite" }, { id: 'B', text: "Although" }, { id: 'C', text: "Because" }, { id: 'D', text: "However" }], correct_option_id: 'A', explanation: "'Despite' + cụm danh từ (the bad weather) = mặc dù." },
+{ id: 'gst_lop10_q5', type: 'mcq', skill: 'reading_cloze', question_text: "Scientists have ___ a new species of frog in the Amazon.", options: [{ id: 'A', text: "discovered" }, { id: 'B', text: "invented" }, { id: 'C', text: "created" }, { id: 'D', text: "produced" }], correct_option_id: 'A', explanation: "Phát hiện (discover) loài mới, không phải phát minh (invent)." },
+{ id: 'gst_lop10_q6', type: 'mcq', skill: 'grammar', question_text: "The woman to ___ I spoke was very helpful.", options: [{ id: 'A', text: "who" }, { id: 'B', text: "whom" }, { id: 'C', text: "which" }, { id: 'D', text: "that" }], correct_option_id: 'B', explanation: "Sau giới từ 'to' dùng 'whom'." },
+{ id: 'gst_lop10_q7', type: 'mcq', skill: 'vocabulary', question_text: "His argument was so ___ that everyone agreed with him.", options: [{ id: 'A', text: "convincing" }, { id: 'B', text: "confused" }, { id: 'C', text: "confusing" }, { id: 'D', text: "convinced" }], correct_option_id: 'A', explanation: "Lập luận thuyết phục (convincing) khiến mọi người đồng ý." },
+{ id: 'gst_lop10_q8', type: 'mcq', skill: 'grammar', question_text: "Not only ___ late, but he also forgot his homework.", options: [{ id: 'A', text: "he was" }, { id: 'B', text: "was he" }, { id: 'C', text: "he is" }, { id: 'D', text: "is he" }], correct_option_id: 'B', explanation: "'Not only' đứng đầu câu gây đảo ngữ: was he." },
+{ id: 'gst_lop10_q9', type: 'mcq', skill: 'vocabulary', question_text: "The opposite of 'expand' is ___.", options: [{ id: 'A', text: "contract" }, { id: 'B', text: "extend" }, { id: 'C', text: "enlarge" }, { id: 'D', text: "increase" }], correct_option_id: 'A', explanation: "Trái nghĩa với 'expand' (mở rộng) là 'contract' (thu hẹp)." },
+{ id: 'gst_lop10_q10', type: 'mcq', skill: 'grammar', question_text: "I remember ___ this movie before.", options: [{ id: 'A', text: "to see" }, { id: 'B', text: "seeing" }, { id: 'C', text: "see" }, { id: 'D', text: "saw" }], correct_option_id: 'B', explanation: "'Remember + V-ing' = nhớ đã làm gì trong quá khứ." }
+] },
+lop_11: { thpt_foundation: [
+{ id: 'gst_lop11_q1', type: 'mcq', skill: 'grammar', question_text: "Had I known about the meeting, I ___ attended.", options: [{ id: 'A', text: "would have" }, { id: 'B', text: "will have" }, { id: 'C', text: "have" }, { id: 'D', text: "had" }], correct_option_id: 'A', explanation: "Đảo ngữ điều kiện loại 3: Had + S + V3, would have + V3." },
+{ id: 'gst_lop11_q2', type: 'mcq', skill: 'grammar', question_text: "The bridge ___ next year.", options: [{ id: 'A', text: "will be built" }, { id: 'B', text: "is built" }, { id: 'C', text: "was built" }, { id: 'D', text: "builds" }], correct_option_id: 'A', explanation: "Bị động tương lai đơn: will be + V3." },
+{ id: 'gst_lop11_q3', type: 'mcq', skill: 'vocabulary', question_text: "The company decided to ___ ten new employees.", options: [{ id: 'A', text: "recruit" }, { id: 'B', text: "retire" }, { id: 'C', text: "resign" }, { id: 'D', text: "reward" }], correct_option_id: 'A', explanation: "Công ty tuyển dụng (recruit) nhân viên mới." },
+{ id: 'gst_lop11_q4', type: 'mcq', skill: 'grammar', question_text: "___ she was tired, she finished her assignment.", options: [{ id: 'A', text: "Although" }, { id: 'B', text: "Despite" }, { id: 'C', text: "Because of" }, { id: 'D', text: "In spite" }], correct_option_id: 'A', explanation: "'Although' + mệnh đề (she was tired) = mặc dù." },
+{ id: 'gst_lop11_q5', type: 'mcq', skill: 'reading_cloze', question_text: "Climate change is one of the most ___ issues of our time.", options: [{ id: 'A', text: "pressing" }, { id: 'B', text: "press" }, { id: 'C', text: "pressed" }, { id: 'D', text: "pressure" }], correct_option_id: 'A', explanation: "'Pressing issue' = vấn đề cấp bách." },
+{ id: 'gst_lop11_q6', type: 'mcq', skill: 'grammar', question_text: "The reason ___ he was late is still unknown.", options: [{ id: 'A', text: "which" }, { id: 'B', text: "that" }, { id: 'C', text: "why" }, { id: 'D', text: "when" }], correct_option_id: 'C', explanation: "Đi với 'the reason' dùng đại từ quan hệ 'why'." },
+{ id: 'gst_lop11_q7', type: 'mcq', skill: 'vocabulary', question_text: "An ___ is a person who writes books.", options: [{ id: 'A', text: "author" }, { id: 'B', text: "editor" }, { id: 'C', text: "reader" }, { id: 'D', text: "publisher" }], correct_option_id: 'A', explanation: "Tác giả (author) là người viết sách." },
+{ id: 'gst_lop11_q8', type: 'mcq', skill: 'grammar', question_text: "Scarcely had he arrived ___ it started to rain.", options: [{ id: 'A', text: "when" }, { id: 'B', text: "than" }, { id: 'C', text: "then" }, { id: 'D', text: "that" }], correct_option_id: 'A', explanation: "Cấu trúc: Scarcely... when... (vừa mới... thì...)." },
+{ id: 'gst_lop11_q9', type: 'mcq', skill: 'vocabulary', question_text: "The new law will come into ___ next month.", options: [{ id: 'A', text: "effect" }, { id: 'B', text: "affect" }, { id: 'C', text: "force" }, { id: 'D', text: "power" }], correct_option_id: 'A', explanation: "Cụm cố định: 'come into effect' = có hiệu lực." },
+{ id: 'gst_lop11_q10', type: 'mcq', skill: 'grammar', question_text: "She suggested ___ to the beach this weekend.", options: [{ id: 'A', text: "to go" }, { id: 'B', text: "going" }, { id: 'C', text: "go" }, { id: 'D', text: "went" }], correct_option_id: 'B', explanation: "'Suggest + V-ing': đề nghị làm gì." }
+] }
 };
 
 // Automatic cleanup of expired guest sessions (Retention TTL: 2 hours after exam expiry)

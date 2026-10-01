@@ -270,7 +270,7 @@
 
 <div class="min-h-screen flex flex-col bg-transparent text-ink-900 font-sans transition-colors duration-250">
  <!-- Top Navigation Header -->
- <header class="sticky top-0 z-50 bg-surface-0/95 backdrop-blur-md border-b border-line shadow-xs transition-colors duration-250 w-full">
+ <header class="sticky top-0 z-50 bg-surface-0/95 backdrop-blur-md border-b border-line shadow-xs transition-colors duration-250 w-full" style="padding-top: env(safe-area-inset-top);">
  <div class="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
  <div class="flex items-center justify-between h-16 gap-2 sm:gap-3 min-w-0">
 
@@ -635,6 +635,21 @@
  <div>
  <div class="font-semibold text-xs text-ink-900 group-hover:text-brand-600">Obsidian Second Brain</div>
  <div class="text-[11px] text-ink-500 font-medium">Kho tri thức &amp; WikiLinks Vault local</div>
+ </div>
+ </a>
+
+ <!-- Google Drive Dashboard: Admin & Teacher Only -->
+ <a
+ href="/drive"
+ onclick={closeAllDropdowns}
+ class="flex items-center gap-3 p-2.5 rounded-md hover:bg-surface-1 transition-colors group"
+ >
+ <div class="w-8 h-8 rounded-md bg-blue-100 text-blue-700 flex items-center justify-center text-sm font-semibold">
+ 📚
+ </div>
+ <div>
+ <div class="font-semibold text-xs text-ink-900 group-hover:text-brand-600">Kho Tài Liệu Drive</div>
+ <div class="text-[11px] text-ink-500 font-medium">Truy cập trực tiếp Google Drive</div>
  </div>
  </a>
 

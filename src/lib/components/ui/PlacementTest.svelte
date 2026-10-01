@@ -10,6 +10,36 @@
 
  const GRADES = [
  {
+ key: 'lop_1',
+ label: 'Lớp 1',
+ curricula: [{ key: 'primary_english', label: 'Tiếng Anh Tiểu học' }]
+ },
+ {
+ key: 'lop_2',
+ label: 'Lớp 2',
+ curricula: [{ key: 'primary_english', label: 'Tiếng Anh Tiểu học' }]
+ },
+ {
+ key: 'lop_3',
+ label: 'Lớp 3',
+ curricula: [{ key: 'primary_english', label: 'Tiếng Anh Tiểu học' }]
+ },
+ {
+ key: 'lop_4',
+ label: 'Lớp 4',
+ curricula: [{ key: 'primary_english', label: 'Tiếng Anh Tiểu học' }]
+ },
+ {
+ key: 'lop_5',
+ label: 'Lớp 5',
+ curricula: [{ key: 'primary_english', label: 'Tiếng Anh Tiểu học' }]
+ },
+ {
+ key: 'lop_6',
+ label: 'Lớp 6',
+ curricula: [{ key: 'global_success', label: 'Global Success' }]
+ },
+ {
  key: 'lop_7',
  label: 'Lớp 7 (THCS)',
  curricula: [
@@ -17,6 +47,26 @@
  { key: 'friends_plus', label: 'Friends Plus' },
  { key: 'smart_world', label: 'i-Learn Smart World' }
  ]
+ },
+ {
+ key: 'lop_8',
+ label: 'Lớp 8',
+ curricula: [{ key: 'global_success', label: 'Global Success' }]
+ },
+ {
+ key: 'lop_9',
+ label: 'Lớp 9',
+ curricula: [{ key: 'global_success', label: 'Ôn thi vào 10' }]
+ },
+ {
+ key: 'lop_10',
+ label: 'Lớp 10',
+ curricula: [{ key: 'thpt_foundation', label: 'Nền tảng THPT' }]
+ },
+ {
+ key: 'lop_11',
+ label: 'Lớp 11',
+ curricula: [{ key: 'thpt_foundation', label: 'Nền tảng THPT' }]
  },
  {
  key: 'lop_12',
