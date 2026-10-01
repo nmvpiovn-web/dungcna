@@ -266,39 +266,36 @@ export async function loginUser(identifier, password) {
   }
 }
 
-// Academic Warmth (2026-09-30): 3 che do Sáng / Xanh Nhẹ / Tối, luu localStorage.
-// Fix bug cu: code co variant `dark:` nhung setTheme lai remove class `dark`.
-export const THEMES = ['light', 'sky', 'dark'];
-export const THEME_LABELS = { light: 'Sáng', sky: 'Xanh Nhẹ', dark: 'Tối' };
+// Academic Warmth (2026-10-01): 2 che do Sáng / Xanh Nhẹ, luu localStorage. Dark da bi go bo hoan toan.
+export const THEMES = ['light', 'sky'];
+export const THEME_LABELS = { light: 'Sáng', sky: 'Xanh Nhẹ' };
 
 export function getTheme() {
   if (typeof window === 'undefined') return 'sky';
   try {
     const saved = localStorage.getItem('tienganh_theme');
-    if (saved === 'light' || saved === 'sky' || saved === 'dark') return saved;
+    if (saved === 'light' || saved === 'sky') return saved;
     return 'sky'; // Mặc định giao diện Xanh Nhẹ thanh thoát, thân thiện
   } catch {}
   return 'sky';
 }
 
 export function setTheme(theme) {
-  const safeTheme = theme === 'dark' ? 'dark' : theme === 'light' ? 'light' : 'sky';
+  const safeTheme = theme === 'light' ? 'light' : 'sky';
   if (typeof window !== 'undefined') {
     localStorage.setItem('tienganh_theme', safeTheme);
-    document.documentElement.classList.remove('dark', 'theme-sky');
+    document.documentElement.classList.remove('theme-sky');
     if (safeTheme === 'sky') {
       document.documentElement.classList.add('theme-sky');
-    } else if (safeTheme === 'dark') {
-      document.documentElement.classList.add('dark');
     }
-    document.documentElement.style.colorScheme = safeTheme === 'dark' ? 'dark' : 'light';
+    document.documentElement.style.colorScheme = 'light';
     window.dispatchEvent(new CustomEvent('tienganh:theme-change', { detail: safeTheme }));
   }
   return safeTheme;
 }
 
 export function toggleTheme() {
-  const order = ['light', 'sky', 'dark'];
+  const order = ['light', 'sky'];
   const next = order[(order.indexOf(getTheme()) + 1) % order.length];
   return setTheme(next);
 }

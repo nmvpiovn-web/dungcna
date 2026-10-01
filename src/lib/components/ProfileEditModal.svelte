@@ -1,725 +1,725 @@
 <script>
-  import { onMount, onDestroy, untrack } from 'svelte';
-  import { getCurrentUser, getAuthToken, setCurrentUser, updateUserProfile, POPULAR_SCHOOLS, isTeacherOrAdmin, requestUnlockClass } from '$lib/unifiedStore';
-  import { playAudioFeedback } from '$lib/speech.js';
+ import { onMount, onDestroy, untrack } from 'svelte';
+ import { getCurrentUser, getAuthToken, setCurrentUser, updateUserProfile, POPULAR_SCHOOLS, isTeacherOrAdmin, requestUnlockClass } from '$lib/unifiedStore';
+ import { playAudioFeedback } from '$lib/speech.js';
 
-  let { isOpen = $bindable(false) } = $props();
+ let { isOpen = $bindable(false) } = $props();
 
-  let currentUser = $state(null);
-  let name = $state('');
-  let phone = $state('');
-  let zaloId = $state('');
-  let email = $state('');
-  let avatar = $state('');
-  let grade = $state('');
-  let school = $state('');
-  let target = $state('');
-  let statusMessage = $state('');
-  let profileVersion = $state(null); // Integer CAS version from server
-  let originalProfile = {};
-  let isSaving = $state(false);
-  let isInitialLoading = $state(false);
-  let baselineFetchFailed = $state(false);
-  let isReloadingBaseline = $state(false);
+ let currentUser = $state(null);
+ let name = $state('');
+ let phone = $state('');
+ let zaloId = $state('');
+ let email = $state('');
+ let avatar = $state('');
+ let grade = $state('');
+ let school = $state('');
+ let target = $state('');
+ let statusMessage = $state('');
+ let profileVersion = $state(null); // Integer CAS version from server
+ let originalProfile = {};
+ let isSaving = $state(false);
+ let isInitialLoading = $state(false);
+ let baselineFetchFailed = $state(false);
+ let isReloadingBaseline = $state(false);
 
-  let profileLoadGen = 0;
-  let saveGen = 0;
-  let activeActorId = $state(null);
-  let closeTimeout = null;
+ let profileLoadGen = 0;
+ let saveGen = 0;
+ let activeActorId = $state(null);
+ let closeTimeout = null;
 
-  let showTransferModal = $state(false);
-  let requestedTargetGrade = $state('');
-  let transferReason = $state('');
-  let isSendingTransfer = $state(false);
-  let isAdminOrTeacher = $derived(currentUser ? isTeacherOrAdmin(currentUser) : false);
+ let showTransferModal = $state(false);
+ let requestedTargetGrade = $state('');
+ let transferReason = $state('');
+ let isSendingTransfer = $state(false);
+ let isAdminOrTeacher = $derived(currentUser ? isTeacherOrAdmin(currentUser) : false);
 
-  const presetAvatars = [
-    { label: '👦 Bé trai', url: 'https://api.dicebear.com/7.x/bottts/svg?seed=Felix' },
-    { label: '👧 Bé gái', url: 'https://api.dicebear.com/7.x/bottts/svg?seed=Mia' },
-    { label: '🎒 Học sinh', url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150' },
-    { label: '👩‍🏫 Cô giáo', url: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150' },
-    { label: '👨‍🏫 Thầy giáo', url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150' },
-    { label: '👨‍👩‍👧 Phụ huynh', url: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150' }
-  ];
+ const presetAvatars = [
+ { label: '👦 Bé trai', url: 'https://api.dicebear.com/7.x/bottts/svg?seed=Felix' },
+ { label: '👧 Bé gái', url: 'https://api.dicebear.com/7.x/bottts/svg?seed=Mia' },
+ { label: '🎒 Học sinh', url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150' },
+ { label: '👩‍🏫 Cô giáo', url: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150' },
+ { label: '👨‍🏫 Thầy giáo', url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150' },
+ { label: '👨‍👩‍👧 Phụ huynh', url: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150' }
+ ];
 
-  const gradeOptions = [
-    'Lớp 1', 'Lớp 2', 'Lớp 3', 'Lớp 4', 'Lớp 5',
-    'Lớp 6', 'Lớp 7', 'Lớp 8', 'Lớp 9',
-    'Lớp 10', 'Lớp 11', 'Lớp 12',
-    'Ôn Thi THPT Quốc Gia 2026',
-    'Luyện Thi IELTS Academic',
-    'Luyện Thi TOEIC (Thang 990)',
-    'Luyện Thi TOEFL iBT'
-  ];
+ const gradeOptions = [
+ 'Lớp 1', 'Lớp 2', 'Lớp 3', 'Lớp 4', 'Lớp 5',
+ 'Lớp 6', 'Lớp 7', 'Lớp 8', 'Lớp 9',
+ 'Lớp 10', 'Lớp 11', 'Lớp 12',
+ 'Ôn Thi THPT Quốc Gia 2026',
+ 'Luyện Thi IELTS Academic',
+ 'Luyện Thi TOEIC (Thang 990)',
+ 'Luyện Thi TOEFL iBT'
+ ];
 
-  function handleAuthChange() {
-    profileLoadGen += 1;
-    saveGen += 1;
-    if (closeTimeout) {
-      clearTimeout(closeTimeout);
-      closeTimeout = null;
-    }
-    activeActorId = null;
-    isOpen = false;
-    statusMessage = '';
-    currentUser = null;
-    profileVersion = null;
-    isSaving = false;
-    isInitialLoading = false;
-    baselineFetchFailed = false;
-    isReloadingBaseline = false;
-  }
+ function handleAuthChange() {
+ profileLoadGen += 1;
+ saveGen += 1;
+ if (closeTimeout) {
+ clearTimeout(closeTimeout);
+ closeTimeout = null;
+ }
+ activeActorId = null;
+ isOpen = false;
+ statusMessage = '';
+ currentUser = null;
+ profileVersion = null;
+ isSaving = false;
+ isInitialLoading = false;
+ baselineFetchFailed = false;
+ isReloadingBaseline = false;
+ }
 
-  onMount(() => {
-    if (typeof window !== 'undefined') {
-      window.addEventListener('tienganh:auth-change', handleAuthChange);
-    }
-    return () => {
-      if (typeof window !== 'undefined') {
-        window.removeEventListener('tienganh:auth-change', handleAuthChange);
-      }
-    };
-  });
+ onMount(() => {
+ if (typeof window !== 'undefined') {
+ window.addEventListener('tienganh:auth-change', handleAuthChange);
+ }
+ return () => {
+ if (typeof window !== 'undefined') {
+ window.removeEventListener('tienganh:auth-change', handleAuthChange);
+ }
+ };
+ });
 
-  onDestroy(() => {
-    profileLoadGen += 1;
-    saveGen += 1;
-    if (closeTimeout) {
-      clearTimeout(closeTimeout);
-      closeTimeout = null;
-    }
-    if (typeof window !== 'undefined') {
-      window.removeEventListener('tienganh:auth-change', handleAuthChange);
-    }
-  });
+ onDestroy(() => {
+ profileLoadGen += 1;
+ saveGen += 1;
+ if (closeTimeout) {
+ clearTimeout(closeTimeout);
+ closeTimeout = null;
+ }
+ if (typeof window !== 'undefined') {
+ window.removeEventListener('tienganh:auth-change', handleAuthChange);
+ }
+ });
 
-  $effect(() => {
-    if (isOpen) {
-      untrack(() => {
-        statusMessage = '';
-        baselineFetchFailed = false;
-        loadProfileData({ isInitial: true });
-      });
-    } else {
-      untrack(() => {
-        profileLoadGen += 1;
-        saveGen += 1;
-        if (closeTimeout) {
-          clearTimeout(closeTimeout);
-          closeTimeout = null;
-        }
-        isSaving = false;
-        isInitialLoading = false;
-        baselineFetchFailed = false;
-        isReloadingBaseline = false;
-      });
-    }
-  });
+ $effect(() => {
+ if (isOpen) {
+ untrack(() => {
+ statusMessage = '';
+ baselineFetchFailed = false;
+ loadProfileData({ isInitial: true });
+ });
+ } else {
+ untrack(() => {
+ profileLoadGen += 1;
+ saveGen += 1;
+ if (closeTimeout) {
+ clearTimeout(closeTimeout);
+ closeTimeout = null;
+ }
+ isSaving = false;
+ isInitialLoading = false;
+ baselineFetchFailed = false;
+ isReloadingBaseline = false;
+ });
+ }
+ });
 
-  async function loadProfileData({ isInitial = false } = {}) {
-    const thisGen = ++profileLoadGen;
-    const user = getCurrentUser();
-    currentUser = user;
-    if (!user) {
-      activeActorId = null;
-      profileVersion = null;
-      isInitialLoading = false;
-      isReloadingBaseline = false;
-      baselineFetchFailed = false;
-      return { success: false, error: 'Chưa đăng nhập' };
-    }
-    activeActorId = user.id;
+ async function loadProfileData({ isInitial = false } = {}) {
+ const thisGen = ++profileLoadGen;
+ const user = getCurrentUser();
+ currentUser = user;
+ if (!user) {
+ activeActorId = null;
+ profileVersion = null;
+ isInitialLoading = false;
+ isReloadingBaseline = false;
+ baselineFetchFailed = false;
+ return { success: false, error: 'Chưa đăng nhập' };
+ }
+ activeActorId = user.id;
 
-    if (isInitial) {
-      isInitialLoading = true;
-    } else {
-      isReloadingBaseline = true;
-    }
+ if (isInitial) {
+ isInitialLoading = true;
+ } else {
+ isReloadingBaseline = true;
+ }
 
-    // Reset profileVersion at start of load so stale version is never reused if load fails
-    profileVersion = null;
+ // Reset profileVersion at start of load so stale version is never reused if load fails
+ profileVersion = null;
 
-    let serverSuccess = false;
-    let fetchError = null;
+ let serverSuccess = false;
+ let fetchError = null;
 
-    // Try to fetch authoritative profile from server (includes profile_version for CAS)
-    try {
-      const token = getAuthToken();
-      if (token) {
-        const res = await fetch('/api/users/profile', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (thisGen !== profileLoadGen || user.id !== activeActorId || !isOpen) {
-          return { success: false, error: 'Stale actor or modal closed' };
-        }
-        if (res.ok) {
-          const data = await res.json();
-          if (thisGen !== profileLoadGen || user.id !== activeActorId || !isOpen) {
-            return { success: false, error: 'Stale actor or modal closed' };
-          }
-          if (data.success && data.user) {
-            currentUser = data.user;
-            profileVersion = data.profile_version || null;
-            serverSuccess = true;
-          } else {
-            fetchError = data.error || 'Lỗi dữ liệu từ máy chủ';
-          }
-        } else {
-          fetchError = `Máy chủ phản hồi HTTP ${res.status}`;
-        }
-      } else {
-        fetchError = 'Thiếu auth token';
-      }
-    } catch (err) {
-      if (thisGen !== profileLoadGen || user.id !== activeActorId || !isOpen) {
-        return { success: false, error: 'Stale actor or modal closed' };
-      }
-      fetchError = err.message || 'Lỗi kết nối máy chủ';
-    } finally {
-      if (thisGen === profileLoadGen && user.id === activeActorId && isOpen) {
-        isInitialLoading = false;
-        isReloadingBaseline = false;
-      }
-    }
+ // Try to fetch authoritative profile from server (includes profile_version for CAS)
+ try {
+ const token = getAuthToken();
+ if (token) {
+ const res = await fetch('/api/users/profile', {
+ headers: { 'Authorization': `Bearer ${token}` }
+ });
+ if (thisGen !== profileLoadGen || user.id !== activeActorId || !isOpen) {
+ return { success: false, error: 'Stale actor or modal closed' };
+ }
+ if (res.ok) {
+ const data = await res.json();
+ if (thisGen !== profileLoadGen || user.id !== activeActorId || !isOpen) {
+ return { success: false, error: 'Stale actor or modal closed' };
+ }
+ if (data.success && data.user) {
+ currentUser = data.user;
+ profileVersion = data.profile_version || null;
+ serverSuccess = true;
+ } else {
+ fetchError = data.error || 'Lỗi dữ liệu từ máy chủ';
+ }
+ } else {
+ fetchError = `Máy chủ phản hồi HTTP ${res.status}`;
+ }
+ } else {
+ fetchError = 'Thiếu auth token';
+ }
+ } catch (err) {
+ if (thisGen !== profileLoadGen || user.id !== activeActorId || !isOpen) {
+ return { success: false, error: 'Stale actor or modal closed' };
+ }
+ fetchError = err.message || 'Lỗi kết nối máy chủ';
+ } finally {
+ if (thisGen === profileLoadGen && user.id === activeActorId && isOpen) {
+ isInitialLoading = false;
+ isReloadingBaseline = false;
+ }
+ }
 
-    if (thisGen !== profileLoadGen || user.id !== activeActorId || !isOpen) {
-      return { success: false, error: 'Stale actor or modal closed' };
-    }
+ if (thisGen !== profileLoadGen || user.id !== activeActorId || !isOpen) {
+ return { success: false, error: 'Stale actor or modal closed' };
+ }
 
-    baselineFetchFailed = !serverSuccess;
+ baselineFetchFailed = !serverSuccess;
 
-    // Only populate fields from server or initial store baseline.
-    // If this is a refresh after 409 and server failed, DO NOT replace baseline with local cache!
-    if (serverSuccess || isInitial) {
-      name = currentUser.name || '';
-      phone = currentUser.phone || '';
-      email = currentUser.email || '';
-      avatar = currentUser.avatar || presetAvatars[0].url;
+ // Only populate fields from server or initial store baseline.
+ // If this is a refresh after 409 and server failed, DO NOT replace baseline with local cache!
+ if (serverSuccess || isInitial) {
+ name = currentUser.name || '';
+ phone = currentUser.phone || '';
+ email = currentUser.email || '';
+ avatar = currentUser.avatar || presetAvatars[0].url;
 
-      let meta = {};
-      try {
-        meta = typeof currentUser.metadata === 'string' ? JSON.parse(currentUser.metadata) : (currentUser.metadata || {});
-      } catch {}
+ let meta = {};
+ try {
+ meta = typeof currentUser.metadata === 'string' ? JSON.parse(currentUser.metadata) : (currentUser.metadata || {});
+ } catch {}
 
-      zaloId = meta.zalo_id || meta.zalo_phone || phone;
-      grade = currentUser.grade || meta.grade || '';
-      requestedTargetGrade = grade || '';
-      school = meta.school || '';
-      target = meta.target || `Chương trình ${grade}`;
-      originalProfile = { name, phone, email, avatar, school, target, zalo_id: zaloId, grade };
-    }
+ zaloId = meta.zalo_id || meta.zalo_phone || phone;
+ grade = currentUser.grade || meta.grade || '';
+ requestedTargetGrade = grade || '';
+ school = meta.school || '';
+ target = meta.target || `Chương trình ${grade}`;
+ originalProfile = { name, phone, email, avatar, school, target, zalo_id: zaloId, grade };
+ }
 
-    return { success: serverSuccess, error: fetchError, version: profileVersion };
-  }
+ return { success: serverSuccess, error: fetchError, version: profileVersion };
+ }
 
-  async function handleReloadBaseline() {
-    const thisActorId = activeActorId;
-    const thisGen = profileLoadGen;
+ async function handleReloadBaseline() {
+ const thisActorId = activeActorId;
+ const thisGen = profileLoadGen;
 
-    // Capture ONLY dirty diff relative to originalProfile BEFORE await
-    const dirtyDiff = {};
-    if (originalProfile) {
-      if (name !== (originalProfile.name ?? '')) dirtyDiff.name = name;
-      if (phone !== (originalProfile.phone ?? '')) dirtyDiff.phone = phone;
-      if (email !== (originalProfile.email ?? '')) dirtyDiff.email = email;
-      if (avatar !== (originalProfile.avatar ?? presetAvatars[0].url)) dirtyDiff.avatar = avatar;
-      if (school !== (originalProfile.school ?? '')) dirtyDiff.school = school;
-      if (target !== (originalProfile.target ?? '')) dirtyDiff.target = target;
-      const origZalo = originalProfile.zalo_id ?? originalProfile.zaloId ?? '';
-      if (zaloId !== origZalo) dirtyDiff.zaloId = zaloId;
-      if (grade !== (originalProfile.grade ?? '')) dirtyDiff.grade = grade;
-    }
+ // Capture ONLY dirty diff relative to originalProfile BEFORE await
+ const dirtyDiff = {};
+ if (originalProfile) {
+ if (name !== (originalProfile.name ?? '')) dirtyDiff.name = name;
+ if (phone !== (originalProfile.phone ?? '')) dirtyDiff.phone = phone;
+ if (email !== (originalProfile.email ?? '')) dirtyDiff.email = email;
+ if (avatar !== (originalProfile.avatar ?? presetAvatars[0].url)) dirtyDiff.avatar = avatar;
+ if (school !== (originalProfile.school ?? '')) dirtyDiff.school = school;
+ if (target !== (originalProfile.target ?? '')) dirtyDiff.target = target;
+ const origZalo = originalProfile.zalo_id ?? originalProfile.zaloId ?? '';
+ if (zaloId !== origZalo) dirtyDiff.zaloId = zaloId;
+ if (grade !== (originalProfile.grade ?? '')) dirtyDiff.grade = grade;
+ }
 
-    const res = await loadProfileData({ isInitial: false });
+ const res = await loadProfileData({ isInitial: false });
 
-    // Guard actor and modal state after await (loadProfileData itself guards generation internally)
-    if (thisActorId !== activeActorId || !isOpen) {
-      return;
-    }
+ // Guard actor and modal state after await (loadProfileData itself guards generation internally)
+ if (thisActorId !== activeActorId || !isOpen) {
+ return;
+ }
 
-    if (res.success) {
-      // Re-apply ONLY the dirty diff fields on top of the newly loaded server baseline.
-      // Fields not modified by this user remain strictly as loaded from server baseline (no lost-update).
-      if ('name' in dirtyDiff) name = dirtyDiff.name;
-      if ('phone' in dirtyDiff) phone = dirtyDiff.phone;
-      if ('email' in dirtyDiff) email = dirtyDiff.email;
-      if ('avatar' in dirtyDiff) avatar = dirtyDiff.avatar;
-      if ('school' in dirtyDiff) school = dirtyDiff.school;
-      if ('target' in dirtyDiff) target = dirtyDiff.target;
-      if ('zaloId' in dirtyDiff) zaloId = dirtyDiff.zaloId;
-      if ('grade' in dirtyDiff) grade = dirtyDiff.grade;
+ if (res.success) {
+ // Re-apply ONLY the dirty diff fields on top of the newly loaded server baseline.
+ // Fields not modified by this user remain strictly as loaded from server baseline (no lost-update).
+ if ('name' in dirtyDiff) name = dirtyDiff.name;
+ if ('phone' in dirtyDiff) phone = dirtyDiff.phone;
+ if ('email' in dirtyDiff) email = dirtyDiff.email;
+ if ('avatar' in dirtyDiff) avatar = dirtyDiff.avatar;
+ if ('school' in dirtyDiff) school = dirtyDiff.school;
+ if ('target' in dirtyDiff) target = dirtyDiff.target;
+ if ('zaloId' in dirtyDiff) zaloId = dirtyDiff.zaloId;
+ if ('grade' in dirtyDiff) grade = dirtyDiff.grade;
 
-      statusMessage = '✅ Đã tải bản mới nhất từ máy chủ thành công. Bản nháp của bạn đã được đối soát; bạn có thể bấm Lưu.';
-      baselineFetchFailed = false;
-    } else {
-      statusMessage = `⚠️ Tải lại thất bại (${res.error || 'Lỗi mạng'}). Vui lòng thử lại sau.`;
-    }
-  }
+ statusMessage = '✅ Đã tải bản mới nhất từ máy chủ thành công. Bản nháp của bạn đã được đối soát; bạn có thể bấm Lưu.';
+ baselineFetchFailed = false;
+ } else {
+ statusMessage = `⚠️ Tải lại thất bại (${res.error || 'Lỗi mạng'}). Vui lòng thử lại sau.`;
+ }
+ }
 
-  async function handleSendClassTransferRequest() {
-    if (!currentUser) return;
-    isSendingTransfer = true;
-    try {
-      const res = await requestUnlockClass(currentUser.id, requestedTargetGrade, transferReason);
-      if (res.success) {
-        statusMessage = `✅ Đã gửi yêu cầu chuyển sang ${requestedTargetGrade} tới Cô Dung thành công!`;
-        playAudioFeedback('correct');
-        showTransferModal = false;
-        transferReason = '';
-      } else {
-        statusMessage = res.error || 'Có lỗi xảy ra khi gửi yêu cầu!';
-      }
-    } catch (err) {
-      statusMessage = err.message || 'Lỗi kết nối';
-    } finally {
-      isSendingTransfer = false;
-    }
-  }
+ async function handleSendClassTransferRequest() {
+ if (!currentUser) return;
+ isSendingTransfer = true;
+ try {
+ const res = await requestUnlockClass(currentUser.id, requestedTargetGrade, transferReason);
+ if (res.success) {
+ statusMessage = `✅ Đã gửi yêu cầu chuyển sang ${requestedTargetGrade} tới Cô Dung thành công!`;
+ playAudioFeedback('correct');
+ showTransferModal = false;
+ transferReason = '';
+ } else {
+ statusMessage = res.error || 'Có lỗi xảy ra khi gửi yêu cầu!';
+ }
+ } catch (err) {
+ statusMessage = err.message || 'Lỗi kết nối';
+ } finally {
+ isSendingTransfer = false;
+ }
+ }
 
-  function handleFileUpload(e) {
-    const file = e.target.files?.[0];
-    if (!file) return;
+ function handleFileUpload(e) {
+ const file = e.target.files?.[0];
+ if (!file) return;
 
-    if (file.size > 2 * 1024 * 1024) {
-      statusMessage = '⚠️ Dung lượng ảnh không được vượt quá 2MB!';
-      return;
-    }
+ if (file.size > 2 * 1024 * 1024) {
+ statusMessage = '⚠️ Dung lượng ảnh không được vượt quá 2MB!';
+ return;
+ }
 
-    const thisGen = ++profileLoadGen;
-    const thisActorId = activeActorId;
+ const thisGen = ++profileLoadGen;
+ const thisActorId = activeActorId;
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      if (thisGen !== profileLoadGen || thisActorId !== activeActorId || !isOpen) {
-        return;
-      }
-      avatar = event.target?.result;
-    };
-    reader.readAsDataURL(file);
-  }
+ const reader = new FileReader();
+ reader.onload = (event) => {
+ if (thisGen !== profileLoadGen || thisActorId !== activeActorId || !isOpen) {
+ return;
+ }
+ avatar = event.target?.result;
+ };
+ reader.readAsDataURL(file);
+ }
 
-  async function handleSaveProfile(e) {
-    if (e) e.preventDefault();
-    if (!currentUser) return;
+ async function handleSaveProfile(e) {
+ if (e) e.preventDefault();
+ if (!currentUser) return;
 
-    // Block save if initial load is pending
-    if (isInitialLoading) {
-      statusMessage = '⚠️ Dữ liệu hồ sơ đang được tải, vui lòng đợi...';
-      return;
-    }
+ // Block save if initial load is pending
+ if (isInitialLoading) {
+ statusMessage = '⚠️ Dữ liệu hồ sơ đang được tải, vui lòng đợi...';
+ return;
+ }
 
-    // Block save if baseline fetch failed or version is unknown (prevent unversioned mutation)
-    if (baselineFetchFailed || profileVersion == null) {
-      statusMessage = '⚠️ Chưa thể đồng bộ phiên bản mới nhất từ máy chủ để lưu. Vui lòng bấm "Tải lại dữ liệu đối soát" trước khi lưu.';
-      return;
-    }
+ // Block save if baseline fetch failed or version is unknown (prevent unversioned mutation)
+ if (baselineFetchFailed || profileVersion == null) {
+ statusMessage = '⚠️ Chưa thể đồng bộ phiên bản mới nhất từ máy chủ để lưu. Vui lòng bấm "Tải lại dữ liệu đối soát" trước khi lưu.';
+ return;
+ }
 
-    const thisSaveGen = ++saveGen;
-    const thisActorId = activeActorId;
+ const thisSaveGen = ++saveGen;
+ const thisActorId = activeActorId;
 
-    isSaving = true;
-    statusMessage = '';
+ isSaving = true;
+ statusMessage = '';
 
-    try {
-      const token = getAuthToken();
-      const payload = {
-        name: name.trim(),
-        phone: phone ? phone.trim() : '',
-        email: email ? email.trim() : '',
-        avatar,
-        school: school ? school.trim() : '',
-        target: target ? target.trim() : '',
-        zalo_id: zaloId ? zaloId.trim() : ''
-      };
+ try {
+ const token = getAuthToken();
+ const payload = {
+ name: name.trim(),
+ phone: phone ? phone.trim() : '',
+ email: email ? email.trim() : '',
+ avatar,
+ school: school ? school.trim() : '',
+ target: target ? target.trim() : '',
+ zalo_id: zaloId ? zaloId.trim() : ''
+ };
 
-      if (isAdminOrTeacher && grade) {
-        payload.grade = grade;
-      }
+ if (isAdminOrTeacher && grade) {
+ payload.grade = grade;
+ }
 
-      // STRICT CAS GUARD: MUST include expected_version. Never send unversioned mutation from profile modal!
-      payload.expected_version = profileVersion;
+ // STRICT CAS GUARD: MUST include expected_version. Never send unversioned mutation from profile modal!
+ payload.expected_version = profileVersion;
 
-      for (const key of Object.keys(payload)) {
-        if (key === 'expected_version') continue; // Don't strip version field
-        if (payload[key] === originalProfile[key]) delete payload[key];
-      }
-      const res = await fetch('/api/users/profile', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-        },
-        body: JSON.stringify(payload)
-      });
+ for (const key of Object.keys(payload)) {
+ if (key === 'expected_version') continue; // Don't strip version field
+ if (payload[key] === originalProfile[key]) delete payload[key];
+ }
+ const res = await fetch('/api/users/profile', {
+ method: 'POST',
+ headers: {
+ 'Content-Type': 'application/json',
+ ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+ },
+ body: JSON.stringify(payload)
+ });
 
-      const data = await res.json();
+ const data = await res.json();
 
-      if (thisSaveGen !== saveGen || thisActorId !== activeActorId || !isOpen) {
-        return;
-      }
+ if (thisSaveGen !== saveGen || thisActorId !== activeActorId || !isOpen) {
+ return;
+ }
 
-      if (res.ok && data.success) {
-        statusMessage = '✅ Cập nhật hồ sơ thành công!';
-        if (data.user) {
-          currentUser = setCurrentUser(data.user);
-        }
-        // Update version for any subsequent saves in the same session
-        if (data.profile_version) {
-          profileVersion = data.profile_version;
-        }
-        baselineFetchFailed = false;
-        playAudioFeedback('correct');
-        if (closeTimeout) clearTimeout(closeTimeout);
-        closeTimeout = setTimeout(() => {
-          if (thisSaveGen === saveGen && thisActorId === activeActorId) {
-            isOpen = false;
-            isSaving = false;
-            closeTimeout = null;
-          }
-        }, 500);
-      } else if (res.status === 409 && data.error?.includes('ConcurrencyConflict')) {
-        // Keep the submitted dirty fields, refresh the server baseline/version,
-        // then restore only those edits for explicit user review and retry.
-        const draft = { ...payload };
-        delete draft.expected_version;
-        const refreshResult = await loadProfileData({ isInitial: false });
-        if (thisSaveGen !== saveGen || thisActorId !== activeActorId || !isOpen) {
-          return;
-        }
-        if ('name' in draft) name = draft.name;
-        if ('phone' in draft) phone = draft.phone;
-        if ('email' in draft) email = draft.email;
-        if ('avatar' in draft) avatar = draft.avatar;
-        if ('school' in draft) school = draft.school;
-        if ('target' in draft) target = draft.target;
-        if ('zalo_id' in draft) zaloId = draft.zalo_id;
-        if ('grade' in draft) grade = draft.grade;
+ if (res.ok && data.success) {
+ statusMessage = '✅ Cập nhật hồ sơ thành công!';
+ if (data.user) {
+ currentUser = setCurrentUser(data.user);
+ }
+ // Update version for any subsequent saves in the same session
+ if (data.profile_version) {
+ profileVersion = data.profile_version;
+ }
+ baselineFetchFailed = false;
+ playAudioFeedback('correct');
+ if (closeTimeout) clearTimeout(closeTimeout);
+ closeTimeout = setTimeout(() => {
+ if (thisSaveGen === saveGen && thisActorId === activeActorId) {
+ isOpen = false;
+ isSaving = false;
+ closeTimeout = null;
+ }
+ }, 500);
+ } else if (res.status === 409 && data.error?.includes('ConcurrencyConflict')) {
+ // Keep the submitted dirty fields, refresh the server baseline/version,
+ // then restore only those edits for explicit user review and retry.
+ const draft = { ...payload };
+ delete draft.expected_version;
+ const refreshResult = await loadProfileData({ isInitial: false });
+ if (thisSaveGen !== saveGen || thisActorId !== activeActorId || !isOpen) {
+ return;
+ }
+ if ('name' in draft) name = draft.name;
+ if ('phone' in draft) phone = draft.phone;
+ if ('email' in draft) email = draft.email;
+ if ('avatar' in draft) avatar = draft.avatar;
+ if ('school' in draft) school = draft.school;
+ if ('target' in draft) target = draft.target;
+ if ('zalo_id' in draft) zaloId = draft.zalo_id;
+ if ('grade' in draft) grade = draft.grade;
 
-        if (refreshResult && !refreshResult.success) {
-          baselineFetchFailed = true;
-          statusMessage = `⚠️ Xung đột phiên xảy ra, nhưng không thể tải bản mới nhất từ máy chủ (${refreshResult.error || 'Máy chủ phản hồi HTTP 503'}). Bản nháp chỉnh sửa của bạn vẫn được giữ nguyên. Vui lòng kiểm tra lại kết nối và thử lại.`;
-        } else {
-          baselineFetchFailed = false;
-          statusMessage = '⚠️ Hồ sơ đã được cập nhật bởi phiên khác. Các chỉnh sửa của bạn được giữ lại; vui lòng đối chiếu và nhấn Lưu nếu muốn áp dụng.';
-        }
-        isSaving = false;
-      } else {
-        statusMessage = `⚠️ ${data.error || 'Có lỗi xảy ra khi lưu hồ sơ vào máy chủ!'}`;
-        isSaving = false;
-      }
-    } catch (err) {
-      if (thisSaveGen !== saveGen || thisActorId !== activeActorId || !isOpen) {
-        return;
-      }
-      statusMessage = `⚠️ Lỗi kết nối máy chủ: ${err.message || err}`;
-      isSaving = false;
-    }
-  }
+ if (refreshResult && !refreshResult.success) {
+ baselineFetchFailed = true;
+ statusMessage = `⚠️ Xung đột phiên xảy ra, nhưng không thể tải bản mới nhất từ máy chủ (${refreshResult.error || 'Máy chủ phản hồi HTTP 503'}). Bản nháp chỉnh sửa của bạn vẫn được giữ nguyên. Vui lòng kiểm tra lại kết nối và thử lại.`;
+ } else {
+ baselineFetchFailed = false;
+ statusMessage = '⚠️ Hồ sơ đã được cập nhật bởi phiên khác. Các chỉnh sửa của bạn được giữ lại; vui lòng đối chiếu và nhấn Lưu nếu muốn áp dụng.';
+ }
+ isSaving = false;
+ } else {
+ statusMessage = `⚠️ ${data.error || 'Có lỗi xảy ra khi lưu hồ sơ vào máy chủ!'}`;
+ isSaving = false;
+ }
+ } catch (err) {
+ if (thisSaveGen !== saveGen || thisActorId !== activeActorId || !isOpen) {
+ return;
+ }
+ statusMessage = `⚠️ Lỗi kết nối máy chủ: ${err.message || err}`;
+ isSaving = false;
+ }
+ }
 </script>
 
 <svelte:window onkeydown={(e) => { if (e.key === 'Escape' && isOpen) isOpen = false; }} />
 
 {#if isOpen}
-  <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
-  <div
-    class="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md animate-in fade-in duration-200"
-    onclick={(e) => { if (e.target === e.currentTarget) isOpen = false; }}
-    role="dialog"
-    aria-modal="true"
-    tabindex="-1"
-  >
-    <div class="w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl overflow-hidden relative font-sans text-slate-800 dark:text-slate-100 flex flex-col max-h-[92vh]">
-      
-      <!-- Modal Header (Academic Ledger Style) -->
-      <div class="bg-slate-900 p-5 text-slate-100 border-b border-slate-800 relative">
-        <button
-          onclick={() => isOpen = false}
-          class="absolute top-4 right-4 text-slate-400 hover:text-white p-1 rounded-md bg-slate-800 hover:bg-slate-700 text-xs transition-colors"
-          title="Đóng"
-        >
-          ✕
-        </button>
+ <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
+ <div
+ class="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md animate-in fade-in duration-200"
+ onclick={(e) => { if (e.target === e.currentTarget) isOpen = false; }}
+ role="dialog"
+ aria-modal="true"
+ tabindex="-1"
+ >
+ <div class="w-full max-w-lg bg-white border border-slate-200 rounded-xl shadow-2xl overflow-hidden relative font-sans text-slate-800 flex flex-col max-h-[92vh]">
+ 
+ <!-- Modal Header (Academic Ledger Style) -->
+ <div class="bg-slate-900 p-5 text-slate-100 border-b border-slate-800 relative">
+ <button
+ onclick={() => isOpen = false}
+ class="absolute top-4 right-4 text-slate-400 hover:text-white p-1 rounded-md bg-slate-800 hover:bg-slate-700 text-xs transition-colors"
+ title="Đóng"
+ >
+ ✕
+ </button>
 
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-md bg-slate-800 border border-slate-700 flex items-center justify-center text-xl">
-            👤
-          </div>
-          <div>
-            <div class="text-[11px] font-semibold uppercase tracking-wider text-cx-400">TIẾNG ANH CÔ DUNG</div>
-            <h2 class="text-lg font-semibold text-white">Chỉnh Sửa Hồ Sơ Cá Nhân</h2>
-          </div>
-        </div>
-      </div>
+ <div class="flex items-center gap-3">
+ <div class="w-10 h-10 rounded-md bg-slate-800 border border-slate-700 flex items-center justify-center text-xl">
+ 👤
+ </div>
+ <div>
+ <div class="text-[11px] font-semibold uppercase tracking-wider text-cx-400">TIẾNG ANH CÔ DUNG</div>
+ <h2 class="text-lg font-semibold text-white">Chỉnh Sửa Hồ Sơ Cá Nhân</h2>
+ </div>
+ </div>
+ </div>
 
-      <!-- Modal Body -->
-      <form onsubmit={handleSaveProfile} novalidate class="p-6 overflow-y-auto space-y-4 flex-1 text-xs">
-        {#if statusMessage}
-          <div class="p-3 rounded-md text-xs font-semibold {statusMessage.includes('✅') ? 'bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300' : 'bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-300'}">
-            {statusMessage}
-          </div>
-        {/if}
+ <!-- Modal Body -->
+ <form onsubmit={handleSaveProfile} novalidate class="p-6 overflow-y-auto space-y-4 flex-1 text-xs">
+ {#if statusMessage}
+ <div class="p-3 rounded-md text-xs font-semibold {statusMessage.includes('✅') ? 'bg-emerald-50 border border-emerald-200 text-emerald-700' : 'bg-rose-50 border border-rose-200 text-rose-700'}">
+ {statusMessage}
+ </div>
+ {/if}
 
-        <!-- Avatar Selection -->
-        <div class="p-4 rounded-lg bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 space-y-3">
-          <div class="font-semibold text-slate-700 dark:text-slate-300">Ảnh Đại Diện (Avatar):</div>
-          
-          <div class="flex items-center gap-4">
-            <img src={avatar} alt="Avatar Preview" class="w-16 h-16 rounded-md object-cover border border-slate-300 dark:border-slate-700 shadow-xs bg-white" />
-            
-            <div class="flex-1 space-y-1.5">
-              <label class="block text-[11px] font-semibold text-slate-500 dark:text-slate-400">
-                Tải ảnh từ máy tính hoặc điện thoại:
-              </label>
-              <input
-                type="file"
-                accept="image/*"
-                onchange={handleFileUpload}
-                class="block w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-cx-700 file:text-white hover:file:bg-cx-600 cursor-pointer"
-              />
-            </div>
-          </div>
+ <!-- Avatar Selection -->
+ <div class="p-4 rounded-lg bg-slate-50 border border-slate-200 space-y-3">
+ <div class="font-semibold text-slate-700">Ảnh Đại Diện (Avatar):</div>
+ 
+ <div class="flex items-center gap-4">
+ <img src={avatar} alt="Avatar Preview" class="w-16 h-16 rounded-md object-cover border border-slate-300 shadow-xs bg-white" />
+ 
+ <div class="flex-1 space-y-1.5">
+ <label class="block text-[11px] font-semibold text-slate-500">
+ Tải ảnh từ máy tính hoặc điện thoại:
+ </label>
+ <input
+ type="file"
+ accept="image/*"
+ onchange={handleFileUpload}
+ class="block w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-cx-700 file:text-white hover:file:bg-cx-600 cursor-pointer"
+ />
+ </div>
+ </div>
 
-          <!-- Quick Avatar Presets -->
-          <div>
-            <div class="text-[11px] text-slate-500 uppercase font-semibold mb-1.5">Hoặc chọn avatar gợi ý:</div>
-            <div class="flex items-center gap-2 overflow-x-auto pb-1">
-              {#each presetAvatars as p}
-                <button
-                  type="button"
-                  onclick={() => avatar = p.url}
-                  class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border transition-colors text-[11px] whitespace-nowrap {avatar === p.url ? 'border-cx-500 bg-cx-50 dark:bg-cx-950/50 text-cx-700 dark:text-cx-300 font-semibold' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400'}"
-                >
-                  <img src={p.url} alt={p.label} class="w-5 h-5 rounded-full object-cover" />
-                  <span>{p.label}</span>
-                </button>
-              {/each}
-            </div>
-          </div>
-        </div>
+ <!-- Quick Avatar Presets -->
+ <div>
+ <div class="text-[11px] text-slate-500 uppercase font-semibold mb-1.5">Hoặc chọn avatar gợi ý:</div>
+ <div class="flex items-center gap-2 overflow-x-auto pb-1">
+ {#each presetAvatars as p}
+ <button
+ type="button"
+ onclick={() => avatar = p.url}
+ class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border transition-colors text-[11px] whitespace-nowrap {avatar === p.url ? 'border-cx-500 bg-cx-50 text-cx-700 font-semibold' : 'border-slate-200 bg-white text-slate-600'}"
+ >
+ <img src={p.url} alt={p.label} class="w-5 h-5 rounded-full object-cover" />
+ <span>{p.label}</span>
+ </button>
+ {/each}
+ </div>
+ </div>
+ </div>
 
-        <!-- Name & Contact -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label for="prof-name" class="block font-bold text-slate-700 dark:text-slate-300 mb-1">
-              Họ và Tên (*):
-            </label>
-            <input
-              id="prof-name"
-              type="text"
-              bind:value={name}
-              required
-              class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
-            />
-          </div>
+ <!-- Name & Contact -->
+ <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+ <div>
+ <label for="prof-name" class="block font-bold text-slate-700 mb-1">
+ Họ và Tên (*):
+ </label>
+ <input
+ id="prof-name"
+ type="text"
+ bind:value={name}
+ required
+ class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:border-emerald-500"
+ />
+ </div>
 
-          <div>
-            <label for="prof-phone" class="block font-bold text-slate-700 dark:text-slate-300 mb-1">
-              Số Điện Thoại (*):
-            </label>
-            <input
-              id="prof-phone"
-              type="text"
-              bind:value={phone}
-              required
-              class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
-            />
-          </div>
-        </div>
+ <div>
+ <label for="prof-phone" class="block font-bold text-slate-700 mb-1">
+ Số Điện Thoại (*):
+ </label>
+ <input
+ id="prof-phone"
+ type="text"
+ bind:value={phone}
+ required
+ class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:border-emerald-500"
+ />
+ </div>
+ </div>
 
-        <!-- Zalo & Email -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label for="prof-zalo" class="block font-bold text-cx-600 dark:text-cx-400 mb-1">
-              💬 Số Zalo / Zalo ID (* Nhận báo cáo):
-            </label>
-            <input
-              id="prof-zalo"
-              type="text"
-              bind:value={zaloId}
-              placeholder="VD: 0912345678 hoặc nick zalo"
-              class="w-full bg-cx-50/50 dark:bg-slate-950 border border-cx-300 dark:border-cx-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-cx-500"
-            />
-            <span class="text-xs text-slate-500 block mt-1">Dùng để Bot Zalo Cô Dung gửi phiếu học phí &amp; kết quả thi.</span>
-          </div>
+ <!-- Zalo & Email -->
+ <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+ <div>
+ <label for="prof-zalo" class="block font-bold text-cx-600 mb-1">
+ 💬 Số Zalo / Zalo ID (* Nhận báo cáo):
+ </label>
+ <input
+ id="prof-zalo"
+ type="text"
+ bind:value={zaloId}
+ placeholder="VD: 0912345678 hoặc nick zalo"
+ class="w-full bg-cx-50/50 border border-cx-300 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:border-cx-500"
+ />
+ <span class="text-xs text-slate-500 block mt-1">Dùng để Bot Zalo Cô Dung gửi phiếu học phí &amp; kết quả thi.</span>
+ </div>
 
-          <div>
-            <label for="prof-email" class="block font-bold text-slate-700 dark:text-slate-300 mb-1">
-              Địa Chỉ Email:
-            </label>
-            <input
-              id="prof-email"
-              type="email"
-              bind:value={email}
-              class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
-            />
-          </div>
-        </div>
+ <div>
+ <label for="prof-email" class="block font-bold text-slate-700 mb-1">
+ Địa Chỉ Email:
+ </label>
+ <input
+ id="prof-email"
+ type="email"
+ bind:value={email}
+ class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:border-emerald-500"
+ />
+ </div>
+ </div>
 
-        <!-- Grade & School (with Role-based Security & Transfer Request) -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <div class="flex items-center justify-between mb-1">
-              <label for="prof-grade" class="block font-bold text-slate-700 dark:text-slate-300">
-                Khối Lớp Học Tập:
-              </label>
-              {#if !isAdminOrTeacher}
-                <span class="inline-flex items-center gap-1 text-[11px] font-medium text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
-                  🔒 Cố định
-                </span>
-              {/if}
-            </div>
+ <!-- Grade & School (with Role-based Security & Transfer Request) -->
+ <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+ <div>
+ <div class="flex items-center justify-between mb-1">
+ <label for="prof-grade" class="block font-bold text-slate-700">
+ Khối Lớp Học Tập:
+ </label>
+ {#if !isAdminOrTeacher}
+ <span class="inline-flex items-center gap-1 text-[11px] font-medium text-amber-600 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+ 🔒 Cố định
+ </span>
+ {/if}
+ </div>
 
-            {#if isAdminOrTeacher}
-              <select
-                id="prof-grade"
-                bind:value={grade}
-                class="w-full bg-slate-50 dark:bg-slate-950 border border-emerald-400 dark:border-emerald-600 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 font-semibold"
-              >
-                {#each gradeOptions as g}
-                  <option value={g}>{g}</option>
-                {/each}
-              </select>
-              <span class="text-xs text-emerald-600 dark:text-emerald-400 block mt-1">
-                ⭐ Bạn là Giáo viên/Admin: Có toàn quyền đổi khối lớp trực tiếp.
-              </span>
-            {:else}
-              <div class="relative">
-                <input
-                  id="prof-grade"
-                  type="text"
-                  value={grade}
-                  disabled
-                  class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-600 dark:text-slate-400 font-bold cursor-not-allowed select-none"
-                />
-              </div>
-              <div class="mt-1.5 flex items-center justify-between text-[11px]">
-                <span class="text-slate-500 dark:text-slate-400">Chỉ Cô Dung mới có quyền đổi lớp.</span>
-                <button
-                  type="button"
-                  onclick={() => showTransferModal = !showTransferModal}
-                  class="text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 font-bold underline cursor-pointer flex items-center gap-1"
-                >
-                  <span>📩</span> {showTransferModal ? 'Đóng form' : 'Yêu cầu chuyển lớp'}
-                </button>
-              </div>
+ {#if isAdminOrTeacher}
+ <select
+ id="prof-grade"
+ bind:value={grade}
+ class="w-full bg-slate-50 border border-emerald-400 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:border-emerald-500 font-semibold"
+ >
+ {#each gradeOptions as g}
+ <option value={g}>{g}</option>
+ {/each}
+ </select>
+ <span class="text-xs text-emerald-600 block mt-1">
+ ⭐ Bạn là Giáo viên/Admin: Có toàn quyền đổi khối lớp trực tiếp.
+ </span>
+ {:else}
+ <div class="relative">
+ <input
+ id="prof-grade"
+ type="text"
+ value={grade}
+ disabled
+ class="w-full bg-slate-100 border border-slate-300 rounded-xl px-3 py-2 text-slate-600 font-bold cursor-not-allowed select-none"
+ />
+ </div>
+ <div class="mt-1.5 flex items-center justify-between text-[11px]">
+ <span class="text-slate-500">Chỉ Cô Dung mới có quyền đổi lớp.</span>
+ <button
+ type="button"
+ onclick={() => showTransferModal = !showTransferModal}
+ class="text-emerald-600 hover:text-emerald-700 font-bold underline cursor-pointer flex items-center gap-1"
+ >
+ <span>📩</span> {showTransferModal ? 'Đóng form' : 'Yêu cầu chuyển lớp'}
+ </button>
+ </div>
 
-              {#if showTransferModal}
-                <div class="p-3 mt-2 rounded-md bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200 space-y-2 animate-in fade-in duration-200">
-                  <div class="font-semibold flex items-center gap-1.5 text-xs text-amber-800 dark:text-amber-300">
-                    <span>📩</span> Gửi Yêu Cầu Chuyển Khối Lớp Tới Cô Dung
-                  </div>
-                  <p class="text-[11px] text-slate-600 dark:text-slate-300">
-                    Chọn khối lớp bạn mong muốn chuyển sang. Cô Dung sẽ xét duyệt và cập nhật trong AdminCP.
-                  </p>
-                  <div>
-                    <label for="req-target-grade" class="block font-semibold text-[11px] mb-1">Khối lớp mong muốn:</label>
-                    <select
-                      id="req-target-grade"
-                      bind:value={requestedTargetGrade}
-                      class="w-full bg-white dark:bg-slate-900 border border-amber-300 dark:border-amber-700 rounded-md px-2.5 py-1.5 text-xs text-slate-900 dark:text-white"
-                    >
-                      {#each gradeOptions as g}
-                        <option value={g}>{g}</option>
-                      {/each}
-                    </select>
-                  </div>
-                  <div>
-                    <label for="req-transfer-reason" class="block font-semibold text-[11px] mb-1">Lý do / Nguyện vọng:</label>
-                    <input
-                      id="req-transfer-reason"
-                      type="text"
-                      bind:value={transferReason}
-                      placeholder="VD: Em muốn học thêm IELTS / Em lên lớp mới..."
-                      class="w-full bg-white dark:bg-slate-900 border border-amber-300 dark:border-amber-700 rounded-md px-2.5 py-1.5 text-xs text-slate-900 dark:text-white"
-                    />
-                  </div>
-                  <div class="flex items-center gap-2 pt-1">
-                    <button
-                      type="button"
-                      disabled={isSendingTransfer}
-                      onclick={handleSendClassTransferRequest}
-                      class="flex-1 py-1.5 px-3 rounded-md bg-amber-700 hover:bg-amber-600 text-white font-semibold text-xs transition-colors shadow-xs flex items-center justify-center gap-1.5"
-                    >
-                      {isSendingTransfer ? '⏳ Đang gửi...' : '🚀 Gửi Yêu Cầu Ngay'}
-                    </button>
-                    <button
-                      type="button"
-                      onclick={() => showTransferModal = false}
-                      class="py-1.5 px-3 rounded-md bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 text-slate-700 dark:text-slate-200 font-semibold text-xs"
-                    >
-                      Hủy
-                    </button>
-                  </div>
-                </div>
-              {/if}
-            {/if}
-          </div>
+ {#if showTransferModal}
+ <div class="p-3 mt-2 rounded-md bg-amber-50 border border-amber-300 text-amber-900 space-y-2 animate-in fade-in duration-200">
+ <div class="font-semibold flex items-center gap-1.5 text-xs text-amber-800">
+ <span>📩</span> Gửi Yêu Cầu Chuyển Khối Lớp Tới Cô Dung
+ </div>
+ <p class="text-[11px] text-slate-600">
+ Chọn khối lớp bạn mong muốn chuyển sang. Cô Dung sẽ xét duyệt và cập nhật trong AdminCP.
+ </p>
+ <div>
+ <label for="req-target-grade" class="block font-semibold text-[11px] mb-1">Khối lớp mong muốn:</label>
+ <select
+ id="req-target-grade"
+ bind:value={requestedTargetGrade}
+ class="w-full bg-white border border-amber-300 rounded-md px-2.5 py-1.5 text-xs text-slate-900"
+ >
+ {#each gradeOptions as g}
+ <option value={g}>{g}</option>
+ {/each}
+ </select>
+ </div>
+ <div>
+ <label for="req-transfer-reason" class="block font-semibold text-[11px] mb-1">Lý do / Nguyện vọng:</label>
+ <input
+ id="req-transfer-reason"
+ type="text"
+ bind:value={transferReason}
+ placeholder="VD: Em muốn học thêm IELTS / Em lên lớp mới..."
+ class="w-full bg-white border border-amber-300 rounded-md px-2.5 py-1.5 text-xs text-slate-900"
+ />
+ </div>
+ <div class="flex items-center gap-2 pt-1">
+ <button
+ type="button"
+ disabled={isSendingTransfer}
+ onclick={handleSendClassTransferRequest}
+ class="flex-1 py-1.5 px-3 rounded-md bg-amber-700 hover:bg-amber-600 text-white font-semibold text-xs transition-colors shadow-xs flex items-center justify-center gap-1.5"
+ >
+ {isSendingTransfer ? '⏳ Đang gửi...' : '🚀 Gửi Yêu Cầu Ngay'}
+ </button>
+ <button
+ type="button"
+ onclick={() => showTransferModal = false}
+ class="py-1.5 px-3 rounded-md bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold text-xs"
+ >
+ Hủy
+ </button>
+ </div>
+ </div>
+ {/if}
+ {/if}
+ </div>
 
-          <div>
-            <label for="prof-school" class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              Trường Đang Theo Học (Có gợi ý):
-            </label>
-            <input
-              id="prof-school"
-              type="text"
-              list="popular-schools-list"
-              bind:value={school}
-              placeholder="Gõ để xem gợi ý trường tiêu biểu..."
-              class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-md px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-cx-500"
-            />
-            <datalist id="popular-schools-list">
-              {#each POPULAR_SCHOOLS as sch}
-                <option value={sch.name}>{sch.gradeLevel}</option>
-              {/each}
-            </datalist>
-          </div>
-        </div>
+ <div>
+ <label for="prof-school" class="block font-semibold text-slate-700 mb-1">
+ Trường Đang Theo Học (Có gợi ý):
+ </label>
+ <input
+ id="prof-school"
+ type="text"
+ list="popular-schools-list"
+ bind:value={school}
+ placeholder="Gõ để xem gợi ý trường tiêu biểu..."
+ class="w-full bg-slate-50 border border-slate-300 rounded-md px-3 py-2 text-slate-900 focus:outline-none focus:border-cx-500"
+ />
+ <datalist id="popular-schools-list">
+ {#each POPULAR_SCHOOLS as sch}
+ <option value={sch.name}>{sch.gradeLevel}</option>
+ {/each}
+ </datalist>
+ </div>
+ </div>
 
-        <!-- Target / Goal -->
-        <div>
-          <label for="prof-target" class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-            Mục Tiêu Học Tập &amp; Điểm Số Hướng Tới:
-          </label>
-          <input
-            id="prof-target"
-            type="text"
-            bind:value={target}
-            placeholder="VD: Đạt 9.0+ trên lớp, Chinh phục IELTS 7.5+, Thi đỗ Chuyên Anh..."
-            class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-md px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-cx-500"
-          />
-        </div>
+ <!-- Target / Goal -->
+ <div>
+ <label for="prof-target" class="block font-semibold text-slate-700 mb-1">
+ Mục Tiêu Học Tập &amp; Điểm Số Hướng Tới:
+ </label>
+ <input
+ id="prof-target"
+ type="text"
+ bind:value={target}
+ placeholder="VD: Đạt 9.0+ trên lớp, Chinh phục IELTS 7.5+, Thi đỗ Chuyên Anh..."
+ class="w-full bg-slate-50 border border-slate-300 rounded-md px-3 py-2 text-slate-900 focus:outline-none focus:border-cx-500"
+ />
+ </div>
 
-        <!-- Action Buttons -->
-        {#if baselineFetchFailed || profileVersion == null}
-          <div class="flex flex-col sm:flex-row gap-2 mt-4">
-            <button
-              type="button"
-              id="reload-baseline-btn"
-              disabled={isReloadingBaseline}
-              onclick={handleReloadBaseline}
-              class="flex-1 py-2.5 rounded-md bg-amber-600 hover:bg-amber-500 text-white font-semibold text-xs shadow-xs transition-colors flex items-center justify-center gap-2"
-            >
-              <span>{isReloadingBaseline ? '⏳ Đang tải bản mới...' : '🔄 Tải Lại Dữ Liệu Đối Soát'}</span>
-            </button>
-            <button
-              type="submit"
-              disabled={true}
-              title="Vui lòng tải lại dữ liệu đối soát trước khi lưu"
-              class="flex-1 py-2.5 rounded-md bg-slate-400 dark:bg-slate-700 cursor-not-allowed text-white/70 font-semibold text-xs shadow-xs transition-colors flex items-center justify-center gap-2"
-            >
-              <span>💾 Lưu Thay Đổi Hồ Sơ</span>
-            </button>
-          </div>
-        {:else}
-          <button
-            type="submit"
-            disabled={isSaving || isInitialLoading}
-            class="w-full py-2.5 rounded-md bg-cx-700 hover:bg-cx-600 text-white font-semibold text-xs shadow-xs transition-colors flex items-center justify-center gap-2 mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <span>{isSaving ? '⏳ Đang lưu hồ sơ...' : '💾 Lưu Thay Đổi Hồ Sơ'}</span>
-          </button>
-        {/if}
-      </form>
-    </div>
-  </div>
+ <!-- Action Buttons -->
+ {#if baselineFetchFailed || profileVersion == null}
+ <div class="flex flex-col sm:flex-row gap-2 mt-4">
+ <button
+ type="button"
+ id="reload-baseline-btn"
+ disabled={isReloadingBaseline}
+ onclick={handleReloadBaseline}
+ class="flex-1 py-2.5 rounded-md bg-amber-600 hover:bg-amber-500 text-white font-semibold text-xs shadow-xs transition-colors flex items-center justify-center gap-2"
+ >
+ <span>{isReloadingBaseline ? '⏳ Đang tải bản mới...' : '🔄 Tải Lại Dữ Liệu Đối Soát'}</span>
+ </button>
+ <button
+ type="submit"
+ disabled={true}
+ title="Vui lòng tải lại dữ liệu đối soát trước khi lưu"
+ class="flex-1 py-2.5 rounded-md bg-slate-400 cursor-not-allowed text-white/70 font-semibold text-xs shadow-xs transition-colors flex items-center justify-center gap-2"
+ >
+ <span>💾 Lưu Thay Đổi Hồ Sơ</span>
+ </button>
+ </div>
+ {:else}
+ <button
+ type="submit"
+ disabled={isSaving || isInitialLoading}
+ class="w-full py-2.5 rounded-md bg-cx-700 hover:bg-cx-600 text-white font-semibold text-xs shadow-xs transition-colors flex items-center justify-center gap-2 mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
+ >
+ <span>{isSaving ? '⏳ Đang lưu hồ sơ...' : '💾 Lưu Thay Đổi Hồ Sơ'}</span>
+ </button>
+ {/if}
+ </form>
+ </div>
+ </div>
 {/if}

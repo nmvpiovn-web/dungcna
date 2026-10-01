@@ -598,12 +598,6 @@
     box-sizing: border-box;
   }
 
-  :global(.dark) .card-face {
-    background: #0f172a;
-    border-color: #334155;
-    color: #f8fafc;
-  }
-
   .card-front {
     transform: rotateY(0deg);
     z-index: 2;
@@ -778,12 +772,6 @@
     border: 1px solid var(--border-color);
   }
 
-  :global(.dark) .ipa-pill {
-    background: #1e293b;
-    color: #22d3ee;
-    border-color: #334155;
-  }
-
   .syllables-pill {
     background: var(--primary-light);
     color: var(--primary-hover);
@@ -801,11 +789,6 @@
     padding: 8px 12px;
     border-radius: var(--border-radius-sm);
     border-left: 4px solid var(--primary);
-  }
-
-  :global(.dark) .vietnamese-def {
-    background: #1e293b;
-    border-left-color: #22d3ee;
   }
 
   .def-label {
@@ -831,11 +814,6 @@
     gap: 10px;
   }
 
-  :global(.dark) .phonics-breakdown-box {
-    background: #1e293b;
-    border-color: #334155;
-  }
-
   .phonics-row {
     display: grid;
     grid-template-columns: 1fr 1px 1fr;
@@ -844,10 +822,6 @@
 
   .phonics-row-divider {
     background: var(--border-color);
-  }
-
-  :global(.dark) .phonics-row-divider {
-    background: #334155;
   }
 
   .phonics-tag {
@@ -867,22 +841,10 @@
     color: #0891b2;
   }
 
-  :global(.dark) .tag-vowel {
-    color: #fbbf24;
-  }
-
-  :global(.dark) .tag-consonant {
-    color: #22d3ee;
-  }
-
   .phonics-desc {
     font-size: 0.82rem;
     line-height: 1.45;
     color: var(--text-muted);
-  }
-
-  :global(.dark) .phonics-desc {
-    color: #cbd5e1;
   }
 
   .phonics-note {
@@ -897,23 +859,12 @@
     gap: 6px;
   }
 
-  :global(.dark) .phonics-note {
-    background: #2e1065;
-    border-color: #581c87;
-    color: #d8b4fe;
-  }
-
   /* EXAMPLE SENTENCE BOX */
   .example-box {
     background: var(--bg-surface);
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius-md);
     padding: 10px 14px;
-  }
-
-  :global(.dark) .example-box {
-    background: #0f172a;
-    border-color: #334155;
   }
 
   .example-header {
@@ -928,10 +879,6 @@
     font-weight: 800;
     color: var(--primary);
     text-transform: uppercase;
-  }
-
-  :global(.dark) .example-title {
-    color: #22d3ee;
   }
 
   .btn-speak-example {
@@ -949,27 +896,14 @@
     cursor: pointer;
   }
 
-  :global(.dark) .btn-speak-example {
-    background: #14532d;
-    color: #86efac;
-  }
-
   .example-en {
     font-size: 0.88rem;
     color: var(--text-main);
   }
 
-  :global(.dark) .example-en {
-    color: #f8fafc;
-  }
-
   .example-vi {
     font-size: 0.82rem;
     color: var(--text-muted);
-  }
-
-  :global(.dark) .example-vi {
-    color: #94a3b8;
   }
 
   .btn-speak-example:hover {

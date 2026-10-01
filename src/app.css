@@ -116,10 +116,6 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   color: #0f172a;
 }
 
-.dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6, .dark .font-heading {
-  color: #f8fafc;
-}
-
 /* Enforce body 400, label 500, heading/bold 600 strictly */
 body, p, .text-body {
   font-weight: 400;
@@ -495,35 +491,6 @@ html.theme-sky {
   --surface-0: #ffffff;  --surface-0-rgb: 255 255 255;
   --surface-1: #ecfeff;  --surface-1-rgb: 240 249 255;
   --line: #a5f3fc;       --line-rgb: 186 230 253;
-}
-
-/* ---- TOI (dark) ---- */
-html.dark {
-  color-scheme: dark;
-  --brand-600: #22d3ee;  --brand-600-rgb: 34 211 238;
-  --brand-700: #0891b2;  --brand-700-rgb: 8 145 178;
-  --brand-50: #083344;   --brand-50-rgb: 8 51 68;
-  --brand-200: #155e75;  --brand-200-rgb: 21 94 117;
-  --c-50: #083344;   --c-50-rgb: 8 51 68;
-  --c-100: #164e63;  --c-100-rgb: 22 78 99;
-  --c-200: #155e75;  --c-200-rgb: 21 94 117;
-  --c-300: #0e7490;  --c-300-rgb: 14 116 144;
-  --c-400: #0891b2;  --c-400-rgb: 8 145 178;
-  --c-500: #06b6d4;  --c-500-rgb: 6 182 212;
-  --c-600: #22d3ee;  --c-600-rgb: 34 211 238;
-  --c-700: #67e8f9;  --c-700-rgb: 103 232 249;
-  --c-800: #a5f3fc;  --c-800-rgb: 165 243 252;
-  --c-900: #cffafe;  --c-900-rgb: 207 250 254;
-  --c-950: #ecfeff;  --c-950-rgb: 236 254 255;
-  --hof-1: #155e75; --hof-2: #0e7490; --hof-3: #0891b2; --hof-4: #164e63;
-  --accent-500: #fbbf24; --accent-500-rgb: 251 191 36;
-  --success-600: #4ade80; --success-600-rgb: 74 222 128;
-  --danger-600: #f87171; --danger-600-rgb: 248 113 113;
-  --ink-900: #f1f5f9;    --ink-900-rgb: 241 245 249;
-  --ink-500: #94a3b8;    --ink-500-rgb: 148 163 184;
-  --surface-0: #0f172a;  --surface-0-rgb: 15 23 42;
-  --surface-1: #1e293b;  --surface-1-rgb: 30 41 59;
-  --line: #334155;       --line-rgb: 51 65 85;
 }
 
 /* Nut "do choi" mat hoc sinh: bong do day kieu Duolingo */

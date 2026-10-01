@@ -23,12 +23,11 @@
 		<script src="https://cdn.tailwindcss.com"></script>
 		<script>
 			tailwind.config = {
-				darkMode: 'class',
 				theme: {
 					extend: {
 						colors: {
 							// Academic Warmth design tokens (2026-09-30): utilities an theo CSS variable,
-							// doi theo 3 theme Sáng / Xanh Nhẹ / Tối. Cam hardcode mau trong component moi.
+							// doi theo 2 theme Sáng / Xanh Nhẹ. Cam hardcode mau trong component moi.
 							brand: {
 								50: 'rgb(var(--brand-50-rgb) / <alpha-value>)',
 								200: 'rgb(var(--brand-200-rgb) / <alpha-value>)',
@@ -82,10 +81,8 @@
 			(function() {
 				try {
 					const savedTheme = localStorage.getItem('tienganh_theme') || 'sky';
-					document.documentElement.classList.remove('dark', 'theme-sky');
-					if (savedTheme === 'dark') {
-						document.documentElement.classList.add('dark');
-					} else if (savedTheme === 'sky') {
+					document.documentElement.classList.remove('theme-sky');
+					if (savedTheme === 'sky') {
 						document.documentElement.classList.add('theme-sky');
 					}
 				} catch (e) {}
@@ -147,7 +144,7 @@
 		</script>
 		%sveltekit.head%
 	</head>
-	<body data-sveltekit-preload-data="hover" class="bg-surface-1 text-ink-900 dark:bg-surface-0 dark:text-ink-900 antialiased selection:bg-emerald-500 selection:text-white min-h-screen max-w-full overflow-x-hidden transition-colors duration-150">
+	<body data-sveltekit-preload-data="hover" class="bg-surface-1 text-ink-900 antialiased selection:bg-emerald-500 selection:text-white min-h-screen max-w-full overflow-x-hidden transition-colors duration-150">
 		<div style="display: contents">%sveltekit.body%</div>
 	</body>
 </html>
