@@ -56,12 +56,13 @@ export function rgbStr(h){ const [r,g,b]=hx(h); return `${r} ${g} ${b}`; }
 export function applyThemeVars(cScale, hofStops){
   if (typeof document === 'undefined') return;
   const el = document.documentElement;
+  const cs = cScale || {};
   for (const s of SHADES){
-    if (!isHex(cScale?.[s])) continue;
-    el.style.setProperty('--c-'+s, cScale[s]);
-    el.style.setProperty('--c-'+s+'-rgb', rgbStr(cScale[s]));
+    if (!isHex(cs[s])) continue;
+    el.style.setProperty('--c-'+s, cs[s]);
+    el.style.setProperty('--c-'+s+'-rgb', rgbStr(cs[s]));
   }
-  const map = { 'brand-600': cScale[600], 'brand-700': cScale[700], 'brand-50': cScale[50], 'brand-200': cScale[200] };
+  const map = { 'brand-600': cs[600], 'brand-700': cs[700], 'brand-50': cs[50], 'brand-200': cs[200] };
   for (const [k,v] of Object.entries(map)){
     if (!isHex(v)) continue;
     el.style.setProperty('--'+k, v);
