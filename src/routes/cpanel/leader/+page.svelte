@@ -430,7 +430,7 @@
   <header class="bg-slate-900 border border-slate-800 rounded-lg p-4 sm:p-6 text-slate-100 shadow-sm relative overflow-hidden min-w-0">
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
       <div class="space-y-2 min-w-0">
-        <div class="flex items-center gap-2 text-sky-400 text-xs font-semibold uppercase tracking-wider">
+        <div class="flex items-center gap-2 text-cyan-400 text-xs font-semibold uppercase tracking-wider">
           <span>Trung Tâm Điều Hành Chuyên Môn</span>
           <span>•</span>
           <span>Ban Giám Sát Sư Phạm</span>
@@ -454,7 +454,7 @@
 
   <!-- Notification Toast -->
   {#if actionToast}
-    <div class="p-3 rounded-md text-xs font-semibold bg-sky-50 dark:bg-sky-950/60 border border-sky-200 dark:border-sky-800 text-sky-800 dark:text-sky-300">
+    <div class="p-3 rounded-md text-xs font-semibold bg-cyan-50 dark:bg-cyan-950/60 border border-cyan-200 dark:border-cyan-800 text-cyan-800 dark:text-cyan-300">
       {actionToast}
     </div>
   {/if}
@@ -463,13 +463,13 @@
   <div class="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2 overflow-x-auto max-w-full">
     <button 
       onclick={() => activeTab = 'overview'}
-      class="whitespace-nowrap shrink-0 px-3 sm:px-4 py-2 rounded-md text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 {activeTab === 'overview' ? 'bg-sky-600 text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}"
+      class="whitespace-nowrap shrink-0 px-3 sm:px-4 py-2 rounded-md text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 {activeTab === 'overview' ? 'bg-cyan-600 text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}"
     >
       Tổng Quan Sư Phạm &amp; Sự Kiện
     </button>
     <button 
       onclick={() => activeTab = 'leaves'}
-      class="whitespace-nowrap shrink-0 flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-md text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 {activeTab === 'leaves' ? 'bg-sky-600 text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}"
+      class="whitespace-nowrap shrink-0 flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-md text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 {activeTab === 'leaves' ? 'bg-cyan-600 text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}"
     >
       <span>Duyệt Nghỉ Phép &amp; Dạy Thay</span>
       {#if pendingLeaves.length > 0}
@@ -480,7 +480,7 @@
     </button>
     <button 
       onclick={() => activeTab = 'advances'}
-      class="whitespace-nowrap shrink-0 flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-md text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 {activeTab === 'advances' ? 'bg-sky-600 text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}"
+      class="whitespace-nowrap shrink-0 flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-md text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 {activeTab === 'advances' ? 'bg-cyan-600 text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}"
     >
       <span>Duyệt &amp; Thực Chi Ứng Lương</span>
       {#if pendingAdvances.length > 0}
@@ -491,7 +491,7 @@
     </button>
     <button 
       onclick={() => activeTab = 'recruitment'}
-      class="whitespace-nowrap shrink-0 flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-md text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 {activeTab === 'recruitment' ? 'bg-sky-600 text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}"
+      class="whitespace-nowrap shrink-0 flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-md text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 {activeTab === 'recruitment' ? 'bg-cyan-600 text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}"
     >
       <span>Tuyển Dụng &amp; Phỏng Vấn</span>
       <span class="px-1.5 py-0.2 rounded bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 text-[11px] font-semibold tabular-nums">
@@ -500,7 +500,7 @@
     </button>
     <button 
       onclick={() => activeTab = 'parent-links'}
-      class="whitespace-nowrap shrink-0 flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-md text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 {activeTab === 'parent-links' ? 'bg-sky-600 text-white' : 'text-slate-600 hover:bg-slate-100'}"
+      class="whitespace-nowrap shrink-0 flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-md text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 {activeTab === 'parent-links' ? 'bg-cyan-600 text-white' : 'text-slate-600 hover:bg-slate-100'}"
     >
       <span>Liên Kết Phụ Huynh</span>
       {#if parentLinks.length > 0}
@@ -509,7 +509,7 @@
     </button>
     <button 
       onclick={() => { activeTab = 'payroll'; if (!leaderPayrollData) fetchLeaderPayroll(); }}
-      class="whitespace-nowrap shrink-0 flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-md text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 {activeTab === 'payroll' ? 'bg-sky-600 text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}"
+      class="whitespace-nowrap shrink-0 flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-md text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 {activeTab === 'payroll' ? 'bg-cyan-600 text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}"
     >
       <span>Khóa Sổ &amp; Bảng Lương</span>
     </button>
@@ -541,7 +541,7 @@
         <span class="text-xs font-medium text-slate-600 dark:text-slate-400">Lọc cơ sở:</span>
         <select 
           bind:value={selectedCampus}
-          class="text-xs font-semibold bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-3 py-1.5 rounded-md border border-slate-300 dark:border-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
+          class="text-xs font-semibold bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-3 py-1.5 rounded-md border border-slate-300 dark:border-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500"
         >
           <option value="all">Toàn bộ cơ sở (Nhà Cô Dung, Sunshine, Thầy Vũ)</option>
           {#each campuses as c}
@@ -551,7 +551,7 @@
       </div>
 
       <div class="text-xs text-slate-500 dark:text-slate-400">
-        BTVN đang mở: <strong class="text-sky-600 tabular-nums">{totalAssignments}</strong>
+        BTVN đang mở: <strong class="text-cyan-600 tabular-nums">{totalAssignments}</strong>
       </div>
     </div>
 
@@ -559,7 +559,7 @@
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
       <div class="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 p-5 shadow-sm">
         <div class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Tổng Bài Tập Đã Giao</div>
-        <div class="text-2xl font-semibold text-sky-600 dark:text-sky-400 mt-2 tabular-nums">{totalAssignments}</div>
+        <div class="text-2xl font-semibold text-cyan-600 dark:text-cyan-400 mt-2 tabular-nums">{totalAssignments}</div>
         <div class="text-xs text-slate-500 mt-1">Gắn chặt ca học &amp; giáo án Obsidian</div>
       </div>
 
@@ -600,7 +600,7 @@
               <div class="space-y-0.5">
                 <div class="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
                   <span>{stm.title}</span>
-                  <span class="text-[11px] px-2 py-0.5 rounded font-medium bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300">
+                  <span class="text-[11px] px-2 py-0.5 rounded font-medium bg-cyan-100 text-cyan-800 dark:bg-cyan-950 dark:text-cyan-300">
                     {campusObj?.short_code || stm.campus_id}
                   </span>
                 </div>
@@ -671,7 +671,7 @@
                     onclick={() => handleDecideLeave(l.id, 'approved')}
                     disabled={isProcessing || (l.substitute_teacher_id && !subAccepted)}
                     title={l.substitute_teacher_id && !subAccepted ? 'Cần giáo viên dạy thay xác nhận trước khi duyệt' : 'Duyệt đơn và cập nhật phân công ca'}
-                    class="px-4 py-1.5 rounded-md text-xs font-semibold bg-sky-600 hover:bg-sky-700 text-white disabled:opacity-50 transition-colors"
+                    class="px-4 py-1.5 rounded-md text-xs font-semibold bg-cyan-600 hover:bg-cyan-700 text-white disabled:opacity-50 transition-colors"
                   >
                     Phê Duyệt Ca
                   </button>
@@ -705,7 +705,7 @@
           {#each advances as adv}
             {@const isPending = adv.status === 'pending'}
             {@const isApproved = adv.status === 'approved'}
-            {@const statusColor = adv.status === 'deducted' ? 'bg-slate-100 text-slate-700 border-slate-200' : adv.status === 'disbursed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : adv.status === 'approved' ? 'bg-sky-50 text-sky-700 border-sky-200' : 'bg-amber-50 text-amber-700 border-amber-200'}
+            {@const statusColor = adv.status === 'deducted' ? 'bg-slate-100 text-slate-700 border-slate-200' : adv.status === 'disbursed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : adv.status === 'approved' ? 'bg-cyan-50 text-cyan-700 border-cyan-200' : 'bg-amber-50 text-amber-700 border-amber-200'}
             {@const statusLabel = adv.status === 'deducted' ? 'Đã Quyết Toán' : adv.status === 'disbursed' ? 'Đã Thực Chi' : adv.status === 'approved' ? 'Đã Duyệt Hạn Mức' : 'Chờ Leader Duyệt'}
 
             <div class="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 p-4 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -738,7 +738,7 @@
                   <button 
                     onclick={() => handleApproveAdvance(adv.id, 'approve')}
                     disabled={isProcessing}
-                    class="px-4 py-1.5 rounded-md text-xs font-semibold bg-sky-600 hover:bg-sky-700 text-white transition-colors"
+                    class="px-4 py-1.5 rounded-md text-xs font-semibold bg-cyan-600 hover:bg-cyan-700 text-white transition-colors"
                   >
                     Duyệt Hạn Mức
                   </button>
@@ -783,7 +783,7 @@
               </div>
               <div class="flex gap-2 shrink-0">
                 <button type="button" onclick={() => decideParentLink(link.link_id, 'rejected')} disabled={isProcessing} class="min-h-11 px-4 rounded-md border border-rose-300 bg-white text-rose-800 font-bold hover:bg-rose-50 disabled:opacity-50">Từ chối</button>
-                <button type="button" onclick={() => decideParentLink(link.link_id, 'verified')} disabled={isProcessing} class="min-h-11 px-4 rounded-md bg-sky-700 text-white font-bold hover:bg-sky-800 disabled:opacity-50">Xác minh</button>
+                <button type="button" onclick={() => decideParentLink(link.link_id, 'verified')} disabled={isProcessing} class="min-h-11 px-4 rounded-md bg-cyan-700 text-white font-bold hover:bg-cyan-800 disabled:opacity-50">Xác minh</button>
               </div>
             </article>
           {/each}
@@ -811,7 +811,7 @@
       {:else}
         <div class="space-y-3">
           {#each recruitment as cand}
-            {@const statusColor = cand.status === 'accepted' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : cand.status === 'rejected' ? 'bg-rose-50 text-rose-700 border-rose-200' : cand.status === 'interview_scheduled' ? 'bg-sky-50 text-sky-700 border-sky-200' : 'bg-amber-50 text-amber-700 border-amber-200'}
+            {@const statusColor = cand.status === 'accepted' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : cand.status === 'rejected' ? 'bg-rose-50 text-rose-700 border-rose-200' : cand.status === 'interview_scheduled' ? 'bg-cyan-50 text-cyan-700 border-cyan-200' : 'bg-amber-50 text-amber-700 border-amber-200'}
             {@const statusLabel = cand.status === 'accepted' ? 'Đã Tuyển Dụng' : cand.status === 'rejected' ? 'Không Phù Hợp' : cand.status === 'interview_scheduled' ? 'Đã Xếp Lịch Phỏng Vấn' : 'Mới Ứng Tuyển'}
 
             <div class="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 p-4 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -831,7 +831,7 @@
                     <p>Chứng chỉ: <span class="font-medium text-slate-700 dark:text-slate-300">{cand.certificates}</span></p>
                   {/if}
                   {#if cand.interview_time}
-                    <p class="text-sky-700 dark:text-sky-300 font-medium">Lịch phỏng vấn: <span class="tabular-nums">{cand.interview_time}</span> (Người PV: {cand.interviewer_name})</p>
+                    <p class="text-cyan-700 dark:text-cyan-300 font-medium">Lịch phỏng vấn: <span class="tabular-nums">{cand.interview_time}</span> (Người PV: {cand.interviewer_name})</p>
                   {/if}
                   {#if cand.trial_feedback}
                     <p class="italic text-emerald-700 dark:text-emerald-400">Đánh giá dạy thử: "{cand.trial_feedback}"</p>
@@ -842,7 +842,7 @@
               <div>
                 <button 
                   onclick={() => openInterviewModal(cand)}
-                  class="px-4 py-2 rounded-md text-xs font-semibold bg-sky-600 hover:bg-sky-700 text-white transition-colors"
+                  class="px-4 py-2 rounded-md text-xs font-semibold bg-cyan-600 hover:bg-cyan-700 text-white transition-colors"
                 >
                   Xử Lý Hồ Sơ / Phỏng Vấn
                 </button>
@@ -908,14 +908,14 @@
             <button
               onclick={fetchLeaderPayroll}
               disabled={isFetchingPayroll}
-              class="w-full py-2.5 px-4 rounded-md font-semibold bg-sky-600 hover:bg-sky-700 text-white disabled:opacity-50 transition-colors shadow-sm"
+              class="w-full py-2.5 px-4 rounded-md font-semibold bg-cyan-600 hover:bg-cyan-700 text-white disabled:opacity-50 transition-colors shadow-sm"
             >
               {isFetchingPayroll ? 'Đang tính toán...' : 'Đối Soát &amp; Tính Bảng Lương'}
             </button>
           </div>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 p-4 rounded-lg bg-sky-50 border border-sky-200 text-xs">
+        <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 p-4 rounded-lg bg-cyan-50 border border-cyan-200 text-xs">
           <div>
             <label for="leader-salary-base" class="block font-bold text-slate-800 mb-1">Lương cơ bản (VNĐ)</label>
             <input id="leader-salary-base" type="number" min="0" step="10000" bind:value={salaryBaseVnd} class="w-full p-2.5 rounded-md bg-white border border-slate-300 text-slate-950 font-semibold" />
@@ -935,7 +935,7 @@
             </select>
           </div>
           <div class="flex items-end">
-            <button type="button" onclick={saveSelectedTeacherSalary} disabled={isSavingSalary || !payrollTeacherId} class="w-full min-h-11 px-4 rounded-md bg-sky-700 hover:bg-sky-800 text-white font-bold disabled:opacity-50">
+            <button type="button" onclick={saveSelectedTeacherSalary} disabled={isSavingSalary || !payrollTeacherId} class="w-full min-h-11 px-4 rounded-md bg-cyan-700 hover:bg-cyan-800 text-white font-bold disabled:opacity-50">
               {isSavingSalary ? 'Đang lưu D1...' : 'Lưu Mức Lương'}
             </button>
           </div>
@@ -949,7 +949,7 @@
           <div class="p-5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <div class="flex items-center gap-2">
-                <span class="text-xs font-semibold text-sky-600 uppercase tracking-wider">Hồ Sơ Lương Học Vụ</span>
+                <span class="text-xs font-semibold text-cyan-600 uppercase tracking-wider">Hồ Sơ Lương Học Vụ</span>
                 <span class="text-xs text-slate-400">•</span>
                 <span class="text-xs font-bold text-slate-800 dark:text-slate-200">Kỳ: {leaderPayrollData.billing_cycle}</span>
                 <span class="text-xs text-slate-400">•</span>
@@ -969,7 +969,7 @@
                   ĐÃ KHÓA SỔ BẢO VỆ ({leaderPayrollData.status.toUpperCase()})
                 </span>
               {:else if leaderPayrollData.status === 'approved'}
-                <span class="inline-flex items-center gap-1 px-3 py-1 rounded text-xs font-bold bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300 border border-sky-300 dark:border-sky-800">
+                <span class="inline-flex items-center gap-1 px-3 py-1 rounded text-xs font-bold bg-cyan-100 text-cyan-800 dark:bg-cyan-950 dark:text-cyan-300 border border-cyan-300 dark:border-cyan-800">
                   ĐÃ PHÊ DUYỆT (CHỜ KHÓA SỔ)
                 </span>
               {:else}
@@ -1048,7 +1048,7 @@
               {:else if leaderPayrollData.is_locked || leaderPayrollData.status === 'locked'}
                 <span class="text-rose-700 dark:text-rose-400 font-semibold">🔒 Kỳ lương đã khóa sổ. Quản lý có thể mở lại (Adjust) để điều chỉnh có lưu vết audit.</span>
               {:else if leaderPayrollData.status === 'approved'}
-                <span class="text-sky-700 dark:text-sky-400 font-semibold">📋 Kỳ lương đã duyệt. Quản lý có thể khóa sổ, chi trả, hoặc mở lại để điều chỉnh.</span>
+                <span class="text-cyan-700 dark:text-cyan-400 font-semibold">📋 Kỳ lương đã duyệt. Quản lý có thể khóa sổ, chi trả, hoặc mở lại để điều chỉnh.</span>
               {:else}
                 <span>Bấm <strong>Phê Duyệt</strong> hoặc <strong>Khóa Sổ</strong> để chốt số liệu học vụ lên D1 Cloudflare.</span>
               {/if}
@@ -1121,7 +1121,7 @@
                   id="leader-payroll-approve-btn"
                   onclick={() => handlePayrollAction('approve')}
                   disabled={isLockingPayroll}
-                  class="px-3.5 py-2 rounded-md text-xs font-semibold bg-sky-600 hover:bg-sky-700 text-white disabled:opacity-50 transition-colors shadow-sm"
+                  class="px-3.5 py-2 rounded-md text-xs font-semibold bg-cyan-600 hover:bg-cyan-700 text-white disabled:opacity-50 transition-colors shadow-sm"
                 >
                   Phê Duyệt Bảng Lương
                 </button>
@@ -1184,7 +1184,7 @@
     <div class="bg-white dark:bg-slate-900 rounded-lg max-w-lg w-full border border-slate-200 dark:border-slate-800 shadow-xl p-6 space-y-4 text-xs">
       <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
         <div>
-          <span class="font-semibold text-sky-600 uppercase tracking-wide">Quy Trình Tuyển Dụng</span>
+          <span class="font-semibold text-cyan-600 uppercase tracking-wide">Quy Trình Tuyển Dụng</span>
           <h3 class="text-base font-semibold text-slate-900 dark:text-white">{selectedCandidate.candidate_name}</h3>
         </div>
         <button onclick={() => showInterviewModal = false} class="text-slate-400 hover:text-slate-600 font-bold p-1">✕</button>
@@ -1258,7 +1258,7 @@
         <button 
           onclick={saveCandidateUpdates}
           disabled={isProcessing}
-          class="px-5 py-2 rounded-md font-semibold bg-sky-600 hover:bg-sky-700 text-white disabled:opacity-50 transition-colors"
+          class="px-5 py-2 rounded-md font-semibold bg-cyan-600 hover:bg-cyan-700 text-white disabled:opacity-50 transition-colors"
         >
           {isProcessing ? 'Đang lưu...' : 'Lưu Kết Quả'}
         </button>

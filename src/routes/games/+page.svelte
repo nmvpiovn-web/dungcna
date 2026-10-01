@@ -1285,7 +1285,7 @@
             >
               <div class="font-extrabold text-xs sm:text-sm text-slate-900 dark:text-white">{card.text}</div>
               <div class="text-[10px] text-slate-400 font-mono mt-1">{card.sub}</div>
-              <span class="text-[9px] font-bold px-1.5 py-0.5 rounded mt-1 {card.type === 'en' ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'}">
+              <span class="text-[9px] font-bold px-1.5 py-0.5 rounded mt-1 {card.type === 'en' ? 'bg-cyan-50 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300' : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'}">
                 {card.type === 'en' ? 'EN' : 'VN'}
               </span>
             </button>

@@ -780,7 +780,7 @@
 
   :global(.dark) .ipa-pill {
     background: #1e293b;
-    color: #38bdf8;
+    color: #22d3ee;
     border-color: #334155;
   }
 
@@ -805,7 +805,7 @@
 
   :global(.dark) .vietnamese-def {
     background: #1e293b;
-    border-left-color: #38bdf8;
+    border-left-color: #22d3ee;
   }
 
   .def-label {
@@ -864,7 +864,7 @@
   }
 
   .tag-consonant {
-    color: #0284c7;
+    color: #0891b2;
   }
 
   :global(.dark) .tag-vowel {
@@ -872,7 +872,7 @@
   }
 
   :global(.dark) .tag-consonant {
-    color: #38bdf8;
+    color: #22d3ee;
   }
 
   .phonics-desc {
@@ -931,7 +931,7 @@
   }
 
   :global(.dark) .example-title {
-    color: #38bdf8;
+    color: #22d3ee;
   }
 
   .btn-speak-example {

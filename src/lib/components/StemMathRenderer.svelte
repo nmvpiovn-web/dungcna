@@ -56,7 +56,7 @@
 
 <div class="stem-math-container my-2 p-3 bg-slate-50 dark:bg-slate-800/40 rounded-lg border border-slate-200 dark:border-slate-700 text-xs">
   <div class="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 mb-1 border-b border-slate-200/60 dark:border-slate-700/60 pb-1">
-    <span class="font-semibold text-sky-600 dark:text-sky-400 flex items-center gap-1">
+    <span class="font-semibold text-cyan-600 dark:text-cyan-400 flex items-center gap-1">
       <span>📐</span>
       <span>Công Thức STEM / Toán - Khoa Học</span>
     </span>

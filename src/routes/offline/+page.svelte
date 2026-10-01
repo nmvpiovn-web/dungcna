@@ -61,7 +61,7 @@
   }
   button {
     display: inline-block;
-    background: #0284c7;
+    background: #0891b2;
     color: #fff;
     border: none;
     border-radius: 999px;
@@ -74,7 +74,7 @@
   a {
     display: block;
     font-size: 14px;
-    color: #0284c7;
+    color: #0891b2;
     font-weight: 600;
     text-decoration: none;
   }

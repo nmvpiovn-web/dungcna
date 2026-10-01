@@ -78,7 +78,7 @@
     if (badge?.includes('PHU_HUYNH')) {
       return 'bg-purple-100 text-purple-800 border-purple-300 dark:bg-purple-950/70 dark:text-purple-300 dark:border-purple-700';
     }
-    return 'bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-950/70 dark:text-blue-300 dark:border-blue-700';
+    return 'bg-cyan-100 text-cyan-800 border-cyan-300 dark:bg-cyan-950/70 dark:text-cyan-300 dark:border-cyan-700';
   }
 
   function getTypePill(type) {
@@ -86,7 +86,7 @@
       case 'rebuttal':
         return { label: '⚖️ Phản Biện Kết Quả / Giải Trình', color: 'bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300 border-rose-200' };
       case 'inquiry':
-        return { label: '❓ Câu Hỏi & Thắc Mắc', color: 'bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300 border-blue-200' };
+        return { label: '❓ Câu Hỏi & Thắc Mắc', color: 'bg-cyan-50 text-cyan-700 dark:bg-cyan-950/50 dark:text-cyan-300 border-cyan-200' };
       case 'leader_conclusion':
         return { label: '👑 Kết Luận Từ Cô Dung Leader', color: 'bg-amber-50 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300 border-amber-300' };
       default:
@@ -195,7 +195,7 @@
         <button
           type="button"
           onclick={() => commentType = 'inquiry'}
-          class="px-2.5 py-1 rounded-lg text-[10px] font-bold border transition-all {commentType === 'inquiry' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'}"
+          class="px-2.5 py-1 rounded-lg text-[10px] font-bold border transition-all {commentType === 'inquiry' ? 'bg-cyan-600 text-white' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'}"
         >
           ❓ Thắc Mắc
         </button>

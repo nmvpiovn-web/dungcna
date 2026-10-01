@@ -362,8 +362,8 @@
       <!-- Modal Top Bar -->
       <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
         <div class="flex items-center gap-2">
-          <span class="w-2.5 h-2.5 rounded-full bg-sky-500"></span>
-          <h3 id="guest-modal-title" class="text-xs font-semibold uppercase tracking-wider text-sky-600 dark:text-sky-400">
+          <span class="w-2.5 h-2.5 rounded-full bg-cyan-500"></span>
+          <h3 id="guest-modal-title" class="text-xs font-semibold uppercase tracking-wider text-cyan-600 dark:text-cyan-400">
             Khảo Sát Năng Lực Trực Tuyến (Thi Thử Miễn Phí)
           </h3>
           <span class="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
@@ -405,7 +405,7 @@
                 type="text" 
                 bind:value={candidateName}
                 placeholder="VD: Nguyễn Hoàng Nam"
-                class="w-full p-2.5 rounded-md bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-xs font-normal focus:ring-2 focus:ring-sky-500"
+                class="w-full p-2.5 rounded-md bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-xs font-normal focus:ring-2 focus:ring-cyan-500"
               />
             </div>
 
@@ -416,7 +416,7 @@
                   id="cand-grade-select"
                   bind:value={selectedGrade}
                   onchange={(e) => handleGradeChange(e.currentTarget.value)}
-                  class="w-full p-2.5 rounded-md bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-xs font-medium focus:ring-2 focus:ring-sky-500"
+                  class="w-full p-2.5 rounded-md bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-xs font-medium focus:ring-2 focus:ring-cyan-500"
                 >
                   <option value="" disabled>-- Vui lòng chọn khối lớp --</option>
                   <optgroup label="Khối Lớp Đã Có Đề Thi Chuẩn">
@@ -446,7 +446,7 @@
                     id="cand-curr-select"
                     bind:value={selectedCurriculum}
                     onchange={(e) => handleCurriculumChange(e.currentTarget.value)}
-                    class="w-full p-2.5 rounded-md bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-xs font-medium focus:ring-2 focus:ring-sky-500"
+                    class="w-full p-2.5 rounded-md bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-xs font-medium focus:ring-2 focus:ring-cyan-500"
                   >
                     <option value="global_success">Kết nối tri thức (Global Success) • Đề 5p &amp; 15p</option>
                     <option value="friends_plus">Chân trời sáng tạo (Friends Plus) • Đề 5p</option>
@@ -461,7 +461,7 @@
                     id="cand-curr-select-12"
                     bind:value={selectedCurriculum}
                     onchange={(e) => handleCurriculumChange(e.currentTarget.value)}
-                    class="w-full p-2.5 rounded-md bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-xs font-medium focus:ring-2 focus:ring-sky-500"
+                    class="w-full p-2.5 rounded-md bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-xs font-medium focus:ring-2 focus:ring-cyan-500"
                   >
                     <option value="thpt_qg">Chương trình GDPT Chuẩn &amp; Ôn thi THPT Quốc Gia</option>
                     <option value="ielts_academic">Định hướng Học thuật &amp; IELTS Foundation</option>
@@ -508,7 +508,7 @@
               <button 
                 type="submit"
                 disabled={isStarting}
-                class="px-5 py-2.5 rounded-md font-semibold bg-sky-600 hover:bg-sky-700 text-white disabled:opacity-50 transition-colors shadow-sm text-xs"
+                class="px-5 py-2.5 rounded-md font-semibold bg-cyan-600 hover:bg-cyan-700 text-white disabled:opacity-50 transition-colors shadow-sm text-xs"
               >
                 {isStarting ? 'Đang chuẩn bị đề...' : 'Bắt Đầu Làm Bài Ngay →'}
               </button>
@@ -522,7 +522,7 @@
           <!-- Timer Bar -->
           <div class="flex items-center justify-between bg-slate-900 text-white p-3 rounded-md">
             <div>
-              <span class="text-xs text-sky-400 font-semibold">{candidateName}</span>
+              <span class="text-xs text-cyan-400 font-semibold">{candidateName}</span>
               <span class="text-slate-400 text-xs">
                 • Khối: {selectedGrade.replace('lop_', 'Lớp ')}
                 {#if selectedCurriculum}
@@ -553,7 +553,7 @@
             {#each questions as q, idx}
               <div class="p-4 rounded-lg bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 space-y-3">
                 <div class="flex items-center justify-between">
-                  <span class="font-semibold text-sky-600 dark:text-sky-400 text-xs">
+                  <span class="font-semibold text-cyan-600 dark:text-cyan-400 text-xs">
                     Câu {idx + 1} / {questions.length}
                   </span>
                   <span class="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
@@ -568,11 +568,11 @@
                 {/if}
 
                 {#if q.audio_term}
-                  <div class="flex items-center gap-2 p-2 bg-sky-50 dark:bg-sky-950/40 rounded border border-sky-200 dark:border-sky-800">
+                  <div class="flex items-center gap-2 p-2 bg-cyan-50 dark:bg-cyan-950/40 rounded border border-cyan-200 dark:border-cyan-800">
                     <button 
                       type="button"
                       onclick={() => speakWord(q.audio_term, 0.9)}
-                      class="px-3 py-1 rounded bg-sky-600 text-white font-medium flex items-center gap-1 shadow-sm text-xs"
+                      class="px-3 py-1 rounded bg-cyan-600 text-white font-medium flex items-center gap-1 shadow-sm text-xs"
                     >
                       <span>🔊</span>
                       <span>Nghe Phát Âm</span>
@@ -599,13 +599,13 @@
                     {#each q.options as opt}
                       {@const optVal = typeof opt === 'object' && opt ? opt.id : opt}
                       {@const optLabel = typeof opt === 'object' && opt ? `${opt.id}. ${opt.text}` : opt}
-                      <label class="flex items-center gap-2 p-2.5 rounded border text-xs cursor-pointer transition-colors {answers[q.id] === optVal ? 'border-sky-500 bg-sky-50 dark:bg-sky-950/50 text-sky-900 dark:text-sky-200 font-medium' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-800 dark:text-slate-200 font-normal'}">
+                      <label class="flex items-center gap-2 p-2.5 rounded border text-xs cursor-pointer transition-colors {answers[q.id] === optVal ? 'border-cyan-500 bg-cyan-50 dark:bg-cyan-950/50 text-cyan-900 dark:text-cyan-200 font-medium' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-800 dark:text-slate-200 font-normal'}">
                         <input 
                           type="radio" 
                           name={`q_${q.id}`} 
                           value={optVal} 
                           bind:group={answers[q.id]}
-                          class="accent-sky-600"
+                          class="accent-cyan-600"
                         />
                         <span>{optLabel}</span>
                       </label>
@@ -647,7 +647,7 @@
       {:else if step === 'result' && examResult}
         <div class="space-y-4 font-normal">
           <!-- Summary Banner -->
-          <div class="text-center p-5 rounded-xl bg-gradient-to-b from-sky-50 to-white dark:from-slate-800 dark:to-slate-900 border border-sky-100 dark:border-slate-800 space-y-2">
+          <div class="text-center p-5 rounded-xl bg-gradient-to-b from-cyan-50 to-white dark:from-slate-800 dark:to-slate-900 border border-cyan-100 dark:border-slate-800 space-y-2">
             <span class="text-3xl">🎉</span>
             <h3 class="text-lg font-semibold text-slate-900 dark:text-white">
               Kết Quả Khảo Sát: {candidateName}
@@ -656,7 +656,7 @@
               <span class="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 font-bold">
                 Điểm Số: {examResult.score_10 ?? examResult.score} / 10 ({examResult.correct_count}/{examResult.total_questions} câu đúng)
               </span>
-              <span class="px-3 py-1 rounded-full bg-sky-100 text-sky-800 dark:bg-sky-950/80 dark:text-sky-300 font-bold">
+              <span class="px-3 py-1 rounded-full bg-cyan-100 text-cyan-800 dark:bg-cyan-950/80 dark:text-cyan-300 font-bold">
                 Trình Độ: {examResult.cefr_level || 'A2'} • {examResult.rank_title || 'Nền Tảng'}
               </span>
               {#if examResult.curriculum}
@@ -735,9 +735,9 @@
           {/if}
 
           <!-- Voluntary Lead Capture -->
-          <div class="bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800 p-4 rounded-lg space-y-3">
+          <div class="bg-cyan-50 dark:bg-cyan-950/40 border border-cyan-200 dark:border-cyan-800 p-4 rounded-lg space-y-3">
             <div>
-              <h4 class="font-semibold text-sky-900 dark:text-sky-200 text-xs">Nhận Tư Vấn Kế Hoạch Học Tập (Tùy Chọn)</h4>
+              <h4 class="font-semibold text-cyan-900 dark:text-cyan-200 text-xs">Nhận Tư Vấn Kế Hoạch Học Tập (Tùy Chọn)</h4>
               <p class="text-slate-600 dark:text-slate-400 text-xs mt-0.5 leading-relaxed">
                 Để lại số điện thoại nếu phụ huynh muốn nhận lộ trình chi tiết và đăng ký học thử miễn phí. Hoàn toàn tự nguyện, không ràng buộc.
               </p>
@@ -781,7 +781,7 @@
                   <button 
                     type="submit"
                     disabled={isSubmittingLead}
-                    class="px-5 py-2 rounded-md font-semibold bg-sky-600 hover:bg-sky-700 text-white transition-colors text-xs"
+                    class="px-5 py-2 rounded-md font-semibold bg-cyan-600 hover:bg-cyan-700 text-white transition-colors text-xs"
                   >
                     {isSubmittingLead ? 'Đang gửi...' : 'Gửi Yêu Cầu Tư Vấn Zalo'}
                   </button>

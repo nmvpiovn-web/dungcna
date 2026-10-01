@@ -197,7 +197,7 @@
         <div class="flex items-center gap-2">
           <a
             href="tel:0905960437"
-            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-sky-400 text-xs font-semibold border border-slate-700 transition-colors"
+            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-cyan-400 text-xs font-semibold border border-slate-700 transition-colors"
             title="Gọi Hotline tư vấn"
           >
             <span>📞</span>
@@ -220,13 +220,13 @@
       <div class="flex-shrink-0 flex border-b border-slate-200 dark:border-slate-800 bg-slate-100/90 dark:bg-slate-950/80 p-1.5 text-xs font-semibold">
         <button
           onclick={() => { activeTab = 'login'; errorMessage = ''; }}
-          class="flex-1 py-2 rounded-md transition-all {activeTab === 'login' ? 'bg-white dark:bg-slate-800 text-sky-700 dark:text-sky-300 shadow-xs font-semibold' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'}"
+          class="flex-1 py-2 rounded-md transition-all {activeTab === 'login' ? 'bg-white dark:bg-slate-800 text-cyan-700 dark:text-cyan-300 shadow-xs font-semibold' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'}"
         >
           🔑 Đăng Nhập
         </button>
         <button
           onclick={() => { activeTab = 'register'; resetRegisterFlow(); }}
-          class="flex-1 py-2 rounded-md transition-all {activeTab === 'register' ? 'bg-white dark:bg-slate-800 text-sky-700 dark:text-sky-300 shadow-xs font-semibold' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'}"
+          class="flex-1 py-2 rounded-md transition-all {activeTab === 'register' ? 'bg-white dark:bg-slate-800 text-cyan-700 dark:text-cyan-300 shadow-xs font-semibold' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'}"
         >
           ✨ Đăng Ký Mới (Trial)
         </button>
@@ -262,7 +262,7 @@
                   bind:value={identifier}
                   placeholder="Tên đăng nhập hoặc số điện thoại..."
                   required
-                  class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 focus:border-sky-500 rounded-md px-3.5 py-2.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-sky-500"
+                  class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 focus:border-cyan-500 rounded-md px-3.5 py-2.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-cyan-500"
                 />
                 <span class="absolute right-3 top-2.5 text-sm text-slate-400">👤</span>
               </div>
@@ -279,7 +279,7 @@
                   bind:value={password}
                   placeholder="Nhập mật khẩu của bạn..."
                   required
-                  class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 focus:border-sky-500 rounded-md px-3.5 py-2.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-sky-500"
+                  class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 focus:border-cyan-500 rounded-md px-3.5 py-2.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-cyan-500"
                 />
                 <span class="absolute right-3 top-2.5 text-sm text-slate-400">🔒</span>
               </div>
@@ -294,18 +294,18 @@
         {:else}
           <!-- Visual Step Breadcrumb Indicator -->
           <div class="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800 text-[11px] font-semibold uppercase tracking-wider">
-            <span class="flex items-center gap-1.5 {regStep === 'role' ? 'text-sky-700 dark:text-sky-400 font-bold' : 'text-slate-600 dark:text-slate-400'}">
-              <span class="w-5 h-5 rounded flex items-center justify-center text-xs font-semibold {regStep === 'role' ? 'bg-sky-700 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300'}">1</span>
+            <span class="flex items-center gap-1.5 {regStep === 'role' ? 'text-cyan-700 dark:text-cyan-400 font-bold' : 'text-slate-600 dark:text-slate-400'}">
+              <span class="w-5 h-5 rounded flex items-center justify-center text-xs font-semibold {regStep === 'role' ? 'bg-cyan-700 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300'}">1</span>
               <span>Chọn Role</span>
             </span>
             <span class="text-slate-400 dark:text-slate-600">➔</span>
-            <span class="flex items-center gap-1.5 {regStep === 'credentials' ? 'text-sky-700 dark:text-sky-400 font-bold' : 'text-slate-600 dark:text-slate-400'}">
-              <span class="w-5 h-5 rounded flex items-center justify-center text-xs font-semibold {regStep === 'credentials' ? 'bg-sky-700 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300'}">2</span>
+            <span class="flex items-center gap-1.5 {regStep === 'credentials' ? 'text-cyan-700 dark:text-cyan-400 font-bold' : 'text-slate-600 dark:text-slate-400'}">
+              <span class="w-5 h-5 rounded flex items-center justify-center text-xs font-semibold {regStep === 'credentials' ? 'bg-cyan-700 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300'}">2</span>
               <span>Tài Khoản</span>
             </span>
             <span class="text-slate-400 dark:text-slate-600">➔</span>
-            <span class="flex items-center gap-1.5 {regStep === 'class_popup' ? 'text-sky-700 dark:text-sky-400 font-bold' : 'text-slate-600 dark:text-slate-400'}">
-              <span class="w-5 h-5 rounded flex items-center justify-center text-xs font-semibold {regStep === 'class_popup' ? 'bg-sky-700 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300'}">3</span>
+            <span class="flex items-center gap-1.5 {regStep === 'class_popup' ? 'text-cyan-700 dark:text-cyan-400 font-bold' : 'text-slate-600 dark:text-slate-400'}">
+              <span class="w-5 h-5 rounded flex items-center justify-center text-xs font-semibold {regStep === 'class_popup' ? 'bg-cyan-700 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300'}">3</span>
               <span>Chọn Lớp (*)</span>
             </span>
           </div>
@@ -323,7 +323,7 @@
                 <button
                   type="button"
                   onclick={() => handleSelectRole('student')}
-                  class="w-full p-3.5 rounded-lg border text-left transition-all flex items-center gap-3.5 group bg-slate-50 dark:bg-slate-950/60 border-slate-200 dark:border-slate-800 hover:border-sky-500 hover:bg-sky-50/30"
+                  class="w-full p-3.5 rounded-lg border text-left transition-all flex items-center gap-3.5 group bg-slate-50 dark:bg-slate-950/60 border-slate-200 dark:border-slate-800 hover:border-cyan-500 hover:bg-cyan-50/30"
                 >
                   <div class="w-10 h-10 rounded-md bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 flex items-center justify-center text-xl flex-shrink-0">
                     🎒
@@ -337,7 +337,7 @@
                       Vào phòng thi 15p - 45p, học từ vựng, luyện thi IELTS/TOEIC và tích lũy Sao đổi học phí.
                     </div>
                   </div>
-                  <div class="text-sky-600 dark:text-sky-400 font-semibold text-sm">➔</div>
+                  <div class="text-cyan-600 dark:text-cyan-400 font-semibold text-sm">➔</div>
                 </button>
 
                 <!-- Role Card 2: Phụ huynh -->
@@ -390,14 +390,14 @@
                   <span class="text-base">
                     {regRole === 'student' ? '🎒' : regRole === 'parent' ? '👨‍👩‍👧' : '👨‍🏫'}
                   </span>
-                  <span class="text-xs font-semibold text-sky-700 dark:text-sky-400 uppercase">
+                  <span class="text-xs font-semibold text-cyan-700 dark:text-cyan-400 uppercase">
                     Vai trò: {regRole === 'student' ? 'Học sinh' : regRole === 'parent' ? 'Phụ huynh' : 'Giáo viên'}
                   </span>
                 </div>
                 <button
                   type="button"
                   onclick={() => regStep = 'role'}
-                  class="text-[11px] text-slate-500 hover:text-sky-600 hover:underline font-semibold"
+                  class="text-[11px] text-slate-500 hover:text-cyan-600 hover:underline font-semibold"
                 >
                   ← Đổi vai trò
                 </button>
@@ -415,7 +415,7 @@
                     bind:value={regUsername}
                     placeholder="VD: baokhiem, minhvu, baonhi..."
                     required
-                    class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 focus:border-sky-500 rounded-md px-3.5 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-sky-500"
+                    class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 focus:border-cyan-500 rounded-md px-3.5 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-cyan-500"
                   />
                   <span class="absolute right-3 top-2 text-xs text-slate-500 dark:text-slate-400">🏷️</span>
                 </div>
@@ -434,11 +434,11 @@
                     bind:value={regPassword}
                     placeholder="Mật khẩu dễ nhớ (VD: 123456, pass...)"
                     required
-                    class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 focus:border-sky-500 rounded-md px-3.5 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-sky-500"
+                    class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 focus:border-cyan-500 rounded-md px-3.5 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-cyan-500"
                   />
                   <span class="absolute right-3 top-2 text-xs text-slate-400">🔒</span>
                 </div>
-                <span class="text-[11px] text-sky-600 dark:text-sky-400 mt-0.5 block">✓ Không đòi hỏi ký tự đặc biệt, thuận tiện cho học sinh.</span>
+                <span class="text-[11px] text-cyan-600 dark:text-cyan-400 mt-0.5 block">✓ Không đòi hỏi ký tự đặc biệt, thuận tiện cho học sinh.</span>
               </div>
 
               <!-- 3. FULL NAME -->
@@ -452,7 +452,7 @@
                   bind:value={regName}
                   placeholder="VD: Nguyễn Bảo Khiêm"
                   required
-                  class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 focus:border-sky-500 rounded-md px-3.5 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-sky-500"
+                  class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 focus:border-cyan-500 rounded-md px-3.5 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-cyan-500"
                 />
               </div>
 
@@ -466,7 +466,7 @@
                   type="tel"
                   bind:value={regPhone}
                   placeholder="0918889999 (Nhận báo cáo điểm &amp; lịch học qua Zalo)"
-                  class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 focus:border-sky-500 rounded-md px-3.5 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-sky-500"
+                  class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 focus:border-cyan-500 rounded-md px-3.5 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-cyan-500"
                 />
               </div>
 
@@ -519,16 +519,16 @@
 
               <!-- Selected Class Indicator Badge & Immediate Direct CTA -->
               {#if regSelectedGrade}
-                <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-sky-300 dark:border-sky-800 text-center space-y-2.5 animate-in zoom-in-95 duration-150 shadow-xs">
-                  <div class="text-xs font-semibold text-sky-800 dark:text-sky-300 flex items-center justify-center gap-1.5">
+                <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-cyan-300 dark:border-cyan-800 text-center space-y-2.5 animate-in zoom-in-95 duration-150 shadow-xs">
+                  <div class="text-xs font-semibold text-cyan-800 dark:text-cyan-300 flex items-center justify-center gap-1.5">
                     <span>✅ ĐÃ CHỌN:</span>
-                    <span class="text-xs font-bold uppercase bg-sky-700 text-white px-2.5 py-0.5 rounded shadow-xs">{regSelectedGrade}</span>
+                    <span class="text-xs font-bold uppercase bg-cyan-700 text-white px-2.5 py-0.5 rounded shadow-xs">{regSelectedGrade}</span>
                   </div>
                   <button
                     type="button"
                     disabled={isLoading}
                     onclick={handleFinalizeRegister}
-                    class="w-full py-2.5 px-4 rounded-md bg-sky-700 hover:bg-sky-600 text-white font-semibold text-xs shadow-xs transition-colors flex items-center justify-center gap-2"
+                    class="w-full py-2.5 px-4 rounded-md bg-cyan-700 hover:bg-cyan-600 text-white font-semibold text-xs shadow-xs transition-colors flex items-center justify-center gap-2"
                   >
                     <span>{isLoading ? '⏳ Đang khởi tạo tài khoản...' : `👉 BẤM ĐÂY ĐỂ VÀO HỌC ${regSelectedGrade.toUpperCase()} NGAY`}</span>
                   </button>
@@ -554,7 +554,7 @@
                         <button
                           type="button"
                           onclick={() => regSelectedGrade = item.id}
-                          class="p-2.5 rounded-md border text-left transition-colors {isSelected ? 'bg-sky-700 text-white border-sky-800 shadow-xs' : 'bg-slate-50 dark:bg-slate-950/80 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-sky-400 hover:bg-white dark:hover:bg-slate-900'}"
+                          class="p-2.5 rounded-md border text-left transition-colors {isSelected ? 'bg-cyan-700 text-white border-cyan-800 shadow-xs' : 'bg-slate-50 dark:bg-slate-950/80 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-cyan-400 hover:bg-white dark:hover:bg-slate-900'}"
                         >
                           <div class="font-semibold flex items-center justify-between">
                             <span>{item.title}</span>
@@ -587,7 +587,7 @@
             type="submit"
             form="login-form"
             disabled={isLoading}
-            class="w-full py-2.5 rounded-md bg-sky-700 hover:bg-sky-600 text-white font-semibold text-xs shadow-xs transition-colors flex items-center justify-center gap-2"
+            class="w-full py-2.5 rounded-md bg-cyan-700 hover:bg-cyan-600 text-white font-semibold text-xs shadow-xs transition-colors flex items-center justify-center gap-2"
           >
             <span>{isLoading ? '⏳ Đang đăng nhập...' : '🚀 Đăng Nhập Vào Học'}</span>
           </button>
@@ -604,7 +604,7 @@
           {/if}
         {:else}
           {#if regStep === 'role'}
-            <div class="text-center text-xs text-sky-700 dark:text-sky-400 font-semibold py-1">
+            <div class="text-center text-xs text-cyan-700 dark:text-cyan-400 font-semibold py-1">
               👆 Vui lòng bấm chọn 1 trong 3 vai trò ở trên để tiếp tục bước 2
             </div>
           {:else if regStep === 'credentials'}
@@ -619,7 +619,7 @@
               <button
                 type="submit"
                 form="reg-cred-form"
-                class="flex-1 py-2.5 rounded-md bg-sky-700 hover:bg-sky-600 text-white font-semibold text-xs shadow-xs transition-colors flex items-center justify-center gap-1.5"
+                class="flex-1 py-2.5 rounded-md bg-cyan-700 hover:bg-cyan-600 text-white font-semibold text-xs shadow-xs transition-colors flex items-center justify-center gap-1.5"
               >
                 <span>Bước Tiếp Theo: Chọn Lớp Học ➔</span>
               </button>
@@ -637,7 +637,7 @@
                 type="button"
                 disabled={!regSelectedGrade || isLoading}
                 onclick={handleFinalizeRegister}
-                class="flex-1 py-2.5 rounded-md bg-sky-700 hover:bg-sky-600 text-white font-semibold text-xs shadow-xs transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
+                class="flex-1 py-2.5 rounded-md bg-cyan-700 hover:bg-cyan-600 text-white font-semibold text-xs shadow-xs transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
               >
                 <span>{isLoading ? '⏳ Đang đăng ký...' : '✨ Hoàn Tất & Vào Học (Trial)'}</span>
               </button>

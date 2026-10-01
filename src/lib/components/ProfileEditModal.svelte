@@ -445,7 +445,7 @@
             👤
           </div>
           <div>
-            <div class="text-[11px] font-semibold uppercase tracking-wider text-sky-400">TIẾNG ANH CÔ DUNG</div>
+            <div class="text-[11px] font-semibold uppercase tracking-wider text-cyan-400">TIẾNG ANH CÔ DUNG</div>
             <h2 class="text-lg font-semibold text-white">Chỉnh Sửa Hồ Sơ Cá Nhân</h2>
           </div>
         </div>
@@ -474,7 +474,7 @@
                 type="file"
                 accept="image/*"
                 onchange={handleFileUpload}
-                class="block w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-sky-700 file:text-white hover:file:bg-sky-600 cursor-pointer"
+                class="block w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-cyan-700 file:text-white hover:file:bg-cyan-600 cursor-pointer"
               />
             </div>
           </div>
@@ -487,7 +487,7 @@
                 <button
                   type="button"
                   onclick={() => avatar = p.url}
-                  class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border transition-colors text-[11px] whitespace-nowrap {avatar === p.url ? 'border-sky-500 bg-sky-50 dark:bg-sky-950/50 text-sky-700 dark:text-sky-300 font-semibold' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400'}"
+                  class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border transition-colors text-[11px] whitespace-nowrap {avatar === p.url ? 'border-cyan-500 bg-cyan-50 dark:bg-cyan-950/50 text-cyan-700 dark:text-cyan-300 font-semibold' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400'}"
                 >
                   <img src={p.url} alt={p.label} class="w-5 h-5 rounded-full object-cover" />
                   <span>{p.label}</span>
@@ -529,7 +529,7 @@
         <!-- Zalo & Email -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label for="prof-zalo" class="block font-bold text-blue-600 dark:text-blue-400 mb-1">
+            <label for="prof-zalo" class="block font-bold text-cyan-600 dark:text-cyan-400 mb-1">
               💬 Số Zalo / Zalo ID (* Nhận báo cáo):
             </label>
             <input
@@ -537,7 +537,7 @@
               type="text"
               bind:value={zaloId}
               placeholder="VD: 0912345678 hoặc nick zalo"
-              class="w-full bg-blue-50/50 dark:bg-slate-950 border border-blue-300 dark:border-blue-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-blue-500"
+              class="w-full bg-cyan-50/50 dark:bg-slate-950 border border-cyan-300 dark:border-cyan-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-cyan-500"
             />
             <span class="text-xs text-slate-500 block mt-1">Dùng để Bot Zalo Cô Dung gửi phiếu học phí &amp; kết quả thi.</span>
           </div>
@@ -665,7 +665,7 @@
               list="popular-schools-list"
               bind:value={school}
               placeholder="Gõ để xem gợi ý trường tiêu biểu..."
-              class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-md px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-sky-500"
+              class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-md px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-cyan-500"
             />
             <datalist id="popular-schools-list">
               {#each POPULAR_SCHOOLS as sch}
@@ -685,7 +685,7 @@
             type="text"
             bind:value={target}
             placeholder="VD: Đạt 9.0+ trên lớp, Chinh phục IELTS 7.5+, Thi đỗ Chuyên Anh..."
-            class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-md px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-sky-500"
+            class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-md px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-cyan-500"
           />
         </div>
 
@@ -714,7 +714,7 @@
           <button
             type="submit"
             disabled={isSaving || isInitialLoading}
-            class="w-full py-2.5 rounded-md bg-sky-700 hover:bg-sky-600 text-white font-semibold text-xs shadow-xs transition-colors flex items-center justify-center gap-2 mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
+            class="w-full py-2.5 rounded-md bg-cyan-700 hover:bg-cyan-600 text-white font-semibold text-xs shadow-xs transition-colors flex items-center justify-center gap-2 mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <span>{isSaving ? '⏳ Đang lưu hồ sơ...' : '💾 Lưu Thay Đổi Hồ Sơ'}</span>
           </button>

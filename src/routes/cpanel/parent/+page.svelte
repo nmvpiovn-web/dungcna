@@ -125,8 +125,8 @@
   <header class="bg-slate-900 border border-slate-800 rounded-lg p-4 sm:p-6 text-slate-100 shadow-sm relative overflow-hidden">
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
       <div class="space-y-2 min-w-0">
-        <div class="flex items-center gap-2 text-sky-400 text-xs font-semibold uppercase tracking-wider">
-          <svg class="w-4 h-4 text-sky-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div class="flex items-center gap-2 text-cyan-400 text-xs font-semibold uppercase tracking-wider">
+          <svg class="w-4 h-4 text-cyan-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
           </svg>
           <span>Sổ Phụ Huynh</span>
@@ -150,7 +150,7 @@
           <div class="text-[11px] sm:text-xs text-slate-400 mt-0.5 truncate">Đã Chấm</div>
         </div>
         <div class="bg-slate-800/80 border border-slate-700/60 rounded-md p-2.5 sm:p-3 text-center min-w-0">
-          <div class="text-lg sm:text-xl font-semibold text-sky-400 tabular-nums truncate">{avgScore}</div>
+          <div class="text-lg sm:text-xl font-semibold text-cyan-400 tabular-nums truncate">{avgScore}</div>
           <div class="text-[11px] sm:text-xs text-slate-400 mt-0.5 truncate">Điểm TB</div>
         </div>
       </div>
@@ -176,13 +176,13 @@
     <nav class="flex items-center gap-2 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0" aria-label="Các mục sổ phụ huynh">
       <button 
         onclick={() => activeTab = 'homework'}
-        class="whitespace-nowrap px-3 sm:px-4 py-2 rounded-md text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 {activeTab === 'homework' ? 'bg-sky-600 text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}"
+        class="whitespace-nowrap px-3 sm:px-4 py-2 rounded-md text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 {activeTab === 'homework' ? 'bg-cyan-600 text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}"
       >
         Bài Tập Về Nhà ({filteredSubmissions.length}/{assignments.length})
       </button>
       <button 
         onclick={() => activeTab = 'tuition'}
-        class="whitespace-nowrap px-3 sm:px-4 py-2 rounded-md text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 {activeTab === 'tuition' ? 'bg-sky-600 text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}"
+        class="whitespace-nowrap px-3 sm:px-4 py-2 rounded-md text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 {activeTab === 'tuition' ? 'bg-cyan-600 text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}"
       >
         Sổ Học Phí &amp; Đối Trừ Sao
       </button>
@@ -195,7 +195,7 @@
         id="child-select"
         bind:value={selectedStudentId}
         onchange={handleChildChange}
-        class="flex-1 sm:flex-none text-xs font-medium px-3 py-1.5 rounded-md bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 truncate"
+        class="flex-1 sm:flex-none text-xs font-medium px-3 py-1.5 rounded-md bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 truncate"
         disabled={linkedStudents.length === 0}
       >
         {#if linkedStudents.length === 0}
@@ -266,7 +266,7 @@
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800/80 pb-3">
               <div class="min-w-0">
                 <div class="flex items-center gap-2 flex-wrap">
-                  <span class="px-2 py-0.5 rounded text-[11px] font-medium bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800 shrink-0">
+                  <span class="px-2 py-0.5 rounded text-[11px] font-medium bg-cyan-50 dark:bg-cyan-950/60 text-cyan-700 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-800 shrink-0">
                     {skillLabel}
                   </span>
                   <h2 class="text-sm sm:text-base font-semibold text-slate-900 dark:text-white break-words">{assignment.title}</h2>
@@ -323,7 +323,7 @@
                     <div class="space-y-1 pt-1">
                       <div class="flex items-center justify-between">
                         <span class="font-semibold text-slate-700 dark:text-slate-300">Ảnh bài viết tay trên giấy:</span>
-                        <a href={sub.handwritten_image_url} target="_blank" rel="noopener noreferrer" class="text-sky-600 dark:text-sky-400 font-semibold hover:underline">Xem ảnh gốc</a>
+                        <a href={sub.handwritten_image_url} target="_blank" rel="noopener noreferrer" class="text-cyan-600 dark:text-cyan-400 font-semibold hover:underline">Xem ảnh gốc</a>
                       </div>
                       <img src={sub.handwritten_image_url} alt="Bài viết tay của học sinh" class="max-h-48 rounded border border-slate-200 dark:border-slate-700 object-contain bg-white" />
                     </div>

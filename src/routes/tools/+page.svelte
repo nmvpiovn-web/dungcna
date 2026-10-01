@@ -9,7 +9,7 @@
       icon: '📖',
       href: '/dictionary',
       tag: 'Phát Âm & IPA',
-      tagColor: 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 border-blue-200 dark:border-blue-800',
+      tagColor: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-950 dark:text-cyan-300 border-cyan-200 dark:border-cyan-800',
       badge: 'Bản Ngữ Chuẩn'
     },
     {
@@ -73,10 +73,10 @@
 
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
   <!-- Hero Banner -->
-  <div class="rounded-3xl bg-gradient-to-br from-sky-900 via-indigo-900 to-slate-950 text-white p-8 sm:p-12 shadow-2xl relative overflow-hidden">
+  <div class="rounded-3xl bg-gradient-to-br from-cyan-900 via-indigo-900 to-slate-950 text-white p-8 sm:p-12 shadow-2xl relative overflow-hidden">
     <div class="absolute -right-10 -bottom-10 opacity-10 text-9xl select-none pointer-events-none">🛠️</div>
     <div class="relative z-10 max-w-3xl space-y-4">
-      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-black bg-sky-500/20 text-sky-200 border border-sky-400/30">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-black bg-cyan-500/20 text-cyan-200 border border-cyan-400/30">
         <span>⚡ TRUNG TÂM TIỆN ÍCH HỌC TẬP THẾ HỆ MỚI</span>
       </div>
       <h1 class="text-3xl sm:text-5xl font-heading font-black tracking-tight leading-tight">

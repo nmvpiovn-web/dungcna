@@ -1248,12 +1248,12 @@
           <div class="text-[10px] text-slate-400 mt-1">Chờ Cô Dung duyệt</div>
         </div>
 
-        <div class="p-4 rounded-2xl bg-slate-900 border border-blue-500/40 shadow-xl">
+        <div class="p-4 rounded-2xl bg-slate-900 border border-cyan-500/40 shadow-xl">
           <div class="flex items-center justify-between text-slate-400 font-bold text-[11px] mb-1">
             <span>BÁO CÁO ĐIỂM DANH</span>
             <span>📋</span>
           </div>
-          <div class="text-2xl font-black text-blue-400">
+          <div class="text-2xl font-black text-cyan-400">
             {leaderNotifications.filter(n => n.type === 'attendance_summary').length}
           </div>
           <div class="text-[10px] text-slate-400 mt-1">Đủ &amp; vắng học sinh</div>
@@ -1301,7 +1301,7 @@
           </button>
           <button
             onclick={() => handleAdminSimulate('attendance_summary_absent')}
-            class="p-2.5 rounded-xl bg-slate-950 border border-blue-500/40 text-blue-400 hover:bg-blue-950/40 font-bold text-left transition-all truncate"
+            class="p-2.5 rounded-xl bg-slate-950 border border-cyan-500/40 text-cyan-400 hover:bg-cyan-950/40 font-bold text-left transition-all truncate"
             title="Mô phỏng: Điểm danh lớp thiếu học sinh"
           >
             📋 Điểm Danh Thiếu 2 Em
@@ -1353,7 +1353,7 @@
         </button>
         <button
           onclick={() => notifFilter = 'attendance_summary'}
-          class="px-3 py-1.5 rounded-xl font-bold shrink-0 transition-colors {notifFilter === 'attendance_summary' ? 'bg-blue-600 text-white' : 'bg-slate-900 text-blue-400 hover:bg-blue-950/40'}"
+          class="px-3 py-1.5 rounded-xl font-bold shrink-0 transition-colors {notifFilter === 'attendance_summary' ? 'bg-cyan-600 text-white' : 'bg-slate-900 text-cyan-400 hover:bg-cyan-950/40'}"
         >
           📋 Điểm Danh &amp; Vắng
         </button>
@@ -1472,7 +1472,7 @@
                 {:else if notif.type === 'attendance_summary'}
                   <a
                     href="/schedule?tab=attendance"
-                    class="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold flex items-center gap-1.5 shadow-md shadow-blue-600/30 transition-all hover:scale-105"
+                    class="px-3.5 py-1.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold flex items-center gap-1.5 shadow-md shadow-cyan-600/30 transition-all hover:scale-105"
                   >
                     <span>👁️</span>
                     <span>Mở Sổ Điểm Danh Lớp</span>
@@ -1775,7 +1775,7 @@
                     </td>
                     <td class="p-3 text-slate-300 max-w-[200px] truncate">
                       {#if rec.cv_link}
-                        <a href={rec.cv_link} target="_blank" class="text-sky-400 hover:underline">📄 Xem CV</a>
+                        <a href={rec.cv_link} target="_blank" class="text-cyan-400 hover:underline">📄 Xem CV</a>
                       {/if}
                       <div class="text-[11px] text-slate-400 italic truncate">{rec.notes || 'Không có ghi chú'}</div>
                     </td>

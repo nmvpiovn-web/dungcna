@@ -1075,7 +1075,7 @@ export function calculateAptitude({ listening, reading, writing, speaking, gramm
     return {
       type: 'listening_speaking',
       label: 'Thiên hướng Nghe - Nói & Giao tiếp (Oral/Communicative)',
-      badgeColor: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+      badgeColor: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30',
       description: 'Phản xạ phát âm và nghe hiểu tự nhiên như người bản xứ. Cần bổ sung ngữ pháp cấu trúc câu viết và chính tả.'
     };
   }

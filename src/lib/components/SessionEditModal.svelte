@@ -373,7 +373,7 @@
         <button
           type="button"
           onclick={handleSave}
-          class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-bold text-xs shadow-md shadow-indigo-600/30 transition-all hover:scale-105"
+          class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white font-bold text-xs shadow-md shadow-indigo-600/30 transition-all hover:scale-105"
         >
           💾 Lưu Buổi Học &amp; Thời Khóa Biểu
         </button>

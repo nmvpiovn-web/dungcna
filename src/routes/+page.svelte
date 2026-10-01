@@ -450,7 +450,7 @@
   <!-- ===== 7. Hall of Fame teaser (trung thực: cam kết chương trình) ===== -->
   <section class="rounded-3xl hof-gradient text-white p-6 sm:p-10 shadow-sm relative overflow-hidden">
     <div class="absolute -right-16 -top-16 w-64 h-64 rounded-full bg-white/15 blur-2xl pointer-events-none"></div>
-    <div class="absolute -left-20 -bottom-20 w-72 h-72 rounded-full bg-sky-300/30 blur-3xl pointer-events-none"></div>
+    <div class="absolute -left-20 -bottom-20 w-72 h-72 rounded-full bg-cyan-200/40 blur-3xl pointer-events-none"></div>
     <div class="relative z-10">
       <SectionHeading eyebrow="Hall of Fame" title="Điều chúng tôi cam kết với mỗi học viên" dark />
       <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mt-2">
@@ -463,7 +463,7 @@
         {/each}
       </div>
       <div class="mt-6 text-center">
-        <a href="/hall-of-fame" class="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-white text-sky-800 font-extrabold text-sm shadow-sm hover:scale-[1.03] transition-transform">
+        <a href="/hall-of-fame" class="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-white text-cyan-800 font-extrabold text-sm shadow-sm hover:scale-[1.03] transition-transform">
           🏆 Khám phá Hall of Fame
         </a>
       </div>
