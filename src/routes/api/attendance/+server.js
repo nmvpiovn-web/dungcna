@@ -7,7 +7,7 @@ import {
   getAttendanceStatsForStudent,
   getAttendedStudentsForSession
 } from '../../../lib/unifiedStore.js';
-import { verifyServerAuth, isStaffUser } from '../../../lib/server/auth.js';
+import { verifyServerAuth, isStaffUser, isManager } from '../../../lib/server/auth.js';
 
 export const prerender = false;
 
@@ -31,14 +31,24 @@ export async function GET({ url, request, platform }) {
     const studentId = url.searchParams.get('student_id');
     const attendedOnly = url.searchParams.get('attended_only') === 'true';
     const isStaff = isStaffUser(auth.user);
+    const role = String(auth.user.role || '').toLowerCase();
 
-    // Privacy isolation: Students can only view their own attendance history
+    // Privacy isolation for students and verified parents.
     if (!isStaff) {
-      if (!studentId || studentId !== auth.user.id) {
-        return json({ 
-          success: false, 
-          error: 'Forbidden: Học sinh chỉ có quyền xem nhật ký điểm danh của chính mình.' 
-        }, { status: 403 });
+      if (!studentId) return json({ success: false, error: 'Forbidden: Cần chọn học sinh được phép xem.' }, { status: 403 });
+      if (role === 'student' && studentId !== auth.user.id) {
+        return json({ success: false, error: 'Forbidden: Học sinh chỉ được xem điểm danh của chính mình.' }, { status: 403 });
+      }
+      if (role === 'parent') {
+        if (!platform?.env?.DB) return json({ success: false, error: 'Không thể xác minh liên kết phụ huynh.' }, { status: 503 });
+        const link = await platform.env.DB.prepare(`
+          SELECT 1 FROM parent_student_links
+          WHERE parent_user_id = ? AND student_user_id = ? AND verification_status = 'verified'
+          LIMIT 1
+        `).bind(auth.user.id, studentId).first();
+        if (!link) return json({ success: false, error: 'Forbidden: Liên kết phụ huynh chưa được xác minh.' }, { status: 403 });
+      } else if (role !== 'student') {
+        return json({ success: false, error: 'Forbidden: Vai trò không có quyền xem điểm danh.' }, { status: 403 });
       }
     }
 
@@ -182,7 +192,6 @@ export async function POST({ request, platform }) {
     const sessionId = body.session_id;
     const sessionDate = body.session_date || new Date().toISOString().slice(0, 10);
     const attendanceList = body.students || [];
-    const teacherUser = body.teacher || auth.user;
 
     if (!sessionId || !Array.isArray(attendanceList) || attendanceList.length === 0) {
       return json({ 
@@ -191,18 +200,42 @@ export async function POST({ request, platform }) {
       }, { status: 400 });
     }
 
-    const teacherId = teacherUser?.id || auth.user.id || 'usr_super_2';
-    const teacherName = teacherUser?.name || auth.user.name || 'Ms. Dung';
+    if (!platform?.env?.DB) {
+      return json({ success: false, error: 'Thiếu Cloudflare D1 DB; điểm danh bị từ chối để bảo toàn dữ liệu.' }, { status: 503 });
+    }
+
+    const session = await platform.env.DB.prepare('SELECT * FROM class_sessions WHERE id = ? LIMIT 1').bind(sessionId).first();
+    if (!session) return json({ success: false, error: 'Không tìm thấy buổi học.' }, { status: 404 });
+    if (!isManager(auth.user)) {
+      const ownsSession = [session.teacher_id, session.assistant_teacher_id, session.substitute_teacher_id].includes(auth.user.id);
+      if (!ownsSession) return json({ success: false, error: 'Forbidden: Bạn không phụ trách buổi học này.' }, { status: 403 });
+    }
+
+    const teacherUser = auth.user;
+    const teacherId = auth.user.id;
+    const teacherName = auth.user.name || auth.user.username || 'Giáo viên';
     const nowIso = new Date().toISOString();
+    const allowedStatuses = new Set(['present', 'late', 'absent_excused', 'absent_unexcused']);
+    const uniqueStudentIds = [...new Set(attendanceList.map((item) => item.student_id || item.id).filter(Boolean))];
+    if (uniqueStudentIds.length !== attendanceList.length) {
+      return json({ success: false, error: 'Danh sách điểm danh có học sinh thiếu ID hoặc bị trùng.' }, { status: 400 });
+    }
+    const enrollmentChecks = await Promise.all(uniqueStudentIds.map((studentId) =>
+      platform.env.DB.prepare(`
+        SELECT 1 FROM class_enrollments
+        WHERE user_id = ? AND class_id = ? AND status = 'active' LIMIT 1
+      `).bind(studentId, session.class_id).first()
+    ));
+    if (enrollmentChecks.some((row) => !row)) {
+      return json({ success: false, error: 'Danh sách có học sinh không thuộc lớp của buổi học.' }, { status: 400 });
+    }
 
     // Prepare standardized records with strict NaN defense
     const preparedRecords = attendanceList.map(item => {
       const studentId = item.student_id || item.id;
       const studentName = item.student_name || item.name || 'Học sinh';
-      const status = item.status || 'present';
-      
-      const rawStars = item.instant_stars_rewarded !== undefined && item.instant_stars_rewarded !== null ? Number(item.instant_stars_rewarded) : NaN;
-      const instantStars = Number.isFinite(rawStars) && rawStars >= 0 ? Math.floor(rawStars) : (status === 'present' ? 5 : 0);
+      const status = allowedStatuses.has(item.status) ? item.status : 'present';
+      const instantStars = status === 'present' ? 5 : 0;
 
       return {
         id: item.id || `att_${sessionId}_${sessionDate}_${studentId}`,
@@ -210,7 +243,7 @@ export async function POST({ request, platform }) {
         session_date: sessionDate,
         student_id: studentId,
         student_name: studentName,
-        class_id: item.class_id || '',
+        class_id: session.class_id || '',
         status: status,
         notes: item.notes || '',
         in_class_attitude: item.in_class_attitude || 'Tập trung học tập tốt',

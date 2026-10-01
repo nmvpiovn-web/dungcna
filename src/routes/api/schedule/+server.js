@@ -1,5 +1,5 @@
 import { json } from '@sveltejs/kit';
-import { verifyServerAuth, isStaffUser } from '$lib/server/auth.js';
+import { verifyServerAuth, isStaffUser, isManager } from '$lib/server/auth.js';
 import { getAllClassSessions, saveClassSession, deleteClassSession, assignStudentsToClassSession } from '$lib/unifiedStore';
 
 export const prerender = false;
@@ -33,17 +33,43 @@ export async function GET({ url, request, platform }) {
     const teacherId = url.searchParams.get('teacher_id');
 
     if (platform?.env?.DB) {
-      let query = 'SELECT * FROM class_sessions WHERE 1=1';
+      let query = 'SELECT cs.* FROM class_sessions cs WHERE 1=1';
       const params = [];
+      const role = String(auth.user.role || '').toLowerCase();
+
+      // Scope records from the authenticated actor. Query-string filters may only
+      // narrow this result; they never grant access to another class or teacher.
+      if (role === 'student') {
+        query += ` AND (
+          EXISTS (SELECT 1 FROM class_enrollments ce WHERE ce.class_id = cs.class_id AND ce.user_id = ? AND ce.status = 'active')
+          OR EXISTS (SELECT 1 FROM json_each(COALESCE(cs.student_ids, '[]')) WHERE value = ?)
+        )`;
+        params.push(auth.user.id, auth.user.id);
+      } else if (role === 'parent') {
+        query += ` AND EXISTS (
+          SELECT 1 FROM parent_student_links psl
+          LEFT JOIN class_enrollments ce ON ce.user_id = psl.student_user_id AND ce.status = 'active'
+          WHERE psl.parent_user_id = ? AND psl.verification_status = 'verified'
+            AND (ce.class_id = cs.class_id OR EXISTS (
+              SELECT 1 FROM json_each(COALESCE(cs.student_ids, '[]')) WHERE value = psl.student_user_id
+            ))
+        )`;
+        params.push(auth.user.id);
+      } else if (role === 'teacher') {
+        query += ' AND (cs.teacher_id = ? OR cs.assistant_teacher_id = ? OR cs.substitute_teacher_id = ?)';
+        params.push(auth.user.id, auth.user.id, auth.user.id);
+      } else if (!isManager(auth.user)) {
+        return json({ success: false, error: 'Forbidden: Vai trò không có quyền xem thời khóa biểu.' }, { status: 403 });
+      }
       if (classId) {
-        query += ' AND class_id = ?';
+        query += ' AND cs.class_id = ?';
         params.push(classId);
       }
       if (teacherId) {
-        query += ' AND (teacher_id = ? OR assistant_teacher_id = ? OR substitute_teacher_id = ?)';
+        query += ' AND (cs.teacher_id = ? OR cs.assistant_teacher_id = ? OR cs.substitute_teacher_id = ?)';
         params.push(teacherId, teacherId, teacherId);
       }
-      query += ' ORDER BY session_date DESC, start_time ASC';
+      query += ' ORDER BY cs.session_date DESC, cs.start_time ASC';
 
       const d1Res = await platform.env.DB.prepare(query).bind(...params).all();
       const rows = (d1Res?.results || []).map(formatSessionRow);
@@ -56,7 +82,15 @@ export async function GET({ url, request, platform }) {
     }
 
     const sessions = getAllClassSessions();
+    const role = String(auth.user.role || '').toLowerCase();
     let filtered = sessions;
+    if (role === 'student') {
+      filtered = filtered.filter((s) => Array.isArray(s.student_ids) && s.student_ids.includes(auth.user.id));
+    } else if (role === 'teacher') {
+      filtered = filtered.filter((s) => s.teacher_id === auth.user.id || s.assistant_teacher_id === auth.user.id || s.substitute_teacher_id === auth.user.id);
+    } else if (!isManager(auth.user)) {
+      filtered = [];
+    }
     if (classId) filtered = filtered.filter(s => s.class_id === classId);
     if (teacherId) filtered = filtered.filter(s => s.teacher_id === teacherId || s.assistant_teacher_id === teacherId);
 
@@ -93,7 +127,24 @@ export async function POST({ request, platform }) {
     const body = await request.json();
     const action = body.action || 'save_session';
 
+    const role = String(auth.user.role || '').toLowerCase();
+    const manager = isManager(auth.user);
+
+    async function assertCanMutateSession(sessionId) {
+      if (manager) return true;
+      if (role !== 'teacher' || !platform?.env?.DB || !sessionId) return false;
+      const owned = await platform.env.DB.prepare(`
+        SELECT id FROM class_sessions
+        WHERE id = ? AND (teacher_id = ? OR assistant_teacher_id = ? OR substitute_teacher_id = ?)
+        LIMIT 1
+      `).bind(sessionId, auth.user.id, auth.user.id, auth.user.id).first();
+      return Boolean(owned);
+    }
+
     if (action === 'assign_students') {
+      if (!(await assertCanMutateSession(body.session_id))) {
+        return json({ success: false, error: 'Forbidden: Bạn không phụ trách buổi học này.' }, { status: 403 });
+      }
       const res = assignStudentsToClassSession(body.session_id, body.student_ids);
       if (platform?.env?.DB) {
         await platform.env.DB.prepare(`
@@ -108,13 +159,20 @@ export async function POST({ request, platform }) {
     }
 
     const id = body.id || `sess_${crypto.randomUUID()}`;
+    if (body.id && !(await assertCanMutateSession(body.id))) {
+      return json({ success: false, error: 'Forbidden: Bạn không phụ trách buổi học này.' }, { status: 403 });
+    }
     const dayNames = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
     const dayName = body.day_name || (body.day_of_week !== undefined && dayNames[body.day_of_week] ? dayNames[body.day_of_week] : 'Thứ Năm');
     const studentIdsStr = Array.isArray(body.student_ids) ? JSON.stringify(body.student_ids) : (body.student_ids || '[]');
 
+    const effectiveTeacherId = manager ? (body.teacher_id || auth.user.id) : auth.user.id;
+    const effectiveTeacherName = manager ? (body.teacher_name || auth.user.name || '') : (auth.user.name || '');
     let savedSession = {
       ...body,
       id,
+      teacher_id: effectiveTeacherId,
+      teacher_name: effectiveTeacherName,
       day_name: dayName
     };
 
@@ -147,8 +205,8 @@ export async function POST({ request, platform }) {
         id,
         body.class_id || '',
         body.class_name,
-        body.teacher_id || auth.user.id,
-        body.teacher_name || auth.user.name || '',
+        effectiveTeacherId,
+        effectiveTeacherName,
         body.substitute_teacher_id || null,
         body.session_date || new Date().toISOString().split('T')[0],
         body.start_time,
@@ -199,6 +257,15 @@ export async function DELETE({ url, request, platform }) {
   try {
     const id = url.searchParams.get('id');
     if (!id) return json({ success: false, error: 'Thiếu session ID' }, { status: 400 });
+
+    if (platform?.env?.DB && !isManager(auth.user)) {
+      const owned = await platform.env.DB.prepare(`
+        SELECT id FROM class_sessions
+        WHERE id = ? AND (teacher_id = ? OR assistant_teacher_id = ? OR substitute_teacher_id = ?)
+        LIMIT 1
+      `).bind(id, auth.user.id, auth.user.id, auth.user.id).first();
+      if (!owned) return json({ success: false, error: 'Forbidden: Bạn không phụ trách buổi học này.' }, { status: 403 });
+    }
 
     if (platform?.env?.DB) {
       await platform.env.DB.prepare('DELETE FROM class_sessions WHERE id = ?').bind(id).run();

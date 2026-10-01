@@ -25,7 +25,7 @@ function loadLocal() {
 function createStore() {
   const { subscribe, update, set } = writable(loadLocal());
 
-  function persist(state) {
+  function persist(state, event = null) {
     try {
       if (typeof window !== 'undefined') localStorage.setItem(LS_KEY, JSON.stringify(state));
     } catch {}
@@ -33,11 +33,22 @@ function createStore() {
     try {
       if (typeof window !== 'undefined') {
         const token = localStorage.getItem('tienganh_token') || localStorage.getItem('tienganh_auth_token');
-        if (token) {
+        if (token && event) {
           fetch('/api/gamification', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-            body: JSON.stringify(state)
+            body: JSON.stringify({ action: 'record_activity', ...event })
+          }).then((res) => res.ok ? res.json() : null).then((authoritative) => {
+            if (authoritative?.success && authoritative.persisted) {
+              const next = {
+                streak_days: authoritative.streak_days || 0,
+                last_active_date: authoritative.last_active_date || null,
+                xp_total: authoritative.xp_total || 0,
+                badges: Array.isArray(authoritative.badges) ? authoritative.badges : []
+              };
+              try { localStorage.setItem(LS_KEY, JSON.stringify(next)); } catch {}
+              set(next);
+            }
           }).catch(() => {});
         }
       }
@@ -59,14 +70,14 @@ function createStore() {
           streak = 1;
         }
         const next = { ...s, streak_days: streak, last_active_date: today, xp_total: (s.xp_total || 0) + xpGain };
-        persist(next);
+        persist(next, { event_id: `activity:${today}:${crypto.randomUUID()}`, event_type: 'learning_activity', xp_gain: xpGain });
         return next;
       });
     },
     addXp(amount) {
       update((s) => {
         const next = { ...s, xp_total: (s.xp_total || 0) + amount };
-        persist(next);
+        persist(next, { event_id: `xp:${todayStr()}:${crypto.randomUUID()}`, event_type: 'xp_activity', xp_gain: amount });
         return next;
       });
     },
