@@ -22,7 +22,6 @@
  import StatCounter from '$lib/components/ui/StatCounter.svelte';
  import RoadmapPath from '$lib/components/ui/RoadmapPath.svelte';
  import FaqAccordion from '$lib/components/ui/FaqAccordion.svelte';
- import PriceCard from '$lib/components/ui/PriceCard.svelte';
  import UiButton from '$lib/components/ui/UiButton.svelte';
  import SectionHeading from '$lib/components/ui/SectionHeading.svelte';
  import EmptyState from '$lib/components/ui/EmptyState.svelte';
@@ -288,40 +287,6 @@
  { label: 'C1', sub: 'IELTS 6.5+, HSG', status: 'locked' }
  ];
 
- // Gia that tu /courses (kiem chung 2026-09-30)
- const priceTeaser = [
- {
- title: 'Lớp 7 · A2 → B1',
- gradeBand: 'THCS',
- price: 1200000,
- unit: 'tháng',
- oldPrice: 1500000,
- features: ['Bám sát Global Success 7', 'Ngân hàng đề 15p – 45p', 'Báo cáo Zalo hằng tuần'],
- gifts: ['Miễn phí test xếp lớp đầu vào'],
- href: '/bang-gia'
- },
- {
- title: 'Lớp 9 · B1 → B2',
- gradeBand: 'Luyện vào 10',
- price: 1500000,
- unit: 'tháng',
- oldPrice: 1800000,
- features: ['Luyện đề thi vào 10 các tỉnh', 'Đánh giá năng lực 5 kỹ năng', 'Kèm 1:3 sát sao'],
- gifts: ['Tặng bộ đề vào 10 (PDF)'],
- href: '/bang-gia'
- },
- {
- title: 'IELTS Foundation',
- gradeBand: 'Chứng chỉ',
- price: 1800000,
- unit: 'tháng',
- oldPrice: 2200000,
- features: ['4 kỹ năng Nghe–Nói–Đọc–Viết', 'Mock test định kỳ', 'Lộ trình band 5.5 → 6.5+'],
- gifts: ['Tặng 1 buổi mock test 1:1'],
- href: '/bang-gia'
- }
- ];
-
  const hofCommitments = [
  { emoji: '🎯', title: 'Lộ trình cá nhân', desc: '100% học viên có roadmap riêng sau test xếp lớp 3 phút — không học chung một khuôn.' },
  { emoji: '📈', title: 'Báo cáo minh bạch', desc: 'Điểm số, streak, huy hiệu CEFR được gửi Zalo cho phụ huynh mỗi tuần.' },
@@ -424,13 +389,34 @@
  </div>
  </section>
 
- <!-- ===== 5. Pricing teaser ===== -->
- <section>
- <SectionHeading eyebrow="Học phí" title="Chọn lớp theo đúng trình độ của con" center actionLabel="Xem bảng giá đầy đủ →" actionHref="/bang-gia" />
- <div class="grid md:grid-cols-3 gap-3 sm:gap-4">
- {#each priceTeaser as c}
- <PriceCard {...c} />
- {/each}
+ <!-- ===== 5. Diem khac biet ===== -->
+ <section class="rounded-3xl bg-surface-0 border border-line p-4 sm:p-6 shadow-sm">
+ <SectionHeading eyebrow="Cách học khác biệt" title="Không chỉ học thuộc — học để dùng được" />
+ <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+ <div class="rounded-2xl bg-surface-1 border border-line p-4">
+ <div class="text-2xl mb-2">📝</div>
+ <div class="font-extrabold text-sm text-ink-900 mb-1">Test đầu vào miễn phí</div>
+ <div class="text-xs text-ink-500 leading-relaxed">Biết đúng trình độ sau 3 phút, gợi ý lộ trình riêng — không học đại trà.</div>
+ </div>
+ <div class="rounded-2xl bg-surface-1 border border-line p-4">
+ <div class="text-2xl mb-2">👤</div>
+ <div class="font-extrabold text-sm text-ink-900 mb-1">Kèm 1-1 / 1-3 sát sao</div>
+ <div class="text-xs text-ink-500 leading-relaxed">Giáo viên theo sát từng học viên, sửa lỗi tận nơi, không bỏ sót ai.</div>
+ </div>
+ <div class="rounded-2xl bg-surface-1 border border-line p-4">
+ <div class="text-2xl mb-2">🌍</div>
+ <div class="font-extrabold text-sm text-ink-900 mb-1">Giáo viên bản xứ</div>
+ <div class="text-xs text-ink-500 leading-relaxed">Luyện phát âm và phản xạ với GV bản ngữ, chuẩn giọng quốc tế.</div>
+ </div>
+ <div class="rounded-2xl bg-surface-1 border border-line p-4">
+ <div class="text-2xl mb-2">💬</div>
+ <div class="font-extrabold text-sm text-ink-900 mb-1">Học phản biện</div>
+ <div class="text-xs text-ink-500 leading-relaxed">Tranh luận, thuyết trình bằng tiếng Anh — tư duy chứ không học vẹt.</div>
+ </div>
+ </div>
+ <div class="mt-4 flex flex-wrap gap-2 sm:gap-3">
+ <UiButton href="/exam#placement" size="sm">📝 Test thử miễn phí</UiButton>
+ <UiButton href="/courses" variant="ghost" size="sm">Xem chương trình →</UiButton>
  </div>
  </section>
 
