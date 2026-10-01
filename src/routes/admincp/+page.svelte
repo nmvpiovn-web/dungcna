@@ -7,6 +7,8 @@
   import { getCurrentUser, isSuperAdmin, scanScheduleAndAttendanceForLeader, scanTuitionDueAlerts } from '$lib/unifiedStore';
   import { currentLang, toggleLanguage, t } from '$lib/i18n';
   import { playAudioFeedback } from '$lib/speech';
+  import ThemeStudioPanel from '$lib/components/ThemeStudioPanel.svelte';
+  import { applyThemeVars, clearLocal } from '$lib/themeStudio.js';
 
   let currentUser = $state(null);
   let campuses = $state([]);
@@ -14,9 +16,64 @@
   let assignments = $state([]);
   let submissions = $state([]);
   let loading = $state(true);
-  let activeTab = $state('campuses'); // 'campuses' | 'streams' | 'cross_reminders' | 'storage_audit'
+  let activeTab = $state('campuses'); // 'campuses' | 'streams' | 'cross_reminders' | 'storage_audit' | 'theme'
   let selectedCampusFilter = $state('all');
   let lang = $state('vi');
+
+  // Theme Studio (tab Giao dien)
+  let themeDraft = $state(null);   // {name, c, hof} dang xem truoc
+  let themeSaved = $state(null);   // theme chung dang luu tren web
+  let themeMsg = $state('');
+  let themeSaving = $state(false);
+
+  function authHeaders(){
+    const token = typeof localStorage !== 'undefined' ? localStorage.getItem('tienganh_token') : null;
+    return token ? { 'Authorization': `Bearer ${token}` } : {};
+  }
+  async function loadSavedTheme(){
+    try {
+      const res = await fetch('/api/site-theme');
+      const data = await res.json();
+      if (data.success) themeSaved = data.theme;
+    } catch {}
+  }
+  function previewTheme(c, hof, name){
+    applyThemeVars(c, hof);
+    themeDraft = { name, c, hof };
+    themeMsg = '';
+  }
+  async function saveThemeGlobal(){
+    if (!themeDraft){ themeMsg = 'Chua chon mau nao de luu.'; return; }
+    themeSaving = true; themeMsg = '';
+    try {
+      const res = await fetch('/api/site-theme', {
+        method: 'PUT',
+        headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ theme: themeDraft })
+      });
+      const data = await res.json();
+      if (data.success){
+        themeSaved = themeDraft;
+        clearLocal(); // de admin thay luon theme chung vua luu
+        themeMsg = `✓ Da luu "${themeDraft.name}" — toan bo web se hien mau nay.`;
+        playAudioFeedback?.('success');
+      } else themeMsg = '✗ ' + (data.error || 'Khong luu duoc.');
+    } catch { themeMsg = '✗ Loi ket noi.'; }
+    themeSaving = false;
+  }
+  async function clearGlobalTheme(){
+    themeSaving = true; themeMsg = '';
+    try {
+      const res = await fetch('/api/site-theme', { method: 'DELETE', headers: authHeaders() });
+      const data = await res.json();
+      if (data.success){
+        themeSaved = null; themeDraft = null;
+        themeMsg = '✓ Da go theme chung — web ve mau mac dinh. Dang tai lai...';
+        setTimeout(()=>location.reload(), 1200);
+      } else themeMsg = '✗ ' + (data.error || 'Khong xoa duoc.');
+    } catch { themeMsg = '✗ Loi ket noi.'; }
+    themeSaving = false;
+  }
 
   // Cross-reminders toast
   let scanToast = $state('');
@@ -69,6 +126,7 @@
 
   onMount(() => {
     loadData();
+    loadSavedTheme();
   });
 
   let filteredStreams = $derived.by(() => {
@@ -192,6 +250,12 @@
         class="px-4 py-2 rounded-xl text-xs font-bold transition-all {activeTab === 'storage_audit' ? 'bg-rose-600 text-white shadow-sm' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}"
       >
         📁 Cây Thư Mục &amp; Audit Bài Nộp
+      </button>
+      <button 
+        onclick={() => activeTab = 'theme'}
+        class="px-4 py-2 rounded-xl text-xs font-bold transition-all {activeTab === 'theme' ? 'bg-rose-600 text-white shadow-sm' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}"
+      >
+        🎨 Giao Diện &amp; Màu Sắc
       </button>
     </div>
 
@@ -370,6 +434,59 @@
           </div>
         {/each}
       </div>
+    </div>
+  <!-- TAB 5: GIAO DIEN & MAU SAC -->
+  {:else if activeTab === 'theme'}
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+      <div class="border-b border-slate-100 dark:border-slate-800 pb-3 mb-4">
+        <h2 class="text-base font-heading font-black text-slate-900 dark:text-white">🎨 Giao Diện &amp; Màu Sắc Web</h2>
+        <p class="text-xs text-slate-600 dark:text-slate-300 font-normal mt-0.5">
+          Chọn màu bên dưới để <b>xem trước trực tiếp</b> trên trang này.
+          Bấm <b>💾 Lưu lên web</b> thì toàn bộ khách truy cập sẽ thấy màu mới.
+        </p>
+        <div class="mt-2 text-xs font-bold">
+          {#if themeSaved}
+            <span class="text-emerald-700 dark:text-emerald-400">● Đang áp dụng chung: {themeSaved.name}</span>
+          {:else}
+            <span class="text-slate-500 dark:text-slate-400">○ Chưa có theme chung — đang dùng màu mặc định (Lavie Aqua).</span>
+          {/if}
+          {#if themeDraft}
+            <span class="text-amber-700 dark:text-amber-400"> • Xem trước: {themeDraft.name} (chưa lưu)</span>
+          {/if}
+        </div>
+      </div>
+
+      <div class="max-w-md">
+        <ThemeStudioPanel activeName={themeDraft?.name || themeSaved?.name || 'Lavie Aqua'} onApply={(c,hof,name)=>previewTheme(c,hof,name)} />
+      </div>
+
+      {#if themeMsg}
+        <div class="mt-4 p-3 rounded-xl text-xs font-bold text-center {themeMsg.startsWith('✓') ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800' : 'bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800'}">
+          {themeMsg}
+        </div>
+      {/if}
+
+      <div class="flex flex-wrap gap-3 mt-4">
+        <button
+          onclick={saveThemeGlobal}
+          disabled={themeSaving || !themeDraft}
+          class="px-5 py-2.5 rounded-xl text-sm font-black text-white bg-cx-600 hover:bg-cx-700 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm transition-all"
+        >
+          {themeSaving ? '⏳ Đang lưu...' : '💾 Lưu lên web'}
+        </button>
+        {#if themeSaved}
+        <button
+          onclick={clearGlobalTheme}
+          disabled={themeSaving}
+          class="px-5 py-2.5 rounded-xl text-sm font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 disabled:opacity-40 transition-all"
+        >
+          ↩️ Về màu mặc định
+        </button>
+        {/if}
+      </div>
+      <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-3">
+        Lưu ý: đổi theme không ảnh hưởng dữ liệu hay tài khoản nào — chỉ đổi màu hiển thị.
+      </p>
     </div>
   {/if}
 </div>
