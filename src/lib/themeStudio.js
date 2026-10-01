@@ -110,6 +110,17 @@ export function clearLocal(){
   try { localStorage.removeItem(STORE_KEY); } catch(e){}
 }
 
+// Xoa toan bo inline vars da ap -> ve CSS mac dinh (khi huy xem truoc)
+export function removeThemeVars(){
+  if (typeof document === 'undefined') return;
+  const el = document.documentElement;
+  const keys = [];
+  for (const s of SHADES){ keys.push('--c-'+s, '--c-'+s+'-rgb'); }
+  for (const k of ['brand-600','brand-700','brand-50','brand-200']) keys.push('--'+k, '--'+k+'-rgb');
+  for (let i=1;i<=4;i++) keys.push('--hof-'+i);
+  keys.forEach(k=>el.style.removeProperty(k));
+}
+
 // Validate payload tu client truoc khi luu DB (dung chung client/server)
 export function validateThemePayload(t){
   if (!t || typeof t !== 'object') return 'Payload khong hop le.';

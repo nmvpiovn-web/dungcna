@@ -30,6 +30,8 @@
  import BottomNav from '$lib/components/ui/BottomNav.svelte';
  import ZaloCta from '$lib/components/ui/ZaloCta.svelte';
  import ThemeStudio from '$lib/components/ThemeStudio.svelte';
+ import PersonalThemeModal from '$lib/components/PersonalThemeModal.svelte';
+ import { loadLocal } from '$lib/themeStudio.js';
 
  let { children } = $props();
 
@@ -46,6 +48,8 @@
  let showLeaderDrawer = $state(false);
  let showNotificationModal = $state(false);
  let showTourModal = $state(false);
+ let showPersonalThemeModal = $state(false);
+ let hasPersonalTheme = $state(false);
  let leaderUnreadCount = $state(0);
  let userUnreadCount = $state(0);
  let canDismiss = $state(false);
@@ -108,6 +112,7 @@
  currentUser = getCurrentUser();
  currentTheme = getTheme();
  setTheme(currentTheme);
+ try { hasPersonalTheme = !!loadLocal(); } catch {}
 
  if (currentUser?.role === 'student') {
  studentStars = getStudentStars(currentUser.id);
@@ -174,8 +179,13 @@
  leaderUnreadCount = getUnreadLeaderNotificationCount();
  };
 
+ const handlePersonalThemeEvent = () => {
+ try { hasPersonalTheme = !!loadLocal(); } catch {}
+ };
+
  window.addEventListener('tienganh:auth-change', handleAuthEvent);
  window.addEventListener('tienganh:theme-change', handleThemeEvent);
+ window.addEventListener('tienganh:personal-theme-change', handlePersonalThemeEvent);
  window.addEventListener('tienganh:leader-notifications-change', handleLeaderNotifEvent);
  window.addEventListener('tienganh:leader-notification-new', handleLeaderNotifEvent);
 
@@ -183,6 +193,7 @@
  clearInterval(scanTimer);
  window.removeEventListener('tienganh:auth-change', handleAuthEvent);
  window.removeEventListener('tienganh:theme-change', handleThemeEvent);
+ window.removeEventListener('tienganh:personal-theme-change', handlePersonalThemeEvent);
  window.removeEventListener('tienganh:leader-notifications-change', handleLeaderNotifEvent);
  window.removeEventListener('tienganh:leader-notification-new', handleLeaderNotifEvent);
  };
@@ -665,6 +676,20 @@
  <!-- Theme Switcher: Sáng / Xanh Nhẹ / Tối (Academic Warmth) -->
  <ThemeSwitcher />
 
+ <!-- Personal color theme picker: mo modal chon mau ca nhan -->
+ <button
+ type="button"
+ onclick={() => showPersonalThemeModal = true}
+ title={hasPersonalTheme ? 'Màu sắc của tôi (đang dùng màu cá nhân)' : 'Màu sắc của tôi'}
+ aria-label="Chọn màu sắc cá nhân"
+ class="relative w-9 h-9 rounded-full border border-line bg-surface-1 text-base flex items-center justify-center hover:border-brand-600 transition-all shrink-0"
+ >
+ <span>🎨</span>
+ {#if hasPersonalTheme}
+ <span class="absolute top-0.5 right-0.5 w-2.5 h-2.5 rounded-full bg-brand-600 ring-2 ring-surface-0" title="Đang dùng màu cá nhân"></span>
+ {/if}
+ </button>
+
  <!-- CTA Hoc thu mien phi — luon visible (sticky header) -->
  <a
  href="/exam#placement"
@@ -1103,6 +1128,7 @@
  <BottomNav />
  <ZaloCta />
  <ThemeStudio />
+ <PersonalThemeModal bind:isOpen={showPersonalThemeModal} />
 
  <!-- Footer -->
  <footer class="bg-surface-0 border-t border-line py-8 mt-auto text-xs text-ink-500 transition-colors duration-200">
