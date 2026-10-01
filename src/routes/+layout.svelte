@@ -270,7 +270,7 @@
 
 <div class="min-h-screen flex flex-col bg-transparent text-ink-900 font-sans transition-colors duration-250">
  <!-- Top Navigation Header -->
- <header class="sticky top-0 z-40 bg-surface-0/95 backdrop-blur-md border-b border-line shadow-xs transition-colors duration-250 w-full">
+ <header class="sticky top-0 z-50 bg-surface-0/95 backdrop-blur-md border-b border-line shadow-xs transition-colors duration-250 w-full">
  <div class="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
  <div class="flex items-center justify-between h-16 gap-2 sm:gap-3 min-w-0">
 

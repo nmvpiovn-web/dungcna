@@ -65,11 +65,12 @@
  const token = typeof window !== 'undefined' ? localStorage.getItem('tienganh_token') : '';
  const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
 
- const [hwRes, campRes, wfRes, prRes] = await Promise.all([
+ // P1 (2026-10-01): payroll tach khoi Promise.all chinh — API payroll cham (~5s),
+ // khong duoc block cac tab khac. Payroll load lazy khi mo tab salary.
+ const [hwRes, campRes, wfRes] = await Promise.all([
  fetch('/api/homework', { headers }),
  fetch('/api/campuses', { headers }),
- fetch('/api/teachers/workflows?type=all', { headers }),
- fetch(`/api/teachers/payroll?billing_cycle=${selectedCycle}`, { headers }).catch(() => null)
+ fetch('/api/teachers/workflows?type=all', { headers })
  ]);
 
  if (!hwRes.ok && hwRes.status === 401) {
@@ -92,12 +93,8 @@
  myLeaves = wfData.leaves || [];
  myAdvances = wfData.advances || [];
  }
- if (prRes && prRes.ok) {
- const prData = await prRes.json();
- if (prData.success) {
- currentPayroll = prData.payroll;
- }
- }
+ // Payroll load nen (khong block UI)
+ loadPayroll();
  } catch (e) {
  console.error('Failed to load teacher data:', e);
  errorMessage = e.message || 'Lỗi kết nối máy chủ. Vui lòng thử lại sau.';
@@ -106,21 +103,33 @@
  }
  }
 
- async function changePayrollCycle(newCycle) {
- selectedCycle = newCycle;
+ // Payroll fetch rieng voi timeout — khong bao gio treo UI
+ let payrollLoading = $state(false);
+ async function loadPayroll() {
+ if (payrollLoading) return;
+ payrollLoading = true;
  try {
  const token = typeof window !== 'undefined' ? localStorage.getItem('tienganh_token') : '';
  const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
- const res = await fetch(`/api/teachers/payroll?billing_cycle=${selectedCycle}`, { headers });
- if (res.ok) {
+ const ctrl = new AbortController();
+ const t = setTimeout(() => ctrl.abort(), 15000);
+ const res = await fetch(`/api/teachers/payroll?billing_cycle=${selectedCycle}`, { headers, signal: ctrl.signal }).catch(() => null);
+ clearTimeout(t);
+ if (res && res.ok) {
  const data = await res.json();
- if (data.success) {
- currentPayroll = data.payroll;
- }
+ if (data.success) currentPayroll = data.payroll;
  }
  } catch (e) {
- console.error('Failed to change payroll cycle:', e);
+ console.error('Failed to load payroll:', e);
+ } finally {
+ payrollLoading = false;
  }
+ }
+
+ async function changePayrollCycle(newCycle) {
+ selectedCycle = newCycle;
+ currentPayroll = null;
+ await loadPayroll();
  }
 
  onMount(() => {
@@ -647,7 +656,13 @@
  </div>
 
  <!-- PAYROLL COMPUTATION SUMMARY CARD -->
- {#if currentPayroll}
+ {#if payrollLoading && !currentPayroll}
+ <div class="bg-white rounded-lg border border-slate-200 shadow-sm p-8 text-center" aria-busy="true">
+ <div class="h-4 bg-slate-200 rounded w-1/3 mx-auto animate-pulse"></div>
+ <div class="h-3 bg-slate-100 rounded w-1/2 mx-auto mt-3 animate-pulse"></div>
+ <p class="text-xs text-slate-500 mt-4">Đang tải phiếu lương…</p>
+ </div>
+ {:else if currentPayroll}
  <div class="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
  <!-- Card Header -->
  <div class="p-5 border-b border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
