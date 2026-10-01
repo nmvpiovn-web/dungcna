@@ -275,25 +275,25 @@
  <div class="flex items-center justify-between h-16 gap-2 sm:gap-3 min-w-0">
 
  <!-- Brand Logo (Academic Ledger Style) -->
- <a href="/" onclick={closeAllDropdowns} class="flex items-center gap-2 sm:gap-3 group shrink min-w-0">
+ <a href="/" onclick={closeAllDropdowns} class="flex items-center gap-2 sm:gap-3 group shrink-0">
  <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-brand-700 flex items-center justify-center text-white text-base sm:text-xl border border-brand-700 shadow-xs group-hover:scale-105 transition-transform duration-200 shrink-0">
  👩‍🏫
  </div>
- <div class="min-w-0">
+ <div class="shrink-0">
  <div class="flex items-center gap-1.5">
- <span class="font-semibold text-xs sm:text-base tracking-tight text-ink-900 truncate">
+ <span class="font-semibold text-xs sm:text-base tracking-tight text-ink-900 whitespace-nowrap">
  Tiếng Anh Cô Dung
  </span>
- <span class="hidden 2xl:inline-block text-[11px] font-medium px-2 py-0.5 rounded bg-brand-50 text-brand-700 border border-brand-200">
+ <span class="hidden 2xl:inline-block text-[11px] font-medium px-2 py-0.5 rounded bg-brand-50 text-brand-700 border border-brand-200 whitespace-nowrap">
  2026 CTGDPT
  </span>
  </div>
- <span class="hidden xl:block text-[11px] text-ink-500 font-medium -mt-0.5">K12 &amp; Lộ Trình Chuẩn Quốc Tế</span>
+ <span class="hidden xl:block text-[11px] text-ink-500 font-medium -mt-0.5 whitespace-nowrap">K12 &amp; Lộ Trình Chuẩn Quốc Tế</span>
  </div>
  </a>
 
  <!-- Desktop Navigation with Flyout Submenus -->
- <nav class="hidden lg:flex items-center gap-1 relative z-40">
+ <nav class="hidden lg:flex items-center gap-1 relative z-40 shrink-0">
  <!-- Item 1: Lộ Trình Đào Tạo Dropdown (Or Direct Student Course) -->
  {#if currentUser?.role === 'student'}
  <a
@@ -313,7 +313,7 @@
  class="flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-semibold tracking-wide transition-all {activeDropdown === 'courses' ? 'bg-brand-50 text-brand-700' : 'text-ink-500 hover:text-ink-900 hover:bg-surface-1'}"
  >
  <span>📚</span>
- <span>Lộ Trình</span>
+ <span class="whitespace-nowrap">Lộ Trình</span>
  <span class="text-[11px] transition-transform duration-200 {activeDropdown === 'courses' ? 'rotate-180' : ''}">▾</span>
  </button>
 
@@ -399,7 +399,7 @@
  class="flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-semibold tracking-wide transition-all {$page.url.pathname.startsWith('/exam') ? 'bg-brand-600 text-white shadow-xs' : activeDropdown === 'exams' ? 'bg-brand-50 text-brand-700' : 'text-ink-500 hover:text-ink-900 hover:bg-surface-1'}"
  >
  <span>⏱️</span>
- <span>Phòng Thi</span>
+ <span class="whitespace-nowrap">Phòng Thi</span>
  <span class="text-[11px] transition-transform duration-200 {activeDropdown === 'exams' ? 'rotate-180' : ''}">▾</span>
  </button>
 
@@ -470,7 +470,7 @@
  class="flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-semibold tracking-wide transition-all {$page.url.pathname === '/dictionary' || $page.url.pathname === '/flashcards' || $page.url.pathname === '/games' || $page.url.pathname === '/grammar' || $page.url.pathname === '/pedagogy' ? 'bg-brand-600 text-white shadow-xs' : activeDropdown === 'tools' ? 'bg-brand-50 text-brand-700' : 'text-ink-500 hover:text-ink-900 hover:bg-surface-1'}"
  >
  <span>🛠️</span>
- <span>Công Cụ</span>
+ <span class="whitespace-nowrap">Công Cụ</span>
  <span class="text-[11px] transition-transform duration-200 {activeDropdown === 'tools' ? 'rotate-180' : ''}">▾</span>
  </button>
 
@@ -569,7 +569,7 @@
  class="flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-semibold tracking-wide transition-all {$page.url.pathname === '/schedule' ? 'bg-indigo-700 text-white shadow-xs' : 'text-ink-500 hover:text-ink-900 hover:bg-surface-1'}"
  >
  <span>📅</span>
- <span>Thời Khóa Biểu</span>
+ <span class="whitespace-nowrap">Thời Khóa Biểu</span>
  </a>
 
  <!-- Role-based Portal Link: Sổ Phụ Huynh (parent only) / Sổ Giáo Viên (teacher only) -->
