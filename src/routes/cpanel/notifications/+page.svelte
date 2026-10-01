@@ -68,8 +68,8 @@
   <!-- Header -->
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-xl bg-slate-900 border border-slate-800 text-white shadow-sm">
     <div>
-      <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-slate-800 border border-slate-700 text-xs font-semibold uppercase tracking-wider mb-2 text-cyan-400">
-        <svg class="w-4 h-4 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-slate-800 border border-slate-700 text-xs font-semibold uppercase tracking-wider mb-2 text-cx-400">
+        <svg class="w-4 h-4 text-cx-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
         </svg>
         <span>Trung Tâm Thông Báo / Notification Hub</span>
@@ -81,7 +81,7 @@
     <div class="flex items-center gap-2">
       <button 
         onclick={() => markAsRead(null, true)}
-        class="px-4 py-2 rounded-md bg-cyan-600 hover:bg-cyan-500 font-semibold text-xs transition-colors flex items-center gap-1.5 text-white"
+        class="px-4 py-2 rounded-md bg-cx-600 hover:bg-cx-500 font-semibold text-xs transition-colors flex items-center gap-1.5 text-white"
       >
         <span>✓ Đánh dấu tất cả đã đọc</span>
       </button>
@@ -93,13 +93,13 @@
     <div class="flex items-center gap-2">
       <button 
         onclick={() => filter = 'all'}
-        class="px-3.5 py-1.5 rounded-md text-xs font-semibold transition-all {filter === 'all' ? 'bg-cyan-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}"
+        class="px-3.5 py-1.5 rounded-md text-xs font-semibold transition-all {filter === 'all' ? 'bg-cx-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}"
       >
         Tất cả ({notifications.length})
       </button>
       <button 
         onclick={() => filter = 'unread'}
-        class="px-3.5 py-1.5 rounded-md text-xs font-semibold transition-all {filter === 'unread' ? 'bg-cyan-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}"
+        class="px-3.5 py-1.5 rounded-md text-xs font-semibold transition-all {filter === 'unread' ? 'bg-cx-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}"
       >
         Chưa đọc ({notifications.filter(n => !n.is_read).length})
       </button>
@@ -123,7 +123,7 @@
     </div>
   {:else if filteredNotifications.length === 0}
     <div class="p-12 text-center rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-2">
-      <div class="flex justify-center text-cyan-500">
+      <div class="flex justify-center text-cx-500">
         <svg class="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
@@ -134,10 +134,10 @@
   {:else}
     <div class="space-y-3">
       {#each filteredNotifications as item (item.id)}
-        <div class="p-4 rounded-lg border transition-all {item.is_read ? 'bg-white/60 dark:bg-slate-900/60 border-slate-200 dark:border-slate-800 opacity-75' : 'bg-white dark:bg-slate-900 border-cyan-300 dark:border-cyan-800 shadow-sm ring-1 ring-cyan-500/20'}">
+        <div class="p-4 rounded-lg border transition-all {item.is_read ? 'bg-white/60 dark:bg-slate-900/60 border-slate-200 dark:border-slate-800 opacity-75' : 'bg-white dark:bg-slate-900 border-cx-300 dark:border-cx-800 shadow-sm ring-1 ring-cx-500/20'}">
           <div class="flex items-start justify-between gap-3">
             <div class="flex items-start gap-3">
-              <div class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 {item.is_read ? 'bg-slate-100 dark:bg-slate-800 text-slate-500' : 'bg-cyan-50 dark:bg-cyan-950/60 text-cyan-600 dark:text-cyan-400'}">
+              <div class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 {item.is_read ? 'bg-slate-100 dark:bg-slate-800 text-slate-500' : 'bg-cx-50 dark:bg-cx-950/60 text-cx-600 dark:text-cx-400'}">
                 {#if item.category === 'homework'}
                   <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -175,7 +175,7 @@
             {#if !item.is_read}
               <button 
                 onclick={() => markAsRead(item.id)}
-                class="px-2.5 py-1 rounded-md text-[11px] font-semibold text-cyan-600 dark:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-cyan-950/50 transition-colors shrink-0"
+                class="px-2.5 py-1 rounded-md text-[11px] font-semibold text-cx-600 dark:text-cx-400 hover:bg-cx-50 dark:hover:bg-cx-950/50 transition-colors shrink-0"
               >
                 Đã đọc
               </button>

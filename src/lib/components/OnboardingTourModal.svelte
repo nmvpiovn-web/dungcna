@@ -45,7 +45,7 @@
       <div class="flex-shrink-0 flex overflow-x-auto border-b border-slate-200 dark:border-slate-800 bg-slate-100/90 dark:bg-slate-950/80 p-1.5 text-xs font-semibold gap-1">
         <button
           onclick={() => activeTab = 'vision'}
-          class="px-3 py-1.5 rounded-md transition-colors whitespace-nowrap {activeTab === 'vision' ? 'bg-white dark:bg-slate-800 text-cyan-700 dark:text-cyan-300 shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}"
+          class="px-3 py-1.5 rounded-md transition-colors whitespace-nowrap {activeTab === 'vision' ? 'bg-white dark:bg-slate-800 text-cx-700 dark:text-cx-300 shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}"
         >
           🌟 Tầm Nhìn Sư Phạm
         </button>
@@ -79,8 +79,8 @@
       <div class="flex-1 overflow-y-auto p-5 space-y-4 text-xs text-slate-700 dark:text-slate-300 leading-relaxed min-h-0">
         {#if activeTab === 'vision'}
           <div class="space-y-3">
-            <div class="p-3.5 rounded-lg bg-cyan-50 dark:bg-cyan-950/40 border border-cyan-200 dark:border-cyan-800/60 space-y-1.5">
-              <div class="font-semibold text-cyan-800 dark:text-cyan-300 text-sm flex items-center gap-1.5">
+            <div class="p-3.5 rounded-lg bg-cx-50 dark:bg-cx-950/40 border border-cx-200 dark:border-cx-800/60 space-y-1.5">
+              <div class="font-semibold text-cx-800 dark:text-cx-300 text-sm flex items-center gap-1.5">
                 <span>🎯</span>
                 <span>Tầm Nhìn &amp; Mô Hình Đào Tạo K12 Toàn Diện 2026</span>
               </div>
@@ -170,7 +170,7 @@
         </span>
         <button
           onclick={handleClose}
-          class="px-5 py-2 rounded-md font-semibold bg-cyan-600 hover:bg-cyan-700 text-white text-xs transition-colors shadow-xs"
+          class="px-5 py-2 rounded-md font-semibold bg-cx-600 hover:bg-cx-700 text-white text-xs transition-colors shadow-xs"
         >
           Tôi Đã Hiểu &amp; Bắt Đầu Khám Phá ➔
         </button>

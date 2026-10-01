@@ -441,14 +441,14 @@
   {#if currentUser?.role === 'student'}
     {@const isOfficial = currentUser.approval_status === 'official' || (currentUser.status === 'active' && !currentUser.is_trial && !currentUser.metadata?.includes('"is_trial":true'))}
     {@const primaryGrade = currentUser.grade || 'Lớp 7'}
-    <div class="rounded-2xl bg-white border border-cyan-200 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg">
+    <div class="rounded-2xl bg-white border border-cx-200 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg">
       <div class="flex items-center gap-3.5">
-        <div class="w-11 h-11 rounded-2xl bg-cyan-100 border border-cyan-300 text-cyan-900 font-bold flex items-center justify-center text-xl shadow-md">
+        <div class="w-11 h-11 rounded-2xl bg-cx-100 border border-cx-300 text-cx-900 font-bold flex items-center justify-center text-xl shadow-md">
           📊
         </div>
         <div class="space-y-0.5">
           <div class="text-sm font-bold text-slate-950 flex flex-wrap items-center gap-2">
-            <span>Học Sinh: <strong class="text-cyan-800">{currentUser.name}</strong></span>
+            <span>Học Sinh: <strong class="text-cx-800">{currentUser.name}</strong></span>
             {#if isOfficial}
               <span class="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 font-bold border border-emerald-300">
                 ✓ Học Sinh Chính Thức
@@ -464,15 +464,15 @@
           </div>
         </div>
       </div>
-      <div class="sm:text-right bg-cyan-50 px-3.5 py-2 rounded-xl border border-indigo-500/20">
-        <div class="text-[10px] text-cyan-800 font-extrabold uppercase tracking-wider">Khối Lớp Đã Đăng Ký</div>
+      <div class="sm:text-right bg-cx-50 px-3.5 py-2 rounded-xl border border-indigo-500/20">
+        <div class="text-[10px] text-cx-800 font-extrabold uppercase tracking-wider">Khối Lớp Đã Đăng Ký</div>
         <div class="text-sm font-black text-slate-950">{primaryGrade}</div>
       </div>
     </div>
   {/if}
 
   <!-- Header Banner -->
-  <div class="rounded-3xl bg-gradient-to-r from-white via-cyan-50 to-white border border-cyan-200 p-6 md:p-8 shadow-2xl relative overflow-hidden">
+  <div class="rounded-3xl bg-gradient-to-r from-white via-cx-50 to-white border border-cx-200 p-6 md:p-8 shadow-2xl relative overflow-hidden">
     <div class="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
       <div>
         <div class="flex items-center gap-2 mb-2">
@@ -506,7 +506,7 @@
               if (students.length > 0) openEvaluationModal(students[0]);
               else alert('Vui lòng thêm học sinh trước khi đánh giá!');
             }}
-            class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white font-bold text-xs flex items-center gap-2 shadow-lg shadow-indigo-600/30 transition-all hover:scale-105"
+            class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-cx-600 hover:from-indigo-500 hover:to-cx-500 text-white font-bold text-xs flex items-center gap-2 shadow-lg shadow-indigo-600/30 transition-all hover:scale-105"
           >
             <span>✍️ Tạo Đánh Giá Năng Lực Mới</span>
           </button>
@@ -517,24 +517,24 @@
 
   <!-- Tabs Navigation -->
   {#if !currentUser}
-    <div class="rounded-xl border border-cyan-200 bg-white p-8 text-center shadow-sm">
+    <div class="rounded-xl border border-cx-200 bg-white p-8 text-center shadow-sm">
       <h2 class="text-lg font-black text-slate-950">Đăng nhập để xem phiếu đánh giá</h2>
       <p class="mt-2 text-sm text-slate-700">Phiếu năng lực và thông tin phụ huynh chỉ hiển thị cho tài khoản đã được xác thực.</p>
-      <a href="/login" class="mt-5 inline-flex min-h-11 items-center rounded-lg bg-cyan-700 px-5 font-bold text-white hover:bg-cyan-800">Đăng nhập</a>
+      <a href="/login" class="mt-5 inline-flex min-h-11 items-center rounded-lg bg-cx-700 px-5 font-bold text-white hover:bg-cx-800">Đăng nhập</a>
     </div>
   {:else}
   <div class="flex items-center justify-between border-b border-slate-200 pb-3">
     <div class="flex items-center gap-2">
       <button
         onclick={() => activeTab = 'evaluations'}
-        class="px-4 py-2 rounded-xl text-xs font-bold transition-all {activeTab === 'evaluations' ? 'bg-indigo-600 text-white shadow-md' : 'bg-white text-slate-700 hover:bg-cyan-50 hover:text-cyan-900 border border-slate-300'}"
+        class="px-4 py-2 rounded-xl text-xs font-bold transition-all {activeTab === 'evaluations' ? 'bg-indigo-600 text-white shadow-md' : 'bg-white text-slate-700 hover:bg-cx-50 hover:text-cx-900 border border-slate-300'}"
       >
         📑 {currentUser?.role === 'student' ? 'Phiếu Đánh Giá Của Em' : (currentUser?.role === 'parent' ? 'Phiếu Đánh Giá Của Con' : 'Danh Sách Đánh Giá Đã Lưu')} ({filteredEvaluations.length})
       </button>
       {#if currentUser && isTeacherOrAdmin(currentUser)}
         <button
           onclick={() => activeTab = 'students'}
-          class="px-4 py-2 rounded-xl text-xs font-bold transition-all {activeTab === 'students' ? 'bg-indigo-600 text-white shadow-md' : 'bg-white text-slate-700 hover:bg-cyan-50 hover:text-cyan-900 border border-slate-300'}"
+          class="px-4 py-2 rounded-xl text-xs font-bold transition-all {activeTab === 'students' ? 'bg-indigo-600 text-white shadow-md' : 'bg-white text-slate-700 hover:bg-cx-50 hover:text-cx-900 border border-slate-300'}"
         >
           👥 Danh Sách Học Sinh ({students.length})
         </button>
@@ -626,23 +626,23 @@
                 </div>
 
                 <div class="grid grid-cols-5 gap-2 text-center text-xs">
-                  <div class="p-2 rounded-xl bg-cyan-50 border border-cyan-200">
+                  <div class="p-2 rounded-xl bg-cx-50 border border-cx-200">
                     <div class="text-[10px] text-slate-700">🎧 Nghe</div>
-                    <div class="font-black text-cyan-400 text-sm">{ev.listening_score}</div>
+                    <div class="font-black text-cx-400 text-sm">{ev.listening_score}</div>
                   </div>
-                  <div class="p-2 rounded-xl bg-cyan-50 border border-cyan-200">
+                  <div class="p-2 rounded-xl bg-cx-50 border border-cx-200">
                     <div class="text-[10px] text-slate-700">📖 Đọc</div>
-                    <div class="font-black text-cyan-400 text-sm">{ev.reading_score}</div>
+                    <div class="font-black text-cx-400 text-sm">{ev.reading_score}</div>
                   </div>
-                  <div class="p-2 rounded-xl bg-cyan-50 border border-cyan-200">
+                  <div class="p-2 rounded-xl bg-cx-50 border border-cx-200">
                     <div class="text-[10px] text-slate-700">✍️ Viết</div>
                     <div class="font-black text-purple-400 text-sm">{ev.writing_score}</div>
                   </div>
-                  <div class="p-2 rounded-xl bg-cyan-50 border border-cyan-200">
+                  <div class="p-2 rounded-xl bg-cx-50 border border-cx-200">
                     <div class="text-[10px] text-slate-700">🗣️ Nói</div>
                     <div class="font-black text-rose-400 text-sm">{ev.speaking_score}</div>
                   </div>
-                  <div class="p-2 rounded-xl bg-cyan-50 border border-cyan-200">
+                  <div class="p-2 rounded-xl bg-cx-50 border border-cx-200">
                     <div class="text-[10px] text-slate-700">🧠 Ngữ Pháp</div>
                     <div class="font-black text-amber-400 text-sm">{ev.grammar_vocab_score}</div>
                   </div>
@@ -871,11 +871,11 @@
   <!-- MODAL 1: EVALUATION EDITOR -->
   {#if showEvalModal}
     <div class="fixed inset-0 z-50 bg-slate-900/45 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4" role="presentation" onclick={() => showEvalModal = false}>
-      <div class="evaluation-modal bg-white border-2 border-cyan-200 rounded-2xl w-full max-w-4xl shadow-2xl max-h-[calc(100vh-1rem)] sm:max-h-[calc(100vh-2rem)] overflow-hidden flex flex-col text-slate-900" role="dialog" aria-modal="true" aria-labelledby="evaluation-modal-title" tabindex="-1" onclick={(event) => event.stopPropagation()} onkeydown={(event) => event.stopPropagation()}>
+      <div class="evaluation-modal bg-white border-2 border-cx-200 rounded-2xl w-full max-w-4xl shadow-2xl max-h-[calc(100vh-1rem)] sm:max-h-[calc(100vh-2rem)] overflow-hidden flex flex-col text-slate-900" role="dialog" aria-modal="true" aria-labelledby="evaluation-modal-title" tabindex="-1" onclick={(event) => event.stopPropagation()} onkeydown={(event) => event.stopPropagation()}>
         <!-- Header -->
-        <div class="flex items-start justify-between gap-4 border-b border-cyan-200 bg-cyan-50 p-4 sm:px-6 shrink-0">
+        <div class="flex items-start justify-between gap-4 border-b border-cx-200 bg-cx-50 p-4 sm:px-6 shrink-0">
           <div>
-            <span class="text-xs font-extrabold text-cyan-800">BIỂU MẪU ĐÁNH GIÁ NĂNG KHIẾU &amp; LẬP KẾ HOẠCH</span>
+            <span class="text-xs font-extrabold text-cx-800">BIỂU MẪU ĐÁNH GIÁ NĂNG KHIẾU &amp; LẬP KẾ HOẠCH</span>
             <h2 id="evaluation-modal-title" class="text-lg sm:text-xl font-black text-slate-950 mt-1">Đánh Giá Học Sinh: {evalForm.student_name}</h2>
           </div>
           <button type="button" onclick={() => showEvalModal = false} class="min-h-11 px-4 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 text-slate-900 text-sm font-extrabold shadow-sm" aria-label="Đóng bảng đánh giá">✕ Đóng</button>
@@ -884,7 +884,7 @@
         <div class="overflow-y-auto overscroll-contain p-4 sm:p-6 space-y-5">
 
         <!-- Live Aptitude Preview Banner -->
-        <div class="p-4 rounded-xl border border-cyan-300 bg-cyan-50 text-cyan-950 flex items-center justify-between gap-4">
+        <div class="p-4 rounded-xl border border-cx-300 bg-cx-50 text-cx-950 flex items-center justify-between gap-4">
           <div>
             <div class="text-xs font-bold uppercase tracking-wider">Hệ Thống Tự Động Định Hình Thiên Hướng:</div>
             <div class="text-base font-black mt-0.5">{liveAptitude.label}</div>
@@ -904,18 +904,18 @@
             <div>
               <div class="flex justify-between font-bold text-slate-900 mb-1">
                 <span>🎧 Kỹ năng Nghe (Listening)</span>
-                <span class="text-cyan-800 font-extrabold">{evalForm.listening_score}</span>
+                <span class="text-cx-800 font-extrabold">{evalForm.listening_score}</span>
               </div>
-              <input type="range" min="0" max="10" step="0.5" bind:value={evalForm.listening_score} class="w-full accent-cyan-500" />
+              <input type="range" min="0" max="10" step="0.5" bind:value={evalForm.listening_score} class="w-full accent-cx-500" />
             </div>
 
             <!-- Reading -->
             <div>
               <div class="flex justify-between font-bold text-slate-900 mb-1">
                 <span>📖 Kỹ năng Đọc (Reading)</span>
-                <span class="text-cyan-800 font-extrabold">{evalForm.reading_score}</span>
+                <span class="text-cx-800 font-extrabold">{evalForm.reading_score}</span>
               </div>
-              <input type="range" min="0" max="10" step="0.5" bind:value={evalForm.reading_score} class="w-full accent-cyan-500" />
+              <input type="range" min="0" max="10" step="0.5" bind:value={evalForm.reading_score} class="w-full accent-cx-500" />
             </div>
 
             <!-- Writing -->
@@ -956,7 +956,7 @@
                 bind:value={evalForm.strengths}
                 rows="2"
                 placeholder="VD: Khả năng phản xạ âm thanh tốt, vốn từ vựng phong phú, tự tin giao tiếp..."
-                class="w-full bg-white border-2 border-slate-300 rounded-lg p-3 text-slate-950 placeholder:text-slate-500 focus:outline-none focus:border-cyan-600"
+                class="w-full bg-white border-2 border-slate-300 rounded-lg p-3 text-slate-950 placeholder:text-slate-500 focus:outline-none focus:border-cx-600"
               ></textarea>
             </div>
             <div>
@@ -965,13 +965,13 @@
                 bind:value={evalForm.weaknesses}
                 rows="2"
                 placeholder="VD: Lỗi chia thì quá khứ đơn, hay nhầm mạo từ, thiếu từ nối khi viết đoạn văn..."
-                class="w-full bg-white border-2 border-slate-300 rounded-lg p-3 text-slate-950 placeholder:text-slate-500 focus:outline-none focus:border-cyan-600"
+                class="w-full bg-white border-2 border-slate-300 rounded-lg p-3 text-slate-950 placeholder:text-slate-500 focus:outline-none focus:border-cx-600"
               ></textarea>
             </div>
           </div>
 
           <!-- Chuyên Cần & Sổ Đầu Bài Tức Thời -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 p-3.5 rounded-xl bg-cyan-50 border border-cyan-200">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 p-3.5 rounded-xl bg-cx-50 border border-cx-200">
             <div>
               <label class="block font-extrabold text-emerald-900 mb-1">⏱️ Tổng Hợp Điểm Danh &amp; Chuyên Cần:</label>
               <input
@@ -1019,7 +1019,7 @@
               bind:value={evalForm.action_plan}
               rows="3"
               placeholder="1. Lộ trình tuần 1-4...&#10;2. Mục tiêu điểm số...&#10;3. Báo cáo định kỳ..."
-              class="w-full bg-white border-2 border-cyan-300 rounded-lg p-3 text-slate-950 placeholder:text-slate-500 focus:outline-none focus:border-cyan-600 font-mono text-[11px]"
+              class="w-full bg-white border-2 border-cx-300 rounded-lg p-3 text-slate-950 placeholder:text-slate-500 focus:outline-none focus:border-cx-600 font-mono text-[11px]"
             ></textarea>
           </div>
 
@@ -1066,7 +1066,7 @@
         </div>
 
         <!-- Modal Footer Actions -->
-        <div class="flex items-center justify-end gap-3 p-4 sm:px-6 border-t border-cyan-200 bg-cyan-50 shrink-0">
+        <div class="flex items-center justify-end gap-3 p-4 sm:px-6 border-t border-cx-200 bg-cx-50 shrink-0">
           <button
             onclick={() => showEvalModal = false}
             class="min-h-11 px-4 py-2 rounded-lg bg-white hover:bg-slate-100 border border-slate-300 text-slate-900 text-xs font-extrabold"
@@ -1087,7 +1087,7 @@
   <!-- MODAL 2: PARENT REPORT CARD PREVIEW & DISPATCH -->
   {#if showReportModal}
     <div class="fixed inset-0 z-50 bg-slate-900/45 backdrop-blur-sm flex items-center justify-center p-4">
-      <div class="bg-white border border-cyan-200 rounded-2xl w-full max-w-2xl p-6 md:p-8 shadow-2xl space-y-6">
+      <div class="bg-white border border-cx-200 rounded-2xl w-full max-w-2xl p-6 md:p-8 shadow-2xl space-y-6">
         <div class="flex items-start justify-between border-b border-slate-200 pb-4">
           <div>
             <span class="text-xs font-bold text-emerald-900">PHIẾU BÁO CÁO PHỤ HUYNH CHUẨN ZALO / SMS</span>
@@ -1133,7 +1133,7 @@
   <!-- MODAL 3: ADD NEW STUDENT -->
   {#if showAddStudentModal}
     <div class="fixed inset-0 z-50 bg-slate-900/45 backdrop-blur-sm flex items-center justify-center p-4">
-      <div class="bg-white border border-cyan-200 rounded-2xl w-full max-w-lg p-6 md:p-8 shadow-2xl space-y-5">
+      <div class="bg-white border border-cx-200 rounded-2xl w-full max-w-lg p-6 md:p-8 shadow-2xl space-y-5">
         <div class="flex items-start justify-between border-b border-slate-200 pb-3">
           <div>
             <span class="text-xs font-bold text-indigo-900">QUẢN TRỊ VIÊN &amp; GIÁO VIÊN</span>
@@ -1270,19 +1270,19 @@
           </div>
 
           <!-- Native Trainer -->
-          <div class="p-3.5 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 space-y-1.5">
-            <label class="block font-bold text-cyan-800 dark:text-cyan-300">
+          <div class="p-3.5 rounded-2xl bg-cx-500/10 border border-cx-500/30 space-y-1.5">
+            <label class="block font-bold text-cx-800 dark:text-cx-300">
               🗣️ 2. Giáo Viên Bản Ngữ (Native Speaking Trainer):
             </label>
             <select
               bind:value={assignNativeTeacher}
-              class="w-full bg-white dark:bg-slate-950 border border-cyan-300 dark:border-cyan-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white font-semibold focus:outline-none focus:border-cyan-500"
+              class="w-full bg-white dark:bg-slate-950 border border-cx-300 dark:border-cx-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white font-semibold focus:outline-none focus:border-cx-500"
             >
               {#each allTeachers as t}
                 <option value={t.id}>{t.name} (@{t.username})</option>
               {/each}
             </select>
-            <span class="text-[10px] text-cyan-700 dark:text-cyan-400 block">Chịu trách nhiệm chỉnh âm Phonics, phát âm chuẩn Anh - Mỹ và phản xạ Speaking.</span>
+            <span class="text-[10px] text-cx-700 dark:text-cx-400 block">Chịu trách nhiệm chỉnh âm Phonics, phát âm chuẩn Anh - Mỹ và phản xạ Speaking.</span>
           </div>
 
           <!-- Assistant Teacher -->

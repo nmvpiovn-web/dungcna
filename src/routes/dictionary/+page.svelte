@@ -111,7 +111,7 @@
     if (role === 'teacher' || role === 'leader') {
       if (masteredCount >= 50) return { title: 'Đại Sứ Học Viện', level: 4, icon: '🏛️', color: 'text-amber-500' };
       if (masteredCount >= 20) return { title: 'Chuyên Gia Truyền Cảm Hứng', level: 3, icon: '🌟', color: 'text-indigo-500' };
-      return { title: 'Sư Phạm Xuất Sắc', level: 2, icon: '👩‍🏫', color: 'text-cyan-500' };
+      return { title: 'Sư Phạm Xuất Sắc', level: 2, icon: '👩‍🏫', color: 'text-cx-500' };
     }
     if (role === 'parent') {
       return { title: 'Người Đồng Hành Vàng', level: 2, icon: '👨‍👩‍👧', color: 'text-amber-500' };
@@ -120,7 +120,7 @@
     if (masteredCount >= 100) return { title: 'Huyền Thoại Làng Anh Ngữ', level: 5, icon: '👑', color: 'text-amber-500' };
     if (masteredCount >= 50) return { title: 'Chiến Binh IELTS', level: 4, icon: '⚔️', color: 'text-rose-500' };
     if (masteredCount >= 30) return { title: 'Bậc Thầy Phát Âm', level: 3, icon: '🎙️', color: 'text-emerald-500' };
-    if (masteredCount >= 10) return { title: 'Thợ Săn Từ Vựng', level: 2, icon: '🏹', color: 'text-cyan-500' };
+    if (masteredCount >= 10) return { title: 'Thợ Săn Từ Vựng', level: 2, icon: '🏹', color: 'text-cx-500' };
     return { title: 'Tân Binh Học Ngữ', level: 1, icon: '🌱', color: 'text-slate-500' };
   });
 
@@ -135,12 +135,12 @@
       return { label: 'Khó', badgeClass: 'bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300' };
     }
     if (isHighSchool) {
-      if (cefr.includes('A1') || cefr.includes('A2')) return { label: 'Dễ', badgeClass: 'bg-cyan-50 text-cyan-700 dark:bg-cyan-950/60 dark:text-cyan-300' };
+      if (cefr.includes('A1') || cefr.includes('A2')) return { label: 'Dễ', badgeClass: 'bg-cx-50 text-cx-700 dark:bg-cx-950/60 dark:text-cx-300' };
       if (cefr.includes('B1')) return { label: 'Vừa', badgeClass: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300' };
       return { label: 'Khó', badgeClass: 'bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300' };
     }
     // Default Secondary
-    if (cefr.includes('A1')) return { label: 'Dễ', badgeClass: 'bg-cyan-50 text-cyan-700 dark:bg-cyan-950/60 dark:text-cyan-300' };
+    if (cefr.includes('A1')) return { label: 'Dễ', badgeClass: 'bg-cx-50 text-cx-700 dark:bg-cx-950/60 dark:text-cx-300' };
     if (cefr.includes('A2') || cefr.includes('KET')) return { label: 'Vừa', badgeClass: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300' };
     return { label: 'Khó', badgeClass: 'bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300' };
   }
@@ -534,7 +534,7 @@
   <header class="bg-slate-900 border border-slate-800 rounded-lg p-6 text-slate-100 shadow-sm relative">
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
       <div class="space-y-2">
-        <div class="flex items-center gap-2 text-cyan-400 text-xs font-semibold uppercase tracking-wider">
+        <div class="flex items-center gap-2 text-cx-400 text-xs font-semibold uppercase tracking-wider">
           <span>Ngân Hàng Từ Vựng Sư Phạm</span>
           <span>•</span>
           <span>Stealth Vocabulary &amp; Pronunciation Engine</span>
@@ -562,7 +562,7 @@
         </div>
         <!-- Progress bar toward next badge -->
         <div class="w-full bg-slate-700/60 rounded-full h-1.5 overflow-hidden">
-          <div class="bg-cyan-500 h-1.5 rounded-full transition-all duration-300" style="width: {Math.min(100, (masteredCount % 30) * 3.33)}%"></div>
+          <div class="bg-cx-500 h-1.5 rounded-full transition-all duration-300" style="width: {Math.min(100, (masteredCount % 30) * 3.33)}%"></div>
         </div>
       </div>
     </div>
@@ -578,7 +578,7 @@
           type="text"
           bind:value={searchQuery}
           placeholder="Tra cứu từ vựng tiếng Anh, phiên âm IPA hoặc nghĩa tiếng Việt..."
-          class="w-full pl-9 pr-8 py-2 rounded-md text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500"
+          class="w-full pl-9 pr-8 py-2 rounded-md text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cx-500"
         />
         {#if searchQuery}
           <button onclick={() => searchQuery = ''} class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 text-xs">✕</button>
@@ -596,7 +596,7 @@
         </button>
         <button
           onclick={() => showAddModal = true}
-          class="px-4 py-2 rounded-md text-xs font-semibold bg-cyan-600 hover:bg-cyan-700 text-white transition-colors"
+          class="px-4 py-2 rounded-md text-xs font-semibold bg-cx-600 hover:bg-cx-700 text-white transition-colors"
         >
           + Thêm Từ Mới
         </button>
@@ -607,7 +607,7 @@
     <div class="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3 text-xs overflow-x-auto max-w-full">
       <button
         onclick={() => viewMode = 'active'}
-        class="px-3 py-1.5 rounded-md font-semibold transition-colors whitespace-nowrap {viewMode === 'active' ? 'bg-cyan-600 text-white' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}"
+        class="px-3 py-1.5 rounded-md font-semibold transition-colors whitespace-nowrap {viewMode === 'active' ? 'bg-cx-600 text-white' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}"
       >
         Đang Học ({words.length - masteredCount})
       </button>
@@ -715,14 +715,14 @@
                 <h2 class="text-lg font-semibold text-slate-900 dark:text-white">
                   {word.term}
                 </h2>
-                <div class="text-xs font-mono text-cyan-600 dark:text-cyan-400">
+                <div class="text-xs font-mono text-cx-600 dark:text-cx-400">
                   {word.ipa || '/.../'}
                 </div>
               </div>
 
               <button
                 onclick={() => speakWord(word.term, 0.9)}
-                class="w-9 h-9 rounded-md bg-slate-100 hover:bg-cyan-50 dark:bg-slate-800 dark:hover:bg-cyan-950/60 text-slate-600 hover:text-cyan-600 dark:text-slate-300 dark:hover:text-cyan-400 flex items-center justify-center text-sm border border-slate-200 dark:border-slate-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500"
+                class="w-9 h-9 rounded-md bg-slate-100 hover:bg-cx-50 dark:bg-slate-800 dark:hover:bg-cx-950/60 text-slate-600 hover:text-cx-600 dark:text-slate-300 dark:hover:text-cx-400 flex items-center justify-center text-sm border border-slate-200 dark:border-slate-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cx-500"
                 title="Nghe phát âm chuẩn Cambridge"
                 aria-label="Phát âm từ {word.term}"
               >
@@ -751,7 +751,7 @@
             <button
               id="btn-open-deep-modal"
               onclick={() => openDeepModal(word)}
-              class="px-3 py-1.5 rounded-md font-semibold text-cyan-600 dark:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-cyan-950/60 transition-colors"
+              class="px-3 py-1.5 rounded-md font-semibold text-cx-600 dark:text-cx-400 hover:bg-cx-50 dark:hover:bg-cx-950/60 transition-colors"
             >
               Phân Tích Sâu 🔍
             </button>
@@ -777,7 +777,7 @@
       <div class="flex items-start justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
         <div>
           <div class="flex items-center gap-2">
-            <span class="text-xs px-2 py-0.5 rounded font-semibold bg-cyan-50 text-cyan-700 dark:bg-cyan-950 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-800">
+            <span class="text-xs px-2 py-0.5 rounded font-semibold bg-cx-50 text-cx-700 dark:bg-cx-950 dark:text-cx-300 border border-cx-200 dark:border-cx-800">
               {deepAnalysisData?.cefr_level || 'A2'} • {deepAnalysisData?.pos || selectedWordForDeep.pos || 'Động từ'}
             </span>
             <span class="text-slate-400 font-mono">{deepAnalysisData?.syllables || selectedWordForDeep.term}</span>
@@ -785,7 +785,7 @@
           <h2 class="text-2xl font-semibold text-slate-900 dark:text-white mt-1">
             {selectedWordForDeep.term}
           </h2>
-          <div class="text-sm font-mono text-cyan-600 dark:text-cyan-400 mt-0.5">
+          <div class="text-sm font-mono text-cx-600 dark:text-cx-400 mt-0.5">
             {deepAnalysisData?.ipa || selectedWordForDeep.ipa || '/.../'}
           </div>
         </div>
@@ -801,7 +801,7 @@
           </span>
           <button
             onclick={() => speakWord(selectedWordForDeep.term, 0.9)}
-            class="px-2.5 py-1 rounded bg-white dark:bg-slate-800 text-cyan-600 dark:text-cyan-400 font-semibold border border-slate-200 dark:border-slate-700 hover:bg-slate-100"
+            class="px-2.5 py-1 rounded bg-white dark:bg-slate-800 text-cx-600 dark:text-cx-400 font-semibold border border-slate-200 dark:border-slate-700 hover:bg-slate-100"
           >
             🔊 Nghe Mẫu
           </button>
@@ -905,7 +905,7 @@
               <p class="text-xs text-slate-600 dark:text-slate-400">
                 ✅ {pronunciationResult.message}
               </p>
-              <p class="text-[11px] italic text-cyan-700 dark:text-cyan-400 bg-cyan-50 dark:bg-cyan-950/40 p-2 rounded">
+              <p class="text-[11px] italic text-cx-700 dark:text-cx-400 bg-cx-50 dark:bg-cx-950/40 p-2 rounded">
                 ℹ️ {pronunciationResult.pedagogicalNotice}
               </p>
             </div>
@@ -915,7 +915,7 @@
 
       <!-- SECTION 2: PHONETICS & SYLLABLES -->
       <div class="space-y-2">
-        <h3 class="font-semibold text-slate-900 dark:text-white text-xs uppercase tracking-wider text-cyan-600">
+        <h3 class="font-semibold text-slate-900 dark:text-white text-xs uppercase tracking-wider text-cx-600">
           1. Ngữ Âm &amp; Cấu Trúc Âm Tiết
         </h3>
         <div class="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-md border border-slate-200 dark:border-slate-700 space-y-1.5 leading-relaxed">
@@ -923,14 +923,14 @@
           <p><strong>Phân tích nguyên âm:</strong> {deepAnalysisData?.phonetics_detail?.vowels || 'Nguyên âm chuẩn theo bảng IPA quốc tế.'}</p>
           <p><strong>Phân tích phụ âm:</strong> {deepAnalysisData?.phonetics_detail?.consonants || 'Phụ âm hữu thanh/vô thanh chuẩn.'}</p>
           {#if deepAnalysisData?.phonetics_detail?.rubric_tips}
-            <p class="text-cyan-700 dark:text-cyan-300"><strong>Mẹo uốn lưỡi:</strong> {deepAnalysisData.phonetics_detail.rubric_tips}</p>
+            <p class="text-cx-700 dark:text-cx-300"><strong>Mẹo uốn lưỡi:</strong> {deepAnalysisData.phonetics_detail.rubric_tips}</p>
           {/if}
         </div>
       </div>
 
       <!-- SECTION 3: GRAMMAR & CONJUGATION PATTERNS -->
       <div class="space-y-2">
-        <h3 class="font-semibold text-slate-900 dark:text-white text-xs uppercase tracking-wider text-cyan-600">
+        <h3 class="font-semibold text-slate-900 dark:text-white text-xs uppercase tracking-wider text-cx-600">
           2. Ngữ Pháp &amp; Các Thì Biến Thể
         </h3>
         <div class="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-md border border-slate-200 dark:border-slate-700 space-y-1.5 leading-relaxed">
@@ -950,7 +950,7 @@
 
       <!-- SECTION 4: SYNONYMS, ANTONYMS & COLLOCATIONS -->
       <div class="space-y-2">
-        <h3 class="font-semibold text-slate-900 dark:text-white text-xs uppercase tracking-wider text-cyan-600">
+        <h3 class="font-semibold text-slate-900 dark:text-white text-xs uppercase tracking-wider text-cx-600">
           3. Đồng Nghĩa, Trái Nghĩa &amp; Collocations
         </h3>
         <div class="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-md border border-slate-200 dark:border-slate-700 space-y-2">
@@ -1063,7 +1063,7 @@
 
         <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
           <button type="button" onclick={() => showAddModal = false} class="px-4 py-2 rounded-md font-medium text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800">Hủy</button>
-          <button type="submit" class="px-5 py-2 rounded-md font-semibold bg-cyan-600 hover:bg-cyan-700 text-white">Lưu Từ Mới</button>
+          <button type="submit" class="px-5 py-2 rounded-md font-semibold bg-cx-600 hover:bg-cx-700 text-white">Lưu Từ Mới</button>
         </div>
       </form>
     </div>

@@ -137,7 +137,7 @@
     if (priority === 'urgent') return 'bg-rose-100 text-rose-800 border-rose-300 dark:bg-rose-950/60 dark:text-rose-300 dark:border-rose-800';
     if (priority === 'high') return 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800';
     if (type === 'test_completed') return 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800';
-    if (type === 'attendance_summary') return 'bg-cyan-100 text-cyan-800 border-cyan-300 dark:bg-cyan-950/60 dark:text-cyan-300 dark:border-cyan-800';
+    if (type === 'attendance_summary') return 'bg-cx-100 text-cx-800 border-cx-300 dark:bg-cx-950/60 dark:text-cx-300 dark:border-cx-800';
     return 'bg-purple-100 text-purple-800 border-purple-300 dark:bg-purple-950/60 dark:text-purple-300 dark:border-purple-800';
   }
 
@@ -296,7 +296,7 @@
         </button>
         <button
           onclick={() => activeFilter = 'attendance_summary'}
-          class="px-2.5 py-1 rounded-lg font-bold shrink-0 transition-colors {activeFilter === 'attendance_summary' ? 'bg-cyan-600 text-white' : 'bg-cyan-50 text-cyan-700 dark:bg-cyan-950/40 dark:text-cyan-300'}"
+          class="px-2.5 py-1 rounded-lg font-bold shrink-0 transition-colors {activeFilter === 'attendance_summary' ? 'bg-cx-600 text-white' : 'bg-cx-50 text-cx-700 dark:bg-cx-950/40 dark:text-cx-300'}"
         >
           📋 Điểm danh &amp; Vắng
         </button>
@@ -423,7 +423,7 @@
                 <a
                   href="/schedule?tab=attendance"
                   onclick={() => { handleMarkRead(notif.id); onClose(); }}
-                  class="px-3 py-1.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs flex items-center gap-1 shadow-sm transition-all"
+                  class="px-3 py-1.5 rounded-xl bg-cx-600 hover:bg-cx-500 text-white font-bold text-xs flex items-center gap-1 shadow-sm transition-all"
                 >
                   <span>👁️</span>
                   <span>Xem Sổ Điểm Danh</span>
@@ -487,7 +487,7 @@
         </button>
         <button
           onclick={() => handleSimulate('attendance_summary_absent')}
-          class="p-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-cyan-700 dark:text-cyan-400 font-bold hover:bg-cyan-50 dark:hover:bg-cyan-950/50 transition-colors text-left truncate"
+          class="p-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-cx-700 dark:text-cx-400 font-bold hover:bg-cx-50 dark:hover:bg-cx-950/50 transition-colors text-left truncate"
           title="Mô phỏng lớp có học sinh vắng"
         >
           📋 Điểm Danh Thiếu 2 Em

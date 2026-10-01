@@ -284,19 +284,19 @@
 
   <!-- ==================== TEMPLATE 3: CHIẾN BINH IELTS / CAMBRIDGE (MODERN MINT) ==================== -->
   {:else if templateId === 3}
-    <div class="bill-page bg-white text-slate-900 rounded-3xl p-8 border-4 border-cyan-500 shadow-2xl relative font-sans">
-      <div class="flex items-center justify-between border-b-2 border-cyan-500 pb-4">
+    <div class="bill-page bg-white text-slate-900 rounded-3xl p-8 border-4 border-cx-500 shadow-2xl relative font-sans">
+      <div class="flex items-center justify-between border-b-2 border-cx-500 pb-4">
         <div>
-          <span class="text-xs font-black text-cyan-600 uppercase tracking-widest">TIẾNG ANH CÔ DUNG • IELTS &amp; THPT QG ACADEMY</span>
+          <span class="text-xs font-black text-cx-600 uppercase tracking-widest">TIẾNG ANH CÔ DUNG • IELTS &amp; THPT QG ACADEMY</span>
           <h1 class="text-2xl font-black text-slate-900 mt-0.5">TIẾNG ANH CÔ DUNG - ĐÁNH GIÁ NĂNG LỰC &amp; HỌC PHÍ</h1>
         </div>
         <div class="text-3xl">🌍</div>
       </div>
 
-      <div class="grid grid-cols-3 gap-3 my-4 text-xs p-4 bg-cyan-50/60 rounded-2xl border border-cyan-200">
+      <div class="grid grid-cols-3 gap-3 my-4 text-xs p-4 bg-cx-50/60 rounded-2xl border border-cx-200">
         <div>Học sinh: <strong class="text-slate-900 block">{bill.student_name}</strong></div>
         <div>Khóa: <strong class="text-slate-900 block">{bill.program_name}</strong></div>
-        <div>Tăng trưởng: <strong class="text-cyan-700 block">+{bill.growth_percentage}% (Vượt bậc)</strong></div>
+        <div>Tăng trưởng: <strong class="text-cx-700 block">+{bill.growth_percentage}% (Vượt bậc)</strong></div>
       </div>
 
       <!-- Skills Radar -->
@@ -308,7 +308,7 @@
         <div class="p-2 rounded-xl bg-slate-100 font-bold">Grammar: {bill.eval_grammar}</div>
       </div>
 
-      <div class="p-4 rounded-2xl bg-cyan-600 text-white flex justify-between items-center my-4">
+      <div class="p-4 rounded-2xl bg-cx-600 text-white flex justify-between items-center my-4">
         <div>
           <div class="text-xs opacity-80">Tổng thanh toán sau khi trừ {bill.stars_deducted} Sao:</div>
           <div class="text-2xl font-black">{bill.final_amount_vnd.toLocaleString('vi-VN')} đ</div>

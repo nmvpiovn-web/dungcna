@@ -143,14 +143,14 @@
       <!-- Left: Logo & Portal Badge -->
       <div class="flex items-center gap-2 sm:gap-3 shrink min-w-0">
         <a href="/" class="flex items-center gap-2 group shrink min-w-0">
-          <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-cyan-700 dark:bg-cyan-600 flex items-center justify-center text-white font-bold text-base shadow-sm group-hover:bg-cyan-800 dark:group-hover:bg-cyan-500 transition-colors shrink-0">
+          <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-cx-700 dark:bg-cx-600 flex items-center justify-center text-white font-bold text-base shadow-sm group-hover:bg-cx-800 dark:group-hover:bg-cx-500 transition-colors shrink-0">
             D
           </div>
           <div class="min-w-0">
-            <div class="text-[11px] sm:text-xs uppercase tracking-wider font-bold text-cyan-600 dark:text-cyan-400 truncate">Tiếng Anh Cô Dung</div>
+            <div class="text-[11px] sm:text-xs uppercase tracking-wider font-bold text-cx-600 dark:text-cx-400 truncate">Tiếng Anh Cô Dung</div>
             <div class="text-xs sm:text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
               <span class="truncate">Hệ Thống Cpanel</span>
-              <span class="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 rounded-md font-semibold tracking-wide bg-cyan-50 dark:bg-cyan-950/80 text-cyan-700 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-800 shrink-0">
+              <span class="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 rounded-md font-semibold tracking-wide bg-cx-50 dark:bg-cx-950/80 text-cx-700 dark:text-cx-300 border border-cx-200 dark:border-cx-800 shrink-0">
                 {currentRoleKey}
               </span>
             </div>
@@ -166,7 +166,7 @@
           <span class="text-xs text-slate-400 font-medium">Điểm học:</span>
           <select
             bind:value={selectedCampus}
-            class="text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-2.5 py-1 rounded-md border border-slate-300 dark:border-slate-700 focus:outline-none focus:ring-1 focus:ring-cyan-500"
+            class="text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-2.5 py-1 rounded-md border border-slate-300 dark:border-slate-700 focus:outline-none focus:ring-1 focus:ring-cx-500"
           >
             <option value="all">Tất cả cơ sở</option>
             {#each campuses as c}
@@ -239,7 +239,7 @@
         {@const isActive = $page.url.pathname === item.path || ($page.url.hash && item.path.includes($page.url.hash))}
         <a
           href={item.path}
-          class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold whitespace-nowrap transition-all shrink-0 {isActive ? 'bg-cyan-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}"
+          class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold whitespace-nowrap transition-all shrink-0 {isActive ? 'bg-cx-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}"
         >
           <span>{item.label}</span>
         </a>

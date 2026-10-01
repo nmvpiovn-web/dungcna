@@ -120,7 +120,7 @@
   <div class="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:max-w-md z-50 p-4 rounded-3xl bg-slate-900/95 backdrop-blur-md text-white shadow-2xl border border-emerald-500/40 animate-in slide-in-from-bottom-4 duration-300">
     <div class="flex items-start justify-between gap-3">
       <div class="flex items-center gap-3">
-        <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-cyan-500 via-teal-500 to-emerald-600 flex items-center justify-center text-xl flex-shrink-0 shadow-lg shadow-emerald-500/20">
+        <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-cx-500 via-teal-500 to-emerald-600 flex items-center justify-center text-xl flex-shrink-0 shadow-lg shadow-emerald-500/20">
           📱
         </div>
         <div>

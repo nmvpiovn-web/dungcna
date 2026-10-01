@@ -1075,7 +1075,7 @@ export function calculateAptitude({ listening, reading, writing, speaking, gramm
     return {
       type: 'listening_speaking',
       label: 'Thiên hướng Nghe - Nói & Giao tiếp (Oral/Communicative)',
-      badgeColor: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30',
+      badgeColor: 'bg-cx-500/20 text-cx-400 border-cx-500/30',
       description: 'Phản xạ phát âm và nghe hiểu tự nhiên như người bản xứ. Cần bổ sung ngữ pháp cấu trúc câu viết và chính tả.'
     };
   }
@@ -1567,8 +1567,8 @@ export const TUITION_TEMPLATES = [
     accentColor: 'cyan',
     badge: 'IELTS & THPT QG',
     headerBg: 'bg-slate-900',
-    borderColor: 'border-cyan-500',
-    tagColor: 'bg-cyan-100 text-cyan-800'
+    borderColor: 'border-cx-500',
+    tagColor: 'bg-cx-100 text-cx-800'
   },
   {
     id: 4,

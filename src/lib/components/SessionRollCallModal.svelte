@@ -162,7 +162,7 @@
                   <input type="radio" bind:group={item.status} value="late" class="hidden" />
                   <span>⏱️ Đi Muộn</span>
                 </label>
-                <label class="px-2.5 py-1.5 rounded-xl border text-[11px] font-bold cursor-pointer transition-all flex items-center gap-1 {item.status === 'absent_excused' ? 'bg-cyan-600 border-cyan-500 text-white shadow-sm' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}">
+                <label class="px-2.5 py-1.5 rounded-xl border text-[11px] font-bold cursor-pointer transition-all flex items-center gap-1 {item.status === 'absent_excused' ? 'bg-cx-600 border-cx-500 text-white shadow-sm' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}">
                   <input type="radio" bind:group={item.status} value="absent_excused" class="hidden" />
                   <span>✉️ Có Phép</span>
                 </label>

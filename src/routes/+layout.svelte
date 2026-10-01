@@ -29,6 +29,7 @@
   import ThemeSwitcher from '$lib/components/ui/ThemeSwitcher.svelte';
   import BottomNav from '$lib/components/ui/BottomNav.svelte';
   import ZaloCta from '$lib/components/ui/ZaloCta.svelte';
+  import ThemeStudio from '$lib/components/ThemeStudio.svelte';
 
   let { children } = $props();
 
@@ -1101,6 +1102,7 @@
   <!-- Global mobile bottom nav + floating Zalo (render 1 lan cho moi trang) -->
   <BottomNav />
   <ZaloCta />
+  <ThemeStudio />
 
   <!-- Footer -->
   <footer class="bg-surface-0 dark:bg-surface-0 border-t border-line dark:border-line py-8 mt-auto text-xs text-ink-500 transition-colors duration-200">

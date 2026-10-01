@@ -240,7 +240,7 @@
   <header class="bg-slate-900 border border-slate-800 rounded-lg p-4 sm:p-6 text-slate-100 shadow-sm relative overflow-hidden min-w-0">
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
       <div class="space-y-2 min-w-0">
-        <div class="flex items-center gap-2 text-cyan-400 text-xs font-semibold uppercase tracking-wider">
+        <div class="flex items-center gap-2 text-cx-400 text-xs font-semibold uppercase tracking-wider">
           <span>Sổ Giáo Viên</span>
           <span>•</span>
           <span>Không Gian Sư Phạm &amp; Nghiệp Vụ</span>
@@ -260,12 +260,12 @@
           <div class="text-[11px] sm:text-xs text-slate-400 mt-0.5 truncate">Chờ Chấm</div>
         </div>
         <div class="bg-slate-800/80 border border-slate-700/60 rounded-md p-2.5 sm:p-3 text-center min-w-0">
-          <div class="text-lg sm:text-xl font-semibold text-cyan-400 tabular-nums truncate">{assignments.length}</div>
+          <div class="text-lg sm:text-xl font-semibold text-cx-400 tabular-nums truncate">{assignments.length}</div>
           <div class="text-[11px] sm:text-xs text-slate-400 mt-0.5 truncate">Đã Giao</div>
         </div>
         <button 
           onclick={() => showAdvanceModal = true}
-          class="p-2.5 sm:p-3 rounded-md text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-slate-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 flex flex-col items-center justify-center min-w-0"
+          class="p-2.5 sm:p-3 rounded-md text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-cx-300 border border-slate-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cx-500 flex flex-col items-center justify-center min-w-0"
         >
           <span class="text-lg sm:text-xl font-semibold text-emerald-400">⚡</span>
           <span class="text-[11px] sm:text-xs mt-0.5 truncate">Ứng Lương</span>
@@ -278,7 +278,7 @@
   <div class="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2 overflow-x-auto max-w-full">
     <button 
       onclick={() => activeTab = 'grading'}
-      class="whitespace-nowrap shrink-0 flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-md text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 {activeTab === 'grading' ? 'bg-cyan-600 text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}"
+      class="whitespace-nowrap shrink-0 flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-md text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cx-500 {activeTab === 'grading' ? 'bg-cx-600 text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}"
     >
       <span>Chấm Điểm BTVN</span>
       {#if pendingSubmissions.length > 0}
@@ -289,19 +289,19 @@
     </button>
     <button 
       onclick={() => activeTab = 'assign'}
-      class="whitespace-nowrap shrink-0 px-3 sm:px-4 py-2 rounded-md text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 {activeTab === 'assign' ? 'bg-cyan-600 text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}"
+      class="whitespace-nowrap shrink-0 px-3 sm:px-4 py-2 rounded-md text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cx-500 {activeTab === 'assign' ? 'bg-cx-600 text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}"
     >
       Giao BTVN Mới
     </button>
     <button 
       onclick={() => activeTab = 'sessions'}
-      class="whitespace-nowrap shrink-0 px-3 sm:px-4 py-2 rounded-md text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 {activeTab === 'sessions' ? 'bg-cyan-600 text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}"
+      class="whitespace-nowrap shrink-0 px-3 sm:px-4 py-2 rounded-md text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cx-500 {activeTab === 'sessions' ? 'bg-cx-600 text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}"
     >
       Lịch Ca Dạy ({mySessions.length})
     </button>
     <button 
       onclick={() => activeTab = 'salary'}
-      class="whitespace-nowrap shrink-0 px-3 sm:px-4 py-2 rounded-md text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 {activeTab === 'salary' ? 'bg-cyan-600 text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}"
+      class="whitespace-nowrap shrink-0 px-3 sm:px-4 py-2 rounded-md text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cx-500 {activeTab === 'salary' ? 'bg-cx-600 text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}"
     >
       Sổ Lương ({myAdvances.length})
     </button>
@@ -383,7 +383,7 @@
               <div class="space-y-3">
                 <div class="flex items-center justify-between">
                   <div class="flex items-center gap-2.5">
-                    <div class="w-8 h-8 rounded-md bg-cyan-100 dark:bg-cyan-950 text-cyan-700 dark:text-cyan-300 flex items-center justify-center font-semibold text-xs border border-cyan-200 dark:border-cyan-800">
+                    <div class="w-8 h-8 rounded-md bg-cx-100 dark:bg-cx-950 text-cx-700 dark:text-cx-300 flex items-center justify-center font-semibold text-xs border border-cx-200 dark:border-cx-800">
                       {sub.student_name ? sub.student_name[0] : 'H'}
                     </div>
                     <div>
@@ -412,7 +412,7 @@
 
                   {#if sub.audio_url}
                     <div class="space-y-1 pt-1">
-                      <span class="font-medium text-cyan-700 dark:text-cyan-300">File ghi âm học sinh:</span>
+                      <span class="font-medium text-cx-700 dark:text-cx-300">File ghi âm học sinh:</span>
                       <audio controls src={sub.audio_url} class="w-full mt-1"></audio>
                     </div>
                   {/if}
@@ -432,7 +432,7 @@
                 </span>
                 <button 
                   onclick={() => openGradeModal(sub)}
-                  class="px-4 py-2 rounded-md text-xs font-semibold bg-cyan-600 hover:bg-cyan-700 text-white shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500"
+                  class="px-4 py-2 rounded-md text-xs font-semibold bg-cx-600 hover:bg-cx-700 text-white shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cx-500"
                 >
                   {isGraded ? 'Sửa Điểm & Nhận Xét' : 'Chấm Bài Ngay'}
                 </button>
@@ -459,7 +459,7 @@
             <select 
               id="assign-campus-select"
               bind:value={assignForm.campus_id}
-              class="w-full text-xs font-medium p-2.5 rounded-md bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500"
+              class="w-full text-xs font-medium p-2.5 rounded-md bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cx-500"
             >
               {#each campuses as c}
                 <option value={c.id}>{c.name}</option>
@@ -472,7 +472,7 @@
             <select 
               id="assign-skill-select"
               bind:value={assignForm.skill_type}
-              class="w-full text-xs font-medium p-2.5 rounded-md bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500"
+              class="w-full text-xs font-medium p-2.5 rounded-md bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cx-500"
             >
               <option value="writing">Viết luận (Writing)</option>
               <option value="reading">Đọc hiểu (Reading)</option>
@@ -489,7 +489,7 @@
             type="text" 
             bind:value={assignForm.title}
             placeholder="VD: Luyện viết đoạn văn 100 từ về Bảo vệ môi trường..."
-            class="w-full text-xs p-2.5 rounded-md bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500"
+            class="w-full text-xs p-2.5 rounded-md bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cx-500"
             required
           />
         </div>
@@ -502,7 +502,7 @@
             bind:value={assignForm.description}
             placeholder="Mô tả cụ thể yêu cầu học sinh làm gì, các từ vựng cần sử dụng..."
             rows="4"
-            class="w-full text-xs p-2.5 rounded-md bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500"
+            class="w-full text-xs p-2.5 rounded-md bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cx-500"
           ></textarea>
         </div>
 
@@ -514,7 +514,7 @@
             type="text" 
             bind:value={assignForm.obsidian_note_title}
             placeholder="VD: Unit 10: Energy Sources & Environmental Impact"
-            class="w-full text-xs p-2.5 rounded-md bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500"
+            class="w-full text-xs p-2.5 rounded-md bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cx-500"
           />
         </div>
 
@@ -526,7 +526,7 @@
               id="assign-deadline-date"
               type="date" 
               bind:value={assignForm.deadline_date}
-              class="w-full text-xs p-2.5 rounded-md bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500"
+              class="w-full text-xs p-2.5 rounded-md bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cx-500"
               required
             />
           </div>
@@ -536,7 +536,7 @@
               id="assign-deadline-time"
               type="time" 
               bind:value={assignForm.deadline_time}
-              class="w-full text-xs p-2.5 rounded-md bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500"
+              class="w-full text-xs p-2.5 rounded-md bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cx-500"
               required
             />
           </div>
@@ -552,7 +552,7 @@
           <button 
             type="submit"
             disabled={isAssigning}
-            class="px-5 py-2.5 rounded-md text-xs font-semibold bg-cyan-600 hover:bg-cyan-700 text-white disabled:opacity-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500"
+            class="px-5 py-2.5 rounded-md text-xs font-semibold bg-cx-600 hover:bg-cx-700 text-white disabled:opacity-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cx-500"
           >
             {isAssigning ? 'Đang phát hành...' : 'Phát Hành BTVN Cho Học Sinh'}
           </button>
@@ -626,7 +626,7 @@
               id="teacher-payroll-cycle"
               value={selectedCycle}
               onchange={(e) => changePayrollCycle(e.currentTarget.value)}
-              class="text-xs px-2.5 py-1.5 rounded-md bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500"
+              class="text-xs px-2.5 py-1.5 rounded-md bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cx-500"
             >
               <option value="2026-07">Kỳ 07/2026</option>
               <option value="2026-08">Kỳ 08/2026</option>
@@ -639,7 +639,7 @@
 
           <button 
             onclick={() => showAdvanceModal = true}
-            class="px-3.5 py-1.5 rounded-md text-xs font-semibold bg-cyan-600 hover:bg-cyan-700 text-white transition-colors shadow-sm"
+            class="px-3.5 py-1.5 rounded-md text-xs font-semibold bg-cx-600 hover:bg-cx-700 text-white transition-colors shadow-sm"
           >
             + Tạo Yêu Cầu Ứng Lương
           </button>
@@ -653,7 +653,7 @@
           <div class="p-5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <div class="flex items-center gap-2">
-                <span class="text-xs font-semibold text-cyan-600 dark:text-cyan-400 uppercase tracking-wider">Phiếu Lương Giáo Viên</span>
+                <span class="text-xs font-semibold text-cx-600 dark:text-cx-400 uppercase tracking-wider">Phiếu Lương Giáo Viên</span>
                 <span class="text-xs text-slate-400">•</span>
                 <span class="text-xs font-bold text-slate-700 dark:text-slate-300">Kỳ: {currentPayroll.billing_cycle}</span>
               </div>
@@ -671,7 +671,7 @@
                   ĐÃ KHÓA SỔ KỲ LƯƠNG
                 </span>
               {:else if currentPayroll.status === 'approved'}
-                <span class="inline-flex items-center gap-1 px-3 py-1 rounded text-xs font-bold bg-cyan-50 dark:bg-cyan-950/60 text-cyan-700 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-800">
+                <span class="inline-flex items-center gap-1 px-3 py-1 rounded text-xs font-bold bg-cx-50 dark:bg-cx-950/60 text-cx-700 dark:text-cx-300 border border-cx-200 dark:border-cx-800">
                   ĐÃ PHÊ DUYỆT
                 </span>
               {:else}
@@ -796,7 +796,7 @@
         {:else}
           <div class="space-y-3">
             {#each myAdvances as adv}
-              {@const statusColor = adv.status === 'deducted' ? 'bg-slate-100 text-slate-700 border-slate-200' : adv.status === 'disbursed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : adv.status === 'approved' ? 'bg-cyan-50 text-cyan-700 border-cyan-200' : 'bg-amber-50 text-amber-700 border-amber-200'}
+              {@const statusColor = adv.status === 'deducted' ? 'bg-slate-100 text-slate-700 border-slate-200' : adv.status === 'disbursed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : adv.status === 'approved' ? 'bg-cx-50 text-cx-700 border-cx-200' : 'bg-amber-50 text-amber-700 border-amber-200'}
               {@const statusLabel = adv.status === 'deducted' ? 'Đã Quyết Toán' : adv.status === 'disbursed' ? 'Đã Thực Chi' : adv.status === 'approved' ? 'Đã Duyệt Hạn Mức' : 'Chờ Leader Duyệt'}
 
               <div class="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 p-4 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -835,7 +835,7 @@
     <div class="bg-white dark:bg-slate-900 rounded-lg max-w-lg w-full border border-slate-200 dark:border-slate-800 shadow-xl p-6 space-y-4">
       <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
         <div>
-          <span class="text-xs font-semibold text-cyan-600 dark:text-cyan-400 uppercase tracking-wide">Chấm Bài Về Nhà</span>
+          <span class="text-xs font-semibold text-cx-600 dark:text-cx-400 uppercase tracking-wide">Chấm Bài Về Nhà</span>
           <h3 class="text-base font-semibold text-slate-900 dark:text-white">
             {selectedSubmission.student_name}
           </h3>
@@ -849,7 +849,7 @@
           <div class="space-y-1.5">
             <div class="flex items-center justify-between">
               <span class="font-semibold text-slate-700 dark:text-slate-300">Ảnh bài viết tay trên giấy:</span>
-              <a href={selectedSubmission.handwritten_image_url} target="_blank" rel="noopener noreferrer" class="text-cyan-600 dark:text-cyan-400 font-semibold hover:underline">Xem ảnh gốc</a>
+              <a href={selectedSubmission.handwritten_image_url} target="_blank" rel="noopener noreferrer" class="text-cx-600 dark:text-cx-400 font-semibold hover:underline">Xem ảnh gốc</a>
             </div>
             <img 
               src={selectedSubmission.handwritten_image_url} 
@@ -880,7 +880,7 @@
       <div>
         <div class="flex items-center justify-between text-xs mb-1">
           <label for="grade-score-input" class="font-semibold text-slate-700 dark:text-slate-300">Điểm số (thang 10):</label>
-          <span class="font-semibold text-cyan-600 text-sm tabular-nums">{gradingScore} / 10</span>
+          <span class="font-semibold text-cx-600 text-sm tabular-nums">{gradingScore} / 10</span>
         </div>
         <input 
           id="grade-score-input"
@@ -889,7 +889,7 @@
           min="0" 
           max="10" 
           bind:value={gradingScore}
-          class="w-full text-center text-xl font-semibold p-2.5 rounded-md bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500"
+          class="w-full text-center text-xl font-semibold p-2.5 rounded-md bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cx-500"
         />
         <div class="text-[11px] text-amber-600 dark:text-amber-400 font-medium mt-1 text-center">
           {#if selectedSubmission.is_on_time}
@@ -914,7 +914,7 @@
           bind:value={teacherFeedback}
           rows="3"
           placeholder="Nhận xét cụ thể bài làm của học sinh..."
-          class="w-full text-xs p-2.5 rounded-md bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500"
+          class="w-full text-xs p-2.5 rounded-md bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cx-500"
         ></textarea>
       </div>
 
@@ -929,7 +929,7 @@
         <button 
           onclick={submitGrade}
           disabled={isGrading}
-          class="px-5 py-2 rounded-md text-xs font-semibold bg-cyan-600 hover:bg-cyan-700 text-white disabled:opacity-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500"
+          class="px-5 py-2 rounded-md text-xs font-semibold bg-cx-600 hover:bg-cx-700 text-white disabled:opacity-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cx-500"
         >
           {isGrading ? 'Đang lưu...' : 'Lưu Điểm & Báo Cáo'}
         </button>

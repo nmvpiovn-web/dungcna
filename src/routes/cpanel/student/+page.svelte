@@ -355,7 +355,7 @@
   <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 text-white shadow-sm relative overflow-hidden">
     <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
       <div>
-        <div class="flex items-center gap-2 text-cyan-400 text-xs font-semibold uppercase tracking-wider mb-1">
+        <div class="flex items-center gap-2 text-cx-400 text-xs font-semibold uppercase tracking-wider mb-1">
           <span>🎒 Không Gian Học Tập Của Em</span>
           <span>•</span>
           <span>{currentUser?.grade || 'Chưa phân lớp'}</span>
@@ -390,19 +390,19 @@
     <div class="flex items-center gap-1">
       <button 
         onclick={() => activeTab = 'todo'} 
-        class="px-3.5 py-1.5 rounded-md text-xs font-semibold transition-all {activeTab === 'todo' ? 'bg-cyan-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}"
+        class="px-3.5 py-1.5 rounded-md text-xs font-semibold transition-all {activeTab === 'todo' ? 'bg-cx-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}"
       >
         ⏳ Cần Làm ({assignmentItems.filter(i => !i.isCompleted).length})
       </button>
       <button 
         onclick={() => activeTab = 'completed'} 
-        class="px-3.5 py-1.5 rounded-md text-xs font-semibold transition-all {activeTab === 'completed' ? 'bg-cyan-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}"
+        class="px-3.5 py-1.5 rounded-md text-xs font-semibold transition-all {activeTab === 'completed' ? 'bg-cx-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}"
       >
         ✅ Đã Nộp ({assignmentItems.filter(i => i.isCompleted).length})
       </button>
       <button 
         onclick={() => activeTab = 'all'} 
-        class="px-3.5 py-1.5 rounded-md text-xs font-semibold transition-all {activeTab === 'all' ? 'bg-cyan-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}"
+        class="px-3.5 py-1.5 rounded-md text-xs font-semibold transition-all {activeTab === 'all' ? 'bg-cx-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}"
       >
         Tất Cả ({assignmentItems.length})
       </button>
@@ -431,14 +431,14 @@
       <p class="text-xs text-slate-500">Đã dừng hiển thị danh sách để bảo đảm tính chính xác của phiên học tập.</p>
       <button
         onclick={loadData}
-        class="inline-flex items-center gap-1.5 px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-semibold shadow-sm transition-all"
+        class="inline-flex items-center gap-1.5 px-4 py-2 bg-cx-600 hover:bg-cx-500 text-white rounded-lg text-xs font-semibold shadow-sm transition-all"
       >
         <span>🔄 Thử lại</span>
       </button>
     </div>
   {:else if loading}
     <div class="text-center py-12 text-slate-400">
-      <div class="inline-block animate-spin w-8 h-8 border-4 border-cyan-500 border-t-transparent rounded-full mb-3"></div>
+      <div class="inline-block animate-spin w-8 h-8 border-4 border-cx-500 border-t-transparent rounded-full mb-3"></div>
       <p class="text-sm font-medium">Đang tải bài tập về nhà...</p>
     </div>
   {:else if filteredItems.length === 0}
@@ -456,7 +456,7 @@
           <div class="space-y-3">
             <!-- Header Badges -->
             <div class="flex items-center justify-between gap-2">
-              <span class="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-md bg-cyan-50 dark:bg-cyan-950/60 text-cyan-700 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-800">
+              <span class="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-md bg-cx-50 dark:bg-cx-950/60 text-cx-700 dark:text-cx-300 border border-cx-200 dark:border-cx-800">
                 <span>{skillIcon}</span>
                 <span>{skillLabel}</span>
               </span>
@@ -496,7 +496,7 @@
               {#if item.obsidian_note_title}
                 <div class="flex items-center justify-between pt-1 border-t border-slate-200 dark:border-slate-700">
                   <span>🧠 Giáo án liên kết:</span>
-                  <a href="/second-brain?id={item.obsidian_note_id}" class="text-cyan-600 dark:text-cyan-400 hover:underline font-bold truncate max-w-[200px]" target="_blank">
+                  <a href="/second-brain?id={item.obsidian_note_id}" class="text-cx-600 dark:text-cx-400 hover:underline font-bold truncate max-w-[200px]" target="_blank">
                     {item.obsidian_note_title}
                   </a>
                 </div>
@@ -536,7 +536,7 @@
 
               <button 
                 onclick={() => openSubmitModal(item)}
-                class="px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm {item.isCompleted ? 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200' : 'bg-cyan-500 hover:bg-cyan-600 text-white shadow-cyan-500/20'}"
+                class="px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm {item.isCompleted ? 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200' : 'bg-cx-500 hover:bg-cx-600 text-white shadow-cx-500/20'}"
               >
                 {item.isCompleted ? 'Xem / Nộp Lại' : 'Làm Bài Ngay →'}
               </button>
@@ -555,7 +555,7 @@
       <!-- Modal Header -->
       <div class="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
         <div>
-          <span class="text-xs font-semibold uppercase tracking-wider text-cyan-600 dark:text-cyan-400">Nộp Bài Tập Về Nhà</span>
+          <span class="text-xs font-semibold uppercase tracking-wider text-cx-600 dark:text-cx-400">Nộp Bài Tập Về Nhà</span>
           <h2 class="text-lg font-bold text-slate-900 dark:text-white mt-0.5">{selectedAssignment.title}</h2>
         </div>
         <button 
@@ -591,7 +591,7 @@
             <div class="flex items-center gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-md w-fit">
               <button 
                 onclick={() => writingMode = 'typed'}
-                class="px-3 py-1.5 rounded-md text-xs font-semibold transition-all {writingMode === 'typed' ? 'bg-white dark:bg-slate-900 text-cyan-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'}"
+                class="px-3 py-1.5 rounded-md text-xs font-semibold transition-all {writingMode === 'typed' ? 'bg-white dark:bg-slate-900 text-cx-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'}"
               >
                 ⌨️ Gõ Trên Máy Tính
               </button>
@@ -607,14 +607,14 @@
               <div class="space-y-1.5">
                 <div class="flex items-center justify-between text-xs">
                   <label for="writing-textarea" class="font-semibold text-slate-700 dark:text-slate-300">✍️ Bài viết trực tiếp:</label>
-                  <span class="text-slate-400 font-medium">Số từ: <strong class="text-cyan-500">{wordCount}</strong> từ</span>
+                  <span class="text-slate-400 font-medium">Số từ: <strong class="text-cx-500">{wordCount}</strong> từ</span>
                 </div>
                 <textarea 
                   id="writing-textarea"
                   bind:value={writingContent}
                   placeholder="Nhập bài viết luận của em tại đây (tiếng Anh)..."
                   rows="7"
-                  class="w-full text-xs font-mono p-4 rounded-lg bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 focus:outline-none focus:ring-1 focus:ring-cyan-500"
+                  class="w-full text-xs font-mono p-4 rounded-lg bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 focus:outline-none focus:ring-1 focus:ring-cx-500"
                 ></textarea>
               </div>
             {:else}
@@ -675,7 +675,7 @@
               bind:value={writingContent}
               placeholder="Điền đáp án các câu hỏi hoặc tóm tắt đoạn văn theo yêu cầu..."
               rows="8"
-              class="w-full text-xs font-mono p-4 rounded-lg bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 focus:outline-none focus:ring-1 focus:ring-cyan-500"
+              class="w-full text-xs font-mono p-4 rounded-lg bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 focus:outline-none focus:ring-1 focus:ring-cx-500"
             ></textarea>
           </div>
 
@@ -703,7 +703,7 @@
                 <div>
                   <button 
                     onclick={startRecording}
-                    class="px-5 py-2.5 rounded-md bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs shadow-sm"
+                    class="px-5 py-2.5 rounded-md bg-cx-600 hover:bg-cx-700 text-white font-semibold text-xs shadow-sm"
                   >
                     ▶️ Bắt Đầu Thu Âm
                   </button>
@@ -752,7 +752,7 @@
         <button 
           onclick={submitHomework}
           disabled={isSubmitting || (selectedAssignment.skill_type === 'speaking' && !recordedAudioUrl && !writingContent)}
-          class="px-5 py-2.5 rounded-xl text-xs font-bold bg-cyan-500 hover:bg-cyan-600 text-white shadow-md shadow-cyan-500/20 disabled:opacity-50"
+          class="px-5 py-2.5 rounded-xl text-xs font-bold bg-cx-500 hover:bg-cx-600 text-white shadow-md shadow-cx-500/20 disabled:opacity-50"
         >
           {isSubmitting ? 'Đang nộp...' : 'Nộp Bài Cho Cô Giáo'}
         </button>
@@ -770,14 +770,14 @@
         <div class="flex items-center gap-2">
           <span class="text-xl">🖨️</span>
           <div>
-            <div class="text-xs font-semibold uppercase tracking-wider text-cyan-400">Xem Trước Bản In Phiếu Bài Tập A4</div>
+            <div class="text-xs font-semibold uppercase tracking-wider text-cx-400">Xem Trước Bản In Phiếu Bài Tập A4</div>
             <div class="text-sm font-bold">{worksheetToPrint.title}</div>
           </div>
         </div>
         <div class="flex items-center gap-2">
           <button 
             onclick={triggerPrintWorksheet}
-            class="px-4 py-2 rounded-md bg-cyan-600 hover:bg-cyan-500 text-white font-semibold text-xs shadow-sm flex items-center gap-1.5"
+            class="px-4 py-2 rounded-md bg-cx-600 hover:bg-cx-500 text-white font-semibold text-xs shadow-sm flex items-center gap-1.5"
           >
             <span>🖨️ In Ngay (Print Worksheet)</span>
           </button>
@@ -796,7 +796,7 @@
         <div class="border-b-2 border-slate-900 pb-4 mb-4">
           <div class="flex items-start justify-between">
             <div>
-              <div class="text-xs font-sans font-bold uppercase tracking-widest text-cyan-800">TRUNG TÂM TIẾNG ANH CÔ DUNG</div>
+              <div class="text-xs font-sans font-bold uppercase tracking-widest text-cx-800">TRUNG TÂM TIẾNG ANH CÔ DUNG</div>
               <div class="text-[11px] font-sans text-slate-600 italic">Ms. Dung English Academy • Học Để Tự Tin Toàn Cầu</div>
             </div>
             <div class="text-right font-sans text-xs">
@@ -848,7 +848,7 @@
           {#each Array(11) as _, i}
             <div class="relative py-2 border-b border-slate-400">
               <!-- Midline guideline for lowercase letters -->
-              <div class="border-b border-dashed border-cyan-300/80 mb-2"></div>
+              <div class="border-b border-dashed border-cx-300/80 mb-2"></div>
               <div class="text-[11px] font-sans text-slate-400 absolute left-0 top-1">{i + 1}</div>
             </div>
           {/each}

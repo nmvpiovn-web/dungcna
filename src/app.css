@@ -434,7 +434,7 @@ input:focus, select:focus, textarea:focus {
 /* ACADEMIC WARMTH — DESIGN TOKENS (2026-09-30)                                */
 /* 3 theme x 12 token = 36 bien. Moi component MOI chi dung token nay        */
 /* (bg-surface-0, text-ink-900, bg-brand-600, border-line...).                 */
-/* Cam hardcode bg-white / text-slate-900 / bg-cyan-600 trong code moi.        */
+/* Cam hardcode bg-white / text-slate-900 / bg-cx-600 trong code moi.        */
 /* ========================================================================= */
 
 :root {
@@ -443,6 +443,20 @@ input:focus, select:focus, textarea:focus {
   --brand-700: #0e7490;  --brand-700-rgb: 14 116 144;
   --brand-50: #ecfeff;   --brand-50-rgb: 236 254 255;
   --brand-200: #a5f3fc;  --brand-200-rgb: 165 243 252;
+  /* ---- CX scale (customizable theme color, studio dieu khien) ---- */
+  --c-50: #ecfeff;   --c-50-rgb: 236 254 255;
+  --c-100: #cffafe;  --c-100-rgb: 207 250 254;
+  --c-200: #a5f3fc;  --c-200-rgb: 165 243 252;
+  --c-300: #67e8f9;  --c-300-rgb: 103 232 249;
+  --c-400: #22d3ee;  --c-400-rgb: 34 211 238;
+  --c-500: #06b6d4;  --c-500-rgb: 6 182 212;
+  --c-600: #0891b2;  --c-600-rgb: 8 145 178;
+  --c-700: #0e7490;  --c-700-rgb: 14 116 144;
+  --c-800: #155e75;  --c-800-rgb: 21 94 117;
+  --c-900: #164e63;  --c-900-rgb: 22 78 99;
+  --c-950: #083344;  --c-950-rgb: 8 51 68;
+  /* ---- Hall of Fame gradient stops ---- */
+  --hof-1: #a5f3fc; --hof-2: #67e8f9; --hof-3: #22d3ee; --hof-4: #06b6d4;
   --accent-500: #f59e0b; --accent-500-rgb: 245 158 11;
   --success-600: #16a34a; --success-600-rgb: 22 163 74;
   --danger-600: #dc2626; --danger-600-rgb: 220 38 38;
@@ -461,6 +475,18 @@ html.theme-sky {
   --brand-700: #0891b2;  --brand-700-rgb: 8 145 178;
   --brand-50: #cffafe;   --brand-50-rgb: 207 250 254;
   --brand-200: #67e8f9;  --brand-200-rgb: 103 232 249;
+  --c-50: #ecfeff;   --c-50-rgb: 236 254 255;
+  --c-100: #cffafe;  --c-100-rgb: 207 250 254;
+  --c-200: #a5f3fc;  --c-200-rgb: 165 243 252;
+  --c-300: #67e8f9;  --c-300-rgb: 103 232 249;
+  --c-400: #22d3ee;  --c-400-rgb: 34 211 238;
+  --c-500: #06b6d4;  --c-500-rgb: 6 182 212;
+  --c-600: #0891b2;  --c-600-rgb: 8 145 178;
+  --c-700: #0e7490;  --c-700-rgb: 14 116 144;
+  --c-800: #155e75;  --c-800-rgb: 21 94 117;
+  --c-900: #164e63;  --c-900-rgb: 22 78 99;
+  --c-950: #083344;  --c-950-rgb: 8 51 68;
+  --hof-1: #a5f3fc; --hof-2: #67e8f9; --hof-3: #22d3ee; --hof-4: #06b6d4;
   --accent-500: #f59e0b; --accent-500-rgb: 245 158 11;
   --success-600: #16a34a; --success-600-rgb: 22 163 74;
   --danger-600: #dc2626; --danger-600-rgb: 220 38 38;
@@ -478,6 +504,18 @@ html.dark {
   --brand-700: #0891b2;  --brand-700-rgb: 8 145 178;
   --brand-50: #083344;   --brand-50-rgb: 8 51 68;
   --brand-200: #155e75;  --brand-200-rgb: 21 94 117;
+  --c-50: #083344;   --c-50-rgb: 8 51 68;
+  --c-100: #164e63;  --c-100-rgb: 22 78 99;
+  --c-200: #155e75;  --c-200-rgb: 21 94 117;
+  --c-300: #0e7490;  --c-300-rgb: 14 116 144;
+  --c-400: #0891b2;  --c-400-rgb: 8 145 178;
+  --c-500: #06b6d4;  --c-500-rgb: 6 182 212;
+  --c-600: #22d3ee;  --c-600-rgb: 34 211 238;
+  --c-700: #67e8f9;  --c-700-rgb: 103 232 249;
+  --c-800: #a5f3fc;  --c-800-rgb: 165 243 252;
+  --c-900: #cffafe;  --c-900-rgb: 207 250 254;
+  --c-950: #ecfeff;  --c-950-rgb: 236 254 255;
+  --hof-1: #155e75; --hof-2: #0e7490; --hof-3: #0891b2; --hof-4: #164e63;
   --accent-500: #fbbf24; --accent-500-rgb: 251 191 36;
   --success-600: #4ade80; --success-600-rgb: 74 222 128;
   --danger-600: #f87171; --danger-600-rgb: 248 113 113;
@@ -506,9 +544,9 @@ html.dark {
   box-shadow: 0 1px 0 #b45309;
 }
 
-/* Hall of Fame — Lavie aqua gradient, chu trang doc ro tren moi theme */
+/* Hall of Fame — gradient bien so, Theme Studio dieu khien truc tiep */
 .hof-gradient {
-  background: linear-gradient(120deg, #a5f3fc 0%, #67e8f9 40%, #22d3ee 75%, #06b6d4 100%);
+  background: linear-gradient(120deg, var(--hof-1) 0%, var(--hof-2) 40%, var(--hof-3) 75%, var(--hof-4) 100%);
 }
 .hof-card {
   background: rgb(14 116 144 / 0.28);

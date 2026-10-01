@@ -258,7 +258,7 @@
     html = html.replace(/>\s*\[!(important|tip|note|abstract|warning|danger)\]\s*(.*?)\n((?:>.*(?:\n|$))*)/gi, (match, type, title, body) => {
       const cleanBody = body.replace(/^>\s?/gm, '').trim();
       const typeLower = type.toLowerCase();
-      let borderClass = 'border-cyan-500 bg-cyan-500/10 text-cyan-900 dark:text-cyan-200';
+      let borderClass = 'border-cx-500 bg-cx-500/10 text-cx-900 dark:text-cx-200';
       let icon = 'ℹ️';
 
       if (typeLower === 'important') {

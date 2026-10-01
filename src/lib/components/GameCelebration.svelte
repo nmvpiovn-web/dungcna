@@ -16,7 +16,7 @@
 
   let result = $derived(buildCelebrationResult(score, maxScore));
   const accentClasses = {
-    sky: 'from-cyan-600 to-cyan-700 shadow-cyan-200',
+    sky: 'from-cx-600 to-cx-700 shadow-cx-200',
     amber: 'from-amber-500 to-orange-600 shadow-amber-200',
     rose: 'from-rose-500 to-pink-600 shadow-rose-200',
     violet: 'from-violet-600 to-indigo-700 shadow-violet-200',
@@ -25,7 +25,7 @@
 </script>
 
 <section
-  class="celebration-shell relative overflow-hidden rounded-[28px] border-2 border-cyan-200 bg-white px-5 py-7 text-center shadow-xl shadow-cyan-100 sm:px-9 sm:py-9"
+  class="celebration-shell relative overflow-hidden rounded-[28px] border-2 border-cx-200 bg-white px-5 py-7 text-center shadow-xl shadow-cx-100 sm:px-9 sm:py-9"
   data-testid="game-celebration"
   role="status"
   aria-live="polite"
@@ -42,7 +42,7 @@
   </div>
 
   <div class="mt-4 space-y-2">
-    <p class="text-xs font-black uppercase tracking-[0.18em] text-cyan-700">{result.label}</p>
+    <p class="text-xs font-black uppercase tracking-[0.18em] text-cx-700">{result.label}</p>
     <h2 class="text-balance text-2xl font-black leading-tight text-slate-950 sm:text-3xl">{title}</h2>
     <p class="mx-auto max-w-xl text-sm font-medium leading-6 text-slate-700">{result.message}</p>
   </div>
@@ -72,10 +72,10 @@
   </div>
 
   <div class="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-center">
-    <button onclick={onMenu} class="min-h-11 rounded-xl border-2 border-slate-300 bg-white px-5 py-2.5 text-sm font-extrabold text-slate-800 hover:border-cyan-600 hover:text-cyan-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-700">
+    <button onclick={onMenu} class="min-h-11 rounded-xl border-2 border-slate-300 bg-white px-5 py-2.5 text-sm font-extrabold text-slate-800 hover:border-cx-600 hover:text-cx-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cx-700">
       Về menu game
     </button>
-    <button onclick={onReplay} class={`min-h-11 rounded-xl bg-gradient-to-r px-6 py-2.5 text-sm font-extrabold text-white shadow-md hover:brightness-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-700 ${accentClasses[accent] || accentClasses.sky}`}>
+    <button onclick={onReplay} class={`min-h-11 rounded-xl bg-gradient-to-r px-6 py-2.5 text-sm font-extrabold text-white shadow-md hover:brightness-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cx-700 ${accentClasses[accent] || accentClasses.sky}`}>
       Chơi lại thử thách ↻
     </button>
   </div>

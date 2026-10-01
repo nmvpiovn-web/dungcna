@@ -187,7 +187,7 @@
 <div class="max-w-3xl mx-auto py-8 px-4 space-y-6">
   <!-- Header Banner (Academic Ledger Style) -->
   <header class="bg-slate-900 border border-slate-800 rounded-lg p-6 text-slate-100 shadow-sm space-y-2">
-    <div class="text-xs font-semibold text-cyan-400 uppercase tracking-wider">
+    <div class="text-xs font-semibold text-cx-400 uppercase tracking-wider">
       Cổng Tuyển Dụng Sư Phạm • Tiếng Anh Cô Dung
     </div>
     <h1 class="text-2xl font-semibold text-white">Gia Nhập Đội Ngũ Giáo Viên Tiếng Anh</h1>
@@ -209,7 +209,7 @@
         🔒 Trạng thái hồ sơ: <strong>100% Chờ Duyệt (Pending)</strong>. Hồ sơ không tự cấp quyền giáo viên hoặc tài khoản nội bộ cho đến khi Ban Quản Trị thẩm định và phê duyệt chính thức.
       </div>
       <div class="pt-2">
-        <a href="/" class="px-5 py-2.5 rounded-md text-xs font-semibold bg-cyan-600 hover:bg-cyan-700 text-white transition-colors">
+        <a href="/" class="px-5 py-2.5 rounded-md text-xs font-semibold bg-cx-600 hover:bg-cx-700 text-white transition-colors">
           Trở Về Trang Chủ
         </a>
       </div>
@@ -287,7 +287,7 @@
           <span class="block font-semibold text-slate-700 dark:text-slate-300">
             Khối lớp Thầy/Cô có thể nhận dạy (Chọn nhiều khối) (*):
           </span>
-          <span class="block text-[11px] text-cyan-700 dark:text-cyan-300" data-testid="selected-grades-count">
+          <span class="block text-[11px] text-cx-700 dark:text-cx-300" data-testid="selected-grades-count">
             Đã chọn {selectedGrades.length} khối/chương trình: {selectedGrades.join(', ')}
           </span>
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -298,7 +298,7 @@
                 onclick={() => toggleGrade(gr)}
                 aria-pressed={isChecked}
                 data-grade={gr}
-                class="flex items-center gap-2 p-2 rounded-md border text-left transition-colors {isChecked ? 'bg-cyan-50 dark:bg-cyan-950/60 border-cyan-400 dark:border-cyan-600 text-cyan-800 dark:text-cyan-200 font-semibold' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-medium hover:bg-slate-50 dark:hover:bg-slate-700'}"
+                class="flex items-center gap-2 p-2 rounded-md border text-left transition-colors {isChecked ? 'bg-cx-50 dark:bg-cx-950/60 border-cx-400 dark:border-cx-600 text-cx-800 dark:text-cx-200 font-semibold' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-medium hover:bg-slate-50 dark:hover:bg-slate-700'}"
               >
                 <span>{isChecked ? '☑' : '☐'}</span>
                 <span>{gr}</span>
@@ -411,7 +411,7 @@
             id="btn-submit-recruitment"
             type="submit"
             disabled={isSubmitting}
-            class="px-6 py-2.5 rounded-md font-semibold bg-cyan-600 hover:bg-cyan-700 text-white disabled:opacity-50 transition-colors shadow-sm"
+            class="px-6 py-2.5 rounded-md font-semibold bg-cx-600 hover:bg-cx-700 text-white disabled:opacity-50 transition-colors shadow-sm"
           >
             {isSubmitting ? 'Đang gửi hồ sơ...' : 'Nộp Hồ Sơ Ứng Tuyển Giáo Viên'}
           </button>

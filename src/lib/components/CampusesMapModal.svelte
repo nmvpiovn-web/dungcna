@@ -56,7 +56,7 @@
     <div class="bg-white dark:bg-slate-900 rounded-lg max-w-2xl w-full border border-slate-200 dark:border-slate-800 shadow-2xl p-6 space-y-5 text-xs max-h-[90vh] overflow-y-auto">
       <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
         <div class="flex items-center gap-2">
-          <span class="text-sm font-semibold text-cyan-600 dark:text-cyan-400">📍 Bản Đồ Vệ Tinh Cơ Sở &amp; Cụm Trường Học</span>
+          <span class="text-sm font-semibold text-cx-600 dark:text-cx-400">📍 Bản Đồ Vệ Tinh Cơ Sở &amp; Cụm Trường Học</span>
         </div>
         <button onclick={onClose} class="text-slate-400 hover:text-slate-600 font-bold p-1 text-sm">✕</button>
       </div>
@@ -77,18 +77,18 @@
           <button 
             type="button"
             onclick={() => selectedCampus = c}
-            class="p-3.5 rounded-lg border text-left transition-colors space-y-1.5 {isChosen ? 'bg-cyan-50 dark:bg-cyan-950/60 border-cyan-500 shadow-sm' : 'bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800'}"
+            class="p-3.5 rounded-lg border text-left transition-colors space-y-1.5 {isChosen ? 'bg-cx-50 dark:bg-cx-950/60 border-cx-500 shadow-sm' : 'bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800'}"
           >
             <div class="flex items-center justify-between">
               <span class="font-semibold text-slate-900 dark:text-white text-xs">{c.name}</span>
               {#if isChosen}
-                <span class="text-cyan-600 font-bold text-xs">✓ Chọn</span>
+                <span class="text-cx-600 font-bold text-xs">✓ Chọn</span>
               {/if}
             </div>
             <div class="text-[11px] text-slate-500 dark:text-slate-400">
               📍 {c.address}
             </div>
-            <div class="text-[11px] text-cyan-700 dark:text-cyan-300 font-medium">
+            <div class="text-[11px] text-cx-700 dark:text-cx-300 font-medium">
               Khoảng cách: <strong>{c.distanceFromCenter}</strong>
             </div>
           </button>
@@ -107,7 +107,7 @@
               href={getGoogleMapsUrl(selectedCampus.lat, selectedCampus.lng)}
               target="_blank" 
               rel="noopener noreferrer"
-              class="px-3.5 py-1.5 rounded-md font-semibold bg-cyan-600 hover:bg-cyan-700 text-white flex items-center gap-1.5 transition-colors shadow-sm self-start sm:self-auto"
+              class="px-3.5 py-1.5 rounded-md font-semibold bg-cx-600 hover:bg-cx-700 text-white flex items-center gap-1.5 transition-colors shadow-sm self-start sm:self-auto"
             >
               <span>🗺️</span>
               <span>Chỉ Đường Google Maps</span>

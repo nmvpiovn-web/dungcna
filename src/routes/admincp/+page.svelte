@@ -124,7 +124,7 @@
       >
         {lang === 'vi' ? '🇻🇳 Tiếng Việt' : '🇬🇧 English'}
       </button>
-      <a href="/cpanel/student" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-semibold text-cyan-700 dark:text-cyan-300 transition-all border border-slate-200 dark:border-slate-700">
+      <a href="/cpanel/student" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-semibold text-cx-700 dark:text-cx-300 transition-all border border-slate-200 dark:border-slate-700">
         🎒 Học Sinh
       </a>
       <a href="/cpanel/parent" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-semibold text-emerald-700 dark:text-emerald-300 transition-all border border-slate-200 dark:border-slate-700">
@@ -156,7 +156,7 @@
     </div>
     <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
       <div class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Bài Tập Về Nhà</div>
-      <div class="text-3xl font-heading font-black text-cyan-600 dark:text-cyan-400 mt-1">{assignments.length}</div>
+      <div class="text-3xl font-heading font-black text-cx-600 dark:text-cx-400 mt-1">{assignments.length}</div>
       <div class="text-[11px] text-slate-600 dark:text-slate-400 font-medium mt-1">Đã phát hành</div>
     </div>
     <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
@@ -232,7 +232,7 @@
           </div>
 
           <div class="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
-            <span class="text-slate-600 dark:text-slate-400">Quản lý: <strong class="text-cyan-700 dark:text-cyan-400">{campus.manager_user_id || 'Cô Dung'}</strong></span>
+            <span class="text-slate-600 dark:text-slate-400">Quản lý: <strong class="text-cx-700 dark:text-cx-400">{campus.manager_user_id || 'Cô Dung'}</strong></span>
             <span class="text-amber-700 dark:text-amber-400 font-bold">Mã: {campus.id}</span>
           </div>
         </div>
@@ -272,7 +272,7 @@
                 <div class="text-[11px] text-slate-600 dark:text-slate-400 flex items-center gap-2 mt-1 font-medium">
                   <span>Thực hiện: <strong class="text-slate-800 dark:text-slate-200">{stm.actor_name}</strong> ({stm.actor_role})</span>
                   <span>•</span>
-                  <span>Mã tham chiếu: <code class="text-cyan-700 dark:text-cyan-400">{stm.reference_id || 'N/A'}</code></span>
+                  <span>Mã tham chiếu: <code class="text-cx-700 dark:text-cx-400">{stm.reference_id || 'N/A'}</code></span>
                 </div>
               </div>
               <span class="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap font-mono">
@@ -345,7 +345,7 @@
         {#each submissions as sub}
           {@const assignment = assignments.find(a => a.id === sub.assignment_id)}
           <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/60 space-y-2">
-            <div class="flex items-center justify-between text-cyan-700 dark:text-cyan-400 font-semibold">
+            <div class="flex items-center justify-between text-cx-700 dark:text-cx-400 font-semibold">
               <span>📂 storage/homework/{assignment?.campus_id || 'loc_codung'}/{assignment?.class_id || 'cls_g7'}/{assignment?.session_id || 'sess_01'}/{sub.student_id}/{sub.assignment_id}/</span>
               <span class="text-slate-500 dark:text-slate-400 text-[11px] font-sans font-medium">{new Date(sub.submitted_at).toLocaleDateString('vi-VN')}</span>
             </div>
@@ -355,7 +355,7 @@
               {#if sub.handwritten_image_url}
                 <div class="text-amber-700 dark:text-amber-300 flex items-center gap-1 font-mono text-[11px]">
                   <span>📄 handwritten_worksheet_p1.jpg</span>
-                  <a href={sub.handwritten_image_url} target="_blank" class="text-cyan-700 dark:text-cyan-400 underline font-sans ml-2">Xem ảnh</a>
+                  <a href={sub.handwritten_image_url} target="_blank" class="text-cx-700 dark:text-cx-400 underline font-sans ml-2">Xem ảnh</a>
                 </div>
               {/if}
               {#if sub.audio_url}

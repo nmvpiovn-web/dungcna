@@ -79,7 +79,7 @@
       case 'tuition': return { text: 'Học phí', color: 'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300' };
       case 'leave': return { text: 'Nghỉ & Dạy thay', color: 'bg-teal-100 text-teal-800 dark:bg-teal-950 dark:text-teal-300' };
       case 'salary': return { text: 'Lương & Ứng', color: 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300' };
-      case 'exam': return { text: 'Bài kiểm tra', color: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-950 dark:text-cyan-300' };
+      case 'exam': return { text: 'Bài kiểm tra', color: 'bg-cx-100 text-cx-800 dark:bg-cx-950 dark:text-cx-300' };
       default: return { text: 'Thông báo', color: 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300' };
     }
   }
@@ -106,7 +106,7 @@
             <button
               type="button"
               onclick={() => markRead(null, true)}
-              class="px-2.5 py-1 rounded-md bg-slate-800 text-cyan-300 text-[11px] font-semibold hover:bg-slate-700 border border-slate-700"
+              class="px-2.5 py-1 rounded-md bg-slate-800 text-cx-300 text-[11px] font-semibold hover:bg-slate-700 border border-slate-700"
             >
               Đọc tất cả
             </button>
@@ -126,14 +126,14 @@
         <button
           type="button"
           onclick={() => activeFilter = 'all'}
-          class="px-3 py-1 rounded-md font-semibold transition-colors {activeFilter === 'all' ? 'bg-cyan-700 text-white' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}"
+          class="px-3 py-1 rounded-md font-semibold transition-colors {activeFilter === 'all' ? 'bg-cx-700 text-white' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}"
         >
           Tất cả ({notifications.length})
         </button>
         <button
           type="button"
           onclick={() => activeFilter = 'unread'}
-          class="px-3 py-1 rounded-md font-semibold transition-colors {activeFilter === 'unread' ? 'bg-cyan-700 text-white' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}"
+          class="px-3 py-1 rounded-md font-semibold transition-colors {activeFilter === 'unread' ? 'bg-cx-700 text-white' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}"
         >
           Chưa đọc ({unreadCount})
         </button>
@@ -143,7 +143,7 @@
       <div class="flex-1 overflow-y-auto p-4 space-y-2.5">
         {#if isLoading}
           <div class="py-12 text-center text-xs text-slate-400">
-            <div class="w-8 h-8 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+            <div class="w-8 h-8 border-2 border-cx-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
             Đang tải thông báo...
           </div>
         {:else if filteredNotifications.length === 0}
@@ -154,7 +154,7 @@
           {#each filteredNotifications as item}
             {@const badge = getCategoryBadge(item.category)}
             <div
-              class="p-4 rounded-lg border transition-colors {item.is_read ? 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 opacity-80' : 'bg-slate-50 dark:bg-slate-850 border-cyan-200 dark:border-cyan-800/60 shadow-xs'}"
+              class="p-4 rounded-lg border transition-colors {item.is_read ? 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 opacity-80' : 'bg-slate-50 dark:bg-slate-850 border-cx-200 dark:border-cx-800/60 shadow-xs'}"
             >
               <div class="flex items-start justify-between gap-3 mb-1.5">
                 <div class="flex items-center gap-2 flex-wrap">
@@ -169,7 +169,7 @@
                   <button
                     type="button"
                     onclick={() => markRead(item.id)}
-                    class="text-[11px] text-cyan-600 dark:text-cyan-400 font-semibold hover:underline whitespace-nowrap"
+                    class="text-[11px] text-cx-600 dark:text-cx-400 font-semibold hover:underline whitespace-nowrap"
                   >
                     Đánh dấu đã đọc
                   </button>

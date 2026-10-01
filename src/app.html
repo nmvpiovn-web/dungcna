@@ -35,6 +35,20 @@
 								600: 'rgb(var(--brand-600-rgb) / <alpha-value>)',
 								700: 'rgb(var(--brand-700-rgb) / <alpha-value>)'
 							},
+							// CX scale: mau chu dao tuy chinh qua CSS bien, Theme Studio dieu khien
+							cx: {
+								50: 'rgb(var(--c-50-rgb) / <alpha-value>)',
+								100: 'rgb(var(--c-100-rgb) / <alpha-value>)',
+								200: 'rgb(var(--c-200-rgb) / <alpha-value>)',
+								300: 'rgb(var(--c-300-rgb) / <alpha-value>)',
+								400: 'rgb(var(--c-400-rgb) / <alpha-value>)',
+								500: 'rgb(var(--c-500-rgb) / <alpha-value>)',
+								600: 'rgb(var(--c-600-rgb) / <alpha-value>)',
+								700: 'rgb(var(--c-700-rgb) / <alpha-value>)',
+								800: 'rgb(var(--c-800-rgb) / <alpha-value>)',
+								900: 'rgb(var(--c-900-rgb) / <alpha-value>)',
+								950: 'rgb(var(--c-950-rgb) / <alpha-value>)'
+							},
 							ink: {
 								500: 'rgb(var(--ink-500-rgb) / <alpha-value>)',
 								900: 'rgb(var(--ink-900-rgb) / <alpha-value>)'
@@ -111,8 +125,8 @@
 						if (!banner) {
 							banner = document.createElement('div');
 							banner.id = 'sw-update-banner';
-							banner.className = 'fixed bottom-4 right-4 z-[9999] p-3 bg-slate-900/95 text-white border border-cyan-500 rounded-lg shadow-2xl text-xs flex items-center gap-3 backdrop-blur-md animate-in fade-in';
-							banner.innerHTML = '<span>⚡ Có bản cập nhật hệ thống mới. Dữ liệu đã được bảo toàn tự động.</span> <button onclick="this.parentElement.remove()" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-cyan-400 rounded font-semibold border border-slate-700 shadow-xs">Đã Rõ</button>';
+							banner.className = 'fixed bottom-4 right-4 z-[9999] p-3 bg-slate-900/95 text-white border border-cx-500 rounded-lg shadow-2xl text-xs flex items-center gap-3 backdrop-blur-md animate-in fade-in';
+							banner.innerHTML = '<span>⚡ Có bản cập nhật hệ thống mới. Dữ liệu đã được bảo toàn tự động.</span> <button onclick="this.parentElement.remove()" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-cx-400 rounded font-semibold border border-slate-700 shadow-xs">Đã Rõ</button>';
 							document.body.appendChild(banner);
 						}
 						return;
