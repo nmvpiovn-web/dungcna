@@ -2,7 +2,7 @@
 // Architecture: Strict Network-Only for dynamic data/APIs; Cache-First for static immutable assets;
 // Network-First (with offline fallback) for navigations.
 
-const CACHE_NAME = 'tienganh-academic-v5';
+const CACHE_NAME = 'tienganh-academic-v6';
 
 // App shell precache (offline fallback + icons + manifest). Individual failures must not break install.
 const PRECACHE_URLS = [
