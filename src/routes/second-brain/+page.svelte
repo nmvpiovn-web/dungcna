@@ -106,7 +106,16 @@
  return;
  }
 
- const data = await res.json();
+ debugStep = 'reading body text...';
+ const text = await res.text();
+ debugStep = 'body read, ' + text.length + ' chars, parsing...';
+ let data;
+ try {
+ data = JSON.parse(text);
+ } catch (parseErr) {
+ debugStep = 'JSON parse ERROR: ' + parseErr.message;
+ throw new Error('JSON parse failed: ' + parseErr.message);
+ }
  debugStep = 'json parsed, success=' + data.success + ', notes=' + (data.notes ? data.notes.length : 'n/a');
  if (data.success) {
  debugStep = 'setting vaultNotes...';
