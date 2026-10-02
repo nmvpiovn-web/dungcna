@@ -9,7 +9,9 @@
  let vaultNotes = $state(data?.notes || []);
  let vaultFolders = $state(data?.folders || []);
  let vaultVersion = $state(data?.version || '2.5.0-D1');
- let isLoading = $state(!data || (!data.notes?.length && !data.forbidden));
+ // Nếu có data từ server (dù forbidden hay có notes), không hiện spinner
+ // Chỉ hiện spinner khi hoàn toàn không có data (đang chờ)
+ let isLoading = $state(!data);
  let isForbidden = $state(!!data?.forbidden);
  let errorMessage = $state('');
 
@@ -201,16 +203,23 @@
  }
 
  onMount(() => {
- // TẠM THỜI: unregister Service Worker để test xem có phải SW gây treo fetch không
- if ('serviceWorker' in navigator) {
- navigator.serviceWorker.getRegistrations().then(regs => {
- regs.forEach(r => { console.log('[DEBUG] Unregistering SW:', r.scope); r.unregister(); });
- });
- }
+ // Nếu server đã cung cấp dữ liệu, không cần fetch lại
+ // Chỉ fetch khi không có dữ liệu server
+ if (!data || data.forbidden || !data.notes?.length) {
  loadVault();
+ } else {
+ // Có dữ liệu server, chỉ cần set user và fetch note detail
+ try { currentUser = getCurrentUser(); } catch {}
+ isLoading = false;
+ isForbidden = false;
+ fetchNoteDetail(selectedNoteId);
+ }
  const handleAuth = (e) => {
  currentUser = e.detail;
+ // Chỉ reload khi user thay đổi (login/logout)
+ if (currentUser && isTeacherOrAdmin(currentUser)) {
  loadVault();
+ }
  };
  window.addEventListener('tienganh:auth-change', handleAuth);
  return () => {

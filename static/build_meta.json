@@ -1,7 +1,7 @@
 {
-  "source_commit": "dd0e8372a7240c36563632002adedf9efee1066e",
-  "build_timestamp": "2026-10-02T15:30:05.415Z",
-  "build_identity": "build_dd0e837_1790955005416",
+  "source_commit": "fbc8dff3dcede522d3353a854f0e90ef79523214",
+  "build_timestamp": "2026-10-02T15:31:31.219Z",
+  "build_identity": "build_fbc8dff_1790955091220",
   "version": "2.2.0",
   "environment": "production"
 }
