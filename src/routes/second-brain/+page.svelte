@@ -19,7 +19,6 @@
  let copiedPath = $state(false);
  let syncing = $state(false);
  let syncResult = $state('');
- let debugStep = $state('init');
 
  async function syncDatabase() {
   if (syncing) return;
@@ -49,101 +48,66 @@
 
  async function loadVault() {
  // Guard: tránh 2 loadVault chạy chồng (onMount + auth-change event)
- if (loadVault._running) {
- debugStep = 'loadVault skipped (already running)';
- return;
- }
+ if (loadVault._running) return;
  loadVault._running = true;
- debugStep = 'loadVault start';
+
+ const done = () => { isLoading = false; loadVault._running = false; };
+
  try {
- debugStep = 'getCurrentUser...';
  currentUser = getCurrentUser();
- debugStep = 'user=' + (currentUser ? currentUser.username + '/' + currentUser.role : 'null');
  } catch (e) {
- debugStep = 'getCurrentUser ERROR: ' + e.message;
  console.error('getCurrentUser failed:', e);
  currentUser = null;
  }
  if (!currentUser || !isTeacherOrAdmin(currentUser)) {
  isForbidden = true;
- isLoading = false;
  vaultNotes = [];
- loadVault._running = false;
+ done();
  return;
  }
 
  const token = getAuthToken();
- debugStep = 'token=' + (token ? 'yes(' + token.length + ' chars)' : 'null');
  if (!token) {
  isForbidden = true;
- isLoading = false;
  vaultNotes = [];
- loadVault._running = false;
+ done();
  return;
  }
-
- // AbortController: tránh treo mãi nếu fetch không bao giờ resolve
- const ctrl = new AbortController();
- const timeoutId = setTimeout(() => ctrl.abort(), 20000);
 
  try {
  isLoading = true;
- debugStep = 'fetching /api/second-brain...';
- const res = await fetch('/api/second-brain', {
- headers: {
- 'Authorization': `Bearer ${token}`
- },
- signal: ctrl.signal
+ const res = await fetch(`/api/second-brain?_t=${Date.now()}`, {
+ headers: { 'Authorization': `Bearer ${token}` },
+ cache: 'no-store'
  });
- clearTimeout(timeoutId);
- debugStep = 'fetch done, status=' + res.status;
 
  if (res.status === 401 || res.status === 403) {
  isForbidden = true;
- isLoading = false;
  vaultNotes = [];
- loadVault._running = false;
+ done();
  return;
  }
 
- debugStep = 'reading body text...';
- const text = await res.text();
- debugStep = 'body read, ' + text.length + ' chars, parsing...';
- let data;
- try {
- data = JSON.parse(text);
- } catch (parseErr) {
- debugStep = 'JSON parse ERROR: ' + parseErr.message;
- throw new Error('JSON parse failed: ' + parseErr.message);
- }
- debugStep = 'json parsed, success=' + data.success + ', notes=' + (data.notes ? data.notes.length : 'n/a');
+ const data = await res.json();
  if (data.success) {
- debugStep = 'setting vaultNotes...';
  vaultNotes = data.notes || [];
- debugStep = 'vaultNotes set, setting vaultFolders...';
  vaultFolders = data.folders || [];
- debugStep = 'vaultFolders set, setting version...';
  vaultVersion = data.version || '2.5.0-D1';
- debugStep = 'version set, clearing forbidden...';
  isForbidden = false;
- debugStep = 'calling fetchNoteDetail...';
- // Fetch detailed content for active note
+ // Fetch detailed content for active note (không await)
  fetchNoteDetail(selectedNoteId);
- debugStep = 'fetchNoteDetail called, done.';
  } else {
  errorMessage = data.error || 'Lỗi khi tải kho tri thức';
  isForbidden = true;
  vaultNotes = [];
  }
  } catch (err) {
- debugStep = 'CATCH: ' + err.name + ': ' + err.message;
- errorMessage = err.name === 'AbortError' ? 'Hết thời gian chờ server (20s). Kiểm tra kết nối mạng rồi thử lại.' : (err.message || 'Lỗi kết nối');
+ console.error('loadVault error:', err);
+ errorMessage = err.message || 'Lỗi kết nối';
  isForbidden = true;
  vaultNotes = [];
  } finally {
- clearTimeout(timeoutId);
- isLoading = false;
- loadVault._running = false;
+ done();
  }
  }
 
@@ -476,7 +440,6 @@
  <div class="max-w-2xl mx-auto my-24 p-8 text-center space-y-4">
  <div class="w-12 h-12 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
  <p class="text-sm font-bold text-slate-500">Đang nạp kho tri thức bảo mật từ server...</p>
- <p class="text-xs text-slate-400 font-mono">debug: {debugStep}</p>
  </div>
  {:else if isForbidden || !currentUser || !isTeacherOrAdmin(currentUser)}
  <!-- Restricted Access Warning for Students / Guests -->
