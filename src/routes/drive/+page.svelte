@@ -116,6 +116,19 @@
   debounceTimer = setTimeout(() => loadFiles(currentFolderId, search), 400);
  }
 
+ let folderIdInput = $state('');
+ const DEFAULT_FOLDER_ID = '1_V4YUCuTJ4uui49S6AfcaI8lZmIszKou';
+
+ function openFolderById() {
+  const fid = folderIdInput.trim() || DEFAULT_FOLDER_ID;
+  // Trích folder ID từ URL nếu user dán cả link
+  const m = fid.match(/\/folders\/([a-zA-Z0-9_-]+)/);
+  const folderId = m ? m[1] : fid;
+  breadcrumbs = [{ id: folderId, name: '📁 Folder đã share' }];
+  currentFolderId = folderId;
+  loadFiles(folderId, search);
+ }
+
  function formatSize(bytes) {
   if (!bytes) return '—';
   if (bytes < 1024) return bytes + ' B';
@@ -167,6 +180,24 @@
    ⚠️ Chỉ giáo viên và quản trị viên mới truy cập kho tài liệu này.
   </div>
  {:else}
+  <!-- Folder ID input (API key không đọc được root, cần folder đã share) -->
+  <div class="rounded-xl bg-blue-50 border border-blue-200 p-4 space-y-2">
+   <div class="font-bold text-sm text-ink-900">📁 Mở folder Drive đã share</div>
+   <div class="flex flex-col sm:flex-row gap-2">
+    <input
+     type="text"
+     bind:value={folderIdInput}
+     placeholder="Dán Folder ID hoặc link drive.google.com/drive/folders/..."
+     class="flex-1 px-4 py-2.5 rounded-xl border border-line bg-white text-sm font-mono focus:outline-none focus:ring-2 focus:ring-brand-300"
+    />
+    <button
+     onclick={openFolderById}
+     class="px-5 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-bold hover:bg-blue-700 whitespace-nowrap"
+    >📂 Mở folder</button>
+   </div>
+   <p class="text-xs text-ink-500">Để trống = mở folder tài liệu tiếng Anh đã share sẵn.</p>
+  </div>
+
   <!-- Breadcrumbs -->
   <nav class="flex items-center gap-1.5 text-sm flex-wrap">
    {#each breadcrumbs as crumb, i}

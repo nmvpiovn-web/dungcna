@@ -31,7 +31,7 @@ export async function GET({ url, request, platform }) {
     }, { status: 503 });
   }
 
-  const folderId = url.searchParams.get('folder_id') || 'root';
+  const folderId = url.searchParams.get('folder_id') || '1_V4YUCuTJ4uui49S6AfcaI8lZmIszKou';
   const query = url.searchParams.get('q') || '';
 
   try {

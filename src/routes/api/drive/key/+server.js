@@ -29,12 +29,19 @@ export async function POST({ request, platform }) {
   const apiKey = String(body.api_key || '').trim();
   if (!apiKey || apiKey.length < 10) return json({ success: false, error: 'API key không hợp lệ' }, { status: 400 });
   try {
-    // Test key trước khi lưu
+    // Test key: API key chỉ đọc được file public, không list được root (cần OAuth).
+    // Key hợp lệ = không báo API_KEY_INVALID. 403 insufficientFilePermissions vẫn tính là key đúng.
     const testUrl = `https://www.googleapis.com/drive/v3/files?pageSize=1&fields=files(id)&key=${encodeURIComponent(apiKey)}`;
     const testRes = await fetch(testUrl);
     const testData = await testRes.json();
     if (testData.error) {
-      return json({ success: false, error: 'Key không hoạt động: ' + (testData.error.message || 'lỗi Drive API') }, { status: 400 });
+      const reason = testData.error.errors?.[0]?.reason || '';
+      const msg = testData.error.message || '';
+      // Chỉ reject khi key thật sự sai
+      if (reason === 'badRequest' && msg.includes('API key not valid')) {
+        return json({ success: false, error: 'API key không hợp lệ. Kiểm tra lại key.' }, { status: 400 });
+      }
+      // 403 = key đúng nhưng không có quyền list root (bình thường với API key) → chấp nhận
     }
     await platform.env.DB.prepare(`
       INSERT INTO site_settings (key, value, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)
