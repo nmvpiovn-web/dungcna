@@ -332,6 +332,10 @@
  html = html.replace(/\*\*(.*?)\*\*/g, '<strong class="font-extrabold text-slate-900">$1</strong>');
  html = html.replace(/\*(.*?)\*/g, '<em class="italic">$1</em>');
 
+ // 5b. Process standard markdown links [text](url) — mở tab mới, chỉ cho https/http
+ html = html.replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g,
+ '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-brand-600 font-bold underline hover:text-brand-700">$1 ↗</a>');
+
  // Imported images use generated, content-addressed local asset paths.
  html = html.replace(/!\[([^\]]*)\]\((?:\.\.\/|\/)?drive-media\/([a-f0-9]{24}\.(?:png|jpe?g|gif|webp))\)/g,
  '<img src="/drive-media/$2" alt="$1" loading="lazy" class="max-w-full h-auto rounded-xl shadow-sm border border-slate-200 my-4" />');
