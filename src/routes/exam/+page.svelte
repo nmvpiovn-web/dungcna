@@ -1409,10 +1409,10 @@
  {@const is5m = ex.format_type === 'quick_5m' || ex.duration_minutes === 5}
  {@const is15m = ex.format_type === 'quick_15m' || ex.duration_minutes === 15}
  {@const is45m = ex.format_type === 'standard_45m' || ex.duration_minutes === 45}
- <button
- onclick={() => handleSelectExam(ex)}
+ <div
  class="p-3.5 rounded-2xl border text-left transition-all duration-200 hover-lift flex flex-col justify-between {isSelected ? 'bg-gradient-to-br from-brand-600 to-brand-700 border-brand-200 text-white shadow-lg shadow-brand-600/25 ring-2 ring-brand-200/80 font-semibold' : (isEnrolled ? 'bg-surface-0/90 border-brand-50 text-ink-900 hover:border-brand-200 hover:shadow-md' : 'bg-surface-1 border-line text-ink-500 hover:border-slate-400')}"
  >
+ <button onclick={() => handleSelectExam(ex)} class="text-left flex-1">
  <div>
  <div class="flex items-center justify-between text-[10px] font-bold uppercase mb-1.5">
  <span class="{isSelected ? 'text-brand-200' : (isEnrolled ? (is5m ? 'text-amber-500 font-extrabold' : (is15m ? 'text-brand-600 font-extrabold' : 'text-brand-600 font-extrabold')) : 'text-ink-500 font-semibold')}">
@@ -1432,6 +1432,15 @@
  <span class="uppercase font-semibold">{ex.skill_category}</span>
  </div>
  </button>
+ {#if isEnrolled}
+ <button
+ onclick={(e) => { e.stopPropagation(); handleSelectExam(ex); setTimeout(() => startExam(), 100); }}
+ class="mt-2 w-full py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs shadow transition-all hover:scale-[1.02]"
+ >
+ 🚀 Thi Thử Ngay
+ </button>
+ {/if}
+ </div>
  {/each}
  </div>
 
