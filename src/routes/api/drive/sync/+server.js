@@ -1,15 +1,23 @@
 // src/routes/api/drive/sync/+server.js
 // Sync tài liệu Google Drive vào knowledge_vault (kho tri thức)
 // POST /api/drive/sync { folder_id?, recursive? } — staff only
+// Ưu tiên Service Account (đọc folder riêng tư), fallback API key
 import { json } from '@sveltejs/kit';
 import { verifyServerAuth, isStaffUser } from '$lib/server/auth.js';
+import { getServiceAccountToken, hasServiceAccount } from '$lib/server/googleServiceAccount.js';
 
 export const prerender = false;
 const DEFAULT_FOLDER = '1_V4YUCuTJ4uui49S6AfcaI8lZmIszKou';
 const MAX_FILE_CONTENT = 20000; // giới hạn ký tự mỗi file
 const MAX_FILES = 100;
 
-async function getApiKey(platform) {
+async function getAuth(platform) {
+  // Ưu tiên 1: Service Account
+  if (hasServiceAccount(platform)) {
+    const token = await getServiceAccountToken(platform);
+    if (token) return { bearer: token };
+  }
+  // Fallback: API key
   let key = platform?.env?.GOOGLE_DRIVE_API_KEY;
   if (!key && platform?.env?.DB) {
     try {
@@ -17,39 +25,56 @@ async function getApiKey(platform) {
       if (row?.value) key = row.value;
     } catch {}
   }
-  return key;
+  return key ? { apiKey: key } : {};
 }
 
-async function driveFetch(url, key) {
-  const res = await fetch(url + (url.includes('?') ? '&' : '?') + `key=${encodeURIComponent(key)}`);
+async function driveFetch(url, auth) {
+  const headers = {};
+  let finalUrl = url;
+  if (auth.bearer) {
+    headers['Authorization'] = `Bearer ${auth.bearer}`;
+  } else if (auth.apiKey) {
+    finalUrl = url + (url.includes('?') ? '&' : '?') + `key=${encodeURIComponent(auth.apiKey)}`;
+  }
+  const res = await fetch(finalUrl, { headers });
   return res.json();
 }
 
-async function listFiles(folderId, key, pageToken = '') {
+async function driveFetchText(url, auth) {
+  const headers = {};
+  let finalUrl = url;
+  if (auth.bearer) {
+    headers['Authorization'] = `Bearer ${auth.bearer}`;
+  } else if (auth.apiKey) {
+    finalUrl = url + (url.includes('?') ? '&' : '?') + `key=${encodeURIComponent(auth.apiKey)}`;
+  }
+  const res = await fetch(finalUrl, { headers });
+  if (!res.ok) return '';
+  return res.text();
+}
+
+async function listFiles(folderId, auth, pageToken = '') {
   const q = `'${folderId}' in parents and trashed = false`;
   let url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id,name,mimeType,size,modifiedTime,webViewLink),nextPageToken&pageSize=100&orderBy=name`;
   if (pageToken) url += `&pageToken=${pageToken}`;
-  return driveFetch(url, key);
+  return driveFetch(url, auth);
 }
 
-async function exportDocText(fileId, mimeType, key) {
+async function exportDocText(fileId, mimeType, auth) {
   try {
     // Google Docs/Sheets/Slides → export text
     if (mimeType === 'application/vnd.google-apps.document') {
-      const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}/export?mimeType=text/plain&key=${encodeURIComponent(key)}`);
-      if (!res.ok) return '';
-      return (await res.text()).substring(0, MAX_FILE_CONTENT);
+      const text = await driveFetchText(`https://www.googleapis.com/drive/v3/files/${fileId}/export?mimeType=text/plain`, auth);
+      return text.substring(0, MAX_FILE_CONTENT);
     }
     if (mimeType === 'application/vnd.google-apps.spreadsheet') {
-      const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}/export?mimeType=text/csv&key=${encodeURIComponent(key)}`);
-      if (!res.ok) return '';
-      return (await res.text()).substring(0, MAX_FILE_CONTENT);
+      const text = await driveFetchText(`https://www.googleapis.com/drive/v3/files/${fileId}/export?mimeType=text/csv`, auth);
+      return text.substring(0, MAX_FILE_CONTENT);
     }
     // Text/plain trực tiếp
     if (mimeType === 'text/plain' || mimeType === 'text/markdown' || mimeType === 'text/csv') {
-      const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${encodeURIComponent(key)}`);
-      if (!res.ok) return '';
-      return (await res.text()).substring(0, MAX_FILE_CONTENT);
+      const text = await driveFetchText(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, auth);
+      return text.substring(0, MAX_FILE_CONTENT);
     }
   } catch {}
   return '';
@@ -65,8 +90,8 @@ export async function POST({ request, platform }) {
   if (!isStaffUser(auth.user)) return json({ success: false, error: 'Forbidden: Chỉ staff' }, { status: 403 });
   if (!platform?.env?.DB) return json({ success: false, error: 'DatabaseUnavailable' }, { status: 500 });
 
-  const apiKey = await getApiKey(platform);
-  if (!apiKey) return json({ success: false, error: 'Chưa cấu hình Google Drive API key' }, { status: 503 });
+  const driveAuth = await getAuth(platform);
+  if (!driveAuth.bearer && !driveAuth.apiKey) return json({ success: false, error: 'Chưa cấu hình Google Drive (cần Service Account hoặc API key)' }, { status: 503 });
 
   let body = {};
   try { body = await request.json(); } catch {}
@@ -81,7 +106,7 @@ export async function POST({ request, platform }) {
     if (depth > 3 || stats.files >= MAX_FILES) return;
     let pageToken = '';
     do {
-      const data = await listFiles(fid, apiKey, pageToken);
+      const data = await listFiles(fid, driveAuth, pageToken);
       if (data.error) {
         errors.push(`list ${fid}: ${data.error.message}`);
         return;
@@ -107,7 +132,7 @@ export async function POST({ request, platform }) {
         }
 
         // File: lấy nội dung text nếu export được
-        const content = await exportDocText(f.id, f.mimeType, apiKey);
+        const content = await exportDocText(f.id, f.mimeType, driveAuth);
         stats.files++;
         if (content) stats.with_content++; else stats.skipped++;
 

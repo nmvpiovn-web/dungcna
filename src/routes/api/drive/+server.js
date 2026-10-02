@@ -1,8 +1,9 @@
 // src/routes/api/drive/+server.js
 // Google Drive API proxy: list files from a Drive folder
-// Requires GOOGLE_DRIVE_API_KEY env var (set via Cloudflare Pages env)
+// Ưu tiên Service Account (đọc folder riêng tư), fallback API key (chỉ folder công khai)
 import { json } from '@sveltejs/kit';
 import { verifyServerAuth, isStaffUser } from '$lib/server/auth.js';
+import { getServiceAccountToken, hasServiceAccount } from '$lib/server/googleServiceAccount.js';
 
 export const prerender = false;
 
@@ -15,18 +16,31 @@ export async function GET({ url, request, platform }) {
     return json({ success: false, error: 'Forbidden: Chỉ staff mới truy cập Drive' }, { status: 403 });
   }
 
-  let apiKey = platform?.env?.GOOGLE_DRIVE_API_KEY;
-  // Fallback: key lưu trong D1 site_settings (nhập từ dashboard)
-  if (!apiKey && platform?.env?.DB) {
-    try {
-      const row = await platform.env.DB.prepare(`SELECT value FROM site_settings WHERE key = 'google_drive_api_key' LIMIT 1`).bind().first();
-      if (row?.value) apiKey = row.value;
-    } catch {}
+  // Ưu tiên 1: Service Account (đọc được folder riêng tư đã share cho nó)
+  let bearerToken = null;
+  let authMethod = 'none';
+  if (hasServiceAccount(platform)) {
+    bearerToken = await getServiceAccountToken(platform);
+    if (bearerToken) authMethod = 'service_account';
   }
-  if (!apiKey) {
+
+  // Fallback: API key (chỉ folder công khai)
+  let apiKey = null;
+  if (!bearerToken) {
+    apiKey = platform?.env?.GOOGLE_DRIVE_API_KEY;
+    if (!apiKey && platform?.env?.DB) {
+      try {
+        const row = await platform.env.DB.prepare(`SELECT value FROM site_settings WHERE key = 'google_drive_api_key' LIMIT 1`).bind().first();
+        if (row?.value) apiKey = row.value;
+      } catch {}
+    }
+    if (apiKey) authMethod = 'api_key';
+  }
+
+  if (!bearerToken && !apiKey) {
     return json({
       success: false,
-      error: 'Chưa cấu hình Google Drive API key. Nhập key ở ô bên dưới hoặc thêm GOOGLE_DRIVE_API_KEY vào Cloudflare Pages env.',
+      error: 'Chưa cấu hình Google Drive. Cần Service Account hoặc API key.',
       needs_setup: true
     }, { status: 503 });
   }
@@ -45,9 +59,15 @@ export async function GET({ url, request, platform }) {
     driveUrl.searchParams.set('fields', 'files(id,name,mimeType,size,modifiedTime,webViewLink,thumbnailLink)');
     driveUrl.searchParams.set('pageSize', '100');
     driveUrl.searchParams.set('orderBy', 'modifiedTime desc');
-    driveUrl.searchParams.set('key', apiKey);
+    // Auth: ưu tiên Bearer (service account), fallback key param
+    const fetchHeaders = {};
+    if (bearerToken) {
+      fetchHeaders['Authorization'] = `Bearer ${bearerToken}`;
+    } else {
+      driveUrl.searchParams.set('key', apiKey);
+    }
 
-    const res = await fetch(driveUrl.toString());
+    const res = await fetch(driveUrl.toString(), { headers: fetchHeaders });
     const data = await res.json();
 
     if (data.error) {
@@ -66,7 +86,8 @@ export async function GET({ url, request, platform }) {
         thumbnailLink: f.thumbnailLink,
         isFolder: f.mimeType === 'application/vnd.google-apps.folder'
       })),
-      source: 'google_drive'
+      source: 'google_drive',
+      auth_method: authMethod
     });
   } catch (err) {
     return json({ success: false, error: err.message }, { status: 500 });
