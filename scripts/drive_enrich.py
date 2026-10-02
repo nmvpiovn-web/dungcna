@@ -283,9 +283,26 @@ def classify(name, folder_path, mime_type="", size=0):
     if grade:
         tags.append(grade.lower().replace(" ", "_"))
     # tag loại file gọn
-    short_mime = mime_type.split("/")[-1].replace(".", "_")[:24]
-    if short_mime:
-        tags.append(f"mime_{short_mime}")
+    mime_short = {
+        "application/pdf": "pdf",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "xlsx",
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation": "pptx",
+        "application/msword": "doc",
+        "application/vnd.ms-excel": "xls",
+        "application/vnd.google-apps.document": "gdoc",
+        "application/vnd.google-apps.spreadsheet": "gsheet",
+        "application/vnd.google-apps.presentation": "gslides",
+        "text/plain": "txt",
+        "text/markdown": "md",
+        "audio/mpeg": "mp3",
+        "image/png": "png",
+        "image/jpeg": "jpg",
+    }.get(mime_type)
+    if not mime_short:
+        base = mime_type.split("/")[-1].replace(".", "_").replace("-", "_")
+        mime_short = re.sub(r"[^a-z0-9_]", "", base)[:16] or "unknown"
+    tags.append(f"mime_{mime_short}")
 
     return grade, category, tags
 
