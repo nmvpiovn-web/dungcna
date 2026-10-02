@@ -710,7 +710,14 @@
  submitError = '';
 
  const studentUser = (data.users || []).find(u => u.id === selectedStudentId) || currentUser;
- const finalAnswers = { ...userAnswers, essay: essayText, transcript: speechTranscript };
+ // Đảm bảo mọi câu hỏi đều có key trong answers (câu bỏ trống = chuỗi rỗng, tính là sai chứ không lỗi schema)
+ const completeAnswers = {};
+ activeQuestions.forEach((q, idx) => {
+   const key = q.id || idx;
+   const ans = userAnswers[idx] ?? userAnswers[key] ?? '';
+   completeAnswers[key] = typeof ans === 'string' ? ans : String(ans ?? '');
+ });
+ const finalAnswers = { ...completeAnswers, essay: essayText, transcript: speechTranscript };
  const durationSecs = (currentExam.duration_minutes * 60) - timeLeftSeconds;
 
  let serverCommitSuccess = false;
