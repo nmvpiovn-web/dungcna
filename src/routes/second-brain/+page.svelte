@@ -76,10 +76,15 @@
 
  try {
  isLoading = true;
- const res = await fetch(`/api/second-brain?_t=${Date.now()}`, {
+ // Timeout 30s bằng Promise.race để tránh treo vô hạn
+ const fetchPromise = fetch(`/api/second-brain?_t=${Date.now()}`, {
  headers: { 'Authorization': `Bearer ${token}` },
  cache: 'no-store'
  });
+ const timeoutPromise = new Promise((_, reject) =>
+ setTimeout(() => reject(new Error('Fetch timeout sau 30s')), 30000)
+ );
+ const res = await Promise.race([fetchPromise, timeoutPromise]);
 
  if (res.status === 401 || res.status === 403) {
  isForbidden = true;
@@ -88,7 +93,10 @@
  return;
  }
 
- const data = await res.json();
+ const data = await Promise.race([
+ res.json(),
+ new Promise((_, reject) => setTimeout(() => reject(new Error('JSON parse timeout sau 30s')), 30000))
+ ]);
  if (data.success) {
  vaultNotes = data.notes || [];
  vaultFolders = data.folders || [];
@@ -453,6 +461,11 @@
  <p class="text-xs sm:text-sm text-slate-600 leading-relaxed max-w-md mx-auto">
  Kho tài liệu và ma trận bài giảng chuyên sâu này dành riêng cho <strong>Ban Giám Hiệu (Cô Dung, SuperAdmin)</strong> và đội ngũ <strong>Giáo viên</strong>. Tài khoản học sinh của bạn chỉ được truy cập vào phần bài tập và lộ trình đào tạo chính quy.
  </p>
+ {#if errorMessage}
+ <p class="text-xs text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-2 max-w-md mx-auto">
+ ⚠️ {errorMessage}
+ </p>
+ {/if}
  <div class="pt-4 flex items-center justify-center gap-3">
  <a
  href="/"
