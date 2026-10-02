@@ -1,6 +1,6 @@
 import { json } from '@sveltejs/kit';
-import { verifyServerAuth, isStaffUser } from '$lib/server/auth.js';
-import { getAllClassSessions, saveClassSession, deleteClassSession, assignStudentsToClassSession } from '$lib/unifiedStore';
+import { verifyServerAuth, isStaffUser, isManager } from '../../../lib/server/auth.js';
+import { getAllClassSessions, saveClassSession, deleteClassSession, assignStudentsToClassSession } from '../../../lib/unifiedStore.js';
 
 export const prerender = false;
 
@@ -33,17 +33,59 @@ export async function GET({ url, request, platform }) {
     const teacherId = url.searchParams.get('teacher_id');
 
     if (platform?.env?.DB) {
-      let query = 'SELECT * FROM class_sessions WHERE 1=1';
+      let query = 'SELECT cs.* FROM class_sessions cs WHERE 1=1';
       const params = [];
+      const role = String(auth.user.role || '').toLowerCase();
+
+      // Resource scope is enforced on the server. Query parameters may narrow a
+      // result set, but never widen the sessions visible to the signed-in user.
+      if (!isManager(auth.user)) {
+        if (role === 'teacher') {
+          query += ' AND (cs.teacher_id = ? OR cs.assistant_teacher_id = ? OR cs.substitute_teacher_id = ?)';
+          params.push(auth.user.id, auth.user.id, auth.user.id);
+        } else if (role === 'student') {
+          query += ` AND (
+            cs.class_id IN (
+              SELECT class_id FROM class_enrollments
+              WHERE user_id = ? AND status = 'active'
+            )
+            OR EXISTS (
+              SELECT 1 FROM json_each(CASE WHEN json_valid(cs.student_ids) THEN cs.student_ids ELSE '[]' END)
+              WHERE value = ?
+            )
+          )`;
+          params.push(auth.user.id, auth.user.id);
+        } else if (role === 'parent') {
+          query += ` AND (
+            cs.class_id IN (
+              SELECT ce.class_id
+              FROM class_enrollments ce
+              JOIN parent_student_links psl ON psl.student_user_id = ce.user_id
+              WHERE psl.parent_user_id = ?
+                AND psl.verification_status = 'verified'
+                AND ce.status = 'active'
+            )
+            OR EXISTS (
+              SELECT 1
+              FROM json_each(CASE WHEN json_valid(cs.student_ids) THEN cs.student_ids ELSE '[]' END) ids
+              JOIN parent_student_links psl ON psl.student_user_id = ids.value
+              WHERE psl.parent_user_id = ? AND psl.verification_status = 'verified'
+            )
+          )`;
+          params.push(auth.user.id, auth.user.id);
+        } else {
+          return json({ success: false, error: 'Forbidden: Vai trò này không có quyền xem thời khóa biểu' }, { status: 403 });
+        }
+      }
       if (classId) {
-        query += ' AND class_id = ?';
+        query += ' AND cs.class_id = ?';
         params.push(classId);
       }
       if (teacherId) {
-        query += ' AND (teacher_id = ? OR assistant_teacher_id = ? OR substitute_teacher_id = ?)';
+        query += ' AND (cs.teacher_id = ? OR cs.assistant_teacher_id = ? OR cs.substitute_teacher_id = ?)';
         params.push(teacherId, teacherId, teacherId);
       }
-      query += ' ORDER BY session_date DESC, start_time ASC';
+      query += ' ORDER BY cs.session_date DESC, cs.start_time ASC';
 
       const d1Res = await platform.env.DB.prepare(query).bind(...params).all();
       const rows = (d1Res?.results || []).map(formatSessionRow);
@@ -57,6 +99,18 @@ export async function GET({ url, request, platform }) {
 
     const sessions = getAllClassSessions();
     let filtered = sessions;
+    if (!isManager(auth.user)) {
+      const role = String(auth.user.role || '').toLowerCase();
+      if (role === 'teacher') {
+        filtered = filtered.filter(s => [s.teacher_id, s.assistant_teacher_id, s.substitute_teacher_id].includes(auth.user.id));
+      } else if (role === 'student') {
+        filtered = filtered.filter(s => Array.isArray(s.student_ids) && s.student_ids.includes(auth.user.id));
+      } else {
+        // Parent links cannot be verified without D1, so fail closed instead of
+        // returning another family's schedule from fixture data.
+        return json({ success: false, error: 'DatabaseUnavailable: Không thể xác minh lịch của học sinh liên kết' }, { status: 503 });
+      }
+    }
     if (classId) filtered = filtered.filter(s => s.class_id === classId);
     if (teacherId) filtered = filtered.filter(s => s.teacher_id === teacherId || s.assistant_teacher_id === teacherId);
 

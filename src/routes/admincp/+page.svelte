@@ -160,9 +160,9 @@
 
 <div class="min-h-screen bg-slate-50 text-slate-900 font-sans p-4 sm:p-6 lg:p-8 space-y-6 transition-colors duration-150">
  <!-- Top AdminCP Bar -->
- <header class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+ <header class="bg-white border border-slate-200 rounded-lg p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
  <div class="flex items-center gap-3">
- <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-rose-600 via-amber-600 to-indigo-600 flex items-center justify-center text-white font-black text-2xl shadow-md shadow-rose-600/20">
+ <div class="w-12 h-12 rounded-md bg-slate-800 flex items-center justify-center text-white font-semibold text-2xl shadow-sm">
  ⚡
  </div>
  <div>
@@ -170,7 +170,7 @@
  <span class="text-xs font-bold uppercase tracking-wider text-rose-600">Ms. Dung Master AdminCP</span>
  <span class="text-[10px] px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 font-bold border border-rose-200">SUPERADMIN</span>
  </div>
- <h1 class="text-xl sm:text-2xl font-heading font-black text-slate-900">Trung Tâm Điều Hành Tối Cao Toàn Hệ Thống</h1>
+ <h1 class="text-xl sm:text-2xl font-heading font-semibold text-slate-900">Trung Tâm Điều Hành Tối Cao Toàn Hệ Thống</h1>
  </div>
  </div>
 
@@ -178,23 +178,23 @@
  <div class="flex flex-wrap items-center gap-2">
  <button 
  onclick={toggleLanguage}
- class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-800 transition-all border border-slate-200"
+ class="px-3 py-1.5 rounded-md bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-800 transition-all border border-slate-200"
  >
  {lang === 'vi' ? '🇻🇳 Tiếng Việt' : '🇬🇧 English'}
  </button>
- <a href="/cpanel/student" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-cx-700 transition-all border border-slate-200">
+ <a href="/cpanel/student" class="px-3 py-1.5 rounded-md bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-cx-700 transition-all border border-slate-200">
  🎒 Học Sinh
  </a>
- <a href="/cpanel/parent" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-emerald-700 transition-all border border-slate-200">
+ <a href="/cpanel/parent" class="px-3 py-1.5 rounded-md bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-emerald-700 transition-all border border-slate-200">
  👨‍👩‍👧 Phụ Huynh
  </a>
- <a href="/cpanel/teacher" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-amber-700 transition-all border border-slate-200">
+ <a href="/cpanel/teacher" class="px-3 py-1.5 rounded-md bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-amber-700 transition-all border border-slate-200">
  👩‍🏫 Giáo Viên
  </a>
- <a href="/cpanel/leader" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-indigo-700 transition-all border border-slate-200">
+ <a href="/cpanel/leader" class="px-3 py-1.5 rounded-md bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-indigo-700 transition-all border border-slate-200">
  👑 Leader &amp; Bài Test
  </a>
- <a href="/" class="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-xs font-semibold text-white shadow-sm transition-all">
+ <a href="/" class="px-3 py-1.5 rounded-md bg-rose-600 hover:bg-rose-700 text-xs font-semibold text-white shadow-sm transition-all">
  🏠 Trang Chủ
  </a>
  </div>
@@ -202,58 +202,58 @@
 
  <!-- Metrics Grid -->
  <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
- <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+ <div class="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
  <div class="text-xs font-bold text-slate-700 uppercase tracking-wider">Cơ Sở Dạy Học</div>
- <div class="text-3xl font-heading font-black text-rose-600 mt-1">{campuses.length}</div>
+ <div class="text-2xl font-semibold text-rose-600 mt-1">{campuses.length}</div>
  <div class="text-[11px] text-slate-600 font-medium mt-1">Đa điểm liên kết</div>
  </div>
- <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+ <div class="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
  <div class="text-xs font-bold text-slate-700 uppercase tracking-wider">Sự Kiện Trực Tiếp</div>
- <div class="text-3xl font-heading font-black text-amber-600 mt-1">{streams.length}</div>
+ <div class="text-2xl font-semibold text-amber-600 mt-1">{streams.length}</div>
  <div class="text-[11px] text-slate-600 font-medium mt-1">Ghi nhận đa cơ sở</div>
  </div>
- <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+ <div class="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
  <div class="text-xs font-bold text-slate-700 uppercase tracking-wider">Bài Tập Về Nhà</div>
- <div class="text-3xl font-heading font-black text-cx-600 mt-1">{assignments.length}</div>
+ <div class="text-2xl font-semibold text-cx-600 mt-1">{assignments.length}</div>
  <div class="text-[11px] text-slate-600 font-medium mt-1">Đã phát hành</div>
  </div>
- <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+ <div class="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
  <div class="text-xs font-bold text-slate-700 uppercase tracking-wider">Bài Nộp Học Sinh</div>
- <div class="text-3xl font-heading font-black text-emerald-600 mt-1">{submissions.length}</div>
+ <div class="text-2xl font-semibold text-emerald-600 mt-1">{submissions.length}</div>
  <div class="text-[11px] text-slate-600 font-medium mt-1">Viết tay &amp; Ghi âm nói</div>
  </div>
  </div>
 
  <!-- Navigation Tabs -->
- <div class="flex flex-wrap items-center justify-between gap-3 bg-white p-2 rounded-2xl border border-slate-200 shadow-sm">
+ <div class="flex flex-wrap items-center justify-between gap-3 bg-white p-2 rounded-lg border border-slate-200 shadow-sm">
  <div class="flex items-center gap-1 overflow-x-auto">
  <button 
  onclick={() => activeTab = 'campuses'}
- class="px-4 py-2 rounded-xl text-xs font-bold transition-all {activeTab === 'campuses' ? 'bg-rose-600 text-white shadow-sm' : 'text-slate-700 hover:bg-slate-100'}"
+ class="px-4 py-2 rounded-md text-xs font-bold transition-all {activeTab === 'campuses' ? 'bg-rose-600 text-white shadow-sm' : 'text-slate-700 hover:bg-slate-100'}"
  >
  🏢 Quản Lý Cơ Sở Đa Điểm ({campuses.length})
  </button>
  <button 
  onclick={() => activeTab = 'streams'}
- class="px-4 py-2 rounded-xl text-xs font-bold transition-all {activeTab === 'streams' ? 'bg-rose-600 text-white shadow-sm' : 'text-slate-700 hover:bg-slate-100'}"
+ class="px-4 py-2 rounded-md text-xs font-bold transition-all {activeTab === 'streams' ? 'bg-rose-600 text-white shadow-sm' : 'text-slate-700 hover:bg-slate-100'}"
  >
  📡 Dòng Hoạt Động Thời Gian Thực ({streams.length})
  </button>
  <button 
  onclick={() => activeTab = 'cross_reminders'}
- class="px-4 py-2 rounded-xl text-xs font-bold transition-all {activeTab === 'cross_reminders' ? 'bg-rose-600 text-white shadow-sm' : 'text-slate-700 hover:bg-slate-100'}"
+ class="px-4 py-2 rounded-md text-xs font-bold transition-all {activeTab === 'cross_reminders' ? 'bg-rose-600 text-white shadow-sm' : 'text-slate-700 hover:bg-slate-100'}"
  >
  🔔 Nhắc Nhở Chéo (Cross-Reminders)
  </button>
  <button 
  onclick={() => activeTab = 'storage_audit'}
- class="px-4 py-2 rounded-xl text-xs font-bold transition-all {activeTab === 'storage_audit' ? 'bg-rose-600 text-white shadow-sm' : 'text-slate-700 hover:bg-slate-100'}"
+ class="px-4 py-2 rounded-md text-xs font-bold transition-all {activeTab === 'storage_audit' ? 'bg-rose-600 text-white shadow-sm' : 'text-slate-700 hover:bg-slate-100'}"
  >
  📁 Cây Thư Mục &amp; Audit Bài Nộp
  </button>
  <button 
  onclick={() => activeTab = 'theme'}
- class="px-4 py-2 rounded-xl text-xs font-bold transition-all {activeTab === 'theme' ? 'bg-rose-600 text-white shadow-sm' : 'text-slate-700 hover:bg-slate-100'}"
+ class="px-4 py-2 rounded-md text-xs font-bold transition-all {activeTab === 'theme' ? 'bg-rose-600 text-white shadow-sm' : 'text-slate-700 hover:bg-slate-100'}"
  >
  🎨 Giao Diện &amp; Màu Sắc
  </button>
@@ -264,7 +264,7 @@
  <span class="text-xs text-slate-700 font-semibold">Lọc cơ sở:</span>
  <select 
  bind:value={selectedCampusFilter}
- class="text-xs font-bold bg-slate-50 text-slate-800 px-3 py-1.5 rounded-xl border border-slate-200 focus:outline-none"
+ class="text-xs font-bold bg-slate-50 text-slate-800 px-3 py-1.5 rounded-md border border-slate-200 focus:outline-none"
  >
  <option value="all">🌐 Toàn bộ cơ sở</option>
  {#each campuses as c}
@@ -278,7 +278,7 @@
  {#if activeTab === 'campuses'}
  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
  {#each campuses as campus}
- <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-3 flex flex-col justify-between">
+ <div class="bg-white border border-slate-200 rounded-lg p-5 shadow-sm space-y-3 flex flex-col justify-between">
  <div>
  <div class="flex items-center justify-between">
  <span class="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-700 font-mono font-bold text-xs border border-rose-200">
@@ -288,7 +288,7 @@
  <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Đang hoạt động
  </span>
  </div>
- <h3 class="text-base font-heading font-black text-slate-900 mt-2">{campus.name}</h3>
+ <h3 class="text-base font-heading font-semibold text-slate-900 mt-2">{campus.name}</h3>
  <p class="text-xs text-slate-600 font-normal mt-1">📍 {campus.address}</p>
  <div class="text-xs text-slate-600 mt-2 font-medium">
  Hotline: <strong class="text-slate-800">{campus.hotline || 'Chưa cập nhật'}</strong>
@@ -305,10 +305,10 @@
 
  <!-- TAB 2: REALTIME ACTIVITY STREAMS -->
  {:else if activeTab === 'streams'}
- <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
+ <div class="bg-white border border-slate-200 rounded-lg p-6 shadow-sm space-y-4">
  <div class="flex items-center justify-between border-b border-slate-100 pb-3">
  <div>
- <h2 class="text-base font-heading font-black text-slate-900 flex items-center gap-2">
+ <h2 class="text-base font-heading font-semibold text-slate-900 flex items-center gap-2">
  <span>📡 Dòng Sự Kiện Đa Cơ Sở Chồng Chéo</span>
  <span class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span>
  </h2>
@@ -324,7 +324,7 @@
  <div class="space-y-3 max-h-[500px] overflow-y-auto pr-2">
  {#each filteredStreams as stm}
  {@const campusObj = campuses.find(c => c.id === stm.campus_id)}
- <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex items-start justify-between gap-4">
+ <div class="p-4 rounded-lg bg-slate-50 border border-slate-200 flex items-start justify-between gap-4">
  <div class="space-y-1">
  <div class="flex items-center gap-2">
  <span class="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-rose-50 text-rose-700 border border-rose-200">
@@ -350,14 +350,14 @@
 
  <!-- TAB 3: CROSS REMINDERS SYSTEM -->
  {:else if activeTab === 'cross_reminders'}
- <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-6 max-w-4xl mx-auto">
+ <div class="bg-white border border-slate-200 rounded-lg p-6 shadow-sm space-y-6 max-w-4xl mx-auto">
  <div class="border-b border-slate-100 pb-4">
- <h2 class="text-lg font-heading font-black text-slate-900">🔔 Cơ Chế Nhắc Nhở Chéo (Cross-Reminders Engine)</h2>
+ <h2 class="text-lg font-heading font-semibold text-slate-900">🔔 Cơ Chế Nhắc Nhở Chéo (Cross-Reminders Engine)</h2>
  <p class="text-xs text-slate-600 mt-1 font-normal">Tự động giám sát thời hạn làm bài tập của học sinh và tiến độ chấm bài của giáo viên.</p>
  </div>
 
  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
- <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+ <div class="p-4 rounded-lg bg-slate-50 border border-slate-200 space-y-2">
  <div class="font-bold text-amber-700 flex items-center gap-1.5">
  <span>⏰ 1. Nhắc Học Sinh &amp; Phụ Huynh</span>
  </div>
@@ -366,7 +366,7 @@
  </p>
  </div>
 
- <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+ <div class="p-4 rounded-lg bg-slate-50 border border-slate-200 space-y-2">
  <div class="font-bold text-rose-700 flex items-center gap-1.5">
  <span>👩‍🏫 2. Nhắc Giáo Viên Chậm Chấm Bài</span>
  </div>
@@ -376,7 +376,7 @@
  </div>
  </div>
 
- <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+ <div class="p-4 rounded-lg bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
  <div>
  <div class="font-bold text-slate-900 text-xs">Kích hoạt quét toàn bộ BTVN &amp; Bài nộp ngay bây giờ:</div>
  <div class="text-[11px] text-slate-600 font-medium">Quét deadline các lớp Lớp 7 Chuyên, Lớp 9, Lớp 12 trên toàn bộ cơ sở.</div>
@@ -384,14 +384,14 @@
  <button 
  onclick={triggerCrossRemindersScan}
  disabled={isScanning}
- class="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-sm disabled:opacity-50 whitespace-nowrap"
+ class="px-5 py-2.5 rounded-md bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-sm disabled:opacity-50 whitespace-nowrap"
  >
  {isScanning ? 'Đang quét hệ thống...' : '⚡ Chạy Quét Nhắc Nhở Chéo'}
  </button>
  </div>
 
  {#if scanToast}
- <div class="p-3 rounded-xl text-xs font-bold text-center bg-emerald-50 text-emerald-800 border border-emerald-200">
+ <div class="p-3 rounded-md text-xs font-bold text-center bg-emerald-50 text-emerald-800 border border-emerald-200">
  {scanToast}
  </div>
  {/if}
@@ -399,16 +399,16 @@
 
  <!-- TAB 4: STORAGE TREE AUDIT -->
  {:else if activeTab === 'storage_audit'}
- <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
+ <div class="bg-white border border-slate-200 rounded-lg p-6 shadow-sm space-y-4">
  <div class="border-b border-slate-100 pb-3">
- <h2 class="text-base font-heading font-black text-slate-900">📁 Cây Thư Mục Lưu Trữ BTVN &amp; Bài Nộp Chuẩn Hóa</h2>
+ <h2 class="text-base font-heading font-semibold text-slate-900">📁 Cây Thư Mục Lưu Trữ BTVN &amp; Bài Nộp Chuẩn Hóa</h2>
  <p class="text-xs text-slate-600 font-normal mt-0.5">Cấu trúc: <code>storage/homework/&lbrace;campus&rbrace;/&lbrace;class&rbrace;/&lbrace;session&rbrace;/&lbrace;student&rbrace;/&lbrace;assignment&rbrace;/</code></p>
  </div>
 
  <div class="space-y-3 font-mono text-xs">
  {#each submissions as sub}
  {@const assignment = assignments.find(a => a.id === sub.assignment_id)}
- <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+ <div class="p-4 rounded-lg bg-slate-50 border border-slate-200 space-y-2">
  <div class="flex items-center justify-between text-cx-700 font-semibold">
  <span>📂 storage/homework/{assignment?.campus_id || 'loc_codung'}/{assignment?.class_id || 'cls_g7'}/{assignment?.session_id || 'sess_01'}/{sub.student_id}/{sub.assignment_id}/</span>
  <span class="text-slate-500 text-[11px] font-sans font-medium">{new Date(sub.submitted_at).toLocaleDateString('vi-VN')}</span>
@@ -437,9 +437,9 @@
  </div>
  <!-- TAB 5: GIAO DIEN & MAU SAC -->
  {:else if activeTab === 'theme'}
- <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+ <div class="bg-white border border-slate-200 rounded-lg p-6 shadow-sm">
  <div class="border-b border-slate-100 pb-3 mb-4">
- <h2 class="text-base font-heading font-black text-slate-900">🎨 Giao Diện &amp; Màu Sắc Web</h2>
+ <h2 class="text-base font-heading font-semibold text-slate-900">🎨 Giao Diện &amp; Màu Sắc Web</h2>
  <p class="text-xs text-slate-600 font-normal mt-0.5">
  Chọn màu bên dưới để <b>xem trước trực tiếp</b> trên trang này.
  Bấm <b>💾 Lưu lên web</b> thì toàn bộ khách truy cập sẽ thấy màu mới.
@@ -461,7 +461,7 @@
  </div>
 
  {#if themeMsg}
- <div class="mt-4 p-3 rounded-xl text-xs font-bold text-center {themeMsg.startsWith('✓') ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-amber-50 text-amber-800 border border-amber-200'}">
+ <div class="mt-4 p-3 rounded-md text-xs font-bold text-center {themeMsg.startsWith('✓') ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-amber-50 text-amber-800 border border-amber-200'}">
  {themeMsg}
  </div>
  {/if}
@@ -470,7 +470,7 @@
  <button
  onclick={saveThemeGlobal}
  disabled={themeSaving || !themeDraft}
- class="px-5 py-2.5 rounded-xl text-sm font-black text-white bg-cx-600 hover:bg-cx-700 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm transition-all"
+ class="px-5 py-2.5 rounded-md text-sm font-semibold text-white bg-cx-600 hover:bg-cx-700 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm transition-all"
  >
  {themeSaving ? '⏳ Đang lưu...' : '💾 Lưu lên web'}
  </button>
@@ -478,7 +478,7 @@
  <button
  onclick={clearGlobalTheme}
  disabled={themeSaving}
- class="px-5 py-2.5 rounded-xl text-sm font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 disabled:opacity-40 transition-all"
+ class="px-5 py-2.5 rounded-md text-sm font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 disabled:opacity-40 transition-all"
  >
  ↩️ Về màu mặc định
  </button>
