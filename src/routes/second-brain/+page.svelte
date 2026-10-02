@@ -47,7 +47,12 @@
  const LOCAL_VAULT_PATH = 'c:\\Users\\admin\\.gemini\\antigravity\\scratch\\tienganh7-sveltekit\\obsidian_vault';
 
  async function loadVault() {
+ try {
  currentUser = getCurrentUser();
+ } catch (e) {
+ console.error('getCurrentUser failed:', e);
+ currentUser = null;
+ }
  if (!currentUser || !isTeacherOrAdmin(currentUser)) {
  isForbidden = true;
  isLoading = false;
@@ -63,13 +68,19 @@
  return;
  }
 
+ // AbortController: tránh treo mãi nếu fetch không bao giờ resolve
+ const ctrl = new AbortController();
+ const timeoutId = setTimeout(() => ctrl.abort(), 20000);
+
  try {
  isLoading = true;
  const res = await fetch('/api/second-brain', {
  headers: {
  'Authorization': `Bearer ${token}`
- }
+ },
+ signal: ctrl.signal
  });
+ clearTimeout(timeoutId);
 
  if (res.status === 401 || res.status === 403) {
  isForbidden = true;
@@ -92,10 +103,11 @@
  vaultNotes = [];
  }
  } catch (err) {
- errorMessage = err.message || 'Lỗi kết nối';
+ errorMessage = err.name === 'AbortError' ? 'Hết thời gian chờ server (20s). Kiểm tra kết nối mạng rồi thử lại.' : (err.message || 'Lỗi kết nối');
  isForbidden = true;
  vaultNotes = [];
  } finally {
+ clearTimeout(timeoutId);
  isLoading = false;
  }
  }
