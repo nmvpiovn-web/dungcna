@@ -232,26 +232,26 @@ def classify(name, folder_path, mime_type="", size=0):
         if 1 <= g <= 12:
             grade = f"Lớp {g}"
 
-    # ---- category theo keyword (ưu tiên tên file rồi đến folder)
+    # ---- category theo keyword (uu tien tu khoa dac thu truoc)
     category = "document"
     tags = ["google_drive"]
     rules = [
+        ("ielts", [r"\bielts\b"]),
+        ("toeic", [r"\btoeic\b"]),
+        ("hsg", [r"\bhsg\b", r"olympic", r"chuyen",
+                 r"hoc[_\-\s]?sinh[_\-\s]?gioi"]),
+        ("listening", [r"listening", r"luyen[_\-\s]?nghe", r"\baudio\b",
+                        r"luyennghe"]),
         ("exam", [r"de[_\-\s]?thi", r"\bexam\b", r"\btest\b",
                   r"kiem[_\-\s]?tra", r"bai[_\-\s]?kiem", r"dethi"]),
         ("vocabulary", [r"tu[_\-\s]?vung", r"\bvocab\w*", r"\bwords?\b",
                         r"flashcard", r"tuvung"]),
         ("grammar", [r"ngu[_\-\s]?phap", r"\bgrammar\b", r"nguphap"]),
-        ("listening", [r"listening", r"luyen[_\-\s]?nghe", r"\baudio\b",
-                        r"luyennghe"]),
-        ("ielts", [r"\bielts\b"]),
-        ("toeic", [r"\btoeic\b"]),
-        ("hsg", [r"\bhsg\b", r"olympic", r"chuyen", r"\bhsg\b",
-                 r"hoc[_\-\s]?sinh[_\-\s]?gioi"]),
         ("teaching", [r"giao[_\-\s]?an", r"lesson[_\-\s]?plan",
                       r"bai[_\-\s]?giang", r"\bsop\b", r"giaoan"]),
         ("curriculum", [r"giao[_\-\s]?trinh", r"\bcurriculum\b", r"\bgdpt\b",
                         r"\bsgk\b", r"giaotrinh"]),
-        ("worksheet", [r"worksheet"]),
+        ("worksheet", [r"worksheet", r"bai[_\-\s]?tap", r"baitap"]),
         ("speaking", [r"speaking", r"luyen[_\-\s]?noi"]),
         ("reading", [r"\breading\b", r"luyen[_\-\s]?doc", r"doc[_\-\s]?hieu"]),
         ("writing", [r"\bwriting\b", r"luyen[_\-\s]?viet"]),
