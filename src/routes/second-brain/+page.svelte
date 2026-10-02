@@ -19,6 +19,7 @@
  let copiedPath = $state(false);
  let syncing = $state(false);
  let syncResult = $state('');
+ let debugStep = $state('init');
 
  async function syncDatabase() {
   if (syncing) return;
@@ -47,9 +48,13 @@
  const LOCAL_VAULT_PATH = 'c:\\Users\\admin\\.gemini\\antigravity\\scratch\\tienganh7-sveltekit\\obsidian_vault';
 
  async function loadVault() {
+ debugStep = 'loadVault start';
  try {
+ debugStep = 'getCurrentUser...';
  currentUser = getCurrentUser();
+ debugStep = 'user=' + (currentUser ? currentUser.username + '/' + currentUser.role : 'null');
  } catch (e) {
+ debugStep = 'getCurrentUser ERROR: ' + e.message;
  console.error('getCurrentUser failed:', e);
  currentUser = null;
  }
@@ -61,6 +66,7 @@
  }
 
  const token = getAuthToken();
+ debugStep = 'token=' + (token ? 'yes(' + token.length + ' chars)' : 'null');
  if (!token) {
  isForbidden = true;
  isLoading = false;
@@ -74,6 +80,7 @@
 
  try {
  isLoading = true;
+ debugStep = 'fetching /api/second-brain...';
  const res = await fetch('/api/second-brain', {
  headers: {
  'Authorization': `Bearer ${token}`
@@ -81,6 +88,7 @@
  signal: ctrl.signal
  });
  clearTimeout(timeoutId);
+ debugStep = 'fetch done, status=' + res.status;
 
  if (res.status === 401 || res.status === 403) {
  isForbidden = true;
@@ -90,6 +98,7 @@
  }
 
  const data = await res.json();
+ debugStep = 'json parsed, success=' + data.success + ', notes=' + (data.notes ? data.notes.length : 'n/a');
  if (data.success) {
  vaultNotes = data.notes || [];
  vaultFolders = data.folders || [];
@@ -103,6 +112,7 @@
  vaultNotes = [];
  }
  } catch (err) {
+ debugStep = 'CATCH: ' + err.name + ': ' + err.message;
  errorMessage = err.name === 'AbortError' ? 'Hết thời gian chờ server (20s). Kiểm tra kết nối mạng rồi thử lại.' : (err.message || 'Lỗi kết nối');
  isForbidden = true;
  vaultNotes = [];
@@ -441,6 +451,7 @@
  <div class="max-w-2xl mx-auto my-24 p-8 text-center space-y-4">
  <div class="w-12 h-12 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
  <p class="text-sm font-bold text-slate-500">Đang nạp kho tri thức bảo mật từ server...</p>
+ <p class="text-xs text-slate-400 font-mono">debug: {debugStep}</p>
  </div>
  {:else if isForbidden || !currentUser || !isTeacherOrAdmin(currentUser)}
  <!-- Restricted Access Warning for Students / Guests -->
