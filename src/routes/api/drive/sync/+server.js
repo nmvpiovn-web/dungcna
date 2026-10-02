@@ -9,7 +9,7 @@ import { getServiceAccountToken, hasServiceAccount } from '$lib/server/googleSer
 export const prerender = false;
 const DEFAULT_FOLDER = '1_V4YUCuTJ4uui49S6AfcaI8lZmIszKou';
 const MAX_FILE_CONTENT = 20000; // giới hạn ký tự mỗi file
-const MAX_FILES = 100;
+const MAX_FILES = 500;
 
 async function getAuth(platform) {
   // Ưu tiên 1: Service Account
@@ -84,6 +84,53 @@ function mdEscape(s) {
   return String(s || '').replace(/[#*`\[\]]/g, '').substring(0, MAX_FILE_CONTENT);
 }
 
+// Tự động phân loại file dựa trên tên folder và tên file
+// Trả về { grade, category, tags }
+function autoClassify(fileName, folderPath) {
+  const text = `${folderPath} ${fileName}`.toLowerCase();
+  let grade = null;
+  let category = 'document';
+  const tags = ['google_drive'];
+
+  // Detect grade: "lop 7", "lớp 7", "grade 7", "l07", "khoi 7"
+  const gradeMatch = text.match(/(?:lop|lớp|grade|khoi|khối|l)\s*[_-]?\s*(\d{1,2})/);
+  if (gradeMatch) {
+    const g = parseInt(gradeMatch[1]);
+    if (g >= 1 && g <= 12) grade = `Lớp ${g}`;
+  }
+
+  // Detect category từ keywords
+  if (/de[_-]?thi|exam|test|kiem[_-]?tra/.test(text)) {
+    category = 'exam';
+    tags.push('de_thi');
+  } else if (/tu[_-]?vung|vocab|word|flashcard/.test(text)) {
+    category = 'vocabulary';
+    tags.push('tu_vung');
+  } else if (/ngu[_-]?phap|grammar/.test(text)) {
+    category = 'grammar';
+    tags.push('ngu_phap');
+  } else if (/nghe|listening|audio|mp3/.test(text)) {
+    category = 'listening';
+    tags.push('luyen_nghe');
+  } else if (/ielts/.test(text)) {
+    category = 'ielts';
+    tags.push('ielts');
+  } else if (/toeic/.test(text)) {
+    category = 'toeic';
+    tags.push('toeic');
+  } else if (/hsg|olympic|chuyen/.test(text)) {
+    category = 'hsg';
+    tags.push('hsg');
+  } else if (/giao[_-]?an|lesson[_-]?plan|sop/.test(text)) {
+    category = 'teaching';
+    tags.push('giao_an');
+  }
+
+  if (grade) tags.push(grade.toLowerCase().replace(' ', '_'));
+
+  return { grade, category, tags };
+}
+
 export async function POST({ request, platform }) {
   const auth = await verifyServerAuth(request, platform);
   if (!auth.authenticated) return json({ success: false, error: 'Unauthorized' }, { status: 401 });
@@ -102,8 +149,8 @@ export async function POST({ request, platform }) {
   const stats = { folders: 0, files: 0, with_content: 0, skipped: 0 };
   const errors = [];
 
-  async function syncFolder(fid, depth = 0) {
-    if (depth > 3 || stats.files >= MAX_FILES) return;
+  async function syncFolder(fid, depth = 0, folderPath = '') {
+    if (depth > 5 || stats.files >= MAX_FILES) return;
     let pageToken = '';
     do {
       const data = await listFiles(fid, driveAuth, pageToken);
@@ -115,6 +162,7 @@ export async function POST({ request, platform }) {
         if (stats.files >= MAX_FILES) break;
         const vid = `db_drive_${f.id}`;
         const isFolder = f.mimeType === 'application/vnd.google-apps.folder';
+        const currentPath = folderPath ? `${folderPath}/${f.name}` : f.name;
 
         if (isFolder) {
           stats.folders++;
@@ -127,17 +175,19 @@ export async function POST({ request, platform }) {
               ON CONFLICT(id) DO UPDATE SET title=excluded.title, content_markdown=excluded.content_markdown, updated_at=CURRENT_TIMESTAMP
             `).bind(vid, `📁 ${f.name}`, '07_GOOGLE_DRIVE_LIBRARY', 'drive_folder', JSON.stringify(['google_drive']), `drive://${f.id}`, `drive_${f.id}`, md).run();
           } catch (e) { errors.push(`folder ${f.id}: ${e.message}`); }
-          if (recursive) await syncFolder(f.id, depth + 1);
+          if (recursive) await syncFolder(f.id, depth + 1, currentPath);
           continue;
         }
 
-        // File: lấy nội dung text nếu export được
+        // File: tự động phân loại theo tên folder + tên file
+        const cls = autoClassify(f.name, folderPath);
         const content = await exportDocText(f.id, f.mimeType, driveAuth);
         stats.files++;
         if (content) stats.with_content++; else stats.skipped++;
 
         const md = `# ${mdEscape(f.name)}\n\n` +
           `- **Loại:** ${f.mimeType}\n` +
+          `- **Phân loại:** ${cls.category}${cls.grade ? ` / ${cls.grade}` : ''}\n` +
           `- **Cập nhật:** ${f.modifiedTime || '—'}\n\n` +
           (content ? `---\n\n${mdEscape(content)}\n\n---\n\n` : `*(Không trích xuất được nội dung text — xem bản gốc trên Drive)*\n\n`) +
           `🔗 [Mở file gốc trên Drive](${f.webViewLink || '#'})\n\n` +
@@ -147,25 +197,56 @@ export async function POST({ request, platform }) {
           await db.prepare(`
             INSERT INTO knowledge_vault (id, title, folder, category, tags, source_path, source_hash, content_markdown, status)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'published')
-            ON CONFLICT(id) DO UPDATE SET title=excluded.title, content_markdown=excluded.content_markdown, updated_at=CURRENT_TIMESTAMP
-          `).bind(vid, f.name, '07_GOOGLE_DRIVE_LIBRARY', 'drive_file', JSON.stringify(['google_drive', f.mimeType]), `drive://${f.id}`, `drive_${f.id}`, md).run();
+            ON CONFLICT(id) DO UPDATE SET title=excluded.title, category=excluded.category, tags=excluded.tags, content_markdown=excluded.content_markdown, updated_at=CURRENT_TIMESTAMP
+          `).bind(vid, f.name, '07_GOOGLE_DRIVE_LIBRARY', cls.category, JSON.stringify(cls.tags), `drive://${f.id}`, `drive_${f.id}`, md).run();
         } catch (e) { errors.push(`file ${f.id}: ${e.message}`); }
       }
       pageToken = data.nextPageToken || '';
     } while (pageToken && stats.files < MAX_FILES);
   }
 
+  // Tạo log entry
+  let logId = null;
+  try {
+    const logRes = await db.prepare(`
+      INSERT INTO drive_sync_logs (direction, folder_id, triggered_by, status)
+      VALUES ('drive_to_db', ?, ?, 'running')
+    `).bind(folderId, auth.user?.username || 'manual').run();
+    logId = logRes.meta.last_row_id;
+  } catch {}
+
   try {
     await syncFolder(folderId);
     // Rebuild FTS
     try { await db.prepare(`INSERT INTO knowledge_fts(knowledge_fts) VALUES('rebuild')`).run(); } catch (e) { errors.push(`fts: ${e.message}`); }
+
+    // Cập nhật log hoàn thành
+    if (logId) {
+      try {
+        await db.prepare(`
+          UPDATE drive_sync_logs
+          SET finished_at = CURRENT_TIMESTAMP, status = 'completed',
+              files_scanned = ?, files_added = ?, files_updated = 0,
+              files_skipped = ?, files_failed = ?, errors = ?
+          WHERE id = ?
+        `).bind(stats.files + stats.folders, stats.files, stats.skipped, errors.length, JSON.stringify(errors.slice(0, 20)), logId).run();
+      } catch {}
+    }
+
     return json({
       success: true,
       message: `Đã sync ${stats.files} files + ${stats.folders} folders từ Drive vào kho tri thức (${stats.with_content} files có nội dung text)`,
       stats,
+      log_id: logId,
       errors: errors.slice(0, 10)
     });
   } catch (err) {
+    if (logId) {
+      try {
+        await db.prepare(`UPDATE drive_sync_logs SET finished_at = CURRENT_TIMESTAMP, status = 'failed', errors = ? WHERE id = ?`)
+          .bind(JSON.stringify([err.message]), logId).run();
+      } catch {}
+    }
     return json({ success: false, error: err.message, stats }, { status: 500 });
   }
 }
