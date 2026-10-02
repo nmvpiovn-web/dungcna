@@ -118,6 +118,32 @@
 
  let folderIdInput = $state('');
  const DEFAULT_FOLDER_ID = '1_V4YUCuTJ4uui49S6AfcaI8lZmIszKou';
+ let syncing = $state(false);
+ let syncMessage = $state('');
+
+ async function syncDriveToVault() {
+  if (syncing) return;
+  if (!confirm('Đồng bộ toàn bộ file trong folder hiện tại vào kho tri thức? (tối đa 100 files)')) return;
+  syncing = true; syncMessage = '';
+  try {
+   const token = getToken();
+   const res = await fetch('/api/drive/sync', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ folder_id: currentFolderId, recursive: true })
+   });
+   const data = await res.json();
+   if (data.success) {
+    syncMessage = '✅ ' + data.message;
+   } else {
+    syncMessage = '❌ ' + (data.error || 'Sync thất bại');
+   }
+  } catch (e) {
+   syncMessage = '❌ Lỗi: ' + e.message;
+  } finally {
+   syncing = false;
+  }
+ }
 
  function openFolderById() {
   const fid = folderIdInput.trim() || DEFAULT_FOLDER_ID;
@@ -194,8 +220,17 @@
      onclick={openFolderById}
      class="px-5 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-bold hover:bg-blue-700 whitespace-nowrap"
     >📂 Mở folder</button>
+    <button
+     onclick={syncDriveToVault}
+     disabled={syncing}
+     class="px-5 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 disabled:opacity-50 whitespace-nowrap"
+     title="Đồng bộ toàn bộ file trong folder hiện tại vào kho tri thức"
+    >{syncing ? '⏳ Đang sync...' : '🔄 Sync vào kho tri thức'}</button>
    </div>
    <p class="text-xs text-ink-500">Để trống = mở folder tài liệu tiếng Anh đã share sẵn.</p>
+   {#if syncMessage}
+    <div class="text-xs font-bold {syncMessage.startsWith('✅') ? 'text-emerald-600' : 'text-red-600'}">{syncMessage}</div>
+   {/if}
   </div>
 
   <!-- Breadcrumbs -->
