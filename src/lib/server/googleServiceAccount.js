@@ -29,8 +29,22 @@ let cachedToken = null;
 let cachedExpiry = 0;
 
 export async function getServiceAccountToken(platform) {
-  const email = platform?.env?.GOOGLE_SERVICE_ACCOUNT_EMAIL;
-  const privateKey = platform?.env?.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY;
+  let email = platform?.env?.GOOGLE_SERVICE_ACCOUNT_EMAIL;
+  let privateKey = platform?.env?.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY;
+
+  // Fallback: đọc từ D1 site_settings
+  if ((!email || !privateKey) && platform?.env?.DB) {
+    try {
+      const emailRow = await platform.env.DB.prepare(
+        `SELECT value FROM site_settings WHERE key = 'google_service_account_email' LIMIT 1`
+      ).first();
+      const keyRow = await platform.env.DB.prepare(
+        `SELECT value FROM site_settings WHERE key = 'google_service_account_private_key' LIMIT 1`
+      ).first();
+      if (emailRow?.value) email = emailRow.value;
+      if (keyRow?.value) privateKey = keyRow.value;
+    } catch {}
+  }
 
   if (!email || !privateKey) {
     return null; // Chưa cấu hình service account
@@ -93,7 +107,19 @@ export async function getServiceAccountToken(platform) {
   }
 }
 
-// Kiểm tra service account đã được cấu hình chưa
-export function hasServiceAccount(platform) {
-  return !!(platform?.env?.GOOGLE_SERVICE_ACCOUNT_EMAIL && platform?.env?.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY);
+// Kiểm tra service account đã được cấu hình chưa (env hoặc D1)
+export async function hasServiceAccount(platform) {
+  if (platform?.env?.GOOGLE_SERVICE_ACCOUNT_EMAIL && platform?.env?.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY) {
+    return true;
+  }
+  // Kiểm tra D1
+  if (platform?.env?.DB) {
+    try {
+      const row = await platform.env.DB.prepare(
+        `SELECT value FROM site_settings WHERE key = 'google_service_account_email' LIMIT 1`
+      ).first();
+      if (row?.value) return true;
+    } catch {}
+  }
+  return false;
 }

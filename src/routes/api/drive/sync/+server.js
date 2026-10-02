@@ -13,7 +13,7 @@ const MAX_FILES = 100;
 
 async function getAuth(platform) {
   // Ưu tiên 1: Service Account
-  if (hasServiceAccount(platform)) {
+  if (await hasServiceAccount(platform)) {
     const token = await getServiceAccountToken(platform);
     if (token) return { bearer: token };
   }

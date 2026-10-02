@@ -19,7 +19,7 @@ export async function GET({ url, request, platform }) {
   // Ưu tiên 1: Service Account (đọc được folder riêng tư đã share cho nó)
   let bearerToken = null;
   let authMethod = 'none';
-  if (hasServiceAccount(platform)) {
+  if (await hasServiceAccount(platform)) {
     bearerToken = await getServiceAccountToken(platform);
     if (bearerToken) authMethod = 'service_account';
   }
