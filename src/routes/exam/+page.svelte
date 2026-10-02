@@ -1145,23 +1145,23 @@
 
  <!-- LEVEL 2: Sub-Tree Hierarchy Pills for Active Group -->
  {#if activeExamGroup === 'k12'}
- <div class="pt-3 border-t border-line flex items-center gap-2 overflow-x-auto pb-1 text-xs">
+ <div class="pt-3 border-t border-line flex items-center gap-2 overflow-x-auto pb-1 text-xs" style="-webkit-overflow-scrolling: touch; touch-action: pan-x pan-y;">
  <span class="text-ink-500 font-bold uppercase text-[10px] whitespace-nowrap">Khối lớp con:</span>
  <button
  onclick={() => activeExamCategory = 'all'}
- class="px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-colors {activeExamCategory === 'all' ? 'bg-brand-600 text-white shadow-xs' : 'bg-surface-1 text-ink-500 hover:bg-line'}"
+ class="px-4 py-2.5 rounded-xl font-bold whitespace-nowrap transition-colors touch-manipulation {activeExamCategory === 'all' ? 'bg-brand-600 text-white shadow-xs' : 'bg-surface-1 text-ink-500 hover:bg-line'}"
  >
  Tất Cả K12
  </button>
  <button
  onclick={() => activeExamCategory = 'primary'}
- class="px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-colors {activeExamCategory === 'primary' ? 'bg-brand-600 text-white shadow-xs' : 'bg-surface-1 text-ink-500 hover:bg-line'}"
+ class="px-4 py-2.5 rounded-xl font-bold whitespace-nowrap transition-colors touch-manipulation {activeExamCategory === 'primary' ? 'bg-brand-600 text-white shadow-xs' : 'bg-surface-1 text-ink-500 hover:bg-line'}"
  >
  🎒 Tiểu Học (Lớp 1 - 5)
  </button>
  <button
  onclick={() => activeExamCategory = 'g6'}
- class="px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-colors {activeExamCategory === 'g6' ? 'bg-brand-600 text-white shadow-xs' : 'bg-surface-1 text-ink-500 hover:bg-line'}"
+ class="px-4 py-2.5 rounded-xl font-bold whitespace-nowrap transition-colors touch-manipulation {activeExamCategory === 'g6' ? 'bg-brand-600 text-white shadow-xs' : 'bg-surface-1 text-ink-500 hover:bg-line'}"
  >
  📚 Lớp 6 (THCS)
  </button>
@@ -1432,12 +1432,12 @@
  <span class="uppercase font-semibold">{ex.skill_category}</span>
  </div>
  </button>
- {#if isEnrolled}
+ {#if true}
  <button
  onclick={(e) => { e.stopPropagation(); handleSelectExam(ex); setTimeout(() => startExam(), 100); }}
- class="mt-2 w-full py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs shadow transition-all hover:scale-[1.02]"
+ class="mt-2 w-full py-2.5 rounded-xl {isEnrolled ? 'bg-brand-600 hover:bg-brand-500' : 'bg-amber-500 hover:bg-amber-400'} text-white font-bold text-xs shadow transition-all hover:scale-[1.02] active:scale-95"
  >
- 🚀 Thi Thử Ngay
+ {isEnrolled ? '🚀 Thi Thử Ngay' : '🔒 Thi Thử Ngay'}
  </button>
  {/if}
  </div>
