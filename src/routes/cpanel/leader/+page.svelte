@@ -7,6 +7,9 @@
  import { getCurrentUser, getAuthToken } from '$lib/unifiedStore';
  import { currentLang, toggleLanguage } from '$lib/i18n';
  import { playAudioFeedback } from '$lib/speech';
+ import LeaderUserManager from '$lib/components/LeaderUserManager.svelte';
+ import LeaderFinance from '$lib/components/LeaderFinance.svelte';
+ import LeaderNotifier from '$lib/components/LeaderNotifier.svelte';
 
  let currentUser = $state(null);
  let assignments = $state([]);
@@ -512,6 +515,24 @@
  class="whitespace-nowrap shrink-0 flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-md text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cx-500 {activeTab === 'payroll' ? 'bg-cx-600 text-white' : 'text-slate-600 hover:bg-slate-100'}"
  >
  <span>Khóa Sổ &amp; Bảng Lương</span>
+ </button>
+ <button
+ onclick={() => activeTab = 'users'}
+ class="whitespace-nowrap shrink-0 flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-md text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cx-500 {activeTab === 'users' ? 'bg-cx-600 text-white' : 'text-slate-600 hover:bg-slate-100'}"
+ >
+ <span>👥 Người Dùng</span>
+ </button>
+ <button
+ onclick={() => activeTab = 'finance'}
+ class="whitespace-nowrap shrink-0 flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-md text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cx-500 {activeTab === 'finance' ? 'bg-cx-600 text-white' : 'text-slate-600 hover:bg-slate-100'}"
+ >
+ <span>💰 Tài Chính</span>
+ </button>
+ <button
+ onclick={() => activeTab = 'notify'}
+ class="whitespace-nowrap shrink-0 flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-md text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cx-500 {activeTab === 'notify' ? 'bg-cx-600 text-white' : 'text-slate-600 hover:bg-slate-100'}"
+ >
+ <span>📢 Thông Báo</span>
  </button>
  </div>
 
@@ -1265,4 +1286,13 @@
  </div>
  </div>
  </div>
+
+ {:else if activeTab === 'users'}
+ <LeaderUserManager />
+
+ {:else if activeTab === 'finance'}
+ <LeaderFinance />
+
+ {:else if activeTab === 'notify'}
+ <LeaderNotifier />
 {/if}

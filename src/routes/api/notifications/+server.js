@@ -198,5 +198,28 @@ export async function POST({ request, platform }) {
     }
   }
 
+  if (action === 'create') {
+    // Chỉ leader/admin/superadmin được gửi thông báo hệ thống
+    const { isManager } = await import('../../../lib/server/auth.js');
+    if (!isManager(auth.user)) {
+      return json({ success: false, error: 'Forbidden: Chỉ quản lý mới được gửi thông báo hệ thống' }, { status: 403 });
+    }
+    const { title, body: notifBody, target_role, category } = body;
+    if (!title?.trim() || !notifBody?.trim()) {
+      return json({ success: false, error: 'Thiếu tiêu đề hoặc nội dung thông báo' }, { status: 400 });
+    }
+    try {
+      await ensureNotificationSchema(db);
+      const id = `notif_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+      await db.prepare(`
+        INSERT INTO system_notifications (id, target_role, target_user_id, title, body, category, is_read)
+        VALUES (?, ?, NULL, ?, ?, ?, 0)
+      `).bind(id, target_role || 'all', title.trim(), notifBody.trim(), category || 'general').run();
+      return json({ success: true, message: 'Đã gửi thông báo', id });
+    } catch (e) {
+      return json({ success: false, error: `DatabaseError: ${e.message}` }, { status: 503 });
+    }
+  }
+
   return json({ success: false, error: `Hành động không hợp lệ: '${action}'` }, { status: 400 });
 }

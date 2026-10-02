@@ -76,12 +76,23 @@ export async function PATCH({ request, platform }) {
   if (action === 'update_profile') return json({ success: false, error: 'DeprecatedEndpoint: Dùng /api/users/profile với profile_version CAS.' }, { status: 410 });
   if (GRADE_ACTIONS.has(action) && !isStaffUser(auth.user)) return json({ success: false, error: 'Forbidden: Chỉ staff được thay đổi phân lớp.' }, { status: 403 });
   if (action === 'request_class_transfer' && studentId !== auth.user.id && !isStaffUser(auth.user)) return json({ success: false, error: 'Forbidden: Không được tạo yêu cầu cho học sinh khác.' }, { status: 403 });
-  if (!GRADE_ACTIONS.has(action) && action !== 'request_class_transfer') return json({ success: false, error: `Hành động '${action}' không hợp lệ.` }, { status: 400 });
+  if (!GRADE_ACTIONS.has(action) && action !== 'request_class_transfer' && action !== 'set_status') return json({ success: false, error: `Hành động '${action}' không hợp lệ.` }, { status: 400 });
   const db = platform?.env?.DB;
   if (db) {
     try {
       const row = await db.prepare(`SELECT id,role,metadata,COALESCE(profile_version,0) profile_version FROM users WHERE id=? LIMIT 1`).bind(studentId).first();
       if (!row || row.role !== 'student') return json({ success: false, error: 'Không tìm thấy học sinh.' }, { status: 404 });
+      // Khóa/mở tài khoản — chỉ staff
+      if (action === 'set_status') {
+        if (!isStaffUser(auth.user)) return json({ success: false, error: 'Forbidden: Chỉ staff được khóa/mở tài khoản.' }, { status: 403 });
+        const status = String(body.status || '').trim();
+        if (!['active', 'locked', 'suspended'].includes(status)) return json({ success: false, error: 'Trạng thái không hợp lệ (active/locked/suspended).' }, { status: 400 });
+        const metadata = parseMetadata(row.metadata);
+        metadata.account_status = status;
+        const result = await db.prepare(`UPDATE users SET metadata=?,profile_version=COALESCE(profile_version,0)+1,updated_at=CURRENT_TIMESTAMP WHERE id=? AND COALESCE(profile_version,0)=?`).bind(JSON.stringify(metadata), studentId, row.profile_version).run();
+        if ((result?.meta?.changes ?? result?.changes ?? 0) !== 1) return json({ success: false, error: 'ConcurrencyConflict: Hồ sơ đã thay đổi.' }, { status: 409 });
+        return json({ success: true, action, student_id: studentId, status, profile_version: row.profile_version + 1 });
+      }
       const metadata = parseMetadata(row.metadata);
       const enrolled = Array.isArray(metadata.enrolled_grades) ? [...new Set(metadata.enrolled_grades)] : (metadata.grade ? [metadata.grade] : []);
       if (action === 'change_grade') {
