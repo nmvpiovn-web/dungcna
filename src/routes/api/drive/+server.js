@@ -15,11 +15,18 @@ export async function GET({ url, request, platform }) {
     return json({ success: false, error: 'Forbidden: Chỉ staff mới truy cập Drive' }, { status: 403 });
   }
 
-  const apiKey = platform?.env?.GOOGLE_DRIVE_API_KEY;
+  let apiKey = platform?.env?.GOOGLE_DRIVE_API_KEY;
+  // Fallback: key lưu trong D1 site_settings (nhập từ dashboard)
+  if (!apiKey && platform?.env?.DB) {
+    try {
+      const row = await platform.env.DB.prepare(`SELECT value FROM site_settings WHERE key = 'google_drive_api_key' LIMIT 1`).bind().first();
+      if (row?.value) apiKey = row.value;
+    } catch {}
+  }
   if (!apiKey) {
     return json({
       success: false,
-      error: 'Chưa cấu hình GOOGLE_DRIVE_API_KEY. Vào Cloudflare Pages > Settings > Environment Variables để thêm.',
+      error: 'Chưa cấu hình Google Drive API key. Nhập key ở ô bên dưới hoặc thêm GOOGLE_DRIVE_API_KEY vào Cloudflare Pages env.',
       needs_setup: true
     }, { status: 503 });
   }

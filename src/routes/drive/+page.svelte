@@ -11,6 +11,63 @@
  let breadcrumbs = $state([{ id: 'root', name: 'Drive của tôi' }]);
  let currentFolderId = $state('root');
  let debounceTimer = $state(null);
+ let apiKeyInput = $state('');
+ let savingKey = $state(false);
+ let keyMessage = $state('');
+ let hasKey = $state(false);
+
+ async function checkKeyStatus() {
+  try {
+   const token = getToken();
+   const res = await fetch('/api/drive/key', { headers: { Authorization: `Bearer ${token}` } });
+   const data = await res.json();
+   if (data.success) hasKey = data.configured;
+  } catch {}
+ }
+
+ async function saveApiKey() {
+  if (savingKey || !apiKeyInput.trim()) return;
+  savingKey = true; keyMessage = '';
+  try {
+   const token = getToken();
+   const res = await fetch('/api/drive/key', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ api_key: apiKeyInput.trim() })
+   });
+   const data = await res.json();
+   if (data.success) {
+    keyMessage = '✅ ' + data.message;
+    hasKey = true;
+    apiKeyInput = '';
+    // Tự động load lại files sau khi lưu key thành công
+    setTimeout(() => loadFiles(currentFolderId, search), 500);
+   } else {
+    keyMessage = '❌ ' + (data.error || 'Lưu thất bại');
+   }
+  } catch (e) {
+   keyMessage = '❌ Lỗi: ' + e.message;
+  } finally {
+   savingKey = false;
+  }
+ }
+
+ async function deleteApiKey() {
+  if (!confirm('Xóa Google Drive API key đã lưu?')) return;
+  try {
+   const token = getToken();
+   const res = await fetch('/api/drive/key', {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` }
+   });
+   const data = await res.json();
+   if (data.success) {
+    hasKey = false;
+    keyMessage = '✅ Đã xóa key';
+    loadFiles(currentFolderId, search);
+   }
+  } catch {}
+ }
 
  const isStaff = $derived(currentUser?.role === 'teacher' || currentUser?.role === 'admin' || currentUser?.role === 'superadmin' || currentUser?.role === 'leader');
 
@@ -83,6 +140,7 @@
    const u = JSON.parse(localStorage.getItem('currentUser') || 'null');
    currentUser = u;
   } catch {}
+  checkKeyStatus();
   loadFiles('root');
  });
 </script>
@@ -121,19 +179,40 @@
   </nav>
 
   {#if error}
-   <div class="rounded-xl bg-red-50 border border-red-200 p-5 text-sm text-red-700 space-y-2">
+   <div class="rounded-xl bg-red-50 border border-red-200 p-5 text-sm text-red-700 space-y-3">
     <div class="font-bold">⚠️ {error}</div>
-    {#if error.includes('GOOGLE_DRIVE_API_KEY')}
-     <div class="text-red-600">
-      <strong>Cách cấu hình:</strong>
+    <!-- Ô nhập Google Drive API Key -->
+    <div class="rounded-xl bg-white border border-red-200 p-4 space-y-3">
+     <div class="font-bold text-ink-900">🔑 Nhập Google Drive API Key</div>
+     <p class="text-xs text-ink-500">Key được lưu an toàn trên server, dùng để đồng bộ tài liệu Drive vào kho tri thức.</p>
+     <div class="flex flex-col sm:flex-row gap-2">
+      <input
+       type="password"
+       bind:value={apiKeyInput}
+       placeholder="AIzaSy..."
+       class="flex-1 px-4 py-2.5 rounded-xl border border-line bg-surface-1 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-brand-300"
+      />
+      <button
+       onclick={saveApiKey}
+       disabled={savingKey || !apiKeyInput.trim()}
+       class="px-5 py-2.5 rounded-xl bg-brand-600 text-white text-sm font-bold hover:bg-brand-700 disabled:opacity-50 whitespace-nowrap"
+      >{savingKey ? '⏳ Đang kiểm tra...' : '💾 Lưu key'}</button>
+     </div>
+     {#if keyMessage}
+      <div class="text-xs font-bold {keyMessage.startsWith('✅') ? 'text-emerald-600' : 'text-red-600'}">{keyMessage}</div>
+     {/if}
+     {#if hasKey}
+      <button onclick={deleteApiKey} class="text-xs text-red-600 underline">🗑️ Xóa key đã lưu</button>
+     {/if}
+     <details class="text-xs text-ink-500">
+      <summary class="cursor-pointer font-bold text-brand-600">Cách lấy API key</summary>
       <ol class="list-decimal ml-5 mt-1 space-y-1">
        <li>Vào <a href="https://console.cloud.google.com" target="_blank" rel="noopener" class="underline">Google Cloud Console</a> → tạo API Key → bật <strong>Google Drive API</strong></li>
-       <li>Chia sẻ folder Drive cần dùng với "Bất kỳ ai có link" (Viewer) — hoặc giới hạn theo HTTP referrer của API key</li>
-       <li>Vào Cloudflare Pages → <strong>tienganh7-pro</strong> → Settings → Environment Variables → thêm <code class="bg-red-100 px-1 rounded">GOOGLE_DRIVE_API_KEY</code></li>
-       <li>Redeploy để nhận biến môi trường mới</li>
+       <li>Chia sẻ folder Drive cần dùng với "Bất kỳ ai có link" (Viewer)</li>
+       <li>Dán key vào ô trên → Lưu (hệ thống tự kiểm tra key trước khi lưu)</li>
       </ol>
-     </div>
-    {/if}
+     </details>
+    </div>
     <button onclick={() => loadFiles(currentFolderId, search)} class="px-4 py-2 rounded-xl bg-red-600 text-white text-sm font-bold hover:bg-red-700">🔄 Thử lại</button>
    </div>
   {:else if loading}
