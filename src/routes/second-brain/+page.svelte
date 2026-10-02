@@ -2,12 +2,15 @@
  import { onMount } from 'svelte';
  import { getCurrentUser, getAuthToken, isTeacherOrAdmin, isSuperAdmin } from '$lib/unifiedStore';
 
+ // Dữ liệu từ server (+page.server.js) — tránh client fetch bị treo
+ let { data } = $props();
+
  let currentUser = $state(null);
- let vaultNotes = $state([]);
- let vaultFolders = $state([]);
- let vaultVersion = $state('2.2.0');
- let isLoading = $state(true);
- let isForbidden = $state(false);
+ let vaultNotes = $state(data?.notes || []);
+ let vaultFolders = $state(data?.folders || []);
+ let vaultVersion = $state(data?.version || '2.5.0-D1');
+ let isLoading = $state(!data || (!data.notes?.length && !data.forbidden));
+ let isForbidden = $state(!!data?.forbidden);
  let errorMessage = $state('');
 
  let searchQuery = $state('');
@@ -47,6 +50,18 @@
  const LOCAL_VAULT_PATH = 'c:\\Users\\admin\\.gemini\\antigravity\\scratch\\tienganh7-sveltekit\\obsidian_vault';
 
  async function loadVault() {
+ // Nếu server đã load dữ liệu (qua cookie), dùng luôn, không fetch lại
+ if (data && !data.forbidden && data.notes?.length > 0) {
+ try { currentUser = getCurrentUser(); } catch {}
+ if (currentUser && isTeacherOrAdmin(currentUser)) {
+ isLoading = false;
+ isForbidden = false;
+ // Vẫn fetch note detail cho note đang chọn
+ fetchNoteDetail(selectedNoteId);
+ return;
+ }
+ }
+
  // Guard: tránh 2 loadVault chạy chồng (onMount + auth-change event)
  if (loadVault._running) return;
  loadVault._running = true;
