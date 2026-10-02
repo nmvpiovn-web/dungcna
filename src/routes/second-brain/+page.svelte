@@ -201,6 +201,12 @@
  }
 
  onMount(() => {
+ // TẠM THỜI: unregister Service Worker để test xem có phải SW gây treo fetch không
+ if ('serviceWorker' in navigator) {
+ navigator.serviceWorker.getRegistrations().then(regs => {
+ regs.forEach(r => { console.log('[DEBUG] Unregistering SW:', r.scope); r.unregister(); });
+ });
+ }
  loadVault();
  const handleAuth = (e) => {
  currentUser = e.detail;
