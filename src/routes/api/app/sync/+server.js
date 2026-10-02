@@ -1,0 +1,97 @@
+// src/routes/api/app/sync/+server.js
+// Unified realtime sync endpoint for mobile app (APK/PWA)
+// GET /api/app/sync?since=<ISO timestamp> — returns all changes since timestamp
+import { json } from '@sveltejs/kit';
+import { verifyServerAuth } from '$lib/server/auth.js';
+
+export const prerender = false;
+
+export async function GET({ url, request, platform }) {
+  const auth = await verifyServerAuth(request, platform);
+  if (!auth.authenticated) {
+    return json({ success: false, error: 'Unauthorized' }, { status: 401 });
+  }
+  if (!platform?.env?.DB) {
+    return json({ success: false, error: 'DatabaseUnavailable' }, { status: 500 });
+  }
+
+  const db = platform.env.DB;
+  const since = url.searchParams.get('since') || '1970-01-01T00:00:00Z';
+  const user = auth.user;
+  const role = String(user.role || '').toLowerCase();
+  const now = new Date().toISOString();
+
+  const result = {
+    success: true,
+    server_time: now,
+    since,
+    changes: {
+      notifications: [],
+      schedule: [],
+      exams: [],
+      site_theme: null
+    }
+  };
+
+  try {
+    // 1. Notifications for this user/role
+    try {
+      const notifs = await db.prepare(`
+        SELECT id, title, body, category, reference_id, created_at
+        FROM system_notifications
+        WHERE created_at > ?
+          AND (target_user_id = ? OR target_role = ? OR target_role = 'all' OR target_user_id IS NULL)
+        ORDER BY created_at DESC LIMIT 50
+      `).bind(since, user.id, role).all();
+      result.changes.notifications = notifs.results || [];
+    } catch {}
+
+    // 2. Schedule changes (role-scoped)
+    try {
+      let schedQuery = `SELECT id, class_id, class_name, subject_topic, session_date, start_time, end_time, teacher_name, location, updated_at FROM class_sessions WHERE updated_at > ?`;
+      const params = [since];
+      if (role === 'teacher') {
+        schedQuery += ` AND (teacher_id = ? OR assistant_teacher_id = ? OR substitute_teacher_id = ?)`;
+        params.push(user.id, user.id, user.id);
+      } else if (role === 'student') {
+        schedQuery += ` AND class_id IN (SELECT class_id FROM class_enrollments WHERE user_id = ? AND status = 'active')`;
+        params.push(user.id);
+      } else if (role === 'parent') {
+        schedQuery += ` AND class_id IN (
+          SELECT ce.class_id FROM class_enrollments ce
+          JOIN parent_student_links psl ON psl.student_user_id = ce.user_id
+          WHERE psl.parent_user_id = ? AND psl.verification_status = 'verified' AND ce.status = 'active'
+        )`;
+        params.push(user.id);
+      }
+      // leader/admin/superadmin: no filter (all)
+      schedQuery += ` ORDER BY updated_at DESC LIMIT 100`;
+      const sched = await db.prepare(schedQuery).bind(...params).all();
+      result.changes.schedule = sched.results || [];
+    } catch {}
+
+    // 3. New/updated exams
+    try {
+      const exams = await db.prepare(`
+        SELECT id, title, grade, format_type, duration_minutes, created_at
+        FROM exams WHERE is_published = 1
+        ORDER BY created_at DESC LIMIT 20
+      `).all();
+      result.changes.exams = exams.results || [];
+    } catch {}
+
+    // 4. Current site theme (for app UI consistency)
+    try {
+      const theme = await db.prepare(`SELECT value FROM site_settings WHERE key = 'site_theme' LIMIT 1`).all();
+      if (theme.results?.[0]) {
+        try { result.changes.site_theme = JSON.parse(theme.results[0].value); } catch {}
+      }
+    } catch {}
+
+    return json(result, {
+      headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' }
+    });
+  } catch (err) {
+    return json({ success: false, error: err.message }, { status: 500 });
+  }
+}

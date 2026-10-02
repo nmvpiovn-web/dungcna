@@ -94,6 +94,16 @@
  }
 
  onMount(() => {
+ // PWA: Register Service Worker for app-like experience (offline, installable)
+ if ('serviceWorker' in navigator) {
+ navigator.serviceWorker.register('/sw.js').then((reg) => {
+ console.log('[PWA] SW registered:', reg.scope);
+ // Notify SW of auth token for authenticated caching if needed
+ }).catch((err) => {
+ console.warn('[PWA] SW registration failed:', err);
+ });
+ }
+
  // RB-C1 (2026-09-30): server-side admin guards redirect here with ?login=1
  // when the session is missing/insufficient. The repo has no dedicated /login
  // route — login happens via the global AuthModal, so open it automatically.
