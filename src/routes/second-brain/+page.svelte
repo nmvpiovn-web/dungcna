@@ -48,6 +48,12 @@
  const LOCAL_VAULT_PATH = 'c:\\Users\\admin\\.gemini\\antigravity\\scratch\\tienganh7-sveltekit\\obsidian_vault';
 
  async function loadVault() {
+ // Guard: tránh 2 loadVault chạy chồng (onMount + auth-change event)
+ if (loadVault._running) {
+ debugStep = 'loadVault skipped (already running)';
+ return;
+ }
+ loadVault._running = true;
  debugStep = 'loadVault start';
  try {
  debugStep = 'getCurrentUser...';
@@ -62,6 +68,7 @@
  isForbidden = true;
  isLoading = false;
  vaultNotes = [];
+ loadVault._running = false;
  return;
  }
 
@@ -71,6 +78,7 @@
  isForbidden = true;
  isLoading = false;
  vaultNotes = [];
+ loadVault._running = false;
  return;
  }
 
@@ -94,6 +102,7 @@
  isForbidden = true;
  isLoading = false;
  vaultNotes = [];
+ loadVault._running = false;
  return;
  }
 
@@ -125,6 +134,7 @@
  } finally {
  clearTimeout(timeoutId);
  isLoading = false;
+ loadVault._running = false;
  }
  }
 
