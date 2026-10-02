@@ -28,10 +28,9 @@
   if (!confirm('Mount toàn bộ database (đề thi, câu hỏi, từ vựng, chương trình) vào kho tri thức?')) return;
   syncing = true; syncResult = '';
   try {
-   const token = getAuthToken();
    const res = await fetch('/api/second-brain/sync', {
     method: 'POST',
-    headers: { Authorization: `Bearer ${token}` }
+    credentials: 'include'
    });
    const data = await res.json();
    if (data.success) {
@@ -81,19 +80,14 @@
  return;
  }
 
- const token = getAuthToken();
- if (!token) {
- isForbidden = true;
- vaultNotes = [];
- done();
- return;
- }
+ // Không cần kiểm tra token localStorage nữa — dùng cookie session_token
+ // (browser tự gửi với credentials: 'include')
 
  try {
  isLoading = true;
- // Timeout 30s bằng Promise.race để tránh treo vô hạn
+ // Dùng credentials: 'include' để gửi cookie session_token (browser tự động)
  const fetchPromise = fetch(`/api/second-brain?_t=${Date.now()}`, {
- headers: { 'Authorization': `Bearer ${token}` },
+ credentials: 'include',
  cache: 'no-store'
  });
  const timeoutPromise = new Promise((_, reject) =>
@@ -152,8 +146,6 @@
  }
 
  async function fetchVaultList() {
- const token = getAuthToken();
- if (!token) return;
  try {
  isSearching = true;
  let url = `/api/second-brain?limit=200`;
@@ -162,7 +154,8 @@
  if (selectedFolder !== 'all') url += `&folder=${encodeURIComponent(selectedFolder)}`;
 
  const res = await fetch(url, {
- headers: { 'Authorization': `Bearer ${token}` }
+ credentials: 'include',
+ cache: 'no-store'
  });
  const data = await res.json();
  if (data.success && Array.isArray(data.notes)) {
@@ -184,13 +177,11 @@
  const existing = vaultNotes.find(n => n.id === noteId);
  if (existing && existing.content && existing.wikilinks && existing.backlinks) return;
 
- const token = getAuthToken();
- if (!token) return;
-
  try {
  isNoteLoading = true;
- const res = await fetch(`/api/second-brain?id=${encodeURIComponent(noteId)}`, {
- headers: { 'Authorization': `Bearer ${token}` }
+ const res = await fetch(`/api/second-brain?id=${encodeURIComponent(noteId)}&_t=${Date.now()}`, {
+ credentials: 'include',
+ cache: 'no-store'
  });
  const data = await res.json();
  if (data.success && data.note) {
