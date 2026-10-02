@@ -191,10 +191,11 @@
  if (dayA !== dayB) return dayA - dayB;
  return a.start_time.localeCompare(b.start_time);
  });
- let calendarTimes = $derived.by(() => {
-   const values = filteredSessions.map((session) => session.start_time).filter(Boolean);
-   return [...new Set(values)].sort().slice(0, 8);
  });
+
+ let calendarTimes = $derived.by(() => {
+ const values = filteredSessions.map((session) => session.start_time).filter(Boolean);
+ return [...new Set(values)].sort().slice(0, 8);
  });
 
  // Test schedule reminder notification
