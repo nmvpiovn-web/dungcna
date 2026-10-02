@@ -100,12 +100,18 @@
  const data = await res.json();
  debugStep = 'json parsed, success=' + data.success + ', notes=' + (data.notes ? data.notes.length : 'n/a');
  if (data.success) {
+ debugStep = 'setting vaultNotes...';
  vaultNotes = data.notes || [];
+ debugStep = 'vaultNotes set, setting vaultFolders...';
  vaultFolders = data.folders || [];
+ debugStep = 'vaultFolders set, setting version...';
  vaultVersion = data.version || '2.5.0-D1';
+ debugStep = 'version set, clearing forbidden...';
  isForbidden = false;
+ debugStep = 'calling fetchNoteDetail...';
  // Fetch detailed content for active note
  fetchNoteDetail(selectedNoteId);
+ debugStep = 'fetchNoteDetail called, done.';
  } else {
  errorMessage = data.error || 'Lỗi khi tải kho tri thức';
  isForbidden = true;
