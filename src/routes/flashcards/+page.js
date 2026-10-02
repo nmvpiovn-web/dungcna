@@ -1,8 +1,26 @@
-import { getStaticWords, getStaticUnits } from '$lib/staticDb.js';
+import { getStaticUnits } from '$lib/staticDb.js';
 
-export function load() {
+export async function load({ fetch }) {
+  // Lấy từ vựng thật từ D1 qua API (fallback file tĩnh nếu lỗi)
+  let words = [];
+  try {
+    const res = await fetch('/api/vocabulary?limit=500');
+    const data = await res.json();
+    if (data.success && data.data) {
+      words = data.data;
+    }
+  } catch (e) {
+    console.error('[flashcards] API error:', e.message);
+  }
+
+  // Fallback: dùng static nếu API trống
+  if (words.length === 0) {
+    const { getStaticWords } = await import('$lib/staticDb.js');
+    words = getStaticWords();
+  }
+
   return {
-    words: getStaticWords(),
+    words,
     units: getStaticUnits()
   };
 }
