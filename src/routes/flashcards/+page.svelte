@@ -142,6 +142,9 @@
         dbg2 = `parse err: ${e.message}`;
       }
     };
+    xhr.onreadystatechange = () => {
+      if (xhr.readyState < 4) dbg2 = `rs=${xhr.readyState} sending...`;
+    };
     xhr.onerror = () => { dbg2 = 'XHR onerror'; };
     xhr.ontimeout = () => { dbg2 = 'XHR timeout'; };
     xhr.open('GET', '/api/vocabulary?limit=100&_cb=' + Date.now());
