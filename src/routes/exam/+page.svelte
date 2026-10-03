@@ -1502,13 +1502,13 @@
  <div class="fixed inset-0 z-[100] overflow-y-auto bg-slate-100/95 backdrop-blur-sm animate-in fade-in duration-150" role="dialog" aria-modal="true" aria-label="Phòng thi" style="padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px);">
  <div class="min-h-full w-full max-w-5xl mx-auto px-3 py-3 sm:px-6 sm:py-6" style="padding-top: calc(12px + env(safe-area-inset-top, 0px));">
  <!-- Popup top bar: tiêu đề + đồng hồ + nút thoát -->
- <div class="sticky top-0 z-10 mb-3 flex items-center justify-between gap-3 p-3 rounded-2xl bg-slate-900/95 border border-slate-700 shadow-xl backdrop-blur">
+ <div class="sticky top-0 z-10 mb-3 flex items-center justify-between gap-3 p-3 rounded-2xl bg-white/95 border border-slate-200 shadow-xl backdrop-blur">
  <div class="flex items-center gap-2 min-w-0">
  <span class="text-xl shrink-0">📝</span>
  <div class="min-w-0">
- <div class="text-sm font-black text-white truncate">{currentExam?.title || 'Phòng thi'}</div>
+ <div class="text-sm font-black text-slate-900 truncate">{currentExam?.title || 'Phòng thi'}</div>
  {#if isStarted && !isSubmitted}
- <div class="text-xs font-mono font-bold text-amber-300">⏱️ {formatTime(timeLeftSeconds)}</div>
+ <div class="text-xs font-mono font-bold text-amber-600">⏱️ {formatTime(timeLeftSeconds)}</div>
  {/if}
  </div>
  </div>
@@ -1516,7 +1516,7 @@
  <button
  type="button"
  onclick={abandonExam}
- class="shrink-0 px-4 py-2 rounded-xl {abandonConfirming ? 'bg-rose-600 border-rose-500 text-white' : 'bg-slate-800 hover:bg-rose-600 border-slate-700 text-slate-300 hover:text-white'} border font-bold text-xs transition-all"
+ class="shrink-0 px-4 py-2 rounded-xl {abandonConfirming ? 'bg-rose-600 border-rose-500 text-white' : 'bg-slate-100 hover:bg-rose-600 border-slate-300 text-slate-600 hover:text-white'} border font-bold text-xs transition-all"
  >
  {abandonConfirming ? '⚠️ Chắc chắn bỏ?' : '✕ Bỏ Test'}
  </button>
@@ -1600,25 +1600,25 @@
  <div>
  <span class="text-xs font-bold text-emerald-400 uppercase tracking-wider">KẾT QUẢ ĐÁNH GIÁ LỘ TRÌNH CHÍNH THỨC</span>
  <h2 class="text-2xl font-black text-white mt-1">Thí Sinh: {studentName}</h2>
- <div class="text-xs text-ink-500 mt-0.5">Thời gian hoàn thành: {Math.floor(((currentExam.duration_minutes * 60) - timeLeftSeconds) / 60)} phút {((currentExam.duration_minutes * 60) - timeLeftSeconds) % 60} giây</div>
+ <div class="text-xs text-slate-400 mt-0.5">Thời gian hoàn thành: {Math.floor(((currentExam.duration_minutes * 60) - timeLeftSeconds) / 60)} phút {((currentExam.duration_minutes * 60) - timeLeftSeconds) % 60} giây</div>
  </div>
 
  <div class="flex flex-wrap items-center gap-3">
  <div class="text-center p-3 rounded-2xl bg-slate-950 border border-indigo-500/30 min-w-[130px] shadow-lg">
- <div class="text-[10px] text-ink-500 font-bold uppercase tracking-wider">{formattedResultBadge.scaleName}</div>
+ <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{formattedResultBadge.scaleName}</div>
  <div class="text-2xl font-black {formattedResultBadge.badgeColor}">
  {formattedResultBadge.value}
  </div>
- <div class="text-[10px] font-semibold text-ink-500 mt-0.5">{formattedResultBadge.sub}</div>
+ <div class="text-[10px] font-semibold text-slate-400 mt-0.5">{formattedResultBadge.sub}</div>
  </div>
  <div class="text-center p-3 rounded-2xl bg-slate-950 border border-slate-800 min-w-[80px]">
- <div class="text-[10px] text-ink-500 font-bold uppercase">Hệ 10</div>
+ <div class="text-[10px] text-slate-400 font-bold uppercase">Hệ 10</div>
  <div class="text-2xl font-black {parseFloat(calculatedScore) >= 7.0 ? 'text-emerald-400' : 'text-amber-400'}">
  {calculatedScore}
  </div>
  </div>
  <div class="text-center p-3 rounded-2xl bg-slate-950 border border-slate-800 min-w-[80px]">
- <div class="text-[10px] text-ink-500 font-bold uppercase">Số Câu Đúng</div>
+ <div class="text-[10px] text-slate-400 font-bold uppercase">Số Câu Đúng</div>
  <div class="text-2xl font-black text-indigo-400">
  {correctCount}/{activeQuestions.length}
  </div>
@@ -1649,7 +1649,7 @@
  <div class="p-8 rounded-3xl bg-slate-900 border border-slate-800 text-center space-y-4">
  <div class="text-5xl">📝</div>
  <h2 class="text-xl font-bold text-white">Bạn Đã Sẵn Sàng Làm Bài?</h2>
- <p class="text-xs text-ink-500 max-w-lg mx-auto leading-relaxed">
+ <p class="text-xs text-slate-400 max-w-lg mx-auto leading-relaxed">
  Bài thi gồm {activeQuestions.length} câu hỏi. Thời gian làm bài là {currentExam.duration_minutes} phút.
  Đồng hồ sẽ bắt đầu đếm ngược ngay khi bạn bấm nút bên dưới.
  </p>
@@ -1668,7 +1668,7 @@
  <div class="rounded-3xl bg-slate-900 border border-slate-800 p-6 space-y-4">
  <div class="flex items-center justify-between border-b border-slate-800 pb-3">
  <span class="text-xs font-bold text-purple-400">WRITING TASK 2 PROMPT</span>
- <span class="text-xs font-bold text-ink-500">Yêu cầu tối thiểu: 250 từ</span>
+ <span class="text-xs font-bold text-slate-400">Yêu cầu tối thiểu: 250 từ</span>
  </div>
 
  <div class="p-4 rounded-2xl bg-slate-950 border border-slate-800 text-xs text-slate-200 leading-relaxed font-sans whitespace-pre-line">
@@ -1706,7 +1706,7 @@
  class="w-full flex-1 bg-slate-950 border border-slate-800 rounded-2xl p-4 text-xs font-sans text-slate-100 placeholder-slate-500 focus:outline-none focus:border-purple-500 leading-relaxed resize-none"
  ></textarea>
 
- <div class="flex justify-between items-center text-xs text-ink-500 pt-2">
+ <div class="flex justify-between items-center text-xs text-slate-400 pt-2">
  <span>Hệ thống tự động lưu từng ký tự</span>
  {#if !isSubmitted}
  <button
