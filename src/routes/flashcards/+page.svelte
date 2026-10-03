@@ -14,6 +14,21 @@
   let studyFilter = $state('all'); // 'all', 'need_review', 'mastered'
   let frontLanguage = $state('vi'); // 'vi' (Mặt trước TV, Mặt sau TA) or 'en'
   let slowVoice = $state(false);
+  let isStudyPopupOpen = $state(false);
+
+  function openStudyPopup() {
+    currentIndex = 0;
+    isFlipped = false;
+    isStudyPopupOpen = true;
+    if (typeof document !== 'undefined') document.body.style.overflow = 'hidden';
+  }
+
+  function closeStudyPopup() {
+    isStudyPopupOpen = false;
+    if (autoPlayTimer) { clearTimeout(autoPlayTimer); autoPlayTimer = null; }
+    autoPlay = false;
+    if (typeof document !== 'undefined') document.body.style.overflow = '';
+  }
 
   // Filtered list
   let displayWords = $derived.by(() => {
@@ -108,6 +123,7 @@
   }
 
   function handleKeydown(e) {
+    if (!isStudyPopupOpen) return;
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
     if (e.code === 'Space') {
       e.preventDefault();
@@ -118,6 +134,8 @@
       prevCard();
     } else if (e.code === 'KeyA' && currentWord) {
       speakWord(currentWord.term, slowVoice ? 0.7 : 0.9);
+    } else if (e.code === 'Escape') {
+      closeStudyPopup();
     }
   }
 
@@ -204,6 +222,9 @@
       </div>
 
       <div class="action-buttons">
+        <button class="btn-tool btn-start-study" onclick={openStudyPopup} title="Mở popup học flashcards">
+          <span>🚀 Bắt đầu học</span>
+        </button>
         <button class="btn-tool" onclick={shuffleCards} title="Xáo trộn ngẫu nhiên">
           <span>🔀 Xáo thẻ</span>
         </button>
@@ -224,195 +245,366 @@
       </button>
     </div>
   {:else if currentWord}
-    <!-- Progress Indicator -->
-    <div class="progress-wrap">
-      <div class="progress-info">
-        <span class="card-counter">Thẻ <strong>{currentIndex + 1}</strong> / {displayWords.length}</span>
-        <span class="keyboard-tip">💡 Phím tắt: [Space] Lật thẻ • [← / →] Đổi thẻ • [A] Nghe phát âm</span>
-      </div>
-      <div class="progress-track">
-        <div class="progress-fill" style="width: {((currentIndex + 1) / displayWords.length) * 100}%"></div>
-      </div>
-    </div>
-
-    <!-- The 3D Flashcard Container -->
-    <div class="card-area">
-      <div class="card-container">
-        <!-- svelte-ignore a11y_click_events_have_key_events -->
-        <!-- svelte-ignore a11y_no_static_element_interactions -->
-        <div
-          class="flashcard"
-          class:flipped={isFlipped}
-          onclick={flipCard}
-        >
-          <!-- ================= FRONT FACE ================= -->
-          <div class="card-face card-front">
-            <div class="card-header">
-              <div class="card-category">
-                <span class="badge badge-purple">{currentWord.unit_id.toUpperCase()}</span>
-                <span class="badge badge-amber">{currentWord.pos}</span>
-                {#if currentWord.status === 'mastered'}
-                  <span class="badge badge-green">✓ Đã thuộc</span>
-                {/if}
-              </div>
-              <div class="flip-hint">
-                <span>🔄 Click hoặc Space để lật</span>
-              </div>
-            </div>
-
-            <!-- Content depends on frontLanguage setting -->
-            {#if frontLanguage === 'vi'}
-              <!-- Mặt trước Tiếng Việt (gợi nhớ từ) -->
-              <div class="card-body front-vietnamese">
-                <div class="label-side">MẶT TIẾNG VIỆT (GỢI NHỚ NGHĨA)</div>
-                <h2 class="meaning-large">{currentWord.meaning_vi}</h2>
-                <div class="syllables-hint">
-                  <span class="hint-label">Cấu trúc từ:</span> {currentWord.syllables || 'Từ vựng SGK'}
-                </div>
-                <div class="prompt-text">
-                  Bạn có nhớ từ tiếng Anh và cách phát âm của từ này không?
-                </div>
-              </div>
-            {:else}
-              <!-- Mặt trước Tiếng Anh -->
-              <div class="card-body front-english">
-                <div class="label-side">MẶT TIẾNG ANH</div>
-                <h2 class="term-large">{currentWord.term}</h2>
-                <div class="ipa-row">
-                  <span class="ipa-text">{currentWord.ipa}</span>
-                  <button
-                    class="btn-audio"
-                    onclick={(e) => { e.stopPropagation(); speakWord(currentWord.term, slowVoice ? 0.7 : 0.9); }}
-                    title="Phát âm"
-                  >
-                    🔊
-                  </button>
-                </div>
-              </div>
-            {/if}
-
-            <div class="card-footer">
-              <span class="footer-hint">Bấm vào thẻ để xem đáp án & phân tích ngữ âm ➔</span>
-            </div>
-          </div>
-
-          <!-- ================= BACK FACE ================= -->
-          <div class="card-face card-back">
-            <div class="card-header">
-              <div class="card-category">
-                <span class="badge badge-green">MẶT TIẾNG ANH & PHONICS</span>
-                <span class="badge badge-purple">{currentWord.pos}</span>
-              </div>
-              <div class="audio-controls" onclick={(e) => e.stopPropagation()}>
-                <button
-                  class="btn-audio-pill"
-                  onclick={() => speakWord(currentWord.term, 0.9)}
-                  title="Nghe phát âm chuẩn (Normal 1.0x)"
-                >
-                  🔊 Đọc chuẩn
-                </button>
-                <button
-                  class="btn-audio-pill slow"
-                  onclick={() => speakWord(currentWord.term, 0.65)}
-                  title="Nghe phát âm chậm để soi khẩu hình âm (Slow 0.65x)"
-                >
-                  🐢 Đọc chậm
-                </button>
-              </div>
-            </div>
-
-            <div class="card-body back-english">
-              <!-- Từ tiếng Anh & Phiên âm IPA -->
-              <div class="term-ipa-block">
-                <h2 class="term-title">{currentWord.term}</h2>
-                <span class="ipa-pill">{currentWord.ipa}</span>
-                {#if currentWord.syllables}
-                  <span class="syllables-pill">{currentWord.syllables}</span>
-                {/if}
-              </div>
-
-              <!-- Nghĩa tiếng Việt -->
-              <div class="vietnamese-def">
-                <span class="def-label">Nghĩa tiếng Việt:</span>
-                <span class="def-text">{currentWord.meaning_vi}</span>
-              </div>
-
-              <!-- KHỐI MÔ TẢ NGUYÊN ÂM & PHỤ ÂM CHI TIẾT (Theo yêu cầu người dùng) -->
-              <div class="phonics-breakdown-box">
-                <div class="phonics-row">
-                  <div class="phonics-col vowels">
-                    <span class="phonics-tag tag-vowel">🟡 Mô tả Nguyên âm:</span>
-                    <p class="phonics-desc">{currentWord.vowels_detail || 'Đang cập nhật phân tích nguyên âm'}</p>
-                  </div>
-                  <div class="phonics-row-divider"></div>
-                  <div class="phonics-col consonants">
-                    <span class="phonics-tag tag-consonant">🔵 Mô tả Phụ âm:</span>
-                    <p class="phonics-desc">{currentWord.consonants_detail || 'Đang cập nhật phân tích phụ âm'}</p>
-                  </div>
-                </div>
-
-                {#if currentWord.phonics_note}
-                  <div class="phonics-note">
-                    <span class="note-icon">📌</span>
-                    <span class="note-text"><strong>Quy tắc trọng âm:</strong> {currentWord.phonics_note}</span>
-                  </div>
-                {/if}
-              </div>
-
-              <!-- CÂU VÍ DỤ MINH HỌA -->
-              <div class="example-box" onclick={(e) => e.stopPropagation()}>
-                <div class="example-header">
-                  <span class="example-title">💡 Ví dụ thực tế:</span>
-                  <button
-                    class="btn-speak-example"
-                    onclick={() => speakWord(currentWord.example_en, 0.85)}
-                    title="Nghe đọc câu ví dụ"
-                  >
-                    🔊 Đọc câu
-                  </button>
-                </div>
-                <div class="example-en">"{currentWord.example_en}"</div>
-                <div class="example-vi">↳ {currentWord.example_vi}</div>
-              </div>
-            </div>
-
-            <div class="card-footer back-footer">
-              <span class="footer-hint">🔄 Bấm để lật lại mặt trước</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Action Navigation Buttons -->
-      <div class="deck-controls">
-        <button class="btn-nav prev" onclick={prevCard} disabled={currentIndex === 0}>
-          <span>← Từ trước</span>
-        </button>
-
-        <div class="mastery-actions">
-          <button class="btn-action review" onclick={() => markProgress('learning')}>
-            <span class="action-icon">❌</span>
-            <span>Chưa nhớ</span>
-          </button>
-          <button class="btn-action flip-main" onclick={flipCard}>
-            <span class="action-icon">🔄</span>
-            <span>{isFlipped ? 'Lật lại' : 'Lật thẻ'}</span>
-          </button>
-          <button class="btn-action mastered" onclick={() => markProgress('mastered')}>
-            <span class="action-icon">✅</span>
-            <span>Đã thuộc</span>
-          </button>
-        </div>
-
-        <button class="btn-nav next" onclick={nextCard} disabled={currentIndex === displayWords.length - 1}>
-          <span>Từ tiếp →</span>
-        </button>
-      </div>
+    <!-- CTA mở popup học flashcards -->
+    <div class="study-cta-card">
+      <div class="study-cta-icon">🗂️</div>
+      <h3>Sẵn sàng học {displayWords.length} thẻ từ vựng</h3>
+      <p>Mở popup học tập trung: lật thẻ, đánh dấu đã thuộc, chuyển thẻ nhanh bằng nút mũi tên 2 bên.</p>
+      <button class="btn-start-study-large" onclick={openStudyPopup}>
+        🚀 Bắt đầu học ngay
+      </button>
     </div>
   {/if}
 </div>
 
+<!-- ============ FLASHCARD STUDY POPUP ============ -->
+{#if isStudyPopupOpen && currentWord}
+<div class="fc-popup-overlay" role="dialog" aria-modal="true" aria-label="Học flashcards">
+  <div class="fc-popup-inner">
+    <!-- Top bar: tiêu đề + tiến độ + nút đóng -->
+    <div class="fc-topbar">
+      <div class="fc-topbar-info">
+        <span class="fc-title">🗂️ Flashcards</span>
+        <span class="fc-counter">Thẻ <strong>{currentIndex + 1}</strong> / {displayWords.length}</span>
+      </div>
+      <button class="fc-close" onclick={closeStudyPopup} aria-label="Đóng popup">✕ Đóng</button>
+    </div>
+    <!-- Progress -->
+    <div class="progress-track fc-progress">
+      <div class="progress-fill" style="width: {((currentIndex + 1) / displayWords.length) * 100}%"></div>
+    </div>
+    <!-- Card với nút mũi tên 2 bên nằm TRONG div card -->
+    <div class="card-area fc-card-area">
+      <button class="fc-arrow fc-arrow-left" onclick={prevCard} aria-label="Từ trước">←</button>
+  <div class="card-container">
+          <!-- svelte-ignore a11y_click_events_have_key_events -->
+          <!-- svelte-ignore a11y_no_static_element_interactions -->
+          <div
+            class="flashcard"
+            class:flipped={isFlipped}
+            onclick={flipCard}
+          >
+            <!-- ================= FRONT FACE ================= -->
+            <div class="card-face card-front">
+              <div class="card-header">
+                <div class="card-category">
+                  <span class="badge badge-purple">{currentWord.unit_id.toUpperCase()}</span>
+                  <span class="badge badge-amber">{currentWord.pos}</span>
+                  {#if currentWord.status === 'mastered'}
+                    <span class="badge badge-green">✓ Đã thuộc</span>
+                  {/if}
+                </div>
+                <div class="flip-hint">
+                  <span>🔄 Click hoặc Space để lật</span>
+                </div>
+              </div>
+
+              <!-- Content depends on frontLanguage setting -->
+              {#if frontLanguage === 'vi'}
+                <!-- Mặt trước Tiếng Việt (gợi nhớ từ) -->
+                <div class="card-body front-vietnamese">
+                  <div class="label-side">MẶT TIẾNG VIỆT (GỢI NHỚ NGHĨA)</div>
+                  <h2 class="meaning-large">{currentWord.meaning_vi}</h2>
+                  <div class="syllables-hint">
+                    <span class="hint-label">Cấu trúc từ:</span> {currentWord.syllables || 'Từ vựng SGK'}
+                  </div>
+                  <div class="prompt-text">
+                    Bạn có nhớ từ tiếng Anh và cách phát âm của từ này không?
+                  </div>
+                </div>
+              {:else}
+                <!-- Mặt trước Tiếng Anh -->
+                <div class="card-body front-english">
+                  <div class="label-side">MẶT TIẾNG ANH</div>
+                  <h2 class="term-large">{currentWord.term}</h2>
+                  <div class="ipa-row">
+                    <span class="ipa-text">{currentWord.ipa}</span>
+                    <button
+                      class="btn-audio"
+                      onclick={(e) => { e.stopPropagation(); speakWord(currentWord.term, slowVoice ? 0.7 : 0.9); }}
+                      title="Phát âm"
+                    >
+                      🔊
+                    </button>
+                  </div>
+                </div>
+              {/if}
+
+              <div class="card-footer">
+                <span class="footer-hint">Bấm vào thẻ để xem đáp án & phân tích ngữ âm ➔</span>
+              </div>
+            </div>
+
+            <!-- ================= BACK FACE ================= -->
+            <div class="card-face card-back">
+              <div class="card-header">
+                <div class="card-category">
+                  <span class="badge badge-green">MẶT TIẾNG ANH & PHONICS</span>
+                  <span class="badge badge-purple">{currentWord.pos}</span>
+                </div>
+                <div class="audio-controls" onclick={(e) => e.stopPropagation()}>
+                  <button
+                    class="btn-audio-pill"
+                    onclick={() => speakWord(currentWord.term, 0.9)}
+                    title="Nghe phát âm chuẩn (Normal 1.0x)"
+                  >
+                    🔊 Đọc chuẩn
+                  </button>
+                  <button
+                    class="btn-audio-pill slow"
+                    onclick={() => speakWord(currentWord.term, 0.65)}
+                    title="Nghe phát âm chậm để soi khẩu hình âm (Slow 0.65x)"
+                  >
+                    🐢 Đọc chậm
+                  </button>
+                </div>
+              </div>
+
+              <div class="card-body back-english">
+                <!-- Từ tiếng Anh & Phiên âm IPA -->
+                <div class="term-ipa-block">
+                  <h2 class="term-title">{currentWord.term}</h2>
+                  <span class="ipa-pill">{currentWord.ipa}</span>
+                  {#if currentWord.syllables}
+                    <span class="syllables-pill">{currentWord.syllables}</span>
+                  {/if}
+                </div>
+
+                <!-- Nghĩa tiếng Việt -->
+                <div class="vietnamese-def">
+                  <span class="def-label">Nghĩa tiếng Việt:</span>
+                  <span class="def-text">{currentWord.meaning_vi}</span>
+                </div>
+
+                <!-- KHỐI MÔ TẢ NGUYÊN ÂM & PHỤ ÂM CHI TIẾT (Theo yêu cầu người dùng) -->
+                <div class="phonics-breakdown-box">
+                  <div class="phonics-row">
+                    <div class="phonics-col vowels">
+                      <span class="phonics-tag tag-vowel">🟡 Mô tả Nguyên âm:</span>
+                      <p class="phonics-desc">{currentWord.vowels_detail || 'Đang cập nhật phân tích nguyên âm'}</p>
+                    </div>
+                    <div class="phonics-row-divider"></div>
+                    <div class="phonics-col consonants">
+                      <span class="phonics-tag tag-consonant">🔵 Mô tả Phụ âm:</span>
+                      <p class="phonics-desc">{currentWord.consonants_detail || 'Đang cập nhật phân tích phụ âm'}</p>
+                    </div>
+                  </div>
+
+                  {#if currentWord.phonics_note}
+                    <div class="phonics-note">
+                      <span class="note-icon">📌</span>
+                      <span class="note-text"><strong>Quy tắc trọng âm:</strong> {currentWord.phonics_note}</span>
+                    </div>
+                  {/if}
+                </div>
+
+                <!-- CÂU VÍ DỤ MINH HỌA -->
+                <div class="example-box" onclick={(e) => e.stopPropagation()}>
+                  <div class="example-header">
+                    <span class="example-title">💡 Ví dụ thực tế:</span>
+                    <button
+                      class="btn-speak-example"
+                      onclick={() => speakWord(currentWord.example_en, 0.85)}
+                      title="Nghe đọc câu ví dụ"
+                    >
+                      🔊 Đọc câu
+                    </button>
+                  </div>
+                  <div class="example-en">"{currentWord.example_en}"</div>
+                  <div class="example-vi">↳ {currentWord.example_vi}</div>
+                </div>
+              </div>
+
+              <div class="card-footer back-footer">
+                <span class="footer-hint">🔄 Bấm để lật lại mặt trước</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      <button class="fc-arrow fc-arrow-right" onclick={nextCard} aria-label="Từ tiếp">→</button>
+    </div>
+    <!-- Hàng nút hành động: Chưa nhớ / Lật thẻ / Đã thuộc -->
+    <div class="fc-actions">
+      <button class="btn-action review" onclick={() => markProgress('learning')}>
+        <span class="action-icon">❌</span>
+        <span>Chưa nhớ</span>
+      </button>
+      <button class="btn-action flip-main" onclick={flipCard}>
+        <span class="action-icon">🔄</span>
+        <span>{isFlipped ? 'Lật lại' : 'Lật thẻ'}</span>
+      </button>
+      <button class="btn-action mastered" onclick={() => markProgress('mastered')}>
+        <span class="action-icon">✅</span>
+        <span>Đã thuộc</span>
+      </button>
+    </div>
+    <div class="fc-tip">💡 Phím tắt: [Space] Lật thẻ • [← / →] Đổi thẻ • [A] Nghe phát âm</div>
+  </div>
+</div>
+{/if}
+
 <style>
+  /* ============ FLASHCARD POPUP ============ */
+  .fc-popup-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    overflow-y: auto;
+    background: rgba(2, 6, 23, 0.96);
+    backdrop-filter: blur(6px);
+    animation: fcPopupIn 0.18s ease-out;
+  }
+  .fc-popup-inner {
+    min-height: 100%;
+    width: 100%;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  @media (min-width: 640px) {
+    .fc-popup-inner { padding: 24px; gap: 16px; }
+  }
+  @keyframes fcPopupIn {
+    from { opacity: 0; transform: scale(0.98); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  .fc-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: 16px;
+    background: rgba(15, 23, 42, 0.9);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+  }
+  .fc-topbar-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+  }
+  .fc-title {
+    font-weight: 800;
+    color: #fff;
+    font-size: 15px;
+    white-space: nowrap;
+  }
+  .fc-counter {
+    font-size: 13px;
+    color: #94a3b8;
+    white-space: nowrap;
+  }
+  .fc-counter strong { color: #fff; }
+  .fc-close {
+    flex-shrink: 0;
+    padding: 8px 16px;
+    border-radius: 12px;
+    background: #1e293b;
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    color: #cbd5e1;
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .fc-close:hover { background: #dc2626; border-color: #dc2626; color: #fff; }
+  .fc-progress {
+    height: 8px;
+    border-radius: 999px;
+    background: rgba(148, 163, 184, 0.15);
+    overflow: hidden;
+  }
+  /* Card area: relative để chứa 2 nút mũi tên */
+  .fc-card-area {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .fc-card-area .card-container {
+    flex: 1;
+    max-width: 640px;
+  }
+  .fc-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 5;
+    width: 48px;
+    height: 48px;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: 900;
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid rgba(148, 163, 184, 0.3);
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.15s;
+    backdrop-filter: blur(4px);
+  }
+  .fc-arrow:hover { background: #4f46e5; border-color: #4f46e5; transform: translateY(-50%) scale(1.08); }
+  .fc-arrow:active { transform: translateY(-50%) scale(0.95); }
+  .fc-arrow-left { left: 4px; }
+  .fc-arrow-right { right: 4px; }
+  @media (min-width: 640px) {
+    .fc-arrow-left { left: 12px; }
+    .fc-arrow-right { right: 12px; }
+  }
+  /* Hàng nút hành động dưới card */
+  .fc-actions {
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    gap: 10px;
+  }
+  .fc-actions .btn-action {
+    flex: 1;
+    max-width: 200px;
+  }
+  .fc-tip {
+    text-align: center;
+    font-size: 12px;
+    color: #64748b;
+  }
+  /* CTA card inline */
+  .study-cta-card {
+    text-align: center;
+    padding: 40px 24px;
+    border-radius: 24px;
+    background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+    border: 1px solid rgba(129, 140, 248, 0.3);
+    color: #fff;
+  }
+  .study-cta-icon { font-size: 48px; margin-bottom: 12px; }
+  .study-cta-card h3 { font-size: 20px; font-weight: 800; margin-bottom: 8px; }
+  .study-cta-card p { font-size: 14px; color: #a5b4fc; margin-bottom: 20px; max-width: 480px; margin-left: auto; margin-right: auto; }
+  .btn-start-study-large {
+    padding: 14px 32px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    color: #fff;
+    font-weight: 800;
+    font-size: 16px;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(79, 70, 229, 0.4);
+    transition: transform 0.15s;
+  }
+  .btn-start-study-large:hover { transform: scale(1.05); }
+  .btn-start-study {
+    background: linear-gradient(135deg, #4f46e5, #7c3aed) !important;
+    color: #fff !important;
+    border: none !important;
+    font-weight: 800 !important;
+  }
+
   .flashcards-page {
     display: flex;
     flex-direction: column;
