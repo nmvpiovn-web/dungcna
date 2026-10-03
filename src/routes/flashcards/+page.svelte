@@ -5,7 +5,8 @@
 
   let { data } = $props();
 
-  let words = $state([...data.words]);
+  let words = $state([]);
+  let wordsLoaded = $state(false);
   let currentIndex = $state(0);
   let isFlipped = $state(false);
   let selectedUnit = $state(data.currentUnit || 'all');
@@ -134,20 +135,28 @@
 
   onMount(() => {
     window.addEventListener('keydown', handleKeydown);
-    // Client-side refetch: dam bao lay du 235 tu tu D1 (SSR co the roi vao fallback)
-    debugMsg = `words=${data.words.length}`;
-    if (data.words.length < 100) {
-      fetch('/api/vocabulary?limit=500')
-        .then(r => { debugMsg += ` status=${r.status}`; return r.json(); })
-        .then(d => {
-          debugMsg += ` api_total=${d.total}`;
-          if (d.success && d.data && d.data.length > words.length) {
-            words = d.data;
-            debugMsg += ` updated=${words.length}`;
-          }
-        })
-        .catch(e => { debugMsg += ` err=${e.message}`; });
-    }
+    // Load 235 tu tu D1 hoan toan o client
+    debugMsg = `loading...`;
+    fetch('/api/vocabulary?limit=500')
+      .then(r => { debugMsg += ` status=${r.status}`; return r.json(); })
+      .then(d => {
+        debugMsg += ` api_total=${d.total}`;
+        if (d.success && d.data && d.data.length > 0) {
+          words = d.data;
+          wordsLoaded = true;
+          debugMsg += ` updated=${words.length}`;
+        } else {
+          // fallback static neu API loi
+          words = [...data.words];
+          wordsLoaded = true;
+          debugMsg += ` fallback=${words.length}`;
+        }
+      })
+      .catch(e => {
+        words = [...data.words];
+        wordsLoaded = true;
+        debugMsg += ` err=${e.message}`;
+      });
     return () => {
       window.removeEventListener('keydown', handleKeydown);
       if (autoPlayTimer) clearTimeout(autoPlayTimer);
@@ -211,9 +220,14 @@
 
   {#if displayWords.length === 0}
     <div class="empty-state">
-      <div class="empty-icon">🎉</div>
-      <h3>Không có từ vựng nào trong bộ lọc này!</h3>
-      <p>Bạn đã hoàn thành tất cả từ hoặc bộ lọc chưa có từ tương ứng.</p>
+      {#if !wordsLoaded}
+        <div class="empty-icon">⏳</div>
+        <h3>Đang tải từ vựng...</h3>
+      {:else}
+        <div class="empty-icon">🎉</div>
+        <h3>Không có từ vựng nào trong bộ lọc này!</h3>
+        <p>Bạn đã hoàn thành tất cả từ hoặc bộ lọc chưa có từ tương ứng.</p>
+      {/if}
       <button class="btn-primary" onclick={() => { studyFilter = 'all'; selectedUnit = 'all'; }}>
         Xem lại tất cả từ vựng
       </button>
