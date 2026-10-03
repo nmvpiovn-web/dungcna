@@ -5,10 +5,10 @@
 
   let { data } = $props();
 
-  let words = $state([...data.words]);
+  let words = $state([...(data?.words || [])]);
   let currentIndex = $state(0);
   let isFlipped = $state(false);
-  let selectedUnit = $state(data.currentUnit || 'all');
+  let selectedUnit = $state(data?.currentUnit || 'all');
   let autoPlay = $state(false);
   let autoPlayTimer = $state(null);
   let studyFilter = $state('all'); // 'all', 'need_review', 'mastered'
@@ -149,7 +149,7 @@
         <label for="unit-select">Chủ điểm:</label>
         <select id="unit-select" bind:value={selectedUnit} onchange={() => { currentIndex = 0; isFlipped = false; }}>
           <option value="all">Tất cả Unit (Tổng hợp đề thi)</option>
-          {#each data.units as unit}
+          {#each (data?.units || []) as unit}
             <option value={unit.id}>{unit.icon} {unit.name}</option>
           {/each}
         </select>
@@ -158,9 +158,9 @@
       <div class="filter-group">
         <label for="filter-status">Trạng thái:</label>
         <select id="filter-status" bind:value={studyFilter} onchange={() => { currentIndex = 0; isFlipped = false; }}>
-          <option value="all">Tất cả từ ({data.words.length})</option>
-          <option value="need_review">Chưa thuộc ({data.words.filter(w => w.status !== 'mastered').length})</option>
-          <option value="mastered">Đã thuộc ({data.words.filter(w => w.status === 'mastered').length})</option>
+          <option value="all">Tất cả từ ({(data?.words || []).length})</option>
+          <option value="need_review">Chưa thuộc ({((data?.words || []).filter(w => w.status !== 'mastered').length})</option>
+          <option value="mastered">Đã thuộc ({((data?.words || []).filter(w => w.status === 'mastered').length})</option>
         </select>
       </div>
 
