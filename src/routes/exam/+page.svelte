@@ -600,12 +600,13 @@
  if (activeExamGroup === 'random_builder') return false;
  if (activeExamGroup === 'my_grade') return isExamEnrolledForUser(currentUser, e);
  if (activeExamGroup === 'k12') {
- if (activeExamCategory === 'primary') return (e.grade >= 1 && e.grade <= 5) || e.title.includes('Lớp 1') || e.title.includes('Lớp 2') || e.title.includes('Lớp 3') || e.title.includes('Lớp 4') || e.title.includes('Lớp 5');
- if (activeExamCategory === 'g6') return e.grade === 6 || e.title.includes('Lớp 6') || e.curriculum_id === 'curr_g6';
- if (activeExamCategory === 'g7') return e.grade === 7 || e.title.includes('Lớp 7') || e.curriculum_id === 'curr_g7';
- if (activeExamCategory === 'g8') return e.grade === 8 || e.title.includes('Lớp 8') || e.curriculum_id === 'curr_g8';
+ const hasGrade = (t, g) => new RegExp(`Lớp ${g}(?!\\d)`).test(t || '');
+ if (activeExamCategory === 'primary') return (e.grade >= 1 && e.grade <= 5) || [1,2,3,4,5].some(g => hasGrade(e.title, g));
+ if (activeExamCategory === 'g6') return e.grade === 6 || hasGrade(e.title, 6) || e.curriculum_id === 'curr_g6';
+ if (activeExamCategory === 'g7') return e.grade === 7 || hasGrade(e.title, 7) || e.curriculum_id === 'curr_g7';
+ if (activeExamCategory === 'g8') return e.grade === 8 || hasGrade(e.title, 8) || e.curriculum_id === 'curr_g8';
  if (activeExamCategory === 'g9') return e.grade === 9 || e.title.includes('Vào 10') || e.curriculum_id === 'curr_g9';
- if (activeExamCategory === 'highschool') return (e.grade >= 10 && e.grade <= 12) || e.title.includes('Lớp 10') || e.title.includes('Lớp 11') || e.title.includes('Lớp 12') || e.title.includes('THPT');
+ if (activeExamCategory === 'highschool') return (e.grade >= 10 && e.grade <= 12) || [10,11,12].some(g => hasGrade(e.title, g)) || e.title.includes('THPT');
  return (e.grade >= 1 && e.grade <= 12) || e.curriculum_id?.startsWith('curr_g') || e.curriculum_id === 'curr_thptqg' || !['ielts_academic', 'toeic_lr', 'toefl_ibt'].includes(e.format_type);
  }
  if (activeExamGroup === 'intl') {
