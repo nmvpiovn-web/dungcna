@@ -3,7 +3,6 @@ import { getStaticUnits } from '$lib/staticDb.js';
 // Trang này fetch API runtime (D1) nên không prerender được —
 // prerender sẽ khiến SvelteKit từ chối gọi /api/vocabulary (prerender=false) và fail build.
 export const prerender = false;
-export const ssr = false;
 
 export async function load({ fetch }) {
   // Lấy từ vựng thật từ D1 qua API (fallback file tĩnh nếu lỗi)
