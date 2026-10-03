@@ -159,6 +159,7 @@
  // State
  let isStarted = $state(false);
  let isExamPopupOpen = $state(false);
+ let abandonConfirming = $state(false);
  let isSubmitted = $state(false);
  let timeLeftSeconds = $state(15 * 60);
  let timerInterval = null;
@@ -255,10 +256,16 @@
  }
  });
 
- // Bỏ test: xác nhận rồi thoát popup, xóa timer + backup
+ // Bỏ test: bấm lần 1 hiện xác nhận ngay trên nút, bấm lần 2 mới thoát
+ // (không dùng window.confirm vì headless/PWA WebView có thể nuốt dialog)
  function abandonExam() {
  if (isSubmitting) return;
- if (typeof window !== 'undefined' && !window.confirm('Bỏ bài test này? Tiến trình làm bài sẽ mất.')) return;
+ if (!abandonConfirming) {
+ abandonConfirming = true;
+ setTimeout(() => { abandonConfirming = false; }, 4000);
+ return;
+ }
+ abandonConfirming = false;
  if (timerInterval) clearInterval(timerInterval);
  try {
  localStorage.removeItem(getExamBackupKey(currentExam?.id));
@@ -371,6 +378,7 @@
  }
  // Mở popup phòng thi cô lập (PWA-safe): chỉ đóng khi nộp bài hoặc bỏ test
  isExamPopupOpen = true;
+ abandonConfirming = false;
  if (typeof document !== 'undefined') document.body.style.overflow = 'hidden';
  }
 
@@ -1508,9 +1516,9 @@
  <button
  type="button"
  onclick={abandonExam}
- class="shrink-0 px-4 py-2 rounded-xl bg-slate-800 hover:bg-rose-600 border border-slate-700 text-slate-300 hover:text-white font-bold text-xs transition-all"
+ class="shrink-0 px-4 py-2 rounded-xl {abandonConfirming ? 'bg-rose-600 border-rose-500 text-white' : 'bg-slate-800 hover:bg-rose-600 border-slate-700 text-slate-300 hover:text-white'} border font-bold text-xs transition-all"
  >
- ✕ Bỏ Test
+ {abandonConfirming ? '⚠️ Chắc chắn bỏ?' : '✕ Bỏ Test'}
  </button>
  {:else}
  <button
