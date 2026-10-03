@@ -158,31 +158,14 @@
 
   onMount(() => {
     window.addEventListener('keydown', handleKeydown);
-    // Load 235 tu tu D1 hoan toan o client
-    debugMsg = `loading...`;
-    fetch('/api/vocabulary?limit=500')
-      .then(r => { debugMsg += ` status=${r.status}`; return r.json(); })
-      .then(d => {
-        debugMsg += ` api_total=${d.total}`;
-        if (d.success && d.data && d.data.length > 0) {
-          wordsData = d.data;
-          wordsLoaded = true;
-          wordsVersion++;
-          debugMsg += ` updated=${wordsData.length} v=${wordsVersion}`;
-        } else {
-          // fallback static neu API loi
-          wordsData = [...data.words];
-          wordsLoaded = true;
-          wordsVersion++;
-          debugMsg += ` fallback=${wordsData.length}`;
-        }
-      })
-      .catch(e => {
-        wordsData = [...data.words];
-        wordsLoaded = true;
-        wordsVersion++;
-        debugMsg += ` err=${e.message}`;
-      });
+    // TEST QUYET DINH: gan cung 2 items, khong qua fetch
+    wordsData = [
+      { id: 'test1', term: 'hello', meaning_vi: 'xin chào', ipa: '/həˈloʊ/' },
+      { id: 'test2', term: 'world', meaning_vi: 'thế giới', ipa: '/wɜːrld/' }
+    ];
+    wordsVersion++;
+    wordsLoaded = true;
+    debugMsg = `hardcoded v=${wordsVersion} len=${wordsData.length}`;
     return () => {
       window.removeEventListener('keydown', handleKeydown);
       if (autoPlayTimer) clearTimeout(autoPlayTimer);
