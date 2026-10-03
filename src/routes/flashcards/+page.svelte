@@ -123,6 +123,28 @@
 
   onMount(() => {
     window.addEventListener('keydown', handleKeydown);
+    // Fetch batch 5x50 tu D1 (API treo voi limit > 50)
+    // Ghi de len 52 tu static fallback khi co du lieu that
+    (async () => {
+      try {
+        const batches = await Promise.all([0, 50, 100, 150, 200].map(offset =>
+          fetch(`/api/vocabulary?limit=50&offset=${offset}`)
+            .then(r => r.json())
+            .then(d => (d && d.success && Array.isArray(d.data)) ? d.data : [])
+            .catch(() => [])
+        ));
+        const all = batches.flat();
+        if (all.length > words.length) {
+          // Loai trung lap theo id (phong khi offset overlap)
+          const seen = new Set();
+          words = all.filter(w => {
+            if (seen.has(w.id)) return false;
+            seen.add(w.id);
+            return true;
+          });
+        }
+      } catch {}
+    })();
     return () => {
       window.removeEventListener('keydown', handleKeydown);
       if (autoPlayTimer) clearTimeout(autoPlayTimer);
