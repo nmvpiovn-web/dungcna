@@ -1,5 +1,7 @@
 // Flashcards: load truc tiep tu D1 (khong qua HTTP API de tranh van de network)
 // Chay tren server (Cloudflare Pages Function), co platform.env.DB
+import { getStaticWords, getStaticUnits } from '$lib/staticDb.js';
+
 export const prerender = false;
 
 export async function load({ platform }) {
@@ -32,19 +34,16 @@ export async function load({ platform }) {
     console.error('[flashcards] D1 error:', e.message);
   }
 
-  // Fallback: static neu D1 trong (khong bao gio fetch HTTP tu client)
+  // Fallback: static neu D1 trong
+  let source = 'd1';
   if (words.length === 0) {
-    const { getStaticWords, getStaticUnits } = await import('$lib/staticDb.js');
     words = getStaticWords();
-    return { words, units: getStaticUnits(), source: 'static' };
+    source = 'static';
   }
-
-  // Units: van dung static (chua co bang D1 cho units)
-  const { getStaticUnits } = await import('$lib/staticDb.js');
 
   return {
     words,
     units: getStaticUnits(),
-    source: 'd1'
+    source
   };
 }
