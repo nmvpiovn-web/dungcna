@@ -144,7 +144,7 @@
     };
     xhr.onerror = () => { dbg2 = 'XHR onerror'; };
     xhr.ontimeout = () => { dbg2 = 'XHR timeout'; };
-    xhr.open('GET', '/api/vocabulary?limit=500');
+    xhr.open('GET', '/api/vocabulary?limit=500&_cb=' + Date.now());
     xhr.send();
     return () => {
       window.removeEventListener('keydown', handleKeydown);
