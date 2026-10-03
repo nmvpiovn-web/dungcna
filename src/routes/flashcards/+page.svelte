@@ -128,8 +128,12 @@
     dbg = `mount#${mountCount} words=${words.length} data.words=${data.words.length}`;
     window.addEventListener('keydown', handleKeydown);
     // Diagnostic: fetch voi timeout 8s
-    dbg = `starting fetch...`;
-    const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error('TIMEOUT_8S')), 8000));
+    try {
+      dbg = `starting fetch... typeof fetch=${typeof fetch}`;
+      const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error('TIMEOUT_8S')), 8000));
+      dbg = `timeout created, calling fetch...`;
+      const fp = fetch('/api/vocabulary?limit=500');
+      dbg = `fetch returned type=${typeof fp}, then=${typeof fp?.then}`;
     Promise.race([
       fetch('/api/vocabulary?limit=500').then(r => r.json()),
       timeout
@@ -142,6 +146,9 @@
         }
       })
       .catch((e) => { dbg = `fetch err: ${e.message}`; });
+    } catch (e) {
+      dbg = `SYNC THROW: ${e.message}`;
+    }
     return () => {
       window.removeEventListener('keydown', handleKeydown);
       if (autoPlayTimer) clearTimeout(autoPlayTimer);
