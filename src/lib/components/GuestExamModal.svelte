@@ -350,7 +350,7 @@
  <div 
  id="guest-modal-backdrop"
  data-testid="guest-modal-backdrop"
- class="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
+ class="fixed inset-0 z-50 bg-slate-400/40 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
  style="padding-top: calc(12px + env(safe-area-inset-top, 0px)); padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));"
  role="dialog"
  aria-modal="true"

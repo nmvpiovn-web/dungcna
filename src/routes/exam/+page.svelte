@@ -1499,7 +1499,7 @@
  <!-- EXAM POPUP MODAL: phòng thi cô lập full-screen (PWA-safe).
  Chỉ thoát khi nộp bài (xem kết quả -> Đóng) hoặc bấm Bỏ Test. -->
  {#if isExamPopupOpen}
- <div class="fixed inset-0 z-[100] overflow-y-auto bg-slate-950/95 backdrop-blur-sm animate-in fade-in duration-150" role="dialog" aria-modal="true" aria-label="Phòng thi" style="padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px);">
+ <div class="fixed inset-0 z-[100] overflow-y-auto bg-slate-100/95 backdrop-blur-sm animate-in fade-in duration-150" role="dialog" aria-modal="true" aria-label="Phòng thi" style="padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px);">
  <div class="min-h-full w-full max-w-5xl mx-auto px-3 py-3 sm:px-6 sm:py-6" style="padding-top: calc(12px + env(safe-area-inset-top, 0px));">
  <!-- Popup top bar: tiêu đề + đồng hồ + nút thoát -->
  <div class="sticky top-0 z-10 mb-3 flex items-center justify-between gap-3 p-3 rounded-2xl bg-slate-900/95 border border-slate-700 shadow-xl backdrop-blur">

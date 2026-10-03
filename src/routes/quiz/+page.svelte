@@ -494,7 +494,7 @@
     inset: 0;
     z-index: 100;
     overflow-y: auto;
-    background: rgba(2, 6, 23, 0.95);
+    background: rgba(248, 250, 252, 0.97);
     backdrop-filter: blur(4px);
     animation: quizPopupIn 0.15s ease-out;
     padding-top: env(safe-area-inset-top, 0px);

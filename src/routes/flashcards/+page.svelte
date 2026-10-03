@@ -450,7 +450,7 @@
     inset: 0;
     z-index: 100;
     overflow-y: auto;
-    background: rgba(2, 6, 23, 0.96);
+    background: rgba(248, 250, 252, 0.97);
     backdrop-filter: blur(6px);
     animation: fcPopupIn 0.18s ease-out;
     /* iPhone notch/Dynamic Island: đẩy nội dung xuống khỏi vùng tai thỏ */
@@ -483,8 +483,9 @@
     gap: 12px;
     padding: 10px 14px;
     border-radius: 16px;
-    background: rgba(15, 23, 42, 0.9);
-    border: 1px solid rgba(148, 163, 184, 0.2);
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.08);
   }
   .fc-topbar-info {
     display: flex;
@@ -494,23 +495,23 @@
   }
   .fc-title {
     font-weight: 800;
-    color: #fff;
+    color: #0f172a;
     font-size: 15px;
     white-space: nowrap;
   }
   .fc-counter {
     font-size: 13px;
-    color: #94a3b8;
+    color: #64748b;
     white-space: nowrap;
   }
-  .fc-counter strong { color: #fff; }
+  .fc-counter strong { color: #0f172a; }
   .fc-close {
     flex-shrink: 0;
     padding: 8px 16px;
     border-radius: 12px;
-    background: #1e293b;
-    border: 1px solid rgba(148, 163, 184, 0.25);
-    color: #cbd5e1;
+    background: #f1f5f9;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    color: #475569;
     font-weight: 700;
     font-size: 13px;
     cursor: pointer;
