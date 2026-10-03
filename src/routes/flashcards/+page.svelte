@@ -130,18 +130,23 @@
     }
   }
 
+  let debugMsg = $state('');
+
   onMount(() => {
     window.addEventListener('keydown', handleKeydown);
     // Client-side refetch: dam bao lay du 235 tu tu D1 (SSR co the roi vao fallback)
+    debugMsg = `words=${data.words.length}`;
     if (data.words.length < 100) {
       fetch('/api/vocabulary?limit=500')
-        .then(r => r.json())
+        .then(r => { debugMsg += ` status=${r.status}`; return r.json(); })
         .then(d => {
+          debugMsg += ` api_total=${d.total}`;
           if (d.success && d.data && d.data.length > words.length) {
             words = d.data;
+            debugMsg += ` updated=${words.length}`;
           }
         })
-        .catch(() => {});
+        .catch(e => { debugMsg += ` err=${e.message}`; });
     }
     return () => {
       window.removeEventListener('keydown', handleKeydown);
@@ -160,6 +165,7 @@
       <h1 class="page-title">Tiếng Anh Cô Dung — Flashcard Từ Vựng Chuẩn Ngữ Âm</h1>
       <p class="page-desc">
         Học từ vựng đa giác quan cùng Tiếng Anh Cô Dung: <strong>1 mặt tiếng Việt</strong> gợi nhớ, <strong>1 mặt tiếng Anh</strong> phát âm bản xứ, phân tích chi tiết <strong>nguyên âm, phụ âm, trọng âm</strong> và câu ví dụ ngữ cảnh.
+        {#if debugMsg}<span style="display:block;font-size:11px;color:#888;">[debug] {debugMsg}</span>{/if}
       </p>
     </div>
 
