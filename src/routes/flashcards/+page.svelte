@@ -6,6 +6,7 @@
   let { data } = $props();
 
   let words = $state([...data.words]);
+  let dbg2 = $state('waiting');
   let currentIndex = $state(0);
   let isFlipped = $state(false);
   let selectedUnit = $state(data.currentUnit || 'all');
@@ -124,15 +125,25 @@
   onMount(() => {
     window.addEventListener('keydown', handleKeydown);
     // Lay du lieu that tu D1 qua API (server load co the tra fallback khi D1 chua san sang)
+    dbg2 = 'sending XHR...';
     const xhr = new XMLHttpRequest();
     xhr.onload = () => {
+      dbg2 = `onload status=${xhr.status} len=${xhr.responseText.length}`;
       try {
         const d = JSON.parse(xhr.responseText);
+        dbg2 = `parsed ok success=${d.success} dlen=${d.data?.length} wlen=${words.length}`;
         if (d && d.success && d.data && d.data.length > words.length) {
           words = d.data;
+          dbg2 = `ASSIGNED words=${words.length}`;
+        } else {
+          dbg2 += ` NOT assigned (cond false)`;
         }
-      } catch {}
+      } catch (e) {
+        dbg2 = `parse err: ${e.message}`;
+      }
     };
+    xhr.onerror = () => { dbg2 = 'XHR onerror'; };
+    xhr.ontimeout = () => { dbg2 = 'XHR timeout'; };
     xhr.open('GET', '/api/vocabulary?limit=500');
     xhr.send();
     return () => {
@@ -152,6 +163,7 @@
       <h1 class="page-title">Tiếng Anh Cô Dung — Flashcard Từ Vựng Chuẩn Ngữ Âm</h1>
       <p class="page-desc">
         Học từ vựng đa giác quan cùng Tiếng Anh Cô Dung: <strong>1 mặt tiếng Việt</strong> gợi nhớ, <strong>1 mặt tiếng Anh</strong> phát âm bản xứ, phân tích chi tiết <strong>nguyên âm, phụ âm, trọng âm</strong> và câu ví dụ ngữ cảnh.
+        <span style="display:block;font-size:11px;color:#888;">[dbg2] {dbg2} | words={words.length}</span>
       </p>
     </div>
 
