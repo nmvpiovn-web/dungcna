@@ -5,9 +5,7 @@
 
   let { data } = $props();
 
-  let wordsData = [];  // plain array, khong dung $state
-  let wordsVersion = $state(0);
-  let wordsLoaded = $state(false);
+  let words = $state([...data.words]);
   let currentIndex = $state(0);
   let isFlipped = $state(false);
   let selectedUnit = $state(data.currentUnit || 'all');
@@ -19,9 +17,7 @@
 
   // Filtered list
   let displayWords = $derived.by(() => {
-    // doc wordsVersion de dam bao re-run khi data doi
-    void wordsVersion;
-    let list = wordsData;
+    let list = words;
     if (selectedUnit !== 'all') {
       list = list.filter(w => w.unit_id === selectedUnit);
     }
@@ -71,9 +67,8 @@
       const j = Math.floor(Math.random() * (i + 1));
       [currentSub[i], currentSub[j]] = [currentSub[j], currentSub[i]];
     }
-    const otherWords = wordsData.filter(w => !currentIds.has(w.id));
-    wordsData = [...currentSub, ...otherWords];
-    wordsVersion++;
+    const otherWords = words.filter(w => !currentIds.has(w.id));
+    words = [...currentSub, ...otherWords];
     currentIndex = 0;
     isFlipped = false;
   }
@@ -81,20 +76,10 @@
   function markProgress(status) {
     if (!currentWord) return;
     try {
-      const wordId = currentWord.id;
-      const wasVisibleAfterChange = studyFilter === 'all' ||
-        (studyFilter === 'mastered' && status === 'mastered') ||
-        (studyFilter === 'need_review' && status !== 'mastered');
-      wordsData = wordsData.map(word => word.id === wordId ? { ...word, status } : word);
-      wordsVersion++;
-      saveUserProgress(wordId, status);
+      currentWord.status = status;
+      saveUserProgress(currentWord.id, status);
       playAudioFeedback(status === 'mastered' ? 'correct' : 'wrong');
-      if (wasVisibleAfterChange) {
-        nextCard();
-      } else {
-        currentIndex = Math.min(currentIndex, Math.max(0, displayWords.length - 1));
-        isFlipped = false;
-      }
+      nextCard();
     } catch (e) {
       console.error(e);
     }
@@ -136,36 +121,17 @@
     }
   }
 
-  let debugMsg = $state('');
-
-  async function reloadWords() {
-    debugMsg = 'manual reload...';
-    try {
-      const r = await fetch('/api/vocabulary?limit=500');
-      const d = await r.json();
-      debugMsg = `manual: total=${d.total} len=${d.data?.length}`;
-      if (d.success && d.data) {
-        // TEST: chi lay 3 items
-        wordsData = d.data.slice(0, 3);
-        wordsLoaded = true;
-        wordsVersion++;
-        debugMsg += ` words=${wordsData.length} first=${wordsData[0]?.term} v=${wordsVersion}`;
-      }
-    } catch (e) {
-      debugMsg = `manual err=${e.message}`;
-    }
-  }
-
   onMount(() => {
     window.addEventListener('keydown', handleKeydown);
-    // TEST QUYET DINH: gan cung 2 items, khong qua fetch
-    wordsData = [
-      { id: 'test1', term: 'hello', meaning_vi: 'xin chào', ipa: '/həˈloʊ/' },
-      { id: 'test2', term: 'world', meaning_vi: 'thế giới', ipa: '/wɜːrld/' }
-    ];
-    wordsVersion++;
-    wordsLoaded = true;
-    debugMsg = `hardcoded v=${wordsVersion} len=${wordsData.length}`;
+    // Lay 235 tu that tu D1 (API), thay cho 52 tu static fallback
+    fetch('/api/vocabulary?limit=500')
+      .then(r => r.json())
+      .then(d => {
+        if (d && d.success && d.data && d.data.length > words.length) {
+          words = d.data;
+        }
+      })
+      .catch(() => {});
     return () => {
       window.removeEventListener('keydown', handleKeydown);
       if (autoPlayTimer) clearTimeout(autoPlayTimer);
@@ -183,8 +149,6 @@
       <h1 class="page-title">Tiếng Anh Cô Dung — Flashcard Từ Vựng Chuẩn Ngữ Âm</h1>
       <p class="page-desc">
         Học từ vựng đa giác quan cùng Tiếng Anh Cô Dung: <strong>1 mặt tiếng Việt</strong> gợi nhớ, <strong>1 mặt tiếng Anh</strong> phát âm bản xứ, phân tích chi tiết <strong>nguyên âm, phụ âm, trọng âm</strong> và câu ví dụ ngữ cảnh.
-        {#if debugMsg}<span style="display:block;font-size:11px;color:#888;">[debug] {debugMsg}</span>{/if}
-        <button onclick={reloadWords} style="font-size:11px;margin-top:4px;">[TEST] Tải lại từ vựng</button>
       </p>
     </div>
 
@@ -203,9 +167,9 @@
       <div class="filter-group">
         <label for="filter-status">Trạng thái:</label>
         <select id="filter-status" bind:value={studyFilter} onchange={() => { currentIndex = 0; isFlipped = false; }}>
-          <option value="all">Tất cả từ ({wordsData.length})</option>
-          <option value="need_review">Chưa thuộc ({wordsData.filter(w => w.status !== 'mastered').length})</option>
-          <option value="mastered">Đã thuộc ({wordsData.filter(w => w.status === 'mastered').length})</option>
+          <option value="all">Tất cả từ ({data.words.length})</option>
+          <option value="need_review">Chưa thuộc ({data.words.filter(w => w.status !== 'mastered').length})</option>
+          <option value="mastered">Đã thuộc ({data.words.filter(w => w.status === 'mastered').length})</option>
         </select>
       </div>
 
@@ -230,14 +194,9 @@
 
   {#if displayWords.length === 0}
     <div class="empty-state">
-      {#if !wordsLoaded}
-        <div class="empty-icon">⏳</div>
-        <h3>Đang tải từ vựng...</h3>
-      {:else}
-        <div class="empty-icon">🎉</div>
-        <h3>Không có từ vựng nào trong bộ lọc này!</h3>
-        <p>Bạn đã hoàn thành tất cả từ hoặc bộ lọc chưa có từ tương ứng.</p>
-      {/if}
+      <div class="empty-icon">🎉</div>
+      <h3>Không có từ vựng nào trong bộ lọc này!</h3>
+      <p>Bạn đã hoàn thành tất cả từ hoặc bộ lọc chưa có từ tương ứng.</p>
       <button class="btn-primary" onclick={() => { studyFilter = 'all'; selectedUnit = 'all'; }}>
         Xem lại tất cả từ vựng
       </button>
@@ -263,10 +222,6 @@
           class="flashcard"
           class:flipped={isFlipped}
           onclick={flipCard}
-          role="button"
-          tabindex="0"
-          aria-label={isFlipped ? 'Lật về mặt trước của thẻ' : 'Lật sang mặt đáp án của thẻ'}
-          aria-pressed={isFlipped}
         >
           <!-- ================= FRONT FACE ================= -->
           <div class="card-face card-front">
@@ -601,7 +556,7 @@
   .card-container {
     max-width: 680px;
     width: 100%;
-    min-height: 640px;
+    height: 520px;
     perspective: 1200px;
     position: relative;
     margin: 0 auto;
@@ -609,9 +564,8 @@
 
   .flashcard {
     width: 100%;
-    min-height: 640px;
+    height: 100%;
     position: relative;
-    display: grid;
     transform-style: preserve-3d;
     transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
@@ -622,13 +576,14 @@
   }
 
   .card-face {
-    position: relative;
-    grid-area: 1 / 1;
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
-    min-height: 640px;
+    height: 100%;
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
-    overflow: visible;
+    overflow-y: auto;
     background: white;
     border-radius: var(--border-radius-lg, 20px);
     border: 2px solid var(--border-color, #e2e8f0);
@@ -639,27 +594,20 @@
     box-sizing: border-box;
   }
 
+  :global(.dark) .card-face {
+    background: #0f172a;
+    border-color: #334155;
+    color: #f8fafc;
+  }
+
   .card-front {
     transform: rotateY(0deg);
     z-index: 2;
-    visibility: visible;
   }
 
   .card-back {
     transform: rotateY(180deg);
     z-index: 1;
-    visibility: hidden;
-    pointer-events: none;
-  }
-
-  .flashcard.flipped .card-front {
-    visibility: hidden;
-    pointer-events: none;
-  }
-
-  .flashcard.flipped .card-back {
-    visibility: visible;
-    pointer-events: auto;
   }
 
   .card-header {
@@ -813,6 +761,12 @@
     border: 1px solid var(--border-color);
   }
 
+  :global(.dark) .ipa-pill {
+    background: #1e293b;
+    color: #38bdf8;
+    border-color: #334155;
+  }
+
   .syllables-pill {
     background: var(--primary-light);
     color: var(--primary-hover);
@@ -830,6 +784,11 @@
     padding: 8px 12px;
     border-radius: var(--border-radius-sm);
     border-left: 4px solid var(--primary);
+  }
+
+  :global(.dark) .vietnamese-def {
+    background: #1e293b;
+    border-left-color: #38bdf8;
   }
 
   .def-label {
@@ -855,6 +814,11 @@
     gap: 10px;
   }
 
+  :global(.dark) .phonics-breakdown-box {
+    background: #1e293b;
+    border-color: #334155;
+  }
+
   .phonics-row {
     display: grid;
     grid-template-columns: 1fr 1px 1fr;
@@ -863,6 +827,10 @@
 
   .phonics-row-divider {
     background: var(--border-color);
+  }
+
+  :global(.dark) .phonics-row-divider {
+    background: #334155;
   }
 
   .phonics-tag {
@@ -879,13 +847,25 @@
   }
 
   .tag-consonant {
-    color: #0891b2;
+    color: #0284c7;
+  }
+
+  :global(.dark) .tag-vowel {
+    color: #fbbf24;
+  }
+
+  :global(.dark) .tag-consonant {
+    color: #38bdf8;
   }
 
   .phonics-desc {
     font-size: 0.82rem;
     line-height: 1.45;
     color: var(--text-muted);
+  }
+
+  :global(.dark) .phonics-desc {
+    color: #cbd5e1;
   }
 
   .phonics-note {
@@ -900,12 +880,23 @@
     gap: 6px;
   }
 
+  :global(.dark) .phonics-note {
+    background: #2e1065;
+    border-color: #581c87;
+    color: #d8b4fe;
+  }
+
   /* EXAMPLE SENTENCE BOX */
   .example-box {
     background: var(--bg-surface);
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius-md);
     padding: 10px 14px;
+  }
+
+  :global(.dark) .example-box {
+    background: #0f172a;
+    border-color: #334155;
   }
 
   .example-header {
@@ -920,6 +911,10 @@
     font-weight: 800;
     color: var(--primary);
     text-transform: uppercase;
+  }
+
+  :global(.dark) .example-title {
+    color: #38bdf8;
   }
 
   .btn-speak-example {
@@ -937,14 +932,27 @@
     cursor: pointer;
   }
 
+  :global(.dark) .btn-speak-example {
+    background: #14532d;
+    color: #86efac;
+  }
+
   .example-en {
     font-size: 0.88rem;
     color: var(--text-main);
   }
 
+  :global(.dark) .example-en {
+    color: #f8fafc;
+  }
+
   .example-vi {
     font-size: 0.82rem;
     color: var(--text-muted);
+  }
+
+  :global(.dark) .example-vi {
+    color: #94a3b8;
   }
 
   .btn-speak-example:hover {
@@ -1075,11 +1083,6 @@
   }
 
   @media (max-width: 680px) {
-    .card-container,
-    .flashcard,
-    .card-face {
-      min-height: 760px;
-    }
     .phonics-row {
       grid-template-columns: 1fr;
     }
@@ -1114,30 +1117,6 @@
     }
     .card-face {
       padding: 16px 12px;
-    }
-    .card-container,
-    .flashcard,
-    .card-face {
-      min-height: 820px;
-    }
-    .card-header,
-    .example-header {
-      align-items: flex-start;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-    .audio-controls {
-      width: 100%;
-      flex-wrap: wrap;
-    }
-    .mastery-actions {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 6px;
-    }
-    .btn-action {
-      padding: 8px;
-      justify-content: center;
     }
   }
 </style>
