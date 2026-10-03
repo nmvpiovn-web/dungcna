@@ -1,15 +1,74 @@
 import { json } from '@sveltejs/kit';
-import { 
-  getExams, 
-  getAllExamAttempts, 
-  saveExamAttempt, 
-  saveBatchExamAttempts,
-  getAttendedStudentsForSession 
+import {
+  getAllExamAttempts,
+  saveExamAttempt
 } from '../../../lib/unifiedStore.js';
-import questionsData from '../../../lib/data/questions.json' with { type: 'json' };
 import { verifyServerAuth, isStaffUser } from '../../../lib/server/auth.js';
 
 export const prerender = false;
+
+// ---- D1-only data loaders (thay the JSON/unifiedStore) ----
+function parseGradeLevel(gl) {
+  if (gl === null || gl === undefined) return 0;
+  const m = String(gl).match(/(\d{1,2})/);
+  return m ? parseInt(m[1], 10) : 0;
+}
+
+function mapQuestionRow(r) {
+  let examId = '';
+  if (r.source_ref && String(r.source_ref).startsWith('exam:')) {
+    examId = String(r.source_ref).slice(5);
+  }
+  return {
+    id: r.id,
+    exam_id: examId,
+    question_index: 0,
+    grade: parseGradeLevel(r.grade_level),
+    skill: r.skill_category || '',
+    type: r.question_type || 'multiple_choice',
+    prompt: r.question_text || '',
+    options_json: r.options_json || '[]',
+    correct_answer: r.correct_option_id || '',
+    explanation: r.explanation || '',
+    cambridge_level: ''
+  };
+}
+
+async function loadExamsFromD1(db) {
+  const res = await db.prepare(
+    `SELECT id, curriculum_id, title, description, grade, format_type,
+      skill_category, duration_minutes, total_questions, pass_percentage,
+      is_published FROM exams WHERE is_published = 1 ORDER BY grade, title`
+  ).all();
+  return res.results || [];
+}
+
+async function loadQuestionsFromD1(db) {
+  const res = await db.prepare(
+    `SELECT id, grade_level, skill_category, question_type, question_text,
+      options_json, correct_option_id, explanation, source_ref
+     FROM question_bank WHERE status = 'published' OR status IS NULL`
+  ).all();
+  return (res.results || []).map(mapQuestionRow);
+}
+
+async function getExamsD1(db) {
+  if (db) {
+    try { return await loadExamsFromD1(db); } catch (e) {
+      console.error('[exams] D1 loadExams error:', e.message);
+    }
+  }
+  return [];
+}
+
+async function getQuestionsD1(db) {
+  if (db) {
+    try { return await loadQuestionsFromD1(db); } catch (e) {
+      console.error('[exams] D1 loadQuestions error:', e.message);
+    }
+  }
+  return [];
+}
 
 export async function _ensureExamSchema(db) {
   return ensureExamSchemaInternal(db);
@@ -171,7 +230,11 @@ export async function GET({ url, request, platform }) {
       // Standard Master Plan blueprints: 5m: 5, 15m: 15, 30m: 20, 45m: 30, thpt_qg: 40
       const requiredCount = duration <= 5 ? 5 : (duration <= 15 ? 15 : (duration <= 30 ? 20 : (duration <= 45 ? 30 : 40)));
 
-      let pool = [...questionsData];
+      const db = platform?.env?.DB;
+      if (!db) {
+        return json({ success: false, error: 'DatabaseUnavailable: Không thể tạo đề khi thiếu kết nối D1' }, { status: 503 });
+      }
+      let pool = await getQuestionsD1(db);
       if (targetGrade > 0) {
         pool = pool.filter(q => Number(q.grade) === Number(targetGrade));
       } else {
@@ -254,7 +317,7 @@ export async function GET({ url, request, platform }) {
       }
     }
 
-    let exams = getExams();
+    let exams = await getExamsD1(platform?.env?.DB);
     if (grade) {
       const grNum = parseInt(grade, 10);
       exams = exams.filter(e => e.grade === grNum);
@@ -262,8 +325,11 @@ export async function GET({ url, request, platform }) {
 
     // 3. Questions linkage with strict anti-leakage protection
     let linkedQuestions = [];
+    const dbQ = platform?.env?.DB;
+    const allQuestions = await getQuestionsD1(dbQ);
+    const totalBank = allQuestions.length;
     if (includeQuestions && examId) {
-      const rawQuestions = questionsData.filter(q => q.exam_id === examId);
+      const rawQuestions = allQuestions.filter(q => q.exam_id === examId);
 
       // SECURITY ENFORCEMENT: Never leak correct_answer and explanation to students before submission!
       if (isStaff && includeAnswers) {
@@ -279,7 +345,7 @@ export async function GET({ url, request, platform }) {
       attempts,
       exams,
       questions: includeQuestions ? linkedQuestions : undefined,
-      total_questions_bank: questionsData.length
+      total_questions_bank: totalBank
     });
   } catch (err) {
     return json({ success: false, error: err.message }, { status: 500 });
@@ -367,7 +433,7 @@ export async function POST({ request, platform }) {
       }
 
       const effectiveUserId = isStaff ? (body.user_id || user.id) : user.id;
-      const officialExam = getExams().find(e => e.id === examId);
+      const officialExam = (await getExamsD1(platform?.env?.DB)).find(e => e.id === examId);
       const officialDuration = officialExam?.duration_minutes ? Number(officialExam.duration_minutes) : 45;
       const durationMinutes = isStaff && body.duration_minutes !== undefined
         ? Math.min(180, Math.max(5, Number(body.duration_minutes)))
@@ -429,7 +495,7 @@ export async function POST({ request, platform }) {
       }
 
       // Create new session instance with sanitized questions snapshot AND server-side answer key snapshot
-      const rawQuestions = questionsData.filter(q => q.exam_id === examId);
+      const rawQuestions = (await getQuestionsD1(platform?.env?.DB)).filter(q => q.exam_id === examId);
       const sanitizedSnapshot = rawQuestions.map(({ correct_answer, explanation, ...rest }) => rest);
       const answerKeySnapshot = {};
       rawQuestions.forEach(q => {
@@ -489,7 +555,7 @@ export async function POST({ request, platform }) {
       return json({ success: false, error: 'EmptySubmission: Không thể nộp bài thi trống (chưa chọn câu trả lời)' }, { status: 400 });
     }
 
-    const officialExam = getExams().find(e => e.id === examId);
+    const officialExam = (await getExamsD1(platform?.env?.DB)).find(e => e.id === examId);
     const maxScore = isStaff && body.max_score !== undefined
       ? Math.min(100, Math.max(1, Number(body.max_score)))
       : (officialExam?.max_score ? Number(officialExam.max_score) : 10.0);
@@ -649,8 +715,8 @@ export async function POST({ request, platform }) {
       // Custom teacher manual evaluation
       serverCalculatedScore = Math.min(maxScore, Math.max(0, Number(body.score)));
     } else {
-      // Legacy / direct attempt scoring from questionsData when no session instance is bound
-      const examQuestions = questionsData.filter(q => q.exam_id === examId);
+      // Legacy / direct attempt scoring from D1 question_bank when no session instance is bound
+      const examQuestions = (await getQuestionsD1(platform?.env?.DB)).filter(q => q.exam_id === examId);
       if (examQuestions.length > 0) {
         const validQuestionKeys = new Set(examQuestions.map(q => q.id !== undefined ? String(q.id) : String(q.question_index)));
         const nonQuestionKeys = new Set(['essay', 'transcript', 'notes']);

@@ -1,9 +1,16 @@
 import { json } from '@sveltejs/kit';
 import audioManifest from '../../../../lib/data/audio_manifest.json' with { type: 'json' };
+import { verifyServerAuth } from '../../../../lib/server/auth.js';
 
 export const prerender = false;
 
-export async function GET({ url }) {
+export async function GET({ url, request, platform }) {
+  // P1 (PODCAST_AUDIT): catalog metadata chi cho user da dang nhap
+  const auth = await verifyServerAuth(request, platform);
+  if (!auth.authenticated) {
+    return json({ success: false, error: 'Unauthorized: Vui lòng đăng nhập' }, { status: 401 });
+  }
+
   const grade = url.searchParams.get('grade');
   const unit = url.searchParams.get('unit');
   const curriculum = url.searchParams.get('curriculum');

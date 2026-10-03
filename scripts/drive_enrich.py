@@ -143,10 +143,11 @@ def get_service_account_token():
 
 # ---------------------------------------------------------------- Drive scan
 class DriveScanner:
-    def __init__(self, token, max_files=500, max_depth=8):
+    def __init__(self, token, max_files=500, max_depth=8, skip_ids=None):
         self.token = token
         self.max_files = max_files
         self.max_depth = max_depth
+        self.skip_ids = skip_ids or set()  # drive_ids da index -> bo qua
         self.files = []     # dicts: drive file metadata + classification
         self.folders = {}   # folder_id -> {folder_id, name, parent_id, full_path}
 
@@ -195,6 +196,8 @@ class DriveScanner:
                 }
                 self.walk(fid, parent_id=folder_id, path=fpath, depth=depth + 1)
             else:
+                if fid in self.skip_ids:
+                    continue  # da index batch truoc -> bo qua, di tiep
                 grade, category, tags = classify(name, path, mime,
                                                  int(f.get("size") or 0))
                 self.files.append({
@@ -403,6 +406,9 @@ def main():
     ap.add_argument("--max-files", type=int, default=500)
     ap.add_argument("--root", default=DEFAULT_ROOT)
     ap.add_argument("--max-depth", type=int, default=8)
+    ap.add_argument("--skip-indexed", action="store_true",
+                    help="Bo qua file da co trong D1 drive_file_index "
+                         "(de chay batch tiep theo)")
     args = ap.parse_args()
 
     print("[1/5] Tao schema D1...", flush=True)
@@ -418,6 +424,12 @@ def main():
           flush=True)
     scanner = DriveScanner(token, max_files=args.max_files,
                            max_depth=args.max_depth)
+    if args.skip_indexed:
+        print("  Lay danh sach drive_id da index tu D1...", flush=True)
+        rows = d1_query("SELECT drive_id FROM drive_file_index")
+        scanner.skip_ids = {r["drive_id"]
+                            for res in rows for r in res.get("results", [])}
+        print(f"  skip {len(scanner.skip_ids)} files da index", flush=True)
     root_name = "DriveRoot"
     try:
         meta = scanner._get(
