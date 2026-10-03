@@ -123,6 +123,16 @@
 
   onMount(() => {
     window.addEventListener('keydown', handleKeydown);
+    // Fetch 235 tu D1 (export san) tu static folder - client-side only
+    // (SSR fetch bi treo tren Cloudflare Pages)
+    fetch('/vocabulary_d1.json')
+      .then(r => r.json())
+      .then(d => {
+        if (Array.isArray(d) && d.length > words.length) {
+          words = d;
+        }
+      })
+      .catch(() => {});
     return () => {
       window.removeEventListener('keydown', handleKeydown);
       if (autoPlayTimer) clearTimeout(autoPlayTimer);
