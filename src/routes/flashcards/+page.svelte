@@ -140,10 +140,12 @@
       const d = await r.json();
       debugMsg = `manual: total=${d.total} len=${d.data?.length}`;
       if (d.success && d.data) {
+        // TEST: chi lay 3 items
+        const tiny = d.data.slice(0, 3);
         words.length = 0;
-        for (const w of d.data) words.push(w);
+        for (const w of tiny) words.push(w);
         wordsLoaded = true;
-        debugMsg += ` words=${words.length}`;
+        debugMsg += ` words=${words.length} first=${words[0]?.term}`;
       }
     } catch (e) {
       debugMsg = `manual err=${e.message}`;
