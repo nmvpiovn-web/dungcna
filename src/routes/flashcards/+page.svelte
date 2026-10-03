@@ -124,7 +124,7 @@
 
   onMount(() => {
     window.addEventListener('keydown', handleKeydown);
-    // Fetch 235 tu tu 5 chunk JSON nho (~20KB moi chunk) - file lon bi treo
+    // Fetch 235 tu tu 4 chunk JSON (~25KB moi chunk) - 5 chunk bi treo o chunk thu 5
     const fetchChunk = (i) => new Promise((resolve) => {
       const xhr = new XMLHttpRequest();
       xhr.onload = () => {
@@ -136,12 +136,12 @@
       xhr.onerror = () => resolve([]);
       xhr.ontimeout = () => resolve([]);
       xhr.timeout = 10000;
-      xhr.open('GET', `/vocab_chunk_${i}.json`);
+      xhr.open('GET', `/vocab_c${i}.json`);
       xhr.send();
     });
     (async () => {
       const all = [];
-      for (let i = 0; i < 5; i++) {
+      for (let i = 0; i < 4; i++) {
         const chunk = await fetchChunk(i);
         chunkDbg = `chunk ${i}: got ${chunk.length}, total ${all.length + chunk.length}`;
         all.push(...chunk);
