@@ -123,40 +123,6 @@
 
   onMount(() => {
     window.addEventListener('keydown', handleKeydown);
-    // Fetch 5 batch tuan tu, moi batch cach nhau 800ms (tranh gioi han concurrent)
-    (async () => {
-      try {
-        const fetchBatch = (offset) => new Promise((resolve) => {
-          const xhr = new XMLHttpRequest();
-          xhr.onload = () => {
-            try {
-              const d = JSON.parse(xhr.responseText);
-              resolve(d && d.success && Array.isArray(d.data) ? d.data : []);
-            } catch { resolve([]); }
-          };
-          xhr.onerror = () => resolve([]);
-          xhr.ontimeout = () => resolve([]);
-          xhr.timeout = 10000;
-          xhr.open('GET', `/api/vocabulary?limit=50&offset=${offset}&_cb=${Date.now()}`);
-          xhr.send();
-        });
-        const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-        const all = [];
-        for (const offset of [0, 50, 100, 150, 200]) {
-          const batch = await fetchBatch(offset);
-          all.push(...batch);
-          await sleep(800);
-        }
-        if (all.length > words.length) {
-          const seen = new Set();
-          words = all.filter(w => {
-            if (!w || seen.has(w.id)) return false;
-            seen.add(w.id);
-            return true;
-          });
-        }
-      } catch {}
-    })();
     return () => {
       window.removeEventListener('keydown', handleKeydown);
       if (autoPlayTimer) clearTimeout(autoPlayTimer);
