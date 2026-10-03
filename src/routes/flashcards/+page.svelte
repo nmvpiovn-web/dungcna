@@ -133,6 +133,22 @@
 
   let debugMsg = $state('');
 
+  async function reloadWords() {
+    debugMsg = 'manual reload...';
+    try {
+      const r = await fetch('/api/vocabulary?limit=500');
+      const d = await r.json();
+      debugMsg = `manual: total=${d.total} len=${d.data?.length}`;
+      if (d.success && d.data) {
+        words = [...d.data];
+        wordsLoaded = true;
+        debugMsg += ` words=${words.length}`;
+      }
+    } catch (e) {
+      debugMsg = `manual err=${e.message}`;
+    }
+  }
+
   onMount(() => {
     window.addEventListener('keydown', handleKeydown);
     // Load 235 tu tu D1 hoan toan o client
@@ -175,6 +191,7 @@
       <p class="page-desc">
         Học từ vựng đa giác quan cùng Tiếng Anh Cô Dung: <strong>1 mặt tiếng Việt</strong> gợi nhớ, <strong>1 mặt tiếng Anh</strong> phát âm bản xứ, phân tích chi tiết <strong>nguyên âm, phụ âm, trọng âm</strong> và câu ví dụ ngữ cảnh.
         {#if debugMsg}<span style="display:block;font-size:11px;color:#888;">[debug] {debugMsg}</span>{/if}
+        <button onclick={reloadWords} style="font-size:11px;margin-top:4px;">[TEST] Tải lại từ vựng</button>
       </p>
     </div>
 
