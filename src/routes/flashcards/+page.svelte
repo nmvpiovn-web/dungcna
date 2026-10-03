@@ -140,7 +140,8 @@
       const d = await r.json();
       debugMsg = `manual: total=${d.total} len=${d.data?.length}`;
       if (d.success && d.data) {
-        words = [...d.data];
+        words.length = 0;
+        for (const w of d.data) words.push(w);
         wordsLoaded = true;
         debugMsg += ` words=${words.length}`;
       }
