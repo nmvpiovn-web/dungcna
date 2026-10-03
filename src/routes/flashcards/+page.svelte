@@ -123,18 +123,31 @@
 
   onMount(() => {
     window.addEventListener('keydown', handleKeydown);
-    // Fetch 235 tu D1 (export san) tu static folder - dung XHR vi fetch bi treo
-    const xhr = new XMLHttpRequest();
-    xhr.onload = () => {
-      try {
-        const d = JSON.parse(xhr.responseText);
-        if (Array.isArray(d) && d.length > words.length) {
-          words = d;
-        }
-      } catch {}
-    };
-    xhr.open('GET', '/vocabulary_d1.json');
-    xhr.send();
+    // Fetch 235 tu tu 5 chunk JSON nho (~20KB moi chunk) - file lon bi treo
+    const fetchChunk = (i) => new Promise((resolve) => {
+      const xhr = new XMLHttpRequest();
+      xhr.onload = () => {
+        try {
+          const d = JSON.parse(xhr.responseText);
+          resolve(Array.isArray(d) ? d : []);
+        } catch { resolve([]); }
+      };
+      xhr.onerror = () => resolve([]);
+      xhr.ontimeout = () => resolve([]);
+      xhr.timeout = 10000;
+      xhr.open('GET', `/vocab_chunk_${i}.json`);
+      xhr.send();
+    });
+    (async () => {
+      const all = [];
+      for (let i = 0; i < 5; i++) {
+        const chunk = await fetchChunk(i);
+        all.push(...chunk);
+      }
+      if (all.length > words.length) {
+        words = all;
+      }
+    })();
     return () => {
       window.removeEventListener('keydown', handleKeydown);
       if (autoPlayTimer) clearTimeout(autoPlayTimer);
