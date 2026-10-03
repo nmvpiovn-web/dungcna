@@ -127,29 +127,22 @@
     mountCount++;
     dbg = `mount#${mountCount} words=${words.length} data.words=${data.words.length}`;
     window.addEventListener('keydown', handleKeydown);
-    // Diagnostic: thu XMLHttpRequest thay vi fetch
+    // Diagnostic: thu 2 XHR song song
     try {
-      dbg = `starting XHR...`;
-      const xhr = new XMLHttpRequest();
-      xhr.timeout = 8000;
-      xhr.onload = () => {
-        dbg = `XHR onload status=${xhr.status} len=${xhr.responseText.length}`;
-        try {
-          const d = JSON.parse(xhr.responseText);
-          dbg = `XHR parsed total=${d.total}`;
-          if (d && d.success && d.data && d.data.length > words.length) {
-            words = d.data;
-            dbg = `XHR assigned words=${words.length}`;
-          }
-        } catch (e) {
-          dbg = `XHR parse err ${e.message}`;
-        }
+      dbg = `starting XHRs...`;
+      const test = (url, label) => {
+        const xhr = new XMLHttpRequest();
+        xhr.timeout = 8000;
+        xhr.onload = () => { dbg += ` [${label} onload ${xhr.status}]`; };
+        xhr.onerror = () => { dbg += ` [${label} onerror]`; };
+        xhr.ontimeout = () => { dbg += ` [${label} timeout]`; };
+        xhr.open('GET', url);
+        xhr.send();
       };
-      xhr.onerror = () => { dbg = `XHR onerror`; };
-      xhr.ontimeout = () => { dbg = `XHR timeout`; };
-      xhr.open('GET', '/api/vocabulary?limit=500');
-      xhr.send();
-      dbg = `XHR sent...`;
+      test('/api/vocabulary?limit=1', 'vocab');
+      test('/api/exams', 'exams');
+      test('/manifest.webmanifest', 'manifest');
+      dbg = `3 XHRs sent...`;
     } catch (e) {
       dbg = `SYNC THROW: ${e.message}`;
     }
