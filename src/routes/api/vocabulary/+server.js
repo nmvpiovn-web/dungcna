@@ -9,6 +9,7 @@ export async function GET({ url, platform }) {
   const search = url.searchParams.get('search');
   const level = url.searchParams.get('level');
   const limit = Math.min(500, Number(url.searchParams.get('limit')) || 100);
+  const offset = Math.max(0, Number(url.searchParams.get('offset')) || 0);
 
   // D1-only: khong fallback file tinh
   let results = [];
@@ -31,8 +32,8 @@ export async function GET({ url, platform }) {
       params.push(`%${search.trim()}%`, `%${search.trim()}%`);
     }
 
-    sql += ` ORDER BY word ASC LIMIT ?`;
-    params.push(limit);
+    sql += ` ORDER BY word ASC LIMIT ? OFFSET ?`;
+    params.push(limit, offset);
 
     const res = await db.prepare(sql).bind(...params).all();
     results = (res.results || []).map(r => ({
