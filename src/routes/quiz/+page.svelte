@@ -1,5 +1,5 @@
 <script>
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
   import { speakWord, playAudioFeedback } from '$lib/speech.js';
   import { saveUserProgress, saveGameScoreLocally } from '$lib/staticDb.js';
 
@@ -99,7 +99,18 @@
     isStarted = true;
     isFinished = false;
     resetQuestionState();
+    if (typeof document !== 'undefined') document.body.style.overflow = 'hidden';
   }
+
+  // Thoát quiz: đóng popup + mở lại scroll nền
+  function quitQuiz() {
+    isStarted = false;
+    if (typeof document !== 'undefined') document.body.style.overflow = '';
+  }
+
+  onDestroy(() => {
+    if (typeof document !== 'undefined') document.body.style.overflow = '';
+  });
 
   function resetQuestionState() {
     typedAnswer = '';
@@ -288,11 +299,15 @@
         </div>
       </div>
     </div>
-  {:else if !isFinished && currentQ}
+  {:else}
+    <!-- Quiz popup modal: cô lập khi đang làm bài / xem kết quả (đồng bộ với phòng thi) -->
+    <div class="quiz-popup-overlay" role="dialog" aria-modal="true" aria-label="Dò từ vựng">
+    <div class="quiz-popup-inner">
+    {#if !isFinished && currentQ}
     <!-- Active Quiz Screen -->
     <div class="active-quiz">
       <div class="quiz-topbar">
-        <button class="btn-quit" onclick={() => isStarted = false}>✕ Thoát</button>
+        <button class="btn-quit" onclick={quitQuiz}>✕ Thoát</button>
         <div class="quiz-progress-text">
           Câu <strong>{currentQuestionIndex + 1}</strong> / {quizQuestions.length}
         </div>
@@ -458,7 +473,7 @@
         </div>
 
         <div class="result-actions">
-          <button class="btn-secondary" onclick={() => isStarted = false}>
+          <button class="btn-secondary" onclick={quitQuiz}>
             ⚙️ Cấu hình lại
           </button>
           <button class="btn-primary" onclick={startQuiz}>
@@ -467,10 +482,36 @@
         </div>
       </div>
     </div>
+    {/if}
+    </div><!-- /quiz-popup-inner -->
+    </div><!-- /quiz-popup-overlay -->
   {/if}
 </div>
 
 <style>
+  .quiz-popup-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    overflow-y: auto;
+    background: rgba(2, 6, 23, 0.95);
+    backdrop-filter: blur(4px);
+    animation: quizPopupIn 0.15s ease-out;
+  }
+  .quiz-popup-inner {
+    min-height: 100%;
+    width: 100%;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 12px;
+  }
+  @media (min-width: 640px) {
+    .quiz-popup-inner { padding: 24px; }
+  }
+  @keyframes quizPopupIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
   .quiz-page {
     max-width: 860px;
     margin: 0 auto;

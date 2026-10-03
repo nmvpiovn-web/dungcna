@@ -89,6 +89,7 @@
  let remain = $state(TEST_SECONDS);
  let timer = $state(null);
  let result = $state(null);
+ let abandonConfirming = $state(false);
 
  const curricula = $derived(GRADES.find((g) => g.key === grade)?.curricula || []);
  const questions = $derived(session?.questions || []);
@@ -115,6 +116,8 @@
  currentIdx = 0;
  remain = TEST_SECONDS;
  step = 'doing';
+ abandonConfirming = false;
+ if (typeof document !== 'undefined') document.body.style.overflow = 'hidden';
  clearInterval(timer);
  timer = setInterval(() => {
  remain -= 1;
@@ -125,6 +128,22 @@
  } finally {
  loading = false;
  }
+ }
+
+ // Bỏ test giữa chừng: xác nhận 2 bước trên nút rồi về màn hình chọn
+ function abandonPlacement() {
+ if (!abandonConfirming) {
+ abandonConfirming = true;
+ setTimeout(() => { abandonConfirming = false; }, 4000);
+ return;
+ }
+ abandonConfirming = false;
+ clearInterval(timer);
+ step = 'pick';
+ result = null;
+ session = null;
+ answers = {};
+ if (typeof document !== 'undefined') document.body.style.overflow = '';
  }
 
  function answerCurrent(val) {
@@ -199,8 +218,8 @@
  const answeredCount = $derived(Object.keys(answers).filter((k) => answers[k] !== '' && answers[k] != null).length);
 </script>
 
-<div class="rounded-3xl bg-surface-0 border border-line shadow-sm p-5 sm:p-7">
  {#if step === 'pick'}
+ <div class="rounded-3xl bg-surface-0 border border-line shadow-sm p-5 sm:p-7">
  <div class="text-center max-w-lg mx-auto">
  <div class="text-4xl mb-2">📝</div>
  <h3 class="font-heading text-xl sm:text-2xl font-extrabold text-ink-900">Test Xếp Lớp 3 Phút</h3>
@@ -224,11 +243,19 @@
  <UiButton size="lg" variant="accent" onclick={start} disabled={loading}>{loading ? 'Đang chuẩn bị đề...' : '🚀 Bắt đầu làm bài'}</UiButton>
  </div>
  </div>
- {:else if step === 'doing' && currentQ}
+ </div><!-- /pick card -->
+ {:else}
+ <!-- Popup cô lập khi đang làm bài / xem kết quả (đồng bộ với phòng thi) -->
+ <div class="placement-popup-overlay" role="dialog" aria-modal="true" aria-label="Test xếp lớp">
+ <div class="placement-popup-inner">
+ {#if step === 'doing' && currentQ}
  <div class="max-w-2xl mx-auto">
- <div class="flex items-center justify-between mb-4">
+ <div class="flex items-center justify-between mb-4 gap-2">
  <div class="text-sm font-extrabold text-ink-900">Câu {currentIdx + 1}/{questions.length}</div>
+ <div class="flex items-center gap-2">
  <div class={`px-3 py-1 rounded-full text-sm font-extrabold tabular-nums ${remain <= 30 ? 'bg-danger-600/10 text-danger-600' : 'bg-brand-50 text-brand-700 border border-brand-200'}`}>⏱️ {mm}:{ss}</div>
+ <button type="button" onclick={abandonPlacement} class={`px-3 py-1 rounded-full text-xs font-bold border transition-all ${abandonConfirming ? 'bg-danger-600 border-danger-600 text-white' : 'bg-surface-1 border-line text-ink-500 hover:border-danger-600 hover:text-danger-600'}`}>{abandonConfirming ? '⚠️ Chắc chắn bỏ?' : '✕ Bỏ test'}</button>
+ </div>
  </div>
  <div class="h-2 rounded-full bg-surface-1 border border-line overflow-hidden mb-5">
  <div class="h-full bg-brand-600 transition-all" style={`width: ${((currentIdx + 1) / questions.length) * 100}%`}></div>
@@ -310,7 +337,39 @@
  <UiButton href={roadmapHint.href}>Xem lộ trình chi tiết →</UiButton>
  <a href={SITE_CONTACT.zaloUrl} target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl font-bold text-sm text-white bg-brand-600 hover:bg-brand-700 transition-all">💬 Nhận tư vấn Zalo</a>
  </div>
- <button type="button" onclick={() => { step = 'pick'; result = null; session = null; }} class="mt-4 text-xs font-bold text-ink-500 hover:text-brand-600 underline">Làm lại bài test</button>
+ <button type="button" onclick={() => { step = 'pick'; result = null; session = null; abandonConfirming = false; if (typeof document !== 'undefined') document.body.style.overflow = ''; }} class="mt-4 px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-sm font-bold transition-all">✓ Đóng</button>
+ <button type="button" onclick={() => { step = 'pick'; result = null; session = null; abandonConfirming = false; if (typeof document !== 'undefined') document.body.style.overflow = ''; }} class="mt-2 text-xs font-bold text-ink-500 hover:text-brand-600 underline">Làm lại bài test</button>
  </div>
  {/if}
-</div>
+ </div><!-- /placement-popup-inner -->
+ </div><!-- /placement-popup-overlay -->
+ {/if}
+
+<style>
+ .placement-popup-overlay {
+ position: fixed;
+ inset: 0;
+ z-index: 100;
+ overflow-y: auto;
+ background: rgba(2, 6, 23, 0.95);
+ backdrop-filter: blur(4px);
+ animation: placementPopupIn 0.15s ease-out;
+ }
+ .placement-popup-inner {
+ min-height: 100%;
+ width: 100%;
+ max-width: 768px;
+ margin: 0 auto;
+ padding: 12px;
+ display: flex;
+ flex-direction: column;
+ justify-content: center;
+ }
+ @media (min-width: 640px) {
+ .placement-popup-inner { padding: 24px; }
+ }
+ @keyframes placementPopupIn {
+ from { opacity: 0; }
+ to { opacity: 1; }
+ }
+</style>
