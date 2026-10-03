@@ -158,6 +158,7 @@
 
  // State
  let isStarted = $state(false);
+ let isExamPopupOpen = $state(false);
  let isSubmitted = $state(false);
  let timeLeftSeconds = $state(15 * 60);
  let timerInterval = null;
@@ -239,6 +240,7 @@
 
  onDestroy(() => {
  if (timerInterval) clearInterval(timerInterval);
+ if (typeof document !== 'undefined') document.body.style.overflow = '';
  if (mediaRecorder && isRecording) {
  try {
  mediaRecorder.stop();
@@ -252,6 +254,34 @@
  window.unregisterBusyState?.('exam_audio_recording');
  }
  });
+
+ // Bỏ test: xác nhận rồi thoát popup, xóa timer + backup
+ function abandonExam() {
+ if (isSubmitting) return;
+ if (typeof window !== 'undefined' && !window.confirm('Bỏ bài test này? Tiến trình làm bài sẽ mất.')) return;
+ if (timerInterval) clearInterval(timerInterval);
+ try {
+ localStorage.removeItem(getExamBackupKey(currentExam?.id));
+ localStorage.removeItem('tienganh_active_exam_backup');
+ } catch {}
+ resetExamState();
+ isExamPopupOpen = false;
+ if (typeof document !== 'undefined') document.body.style.overflow = '';
+ if (typeof window !== 'undefined') {
+ window.__isExamActive = false;
+ window.unregisterBusyState?.('active_exam');
+ }
+ }
+
+ // Đóng popup sau khi đã nộp bài (xem kết quả xong)
+ function closeExamPopup() {
+ resetExamState();
+ isExamPopupOpen = false;
+ if (typeof document !== 'undefined') document.body.style.overflow = '';
+ if (typeof window !== 'undefined') {
+ window.__isExamSubmitted = false;
+ }
+ }
 
  function resetExamState() {
  if (timerInterval) clearInterval(timerInterval);
@@ -339,6 +369,9 @@
  if (!restored) {
  resetExamState();
  }
+ // Mở popup phòng thi cô lập (PWA-safe): chỉ đóng khi nộp bài hoặc bỏ test
+ isExamPopupOpen = true;
+ if (typeof document !== 'undefined') document.body.style.overflow = 'hidden';
  }
 
  async function startExam() {
@@ -353,6 +386,9 @@
  submitError = '';
  serverCalculatedScoreOverride = null;
  userAnswers = {};
+ // Đảm bảo popup mở (PWA)
+ isExamPopupOpen = true;
+ if (typeof document !== 'undefined') document.body.style.overflow = 'hidden';
 
  const durationMins = currentExam?.duration_minutes || 15;
  timeLeftSeconds = durationMins * 60;
@@ -1452,6 +1488,41 @@
  {/each}
  </div>
 
+ <!-- EXAM POPUP MODAL: phòng thi cô lập full-screen (PWA-safe).
+ Chỉ thoát khi nộp bài (xem kết quả -> Đóng) hoặc bấm Bỏ Test. -->
+ {#if isExamPopupOpen}
+ <div class="fixed inset-0 z-[100] overflow-y-auto bg-slate-950/95 backdrop-blur-sm animate-in fade-in duration-150" role="dialog" aria-modal="true" aria-label="Phòng thi">
+ <div class="min-h-full w-full max-w-5xl mx-auto px-3 py-3 sm:px-6 sm:py-6">
+ <!-- Popup top bar: tiêu đề + đồng hồ + nút thoát -->
+ <div class="sticky top-0 z-10 mb-3 flex items-center justify-between gap-3 p-3 rounded-2xl bg-slate-900/95 border border-slate-700 shadow-xl backdrop-blur">
+ <div class="flex items-center gap-2 min-w-0">
+ <span class="text-xl shrink-0">📝</span>
+ <div class="min-w-0">
+ <div class="text-sm font-black text-white truncate">{currentExam?.title || 'Phòng thi'}</div>
+ {#if isStarted && !isSubmitted}
+ <div class="text-xs font-mono font-bold text-amber-300">⏱️ {formatTime(timeLeftSeconds)}</div>
+ {/if}
+ </div>
+ </div>
+ {#if !isSubmitted}
+ <button
+ type="button"
+ onclick={abandonExam}
+ class="shrink-0 px-4 py-2 rounded-xl bg-slate-800 hover:bg-rose-600 border border-slate-700 text-slate-300 hover:text-white font-bold text-xs transition-all"
+ >
+ ✕ Bỏ Test
+ </button>
+ {:else}
+ <button
+ type="button"
+ onclick={closeExamPopup}
+ class="shrink-0 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-all shadow-lg shadow-emerald-600/30"
+ >
+ ✓ Đóng
+ </button>
+ {/if}
+ </div>
+
  <!-- Active Exam Details & Status Header -->
  <div class="rounded-3xl bg-surface-0 border border-line p-5 sm:p-6 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6 min-w-0 max-w-full">
  <div class="space-y-1 min-w-0 max-w-full">
@@ -1885,6 +1956,9 @@
  </div>
  </div>
  {/if}
+ {/if}
+ </div><!-- /exam-popup-inner -->
+ </div><!-- /exam-popup -->
  {/if}
 
  <!-- BATCH GRADING MODAL FOR ATTENDED STUDENTS -->
