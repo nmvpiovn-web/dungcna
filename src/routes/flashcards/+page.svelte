@@ -132,6 +132,17 @@
 
   onMount(() => {
     window.addEventListener('keydown', handleKeydown);
+    // Client-side refetch: dam bao lay du 235 tu tu D1 (SSR co the roi vao fallback)
+    if (data.words.length < 100) {
+      fetch('/api/vocabulary?limit=500')
+        .then(r => r.json())
+        .then(d => {
+          if (d.success && d.data && d.data.length > words.length) {
+            words = d.data;
+          }
+        })
+        .catch(() => {});
+    }
     return () => {
       window.removeEventListener('keydown', handleKeydown);
       if (autoPlayTimer) clearTimeout(autoPlayTimer);
