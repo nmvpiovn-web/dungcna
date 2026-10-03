@@ -207,9 +207,9 @@
  <p class="text-sm text-ink-500 mt-1 mb-5">10 câu trắc nghiệm nhanh — biết ngay trình độ CEFR, không cần đăng nhập.</p>
  <div class="flex flex-col gap-3 text-left">
  <label class="text-xs font-extrabold uppercase tracking-widest text-ink-500">1. Chọn khối lớp</label>
- <div class="flex gap-2">
+ <div class="grid grid-cols-4 sm:grid-cols-6 gap-2">
  {#each GRADES as g}
- <button type="button" onclick={() => selectGrade(g.key)} class={`flex-1 px-3 py-2.5 rounded-xl text-sm font-bold border transition-all ${grade === g.key ? 'bg-brand-600 border-brand-600 text-white' : 'bg-surface-1 border-line text-ink-900 hover:border-brand-200'}`}>{g.label}</button>
+ <button type="button" onclick={() => selectGrade(g.key)} class={`px-3 py-2.5 rounded-xl text-sm font-bold border transition-all ${grade === g.key ? 'bg-brand-600 border-brand-600 text-white' : 'bg-surface-1 border-line text-ink-900 hover:border-brand-200'}`}>{g.label}</button>
  {/each}
  </div>
  <label class="text-xs font-extrabold uppercase tracking-widest text-ink-500">2. Chọn chương trình</label>
