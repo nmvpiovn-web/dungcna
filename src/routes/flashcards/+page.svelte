@@ -8,8 +8,6 @@
   let wordsData = [];  // plain array, khong dung $state
   let wordsVersion = $state(0);
   let wordsLoaded = $state(false);
-  // derived doc qua version de force reactivity
-  let words = $derived(wordsVersion >= 0 ? wordsData : []);
   let currentIndex = $state(0);
   let isFlipped = $state(false);
   let selectedUnit = $state(data.currentUnit || 'all');
@@ -21,7 +19,9 @@
 
   // Filtered list
   let displayWords = $derived.by(() => {
-    let list = words;
+    // doc wordsVersion de dam bao re-run khi data doi
+    void wordsVersion;
+    let list = wordsData;
     if (selectedUnit !== 'all') {
       list = list.filter(w => w.unit_id === selectedUnit);
     }
@@ -220,9 +220,9 @@
       <div class="filter-group">
         <label for="filter-status">Trạng thái:</label>
         <select id="filter-status" bind:value={studyFilter} onchange={() => { currentIndex = 0; isFlipped = false; }}>
-          <option value="all">Tất cả từ ({words.length})</option>
-          <option value="need_review">Chưa thuộc ({words.filter(w => w.status !== 'mastered').length})</option>
-          <option value="mastered">Đã thuộc ({words.filter(w => w.status === 'mastered').length})</option>
+          <option value="all">Tất cả từ ({wordsData.length})</option>
+          <option value="need_review">Chưa thuộc ({wordsData.filter(w => w.status !== 'mastered').length})</option>
+          <option value="mastered">Đã thuộc ({wordsData.filter(w => w.status === 'mastered').length})</option>
         </select>
       </div>
 
