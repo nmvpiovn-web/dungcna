@@ -5,8 +5,11 @@
 
   let { data } = $props();
 
-  let words = $state([]);
+  let wordsData = [];  // plain array, khong dung $state
+  let wordsVersion = $state(0);
   let wordsLoaded = $state(false);
+  // derived doc qua version de force reactivity
+  let words = $derived(wordsVersion >= 0 ? wordsData : []);
   let currentIndex = $state(0);
   let isFlipped = $state(false);
   let selectedUnit = $state(data.currentUnit || 'all');
@@ -68,8 +71,9 @@
       const j = Math.floor(Math.random() * (i + 1));
       [currentSub[i], currentSub[j]] = [currentSub[j], currentSub[i]];
     }
-    const otherWords = words.filter(w => !currentIds.has(w.id));
-    words = [...currentSub, ...otherWords];
+    const otherWords = wordsData.filter(w => !currentIds.has(w.id));
+    wordsData = [...currentSub, ...otherWords];
+    wordsVersion++;
     currentIndex = 0;
     isFlipped = false;
   }
@@ -81,7 +85,8 @@
       const wasVisibleAfterChange = studyFilter === 'all' ||
         (studyFilter === 'mastered' && status === 'mastered') ||
         (studyFilter === 'need_review' && status !== 'mastered');
-      words = words.map(word => word.id === wordId ? { ...word, status } : word);
+      wordsData = wordsData.map(word => word.id === wordId ? { ...word, status } : word);
+      wordsVersion++;
       saveUserProgress(wordId, status);
       playAudioFeedback(status === 'mastered' ? 'correct' : 'wrong');
       if (wasVisibleAfterChange) {
@@ -141,11 +146,10 @@
       debugMsg = `manual: total=${d.total} len=${d.data?.length}`;
       if (d.success && d.data) {
         // TEST: chi lay 3 items
-        const tiny = d.data.slice(0, 3);
-        words.length = 0;
-        for (const w of tiny) words.push(w);
+        wordsData = d.data.slice(0, 3);
         wordsLoaded = true;
-        debugMsg += ` words=${words.length} first=${words[0]?.term}`;
+        wordsVersion++;
+        debugMsg += ` words=${wordsData.length} first=${wordsData[0]?.term} v=${wordsVersion}`;
       }
     } catch (e) {
       debugMsg = `manual err=${e.message}`;
@@ -161,19 +165,22 @@
       .then(d => {
         debugMsg += ` api_total=${d.total}`;
         if (d.success && d.data && d.data.length > 0) {
-          words = d.data;
+          wordsData = d.data;
           wordsLoaded = true;
-          debugMsg += ` updated=${words.length}`;
+          wordsVersion++;
+          debugMsg += ` updated=${wordsData.length} v=${wordsVersion}`;
         } else {
           // fallback static neu API loi
-          words = [...data.words];
+          wordsData = [...data.words];
           wordsLoaded = true;
-          debugMsg += ` fallback=${words.length}`;
+          wordsVersion++;
+          debugMsg += ` fallback=${wordsData.length}`;
         }
       })
       .catch(e => {
-        words = [...data.words];
+        wordsData = [...data.words];
         wordsLoaded = true;
+        wordsVersion++;
         debugMsg += ` err=${e.message}`;
       });
     return () => {
