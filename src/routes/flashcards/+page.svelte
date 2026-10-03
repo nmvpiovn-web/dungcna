@@ -123,8 +123,7 @@
 
   onMount(() => {
     window.addEventListener('keydown', handleKeydown);
-    // Fetch batch 5x50 tu D1 bang XHR (fetch API treo voi /api/vocabulary)
-    // Ghi de len 52 tu static fallback khi co du lieu that
+    // Fetch batch tuan tu 5x50 tu D1 bang XHR (song song co the bi gioi han)
     (async () => {
       try {
         const fetchBatch = (offset) => new Promise((resolve) => {
@@ -141,8 +140,11 @@
           xhr.open('GET', `/api/vocabulary?limit=50&offset=${offset}&_cb=${Date.now()}`);
           xhr.send();
         });
-        const batches = await Promise.all([0, 50, 100, 150, 200].map(fetchBatch));
-        const all = batches.flat();
+        const all = [];
+        for (const offset of [0, 50, 100, 150, 200]) {
+          const batch = await fetchBatch(offset);
+          all.push(...batch);
+        }
         if (all.length > words.length) {
           const seen = new Set();
           words = all.filter(w => {
