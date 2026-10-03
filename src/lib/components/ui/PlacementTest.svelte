@@ -354,6 +354,8 @@
  background: rgba(2, 6, 23, 0.95);
  backdrop-filter: blur(4px);
  animation: placementPopupIn 0.15s ease-out;
+ padding-top: env(safe-area-inset-top, 0px);
+ padding-bottom: env(safe-area-inset-bottom, 0px);
  }
  .placement-popup-inner {
  min-height: 100%;
@@ -361,12 +363,13 @@
  max-width: 768px;
  margin: 0 auto;
  padding: 12px;
+ padding-top: calc(12px + env(safe-area-inset-top, 0px) + 8px);
  display: flex;
  flex-direction: column;
  justify-content: center;
  }
  @media (min-width: 640px) {
- .placement-popup-inner { padding: 24px; }
+ .placement-popup-inner { padding: 24px; padding-top: calc(24px + env(safe-area-inset-top, 0px) + 8px); }
  }
  @keyframes placementPopupIn {
  from { opacity: 0; }

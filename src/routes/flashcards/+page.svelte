@@ -453,6 +453,9 @@
     background: rgba(2, 6, 23, 0.96);
     backdrop-filter: blur(6px);
     animation: fcPopupIn 0.18s ease-out;
+    /* iPhone notch/Dynamic Island: đẩy nội dung xuống khỏi vùng tai thỏ */
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
   .fc-popup-inner {
     min-height: 100%;
@@ -460,12 +463,14 @@
     max-width: 860px;
     margin: 0 auto;
     padding: 12px;
+    /* Thêm khoảng đệm trên để nút Đóng không bị tai thỏ che (iPhone 12 Pro Max) */
+    padding-top: calc(12px + env(safe-area-inset-top, 0px) + 8px);
     display: flex;
     flex-direction: column;
     gap: 12px;
   }
   @media (min-width: 640px) {
-    .fc-popup-inner { padding: 24px; gap: 16px; }
+    .fc-popup-inner { padding: 24px; padding-top: calc(24px + env(safe-area-inset-top, 0px) + 8px); gap: 16px; }
   }
   @keyframes fcPopupIn {
     from { opacity: 0; transform: scale(0.98); }
