@@ -127,25 +127,29 @@
     mountCount++;
     dbg = `mount#${mountCount} words=${words.length} data.words=${data.words.length}`;
     window.addEventListener('keydown', handleKeydown);
-    // Diagnostic: fetch voi timeout 8s
+    // Diagnostic: thu XMLHttpRequest thay vi fetch
     try {
-      dbg = `starting fetch... typeof fetch=${typeof fetch}`;
-      const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error('TIMEOUT_8S')), 8000));
-      dbg = `timeout created, calling fetch...`;
-      const fp = fetch('/api/vocabulary?limit=500');
-      dbg = `fetch returned type=${typeof fp}, then=${typeof fp?.then}`;
-    Promise.race([
-      fetch('/api/vocabulary?limit=500').then(r => r.json()),
-      timeout
-    ])
-      .then(d => {
-        dbg = `api ok total=${d.total} len=${d.data?.length}`;
-        if (d && d.success && d.data && d.data.length > words.length) {
-          words = d.data;
-          dbg = `assigned words=${words.length} m=${mountCount}`;
+      dbg = `starting XHR...`;
+      const xhr = new XMLHttpRequest();
+      xhr.timeout = 8000;
+      xhr.onload = () => {
+        dbg = `XHR onload status=${xhr.status} len=${xhr.responseText.length}`;
+        try {
+          const d = JSON.parse(xhr.responseText);
+          dbg = `XHR parsed total=${d.total}`;
+          if (d && d.success && d.data && d.data.length > words.length) {
+            words = d.data;
+            dbg = `XHR assigned words=${words.length}`;
+          }
+        } catch (e) {
+          dbg = `XHR parse err ${e.message}`;
         }
-      })
-      .catch((e) => { dbg = `fetch err: ${e.message}`; });
+      };
+      xhr.onerror = () => { dbg = `XHR onerror`; };
+      xhr.ontimeout = () => { dbg = `XHR timeout`; };
+      xhr.open('GET', '/api/vocabulary?limit=500');
+      xhr.send();
+      dbg = `XHR sent...`;
     } catch (e) {
       dbg = `SYNC THROW: ${e.message}`;
     }
