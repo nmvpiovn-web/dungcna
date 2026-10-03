@@ -123,16 +123,18 @@
 
   onMount(() => {
     window.addEventListener('keydown', handleKeydown);
-    // Fetch 235 tu D1 (export san) tu static folder - client-side only
-    // (SSR fetch bi treo tren Cloudflare Pages)
-    fetch('/vocabulary_d1.json')
-      .then(r => r.json())
-      .then(d => {
+    // Fetch 235 tu D1 (export san) tu static folder - dung XHR vi fetch bi treo
+    const xhr = new XMLHttpRequest();
+    xhr.onload = () => {
+      try {
+        const d = JSON.parse(xhr.responseText);
         if (Array.isArray(d) && d.length > words.length) {
           words = d;
         }
-      })
-      .catch(() => {});
+      } catch {}
+    };
+    xhr.open('GET', '/vocabulary_d1.json');
+    xhr.send();
     return () => {
       window.removeEventListener('keydown', handleKeydown);
       if (autoPlayTimer) clearTimeout(autoPlayTimer);
