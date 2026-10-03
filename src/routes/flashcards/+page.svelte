@@ -6,6 +6,8 @@
   let { data } = $props();
 
   let words = $state([...data.words]);
+  let mountCount = $state(0);
+  let dbg = $state('init');
   let currentIndex = $state(0);
   let isFlipped = $state(false);
   let selectedUnit = $state(data.currentUnit || 'all');
@@ -122,16 +124,20 @@
   }
 
   onMount(() => {
+    mountCount++;
+    dbg = `mount#${mountCount} words=${words.length} data.words=${data.words.length}`;
     window.addEventListener('keydown', handleKeydown);
     // Lay 235 tu that tu D1 (API), thay cho 52 tu static fallback
     fetch('/api/vocabulary?limit=500')
       .then(r => r.json())
       .then(d => {
+        dbg = `api ok total=${d.total} len=${d.data?.length}`;
         if (d && d.success && d.data && d.data.length > words.length) {
           words = d.data;
+          dbg = `assigned words=${words.length} m=${mountCount}`;
         }
       })
-      .catch(() => {});
+      .catch((e) => { dbg = `fetch err ${e.message}`; });
     return () => {
       window.removeEventListener('keydown', handleKeydown);
       if (autoPlayTimer) clearTimeout(autoPlayTimer);
@@ -149,6 +155,7 @@
       <h1 class="page-title">Tiếng Anh Cô Dung — Flashcard Từ Vựng Chuẩn Ngữ Âm</h1>
       <p class="page-desc">
         Học từ vựng đa giác quan cùng Tiếng Anh Cô Dung: <strong>1 mặt tiếng Việt</strong> gợi nhớ, <strong>1 mặt tiếng Anh</strong> phát âm bản xứ, phân tích chi tiết <strong>nguyên âm, phụ âm, trọng âm</strong> và câu ví dụ ngữ cảnh.
+        <span style="display:block;font-size:11px;color:#888;">[dbg] {dbg} | tmpl_words={words.length}</span>
       </p>
     </div>
 
