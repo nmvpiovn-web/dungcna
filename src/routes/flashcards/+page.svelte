@@ -127,9 +127,13 @@
     mountCount++;
     dbg = `mount#${mountCount} words=${words.length} data.words=${data.words.length}`;
     window.addEventListener('keydown', handleKeydown);
-    // Lay 235 tu that tu D1 (API), thay cho 52 tu static fallback
-    fetch('/api/vocabulary?limit=500')
-      .then(r => r.json())
+    // Diagnostic: fetch voi timeout 8s
+    dbg = `starting fetch...`;
+    const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error('TIMEOUT_8S')), 8000));
+    Promise.race([
+      fetch('/api/vocabulary?limit=500').then(r => r.json()),
+      timeout
+    ])
       .then(d => {
         dbg = `api ok total=${d.total} len=${d.data?.length}`;
         if (d && d.success && d.data && d.data.length > words.length) {
@@ -137,7 +141,7 @@
           dbg = `assigned words=${words.length} m=${mountCount}`;
         }
       })
-      .catch((e) => { dbg = `fetch err ${e.message}`; });
+      .catch((e) => { dbg = `fetch err: ${e.message}`; });
     return () => {
       window.removeEventListener('keydown', handleKeydown);
       if (autoPlayTimer) clearTimeout(autoPlayTimer);
