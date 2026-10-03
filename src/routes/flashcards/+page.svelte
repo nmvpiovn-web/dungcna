@@ -6,8 +6,6 @@
   let { data } = $props();
 
   let words = $state([...data.words]);
-  let mountCount = $state(0);
-  let dbg = $state('init');
   let currentIndex = $state(0);
   let isFlipped = $state(false);
   let selectedUnit = $state(data.currentUnit || 'all');
@@ -124,28 +122,19 @@
   }
 
   onMount(() => {
-    mountCount++;
-    dbg = `mount#${mountCount} words=${words.length} data.words=${data.words.length}`;
     window.addEventListener('keydown', handleKeydown);
-    // Diagnostic: thu 2 XHR song song
-    try {
-      dbg = `starting XHRs...`;
-      const test = (url, label) => {
-        const xhr = new XMLHttpRequest();
-        xhr.timeout = 8000;
-        xhr.onload = () => { dbg += ` [${label} onload ${xhr.status}]`; };
-        xhr.onerror = () => { dbg += ` [${label} onerror]`; };
-        xhr.ontimeout = () => { dbg += ` [${label} timeout]`; };
-        xhr.open('GET', url);
-        xhr.send();
-      };
-      test('/api/vocabulary?limit=1', 'vocab');
-      test('/api/exams', 'exams');
-      test('/manifest.webmanifest', 'manifest');
-      dbg = `3 XHRs sent...`;
-    } catch (e) {
-      dbg = `SYNC THROW: ${e.message}`;
-    }
+    // Lay du lieu that tu D1 qua API (server load co the tra fallback khi D1 chua san sang)
+    const xhr = new XMLHttpRequest();
+    xhr.onload = () => {
+      try {
+        const d = JSON.parse(xhr.responseText);
+        if (d && d.success && d.data && d.data.length > words.length) {
+          words = d.data;
+        }
+      } catch {}
+    };
+    xhr.open('GET', '/api/vocabulary?limit=500');
+    xhr.send();
     return () => {
       window.removeEventListener('keydown', handleKeydown);
       if (autoPlayTimer) clearTimeout(autoPlayTimer);
@@ -163,7 +152,6 @@
       <h1 class="page-title">Tiếng Anh Cô Dung — Flashcard Từ Vựng Chuẩn Ngữ Âm</h1>
       <p class="page-desc">
         Học từ vựng đa giác quan cùng Tiếng Anh Cô Dung: <strong>1 mặt tiếng Việt</strong> gợi nhớ, <strong>1 mặt tiếng Anh</strong> phát âm bản xứ, phân tích chi tiết <strong>nguyên âm, phụ âm, trọng âm</strong> và câu ví dụ ngữ cảnh.
-        <span style="display:block;font-size:11px;color:#888;">[dbg] {dbg} | tmpl_words={words.length}</span>
       </p>
     </div>
 
