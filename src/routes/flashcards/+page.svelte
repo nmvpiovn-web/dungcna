@@ -159,8 +159,8 @@
         <label for="filter-status">Trạng thái:</label>
         <select id="filter-status" bind:value={studyFilter} onchange={() => { currentIndex = 0; isFlipped = false; }}>
           <option value="all">Tất cả từ ({(data?.words || []).length})</option>
-          <option value="need_review">Chưa thuộc ({((data?.words || []).filter(w => w.status !== 'mastered').length})</option>
-          <option value="mastered">Đã thuộc ({((data?.words || []).filter(w => w.status === 'mastered').length})</option>
+          <option value="need_review">Chưa thuộc ({(data?.words || []).filter(w => w.status !== 'mastered').length})</option>
+          <option value="mastered">Đã thuộc ({(data?.words || []).filter(w => w.status === 'mastered').length})</option>
         </select>
       </div>
 
