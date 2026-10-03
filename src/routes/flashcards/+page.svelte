@@ -124,7 +124,8 @@
 
   onMount(() => {
     window.addEventListener('keydown', handleKeydown);
-    // Fetch 235 tu tu 4 chunk JSON (~25KB moi chunk) - 5 chunk bi treo o chunk thu 5
+    // Fetch 235 tu tu 2 chunk compact (~35KB moi chunk)
+    // Format: [id, term, ipa, pos, meaning_vi, example_en, example_vi]
     const fetchChunk = (i) => new Promise((resolve) => {
       const xhr = new XMLHttpRequest();
       xhr.onload = () => {
@@ -136,15 +137,20 @@
       xhr.onerror = () => resolve([]);
       xhr.ontimeout = () => resolve([]);
       xhr.timeout = 10000;
-      xhr.open('GET', `/vocab_c${i}.json`);
+      xhr.open('GET', `/vocab_m${i}.json`);
       xhr.send();
+    });
+    const expand = (a) => ({
+      id: a[0], term: a[1], ipa: a[2], pos: a[3],
+      meaning_vi: a[4], example_en: a[5], example_vi: a[6],
+      status: 'new', unit_id: 'all'
     });
     (async () => {
       const all = [];
-      for (let i = 0; i < 4; i++) {
+      for (let i = 0; i < 2; i++) {
         const chunk = await fetchChunk(i);
         chunkDbg = `chunk ${i}: got ${chunk.length}, total ${all.length + chunk.length}`;
-        all.push(...chunk);
+        all.push(...chunk.map(expand));
       }
       chunkDbg = `done: ${all.length} words`;
       if (all.length > words.length) {
