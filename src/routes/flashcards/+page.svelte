@@ -123,36 +123,21 @@
 
   onMount(() => {
     window.addEventListener('keydown', handleKeydown);
-    // Fetch batch tuan tu 5x50 tu D1 bang XHR (song song co the bi gioi han)
+    // TEST ISOLATE: 1 XHR duy nhat voi offset=50
     (async () => {
       try {
-        const fetchBatch = (offset) => new Promise((resolve) => {
-          const xhr = new XMLHttpRequest();
-          xhr.onload = () => {
-            try {
-              const d = JSON.parse(xhr.responseText);
-              resolve(d && d.success && Array.isArray(d.data) ? d.data : []);
-            } catch { resolve([]); }
-          };
-          xhr.onerror = () => resolve([]);
-          xhr.ontimeout = () => resolve([]);
-          xhr.timeout = 10000;
-          xhr.open('GET', `/api/vocabulary?limit=50&offset=${offset}&_cb=${Date.now()}`);
-          xhr.send();
-        });
-        const all = [];
-        for (const offset of [0, 50, 100, 150, 200]) {
-          const batch = await fetchBatch(offset);
-          all.push(...batch);
-        }
-        if (all.length > words.length) {
-          const seen = new Set();
-          words = all.filter(w => {
-            if (!w || seen.has(w.id)) return false;
-            seen.add(w.id);
-            return true;
-          });
-        }
+        const xhr = new XMLHttpRequest();
+        xhr.onload = () => {
+          try {
+            const d = JSON.parse(xhr.responseText);
+            if (d && d.success && Array.isArray(d.data)) {
+              // Ghi de hoan toan de test
+              words = d.data;
+            }
+          } catch {}
+        };
+        xhr.open('GET', `/api/vocabulary?limit=50&offset=50&_cb=${Date.now()}`);
+        xhr.send();
       } catch {}
     })();
     return () => {
