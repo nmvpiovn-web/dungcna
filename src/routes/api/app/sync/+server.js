@@ -2,7 +2,8 @@
 // Unified realtime sync endpoint for mobile app (APK/PWA)
 // GET /api/app/sync?since=<ISO timestamp> — returns all changes since timestamp
 import { json } from '@sveltejs/kit';
-import { verifyServerAuth } from '$lib/server/auth.js';
+import { verifyServerAuth } from '../../../../lib/server/auth.js';
+import { buildNotificationAuthFilter } from '../../../../lib/server/notificationPolicy.js';
 
 export const prerender = false;
 
@@ -34,19 +35,21 @@ export async function GET({ url, request, platform }) {
   };
 
   try {
-    // 1. Notifications for this user/role
+    // 1. Notifications — dùng chung policy với /api/notifications (issue #2 P1)
+    // Không còn dùng filter lỏng lẻo gây rò thông báo teacher/leader sang student/parent
     try {
+      const notifFilter = buildNotificationAuthFilter({ role, userId: user.id });
       const notifs = await db.prepare(`
-        SELECT id, title, body, category, reference_id, created_at
-        FROM system_notifications
-        WHERE created_at > ?
-          AND (target_user_id = ? OR target_role = ? OR target_role = 'all' OR target_user_id IS NULL)
-        ORDER BY created_at DESC LIMIT 50
-      `).bind(since, user.id, role).all();
+        SELECT n.id, n.title, n.body, n.category, n.reference_id, n.created_at
+        FROM system_notifications n
+        WHERE n.created_at > ?
+          AND ${notifFilter.whereSql}
+        ORDER BY n.created_at DESC LIMIT 50
+      `).bind(since, ...notifFilter.params).all();
       result.changes.notifications = notifs.results || [];
     } catch {}
 
-    // 2. Schedule changes (role-scoped)
+    // 2. Schedule changes (role-scoped, fail-closed cho role lạ)
     try {
       let schedQuery = `SELECT id, class_id, class_name, subject_topic, session_date, start_time, end_time, teacher_name, location, updated_at FROM class_sessions WHERE updated_at > ?`;
       const params = [since];
@@ -63,28 +66,35 @@ export async function GET({ url, request, platform }) {
           WHERE psl.parent_user_id = ? AND psl.verification_status = 'verified' AND ce.status = 'active'
         )`;
         params.push(user.id);
+      } else if (role === 'leader' || role === 'admin' || role === 'superadmin') {
+        // manager: không filter
+      } else {
+        // Role lạ: fail-closed, không trả lịch
+        schedQuery += ` AND 1 = 0`;
       }
-      // leader/admin/superadmin: no filter (all)
       schedQuery += ` ORDER BY updated_at DESC LIMIT 100`;
       const sched = await db.prepare(schedQuery).bind(...params).all();
       result.changes.schedule = sched.results || [];
     } catch {}
 
-    // 3. New/updated exams
+    // 3. New/updated exams — lọc theo since (trước đây không lọc)
     try {
       const exams = await db.prepare(`
         SELECT id, title, grade, format_type, duration_minutes, created_at
-        FROM exams WHERE is_published = 1
+        FROM exams WHERE is_published = 1 AND created_at > ?
         ORDER BY created_at DESC LIMIT 20
-      `).all();
+      `).bind(since).all();
       result.changes.exams = exams.results || [];
     } catch {}
 
-    // 4. Current site theme (for app UI consistency)
+    // 4. Current site theme — chỉ trả khi có thay đổi sau since
     try {
-      const theme = await db.prepare(`SELECT value FROM site_settings WHERE key = 'site_theme' LIMIT 1`).all();
-      if (theme.results?.[0]) {
-        try { result.changes.site_theme = JSON.parse(theme.results[0].value); } catch {}
+      const theme = await db.prepare(`
+        SELECT value, updated_at FROM site_settings WHERE key = 'site_theme' LIMIT 1
+      `).all();
+      const row = theme.results?.[0];
+      if (row && (!row.updated_at || row.updated_at > since)) {
+        try { result.changes.site_theme = JSON.parse(row.value); } catch {}
       }
     } catch {}
 
