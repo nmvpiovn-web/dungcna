@@ -6,7 +6,7 @@ KHÔNG parse nội dung PDF. Chỉ dùng metadata (tên file, tên folder, mimeT
 để phân loại thông minh vào D1.
 
 Chức năng:
-  1. Lấy Service Account (email + private key) từ D1 site_settings
+  1. Lấy Service Account từ biến môi trường/secret của runtime
   2. Đổi JWT RS256 -> OAuth access token
   3. Quét đệ quy Drive từ folder root (tối đa 500 files), lấy metadata:
      id, name, mimeType, size, modifiedTime, parents, webViewLink
@@ -32,6 +32,7 @@ Dấu vết cho codex/antigravity:
 import argparse
 import base64
 import json
+import os
 import re
 import sys
 import time
@@ -96,18 +97,11 @@ def b64url(data: bytes) -> str:
 
 
 def get_service_account_token():
-    email_row = d1_first(
-        "SELECT value FROM site_settings "
-        "WHERE key = 'google_service_account_email' LIMIT 1"
-    )
-    key_row = d1_first(
-        "SELECT value FROM site_settings "
-        "WHERE key = 'google_service_account_private_key' LIMIT 1"
-    )
-    email = email_row["value"] if email_row else None
-    private_key = key_row["value"] if key_row else None
+    email = os.environ.get("GOOGLE_SERVICE_ACCOUNT_EMAIL")
+    private_key = os.environ.get("GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY")
     if not email or not private_key:
-        raise RuntimeError("Chua cau hinh service account trong D1 site_settings")
+        raise RuntimeError("Thieu GOOGLE_SERVICE_ACCOUNT_EMAIL/GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY")
+    private_key = private_key.replace("\\n", "\n")
 
     from cryptography.hazmat.primitives import hashes, serialization
     from cryptography.hazmat.primitives.asymmetric import padding

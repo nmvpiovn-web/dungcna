@@ -34,7 +34,7 @@ Auto-poll & sync
 ## Authentication
 
 - **Service Account:** `apimuse@onyx-segment-510412-e3.iam.gserviceaccount.com`
-- Credentials lưu trong D1 `site_settings` (keys: `google_service_account_email`, `google_service_account_private_key`)
+- Credentials lưu bằng Cloudflare secrets `GOOGLE_SERVICE_ACCOUNT_EMAIL` và `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY`; không lưu private key trong D1.
 - Helper: `src/lib/server/googleServiceAccount.js` (Web Crypto RS256)
 - KHÔNG lưu private key trong source code
 
@@ -65,7 +65,7 @@ Liệt kê files trong folder. Params: `folder_id`, `q` (search)
 
 ### POST /api/drive/sync
 Sync Drive → D1. Body: `{ folder_id, recursive }`
-- Staff only
+- Manager only
 - Tối đa 500 files, sâu 5 cấp
 - Tự động phân loại
 - Ghi log vào `drive_sync_logs`
@@ -120,7 +120,7 @@ drive_folder_tree (
 
 ## Quy tắc phát triển
 
-1. **Mọi dữ liệu phải từ D1**, không đọc JSON tĩnh
+1. **Dữ liệu ứng dụng phải từ D1**, không đọc JSON tĩnh; secrets phải nằm trong secret store của runtime
 2. **Luôn làm giàu D1** khi có dữ liệu mới từ Drive
 3. **Audit luôn** trước khi báo cáo số liệu
 4. Không echo secrets/tokens trong output
