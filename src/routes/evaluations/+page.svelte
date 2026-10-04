@@ -3,6 +3,7 @@
  import {
  getAllUsers,
  getCurrentUser,
+ verifySessionWithServer,
  isTeacherOrAdmin,
  getAllEvaluations,
  saveEvaluation,
@@ -87,9 +88,13 @@
  loadData();
  });
 
- function loadData() {
+ async function loadData() {
  currentUser = getCurrentUser();
  const token = typeof window !== 'undefined' ? localStorage.getItem('tienganh_token') : null;
+ if (!currentUser && token) {
+   await verifySessionWithServer();
+   currentUser = getCurrentUser();
+ }
  if (!currentUser || !token) {
  students = [];
  evaluations = [];

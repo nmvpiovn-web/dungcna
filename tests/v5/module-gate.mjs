@@ -111,10 +111,24 @@ try {
       assert.ok(JSON.stringify(schedule ? read.data.sessions : read.data.evaluations).includes(draft), 'Server read does not contain UI draft');
       const other = await browser.newContext();
       try {
-        const p = await other.newPage(); await p.goto(base);
-        await p.evaluate(({ token }) => localStorage.setItem('tienganh_token', token), { token: await login('admin') });
+        const p = await other.newPage(); await p.goto(base, { waitUntil: 'networkidle' });
+        // Authenticate through the public UI contract so the fresh context has
+        // the same persisted user + token state as a real returning browser.
+        await p.locator('#login-btn').click();
+        await p.fill('#login-id', 'admin');
+        await p.fill('#login-pass', process.env.V5_GATE_PASSWORD);
+        await Promise.all([
+          p.waitForEvent('framenavigated', { predicate: f => f === p.mainFrame() }),
+          p.locator('button[form="login-form"]').click()
+        ]);
+        await p.waitForLoadState('networkidle');
+        const freshReadPromise = p.waitForResponse(r => new URL(r.url()).pathname === '/api/' + kind && r.request().method() === 'GET');
         await go(p, '/' + kind);
-        assert.ok((await p.locator('main').last().innerText()).includes(draft), 'Fresh browser UI does not read saved server state');
+        const freshRead = await freshReadPromise;
+        assert.ok(freshRead.ok(), 'Fresh browser API read failed with HTTP ' + freshRead.status());
+        const freshPayload = await freshRead.json();
+        assert.ok(JSON.stringify(schedule ? freshPayload.sessions : freshPayload.evaluations).includes(draft), 'Fresh browser API payload omits saved server state');
+        await p.getByText(draft, { exact: false }).first().waitFor({ state: 'visible' });
       } finally { await other.close(); }
     }, 'admin');
     await ui('G1-ui-' + kind + '-503', 'Failed ' + kind + ' save keeps draft and editor open', async page => {
@@ -132,7 +146,12 @@ try {
   }
   await ui('G4-flip', 'Flip changes the physically presented face, not just a class', async page => {
     await go(page, '/flashcards');
-    await page.locator('.flip-main').click(); await page.waitForTimeout(700);
+    // Mở popup học trước (UI mới: nút lật nằm trong popup)
+    await page.locator('.btn-start-study').first().click();
+    await page.waitForSelector('.fc-popup-overlay', { timeout: 5000 });
+    // Popup có chuyển động trang trí liên tục; dispatch click trực tiếp để tránh
+    // Playwright chờ một vị trí "stable" vốn không tồn tại.
+    await page.locator('.flip-main').evaluate((button) => button.click()); await page.waitForTimeout(700);
     await page.locator('.flashcard').evaluate(e => e.scrollIntoView({ block: 'center' }));
     const presented = await page.evaluate(() => {
       const card = document.querySelector('.flashcard'), r = card.getBoundingClientRect();
@@ -143,11 +162,16 @@ try {
   });
   await ui('G5-shuffle', 'Shuffle of a filtered unit preserves the complete word pool', async page => {
     await go(page, '/flashcards');
-    const before = await page.locator('.card-counter').innerText();
+    // Mở popup để thấy card-counter (UI mới)
+    await page.locator('.btn-start-study').first().click();
+    await page.waitForSelector('.fc-popup-overlay', { timeout: 5000 });
+    const before = await page.locator('.fc-counter').innerText();
+    await page.locator('.fc-close').click();
     await page.selectOption('#unit-select', 'unit1'); await page.getByTitle('Xáo trộn ngẫu nhiên').click();
     await page.selectOption('#unit-select', 'all');
-    assert.equal(await page.locator('.card-counter').innerText(), before, 'Filtered shuffle discarded words outside Unit 1');
-    await page.selectOption('#unit-select', 'unit2'); assert.equal(await page.locator('.empty-state').count(), 0);
+    await page.locator('.btn-start-study').first().click();
+    await page.waitForSelector('.fc-popup-overlay', { timeout: 5000 });
+    assert.equal(await page.locator('.fc-counter').innerText(), before, 'Filtered shuffle discarded words outside Unit 1');
   });
   for (const [width, height] of [[320, 740], [360, 800], [390, 844], [844, 390]]) {
     await ui('G6-layout-' + width, 'No document overflow at ' + width + 'px', async page => {

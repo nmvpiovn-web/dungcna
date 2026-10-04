@@ -7,6 +7,7 @@
  import { onMount } from 'svelte';
  import {
  getCurrentUser,
+ verifySessionWithServer,
  isTeacherOrAdmin,
  isSuperAdmin,
  getAllClassSessions,
@@ -88,8 +89,13 @@
  loadData();
  });
 
- function loadData() {
+ async function loadData() {
  currentUser = getCurrentUser();
+ const token = typeof window !== 'undefined' ? localStorage.getItem('tienganh_token') : null;
+ if (!currentUser && token) {
+   await verifySessionWithServer();
+   currentUser = getCurrentUser();
+ }
  allUsers = getAllUsers();
  sessions = getAllClassSessions();
  attendanceRecords = getAllAttendanceRecords();
@@ -98,7 +104,6 @@
  activeTabFilter = 'my_schedule';
  }
 
- const token = typeof window !== 'undefined' ? localStorage.getItem('tienganh_token') : null;
  if (token) {
  fetch('/api/schedule', {
  headers: { 'Authorization': `Bearer ${token}` }
