@@ -17,9 +17,18 @@ export async function GET({ url, request, platform }) {
   }
 
   const db = platform.env.DB;
-  const since = url.searchParams.get('since') || '1970-01-01T00:00:00Z';
+  const sinceInput = url.searchParams.get('since') || '1970-01-01T00:00:00Z';
+  const sinceDate = new Date(sinceInput);
+  if (Number.isNaN(sinceDate.getTime())) {
+    return json({ success: false, error: 'Invalid since timestamp' }, { status: 400 });
+  }
+  const since = sinceDate.toISOString();
   const user = auth.user;
   const role = String(user.role || '').toLowerCase();
+  const supportedRoles = new Set(['student', 'parent', 'teacher', 'leader', 'admin', 'superadmin']);
+  if (!supportedRoles.has(role)) {
+    return json({ success: false, error: 'Forbidden' }, { status: 403 });
+  }
   const now = new Date().toISOString();
 
   const result = {
@@ -42,7 +51,7 @@ export async function GET({ url, request, platform }) {
       const notifs = await db.prepare(`
         SELECT n.id, n.title, n.body, n.category, n.reference_id, n.created_at
         FROM system_notifications n
-        WHERE n.created_at > ?
+        WHERE datetime(n.created_at) > datetime(?)
           AND ${notifFilter.whereSql}
         ORDER BY n.created_at DESC LIMIT 50
       `).bind(since, ...notifFilter.params).all();
@@ -51,7 +60,7 @@ export async function GET({ url, request, platform }) {
 
     // 2. Schedule changes (role-scoped, fail-closed cho role lạ)
     try {
-      let schedQuery = `SELECT id, class_id, class_name, subject_topic, session_date, start_time, end_time, teacher_name, location, updated_at FROM class_sessions WHERE updated_at > ?`;
+      let schedQuery = `SELECT id, class_id, class_name, subject_topic, session_date, start_time, end_time, teacher_name, location, updated_at FROM class_sessions WHERE datetime(updated_at) > datetime(?)`;
       const params = [since];
       if (role === 'teacher') {
         schedQuery += ` AND (teacher_id = ? OR assistant_teacher_id = ? OR substitute_teacher_id = ?)`;
@@ -81,7 +90,7 @@ export async function GET({ url, request, platform }) {
     try {
       const exams = await db.prepare(`
         SELECT id, title, grade, format_type, duration_minutes, created_at
-        FROM exams WHERE is_published = 1 AND created_at > ?
+        FROM exams WHERE is_published = 1 AND datetime(created_at) > datetime(?)
         ORDER BY created_at DESC LIMIT 20
       `).bind(since).all();
       result.changes.exams = exams.results || [];
@@ -89,11 +98,12 @@ export async function GET({ url, request, platform }) {
 
     // 4. Current site theme — chỉ trả khi có thay đổi sau since
     try {
-      const theme = await db.prepare(`
-        SELECT value, updated_at FROM site_settings WHERE key = 'site_theme' LIMIT 1
-      `).all();
-      const row = theme.results?.[0];
-      if (row && (!row.updated_at || row.updated_at > since)) {
+      const row = await db.prepare(`
+        SELECT value, updated_at FROM site_settings
+        WHERE key = 'theme' AND (updated_at IS NULL OR datetime(updated_at) > datetime(?))
+        LIMIT 1
+      `).bind(since).first();
+      if (row) {
         try { result.changes.site_theme = JSON.parse(row.value); } catch {}
       }
     } catch {}

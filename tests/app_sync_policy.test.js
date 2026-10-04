@@ -117,14 +117,34 @@ test('SQL dùng notification policy chung (không còn filter lỏng)', async ()
   assert.ok(!src.includes("OR target_user_id IS NULL)"), 'Vẫn còn filter lỏng lẻo');
 });
 
-test('exams lọc theo since', async () => {
+test('các truy vấn lọc since bằng SQLite datetime', async () => {
   const fs = await import('node:fs');
   const src = fs.readFileSync('src/routes/api/app/sync/+server.js', 'utf8');
-  assert.ok(src.includes('created_at > ?'), 'Exams chưa lọc theo since');
+  assert.ok(src.includes('datetime(n.created_at) > datetime(?)'), 'Notifications chưa chuẩn hóa timestamp');
+  assert.ok(src.includes('datetime(updated_at) > datetime(?)'), 'Schedule chưa chuẩn hóa timestamp');
+  assert.ok(src.includes('datetime(created_at) > datetime(?)'), 'Exams chưa chuẩn hóa timestamp');
 });
 
 test('role lạ fail-closed không trả lịch', async () => {
+  const platform = makePlatform('auditor');
+  const token = await createSignedToken({ id: 'user-auditor', username: 'auditor', role: 'auditor' }, secret, 60_000, 'test-session');
+  const request = new Request('https://timbk.io.vn/api/app/sync', { headers: { Authorization: `Bearer ${token}` } });
+  const response = await GET({ url: new URL(request.url), request, platform });
+  assert.equal(response.status, 403);
+});
+
+test('since không hợp lệ trả 400', async () => {
+  const platform = makePlatform('student');
+  const token = await createSignedToken({ id: 'user-student', username: 'student', role: 'student' }, secret, 60_000, 'test-session');
+  const request = new Request('https://timbk.io.vn/api/app/sync?since=not-a-date', { headers: { Authorization: `Bearer ${token}` } });
+  const response = await GET({ url: new URL(request.url), request, platform });
+  assert.equal(response.status, 400);
+});
+
+test('theme sync dùng cùng key với /api/site-theme và lọc thời gian trong SQL', async () => {
   const fs = await import('node:fs');
   const src = fs.readFileSync('src/routes/api/app/sync/+server.js', 'utf8');
-  assert.ok(src.includes('AND 1 = 0'), 'Role lạ chưa fail-closed');
+  assert.ok(src.includes("WHERE key = 'theme'"), 'App sync đang đọc sai site theme key');
+  assert.ok(!src.includes("key = 'site_theme'"), 'App sync còn dùng key cũ');
+  assert.ok(src.includes('updated_at IS NULL OR datetime(updated_at) > datetime(?)'));
 });
