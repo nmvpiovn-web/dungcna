@@ -652,6 +652,8 @@ export async function POST({ request, platform }) {
 
     // P1-04: SERVER-SIDE SCORING FROM AUTHORITATIVE ANSWER KEY SNAPSHOT
     let serverCalculatedScore = 0;
+    // Per-question results để client hiển thị review SAU khi nộp (thay cho q.correct_answer client-side)
+    const questionResults = [];
 
     if (activeSession) {
       // Must score strictly against answer_key_snapshot_json frozen in this session record!
@@ -703,12 +705,29 @@ export async function POST({ request, platform }) {
       }
 
       let correctCount = 0;
+      // (questionResults đã khai báo ở trên)
+      // Lấy explanation cho review (chỉ trả SAU khi nộp bài)
+      let explanationMap = {};
+      try {
+        const expRows = await platform.env.DB.prepare(
+          `SELECT id, explanation FROM question_bank WHERE id IN (${questionKeys.map(() => '?').join(',')})`
+        ).bind(...questionKeys).all();
+        for (const r of (expRows.results || [])) {
+          explanationMap[String(r.id)] = r.explanation || '';
+        }
+      } catch { /* explanation optional */ }
       for (const key of questionKeys) {
         const expected = answerKeySnapshot[key];
         const given = userAnswers[key];
-        if (given && String(given).trim().toUpperCase() === String(expected).trim().toUpperCase()) {
-          correctCount++;
-        }
+        const isCorrect = given && String(given).trim().toUpperCase() === String(expected).trim().toUpperCase();
+        if (isCorrect) correctCount++;
+        questionResults.push({
+          question_id: key,
+          user_answer: given || '',
+          correct_answer: expected || '',
+          is_correct: !!isCorrect,
+          explanation: explanationMap[key] || ''
+        });
       }
       serverCalculatedScore = Number(((correctCount / questionKeys.length) * maxScore).toFixed(1));
     } else if (isStaff && body.score !== undefined) {
@@ -740,9 +759,15 @@ export async function POST({ request, platform }) {
         for (const q of examQuestions) {
           const qKey = q.id !== undefined ? String(q.id) : String(q.question_index);
           const givenAnswer = userAnswers[qKey] || userAnswers[String(q.question_index)];
-          if (givenAnswer && String(givenAnswer).trim().toUpperCase() === String(q.correct_answer).trim().toUpperCase()) {
-            correctCount++;
-          }
+          const isCorrect = givenAnswer && String(givenAnswer).trim().toUpperCase() === String(q.correct_answer).trim().toUpperCase();
+          if (isCorrect) correctCount++;
+          questionResults.push({
+            question_id: qKey,
+            user_answer: givenAnswer || '',
+            correct_answer: q.correct_answer || '',
+            is_correct: !!isCorrect,
+            explanation: q.explanation || ''
+          });
         }
         serverCalculatedScore = Number(((correctCount / examQuestions.length) * maxScore).toFixed(1));
       } else {
@@ -891,6 +916,8 @@ export async function POST({ request, platform }) {
       message: 'Đã chấm điểm và lưu kết quả thi thành công!',
       server_calculated_score: serverCalculatedScore,
       max_score: maxScore,
+      // Chi tiết từng câu CHỈ trả sau khi nộp bài (chống lộ đáp án trước giờ thi)
+      question_results: questionResults,
       attempt: saved
     });
   } catch (err) {

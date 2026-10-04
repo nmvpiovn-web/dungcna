@@ -238,6 +238,8 @@
  let isSubmitting = $state(false);
  let submitError = $state('');
  let serverCalculatedScoreOverride = $state(null);
+ // Kết quả chi tiết từng câu từ server (chỉ có SAU khi nộp bài) - thay cho q.correct_answer client-side
+ let serverQuestionResults = $state([]);
 
  onDestroy(() => {
  if (timerInterval) clearInterval(timerInterval);
@@ -297,6 +299,7 @@
  isSubmitting = false;
  submitError = '';
  serverCalculatedScoreOverride = null;
+ serverQuestionResults = [];
  activeSessionId = null;
  activeServerDeadline = null;
  userAnswers = {};
@@ -393,6 +396,7 @@
  isSubmitting = false;
  submitError = '';
  serverCalculatedScoreOverride = null;
+ serverQuestionResults = [];
  userAnswers = {};
  // Đảm bảo popup mở (PWA)
  isExamPopupOpen = true;
@@ -670,7 +674,18 @@
  );
 
  // Scoring
+ // Helper: lấy kết quả server cho 1 câu hỏi (chỉ có sau khi nộp bài)
+ function getServerQResult(q, idx) {
+ if (!serverQuestionResults || serverQuestionResults.length === 0) return null;
+ const qid = q.id !== undefined ? String(q.id) : String(q.question_index ?? idx);
+ return serverQuestionResults.find(r => String(r.question_id) === qid) || null;
+ }
+
  let correctCount = $derived.by(() => {
+ // Ưu tiên kết quả server (sau khi nộp); fallback client-side nếu chưa có
+ if (serverQuestionResults && serverQuestionResults.length > 0) {
+ return serverQuestionResults.filter(r => r.is_correct).length;
+ }
  let count = 0;
  activeQuestions.forEach((q, idx) => {
  const uAns = userAnswers[idx];
@@ -835,6 +850,10 @@
  committedAttempt = resData.attempt;
  if (resData.server_calculated_score !== undefined) {
  serverCalculatedScoreOverride = resData.server_calculated_score;
+ }
+ // Lưu kết quả chi tiết từng câu để hiển thị review (thay cho q.correct_answer)
+ if (Array.isArray(resData.question_results)) {
+ serverQuestionResults = resData.question_results;
  }
  } else {
  submitError = resData.error || 'Máy chủ không tiếp nhận bài thi.';
@@ -1793,7 +1812,8 @@
  return [];
  }
  })()}
- {@const isCorrect = isSubmitted && userAnswers[idx]?.trim().toUpperCase() === q.correct_answer?.trim().toUpperCase()}
+ {@const _qr = getServerQResult(q, idx)}
+ {@const isCorrect = isSubmitted && (_qr ? _qr.is_correct : (userAnswers[idx]?.trim().toUpperCase() === q.correct_answer?.trim().toUpperCase()))}
  {@const isWrong = isSubmitted && userAnswers[idx] && !isCorrect}
 
  <div id="q-{idx}" class="p-6 rounded-3xl bg-surface-0 border {isCorrect ? 'border-emerald-500 bg-emerald-50/20' : isWrong ? 'border-rose-500 bg-rose-50/20' : 'border-line shadow-sm'} space-y-4 transition-all scroll-mt-24">
@@ -1813,7 +1833,7 @@
 
  {#if isSubmitted}
  <span class="font-bold {isCorrect ? 'text-emerald-600' : 'text-rose-600'}">
- {isCorrect ? '✓ Đúng (+1.0 điểm)' : '✕ Sai (Đáp án đúng: ' + q.correct_answer + ')'}
+ {isCorrect ? '✓ Đúng (+1.0 điểm)' : '✕ Sai (Đáp án đúng: ' + (_qr?.correct_answer || q.correct_answer || '?') + ')'}
  </span>
  {/if}
  </div>
@@ -1877,7 +1897,8 @@
  {#each parsedOptions as opt}
  {@const optLetter = opt.substring(0, 1).toUpperCase()}
  {@const isSelected = userAnswers[idx] === optLetter}
- {@const isThisCorrect = isSubmitted && q.correct_answer === optLetter}
+ {@const _qr2 = getServerQResult(q, idx)}
+ {@const isThisCorrect = isSubmitted && (_qr2 ? _qr2.correct_answer === optLetter : q.correct_answer === optLetter)}
 
  <button
  disabled={isSubmitted}
@@ -1890,10 +1911,10 @@
  </div>
 
  <!-- Review Explanation (After submission) -->
- {#if isSubmitted && q.explanation}
+ {#if isSubmitted && (_qr2?.explanation || q.explanation)}
  <div class="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-900 space-y-1">
  <strong class="text-amber-700 block font-bold">💡 Giải thích chi tiết:</strong>
- <div class="text-ink-500 font-sans">{q.explanation}</div>
+ <div class="text-ink-500 font-sans">{_qr2?.explanation || q.explanation}</div>
  </div>
  {/if}
  </div>
