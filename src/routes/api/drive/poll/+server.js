@@ -1,10 +1,13 @@
 // src/routes/api/drive/poll/+server.js
 // Poll Google Drive Changes API để phát hiện file mới/thay đổi
-// Dùng cho cronjob chạy định kỳ (realtime-ish)
-// GET: kiểm tra thay đổi | POST: trigger sync nếu có thay đổi
+// SECURITY (issue #2 P1):
+// - Mọi endpoint làm thay đổi token đều yêu cầu cron secret hoặc manager auth
+// - GET công khai KHÔNG được mutate state, KHÔNG lộ tên file/ID/page token
+// - Chỉ commit last_change_token SAU KHI sync thành công
+// - Fail-closed: kiểm tra kết quả sync, không báo success giả
 import { json } from '@sveltejs/kit';
-import { verifyServerAuth, isStaffUser } from '$lib/server/auth.js';
-import { getServiceAccountToken } from '$lib/server/googleServiceAccount.js';
+import { verifyServerAuth, isManager } from '../../../../lib/server/auth.js';
+import { getServiceAccountToken } from '../../../../lib/server/googleServiceAccount.js';
 
 export const prerender = false;
 
@@ -14,134 +17,163 @@ async function getDriveAuth(platform) {
   return null;
 }
 
-export async function GET({ platform }) {
-  // Public endpoint cho cron (không cần auth user, dùng service account)
-  // Nhưng vẫn check có service account không
+function isAuthorizedCron(request, platform) {
+  const cronSecret = request.headers.get('x-cron-secret');
+  const expectedSecret = platform?.env?.CRON_SECRET;
+  return !!(cronSecret && expectedSecret && cronSecret === expectedSecret);
+}
+
+async function isAuthorizedManager(request, platform) {
+  try {
+    const auth = await verifyServerAuth(request, platform);
+    return auth.authenticated && isManager(auth.user);
+  } catch {
+    return false;
+  }
+}
+
+// Kiểm tra thay đổi Drive mà KHÔNG mutate state (dùng cho GET)
+// Trả về { hasChanges, changeCount, newToken } — newToken chỉ dùng nội bộ
+async function checkDriveChanges(platform) {
   const driveAuth = await getDriveAuth(platform);
   if (!driveAuth) {
-    return json({ success: false, error: 'Chưa cấu hình Service Account' }, { status: 503 });
+    return { error: 'Chưa cấu hình Service Account', status: 503 };
   }
   if (!platform?.env?.DB) {
-    return json({ success: false, error: 'DatabaseUnavailable' }, { status: 500 });
+    return { error: 'DatabaseUnavailable', status: 500 };
   }
-
   const db = platform.env.DB;
 
-  try {
-    // Lấy change token đã lưu
-    let state = await db.prepare(`SELECT last_change_token FROM drive_sync_state WHERE id = 1`).first();
-    let pageToken = state?.last_change_token;
+  const state = await db.prepare(
+    `SELECT last_change_token FROM drive_sync_state WHERE id = 1`
+  ).first();
+  const pageToken = state?.last_change_token;
 
-    // Nếu chưa có token, lấy token mới nhất (không sync toàn bộ, chỉ từ giờ trở đi)
-    if (!pageToken) {
-      const tokenRes = await fetch('https://www.googleapis.com/drive/v3/changes/startPageToken', {
-        headers: driveAuth.headers
-      });
-      const tokenData = await tokenRes.json();
-      pageToken = tokenData.startPageToken;
-
-      await db.prepare(`
-        INSERT INTO drive_sync_state (id, last_change_token, last_poll_at)
-        VALUES (1, ?, CURRENT_TIMESTAMP)
-        ON CONFLICT(id) DO UPDATE SET last_change_token = excluded.last_change_token, last_poll_at = CURRENT_TIMESTAMP
-      `).bind(pageToken).run();
-
-      return json({
-        success: true,
-        has_changes: false,
-        message: 'Đã khởi tạo change token, sẽ phát hiện thay đổi từ lần poll sau',
-        page_token: pageToken
-      });
-    }
-
-    // Kiểm tra thay đổi
-    const changesRes = await fetch(
-      `https://www.googleapis.com/drive/v3/changes?pageToken=${pageToken}&fields=changes(fileId,file(name,mimeType,parents)),newStartPageToken,nextPageToken`,
-      { headers: driveAuth.headers }
-    );
-    const changesData = await changesRes.json();
-
-    if (changesData.error) {
-      // Token hết hạn, reset
-      if (changesData.error.code === 410) {
-        await db.prepare(`DELETE FROM drive_sync_state WHERE id = 1`).run();
-        return json({ success: false, error: 'Change token hết hạn, đã reset', need_reinit: true }, { status: 410 });
-      }
-      throw new Error(changesData.error.message);
-    }
-
-    const changes = changesData.changes || [];
-    const newToken = changesData.newStartPageToken || pageToken;
-
-    // Lưu token mới
-    await db.prepare(`
-      UPDATE drive_sync_state SET last_change_token = ?, last_poll_at = CURRENT_TIMESTAMP WHERE id = 1
-    `).bind(newToken).run();
-
-    // Lọc file thay đổi (không phải folder đã xóa)
-    const relevantChanges = changes.filter(c => c.file && !c.file.trashed);
-
-    return json({
-      success: true,
-      has_changes: relevantChanges.length > 0,
-      change_count: relevantChanges.length,
-      changes: relevantChanges.slice(0, 20).map(c => ({
-        file_id: c.fileId,
-        name: c.file?.name,
-        mime_type: c.file?.mimeType
-      })),
-      page_token: newToken
+  // Chưa có token: khởi tạo nhưng KHÔNG coi là có thay đổi
+  if (!pageToken) {
+    const tokenRes = await fetch('https://www.googleapis.com/drive/v3/changes/startPageToken', {
+      headers: driveAuth.headers
     });
-  } catch (err) {
-    return json({ success: false, error: err.message }, { status: 500 });
+    if (!tokenRes.ok) {
+      return { error: `Drive API ${tokenRes.status}`, status: 502 };
+    }
+    const tokenData = await tokenRes.json();
+    const newToken = tokenData.startPageToken;
+    if (!newToken) {
+      return { error: 'Không lấy được startPageToken', status: 502 };
+    }
+    // Lưu token khởi tạo (lần đầu, chưa có gì để mất)
+    await db.prepare(`
+      INSERT INTO drive_sync_state (id, last_change_token, last_poll_at)
+      VALUES (1, ?, CURRENT_TIMESTAMP)
+      ON CONFLICT(id) DO UPDATE SET last_change_token = excluded.last_change_token, last_poll_at = CURRENT_TIMESTAMP
+    `).bind(newToken).run();
+    return { hasChanges: false, changeCount: 0, newToken, initialized: true };
   }
+
+  const changesRes = await fetch(
+    `https://www.googleapis.com/drive/v3/changes?pageToken=${encodeURIComponent(pageToken)}&fields=changes(fileId),newStartPageToken,nextPageToken`,
+    { headers: driveAuth.headers }
+  );
+  if (!changesRes.ok) {
+    const errData = await changesRes.json().catch(() => ({}));
+    if (errData?.error?.code === 410) {
+      await db.prepare(`DELETE FROM drive_sync_state WHERE id = 1`).run();
+      return { error: 'Change token hết hạn, đã reset', status: 410, needReinit: true };
+    }
+    return { error: `Drive API ${changesRes.status}`, status: 502 };
+  }
+  const changesData = await changesRes.json();
+  const changes = changesData.changes || [];
+  const newToken = changesData.newStartPageToken || pageToken;
+
+  return { hasChanges: changes.length > 0, changeCount: changes.length, newToken };
+}
+
+export async function GET({ request, platform }) {
+  // Yêu cầu cron secret hoặc manager auth — không còn public
+  const cron = isAuthorizedCron(request, platform);
+  const manager = await isAuthorizedManager(request, platform);
+  if (!cron && !manager) {
+    return json({ success: false, error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const result = await checkDriveChanges(platform);
+  if (result.error) {
+    return json({ success: false, error: result.error }, { status: result.status || 500 });
+  }
+
+  // KHÔNG lộ page token, tên file, ID cho caller — chỉ báo có/không thay đổi
+  // KHÔNG advance token ở đây — token chỉ commit sau sync thành công
+  await platform.env.DB.prepare(
+    `UPDATE drive_sync_state SET last_poll_at = CURRENT_TIMESTAMP WHERE id = 1`
+  ).run().catch(() => {});
+
+  return json({
+    success: true,
+    has_changes: result.hasChanges,
+    change_count: result.changeCount
+  });
 }
 
 export async function POST({ request, platform }) {
   // Trigger sync nếu có thay đổi (dùng cho cron)
-  const auth = await verifyServerAuth(request, platform);
-  // Cho phép cron không auth (dùng header bí mật) hoặc staff
-  const cronSecret = request.headers.get('x-cron-secret');
-  const expectedSecret = platform?.env?.CRON_SECRET;
-  const isCron = cronSecret && expectedSecret && cronSecret === expectedSecret;
-  const isStaff = auth.authenticated && isStaffUser(auth.user);
-
-  if (!isCron && !isStaff) {
+  const cron = isAuthorizedCron(request, platform);
+  const manager = await isAuthorizedManager(request, platform);
+  if (!cron && !manager) {
     return json({ success: false, error: 'Unauthorized' }, { status: 401 });
   }
 
-  // Kiểm tra thay đổi trước
-  const checkRes = await fetch(new URL('/api/drive/poll', request.url).toString());
-  const checkData = await checkRes.json();
-
-  if (!checkData.success) {
-    return json({ success: false, error: checkData.error }, { status: 500 });
+  // Kiểm tra thay đổi (không mutate token)
+  const check = await checkDriveChanges(platform);
+  if (check.error) {
+    return json({ success: false, error: check.error }, { status: check.status || 500 });
   }
-
-  if (!checkData.has_changes) {
+  if (!check.hasChanges) {
     return json({ success: true, message: 'Không có thay đổi mới', synced: false });
   }
 
-  // Có thay đổi → trigger sync
-  // Gọi sync API nội bộ
-  const syncRes = await fetch(new URL('/api/drive/sync', request.url).toString(), {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      // Truyền auth nội bộ
-      ...(auth.authenticated ? { 'Authorization': request.headers.get('authorization') || '' } : {})
-    },
-    body: JSON.stringify({ folder_id: '1_V4YUCuTJ4uui49S6AfcaI8lZmIszKou', recursive: true })
-  });
+  // Gọi sync TRỰC TIẾP qua import nội bộ (không fetch HTTP vòng lại)
+  // để có service auth hợp lệ và kiểm tra kết quả fail-closed
+  let syncResult;
+  try {
+    const { runDriveSync } = await import('../../../../lib/server/driveSync.js');
+    syncResult = await runDriveSync(platform, {
+      folder_id: '1_V4YUCuTJ4uui49S6AfcaI8lZmIszKou',
+      recursive: true,
+      triggered_by: cron ? 'cron' : 'manager'
+    });
+  } catch (err) {
+    return json({ success: false, error: `Sync failed: ${err.message}`, synced: false }, { status: 500 });
+  }
 
-  // Nếu không có auth user (cron), cần cách khác...
-  // Tạm thời trả về thông tin thay đổi để cron job bên ngoài gọi sync
+  // Fail-closed: kiểm tra kết quả sync
+  if (!syncResult || !syncResult.success) {
+    return json({
+      success: false,
+      error: syncResult?.error || 'Sync không thành công, token chưa được commit',
+      synced: false
+    }, { status: 500 });
+  }
+
+  // CHỈ commit token SAU KHI sync thành công
+  try {
+    await platform.env.DB.prepare(
+      `UPDATE drive_sync_state SET last_change_token = ?, last_poll_at = CURRENT_TIMESTAMP WHERE id = 1`
+    ).bind(check.newToken).run();
+  } catch (dbErr) {
+    return json({
+      success: false,
+      error: `Sync OK nhưng không commit được token: ${dbErr.message}`,
+      synced: true,
+      token_committed: false
+    }, { status: 500 });
+  }
+
   return json({
     success: true,
-    message: `Phát hiện ${checkData.change_count} thay đổi`,
-    has_changes: true,
-    change_count: checkData.change_count,
-    changes: checkData.changes,
-    note: 'Gọi POST /api/drive/sync với staff token để sync'
+    message: `Đã sync ${syncResult.files_synced || 0} file`,
+    synced: true,
+    token_committed: true
   });
 }

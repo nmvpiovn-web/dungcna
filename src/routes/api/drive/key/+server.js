@@ -1,7 +1,16 @@
 // src/routes/api/drive/key/+server.js
 // Quản lý Google Drive API key — staff only, lưu vào D1 site_settings
 import { json } from '@sveltejs/kit';
-import { verifyServerAuth, isStaffUser } from '$lib/server/auth.js';
+import { verifyServerAuth, isManager } from '$lib/server/auth.js';
+
+async function auditLog(platform, action, user, detail) {
+  try {
+    await platform.env.DB.prepare(`
+      INSERT INTO drive_credential_audit (id, action, actor_user_id, actor_username, detail)
+      VALUES (?, ?, ?, ?, ?)
+    `).bind(`dca_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`, action, user?.id || '', user?.username || '', detail || '').run();
+  } catch {}
+}
 
 export const prerender = false;
 const KEY_NAME = 'google_drive_api_key';
@@ -9,7 +18,7 @@ const KEY_NAME = 'google_drive_api_key';
 export async function GET({ request, platform }) {
   const auth = await verifyServerAuth(request, platform);
   if (!auth.authenticated) return json({ success: false, error: 'Unauthorized' }, { status: 401 });
-  if (!isStaffUser(auth.user)) return json({ success: false, error: 'Forbidden' }, { status: 403 });
+  if (!isManager(auth.user)) return json({ success: false, error: 'Forbidden: Chỉ quản lý' }, { status: 403 });
   // Không trả key thật về client — chỉ báo đã có hay chưa
   const envKey = platform?.env?.GOOGLE_DRIVE_API_KEY;
   let dbKey = false;
@@ -23,7 +32,7 @@ export async function GET({ request, platform }) {
 export async function POST({ request, platform }) {
   const auth = await verifyServerAuth(request, platform);
   if (!auth.authenticated) return json({ success: false, error: 'Unauthorized' }, { status: 401 });
-  if (!isStaffUser(auth.user)) return json({ success: false, error: 'Forbidden' }, { status: 403 });
+  if (!isManager(auth.user)) return json({ success: false, error: 'Forbidden: Chỉ quản lý' }, { status: 403 });
   let body = {};
   try { body = await request.json(); } catch { return json({ success: false, error: 'Invalid JSON' }, { status: 400 }); }
   const apiKey = String(body.api_key || '').trim();
@@ -47,6 +56,7 @@ export async function POST({ request, platform }) {
       INSERT INTO site_settings (key, value, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)
       ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = CURRENT_TIMESTAMP
     `).bind(KEY_NAME, apiKey).run();
+    await auditLog(platform, 'drive_key_set', auth.user, 'API key đã được cập nhật');
     return json({ success: true, message: 'Đã lưu Google Drive API key' });
   } catch (e) {
     return json({ success: false, error: e.message }, { status: 500 });
@@ -56,9 +66,10 @@ export async function POST({ request, platform }) {
 export async function DELETE({ request, platform }) {
   const auth = await verifyServerAuth(request, platform);
   if (!auth.authenticated) return json({ success: false, error: 'Unauthorized' }, { status: 401 });
-  if (!isStaffUser(auth.user)) return json({ success: false, error: 'Forbidden' }, { status: 403 });
+  if (!isManager(auth.user)) return json({ success: false, error: 'Forbidden: Chỉ quản lý' }, { status: 403 });
   try {
     await platform.env.DB.prepare(`DELETE FROM site_settings WHERE key = ?`).bind(KEY_NAME).run();
+    await auditLog(platform, 'drive_key_deleted', auth.user, 'API key đã bị xóa');
     return json({ success: true, message: 'Đã xóa key' });
   } catch (e) {
     return json({ success: false, error: e.message }, { status: 500 });
