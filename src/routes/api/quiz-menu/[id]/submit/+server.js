@@ -41,7 +41,7 @@ export async function POST({ params, request, platform }) {
     return json({ success: true, attempt_id: id, attempt_token: guestToken, started_at: attempt.started_at, deadline_at: attempt.deadline_at, time_limit_minutes: limit }, { status: 201 });
   }
 
-  if (action !== 'submit') return json({ success: false, error: 'ActionNotSupported' }, { status: 400 });
+  if (!['submit', 'save_for_later'].includes(action)) return json({ success: false, error: 'ActionNotSupported' }, { status: 400 });
   const attemptId = String(body.attempt_id || '');
   const attempt = await db.prepare(`SELECT * FROM quiz_attempts WHERE id = ? AND quiz_id = ? LIMIT 1`).bind(attemptId, quiz.id).first();
   if (!attempt) return json({ success: false, error: 'AttemptNotFound' }, { status: 404 });
@@ -65,6 +65,28 @@ export async function POST({ params, request, platform }) {
   const questionResult = await db.prepare(`SELECT * FROM quiz_questions WHERE quiz_id = ? ORDER BY q_order, id`).bind(quiz.id).all();
   const questions = questionResult.results || [];
   if (!questions.length) return json({ success: false, error: 'QuizHasNoQuestions' }, { status: 409 });
+  const questionIds = new Set(questions.map((question) => String(question.id)));
+  const deferred = [...new Set([
+    ...(Array.isArray(body.deferred_question_ids) ? body.deferred_question_ids : []),
+    ...Object.entries(answers).filter(([, value]) => value?.state === 'not_understood').map(([id]) => id)
+  ].map(String).filter((id) => questionIds.has(id)))];
+  if (action === 'save_for_later') {
+    const saved = await db.prepare(`
+      UPDATE quiz_attempts
+      SET answers_json = ?, deferred_question_ids_json = ?, saved_for_later_at = strftime('%Y-%m-%dT%H:%M:%fZ','now')
+      WHERE id = ? AND status = 'in_progress'
+    `).bind(serializedAnswers, JSON.stringify(deferred), attempt.id).run();
+    const changed = saved?.meta?.changes ?? saved?.changes;
+    if (changed === 0) return json({ success: false, error: 'AttemptAlreadyClosed' }, { status: 409 });
+    return json({
+      success: true,
+      saved_for_later: true,
+      attempt: { id: attempt.id, status: 'in_progress', deferred_question_ids: deferred, deadline_at: attempt.deadline_at }
+    });
+  }
+  if (deferred.length) {
+    return json({ success: false, error: 'DeferredQuestionsRemain', deferred_question_ids: deferred }, { status: 409 });
+  }
   const score = gradeAnswers(questions, answers);
   const started = Date.parse(attempt.started_at);
   const duration = Number.isFinite(started) ? Math.max(0, Math.floor((now - started) / 1000)) : null;
