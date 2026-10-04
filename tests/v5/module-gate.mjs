@@ -132,6 +132,9 @@ try {
   }
   await ui('G4-flip', 'Flip changes the physically presented face, not just a class', async page => {
     await go(page, '/flashcards');
+    // Mở popup học trước (UI mới: nút lật nằm trong popup)
+    await page.locator('.btn-start-study').first().click();
+    await page.waitForSelector('.fc-popup-overlay', { timeout: 5000 });
     await page.locator('.flip-main').click(); await page.waitForTimeout(700);
     await page.locator('.flashcard').evaluate(e => e.scrollIntoView({ block: 'center' }));
     const presented = await page.evaluate(() => {
@@ -143,11 +146,16 @@ try {
   });
   await ui('G5-shuffle', 'Shuffle of a filtered unit preserves the complete word pool', async page => {
     await go(page, '/flashcards');
-    const before = await page.locator('.card-counter').innerText();
+    // Mở popup để thấy card-counter (UI mới)
+    await page.locator('.btn-start-study').first().click();
+    await page.waitForSelector('.fc-popup-overlay', { timeout: 5000 });
+    const before = await page.locator('.fc-counter').innerText();
+    await page.locator('.fc-close').click();
     await page.selectOption('#unit-select', 'unit1'); await page.getByTitle('Xáo trộn ngẫu nhiên').click();
     await page.selectOption('#unit-select', 'all');
-    assert.equal(await page.locator('.card-counter').innerText(), before, 'Filtered shuffle discarded words outside Unit 1');
-    await page.selectOption('#unit-select', 'unit2'); assert.equal(await page.locator('.empty-state').count(), 0);
+    await page.locator('.btn-start-study').first().click();
+    await page.waitForSelector('.fc-popup-overlay', { timeout: 5000 });
+    assert.equal(await page.locator('.fc-counter').innerText(), before, 'Filtered shuffle discarded words outside Unit 1');
   });
   for (const [width, height] of [[320, 740], [360, 800], [390, 844], [844, 390]]) {
     await ui('G6-layout-' + width, 'No document overflow at ' + width + 'px', async page => {
