@@ -32,8 +32,21 @@ async function isAuthorizedManager(request, platform) {
   }
 }
 
-// Kiểm tra thay đổi Drive mà KHÔNG mutate state (dùng cho GET)
-// Trả về { hasChanges, changeCount, newToken } — newToken chỉ dùng nội bộ
+async function getStartPageToken(platform) {
+  const driveAuth = await getDriveAuth(platform);
+  if (!driveAuth) return { error: 'Chưa cấu hình Service Account', status: 503 };
+  const tokenRes = await fetch('https://www.googleapis.com/drive/v3/changes/startPageToken', {
+    headers: driveAuth.headers
+  });
+  if (!tokenRes.ok) return { error: `Drive API ${tokenRes.status}`, status: 502 };
+  const tokenData = await tokenRes.json();
+  return tokenData.startPageToken
+    ? { newToken: tokenData.startPageToken }
+    : { error: 'Không lấy được startPageToken', status: 502 };
+}
+
+// Kiểm tra thay đổi Drive mà KHÔNG mutate state (dùng cho GET và POST).
+// Theo hết nextPageToken để không bỏ sót hoặc lặp vĩnh viễn trang đầu.
 async function checkDriveChanges(platform) {
   const driveAuth = await getDriveAuth(platform);
   if (!driveAuth) {
@@ -49,45 +62,47 @@ async function checkDriveChanges(platform) {
   ).first();
   const pageToken = state?.last_change_token;
 
-  // Chưa có token: khởi tạo nhưng KHÔNG coi là có thay đổi
+  // Chưa có token: chỉ lấy token. POST sẽ là nơi lưu token khởi tạo.
   if (!pageToken) {
-    const tokenRes = await fetch('https://www.googleapis.com/drive/v3/changes/startPageToken', {
-      headers: driveAuth.headers
-    });
-    if (!tokenRes.ok) {
-      return { error: `Drive API ${tokenRes.status}`, status: 502 };
-    }
-    const tokenData = await tokenRes.json();
-    const newToken = tokenData.startPageToken;
-    if (!newToken) {
-      return { error: 'Không lấy được startPageToken', status: 502 };
-    }
-    // Lưu token khởi tạo (lần đầu, chưa có gì để mất)
-    await db.prepare(`
-      INSERT INTO drive_sync_state (id, last_change_token, last_poll_at)
-      VALUES (1, ?, CURRENT_TIMESTAMP)
-      ON CONFLICT(id) DO UPDATE SET last_change_token = excluded.last_change_token, last_poll_at = CURRENT_TIMESTAMP
-    `).bind(newToken).run();
-    return { hasChanges: false, changeCount: 0, newToken, initialized: true };
+    const initial = await getStartPageToken(platform);
+    return initial.error ? initial : { hasChanges: false, changeCount: 0, newToken: initial.newToken, initialized: true };
   }
 
-  const changesRes = await fetch(
-    `https://www.googleapis.com/drive/v3/changes?pageToken=${encodeURIComponent(pageToken)}&fields=changes(fileId),newStartPageToken,nextPageToken`,
-    { headers: driveAuth.headers }
-  );
-  if (!changesRes.ok) {
-    const errData = await changesRes.json().catch(() => ({}));
-    if (errData?.error?.code === 410) {
-      await db.prepare(`DELETE FROM drive_sync_state WHERE id = 1`).run();
-      return { error: 'Change token hết hạn, đã reset', status: 410, needReinit: true };
+  let requestToken = pageToken;
+  let changeCount = 0;
+  for (let page = 0; page < 100; page++) {
+    const changesRes = await fetch(
+      `https://www.googleapis.com/drive/v3/changes?pageToken=${encodeURIComponent(requestToken)}&fields=changes(fileId),newStartPageToken,nextPageToken`,
+      { headers: driveAuth.headers }
+    );
+    if (!changesRes.ok) {
+      const errData = await changesRes.json().catch(() => ({}));
+      if (changesRes.status === 410 || errData?.error?.code === 410) {
+        return { error: 'Change token hết hạn; cần POST để khởi tạo lại', status: 410, needReinit: true };
+      }
+      return { error: `Drive API ${changesRes.status}`, status: 502 };
     }
-    return { error: `Drive API ${changesRes.status}`, status: 502 };
+    const changesData = await changesRes.json();
+    changeCount += (changesData.changes || []).length;
+    if (changesData.nextPageToken) {
+      requestToken = changesData.nextPageToken;
+      continue;
+    }
+    return {
+      hasChanges: changeCount > 0,
+      changeCount,
+      newToken: changesData.newStartPageToken || requestToken
+    };
   }
-  const changesData = await changesRes.json();
-  const changes = changesData.changes || [];
-  const newToken = changesData.newStartPageToken || pageToken;
+  return { error: 'Drive changes pagination vượt quá giới hạn an toàn', status: 502 };
+}
 
-  return { hasChanges: changes.length > 0, changeCount: changes.length, newToken };
+async function commitToken(platform, token) {
+  await platform.env.DB.prepare(`
+    INSERT INTO drive_sync_state (id, last_change_token, last_poll_at)
+    VALUES (1, ?, CURRENT_TIMESTAMP)
+    ON CONFLICT(id) DO UPDATE SET last_change_token = excluded.last_change_token, last_poll_at = CURRENT_TIMESTAMP
+  `).bind(token).run();
 }
 
 export async function GET({ request, platform }) {
@@ -103,16 +118,11 @@ export async function GET({ request, platform }) {
     return json({ success: false, error: result.error }, { status: result.status || 500 });
   }
 
-  // KHÔNG lộ page token, tên file, ID cho caller — chỉ báo có/không thay đổi
-  // KHÔNG advance token ở đây — token chỉ commit sau sync thành công
-  await platform.env.DB.prepare(
-    `UPDATE drive_sync_state SET last_poll_at = CURRENT_TIMESTAMP WHERE id = 1`
-  ).run().catch(() => {});
-
   return json({
     success: true,
     has_changes: result.hasChanges,
-    change_count: result.changeCount
+    change_count: result.changeCount,
+    needs_initialization: !!result.initialized
   });
 }
 
@@ -126,10 +136,34 @@ export async function POST({ request, platform }) {
 
   // Kiểm tra thay đổi (không mutate token)
   const check = await checkDriveChanges(platform);
+  if (check.needReinit) {
+    const initial = await getStartPageToken(platform);
+    if (initial.error) return json({ success: false, error: initial.error }, { status: initial.status || 500 });
+    try {
+      await commitToken(platform, initial.newToken);
+    } catch (dbErr) {
+      return json({ success: false, error: `Không lưu được token khởi tạo lại: ${dbErr.message}` }, { status: 500 });
+    }
+    return json({ success: true, message: 'Token Drive hết hạn; đã khởi tạo lại', initialized: true, synced: false });
+  }
   if (check.error) {
     return json({ success: false, error: check.error }, { status: check.status || 500 });
   }
+  if (check.initialized) {
+    try {
+      await commitToken(platform, check.newToken);
+    } catch (dbErr) {
+      return json({ success: false, error: `Không lưu được token khởi tạo: ${dbErr.message}` }, { status: 500 });
+    }
+    return json({ success: true, message: 'Đã khởi tạo Drive change token', initialized: true, synced: false });
+  }
   if (!check.hasChanges) {
+    // POST được phép advance token khi Google xác nhận không có thay đổi.
+    try {
+      await commitToken(platform, check.newToken);
+    } catch (dbErr) {
+      return json({ success: false, error: `Không commit được token: ${dbErr.message}` }, { status: 500 });
+    }
     return json({ success: true, message: 'Không có thay đổi mới', synced: false });
   }
 
@@ -158,9 +192,7 @@ export async function POST({ request, platform }) {
 
   // CHỈ commit token SAU KHI sync thành công
   try {
-    await platform.env.DB.prepare(
-      `UPDATE drive_sync_state SET last_change_token = ?, last_poll_at = CURRENT_TIMESTAMP WHERE id = 1`
-    ).bind(check.newToken).run();
+    await commitToken(platform, check.newToken);
   } catch (dbErr) {
     return json({
       success: false,

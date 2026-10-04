@@ -5,7 +5,7 @@
 // Issue #2 P1: cron gọi chung hàm server nội bộ, fail-closed
 import { getServiceAccountToken, hasServiceAccount } from './googleServiceAccount.js';
 
-const DEFAULT_FOLDER = '1_V4YUCuTJ4uui49S6AfcaI8lZmIszKou';
+export const DEFAULT_DRIVE_FOLDER = '1_V4YUCuTJ4uui49S6AfcaI8lZmIszKou';
 const MAX_FILE_CONTENT = 20000;
 const MAX_FILES = 500;
 
@@ -114,7 +114,7 @@ function autoClassify(fileName, folderPath) {
  * @returns {Promise<{success: boolean, files_synced?: number, error?: string, stats?: object}>}
  */
 export async function runDriveSync(platform, opts = {}) {
-  const folderId = opts.folder_id || DEFAULT_FOLDER;
+  const folderId = opts.folder_id || DEFAULT_DRIVE_FOLDER;
   const recursive = opts.recursive !== false;
   const triggeredBy = opts.triggered_by || 'manual';
 
@@ -122,6 +122,15 @@ export async function runDriveSync(platform, opts = {}) {
     return { success: false, error: 'DatabaseUnavailable' };
   }
   const db = platform.env.DB;
+
+  const configuredFolders = String(
+    platform?.env?.DRIVE_SYNC_ALLOWED_FOLDER_IDS ||
+    platform?.env?.GOOGLE_DRIVE_ALLOWED_FOLDER_IDS ||
+    DEFAULT_DRIVE_FOLDER
+  ).split(',').map((id) => id.trim()).filter(Boolean);
+  if (!new Set(configuredFolders).has(folderId)) {
+    return { success: false, error: 'DriveFolderNotAllowed' };
+  }
 
   const driveAuth = await getAuth(platform);
   if (!driveAuth.bearer && !driveAuth.apiKey) {
@@ -183,28 +192,30 @@ export async function runDriveSync(platform, opts = {}) {
     } while (pageToken && stats.files < MAX_FILES);
   }
 
-  let logId = null;
+  const logId = `dsl_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
   try {
-    const logRes = await db.prepare(`
+    await db.prepare(`
       INSERT INTO drive_sync_logs (id, direction, folder_id, triggered_by, status)
       VALUES (?, 'drive_to_db', ?, ?, 'running')
-    `).bind(`dsl_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`, folderId, triggeredBy).run();
-    logId = logRes.meta?.last_row_id;
-  } catch {}
+    `).bind(logId, folderId, triggeredBy).run();
+  } catch (err) {
+    return { success: false, error: `DriveSyncLogError: ${err.message}` };
+  }
 
   try {
     await syncFolder(folderId);
     try { await db.prepare(`INSERT INTO knowledge_fts(knowledge_fts) VALUES('rebuild')`).run(); } catch (e) { errors.push(`fts: ${e.message}`); }
 
-    if (logId) {
-      try {
-        await db.prepare(`
-          UPDATE drive_sync_logs
-          SET finished_at = CURRENT_TIMESTAMP, status = 'completed',
-              files_scanned = ?, files_added = ?, files_skipped = ?, files_failed = ?, errors = ?
-          WHERE id = ?
-        `).bind(stats.files + stats.folders, stats.files, stats.skipped, errors.length, JSON.stringify(errors.slice(0, 20)), logId).run();
-      } catch {}
+    const status = errors.length ? 'failed' : 'completed';
+    await db.prepare(`
+      UPDATE drive_sync_logs
+      SET finished_at = CURRENT_TIMESTAMP, status = ?,
+          files_scanned = ?, files_added = ?, files_skipped = ?, files_failed = ?, errors = ?
+      WHERE id = ?
+    `).bind(status, stats.files + stats.folders, stats.files, stats.skipped, errors.length, JSON.stringify(errors.slice(0, 20)), logId).run();
+
+    if (errors.length) {
+      return { success: false, error: 'DriveSyncIncomplete', stats, log_id: logId, errors: errors.slice(0, 10) };
     }
 
     return {
@@ -215,12 +226,10 @@ export async function runDriveSync(platform, opts = {}) {
       errors: errors.slice(0, 10)
     };
   } catch (err) {
-    if (logId) {
-      try {
-        await db.prepare(`UPDATE drive_sync_logs SET finished_at = CURRENT_TIMESTAMP, status = 'failed', errors = ? WHERE id = ?`)
-          .bind(JSON.stringify([err.message]), logId).run();
-      } catch {}
-    }
+    try {
+      await db.prepare(`UPDATE drive_sync_logs SET finished_at = CURRENT_TIMESTAMP, status = 'failed', errors = ? WHERE id = ?`)
+        .bind(JSON.stringify([err.message]), logId).run();
+    } catch {}
     return { success: false, error: err.message, stats };
   }
 }

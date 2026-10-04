@@ -98,9 +98,7 @@ export async function getServiceAccountToken(platform) {
   }
 }
 
-// Kiểm tra service account đã được cấu hình chưa (env hoặc D1)
+// Kiểm tra service account đã được cấu hình trong Cloudflare secrets chưa.
 export async function hasServiceAccount(platform) {
-  // Issue #2 P1: chỉ kiểm tra Cloudflare secret, không dùng D1
   return !!(platform?.env?.GOOGLE_SERVICE_ACCOUNT_EMAIL && platform?.env?.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY);
-  return false;
 }

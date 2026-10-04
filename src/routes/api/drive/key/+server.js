@@ -1,5 +1,5 @@
 // src/routes/api/drive/key/+server.js
-// Quản lý Google Drive API key — staff only, lưu vào D1 site_settings
+// Quản lý Google Drive API key — manager only, lưu vào D1 site_settings
 import { json } from '@sveltejs/kit';
 import { verifyServerAuth, isManager } from '$lib/server/auth.js';
 
