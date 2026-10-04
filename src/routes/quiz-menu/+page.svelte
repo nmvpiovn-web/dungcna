@@ -2,6 +2,7 @@
   import { onMount, onDestroy } from 'svelte';
   import { getCurrentUser } from '$lib/unifiedStore';
   import QuizReviewPanel from '$lib/components/QuizReviewPanel.svelte';
+  import { cacheQuizData, getCachedQuizData, installQuizOnlineSync, queueQuizAttempt } from '$lib/quizOffline.js';
 
   const questionTypes = [
     ['multiple_choice', 'Trắc nghiệm', 'Chọn một đáp án đúng'],
@@ -42,6 +43,7 @@
   let bundleBusy = $state(false);
   let homeworkForm = $state({ session_id: '', class_id: '', class_name: '', deadline_date: '', deadline_time: '18:00' });
   let selectedReviewQuizId = $state('');
+  let removeOnlineSync = () => {};
 
   let draft = $state({
     id: null, title: '', description: '', time_limit_minutes: 20, questions: []
@@ -78,12 +80,17 @@
     try {
       const publicData = await api('/api/quiz-menu');
       publicQuizzes = publicData.quizzes || [];
+      cacheQuizData('catalog', publicData).catch(() => {});
       if (isStaff) {
         const mineData = await api('/api/quiz-menu?mine=1');
         myQuizzes = mineData.quizzes || [];
       }
     } catch (err) {
-      error = err.message;
+      const cached = await getCachedQuizData('catalog').catch(() => null);
+      if (cached) {
+        publicQuizzes = cached.quizzes || [];
+        message = 'Đang xem danh sách quiz đã lưu trên thiết bị.';
+      } else error = err.message;
     } finally {
       loading = false;
     }
@@ -97,13 +104,15 @@
       loadQuizzes();
     };
     window.addEventListener('tienganh:auth-change', authListener);
-    return () => window.removeEventListener('tienganh:auth-change', authListener);
+    removeOnlineSync = installQuizOnlineSync(token);
+    return () => { window.removeEventListener('tienganh:auth-change', authListener); removeOnlineSync(); };
   });
 
   onDestroy(() => {
     clearInterval(timer);
     clearTimeout(abandonTimer);
     unlockPage();
+    removeOnlineSync();
   });
 
   function selectTab(tab) {
@@ -270,11 +279,16 @@
     try {
       const data = await api(`/api/quiz-menu/${quiz.id}`);
       selectedQuiz = data.quiz;
+      cacheQuizData(`quiz:${quiz.id}`, data).catch(() => {});
       answers = {};
       guestName = '';
       startPanel = true;
     } catch (err) {
-      error = err.message;
+      const cached = await getCachedQuizData(`quiz:${quiz.id}`).catch(() => null);
+      if (cached?.quiz) {
+        selectedQuiz = cached.quiz; answers = {}; guestName = ''; startPanel = true;
+        message = 'Đang mở bản quiz đã lưu trên thiết bị.';
+      } else error = err.message;
     }
   }
 
@@ -295,7 +309,7 @@
       clearInterval(timer);
       timer = setInterval(updateCountdown, 1000);
     } catch (err) {
-      error = friendlyError(err.message);
+      error = !navigator.onLine ? 'Cần kết nối mạng để máy chủ bắt đầu và tính giờ bài làm.' : friendlyError(err.message);
     } finally {
       starting = false;
     }
@@ -337,7 +351,13 @@
         answers, deferred_question_ids
       }) });
       message = 'Đã lưu phần chưa hiểu. Bạn có thể quay lại sửa trước hạn.';
-    } catch (err) { error = friendlyError(err.message); }
+    } catch (err) {
+      if (!navigator.onLine || err instanceof TypeError || /fetch|network|kết nối/i.test(err.message)) {
+        const deferredQuestionIds = Object.keys(answers).filter(isDeferred);
+        await queueQuizAttempt({ quizId: selectedQuiz.id, attemptId: attempt.attempt_id, attemptToken: attempt.attempt_token, answers, action: 'save_for_later', deferredQuestionIds });
+        message = 'Mất mạng: phần chưa hiểu đã được lưu và sẽ đồng bộ khi có kết nối.';
+      } else error = friendlyError(err.message);
+    }
     finally { submitting = false; }
   }
 
@@ -387,7 +407,13 @@
       unlockPage();
       message = auto ? 'Hết giờ. Bài đã được nộp tự động.' : 'Đã nộp bài thành công.';
     } catch (err) {
-      error = friendlyError(err.message);
+      if (!navigator.onLine || err instanceof TypeError || /fetch|network|kết nối/i.test(err.message)) {
+        await queueQuizAttempt({ quizId: selectedQuiz.id, attemptId: attempt.attempt_id, attemptToken: attempt.attempt_token, answers });
+        clearInterval(timer); examOpen = false; unlockPage();
+        message = 'Mất mạng: bài đã được lưu an toàn và sẽ tự gửi khi có kết nối.';
+      } else {
+        error = friendlyError(err.message);
+      }
       if (err.message === 'TimeLimitExceeded') {
         clearInterval(timer);
         examOpen = false;

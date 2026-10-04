@@ -2,11 +2,14 @@
 // Architecture: Strict Network-Only for dynamic data/APIs; Cache-First for static immutable assets;
 // Network-First (with offline fallback) for navigations.
 
-const CACHE_NAME = 'tienganh-academic-v6';
+const CACHE_NAME = 'tienganh-academic-v7';
+const QUIZ_CACHE_NAME = 'tienganh-quiz-public-v1';
+const QUIZ_QUEUE_DB = 'tienganh-quiz-offline-v1';
 
 // App shell precache (offline fallback + icons + manifest). Individual failures must not break install.
 const PRECACHE_URLS = [
   '/offline/',
+  '/quiz-menu/',
   '/icon-192.png',
   '/icon-512.png',
   '/apple-touch-icon.png',
@@ -27,7 +30,7 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((name) => {
-          if (name !== CACHE_NAME) {
+          if (name !== CACHE_NAME && name !== QUIZ_CACHE_NAME) {
             console.log('[SW] Purging obsolete cache:', name);
             return caches.delete(name);
           }
@@ -41,6 +44,28 @@ self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 
   const url = new URL(event.request.url);
+
+  // Public Quiz Menu catalog/details contain no answer keys and no personal data.
+  // Cache only anonymous GETs; staff/mine/include_answers and attempt endpoints stay network-only.
+  const isPublicQuizRead = url.origin === self.location.origin
+    && /^\/api\/quiz-menu(?:\/[^/]+)?$/.test(url.pathname)
+    && !url.searchParams.has('mine')
+    && !url.searchParams.has('include_answers')
+    && !event.request.headers.has('Authorization');
+  if (isPublicQuizRead) {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          if (response.ok) caches.open(QUIZ_CACHE_NAME).then((cache) => cache.put(event.request, response.clone()));
+          return response;
+        })
+        .catch(() => caches.match(event.request).then((cached) => cached || new Response(
+          JSON.stringify({ success: false, error: 'OfflineCacheMiss' }),
+          { status: 503, headers: { 'Content-Type': 'application/json' } }
+        )))
+    );
+    return;
+  }
 
   // 1. STRICT PRIVACY & FAIL-CLOSED:
   // NEVER intercept or persist any API endpoints, auth tokens, or private user requests in CacheStorage
@@ -90,6 +115,50 @@ self.addEventListener('fetch', (event) => {
       });
     })
   );
+});
+
+function openQuizQueue() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(QUIZ_QUEUE_DB, 1);
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains('attempts')) db.createObjectStore('attempts', { keyPath: 'queueId' });
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function flushGuestQuizQueue() {
+  const db = await openQuizQueue();
+  const items = await new Promise((resolve, reject) => {
+    const request = db.transaction('attempts', 'readonly').objectStore('attempts').getAll();
+    request.onsuccess = () => resolve(request.result || []);
+    request.onerror = () => reject(request.error);
+  });
+  for (const item of items) {
+    // Authenticated attempts are flushed by the foreground app so auth tokens never enter IndexedDB.
+    if (!item.attemptToken) continue;
+    try {
+      const response = await fetch(`/api/quiz-menu/${encodeURIComponent(item.quizId)}/submit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: item.action || 'submit', attempt_id: item.attemptId, attempt_token: item.attemptToken, answers: item.answers, deferred_question_ids: item.deferredQuestionIds || [] })
+      });
+      if (response.ok || response.status === 409) {
+        await new Promise((resolve, reject) => {
+          const request = db.transaction('attempts', 'readwrite').objectStore('attempts').delete(item.queueId);
+          request.onsuccess = () => resolve();
+          request.onerror = () => reject(request.error);
+        });
+      }
+    } catch {}
+  }
+  db.close();
+}
+
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'quiz-attempt-sync') event.waitUntil(flushGuestQuizQueue());
 });
 
 // PWA Background Push Event Listener
