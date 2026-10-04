@@ -164,7 +164,7 @@
  loading = true;
  error = '';
  try {
- const payloadAnswers = questions.map((q) => ({ id: q.id, answer: answers[q.id] ?? '' }));
+ const payloadAnswers = Object.fromEntries(questions.map((q) => [q.id, answers[q.id] ?? '']));
  const res = await fetch('/api/exams/guest', {
  method: 'POST',
  headers: { 'Content-Type': 'application/json' },
