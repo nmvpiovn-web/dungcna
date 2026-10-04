@@ -61,7 +61,7 @@ function userPlatformFor(user) {
   return base;
 }
 
-async function questionsQuery({ role = null, includeAnswers = false, limit = null }) {
+async function questionsQuery({ role = null, includeAnswers = false, limit = null, grade = null, examId = null }) {
   const platform = platformFor(null);
   // Mock verifyServerAuth bằng cách patch DB.prepare cho users/auth_sessions
   const realPrepare = platform.env.DB.prepare;
@@ -84,6 +84,8 @@ async function questionsQuery({ role = null, includeAnswers = false, limit = nul
   const params = [];
   if (includeAnswers) params.push('include_answers=1');
   if (limit !== null) params.push(`limit=${limit}`);
+  if (grade !== null) params.push(`grade=${grade}`);
+  if (examId !== null) params.push(`exam_id=${encodeURIComponent(examId)}`);
   if (params.length) urlStr += '?' + params.join('&');
 
   const request = new Request(urlStr, {
@@ -154,4 +156,34 @@ test('limit=abc (NaN) dùng default', async () => {
 test('limit=99999 bị ép về 200', async () => {
   const body = await questionsQuery({ role: null, limit: 99999 });
   assert.ok(body.data.length <= 200, `limit=99999 trả ${body.data.length} rows`);
+});
+
+test('exam_id và grade được lọc trong SQL trước LIMIT', async () => {
+  const platform = platformFor(null);
+  let capturedSql = '';
+  let capturedParams = [];
+  const originalPrepare = platform.env.DB.prepare;
+  platform.env.DB.prepare = (sql) => {
+    const statement = originalPrepare(sql);
+    const originalBind = statement.bind;
+    statement.bind = (...params) => {
+      capturedSql = sql;
+      capturedParams = params;
+      return originalBind(...params);
+    };
+    return statement;
+  };
+  const url = new URL('https://timbk.io.vn/api/questions?exam_id=test1&grade=5&limit=10');
+  const response = await GET({ url, request: new Request(url), platform });
+  assert.equal(response.status, 200);
+  assert.match(capturedSql, /source_ref = \?/);
+  assert.match(capturedSql, /grade_level/);
+  assert.deepEqual(capturedParams, ['exam:test1', 5, 10]);
+});
+
+test('grade ngoài 1..12 bị từ chối', async () => {
+  const platform = platformFor(null);
+  const url = new URL('https://timbk.io.vn/api/questions?grade=99');
+  const response = await GET({ url, request: new Request(url), platform });
+  assert.equal(response.status, 400);
 });

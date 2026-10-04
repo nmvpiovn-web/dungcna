@@ -43,11 +43,29 @@ export async function GET({ url, request, platform }) {
     ? 'id, grade_level, skill_category, question_type, question_text, options_json, correct_option_id, explanation, source_ref'
     : 'id, grade_level, skill_category, question_type, question_text, options_json, source_ref';
 
+  const where = [`(status = 'published' OR status IS NULL)`];
+  const params = [];
+  if (examId) {
+    where.push(`source_ref = ?`);
+    params.push(`exam:${examId}`);
+  }
+  if (grade) {
+    const parsedGrade = parseInt(grade, 10);
+    if (!Number.isInteger(parsedGrade) || parsedGrade < 1 || parsedGrade > 12) {
+      return json({ success: false, error: 'Invalid grade' }, { status: 400 });
+    }
+    // Production contains grade values such as "7", "lop_7" and "Lớp 7".
+    where.push(`CAST(TRIM(REPLACE(REPLACE(REPLACE(LOWER(grade_level), 'lớp', ''), 'lop_', ''), 'lop', '')) AS INTEGER) = ?`);
+    params.push(parsedGrade);
+  }
+  params.push(limit);
+
   const res = await db.prepare(
     `SELECT ${cols}
-     FROM question_bank WHERE status = 'published' OR status IS NULL
+     FROM question_bank
+     WHERE ${where.join(' AND ')}
      ORDER BY id LIMIT ?`
-  ).bind(limit).all();
+  ).bind(...params).all();
 
   let rows = (res.results || []).map(r => {
     let eid = '';
@@ -70,14 +88,6 @@ export async function GET({ url, request, platform }) {
     }
     return q;
   });
-
-  if (grade) {
-    const g = parseInt(grade, 10);
-    rows = rows.filter(q => q.grade === g);
-  }
-  if (examId) {
-    rows = rows.filter(q => q.exam_id === examId);
-  }
 
   return json({ success: true, total: rows.length, source: 'd1', data: rows });
 }
