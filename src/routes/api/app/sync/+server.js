@@ -2,7 +2,8 @@
 // Unified realtime sync endpoint for mobile app (APK/PWA)
 // GET /api/app/sync?since=<ISO timestamp> — returns all changes since timestamp
 import { json } from '@sveltejs/kit';
-import { verifyServerAuth } from '$lib/server/auth.js';
+import { verifyServerAuth } from '../../../../lib/server/auth.js';
+import { buildNotificationAuthFilter } from '../../../../lib/server/notificationPolicy.js';
 
 export const prerender = false;
 
@@ -16,9 +17,18 @@ export async function GET({ url, request, platform }) {
   }
 
   const db = platform.env.DB;
-  const since = url.searchParams.get('since') || '1970-01-01T00:00:00Z';
+  const sinceInput = url.searchParams.get('since') || '1970-01-01T00:00:00Z';
+  const sinceDate = new Date(sinceInput);
+  if (Number.isNaN(sinceDate.getTime())) {
+    return json({ success: false, error: 'Invalid since timestamp' }, { status: 400 });
+  }
+  const since = sinceDate.toISOString();
   const user = auth.user;
   const role = String(user.role || '').toLowerCase();
+  const supportedRoles = new Set(['student', 'parent', 'teacher', 'leader', 'admin', 'superadmin']);
+  if (!supportedRoles.has(role)) {
+    return json({ success: false, error: 'Forbidden' }, { status: 403 });
+  }
   const now = new Date().toISOString();
 
   const result = {
@@ -34,21 +44,23 @@ export async function GET({ url, request, platform }) {
   };
 
   try {
-    // 1. Notifications for this user/role
+    // 1. Notifications — dùng chung policy với /api/notifications (issue #2 P1)
+    // Không còn dùng filter lỏng lẻo gây rò thông báo teacher/leader sang student/parent
     try {
+      const notifFilter = buildNotificationAuthFilter({ role, userId: user.id });
       const notifs = await db.prepare(`
-        SELECT id, title, body, category, reference_id, created_at
-        FROM system_notifications
-        WHERE created_at > ?
-          AND (target_user_id = ? OR target_role = ? OR target_role = 'all' OR target_user_id IS NULL)
-        ORDER BY created_at DESC LIMIT 50
-      `).bind(since, user.id, role).all();
+        SELECT n.id, n.title, n.body, n.category, n.reference_id, n.created_at
+        FROM system_notifications n
+        WHERE datetime(n.created_at) > datetime(?)
+          AND ${notifFilter.whereSql}
+        ORDER BY n.created_at DESC LIMIT 50
+      `).bind(since, ...notifFilter.params).all();
       result.changes.notifications = notifs.results || [];
     } catch {}
 
-    // 2. Schedule changes (role-scoped)
+    // 2. Schedule changes (role-scoped, fail-closed cho role lạ)
     try {
-      let schedQuery = `SELECT id, class_id, class_name, subject_topic, session_date, start_time, end_time, teacher_name, location, updated_at FROM class_sessions WHERE updated_at > ?`;
+      let schedQuery = `SELECT id, class_id, class_name, subject_topic, session_date, start_time, end_time, teacher_name, location, updated_at FROM class_sessions WHERE datetime(updated_at) > datetime(?)`;
       const params = [since];
       if (role === 'teacher') {
         schedQuery += ` AND (teacher_id = ? OR assistant_teacher_id = ? OR substitute_teacher_id = ?)`;
@@ -63,28 +75,36 @@ export async function GET({ url, request, platform }) {
           WHERE psl.parent_user_id = ? AND psl.verification_status = 'verified' AND ce.status = 'active'
         )`;
         params.push(user.id);
+      } else if (role === 'leader' || role === 'admin' || role === 'superadmin') {
+        // manager: không filter
+      } else {
+        // Role lạ: fail-closed, không trả lịch
+        schedQuery += ` AND 1 = 0`;
       }
-      // leader/admin/superadmin: no filter (all)
       schedQuery += ` ORDER BY updated_at DESC LIMIT 100`;
       const sched = await db.prepare(schedQuery).bind(...params).all();
       result.changes.schedule = sched.results || [];
     } catch {}
 
-    // 3. New/updated exams
+    // 3. New/updated exams — lọc theo since (trước đây không lọc)
     try {
       const exams = await db.prepare(`
         SELECT id, title, grade, format_type, duration_minutes, created_at
-        FROM exams WHERE is_published = 1
+        FROM exams WHERE is_published = 1 AND datetime(created_at) > datetime(?)
         ORDER BY created_at DESC LIMIT 20
-      `).all();
+      `).bind(since).all();
       result.changes.exams = exams.results || [];
     } catch {}
 
-    // 4. Current site theme (for app UI consistency)
+    // 4. Current site theme — chỉ trả khi có thay đổi sau since
     try {
-      const theme = await db.prepare(`SELECT value FROM site_settings WHERE key = 'site_theme' LIMIT 1`).all();
-      if (theme.results?.[0]) {
-        try { result.changes.site_theme = JSON.parse(theme.results[0].value); } catch {}
+      const row = await db.prepare(`
+        SELECT value, updated_at FROM site_settings
+        WHERE key = 'theme' AND (updated_at IS NULL OR datetime(updated_at) > datetime(?))
+        LIMIT 1
+      `).bind(since).first();
+      if (row) {
+        try { result.changes.site_theme = JSON.parse(row.value); } catch {}
       }
     } catch {}
 
