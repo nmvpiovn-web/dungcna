@@ -5,7 +5,7 @@ export const ssr = false;
 export async function load({ fetch }) {
   const [examsRes, questionsRes, studentsRes, scheduleRes] = await Promise.all([
     fetch('/api/exams').then(r => r.json()).catch(() => ({})),
-    fetch('/api/questions?limit=2000').then(r => r.json()).catch(() => ({})),
+    fetch('/api/questions?limit=200').then(r => r.json()).catch(() => ({})),
     fetch('/api/students').then(r => r.json()).catch(() => ({})),
     fetch('/api/schedule').then(r => r.json()).catch(() => ({}))
   ]);
