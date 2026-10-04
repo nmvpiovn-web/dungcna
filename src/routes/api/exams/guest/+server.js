@@ -797,8 +797,13 @@ export async function POST({ request, platform }) {
     const startTime = Date.now();
     const expiresAt = startTime + (durationMinutes + 10) * 60 * 1000; // duration + 10m buffer
 
-    // Select exact non-repeating unique questions
-    const selectedQuestions = curriculumPool.slice(0, targetQuestionCount);
+    // Select exact non-repeating unique questions — shuffled (Fisher-Yates) de moi lan tao de khac nhau
+    const shuffledPool = [...curriculumPool];
+    for (let i = shuffledPool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffledPool[i], shuffledPool[j]] = [shuffledPool[j], shuffledPool[i]];
+    }
+    const selectedQuestions = shuffledPool.slice(0, targetQuestionCount);
 
     const blueprint = {
       grade,
@@ -976,7 +981,9 @@ export async function POST({ request, platform }) {
         isCorrect = validList.includes(cleanAnswer);
       } else {
         const studentChoice = rawAnswer.toUpperCase();
-        isCorrect = studentChoice === q.correct_id;
+        // BUGFIX 2026-10-05: bank lop_1..lop_6 dung correct_option_id, lop_7+ dung correct_id
+        const correctId = q.correct_id || q.correct_option_id;
+        isCorrect = studentChoice === correctId;
       }
 
       if (isCorrect) correctCount++;
@@ -988,7 +995,7 @@ export async function POST({ request, platform }) {
         skill: q.skill,
         question_text: q.question_text,
         student_input: rawAnswer,
-        correct_answer: q.type === 'open_cloze' ? q.correct_text : q.correct_id,
+        correct_answer: q.type === 'open_cloze' ? q.correct_text : (q.correct_id || q.correct_option_id),
         is_correct: isCorrect,
         explanation: q.explanation
       });
