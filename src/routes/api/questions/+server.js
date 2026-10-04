@@ -1,4 +1,5 @@
 import { json } from '@sveltejs/kit';
+import { verifyServerAuth, isStaffUser } from '../../../lib/server/auth.js';
 
 export const prerender = false;
 
@@ -8,18 +9,42 @@ function parseGradeLevel(gl) {
   return m ? parseInt(m[1], 10) : 0;
 }
 
-export async function GET({ url, platform }) {
+export async function GET({ url, request, platform }) {
   const db = platform?.env?.DB;
   if (!db) {
     return json({ success: false, error: 'Database unavailable' }, { status: 503 });
   }
+
+  // Auth: xác định staff để quyết định có trả đáp án không
+  let isStaff = false;
+  if (request) {
+    try {
+      const auth = await verifyServerAuth(request, platform);
+      if (auth && auth.authenticated) {
+        isStaff = isStaffUser(auth.user);
+      }
+    } catch {
+      // Không auth -> coi như guest, không trả đáp án
+    }
+  }
+  const includeAnswers = url.searchParams.get('include_answers') === '1';
+  const canSeeAnswers = isStaff && includeAnswers;
+
   const grade = url.searchParams.get('grade');
   const examId = url.searchParams.get('exam_id');
-  const limit = Math.min(2000, Number(url.searchParams.get('limit')) || 500);
+
+  // Enforce limit 1..200 (chặn limit=-1, NaN, quá lớn để dump bank)
+  let limit = parseInt(url.searchParams.get('limit'), 10);
+  if (!Number.isFinite(limit)) limit = 100;
+  limit = Math.max(1, Math.min(200, limit));
+
+  // Chỉ SELECT cột nhạy cảm khi staff yêu cầu rõ ràng
+  const cols = canSeeAnswers
+    ? 'id, grade_level, skill_category, question_type, question_text, options_json, correct_option_id, explanation, source_ref'
+    : 'id, grade_level, skill_category, question_type, question_text, options_json, source_ref';
 
   const res = await db.prepare(
-    `SELECT id, grade_level, skill_category, question_type, question_text,
-      options_json, correct_option_id, explanation, source_ref
+    `SELECT ${cols}
      FROM question_bank WHERE status = 'published' OR status IS NULL
      ORDER BY id LIMIT ?`
   ).bind(limit).all();
@@ -29,17 +54,21 @@ export async function GET({ url, platform }) {
     if (r.source_ref && String(r.source_ref).startsWith('exam:')) {
       eid = String(r.source_ref).slice(5);
     }
-    return {
+    const q = {
       id: r.id,
       exam_id: eid,
       grade: parseGradeLevel(r.grade_level),
       skill: r.skill_category || '',
       type: r.question_type || 'multiple_choice',
       prompt: r.question_text || '',
-      options_json: r.options_json || '[]',
-      correct_answer: r.correct_option_id || '',
-      explanation: r.explanation || ''
+      options_json: r.options_json || '[]'
     };
+    // SECURITY: chỉ staff + include_answers=1 mới nhận đáp án
+    if (canSeeAnswers) {
+      q.correct_answer = r.correct_option_id || '';
+      q.explanation = r.explanation || '';
+    }
+    return q;
   });
 
   if (grade) {
