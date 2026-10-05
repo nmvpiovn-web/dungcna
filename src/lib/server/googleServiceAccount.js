@@ -29,11 +29,8 @@ let cachedToken = null;
 let cachedExpiry = 0;
 
 export async function getServiceAccountToken(platform) {
-  // Test hook: trả token giả để test không cần crypto thật
-  if (platform?.env?.DRIVE_TEST_TOKEN) {
-    return platform.env.DRIVE_TEST_TOKEN;
-  }
-  // Issue #2 P1: private key CHỈ nằm trong Cloudflare secret, không đọc từ D1
+  // Test-only runtime hook; production environments do not define this secret.
+  if (platform?.env?.DRIVE_TEST_TOKEN) return platform.env.DRIVE_TEST_TOKEN;
   const email = platform?.env?.GOOGLE_SERVICE_ACCOUNT_EMAIL;
   const privateKey = platform?.env?.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY;
 
@@ -51,7 +48,7 @@ export async function getServiceAccountToken(platform) {
     const header = base64UrlEncode(JSON.stringify({ alg: 'RS256', typ: 'JWT' }));
     const payload = base64UrlEncode(JSON.stringify({
       iss: email,
-      scope: 'https://www.googleapis.com/auth/drive.readonly',
+      scope: 'https://www.googleapis.com/auth/drive',
       aud: 'https://oauth2.googleapis.com/token',
       iat: now,
       exp: now + 3600
@@ -98,7 +95,10 @@ export async function getServiceAccountToken(platform) {
   }
 }
 
-// Kiểm tra service account đã được cấu hình trong Cloudflare secrets chưa.
+// Credential nhạy cảm chỉ được đọc từ runtime secret, tuyệt đối không đọc từ D1.
 export async function hasServiceAccount(platform) {
-  return !!(platform?.env?.GOOGLE_SERVICE_ACCOUNT_EMAIL && platform?.env?.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY);
+  return Boolean(
+    platform?.env?.GOOGLE_SERVICE_ACCOUNT_EMAIL &&
+    platform?.env?.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY
+  );
 }
