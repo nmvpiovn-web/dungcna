@@ -226,11 +226,10 @@ export async function runDriveSync(platform, opts = {}) {
 
         const cls = autoClassify(f.name, folderPath);
         // Skip files that can't be text-extracted (saves subrequests)
+        // NOTE: PDF/DOCX extraction disabled in Worker (CPU limits) - use Python script for heavy files
         const extractable = f.mimeType === 'application/vnd.google-apps.document' ||
           f.mimeType === 'application/vnd.google-apps.spreadsheet' ||
-          f.mimeType === 'text/plain' || f.mimeType === 'text/markdown' || f.mimeType === 'text/csv' ||
-          f.mimeType === 'application/pdf' ||
-          f.mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+          f.mimeType === 'text/plain' || f.mimeType === 'text/markdown' || f.mimeType === 'text/csv';
         if (!extractable) {
           stats.files++;
           stats.skipped++;
