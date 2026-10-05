@@ -39,6 +39,7 @@ export async function GET({ url, request, platform }) {
       notifications: [],
       schedule: [],
       exams: [],
+      quizzes: [],
       site_theme: null
     }
   };
@@ -96,7 +97,18 @@ export async function GET({ url, request, platform }) {
       result.changes.exams = exams.results || [];
     } catch {}
 
-    // 4. Current site theme — chỉ trả khi có thay đổi sau since
+    // 4. Published Quiz Menu changes for authenticated app sync.
+    try {
+      const quizzes = await db.prepare(`
+        SELECT id, title, description, creator_name, time_limit_minutes, status, created_at, updated_at
+        FROM quizzes
+        WHERE status = 'published' AND datetime(updated_at) > datetime(?)
+        ORDER BY updated_at DESC LIMIT 50
+      `).bind(since).all();
+      result.changes.quizzes = quizzes.results || [];
+    } catch {}
+
+    // 5. Current site theme — chỉ trả khi có thay đổi sau since
     try {
       const row = await db.prepare(`
         SELECT value, updated_at FROM site_settings
