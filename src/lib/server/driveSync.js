@@ -70,8 +70,61 @@ async function exportDocText(fileId, mimeType, auth) {
       const text = await driveFetchText(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, auth);
       return text.substring(0, MAX_FILE_CONTENT);
     }
+    // PDF/DOCX: download bytes and extract locally
+    if (mimeType === 'application/pdf' || mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+      const buffer = await driveFetchBytes(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, auth);
+      if (!buffer) return '';
+      const bytes = new Uint8Array(buffer);
+      let text = '';
+      if (mimeType === 'application/pdf') {
+        text = await extractPdfText(bytes);
+      } else {
+        text = await extractDocxText(bytes);
+      }
+      return text.substring(0, MAX_FILE_CONTENT);
+    }
   } catch {}
   return '';
+}
+
+async function driveFetchBytes(url, auth) {
+  try {
+    const headers = {};
+    if (auth.bearer) headers['Authorization'] = `Bearer ${auth.bearer}`;
+    const res = await fetch(url, { headers });
+    if (!res.ok) return null;
+    return await res.arrayBuffer();
+  } catch {
+    return null;
+  }
+}
+
+async function extractDocxText(bytes) {
+  try {
+    const { default: mammoth } = await import('mammoth');
+    const result = await mammoth.extractRawText({ arrayBuffer: bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) });
+    return result.value || '';
+  } catch {
+    return '';
+  }
+}
+
+async function extractPdfText(bytes) {
+  try {
+    const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
+    const doc = await pdfjs.getDocument({ data: bytes }).promise;
+    const pages = [];
+    const maxPages = Math.min(doc.numPages, 20); // Limit to 20 pages to save subrequests
+    for (let i = 1; i <= maxPages; i++) {
+      const page = await doc.getPage(i);
+      const content = await page.getTextContent();
+      pages.push(content.items.map(it => it.str).join(' '));
+    }
+    await doc.destroy();
+    return pages.join('\n\n');
+  } catch {
+    return '';
+  }
 }
 
 function mdEscape(s) {
@@ -170,6 +223,26 @@ export async function runDriveSync(platform, opts = {}) {
         }
 
         const cls = autoClassify(f.name, folderPath);
+        // Skip files that can't be text-extracted (saves subrequests)
+        const extractable = f.mimeType === 'application/vnd.google-apps.document' ||
+          f.mimeType === 'application/vnd.google-apps.spreadsheet' ||
+          f.mimeType === 'text/plain' || f.mimeType === 'text/markdown' || f.mimeType === 'text/csv' ||
+          f.mimeType === 'application/pdf' ||
+          f.mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+        if (!extractable) {
+          stats.files++;
+          stats.skipped++;
+          continue;
+        }
+        // Check if already in DB with same modified time (skip download if unchanged)
+        const existing = await db.prepare(`SELECT source_hash FROM knowledge_vault WHERE id = ? LIMIT 1`).bind(vid).first().catch(() => null);
+        // Use modifiedTime as hash to detect changes
+        const fileHash = `drive_${f.id}_${f.modifiedTime || ''}`;
+        if (existing && existing.source_hash === fileHash) {
+          stats.files++;
+          stats.skipped++;
+          continue;
+        }
         const content = await exportDocText(f.id, f.mimeType, driveAuth);
         stats.files++;
         if (content) stats.with_content++; else stats.skipped++;
@@ -184,8 +257,8 @@ export async function runDriveSync(platform, opts = {}) {
           await db.prepare(`
             INSERT INTO knowledge_vault (id, title, folder, category, tags, source_path, source_hash, content_markdown, status)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'published')
-            ON CONFLICT(id) DO UPDATE SET title=excluded.title, category=excluded.category, tags=excluded.tags, content_markdown=excluded.content_markdown, updated_at=CURRENT_TIMESTAMP
-          `).bind(vid, f.name, '07_GOOGLE_DRIVE_LIBRARY', cls.category, JSON.stringify(cls.tags), `drive://${f.id}`, `drive_${f.id}`, md).run();
+            ON CONFLICT(id) DO UPDATE SET title=excluded.title, category=excluded.category, tags=excluded.tags, content_markdown=excluded.content_markdown, source_hash=excluded.source_hash, updated_at=CURRENT_TIMESTAMP
+          `).bind(vid, f.name, '07_GOOGLE_DRIVE_LIBRARY', cls.category, JSON.stringify(cls.tags), `drive://${f.id}`, fileHash, md).run();
         } catch (e) { errors.push(`file ${f.id}: ${e.message}`); }
       }
       pageToken = data.nextPageToken || '';
