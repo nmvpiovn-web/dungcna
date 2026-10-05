@@ -2,9 +2,12 @@
 // Sync tài liệu Google Drive vào knowledge_vault (kho tri thức)
 // POST /api/drive/sync { folder_id?, recursive? } — MANAGER only (issue #2 P1)
 // Logic sync dùng chung với cron qua $lib/server/driveSync.js
+// Fix 2026-10-06: commit change token sau sync thành công (dùng chung
+// logic với POST /api/drive/poll) để tránh kẹt vĩnh viễn has_changes=true.
 import { json } from '@sveltejs/kit';
 import { verifyServerAuth, isManager } from '$lib/server/auth.js';
 import { runDriveSync } from '$lib/server/driveSync.js';
+import { commitTokenAfterSync } from '$lib/server/driveChanges.js';
 
 export const prerender = false;
 
@@ -44,11 +47,27 @@ export async function POST({ request, platform }) {
   if (!result.success) {
     return json({ success: false, error: result.error, stats: result.stats }, { status: 500 });
   }
+
+  // Commit change token sau sync thành công để poll không báo
+  // has_changes=true vĩnh viễn. Không fail request nếu commit lỗi —
+  // chỉ cảnh báo, vì sync dữ liệu đã thành công.
+  let tokenCommitted = false;
+  try {
+    const tokenRes = await commitTokenAfterSync(platform);
+    tokenCommitted = tokenRes.committed;
+    if (!tokenCommitted) {
+      console.warn('[drive-sync] Sync OK nhưng commit token thất bại:', tokenRes.error);
+    }
+  } catch (e) {
+    console.warn('[drive-sync] Commit token sau sync lỗi:', e.message);
+  }
+
   return json({
     success: true,
     message: `Đã sync ${result.files_synced} files từ Drive vào kho tri thức`,
     stats: result.stats,
     log_id: result.log_id,
-    errors: result.errors
+    errors: result.errors,
+    token_committed: tokenCommitted
   });
 }

@@ -7,15 +7,14 @@
 // - Fail-closed: kiểm tra kết quả sync, không báo success giả
 import { json } from '@sveltejs/kit';
 import { verifyServerAuth, isManager } from '../../../../lib/server/auth.js';
-import { getServiceAccountToken } from '../../../../lib/server/googleServiceAccount.js';
+import {
+  getStartPageToken,
+  checkDriveChanges,
+  commitToken,
+  commitTokenAfterSync
+} from '../../../../lib/server/driveChanges.js';
 
 export const prerender = false;
-
-async function getDriveAuth(platform) {
-  const token = await getServiceAccountToken(platform);
-  if (token) return { headers: { 'Authorization': `Bearer ${token}` } };
-  return null;
-}
 
 function isAuthorizedCron(request, platform) {
   const cronSecret = request.headers.get('x-cron-secret');
@@ -30,90 +29,6 @@ async function isAuthorizedManager(request, platform) {
   } catch {
     return false;
   }
-}
-
-async function getStartPageToken(platform) {
-  const driveAuth = await getDriveAuth(platform);
-  if (!driveAuth) return { error: 'Chưa cấu hình Service Account', status: 503 };
-  const tokenRes = await fetch('https://www.googleapis.com/drive/v3/changes/startPageToken', {
-    headers: driveAuth.headers
-  });
-  if (!tokenRes.ok) return { error: `Drive API ${tokenRes.status}`, status: 502 };
-  const tokenData = await tokenRes.json();
-  return tokenData.startPageToken
-    ? { newToken: tokenData.startPageToken }
-    : { error: 'Không lấy được startPageToken', status: 502 };
-}
-
-// Kiểm tra thay đổi Drive mà KHÔNG mutate state (dùng cho GET và POST).
-// Theo hết nextPageToken để không bỏ sót hoặc lặp vĩnh viễn trang đầu.
-async function checkDriveChanges(platform) {
-  const driveAuth = await getDriveAuth(platform);
-  if (!driveAuth) {
-    return { error: 'Chưa cấu hình Service Account', status: 503 };
-  }
-  if (!platform?.env?.DB) {
-    return { error: 'DatabaseUnavailable', status: 500 };
-  }
-  const db = platform.env.DB;
-
-  const state = await db.prepare(
-    `SELECT last_change_token FROM drive_sync_state WHERE id = 1`
-  ).first();
-  const pageToken = state?.last_change_token;
-
-  // Chưa có token: chỉ lấy token. POST sẽ là nơi lưu token khởi tạo.
-  if (!pageToken) {
-    const initial = await getStartPageToken(platform);
-    return initial.error ? initial : { hasChanges: false, changeCount: 0, newToken: initial.newToken, initialized: true };
-  }
-
-  let requestToken = pageToken;
-  let changeCount = 0;
-  const seenTokens = new Set([requestToken]);
-  // Limit pagination to avoid Cloudflare subrequest limits (max 50 per invocation)
-  for (let page = 0; page < 10; page++) {
-    const changesRes = await fetch(
-      `https://www.googleapis.com/drive/v3/changes?pageToken=${encodeURIComponent(requestToken)}&fields=changes(fileId),newStartPageToken,nextPageToken`,
-      { headers: driveAuth.headers }
-    );
-    if (!changesRes.ok) {
-      const errData = await changesRes.json().catch(() => ({}));
-      if (changesRes.status === 410 || errData?.error?.code === 410) {
-        return { error: 'Change token hết hạn; cần POST để khởi tạo lại', status: 410, needReinit: true };
-      }
-      return { error: `Drive API ${changesRes.status}`, status: 502 };
-    }
-    const changesData = await changesRes.json();
-    changeCount += (changesData.changes || []).length;
-    if (changesData.nextPageToken) {
-      // Loop detection: break if we've seen this token
-      if (seenTokens.has(changesData.nextPageToken)) break;
-      seenTokens.add(changesData.nextPageToken);
-      requestToken = changesData.nextPageToken;
-      continue;
-    }
-    return {
-      hasChanges: changeCount > 0,
-      changeCount,
-      newToken: changesData.newStartPageToken || requestToken
-    };
-  }
-  // Hit pagination limit — return what we have with the latest token
-  return {
-    hasChanges: changeCount > 0,
-    changeCount,
-    newToken: requestToken,
-    paginationTruncated: true
-  };
-}
-
-async function commitToken(platform, token) {
-  await platform.env.DB.prepare(`
-    INSERT INTO drive_sync_state (id, last_change_token, last_poll_at)
-    VALUES (1, ?, CURRENT_TIMESTAMP)
-    ON CONFLICT(id) DO UPDATE SET last_change_token = excluded.last_change_token, last_poll_at = CURRENT_TIMESTAMP
-  `).bind(token).run();
 }
 
 export async function GET({ request, platform }) {
@@ -207,12 +122,11 @@ export async function POST({ request, platform }) {
   }
 
   // CHỈ commit token SAU KHI sync thành công
-  try {
-    await commitToken(platform, check.newToken);
-  } catch (dbErr) {
+  const tokenRes = await commitTokenAfterSync(platform);
+  if (!tokenRes.committed) {
     return json({
       success: false,
-      error: `Sync OK nhưng không commit được token: ${dbErr.message}`,
+      error: `Sync OK nhưng không commit được token: ${tokenRes.error}`,
       synced: true,
       token_committed: false
     }, { status: 500 });
