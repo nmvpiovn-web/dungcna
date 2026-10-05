@@ -113,17 +113,23 @@ export async function GET({ request, platform }) {
     return json({ success: false, error: 'Unauthorized' }, { status: 401 });
   }
 
-  const result = await checkDriveChanges(platform);
-  if (result.error) {
-    return json({ success: false, error: result.error }, { status: result.status || 500 });
-  }
+  try {
+    const result = await checkDriveChanges(platform);
+    if (result.error) {
+      return json({ success: false, error: result.error }, { status: result.status || 500 });
+    }
 
-  return json({
-    success: true,
-    has_changes: result.hasChanges,
-    change_count: result.changeCount,
-    needs_initialization: !!result.initialized
-  });
+    return json({
+      success: true,
+      has_changes: result.hasChanges,
+      change_count: result.changeCount,
+      needs_initialization: !!result.initialized
+    });
+  } catch (e) {
+    // Temporary diagnostic logging
+    console.error('[drive-poll] Uncaught exception:', e.message, e.stack);
+    return json({ success: false, error: `Internal: ${e.message}` }, { status: 500 });
+  }
 }
 
 export async function POST({ request, platform }) {
