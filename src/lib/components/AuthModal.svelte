@@ -24,7 +24,8 @@
  let regPhone = $state('');
  let regLinkedChild = $state('');
  let regSpecialty = $state('Tiếng Anh THCS & THPT');
- let regSelectedGrade = $state(''); // Must select actively
+ let regSelectedGrades = $state([]);
+ let regSelectedGrade = $derived(regSelectedGrades.join(', ')); // Must select actively
 
  const availableClasses = [
  {
@@ -96,6 +97,11 @@
  }
 
  function handleSelectRole(role) {
+ if (role === 'teacher' || role === 'assistant') {
+ isOpen = false;
+ window.location.assign('/recruitment');
+ return;
+ }
  regRole = role;
  regStep = 'credentials';
  errorMessage = '';
@@ -109,8 +115,8 @@
  errorMessage = 'Vui lòng nhập Tên đăng nhập (Username)!';
  return;
  }
- if (!regPassword.trim()) {
- errorMessage = 'Vui lòng nhập Mật khẩu!';
+ if (regPassword.trim().length < 6) {
+ errorMessage = 'Mật khẩu cần ít nhất 6 ký tự.';
  return;
  }
  if (!regName.trim()) {
@@ -120,12 +126,12 @@
 
  // Advance to mandatory class selection popup
  regStep = 'class_popup';
- regSelectedGrade = ''; // Force active selection
+ regSelectedGrades = []; // Force active selection
  }
 
  async function handleFinalizeRegister() {
  if (!regSelectedGrade) {
- errorMessage = 'Bắt buộc chọn đúng Lớp học của bạn trước khi hoàn tất đăng ký!';
+ errorMessage = 'Vui lòng chọn ít nhất một khối hoặc chứng chỉ.';
  return;
  }
 
@@ -139,13 +145,14 @@
  name: regName.trim(),
  password: regPassword.trim(),
  role: regRole,
- grade: regSelectedGrade,
+ grade: regSelectedGrades[0],
+ selectedGrades: regSelectedGrades,
  target: regRole === 'parent' ? `Đồng hành cùng con lớp ${regSelectedGrade}` : (regRole === 'teacher' ? regSpecialty : `Chương trình đào tạo ${regSelectedGrade}`),
  linkedStudentPhoneOrId: regRole === 'parent' ? regLinkedChild : ''
  });
 
  if (res.success) {
- successMessage = `🎉 Chúc mừng ${res.user.name}! Tài khoản dùng thử (Trial) đã được khởi tạo thành công với Lớp: ${regSelectedGrade}. Đang chờ Leader Cô Dung duyệt chính thức!`;
+ successMessage = `🎉 Chúc mừng ${res.user.name}! Tài khoản dùng thử (Trial) đã được khởi tạo thành công với lựa chọn: ${regSelectedGrade}. Đang chờ Leader Cô Dung duyệt chính thức!`;
  playAudioFeedback(true);
  setTimeout(() => {
  isOpen = false;
@@ -171,7 +178,7 @@
  regName = '';
  regPhone = '';
  regLinkedChild = '';
- regSelectedGrade = '';
+ regSelectedGrades = [];
  errorMessage = '';
  }
 </script>
@@ -374,7 +381,7 @@
  Tôi Là Giáo Viên / Trợ Giảng
  </div>
  <div class="text-[11px] text-slate-600 mt-0.5">
- Giảng dạy, quản lý thời khóa biểu, điểm danh, ghi nhận xét sổ đầu bài và đánh giá học sinh.
+ Nộp hồ sơ giáo viên hoặc trợ giảng. Ban quản lý duyệt và cấp quyền giảng dạy sau.
  </div>
  </div>
  <div class="text-slate-500 group-hover:text-teal-600 font-semibold">➔</div>
@@ -483,7 +490,7 @@
  placeholder="VD: 0918889999 hoặc baokhiem"
  class="w-full bg-white border border-purple-300 rounded-md px-3 py-1.5 text-xs text-slate-900"
  />
- <span class="text-[11px] text-purple-600 block">Hệ thống sẽ tự động liên kết để bạn theo dõi điểm và học phí của con.</span>
+ <span class="text-[11px] text-purple-600 block">Yêu cầu liên kết sẽ chờ xác minh trước khi xem thông tin của con.</span>
  </div>
  {:else if regRole === 'teacher'}
  <div class="p-3 rounded-md bg-teal-50/70 border border-teal-200 space-y-1">
@@ -507,13 +514,13 @@
  <div class="text-center space-y-1">
  <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-amber-500/10 text-amber-700 border border-amber-500/20 text-[11px] font-semibold">
  <span>🎯</span>
- <span>BƯỚC 3 / 3: CHỌN LỚP HỌC CHÍNH XÁC CỦA BẠN (*)</span>
+ <span>BƯỚC 3 / 3: CHỌN KHỐI HOẶC CHỨNG CHỈ</span>
  </div>
  <h3 class="text-sm font-semibold text-slate-900">
- {regRole === 'parent' ? 'Con Bạn Đang Theo Học Lớp Mấy?' : (regRole === 'teacher' ? 'Bạn Đang Phụ Trách Lớp Nào?' : 'Bạn Đang Theo Học Lớp Nào?')}
+ Chọn khối hoặc chứng chỉ bạn quan tâm
  </h3>
  <p class="text-xs text-rose-600 font-medium">
- ⚠️ Không để mặc định — Bắt buộc chọn đúng khối lớp bên dưới:
+ Có thể chọn nhiều mục. Lớp học cụ thể sẽ được xếp sau.
  </p>
  </div>
 
@@ -535,7 +542,7 @@
  </div>
  {:else}
  <div class="p-2.5 rounded-md bg-amber-50 border border-amber-300 text-amber-800 text-xs font-medium text-center">
- 👇 Vui lòng bấm chọn 1 khối lớp bên dưới để tiếp tục:
+ 👇 Chọn ít nhất một khối hoặc chứng chỉ để tiếp tục:
  </div>
  {/if}
 
@@ -550,10 +557,11 @@
 
  <div class="grid grid-cols-2 gap-2">
  {#each group.items as item}
- {@const isSelected = regSelectedGrade === item.id}
+ {@const isSelected = regSelectedGrades.includes(item.id)}
  <button
  type="button"
- onclick={() => regSelectedGrade = item.id}
+ aria-pressed={isSelected}
+ onclick={() => regSelectedGrades = isSelected ? regSelectedGrades.filter(g => g !== item.id) : [...regSelectedGrades, item.id]}
  class="p-2.5 rounded-md border text-left transition-colors {isSelected ? 'bg-cx-700 text-white border-cx-800 shadow-xs' : 'bg-slate-50 border-slate-200 text-slate-700 hover:border-cx-400 hover:bg-white'}"
  >
  <div class="font-semibold flex items-center justify-between">
@@ -621,7 +629,7 @@
  form="reg-cred-form"
  class="flex-1 py-2.5 rounded-md bg-cx-700 hover:bg-cx-600 text-white font-semibold text-xs shadow-xs transition-colors flex items-center justify-center gap-1.5"
  >
- <span>Bước Tiếp Theo: Chọn Lớp Học ➔</span>
+ <span>Bước Tiếp Theo: Chọn Khối / Chứng Chỉ ➔</span>
  </button>
  </div>
  {:else if regStep === 'class_popup'}

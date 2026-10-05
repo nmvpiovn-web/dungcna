@@ -35,6 +35,7 @@
  { path: '/cpanel/teacher', label: t('teacherWorkplace', lang), icon: '👩‍🏫' },
  { path: '/cpanel/teacher#grading', label: t('gradingTab', lang), icon: '✍️' },
  { path: '/cpanel/teacher#assign', label: t('assignTab', lang), icon: '➕' },
+ { path: '/quiz-menu', label: t('quizMenuTab', lang), icon: '🧩' },
  { path: '/second-brain', label: t('secondBrainTab', lang), icon: '🧠' }
  ],
  leader: [
@@ -47,6 +48,7 @@
  { path: '/cpanel/student', label: t('studentDesk', lang), icon: '🎒' },
  { path: '/cpanel/parent', label: t('parentPortal', lang), icon: '👨‍👩‍👧' },
  { path: '/cpanel/teacher', label: t('teacherWorkplace', lang), icon: '👩‍🏫' },
+ { path: '/quiz-menu', label: t('quizMenuTab', lang), icon: '🧩' },
  { path: '/cpanel/leader', label: t('academicTesting', lang), icon: '👑' },
  { path: '/admincp', label: t('adminCP', lang), icon: '⚡' }
  ]
@@ -241,6 +243,7 @@
  href={item.path}
  class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold whitespace-nowrap transition-all shrink-0 {isActive ? 'bg-cx-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'}"
  >
+ <span aria-hidden="true">{item.icon}</span>
  <span>{item.label}</span>
  </a>
  {/each}

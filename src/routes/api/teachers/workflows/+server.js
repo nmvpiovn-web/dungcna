@@ -244,17 +244,23 @@ export async function POST({ request, platform }) {
       notes
     } = body;
 
-    if (!candidate_name || !phone) {
+    if (typeof candidate_name !== 'string' || !candidate_name.trim() || candidate_name.length > 150 || typeof phone !== 'string' || !phone.trim() || phone.length > 30) {
       return json({ success: false, error: 'Vui lòng cung cấp họ tên và số điện thoại liên hệ' }, { status: 400 });
     }
 
-    if (Array.isArray(selected_grades) && selected_grades.length === 0) {
-      return json({ success: false, error: 'Vui lòng chọn ít nhất một khối lớp có thể phụ trách giảng dạy' }, { status: 400 });
+    if (!['lead', 'contractor', 'assistant'].includes(role_type || 'lead')) {
+      return json({ success: false, error: 'Vị trí ứng tuyển không hợp lệ.' }, { status: 400 });
+    }
+    if (!Array.isArray(selected_grades) || selected_grades.length === 0 || selected_grades.length > 30 || selected_grades.some(g => typeof g !== 'string' || !g.trim() || g.length > 100)) {
+      return json({ success: false, error: 'Vui lòng chọn ít nhất một khối hoặc chứng chỉ hợp lệ.' }, { status: 400 });
+    }
+    if ((email != null && typeof email !== 'string') || (certificates != null && typeof certificates !== 'string') || (selected_subjects != null && (!Array.isArray(selected_subjects) || selected_subjects.length > 30 || selected_subjects.some(s => typeof s !== 'string' || s.length > 100)))) {
+      return json({ success: false, error: 'Thông tin hồ sơ không hợp lệ.' }, { status: 400 });
     }
 
     const recId = `rec_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
     const structuredPayload = {
-      selected_grades: Array.isArray(selected_grades) ? selected_grades : [],
+      selected_grades: [...new Set(selected_grades.map(g => g.trim()))],
       selected_subjects: Array.isArray(selected_subjects) ? selected_subjects : [],
       interview_preference: interview_preference || 'online',
       availability: availability || '',
@@ -281,7 +287,8 @@ export async function POST({ request, platform }) {
         cv_link: structuredPayload.cv_link
       });
 
-      // Notify Leader of new applicant
+      // The application is durable even when notification delivery fails.
+      try {
       await db.prepare(`
         INSERT INTO system_notifications (id, target_role, title, body, category, reference_id)
         VALUES (?, 'leader', 'Hồ sơ ứng viên giáo viên mới', ?, 'recruitment', ?);
@@ -290,10 +297,13 @@ export async function POST({ request, platform }) {
         `Ứng viên ${candidate_name} vừa nộp hồ sơ vị trí ${role_type || 'giáo viên'} (Lớp: ${(selected_grades || []).join(', ')}). SĐT: ${phone}`,
         recId
       ).run();
+      } catch (notificationError) {
+        console.warn('Recruitment saved; leader notification failed:', notificationError);
+      }
 
       return json({
         success: true,
-        message: 'Nộp hồ sơ ứng tuyển thành công! Ban Quản Lý Tiếng Anh Cô Dung sẽ liên hệ phỏng vấn trong vòng 48h.',
+        message: 'Nộp hồ sơ ứng tuyển thành công! Ban quản lý sẽ duyệt hồ sơ và liên hệ cấp tài khoản giảng dạy.',
         recruitment_id: recId,
         selected_grades: structuredPayload.selected_grades
       });
@@ -942,7 +952,7 @@ export async function POST({ request, platform }) {
 
     if (isCreate) {
       const { candidate_name, phone, email, role_type, position_type, experience_years, certificates, interview_time, interview_notes, cv_link, notes } = body;
-      if (!candidate_name || !phone) {
+      if (typeof candidate_name !== 'string' || !candidate_name.trim() || candidate_name.length > 150 || typeof phone !== 'string' || !phone.trim() || phone.length > 30) {
         return json({ success: false, error: 'Vui lòng cung cấp tên ứng viên và số điện thoại' }, { status: 400 });
       }
 

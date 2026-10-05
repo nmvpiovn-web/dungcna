@@ -48,6 +48,7 @@ async function fixture() {
     CREATE TABLE auth_sessions (id TEXT PRIMARY KEY, revoked_at TEXT, expires_at TEXT);
   `);
   sqlite.exec(fs.readFileSync('migrations/0012_quiz_menu.sql', 'utf8'));
+  sqlite.exec(fs.readFileSync('migrations/0014_quiz_guest_class.sql', 'utf8'));
   sqlite.exec(`ALTER TABLE quiz_attempts ADD COLUMN deferred_question_ids_json TEXT; ALTER TABLE quiz_attempts ADD COLUMN saved_for_later_at TEXT;`);
   const users = [
     ['teacher-1', 'teacher1', 'Cô Một', 'teacher'],

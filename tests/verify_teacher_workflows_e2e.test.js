@@ -226,7 +226,8 @@ describe('TEACHER WORKFLOWS & SUBSTITUTE 2-STEP APPROVAL AUDIT SUITE', () => {
         email: 'candidate@example.com',
         role_type: 'lead',
         experience_years: 3,
-        certificates: 'IELTS 8.0, TESOL 120h'
+        certificates: 'IELTS 8.0, TESOL 120h',
+        selected_grades: ['IELTS Academic', 'TESOL']
       })
     });
 

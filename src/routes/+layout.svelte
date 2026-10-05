@@ -94,6 +94,7 @@
  }
 
  onMount(() => {
+ const requestedLogin = new URLSearchParams(window.location.search).get('login') === '1';
  // PWA: Register Service Worker for app-like experience (offline, installable)
  if ('serviceWorker' in navigator) {
  navigator.serviceWorker.register('/sw.js').then((reg) => {
@@ -151,7 +152,7 @@
  verifySessionWithServer().then(res => {
  if (!res.valid) {
  currentUser = null;
- showAuthModal = false;
+ showAuthModal = requestedLogin;
  canDismiss = true;
  } else {
  currentUser = res.user;
@@ -161,7 +162,7 @@
  });
  } else {
  currentUser = null;
- showAuthModal = false;
+ showAuthModal = requestedLogin;
  canDismiss = true;
  }
 

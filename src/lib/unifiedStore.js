@@ -300,7 +300,7 @@ export function toggleTheme() {
   return setTheme(next);
 }
 
-export async function registerUser({ usernameOrPhone, name, password, role = 'student', grade = '', target = '', linkedStudentPhoneOrId = '' }) {
+export async function registerUser({ usernameOrPhone, name, password, role = 'student', grade = '', selectedGrades = [], target = '', linkedStudentPhoneOrId = '' }) {
   if (!usernameOrPhone || !usernameOrPhone.trim()) {
     return { success: false, error: 'Vui lòng nhập Số điện thoại hoặc Tên đăng nhập!' };
   }
@@ -319,6 +319,7 @@ export async function registerUser({ usernameOrPhone, name, password, role = 'st
         password,
         role,
         grade,
+        selectedGrades,
         target,
         linkedStudentPhoneOrId
       })

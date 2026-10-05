@@ -22,6 +22,8 @@ export async function POST({ params, request, platform }) {
 
   if (action === 'start') {
     const guestName = auth ? null : sanitizeGuestName(body.guest_name);
+    const guestClass = auth ? null : sanitizeGuestName(body.guest_class);
+    if (!auth && !guestClass) return json({ success: false, error: 'Vui lòng nhập lớp' }, { status: 400 });
     if (!auth && !guestName) return json({ success: false, error: 'Vui lòng nhập tên' }, { status: 400 });
     const ipHash = await sha256(requestIp(request));
     const recent = await db.prepare(`
@@ -34,9 +36,9 @@ export async function POST({ params, request, platform }) {
     const guestTokenHash = guestToken ? await sha256(guestToken) : null;
     const limit = Number(quiz.time_limit_minutes);
     await db.prepare(`
-      INSERT INTO quiz_attempts (id, quiz_id, user_id, guest_name, guest_token_hash, client_ip_hash, status, deadline_at)
-      VALUES (?, ?, ?, ?, ?, ?, 'in_progress', strftime('%Y-%m-%dT%H:%M:%fZ', 'now', ?))
-    `).bind(id, quiz.id, auth?.user?.id || null, guestName, guestTokenHash, ipHash, `+${limit} minutes`).run();
+      INSERT INTO quiz_attempts (id, quiz_id, user_id, guest_name, guest_class, guest_token_hash, client_ip_hash, status, deadline_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, 'in_progress', strftime('%Y-%m-%dT%H:%M:%fZ', 'now', ?))
+    `).bind(id, quiz.id, auth?.user?.id || null, guestName, guestClass, guestTokenHash, ipHash, `+${limit} minutes`).run();
     const attempt = await db.prepare(`SELECT started_at, deadline_at FROM quiz_attempts WHERE id = ?`).bind(id).first();
     return json({ success: true, attempt_id: id, attempt_token: guestToken, started_at: attempt.started_at, deadline_at: attempt.deadline_at, time_limit_minutes: limit }, { status: 201 });
   }

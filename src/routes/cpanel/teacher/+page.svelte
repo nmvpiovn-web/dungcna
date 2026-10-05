@@ -313,6 +313,14 @@
  >
  Giao BTVN Mới
  </button>
+ <a
+ href="/quiz-menu"
+ class="whitespace-nowrap shrink-0 inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-md text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+ aria-label="Mở công cụ tạo Quiz, phiếu DOCX và bài tập về nhà"
+ >
+ <span aria-hidden="true">🧩</span>
+ Quiz &amp; Phiếu DOCX
+ </a>
  <button 
  onclick={() => activeTab = 'sessions'}
  class="whitespace-nowrap shrink-0 px-3 sm:px-4 py-2 rounded-md text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cx-500 {activeTab === 'sessions' ? 'bg-cx-600 text-white' : 'text-slate-600 hover:bg-slate-100'}"

@@ -53,6 +53,7 @@ async function fixture() {
     CREATE TABLE system_notifications (id TEXT PRIMARY KEY, target_role TEXT, target_user_id TEXT, title TEXT, body TEXT, category TEXT, reference_id TEXT);
   `);
   sqlite.exec(fs.readFileSync('migrations/0012_quiz_menu.sql', 'utf8'));
+  sqlite.exec(fs.readFileSync('migrations/0014_quiz_guest_class.sql', 'utf8'));
   sqlite.exec(fs.readFileSync('migrations/0013_quiz_menu_drive.sql', 'utf8'));
   sqlite.prepare(`INSERT INTO users (id,username,name,role,status,metadata) VALUES ('teacher-1','teacher','Cô Giáo','teacher','active','{}'), ('student-1','student','Học Sinh','student','active','{}')`).run();
   sqlite.prepare(`INSERT INTO auth_sessions VALUES ('session-teacher',NULL,'2099-01-01T00:00:00.000Z'), ('session-student',NULL,'2099-01-01T00:00:00.000Z')`).run();

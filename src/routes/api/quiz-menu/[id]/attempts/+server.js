@@ -17,7 +17,7 @@ export async function GET({ params, request, platform }) {
 
   const [attemptResult, questionResult] = await Promise.all([
     db.prepare(`
-      SELECT id, quiz_id, user_id, guest_name, answers_json, auto_score, final_score, max_score,
+      SELECT id, quiz_id, user_id, guest_name, guest_class, answers_json, auto_score, final_score, max_score,
              status, duration_seconds, started_at, deadline_at, submitted_at,
              deferred_question_ids_json, saved_for_later_at
       FROM quiz_attempts WHERE quiz_id = ? ORDER BY datetime(started_at) DESC, id DESC

@@ -21,6 +21,7 @@
   let message = $state('');
   let error = $state('');
   let guestName = $state('');
+  let guestClass = $state('');
   let selectedQuiz = $state(null);
   let startPanel = $state(false);
   let examOpen = $state(false);
@@ -99,6 +100,8 @@
   onMount(() => {
     currentUser = getCurrentUser();
     loadQuizzes();
+    const sharedQuizId = new URLSearchParams(window.location.search).get('quiz');
+    if (sharedQuizId) openQuiz({ id: sharedQuizId });
     const authListener = (event) => {
       currentUser = event.detail;
       loadQuizzes();
@@ -273,32 +276,39 @@
     }
   }
 
+  async function shareQuiz(quiz) {
+    const link = new URL('/quiz-menu', window.location.origin);
+    link.searchParams.set('quiz', quiz.id);
+    try { await navigator.clipboard.writeText(link.href); message = 'Đã sao chép link. Khách có thể nhập tên và lớp để làm bài.'; }
+    catch { message = `Link làm bài: ${link.href}`; }
+  }
+
   async function openQuiz(quiz) {
     error = '';
     result = null;
     try {
-      const data = await api(`/api/quiz-menu/${quiz.id}`);
+      const data = await api(`/api/quiz-menu/${encodeURIComponent(quiz.id)}`);
       selectedQuiz = data.quiz;
       cacheQuizData(`quiz:${quiz.id}`, data).catch(() => {});
       answers = {};
-      guestName = '';
+      guestName = ''; guestClass = '';
       startPanel = true;
     } catch (err) {
       const cached = await getCachedQuizData(`quiz:${quiz.id}`).catch(() => null);
       if (cached?.quiz) {
-        selectedQuiz = cached.quiz; answers = {}; guestName = ''; startPanel = true;
+        selectedQuiz = cached.quiz; answers = {}; guestName = ''; guestClass = ''; startPanel = true;
         message = 'Đang mở bản quiz đã lưu trên thiết bị.';
       } else error = err.message;
     }
   }
 
   async function startAttempt() {
-    if (!currentUser && !guestName.trim()) { error = 'Hãy nhập tên để bắt đầu.'; return; }
+    if (!currentUser && (!guestName.trim() || !guestClass.trim())) { error = 'Hãy nhập tên và lớp để bắt đầu.'; return; }
     starting = true;
     error = '';
     try {
       const data = await api(`/api/quiz-menu/${selectedQuiz.id}/submit`, {
-        method: 'POST', body: JSON.stringify({ action: 'start', guest_name: guestName })
+        method: 'POST', body: JSON.stringify({ action: 'start', guest_name: guestName, guest_class: guestClass })
       });
       attempt = data;
       startPanel = false;
@@ -597,7 +607,7 @@
             <article class="quiz-card">
               <div class="quiz-card-top"><span class:published={quiz.status === 'published'}>{quiz.status === 'published' ? 'Đã xuất bản' : quiz.status === 'draft' ? 'Bản nháp' : 'Đã lưu trữ'}</span><b>{quiz.time_limit_minutes} phút</b></div>
               <h3>{quiz.title}</h3><p>{quiz.description || 'Chưa có mô tả.'}</p>
-              <footer><small>Cập nhật {new Date(quiz.updated_at).toLocaleDateString('vi-VN')}</small><div><button on:click={() => selectedReviewQuizId = selectedReviewQuizId === quiz.id ? '' : quiz.id}>Chấm bài</button><button on:click={() => openBundle(quiz)}>DOCX &amp; BTVN</button>{#if quiz.status === 'published'}<button on:click={() => { activeTab = 'take'; openQuiz(quiz); }}>Xem bài →</button>{/if}</div></footer>
+              <footer><small>Cập nhật {new Date(quiz.updated_at).toLocaleDateString('vi-VN')}</small><div><button on:click={() => selectedReviewQuizId = selectedReviewQuizId === quiz.id ? '' : quiz.id}>Chấm bài</button><button on:click={() => openBundle(quiz)}>DOCX &amp; BTVN</button>{#if quiz.status === 'published'}<button on:click={() => shareQuiz(quiz)}>Sao chép link</button><button on:click={() => { activeTab = 'take'; openQuiz(quiz); }}>Xem bài →</button>{/if}</div></footer>
             </article>
           {/each}
         </div>
@@ -637,7 +647,11 @@
       {#if currentUser}
         <div class="identity">✓ Làm bài với tên <strong>{currentUser.name || currentUser.username}</strong></div>
       {:else}
-        <label class="guest-field">Tên của bạn<input bind:value={guestName} maxlength="50" autocomplete="name" placeholder="Nhập tên để lưu kết quả" /></label>
+        <p>Đăng ký để theo dõi kết quả lâu dài. Bạn vẫn có thể làm bài ngay với tư cách khách.</p>
+        <a data-sveltekit-reload href={`/quiz-menu?quiz=${encodeURIComponent(selectedQuiz.id)}&login=1`}>Đăng nhập / Đăng ký</a>
+        <label class="guest-field">Tên của bạn<input bind:value={guestName} maxlength="50" autocomplete="name" placeholder="Nhập tên để lưu kết quả" required /></label>
+        <label class="guest-field">Lớp của bạn<input bind:value={guestClass} maxlength="50" placeholder="Ví dụ: 7A / IELTS tối thứ 3" required /></label>
+        <small>Tên, lớp và giờ bắt đầu/nộp bài được lưu để giáo viên đối chiếu lịch dạy.</small>
       {/if}
       <button class="btn-main full" disabled={starting} on:click={startAttempt}>{starting ? 'Đang chuẩn bị...' : 'Vào phòng làm bài'}</button>
       <small class="privacy-note">Khi bắt đầu, đồng hồ sẽ chạy liên tục kể cả khi mất kết nối.</small>

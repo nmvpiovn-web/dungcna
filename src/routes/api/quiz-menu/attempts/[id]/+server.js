@@ -54,6 +54,7 @@ export async function GET({ params, request, platform }) {
       quiz_title: attempt.quiz_title,
       user_id: attempt.user_id || null,
       guest_name: attempt.guest_name || null,
+      guest_class: attempt.guest_class || null,
       answers: parseStoredJson(attempt.answers_json, {}),
       deferred_question_ids: parseStoredJson(attempt.deferred_question_ids_json, []),
       saved_for_later_at: attempt.saved_for_later_at || null,
