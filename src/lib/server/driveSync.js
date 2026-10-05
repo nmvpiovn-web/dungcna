@@ -192,12 +192,13 @@ export async function runDriveSync(platform, opts = {}) {
     } while (pageToken && stats.files < MAX_FILES);
   }
 
-  const logId = `dsl_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  let logId;
   try {
-    await db.prepare(`
-      INSERT INTO drive_sync_logs (id, direction, folder_id, triggered_by, status)
-      VALUES (?, 'drive_to_db', ?, ?, 'running')
-    `).bind(logId, folderId, triggeredBy).run();
+    const result = await db.prepare(`
+      INSERT INTO drive_sync_logs (direction, folder_id, triggered_by, status)
+      VALUES ('drive_to_db', ?, ?, 'running')
+    `).bind(folderId, triggeredBy).run();
+    logId = result.meta.last_row_id;
   } catch (err) {
     return { success: false, error: `DriveSyncLogError: ${err.message}` };
   }
