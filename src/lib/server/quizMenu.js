@@ -130,3 +130,14 @@ export async function sha256(value) {
 export function requestIp(request) {
   return request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
 }
+
+export function canManageQuiz(user, quiz) {
+  if (!user || !quiz) return false;
+  const role = String(user.role || '').toLowerCase();
+  if (role === 'superadmin' || role === 'admin' || role === 'leader') return true;
+  return role === 'teacher' && String(quiz.created_by || '') === String(user.id || '');
+}
+
+export function parseStoredJson(value, fallback = null) {
+  return parseJson(value, fallback);
+}
