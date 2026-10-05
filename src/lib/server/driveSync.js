@@ -7,7 +7,7 @@ import { getServiceAccountToken, hasServiceAccount } from './googleServiceAccoun
 
 export const DEFAULT_DRIVE_FOLDER = '1_V4YUCuTJ4uui49S6AfcaI8lZmIszKou';
 const MAX_FILE_CONTENT = 20000;
-const MAX_FILES = 500;
+const MAX_FILES = 10000;
 
 async function getAuth(platform) {
   if (await hasServiceAccount(platform)) {
