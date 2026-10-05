@@ -158,21 +158,112 @@ async function extractBytesLocal(metadata, bytes) {
       return result.value || '';
     }
     if (mime === 'application/pdf' || name.endsWith('.pdf')) {
-      const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
-      const doc = await pdfjs.getDocument({ data: bytes }).promise;
-      const pages = [];
-      for (let i = 1; i <= doc.numPages; i++) {
-        const page = await doc.getPage(i);
-        const content = await page.getTextContent();
-        pages.push(content.items.map(it => it.str).join(' '));
+      // Try pdfjs-dist first
+      try {
+        const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
+        const doc = await pdfjs.getDocument({ data: bytes }).promise;
+        const pages = [];
+        for (let i = 1; i <= doc.numPages; i++) {
+          const page = await doc.getPage(i);
+          const content = await page.getTextContent();
+          pages.push(content.items.map(it => it.str).join(' '));
+        }
+        await doc.destroy();
+        const text = pages.join('\n\n');
+        if (text.trim().length >= 50) return text;
+      } catch (e) {
+        console.warn('[quizDrive] pdfjs failed, trying regex fallback:', e.message);
       }
-      await doc.destroy();
-      return pages.join('\n\n');
+      // Fallback: regex extract text from PDF content streams (Tj/TJ operators)
+      const regexText = extractPdfTextRegex(bytes);
+      if (regexText.trim().length >= 50) return regexText;
+      const decompText = await extractPdfTextDecompressed(bytes);
+      if (decompText.trim().length >= 20) return decompText;
+      return regexText || decompText;
     }
   } catch (e) {
     console.warn('[quizDrive] local extraction failed:', e.message);
   }
   return '';
+}
+
+function extractPdfTextRegex(bytes) {
+  try {
+    const raw = new TextDecoder('latin1').decode(bytes);
+    const texts = [];
+    // Find all streams, decompress if FlateDecode
+    const streamRe = /stream\r?\n([\s\S]*?)\r?\nendstream/g;
+    let sm;
+    const chunks = [];
+    while ((sm = streamRe.exec(raw)) !== null) {
+      chunks.push(sm[1]);
+    }
+    // Also try decompressing flate streams via DecompressionStream
+    const combined = chunks.join('\n');
+    // Match (text) Tj and [...] TJ operators
+    const tjRe = /\((?:\\.|[^\\()])*\)\s*Tj/g;
+    const tjArrRe = /\[((?:[^\[\]])*)\]\s*TJ/g;
+    let m;
+    while ((m = tjRe.exec(combined)) !== null) {
+      texts.push(decodePdfString(m[0]));
+    }
+    while ((m = tjArrRe.exec(combined)) !== null) {
+      const strRe = /\((?:\\.|[^\\()])*\)/g;
+      let s2;
+      while ((s2 = strRe.exec(m[1])) !== null) {
+        texts.push(decodePdfString(s2[0]));
+      }
+    }
+    if (texts.join(' ').trim().length >= 20) return texts.join(' ');
+    return '';
+  } catch {
+    return '';
+  }
+}
+
+async function extractPdfTextDecompressed(bytes) {
+  // Decompress FlateDecode streams then regex-extract
+  try {
+    if (typeof DecompressionStream === 'undefined') return '';
+    const raw = new TextDecoder('latin1').decode(bytes);
+    const streamRe = /\/Filter\s*\/FlateDecode[\s\S]*?stream\r?\n([\s\S]*?)\r?\nendstream/g;
+    let m;
+    const out = [];
+    while ((m = streamRe.exec(raw)) !== null) {
+      const latinBytes = Uint8Array.from(m[1], c => c.charCodeAt(0));
+      const ds = new DecompressionStream('deflate');
+      const writer = ds.writable.getWriter();
+      writer.write(latinBytes);
+      writer.close();
+      const chunks = [];
+      const reader = ds.readable.getReader();
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        chunks.push(value);
+      }
+      const total = chunks.reduce((a, c) => a + c.length, 0);
+      const merged = new Uint8Array(total);
+      let off = 0;
+      for (const c of chunks) { merged.set(c, off); off += c.length; }
+      out.push(new TextDecoder('latin1').decode(merged));
+    }
+    const combined = out.join('\n');
+    const texts = [];
+    const tjRe = /\((?:\\.|[^\\()])*\)\s*Tj/g;
+    while ((m = tjRe.exec(combined)) !== null) texts.push(decodePdfString(m[0]));
+    return texts.join(' ');
+  } catch {
+    return '';
+  }
+}
+
+function decodePdfString(s) {
+  // s is like "(Hello \(world\))" — strip parens and unescape
+  let inner = s.replace(/^\(/, '').replace(/\)\s*Tj$/, '').replace(/\)$/, '');
+  return inner
+    .replace(/\\n/g, '\n').replace(/\\r/g, '\r').replace(/\\t/g, '\t')
+    .replace(/\\\(/g, '(').replace(/\\\)/g, ')').replace(/\\\\/g, '\\');
 }
 
 export async function uploadQuizSource(platform, file) {
