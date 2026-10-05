@@ -160,7 +160,9 @@ export async function uploadQuizSource(platform, file) {
     } catch (e) {
       console.warn('[quizDrive] Drive archival skipped:', e.message);
     }
-    return { file: uploaded, text, uploadFolderId };
+    // Synthesize file info when Drive archival was skipped
+    const file = uploaded || { id: null, name: validated.name, mimeType: validated.mimeType, size: validated.size };
+    return { file, text, uploadFolderId };
   }
   // DOCX/PDF need Drive conversion
   const folder = await ensureQuizUploadsFolder(platform);
@@ -342,14 +344,16 @@ export async function generateQuestionsWithAI(text, platform) {
 }
 
 export async function saveQuizSourceAndDrafts(db, quizId, source, text, questions) {
+  // source may be null when Drive archival was skipped — synthesize from available info
+  const s = source || {};
   const metadata = {
-    id: source.id, name: source.name, mime_type: source.mimeType, size: Number(source.size || 0) || null,
-    parents: source.parents || [], web_view_link: source.webViewLink || null,
-    created_time: source.createdTime || null, modified_time: source.modifiedTime || null
+    id: s.id || null, name: s.name || 'uploaded.txt', mime_type: s.mimeType || 'text/plain', size: Number(s.size || 0) || null,
+    parents: s.parents || [], web_view_link: s.webViewLink || null,
+    created_time: s.createdTime || null, modified_time: s.modifiedTime || null
   };
   const statements = [
     db.prepare(`UPDATE quizzes SET source_file_id = ?, source_file_name = ?, source_metadata_json = ?, source_text_excerpt = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id = ?`)
-      .bind(source.id, source.name, JSON.stringify(metadata), String(text || '').slice(0, 4000) || null, quizId),
+      .bind(metadata.id, metadata.name, JSON.stringify(metadata), String(text || '').slice(0, 4000) || null, quizId),
     db.prepare(`DELETE FROM quiz_questions WHERE quiz_id = ?`).bind(quizId)
   ];
   for (const q of questions) statements.push(db.prepare(`
