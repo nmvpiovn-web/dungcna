@@ -131,6 +131,10 @@ async function removeDriveFile(platform, id) {
 
 async function extractBytes(platform, metadata, bytes, folderId) {
   if (metadata.mimeType === 'text/plain') return new TextDecoder().decode(bytes);
+  // Local extraction first (no Drive dependency)
+  const local = await extractBytesLocal(metadata, bytes);
+  if (local && local.trim().length >= 50) return local;
+  // Fallback: Drive conversion
   let converted;
   try {
     converted = await uploadBytes(platform, {
@@ -144,12 +148,44 @@ async function extractBytes(platform, metadata, bytes, folderId) {
   }
 }
 
+async function extractBytesLocal(metadata, bytes) {
+  const mime = metadata.mimeType || '';
+  const name = (metadata.name || '').toLowerCase();
+  try {
+    if (mime.includes('wordprocessingml') || name.endsWith('.docx')) {
+      const mammoth = await import('mammoth');
+      const result = await mammoth.extractRawText({ arrayBuffer: bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) });
+      return result.value || '';
+    }
+    if (mime === 'application/pdf' || name.endsWith('.pdf')) {
+      const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
+      const doc = await pdfjs.getDocument({ data: bytes }).promise;
+      const pages = [];
+      for (let i = 1; i <= doc.numPages; i++) {
+        const page = await doc.getPage(i);
+        const content = await page.getTextContent();
+        pages.push(content.items.map(it => it.str).join(' '));
+      }
+      await doc.destroy();
+      return pages.join('\n\n');
+    }
+  } catch (e) {
+    console.warn('[quizDrive] local extraction failed:', e.message);
+  }
+  return '';
+}
+
 export async function uploadQuizSource(platform, file) {
   const validated = validateQuizFile(file);
-  const bytes = await file.arrayBuffer();
-  // TXT files don't need Drive at all — decode directly
-  if (validated.mimeType === 'text/plain') {
-    const text = new TextDecoder().decode(bytes);
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  // Local extraction for TXT/DOCX/PDF — no Drive dependency
+  if (validated.mimeType === 'text/plain' || validated.mimeType.includes('wordprocessingml') || validated.mimeType === 'application/pdf') {
+    const text = validated.mimeType === 'text/plain'
+      ? new TextDecoder().decode(bytes)
+      : await extractBytesLocal(validated, bytes);
+    if (!text || text.trim().length < 50) {
+      throw new QuizDriveError('Không đọc được nội dung tệp (tệp rỗng hoặc định dạng không đọc được)', 400, 'EmptyExtraction');
+    }
     // Best-effort Drive archival (service accounts can't upload to regular shared folders)
     let uploaded = null;
     let uploadFolderId = null;
@@ -160,11 +196,10 @@ export async function uploadQuizSource(platform, file) {
     } catch (e) {
       console.warn('[quizDrive] Drive archival skipped:', e.message);
     }
-    // Synthesize file info when Drive archival was skipped
-    const file = uploaded || { id: null, name: validated.name, mimeType: validated.mimeType, size: validated.size };
-    return { file, text, uploadFolderId };
+    const fileInfo = uploaded || { id: null, name: validated.name, mimeType: validated.mimeType, size: validated.size };
+    return { file: fileInfo, text, uploadFolderId };
   }
-  // DOCX/PDF need Drive conversion
+  // Images (PNG/JPG): need Drive/OCR path
   const folder = await ensureQuizUploadsFolder(platform);
   const uploaded = await uploadBytes(platform, { ...validated, bytes, folderId: folder.id });
   const text = await extractBytes(platform, validated, bytes, folder.id);
