@@ -146,8 +146,24 @@ async function extractBytes(platform, metadata, bytes, folderId) {
 
 export async function uploadQuizSource(platform, file) {
   const validated = validateQuizFile(file);
-  const folder = await ensureQuizUploadsFolder(platform);
   const bytes = await file.arrayBuffer();
+  // TXT files don't need Drive at all — decode directly
+  if (validated.mimeType === 'text/plain') {
+    const text = new TextDecoder().decode(bytes);
+    // Best-effort Drive archival (service accounts can't upload to regular shared folders)
+    let uploaded = null;
+    let uploadFolderId = null;
+    try {
+      const folder = await ensureQuizUploadsFolder(platform);
+      uploaded = await uploadBytes(platform, { ...validated, bytes, folderId: folder.id });
+      uploadFolderId = folder.id;
+    } catch (e) {
+      console.warn('[quizDrive] Drive archival skipped:', e.message);
+    }
+    return { file: uploaded, text, uploadFolderId };
+  }
+  // DOCX/PDF need Drive conversion
+  const folder = await ensureQuizUploadsFolder(platform);
   const uploaded = await uploadBytes(platform, { ...validated, bytes, folderId: folder.id });
   const text = await extractBytes(platform, validated, bytes, folder.id);
   return { file: uploaded, text, uploadFolderId: folder.id };
