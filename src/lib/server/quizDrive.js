@@ -226,36 +226,81 @@ async function extractPdfTextDecompressed(bytes) {
   try {
     if (typeof DecompressionStream === 'undefined') return '';
     const raw = new TextDecoder('latin1').decode(bytes);
-    const streamRe = /\/Filter\s*\/FlateDecode[\s\S]*?stream\r?\n([\s\S]*?)\r?\nendstream/g;
+    const streamRe = /stream\r?\n([\s\S]*?)endstream/g;
     let m;
     const out = [];
     while ((m = streamRe.exec(raw)) !== null) {
-      const latinBytes = Uint8Array.from(m[1], c => c.charCodeAt(0));
-      const ds = new DecompressionStream('deflate');
-      const writer = ds.writable.getWriter();
-      writer.write(latinBytes);
-      writer.close();
-      const chunks = [];
-      const reader = ds.readable.getReader();
-      for (;;) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        chunks.push(value);
-      }
-      const total = chunks.reduce((a, c) => a + c.length, 0);
-      const merged = new Uint8Array(total);
-      let off = 0;
-      for (const c of chunks) { merged.set(c, off); off += c.length; }
-      out.push(new TextDecoder('latin1').decode(merged));
+      // Handle ASCII85Decode + FlateDecode (reportlab style) or just FlateDecode
+      let streamData = m[1];
+      // Strip ASCII85 wrapper if present (ends with ~>)
+      const isAscii85 = streamData.includes('~>');
+      try {
+        let deflateBytes;
+        if (isAscii85) {
+          // Decode ASCII85 first
+          const ascii85 = streamData.replace(/\s/g, '').replace(/~>$/, '');
+          deflateBytes = decodeAscii85(ascii85);
+        } else {
+          deflateBytes = Uint8Array.from(streamData, c => c.charCodeAt(0));
+        }
+        const ds = new DecompressionStream('deflate');
+        const writer = ds.writable.getWriter();
+        await writer.write(deflateBytes);
+        await writer.close();
+        const chunks = [];
+        const reader = ds.readable.getReader();
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          chunks.push(value);
+        }
+        const total = chunks.reduce((a, c) => a + c.length, 0);
+        const merged = new Uint8Array(total);
+        let off = 0;
+        for (const c of chunks) { merged.set(c, off); off += c.length; }
+        out.push(new TextDecoder('latin1').decode(merged));
+      } catch {}
     }
     const combined = out.join('\n');
     const texts = [];
     const tjRe = /\((?:\\.|[^\\()])*\)\s*Tj/g;
+    const tjArrRe = /\[([^\[\]]*)\]\s*TJ/g;
     while ((m = tjRe.exec(combined)) !== null) texts.push(decodePdfString(m[0]));
+    while ((m = tjArrRe.exec(combined)) !== null) {
+      const strRe = /\((?:\\.|[^\\()])*\)/g;
+      let s2;
+      while ((s2 = strRe.exec(m[1])) !== null) texts.push(decodePdfString(s2[0]));
+    }
     return texts.join(' ');
   } catch {
     return '';
   }
+}
+
+function decodeAscii85(str) {
+  // Decode ASCII85 (Adobe variant without <~ ~>)
+  const out = [];
+  let tuple = 0, count = 0;
+  for (let i = 0; i < str.length; i++) {
+    const c = str.charCodeAt(i);
+    if (c === 122) { // 'z' = 4 zero bytes
+      if (count !== 0) throw new Error('Invalid z');
+      out.push(0, 0, 0, 0);
+      continue;
+    }
+    if (c < 33 || c > 117) continue;
+    tuple = tuple * 85 + (c - 33);
+    if (++count === 5) {
+      out.push((tuple >>> 24) & 255, (tuple >>> 16) & 255, (tuple >>> 8) & 255, tuple & 255);
+      tuple = 0; count = 0;
+    }
+  }
+  if (count > 0) {
+    for (let i = count; i < 5; i++) tuple = tuple * 85 + 84;
+    const bytes = [(tuple >>> 24) & 255, (tuple >>> 16) & 255, (tuple >>> 8) & 255, tuple & 255];
+    for (let i = 0; i < count - 1; i++) out.push(bytes[i]);
+  }
+  return new Uint8Array(out);
 }
 
 function decodePdfString(s) {
