@@ -70,7 +70,9 @@ async function checkDriveChanges(platform) {
 
   let requestToken = pageToken;
   let changeCount = 0;
-  for (let page = 0; page < 100; page++) {
+  const seenTokens = new Set([requestToken]);
+  // Limit pagination to avoid Cloudflare subrequest limits (max 50 per invocation)
+  for (let page = 0; page < 10; page++) {
     const changesRes = await fetch(
       `https://www.googleapis.com/drive/v3/changes?pageToken=${encodeURIComponent(requestToken)}&fields=changes(fileId),newStartPageToken,nextPageToken`,
       { headers: driveAuth.headers }
@@ -85,6 +87,9 @@ async function checkDriveChanges(platform) {
     const changesData = await changesRes.json();
     changeCount += (changesData.changes || []).length;
     if (changesData.nextPageToken) {
+      // Loop detection: break if we've seen this token
+      if (seenTokens.has(changesData.nextPageToken)) break;
+      seenTokens.add(changesData.nextPageToken);
       requestToken = changesData.nextPageToken;
       continue;
     }
@@ -94,7 +99,13 @@ async function checkDriveChanges(platform) {
       newToken: changesData.newStartPageToken || requestToken
     };
   }
-  return { error: 'Drive changes pagination vượt quá giới hạn an toàn', status: 502 };
+  // Hit pagination limit — return what we have with the latest token
+  return {
+    hasChanges: changeCount > 0,
+    changeCount,
+    newToken: requestToken,
+    paginationTruncated: true
+  };
 }
 
 async function commitToken(platform, token) {
@@ -126,9 +137,8 @@ export async function GET({ request, platform }) {
       needs_initialization: !!result.initialized
     });
   } catch (e) {
-    // Temporary diagnostic logging
-    console.error('[drive-poll] Uncaught exception:', e.message, e.stack);
-    return json({ success: false, error: `Internal: ${e.message}` }, { status: 500 });
+    console.error('[drive-poll] GET failed:', e.message);
+    return json({ success: false, error: 'PollFailed' }, { status: 500 });
   }
 }
 
