@@ -21,7 +21,15 @@ export async function POST({ params, request, platform }) {
     const aiQuestions = await generateQuestionsWithAI(source.text, platform);
     const questions = aiQuestions || generateDraftQuestions(source.text);
     const metadata = await saveQuizSourceAndDrafts(db, params.id, source.file, source.text, questions);
-    const bundle = questions.length ? await publishQuizBundle(platform, db, params.id) : null;
+    // Bundle creation is best-effort (requires Drive write which service accounts lack)
+    let bundle = null;
+    if (questions.length) {
+      try {
+        bundle = await publishQuizBundle(platform, db, params.id);
+      } catch (e) {
+        console.warn('[quiz-upload] Bundle creation skipped:', e.message);
+      }
+    }
     return json({ success: true, source: metadata, extracted_text_length: source.text.length, questions, bundle, ai_generated: !!aiQuestions }, { status: 201 });
   } catch (error) {
     const status = error instanceof QuizDriveError ? error.status : 500;
