@@ -1,6 +1,6 @@
 import { json } from '@sveltejs/kit';
 import { isStaffUser, verifyServerAuth } from '../../../../../lib/server/auth.js';
-import { generateDraftQuestions, publishQuizBundle, QuizDriveError, readAllowedDriveSource, saveQuizSourceAndDrafts } from '../../../../../lib/server/quizDrive.js';
+import { generateDraftQuestions, generateQuestionsWithAI, publishQuizBundle, QuizDriveError, readAllowedDriveSource, saveQuizSourceAndDrafts } from '../../../../../lib/server/quizDrive.js';
 
 export const prerender = false;
 
@@ -17,10 +17,11 @@ export async function POST({ params, request, platform }) {
   try { body = await request.json(); } catch { return json({ success: false, error: 'Invalid JSON' }, { status: 400 }); }
   try {
     const source = await readAllowedDriveSource(platform, body.file_id);
-    const questions = generateDraftQuestions(source.text);
+    const aiQuestions = await generateQuestionsWithAI(source.text, platform);
+    const questions = aiQuestions || generateDraftQuestions(source.text);
     const metadata = await saveQuizSourceAndDrafts(db, params.id, source.file, source.text, questions);
     const bundle = questions.length ? await publishQuizBundle(platform, db, params.id) : null;
-    return json({ success: true, source: metadata, extracted_text_length: source.text.length, questions, bundle });
+    return json({ success: true, source: metadata, extracted_text_length: source.text.length, questions, bundle, ai_generated: !!aiQuestions });
   } catch (error) {
     const status = error instanceof QuizDriveError ? error.status : 500;
     return json({ success: false, error: error.code || 'DriveImportFailed', message: error.message }, { status });

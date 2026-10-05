@@ -1,5 +1,5 @@
 import { getServiceAccountToken } from './googleServiceAccount.js';
-import { makeId, sha256 } from './quizMenu.js';
+import { makeId, sha256, validateQuestion } from './quizMenu.js';
 
 export const MAX_QUIZ_FILE_BYTES = 10 * 1024 * 1024;
 export const QUIZ_UPLOAD_FOLDER_NAME = 'Quiz Uploads';
@@ -241,6 +241,88 @@ export function generateDraftQuestions(text) {
     });
   }
   return questions;
+}
+
+const AI_SYSTEM_PROMPT = `Bạn là trợ lý tạo đề kiểm tra tiếng Anh. Từ nội dung tài liệu người dùng cung cấp, hãy tạo 10 câu hỏi kiểm tra.
+
+QUY TẮC:
+- Ưu tiên các loại: multiple_choice (trắc nghiệm 4 lựa chọn), fill_blank (điền từ), matching (nối từ 2 cột).
+- Có thể thêm paragraph (viết đoạn văn) hoặc rewrite (viết lại câu) nếu nội dung phù hợp, tối đa 2 câu mỗi loại này.
+- Đáp án correct_answer phải chính xác theo nội dung tài liệu.
+- Prompt viết bằng tiếng Việt nếu tài liệu là tiếng Việt, giữ nguyên tiếng Anh cho phần câu hỏi tiếng Anh.
+
+TRẢ VỀ DUY NHẤT một JSON object đúng format sau, không thêm chữ nào khác:
+{"questions": [{"type": "multiple_choice|fill_blank|matching|paragraph|rewrite", "prompt": "nội dung câu hỏi", "options": ["A. ...", "B. ..."] hoặc {"left": [...], "right": [...]}, "correct_answer": "đáp án đúng (string, hoặc object cho matching)", "explanation": "giải thích ngắn (có thể null)", "points": 1}]}
+
+- multiple_choice: options là array 4 string, correct_answer là 1 string trùng 1 option.
+- fill_blank: không có options, correct_answer là string đáp án.
+- matching: options là {"left": [...], "right": [...]}, correct_answer là object {"trái": "phải"}.
+- paragraph/rewrite: không có options, correct_answer là null.`;
+
+/**
+ * Dùng AI (OpenRouter / OpenAI-compatible) để sinh câu hỏi từ nội dung tài liệu.
+ * Trả về array câu hỏi đã validate, hoặc null nếu chưa cấu hình / AI lỗi.
+ * Env: AI_BASE_URL (mặc định https://openrouter.ai/api/v1), AI_API_KEY, AI_MODEL (mặc định deepseek/deepseek-chat).
+ */
+export async function generateQuestionsWithAI(text, platform) {
+  const apiKey = platform?.env?.AI_API_KEY;
+  if (!apiKey) return null;
+  const clean = String(text || '').replace(/\r/g, '').trim().slice(0, 6000);
+  if (!clean) return null;
+  const baseUrl = String(platform?.env?.AI_BASE_URL || 'https://openrouter.ai/api/v1').replace(/\/+$/, '');
+  const model = platform?.env?.AI_MODEL || 'deepseek/deepseek-chat';
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 90000);
+  try {
+    const res = await fetch(`${baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${String(apiKey).trim()}`,
+        'HTTP-Referer': 'https://timbk.io.vn',
+        'X-Title': 'timbk.io.vn Quiz Menu'
+      },
+      signal: controller.signal,
+      body: JSON.stringify({
+        model,
+        messages: [
+          { role: 'system', content: AI_SYSTEM_PROMPT },
+          { role: 'user', content: clean }
+        ],
+        temperature: 0.3,
+        max_tokens: 4000,
+        response_format: { type: 'json_object' }
+      })
+    });
+    clearTimeout(timer);
+    if (!res.ok) return null;
+    const data = await res.json();
+    const content = data?.choices?.[0]?.message?.content;
+    if (!content) return null;
+    let parsed;
+    try { parsed = JSON.parse(content); } catch { return null; }
+    const rawList = Array.isArray(parsed?.questions) ? parsed.questions : [];
+    const questions = [];
+    for (const raw of rawList.slice(0, 20)) {
+      const mapped = {
+        type: String(raw?.type || ''),
+        prompt: String(raw?.prompt || ''),
+        prompt_image_url: null,
+        options_json: raw?.options === undefined || raw?.options === null ? null : JSON.stringify(raw.options),
+        correct_answer: raw?.correct_answer === undefined ? null : (typeof raw.correct_answer === 'object' ? JSON.stringify(raw.correct_answer) : String(raw.correct_answer)),
+        explanation: raw?.explanation ? String(raw.explanation) : null,
+        points: Number(raw?.points) || 1,
+        q_order: questions.length
+      };
+      const checked = validateQuestion(mapped, questions.length);
+      if (checked.error) continue;
+      questions.push({ ...checked.value, id: makeId('qq'), q_order: questions.length });
+    }
+    return questions.length ? questions : null;
+  } catch {
+    clearTimeout(timer);
+    return null;
+  }
 }
 
 export async function saveQuizSourceAndDrafts(db, quizId, source, text, questions) {

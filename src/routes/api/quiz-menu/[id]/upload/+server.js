@@ -1,6 +1,6 @@
 import { json } from '@sveltejs/kit';
 import { isStaffUser, verifyServerAuth } from '../../../../../lib/server/auth.js';
-import { generateDraftQuestions, publishQuizBundle, QuizDriveError, saveQuizSourceAndDrafts, uploadQuizSource } from '../../../../../lib/server/quizDrive.js';
+import { generateDraftQuestions, generateQuestionsWithAI, publishQuizBundle, QuizDriveError, saveQuizSourceAndDrafts, uploadQuizSource } from '../../../../../lib/server/quizDrive.js';
 
 export const prerender = false;
 
@@ -18,10 +18,11 @@ export async function POST({ params, request, platform }) {
   const file = form.get('file');
   try {
     const source = await uploadQuizSource(platform, file);
-    const questions = generateDraftQuestions(source.text);
+    const aiQuestions = await generateQuestionsWithAI(source.text, platform);
+    const questions = aiQuestions || generateDraftQuestions(source.text);
     const metadata = await saveQuizSourceAndDrafts(db, params.id, source.file, source.text, questions);
     const bundle = questions.length ? await publishQuizBundle(platform, db, params.id) : null;
-    return json({ success: true, source: metadata, extracted_text_length: source.text.length, questions, bundle }, { status: 201 });
+    return json({ success: true, source: metadata, extracted_text_length: source.text.length, questions, bundle, ai_generated: !!aiQuestions }, { status: 201 });
   } catch (error) {
     const status = error instanceof QuizDriveError ? error.status : 500;
     return json({ success: false, error: error.code || 'UploadFailed', message: error.message }, { status });
