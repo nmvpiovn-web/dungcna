@@ -12,11 +12,11 @@
  let email = $state('');
  let roleType = $state('lead'); // 'lead' (cơ hữu) | 'contractor' (thời vụ/dạy thay) | 'assistant'
  let experienceYears = $state(2);
- let certificates = $state('IELTS 7.5, Cử nhân Sư Phạm Tiếng Anh');
+ let certificates = $state('');
  let cvLink = $state('');
  let availability = $state('Tối thứ 2, 4, 6 (17:30 - 21:00)');
  let interviewPreference = $state('online'); // 'online' | 'in_person'
- let selectedGrades = $state(['Lớp 6', 'Lớp 7']);
+ let selectedGrades = $state([]);
  let selectedSubjects = $state(['Ngữ Pháp & Luyện Thi']);
  let notes = $state('');
 
@@ -24,7 +24,7 @@
  'Lớp 1', 'Lớp 2', 'Lớp 3', 'Lớp 4', 'Lớp 5',
  'Lớp 6', 'Lớp 7', 'Lớp 8', 'Lớp 9',
  'Lớp 10', 'Lớp 11', 'Lớp 12',
- 'IELTS Academic', 'Tiếng Anh Giao Tiếp'
+ 'IELTS Academic', 'TOEIC', 'TOEFL', 'Cambridge KET/PET', 'VSTEP', 'TESOL', 'Tiếng Anh Giao Tiếp'
  ];
 
  const allAvailableSubjects = [
@@ -98,9 +98,7 @@
 
  function toggleGrade(grade) {
  if (selectedGrades.includes(grade)) {
- if (selectedGrades.length > 1) {
  selectedGrades = selectedGrades.filter(g => g !== grade);
- }
  } else {
  selectedGrades = [...selectedGrades, grade];
  }
@@ -125,7 +123,7 @@
  return;
  }
  if (selectedGrades.length === 0) {
- errorMessage = 'Vui lòng chọn ít nhất một khối lớp có thể phụ trách giảng dạy.';
+ errorMessage = 'Vui lòng chọn ít nhất một khối hoặc chứng chỉ có thể phụ trách.';
  return;
  }
 
@@ -285,7 +283,7 @@
  <!-- Multi-Grade Checkbox Selection (REG requirement) -->
  <div class="space-y-1.5 pt-1">
  <span class="block font-semibold text-slate-700">
- Khối lớp Thầy/Cô có thể nhận dạy (Chọn nhiều khối) (*):
+ Khối hoặc chứng chỉ Thầy/Cô có thể nhận dạy (chọn nhiều) (*):
  </span>
  <span class="block text-[11px] text-cx-700" data-testid="selected-grades-count">
  Đã chọn {selectedGrades.length} khối/chương trình: {selectedGrades.join(', ')}

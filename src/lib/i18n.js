@@ -54,6 +54,7 @@ export const DICTIONARY = {
     tuitionTab: 'Học Phí VietQR',
     gradingTab: 'Chấm Điểm BTVN',
     assignTab: 'Giao BTVN Mới',
+    quizMenuTab: 'Quiz & Phiếu DOCX',
     secondBrainTab: 'Kho Giáo Án Obsidian',
     overviewTab: 'Tổng Quan',
 
@@ -121,6 +122,7 @@ export const DICTIONARY = {
     tuitionTab: 'Tuition & VietQR',
     gradingTab: 'Grade Homework',
     assignTab: 'Assign Homework',
+    quizMenuTab: 'Quiz & DOCX Worksheets',
     secondBrainTab: 'Obsidian Second-Brain',
     overviewTab: 'Overview',
 

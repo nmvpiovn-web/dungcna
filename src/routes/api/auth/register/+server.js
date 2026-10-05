@@ -36,6 +36,7 @@ export async function POST({ request, platform }) {
       password,
       role = 'student',
       grade = '',
+      selectedGrades = [],
       target = '',
       linkedStudentPhoneOrId = ''
     } = body;
@@ -52,6 +53,10 @@ export async function POST({ request, platform }) {
       }, { status: 400 });
     }
     const safeRole = requestedRole;
+    if (!Array.isArray(selectedGrades) || selectedGrades.length > 30 || selectedGrades.some(g => typeof g !== 'string' || !g.trim() || g.length > 100)) {
+      return json({ success: false, error: 'Danh sách khối hoặc chứng chỉ không hợp lệ.' }, { status: 400 });
+    }
+    const gradeSelections = [...new Set(selectedGrades.map(g => g.trim()))];
 
     // 2. Input validation
     if (!usernameOrPhone || typeof usernameOrPhone !== 'string' || !usernameOrPhone.trim()) {
@@ -120,6 +125,7 @@ export async function POST({ request, platform }) {
       approval_status: 'trial',
       metadata: JSON.stringify({
         grade: (grade && typeof grade === 'string' && grade.trim()) ? grade.trim() : null,
+        selected_grades: gradeSelections.length ? gradeSelections : (typeof grade === 'string' && grade.trim() ? [grade.trim()] : []),
         target: target || 'Chương trình GDPT 2026',
         phone: phone || null,
         is_trial: true,

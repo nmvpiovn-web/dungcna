@@ -18,6 +18,10 @@
   let selected = $derived(attempts.find((attempt) => attempt.id === selectedId) || null);
   let subjective = $derived(questions.filter((question) => question.type === 'paragraph' || question.type === 'rewrite'));
 
+  function timeLabel(value) {
+    return value ? new Date(value).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' }) : 'Chưa nộp';
+  }
+
   function authHeaders(json = false) {
     const token = typeof localStorage !== 'undefined' ? localStorage.getItem('tienganh_token') : '';
     return {
@@ -114,6 +118,8 @@
         {#each attempts as attempt}
           <button class:active={attempt.id === selectedId} type="button" on:click={() => chooseAttempt(attempt.id)}>
             <strong>{attempt.guest_name || attempt.user_id || 'Học viên'}</strong>
+            <span>{attempt.guest_class ? `Lớp: ${attempt.guest_class}` : 'Tài khoản / chưa khai lớp'}</span>
+            <span>{timeLabel(attempt.started_at)}</span>
             <span>{attempt.status === 'review_pending' ? 'Chờ chấm' : `${attempt.final_score ?? '—'}/${attempt.max_score ?? '—'} điểm`}</span>
             {#if attempt.deferred_question_ids?.length}<em>{attempt.deferred_question_ids.length} câu chưa hiểu</em>{/if}
           </button>
@@ -123,6 +129,10 @@
       {#if selected}
         <div class="review-form">
           <div class="score-strip">
+            <span>Lớp khai báo <b>{selected.guest_class || '—'}</b></span>
+            <span>Bắt đầu <b>{timeLabel(selected.started_at)}</b></span>
+            <span>Nộp bài <b>{timeLabel(selected.submitted_at)}</b></span>
+            <small>Giờ Việt Nam · thời gian máy chủ</small>
             <span>Tự động <b>{selected.auto_score ?? 0}</b></span>
             <span>Tối đa <b>{selected.max_score ?? 0}</b></span>
             <span>Trạng thái <b>{selected.status}</b></span>

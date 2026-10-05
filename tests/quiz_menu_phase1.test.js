@@ -52,6 +52,7 @@ async function fixture() {
     CREATE TABLE auth_sessions (id TEXT PRIMARY KEY, revoked_at TEXT, expires_at TEXT);
   `);
   sqlite.exec(fs.readFileSync('migrations/0012_quiz_menu.sql', 'utf8'));
+  sqlite.exec(fs.readFileSync('migrations/0014_quiz_guest_class.sql', 'utf8'));
   const users = [
     ['teacher-1', 'teacher', 'Cô Giáo', 'teacher'],
     ['student-1', 'student', 'Học Sinh', 'student']
@@ -129,13 +130,16 @@ test('guest start được sanitize và submit được server chấm tự độ
   const id = await buildPublishedQuiz(ctx);
   const start = await submitQuiz({
     params: { id },
-    request: request(`/api/quiz-menu/${id}/submit`, { body: { action: 'start', guest_name: ' <b> Bé   An </b> ' } }),
+    request: request(`/api/quiz-menu/${id}/submit`, { body: { action: 'start', guest_class: '7A', guest_name: ' <b> Bé   An </b> ' } }),
     platform: ctx.platform
   });
   assert.equal(start.status, 201);
   const started = await start.json();
-  const stored = ctx.sqlite.prepare(`SELECT guest_name FROM quiz_attempts WHERE id = ?`).get(started.attempt_id);
+  const stored = ctx.sqlite.prepare(`SELECT guest_name, guest_class, started_at, guest_token_hash FROM quiz_attempts WHERE id = ?`).get(started.attempt_id);
   assert.equal(stored.guest_name, 'Bé An');
+  assert.equal(stored.guest_class, '7A');
+  assert.ok(Number.isFinite(Date.parse(stored.started_at)));
+  assert.notEqual(stored.guest_token_hash, started.attempt_token);
   assert.ok(started.attempt_token);
 
   const submit = await submitQuiz({
@@ -151,6 +155,8 @@ test('guest start được sanitize và submit được server chấm tự độ
   assert.equal(body.attempt.auto_score, 5);
   assert.equal(body.attempt.final_score, 5);
   assert.equal(body.attempt.status, 'graded');
+  const log = ctx.sqlite.prepare('SELECT started_at, submitted_at FROM quiz_attempts WHERE id = ?').get(started.attempt_id);
+  assert.ok(Date.parse(log.submitted_at) >= Date.parse(log.started_at));
   assert.equal(body.grading[0].correct_answer, 'B');
 
   const repeated = await submitQuiz({
@@ -166,7 +172,7 @@ test('guest start được sanitize và submit được server chấm tự độ
 test('câu tự luận chuyển review_pending và không tự cấp final_score', async () => {
   const ctx = await fixture();
   const id = await buildPublishedQuiz(ctx, { subjective: true });
-  const start = await submitQuiz({ params: { id }, request: request(`/api/quiz-menu/${id}/submit`, { body: { action: 'start', guest_name: 'Lan' } }), platform: ctx.platform });
+  const start = await submitQuiz({ params: { id }, request: request(`/api/quiz-menu/${id}/submit`, { body: { action: 'start', guest_class: '7A', guest_name: 'Lan' } }), platform: ctx.platform });
   const a = await start.json();
   const submit = await submitQuiz({ params: { id }, request: request(`/api/quiz-menu/${id}/submit`, { body: { action: 'submit', attempt_id: a.attempt_id, attempt_token: a.attempt_token, answers: { q1: 'B', q2: 'world', q3: { cat: 'mèo' }, q4: 'My paragraph' } } }), platform: ctx.platform });
   const body = await submit.json();
@@ -177,7 +183,7 @@ test('câu tự luận chuyển review_pending và không tự cấp final_score
 test('deadline và guest attempt token được server enforce', async () => {
   const ctx = await fixture();
   const id = await buildPublishedQuiz(ctx);
-  const start = await submitQuiz({ params: { id }, request: request(`/api/quiz-menu/${id}/submit`, { body: { action: 'start', guest_name: 'Minh' } }), platform: ctx.platform });
+  const start = await submitQuiz({ params: { id }, request: request(`/api/quiz-menu/${id}/submit`, { body: { action: 'start', guest_class: '7A', guest_name: 'Minh' } }), platform: ctx.platform });
   const a = await start.json();
   const wrongToken = await submitQuiz({ params: { id }, request: request(`/api/quiz-menu/${id}/submit`, { body: { action: 'submit', attempt_id: a.attempt_id, attempt_token: 'wrong', answers: {} } }), platform: ctx.platform });
   assert.equal(wrongToken.status, 403);
@@ -191,10 +197,10 @@ test('rate limit chặn attempt thứ 11 trong một phút trên cùng IP', asyn
   const ctx = await fixture();
   const id = await buildPublishedQuiz(ctx);
   for (let i = 0; i < 10; i++) {
-    const res = await submitQuiz({ params: { id }, request: request(`/api/quiz-menu/${id}/submit`, { ip: '198.51.100.7', body: { action: 'start', guest_name: `Guest ${i}` } }), platform: ctx.platform });
+    const res = await submitQuiz({ params: { id }, request: request(`/api/quiz-menu/${id}/submit`, { ip: '198.51.100.7', body: { action: 'start', guest_class: '7A', guest_name: `Guest ${i}` } }), platform: ctx.platform });
     assert.equal(res.status, 201);
   }
-  const limited = await submitQuiz({ params: { id }, request: request(`/api/quiz-menu/${id}/submit`, { ip: '198.51.100.7', body: { action: 'start', guest_name: 'Guest 11' } }), platform: ctx.platform });
+  const limited = await submitQuiz({ params: { id }, request: request(`/api/quiz-menu/${id}/submit`, { ip: '198.51.100.7', body: { action: 'start', guest_class: '7A', guest_name: 'Guest 11' } }), platform: ctx.platform });
   assert.equal(limited.status, 429);
 });
 
@@ -206,4 +212,33 @@ test('staff xóa quiz và dữ liệu con cascade', async () => {
   assert.equal(ctx.sqlite.prepare(`SELECT COUNT(*) AS count FROM quiz_questions WHERE quiz_id = ?`).get(id).count, 0);
   const list = await listQuizzes({ url: new URL('https://timbk.io.vn/api/quiz-menu'), request: request('/api/quiz-menu'), platform: ctx.platform });
   assert.equal((await list.json()).quizzes.length, 0);
+});
+
+ test('guest requires name and class; identity uses sanitized input and server clock', async () => {
+  const ctx = await fixture();
+  const id = await buildPublishedQuiz(ctx);
+  for (const identity of [{ guest_name: 'An' }, { guest_class: '7A' }, { guest_name: 'An', guest_class: '<b> </b>' }]) {
+    const response = await submitQuiz({ params: { id }, request: request(`/api/quiz-menu/${id}/submit`, { body: { action: 'start', ...identity } }), platform: ctx.platform });
+    assert.equal(response.status, 400);
+  }
+  assert.equal(ctx.sqlite.prepare('SELECT count(*) n FROM quiz_attempts').get().n, 0);
+  const response = await submitQuiz({ params: { id }, request: request(`/api/quiz-menu/${id}/submit`, { body: { action: 'start', guest_name: 'An', guest_class: ' <b>7A</b>  tối ', started_at: '2000-01-01', submitted_at: '2000-01-01' } }), platform: ctx.platform });
+  assert.equal(response.status, 201);
+  const created = await response.json();
+  const row = ctx.sqlite.prepare('SELECT * FROM quiz_attempts WHERE id = ?').get(created.attempt_id);
+  assert.equal(row.guest_class, '7A tối');
+  assert.ok(Date.parse(row.started_at) > Date.parse('2020-01-01'));
+  assert.equal(row.submitted_at, null);
+});
+
+test('authenticated student starts without guest identity', async () => {
+  const ctx = await fixture();
+  const id = await buildPublishedQuiz(ctx);
+  const response = await submitQuiz({ params: { id }, request: request(`/api/quiz-menu/${id}/submit`, { token: ctx.studentToken, body: { action: 'start' } }), platform: ctx.platform });
+  assert.equal(response.status, 201);
+  const created = await response.json();
+  const row = ctx.sqlite.prepare('SELECT * FROM quiz_attempts WHERE id = ?').get(created.attempt_id);
+  assert.equal(row.user_id, 'student-1');
+  assert.equal(row.guest_class, null);
+  assert.equal(created.attempt_token, null);
 });
