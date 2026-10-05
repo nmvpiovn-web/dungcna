@@ -170,6 +170,8 @@ export async function runDriveSync(platform, opts = {}) {
   const folderId = opts.folder_id || DEFAULT_DRIVE_FOLDER;
   const recursive = opts.recursive !== false;
   const triggeredBy = opts.triggered_by || 'manual';
+  // Batch limit per invocation to avoid Worker resource limits (default 50 files)
+  const batchLimit = Math.min(Number(opts.batch_limit) || 50, 200);
 
   if (!platform?.env?.DB) {
     return { success: false, error: 'DatabaseUnavailable' };
@@ -194,7 +196,7 @@ export async function runDriveSync(platform, opts = {}) {
   const errors = [];
 
   async function syncFolder(fid, depth = 0, folderPath = '') {
-    if (depth > 5 || stats.files >= MAX_FILES) return;
+    if (depth > 5 || stats.files >= batchLimit) return;
     let pageToken = '';
     do {
       const data = await listFiles(fid, driveAuth, pageToken);
@@ -203,7 +205,7 @@ export async function runDriveSync(platform, opts = {}) {
         return;
       }
       for (const f of (data.files || [])) {
-        if (stats.files >= MAX_FILES) break;
+        if (stats.files >= batchLimit) break;
         const vid = `db_drive_${f.id}`;
         const isFolder = f.mimeType === 'application/vnd.google-apps.folder';
         const currentPath = folderPath ? `${folderPath}/${f.name}` : f.name;
@@ -262,7 +264,7 @@ export async function runDriveSync(platform, opts = {}) {
         } catch (e) { errors.push(`file ${f.id}: ${e.message}`); }
       }
       pageToken = data.nextPageToken || '';
-    } while (pageToken && stats.files < MAX_FILES);
+    } while (pageToken && stats.files < batchLimit);
   }
 
   let logId;

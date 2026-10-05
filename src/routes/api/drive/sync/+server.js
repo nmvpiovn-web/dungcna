@@ -30,10 +30,12 @@ export async function POST({ request, platform }) {
   try { body = await request.json(); } catch {}
   const folderId = body.folder_id || '1_V4YUCuTJ4uui49S6AfcaI8lZmIszKou';
   const recursive = body.recursive !== false;
+  const batchLimit = Math.min(Number(body.batch_limit) || 50, 200);
 
   const result = await runDriveSync(platform, {
     folder_id: folderId,
     recursive,
+    batch_limit: batchLimit,
     triggered_by: auth.user?.username || 'manager'
   });
 
