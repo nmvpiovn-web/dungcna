@@ -500,7 +500,9 @@ export async function POST({ request, platform }) {
       const answerKeySnapshot = {};
       rawQuestions.forEach(q => {
         const key = q.id !== undefined ? String(q.id) : String(q.question_index);
-        answerKeySnapshot[key] = q.correct_answer;
+        // Defensive: handle all correct answer field variants (correct_answer, correct_option_id, correct_id)
+        const correctAns = q.correct_answer || q.correct_option_id || q.correct_id || '';
+        answerKeySnapshot[key] = correctAns;
       });
       const instanceId = `exm_sess_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
       const startedAt = new Date();
@@ -759,12 +761,13 @@ export async function POST({ request, platform }) {
         for (const q of examQuestions) {
           const qKey = q.id !== undefined ? String(q.id) : String(q.question_index);
           const givenAnswer = userAnswers[qKey] || userAnswers[String(q.question_index)];
-          const isCorrect = givenAnswer && String(givenAnswer).trim().toUpperCase() === String(q.correct_answer).trim().toUpperCase();
+          const correctAns = q.correct_answer || q.correct_option_id || q.correct_id || '';
+          const isCorrect = givenAnswer && String(givenAnswer).trim().toUpperCase() === String(correctAns).trim().toUpperCase();
           if (isCorrect) correctCount++;
           questionResults.push({
             question_id: qKey,
             user_answer: givenAnswer || '',
-            correct_answer: q.correct_answer || '',
+            correct_answer: correctAns || '',
             is_correct: !!isCorrect,
             explanation: q.explanation || ''
           });
