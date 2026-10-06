@@ -278,7 +278,7 @@ export async function POST({ request, platform }) {
       await ensureStarLedgerTable(db);
 
       // Validate student exists before touching balance
-      const studentRecord = await db.prepare('SELECT id, status, role, grade, metadata FROM users WHERE id = ?').bind(studentId).first();
+      const studentRecord = await db.prepare('SELECT id, status, role, metadata FROM users WHERE id = ?').bind(studentId).first();
       const starRecord = await db.prepare('SELECT student_id, stars_balance FROM student_stars WHERE student_id = ?').bind(studentId).first();
 
       if (!studentRecord && !starRecord) {
@@ -289,11 +289,11 @@ export async function POST({ request, platform }) {
       }
 
       // VONG-4: resolve grade from the student's own profile — never assume 'Lớp 7'.
-      // If the student has no grade on record, store '' so the UI asks for a grade.
+      // Grade lives in metadata JSON (prod users table has no grade column); '' asks UI for a grade.
       let studentGrade = '';
       try {
         const sm = typeof studentRecord?.metadata === 'string' ? JSON.parse(studentRecord.metadata) : (studentRecord?.metadata || {});
-        studentGrade = studentRecord?.grade || sm?.grade || '';
+        studentGrade = sm?.grade || '';
       } catch {}
       if (!billData.grade_level) billData.grade_level = studentGrade;
 
