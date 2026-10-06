@@ -49,17 +49,21 @@ export async function POST({ request, platform }) {
   }
 
   // Commit change token sau sync thành công để poll không báo
-  // has_changes=true vĩnh viễn. Không fail request nếu commit lỗi —
-  // chỉ cảnh báo, vì sync dữ liệu đã thành công.
-  let tokenCommitted = false;
-  try {
-    const tokenRes = await commitTokenAfterSync(platform);
-    tokenCommitted = tokenRes.committed;
-    if (!tokenCommitted) {
-      console.warn('[drive-sync] Sync OK nhưng commit token thất bại:', tokenRes.error);
+  // has_changes=true vĩnh viễn. runDriveSync ở changes mode đã tự commit
+  // token chính xác theo từng page (resume-safe) → bỏ qua bước này để không
+  // advance token qua change chưa xử lý. Chỉ commit mù khi sync trọn vẹn
+  // (!partial) và runDriveSync chưa commit.
+  let tokenCommitted = !!result.token_committed;
+  if (!tokenCommitted && !result.partial) {
+    try {
+      const tokenRes = await commitTokenAfterSync(platform);
+      tokenCommitted = tokenRes.committed;
+      if (!tokenCommitted) {
+        console.warn('[drive-sync] Sync OK nhưng commit token thất bại:', tokenRes.error);
+      }
+    } catch (e) {
+      console.warn('[drive-sync] Commit token sau sync lỗi:', e.message);
     }
-  } catch (e) {
-    console.warn('[drive-sync] Commit token sau sync lỗi:', e.message);
   }
 
   return json({
@@ -68,6 +72,9 @@ export async function POST({ request, platform }) {
     stats: result.stats,
     log_id: result.log_id,
     errors: result.errors,
-    token_committed: tokenCommitted
+    token_committed: tokenCommitted,
+    mode: result.mode || 'unknown',
+    partial: !!result.partial,
+    full_scan_complete: result.full_scan_complete
   });
 }

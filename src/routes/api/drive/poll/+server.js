@@ -122,21 +122,30 @@ export async function POST({ request, platform }) {
     }, { status: 500 });
   }
 
-  // CHỈ commit token SAU KHI sync thành công
-  const tokenRes = await commitTokenAfterSync(platform);
-  if (!tokenRes.committed) {
-    return json({
-      success: false,
-      error: `Sync OK nhưng không commit được token: ${tokenRes.error}`,
-      synced: true,
-      token_committed: false
-    }, { status: 500 });
+  // CHỈ commit token SAU KHI sync thành công. runDriveSync ở changes mode đã
+  // tự commit token chính xác theo từng page (kể cả khi partial/budget hết) —
+  // gọi commitTokenAfterSync thêm sẽ advance token qua change chưa xử lý
+  // (regression 2026-10-06: file ngoài top-50 bị drop). Bỏ qua khi đã commit,
+  // hoặc khi sync dở dang (partial) — token resume đã được commit trong
+  // runDriveSync, lần chạy sau tiếp tục.
+  if (!syncResult.token_committed && !syncResult.partial) {
+    const tokenRes = await commitTokenAfterSync(platform);
+    if (!tokenRes.committed) {
+      return json({
+        success: false,
+        error: `Sync OK nhưng không commit được token: ${tokenRes.error}`,
+        synced: true,
+        token_committed: false
+      }, { status: 500 });
+    }
   }
 
   return json({
     success: true,
     message: `Đã sync ${syncResult.files_synced || 0} file`,
     synced: true,
-    token_committed: true
+    token_committed: true,
+    mode: syncResult.mode || 'unknown',
+    partial: !!syncResult.partial
   });
 }
