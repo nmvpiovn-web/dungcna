@@ -2,14 +2,14 @@
 import { json } from '@sveltejs/kit';
 import { getAllUsers } from '../../../../lib/unifiedStore.js';
 import { createSignedToken, sanitizeUser, getAuthSecret, verifyPassword, hashPassword } from '../../../../lib/server/auth.js';
+import { checkRateLimit } from '../../../../lib/server/rateLimit.js';
 
 export const prerender = false;
 
-// ---- Brute-force defense (per-isolate, same pattern as /api/ai/deepseek) ----
-// Cloudflare Workers keep module-scope state per isolate; this raises the cost
-// of credential-stuffing from a single client without adding DB writes.
-const LOGIN_ATTEMPTS = new Map(); // key: ip|username -> { count, start }
-const LOGIN_IP_ATTEMPTS = new Map(); // key: ip -> { count, start } (anti credential-stuffing across usernames)
+// ---- Brute-force defense (D1-backed, shared across isolates) ----
+// Module-scope Maps are per-isolate on Cloudflare Workers and NEVER trigger
+// (live audit 2026-10-06: 60 bad logins -> 0x429). Use the shared `rate_limits`
+// D1 table (migration 0015); in-memory is only a fallback when D1 is down.
 const LOGIN_WINDOW_MS = 10 * 60 * 1000;
 const LOGIN_MAX_ATTEMPTS = 50; // per ip+username
 const LOGIN_MAX_ATTEMPTS_PER_IP = 300; // per ip across all usernames
@@ -20,33 +20,20 @@ function getClientIp(request) {
     || 'unknown';
 }
 
-function checkBucket(map, key, max) {
-  const now = Date.now();
-  const rec = map.get(key);
-  if (rec && now - rec.start < LOGIN_WINDOW_MS) {
-    if (rec.count >= max) return false;
-    rec.count += 1;
-    return true;
-  }
-  // Opportunistic cleanup of expired buckets
-  if (map.size > 5000) {
-    for (const [k, v] of map) {
-      if (now - v.start >= LOGIN_WINDOW_MS) map.delete(k);
-    }
-  }
-  map.set(key, { count: 1, start: now });
-  return true;
-}
-
-function checkLoginRateLimit(ip, username) {
+async function checkLoginRateLimit(platform, ip, username) {
   // Kimi review #3: without any IP header every client would share one bucket and
   // an attacker could lock out other users' logins. Cloudflare production always
   // sets cf-connecting-ip, so only skip when the IP is genuinely unknown.
   if (!ip || ip === 'unknown') return true;
-  const userKey = `${ip}|${String(username || '').toLowerCase()}`;
+  const db = platform?.env?.DB || null;
+  const userKey = `login:${ip}|${String(username || '').toLowerCase()}`;
+  const ipKey = `login_ip:${ip}`;
   // Kimi review #2: an attacker rotating usernames must still hit the IP-wide bucket
-  return checkBucket(LOGIN_IP_ATTEMPTS, ip, LOGIN_MAX_ATTEMPTS_PER_IP)
-    && checkBucket(LOGIN_ATTEMPTS, userKey, LOGIN_MAX_ATTEMPTS);
+  const [ipOk, userOk] = await Promise.all([
+    checkRateLimit(db, { key: ipKey, limit: LOGIN_MAX_ATTEMPTS_PER_IP, windowMs: LOGIN_WINDOW_MS }),
+    checkRateLimit(db, { key: userKey, limit: LOGIN_MAX_ATTEMPTS, windowMs: LOGIN_WINDOW_MS })
+  ]);
+  return ipOk && userOk;
 }
 
 // Dummy PBKDF2 hash — NOT a credential. Runs a real PBKDF2 verification when the
@@ -78,7 +65,8 @@ export async function POST({ request, platform, cookies }) {
     }
 
     // Brute-force protection: too many attempts from this IP+username -> 429
-    if (!checkLoginRateLimit(getClientIp(request), username)) {
+    // (D1-backed so it works across Cloudflare isolates; async)
+    if (!(await checkLoginRateLimit(platform, getClientIp(request), username))) {
       return json({
         success: false,
         error: 'TooManyRequests: Quá nhiều lần đăng nhập, vui lòng thử lại sau ít phút.'

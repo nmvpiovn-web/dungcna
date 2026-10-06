@@ -2,8 +2,13 @@
 import { json } from '@sveltejs/kit';
 import { getAllUsers, saveAllUsers } from '../../../../lib/unifiedStore.js';
 import { createSignedToken, sanitizeUser, getAuthSecret, hashPassword } from '../../../../lib/server/auth.js';
+import { checkRateLimit, getClientIp } from '../../../../lib/server/rateLimit.js';
 
 export const prerender = false;
+
+// Anti mass-registration: 10 accounts/hour per IP (D1-backed, shared across isolates).
+const REGISTER_WINDOW_MS = 60 * 60 * 1000;
+const REGISTER_MAX_PER_IP = 10;
 
 const ALLOWED_PUBLIC_ROLES = ['student', 'parent'];
 const RESERVED_USERNAMES = [
@@ -21,6 +26,24 @@ export async function POST({ request, platform }) {
         success: false,
         error: 'Lỗi cấu hình hệ thống: AUTH_SECRET chưa được thiết lập trên server (Fail-Closed).'
       }, { status: 500 });
+    }
+
+    // 0. Mass-registration defense: 10 accounts/hour per IP (D1-backed).
+    // Live audit 2026-10-06: 15 accounts created in <1 minute from one IP.
+    // Skip only when the IP is genuinely unknown (avoids shared-bucket lockout).
+    const regIp = getClientIp(request);
+    if (regIp && regIp !== 'unknown') {
+      const allowed = await checkRateLimit(platform?.env?.DB, {
+        key: `register:${regIp}`,
+        limit: REGISTER_MAX_PER_IP,
+        windowMs: REGISTER_WINDOW_MS
+      });
+      if (!allowed) {
+        return json({
+          success: false,
+          error: 'TooManyRequests: Quá nhiều tài khoản được tạo từ địa chỉ này, vui lòng thử lại sau.'
+        }, { status: 429, headers: { 'Retry-After': '3600' } });
+      }
     }
 
     let body = {};
