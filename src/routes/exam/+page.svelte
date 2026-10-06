@@ -369,7 +369,7 @@
  function handleSelectExam(ex) {
  if (currentUser?.role === 'student' && !isExamEnrolledForUser(currentUser, ex)) {
  playAudioFeedback(false);
- lockedExamAlert = `🔒 Đề thi "${ex.title}" chưa được mở cho lớp của em (${currentUser.grade || 'Lớp 7'}). Hãy hoàn thành bài thi khối lớp mình trước nhé!`;
+ lockedExamAlert = `🔒 Đề thi "${ex.title}" chưa được mở cho lớp của em (${currentUser.grade || 'chưa xác định'}). Hãy hoàn thành bài thi khối lớp mình trước nhé!`;
  setTimeout(() => lockedExamAlert = '', 7000);
  return;
  }
@@ -388,7 +388,7 @@
  async function startExam() {
  if (currentUser?.role === 'student' && !isExamEnrolledForUser(currentUser, currentExam)) {
  playAudioFeedback(false);
- lockedExamAlert = `🔒 Không thể làm bài: Đề thi này chưa được mở cho khối lớp của em (${currentUser.grade || 'Lớp 7'}).`;
+ lockedExamAlert = `🔒 Không thể làm bài: Đề thi này chưa được mở cho khối lớp của em (${currentUser.grade || 'chưa xác định'}).`;
  return;
  }
  isStarted = true;
@@ -513,12 +513,19 @@
 
  // Random Test Generator State
  let randomDuration = $state(15); // 5 | 15 | 45 | 50
- let randomGrade = $state(7);
+ let randomGrade = $state(null); // null = chưa chọn; cấm preselect khối lớp (user 2026-10-06)
  let randomSkill = $state('all'); // 'all' | 'grammar' | 'vocabulary' | 'phonics' | 'reading'
  let randomSuccessNotice = $state('');
  let isGeneratingRandom = $state(false);
 
  async function generateRandomExam() {
+ // Bắt user chọn khối lớp trước — không dùng lớp mặc định
+ if (randomGrade == null) {
+  playAudioFeedback(false);
+  lockedExamAlert = '🎲 Vui lòng chọn khối lớp / hệ học trước khi tạo đề ngẫu nhiên.';
+  setTimeout(() => lockedExamAlert = '', 6000);
+  return;
+ }
  // Check user role permission for selected grade
  if (currentUser?.role === 'student') {
  const enrolledGrades = getUserEnrolledGrades(currentUser);
@@ -532,7 +539,7 @@
  });
  if (!isAllowed) {
  playAudioFeedback(false);
- lockedExamAlert = `🔒 Em đang được phân quyền vào ${currentUser.grade || 'Lớp 7'}. Vui lòng chọn đúng khối lớp của em hoặc liên hệ Cô Dung để mở thêm lớp nhé!`;
+ lockedExamAlert = `🔒 Em đang được phân quyền vào ${currentUser.grade || 'khối lớp chưa xác định'}. Vui lòng chọn đúng khối lớp của em hoặc liên hệ Cô Dung để mở thêm lớp nhé!`;
  setTimeout(() => lockedExamAlert = '', 6000);
  return;
  }
@@ -1109,7 +1116,7 @@
  {:else if currentUser?.role === 'student'}
  {@const isTrialUser = Boolean(currentUser.is_trial) || (typeof currentUser.metadata === 'string' ? currentUser.metadata.includes('"is_trial":true') : Boolean(currentUser.metadata?.is_trial))}
  {@const isOfficial = currentUser.approval_status === 'official' || (currentUser.status === 'active' && !isTrialUser)}
- {@const primaryGrade = currentUser.grade || 'Lớp 7'}
+ {@const primaryGrade = currentUser.grade || 'Chưa có lớp'}
  <!-- Student Header Badge -->
  <div class="rounded-2xl bg-indigo-950/40 border border-indigo-500/30 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg">
  <div class="flex items-center gap-3.5">
@@ -1388,6 +1395,7 @@
  bind:value={randomGrade}
  class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-white font-bold focus:outline-none focus:border-amber-400"
  >
+ <option value={null} disabled>-- Chọn khối lớp / hệ học --</option>
  <optgroup label="🌱 Cấp 2 (THCS)">
  <option value={7}>Lớp 7 (Global Success &amp; KET A2)</option>
  <option value={6}>Lớp 6 (Friends Plus &amp; A1)</option>

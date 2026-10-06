@@ -79,7 +79,9 @@ async function handleCreateExam({ body, platform, auth }) {
 
   const db = platform.env.DB;
   const examType = body.exam_type || body.type || 'thpt_qg';
-  const grade = body.grade || (examType === 'thpt_qg' ? 'lop_12' : 'lop_7');
+  // VONG-4: thpt_qg implies lop_12 by definition; other exam types must state
+  // grade explicitly — the InvalidGrade 400 below fires instead of guessing lop_7.
+  const grade = body.grade || (examType === 'thpt_qg' ? 'lop_12' : null);
   const skillCategory = String(body.skill_category || body.skill || 'all').toLowerCase().trim();
 
   // Validate skill_category allowlist

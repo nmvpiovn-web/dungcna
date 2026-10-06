@@ -223,7 +223,29 @@ export async function GET({ url, request, platform }) {
   try {
     // 1. Dynamic random test generator from questions pool (Strict blueprints & shortage check)
     if (isRandom) {
-      const targetGrade = grade ? parseInt(grade, 10) : 7;
+      // VONG-4: never silently default to grade 7. An explicit grade=0 keeps the
+      // legacy "general pool" behavior; a missing grade resolves from the
+      // authenticated user's profile, otherwise 400 (no guessing).
+      let targetGrade = grade != null && grade !== '' ? parseInt(grade, 10) : 0;
+      if (grade == null || grade === '') {
+        let userGradeRaw = user?.grade;
+        if (!userGradeRaw) {
+          try {
+            const meta = typeof user?.metadata === 'string' ? JSON.parse(user.metadata) : (user?.metadata || {});
+            userGradeRaw = meta?.grade;
+          } catch {}
+        }
+        const m = userGradeRaw ? String(userGradeRaw).match(/(\d{1,2})/) : null;
+        const n = m ? parseInt(m[1], 10) : 0;
+        if (n >= 1 && n <= 12) {
+          targetGrade = n;
+        } else {
+          return json({
+            success: false,
+            error: 'MissingGradeError: Vui lòng chọn khối lớp trước khi tạo đề ngẫu nhiên (tham số grade).'
+          }, { status: 400 });
+        }
+      }
       const duration = parseInt(url.searchParams.get('duration') || '15', 10);
       const skill = url.searchParams.get('skill') || 'all';
 

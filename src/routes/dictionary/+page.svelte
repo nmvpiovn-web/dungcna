@@ -508,7 +508,8 @@
  example_en: newExampleEn.trim(),
  example_vi: newExampleVi.trim(),
  unit_id: newUnit,
- grade: 'Lớp 7',
+ // Dùng đúng khối lớp đang xem (đã auto-scope theo học sinh) — cấm hardcode 'Lớp 7'
+ grade: selectedGrade !== 'all' ? selectedGrade : (parseStudentGrade(currentUser?.grade) || ''),
  cambridge_level: 'KET_A2',
  status: 'new'
  });

@@ -545,7 +545,8 @@ export function enrollStudentAdditionalGrade(studentId, newGrade, operator = nul
   let meta = {};
   try { meta = typeof user.metadata === 'string' ? JSON.parse(user.metadata) : (user.metadata || {}); } catch {}
 
-  const currentEnrolled = Array.isArray(meta.enrolled_grades) ? [...meta.enrolled_grades] : [user.grade || 'Lớp 7'];
+  // VONG-4: seed from the student's own grade only; never guess 'Lớp 7'.
+  const currentEnrolled = Array.isArray(meta.enrolled_grades) ? [...meta.enrolled_grades] : (user.grade ? [user.grade] : []);
   if (!currentEnrolled.includes(newGrade)) {
     currentEnrolled.push(newGrade);
   }
@@ -844,7 +845,9 @@ export function getSimilarProfileRecommendations(student) {
     meta = typeof student.metadata === 'string' ? JSON.parse(student.metadata) : (student.metadata || {});
   } catch {}
 
-  const grade = meta.grade || 'Lớp 7';
+  // VONG-4: unknown grade → no recommendations instead of assuming 'Lớp 7'.
+  const grade = meta.grade || '';
+  if (!grade) return [];
   const isPrimary = /lớp [1-5]/i.test(grade);
   const isSecondary = /lớp [6-9]/i.test(grade);
   const isHighSchool = /lớp 1[0-2]|đại học|thpt/i.test(grade);
@@ -1005,7 +1008,7 @@ export function addStudent(student) {
     avatar: student.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
     status: 'active',
     metadata: JSON.stringify({
-      grade: student.grade || 'Lớp 7',
+      grade: student.grade || '',
       school: student.school || '',
       target: student.target || 'Nâng cao kỹ năng toàn diện',
       parent_name: student.parent_name || '',
@@ -1184,7 +1187,7 @@ export function saveEvaluation(evalData, evaluatorUser = null) {
     evaluator_role: evaluatorRole,
     evaluator_alias: evaluatorAlias,
     evaluator_tag: evaluatorRole === 'lead' ? 'Giáo Viên Chính Thức' : (evaluatorRole === 'native' ? 'Giáo Viên Bản Ngữ' : 'Giáo Viên Hỗ Trợ'),
-    grade_level: evalData.grade_level || 'Lớp 7',
+    grade_level: evalData.grade_level || '',
     listening_score: Number(evalData.listening_score) || 0,
     reading_score: Number(evalData.reading_score) || 0,
     writing_score: Number(evalData.writing_score) || 0,
@@ -1641,7 +1644,7 @@ export function saveTuitionBill(bill) {
     student_id: bill.student_id,
     student_name: bill.student_name,
     age: Number(bill.age) || 13,
-    grade_level: bill.grade_level || 'Lớp 7',
+    grade_level: bill.grade_level || '',
     program_name: bill.program_name || 'Tiếng Anh K12 Toàn Diện',
     billing_period: bill.billing_period || 'Tháng 10/2026',
     base_tuition_vnd: baseTuition,
@@ -2053,7 +2056,7 @@ export function saveClassSession(session, user = null) {
     id: session.id || `sess_${Date.now()}`,
     class_id: session.class_id || 'L7_GLOBAL_SUCCESS_A1',
     class_name: session.class_name || 'Lớp Tiếng Anh Cô Dung',
-    grade_level: session.grade_level || 'Lớp 7',
+    grade_level: session.grade_level || '',
     subject_topic: session.subject_topic || 'Chuyên đề Ngữ pháp & Giao tiếp',
     teacher_id: session.teacher_id || 'usr_super_2',
     teacher_name: session.teacher_name || 'Ms. Dung',

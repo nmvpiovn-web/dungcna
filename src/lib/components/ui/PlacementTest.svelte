@@ -79,8 +79,9 @@
  const TEST_SECONDS = 180; // 3 phut
 
  let step = $state('pick'); // pick | doing | result
- let grade = $state('lop_7');
- let curriculum = $state('global_success');
+ // Không preselect khối lớp (user 2026-10-06: bắt user chọn, cấm hardcode lớp mặc định)
+ let grade = $state('');
+ let curriculum = $state('');
  let loading = $state(false);
  let error = $state('');
  let session = $state(null);
@@ -103,6 +104,16 @@
  async function start() {
  loading = true;
  error = '';
+ if (!grade) {
+  loading = false;
+  error = 'Vui lòng chọn khối lớp của bạn trước khi bắt đầu.';
+  return;
+ }
+ if (!curriculum) {
+  loading = false;
+  error = 'Vui lòng chọn chương trình học trước khi bắt đầu.';
+  return;
+ }
  try {
  const res = await fetch('/api/exams/guest', {
  method: 'POST',
@@ -204,7 +215,7 @@
  const roadmapHint = $derived.by(() => {
  const lvl = result?.cefr_level || 'A1';
  // Dùng đúng khối lớp user đã chọn ở bước 1 — cấm hardcode "Lớp 7" (user 2026-10-06).
- const gradeLabel = (GRADES.find((g) => g.key === grade)?.label || 'Lớp 7').replace(/\s*\(.*\)\s*$/, '');
+ const gradeLabel = (GRADES.find((g) => g.key === grade)?.label || 'khối lớp của bạn').replace(/\s*\(.*\)\s*$/, '');
  const map = {
  A1: { text: `Lộ trình 6 tháng: Nền tảng A1 → A2 (${gradeLabel} Chuyên sâu)`, href: '/courses' },
  A2: { text: 'Lộ trình 6 tháng: A2 → B1, sẵn sàng vào 10', href: '/courses' },
@@ -242,7 +253,7 @@
  </div>
  {#if error}<div class="mt-4 text-sm font-bold text-danger-600">{error}</div>{/if}
  <div class="mt-6">
- <UiButton size="lg" variant="accent" onclick={start} disabled={loading}>{loading ? 'Đang chuẩn bị đề...' : '🚀 Bắt đầu làm bài'}</UiButton>
+ <UiButton size="lg" variant="accent" onclick={start} disabled={loading || !grade || !curriculum}>{loading ? 'Đang chuẩn bị đề...' : '🚀 Bắt đầu làm bài'}</UiButton>
  </div>
  </div>
  </div><!-- /pick card -->

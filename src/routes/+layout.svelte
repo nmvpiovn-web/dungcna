@@ -313,7 +313,7 @@
  class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold tracking-wide transition-all bg-emerald-50 text-emerald-800 border border-emerald-300/60"
  >
  <span>🎓</span>
- <span>Lớp Của Tôi: {currentUserGrade || 'Lớp 7'}</span>
+ <span>Lớp Của Tôi: {currentUserGrade || 'Chưa có lớp'}</span>
  </a>
  {:else}
  <div class="relative">
@@ -917,7 +917,7 @@
  >
  <div class="flex items-center gap-2">
  <span class="text-base">🎓</span>
- <span>Khóa Học Của Tôi: {currentUserGrade || 'Lớp 7'}</span>
+ <span>Khóa Học Của Tôi: {currentUserGrade || 'Chưa có lớp'}</span>
  </div>
  <span class="text-[11px] px-2 py-0.5 rounded bg-emerald-200 uppercase font-semibold">Đang Học</span>
  </a>

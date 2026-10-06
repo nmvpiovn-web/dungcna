@@ -278,7 +278,7 @@ export async function POST({ request, platform }) {
       await ensureStarLedgerTable(db);
 
       // Validate student exists before touching balance
-      const studentRecord = await db.prepare('SELECT id, status, role FROM users WHERE id = ?').bind(studentId).first();
+      const studentRecord = await db.prepare('SELECT id, status, role, grade, metadata FROM users WHERE id = ?').bind(studentId).first();
       const starRecord = await db.prepare('SELECT student_id, stars_balance FROM student_stars WHERE student_id = ?').bind(studentId).first();
 
       if (!studentRecord && !starRecord) {
@@ -287,6 +287,15 @@ export async function POST({ request, platform }) {
           error: `Học sinh với ID '${studentId}' không tồn tại trong hệ thống.`
         }, { status: 400 });
       }
+
+      // VONG-4: resolve grade from the student's own profile — never assume 'Lớp 7'.
+      // If the student has no grade on record, store '' so the UI asks for a grade.
+      let studentGrade = '';
+      try {
+        const sm = typeof studentRecord?.metadata === 'string' ? JSON.parse(studentRecord.metadata) : (studentRecord?.metadata || {});
+        studentGrade = studentRecord?.grade || sm?.grade || '';
+      } catch {}
+      if (!billData.grade_level) billData.grade_level = studentGrade;
 
       if (studentRecord && studentRecord.status !== 'active') {
         return json({
@@ -397,7 +406,7 @@ export async function POST({ request, platform }) {
               updated_at = CURRENT_TIMESTAMP
             WHERE id = ? AND version = ? AND stars_deducted = ? AND (status = 'draft' OR ? = 1);
           `).bind(
-            billData.student_name, billData.age || 13, billData.grade_level || 'Lớp 7',
+            billData.student_name, billData.age || 13, billData.grade_level || '',
             billData.program_name || 'Tiếng Anh K12', billData.billing_period || 'Tháng 10/2026',
             billData.base_tuition_vnd, billData.attendance_total_sessions || 12, billData.attendance_attended_sessions || 12,
             studentId, billData.stars_deducted, billData.discount_vnd,
@@ -442,7 +451,7 @@ export async function POST({ request, platform }) {
               month_label, amount, total_amount
             ) VALUES (?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, (SELECT stars_balance FROM student_stars WHERE student_id = ?), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
           `).bind(
-            billData.id, billData.student_id, billData.student_name, billData.age || 13, billData.grade_level || 'Lớp 7',
+            billData.id, billData.student_id, billData.student_name, billData.age || 13, billData.grade_level || '',
             billData.program_name || 'Tiếng Anh K12', billData.billing_period || 'Tháng 10/2026',
             billData.base_tuition_vnd, billData.attendance_total_sessions || 12, billData.attendance_attended_sessions || 12,
             studentId, billData.stars_deducted, billData.discount_vnd,
@@ -520,7 +529,7 @@ export async function POST({ request, platform }) {
             updated_at = CURRENT_TIMESTAMP
           WHERE id = ? AND version = ? AND stars_deducted = ? AND (status = 'draft' OR ? = 1);
         `).bind(
-          billData.student_name, billData.age || 13, billData.grade_level || 'Lớp 7',
+          billData.student_name, billData.age || 13, billData.grade_level || '',
           billData.program_name || 'Tiếng Anh K12', billData.billing_period || 'Tháng 10/2026',
           billData.base_tuition_vnd, billData.attendance_total_sessions || 12, billData.attendance_attended_sessions || 12,
           studentId, billData.stars_deducted, billData.discount_vnd,
@@ -578,7 +587,7 @@ export async function POST({ request, platform }) {
               updated_at = CURRENT_TIMESTAMP
             WHERE id = ? AND version = ? AND stars_deducted = ? AND (status = 'draft' OR ? = 1);
           `).bind(
-            billData.student_name, billData.age || 13, billData.grade_level || 'Lớp 7',
+            billData.student_name, billData.age || 13, billData.grade_level || '',
             billData.program_name || 'Tiếng Anh K12', billData.billing_period || 'Tháng 10/2026',
             billData.base_tuition_vnd, billData.attendance_total_sessions || 12, billData.attendance_attended_sessions || 12,
             studentId, billData.stars_deducted, billData.discount_vnd,
@@ -608,7 +617,7 @@ export async function POST({ request, platform }) {
               month_label, amount, total_amount
             ) VALUES (?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, (SELECT stars_balance FROM student_stars WHERE student_id = ?), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
           `).bind(
-            billData.id, billData.student_id, billData.student_name, billData.age || 13, billData.grade_level || 'Lớp 7',
+            billData.id, billData.student_id, billData.student_name, billData.age || 13, billData.grade_level || '',
             billData.program_name || 'Tiếng Anh K12', billData.billing_period || 'Tháng 10/2026',
             billData.base_tuition_vnd, billData.attendance_total_sessions || 12, billData.attendance_attended_sessions || 12,
             studentId, billData.stars_deducted, billData.discount_vnd,

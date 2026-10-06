@@ -121,7 +121,7 @@
  username: '',
  phone: '',
  password: '123',
- grade: 'Lớp 7',
+ grade: '',
  school: '',
  parent_name: '',
  parent_phone: '',
@@ -137,7 +137,7 @@
  // Grade/Class Change Modal State
  let showClassModal = $state(false);
  let selectedStudentForClass = $state(null);
- let targetGrade = $state('Lớp 7');
+ let targetGrade = $state('');
  let targetClassId = $state('L7_GLOBAL_SUCCESS_A1');
  let additionalGradeToEnroll = $state('Luyện Thi IELTS');
  let currentStudentEnrolledList = $state([]);
@@ -629,7 +629,7 @@
  selectedStudentForClass = student;
  let meta = {};
  try { meta = typeof student.metadata === 'string' ? JSON.parse(student.metadata) : (student.metadata || {}); } catch {}
- targetGrade = meta.grade || student.grade || 'Lớp 7';
+ targetGrade = meta.grade || student.grade || '';
  targetClassId = meta.class_id || 'L7_GLOBAL_SUCCESS_A1';
  currentStudentEnrolledList = getUserEnrolledGrades(student);
  additionalGradeToEnroll = 'Luyện Thi IELTS';
@@ -675,6 +675,10 @@
  alert('Vui lòng nhập họ và tên học sinh!');
  return;
  }
+ if (!newStudentForm.grade) {
+ alert('Vui lòng chọn khối lớp cho học sinh!');
+ return;
+ }
  const created = addStudent({
  name: newStudentForm.name,
  username: newStudentForm.username,
@@ -694,7 +698,7 @@
  username: '',
  phone: '',
  password: '123',
- grade: 'Lớp 7',
+ grade: '',
  school: '',
  parent_name: '',
  parent_phone: '',
@@ -2256,7 +2260,7 @@
  <div class="flex items-start justify-between gap-3">
  <div>
  <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 uppercase">
- {sess.grade_level || 'Lớp 7'}
+ {sess.grade_level || '—'}
  </span>
  <h3 class="text-base font-black text-white mt-1">{sess.class_name}</h3>
  <div class="text-xs text-slate-400 mt-0.5">{sess.subject_topic}</div>
@@ -3057,6 +3061,7 @@
  bind:value={targetGrade}
  class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-white font-bold focus:outline-none focus:border-indigo-400"
  >
+ <option value="" disabled>-- Chọn khối lớp --</option>
  <option value="Lớp 1">Lớp 1 (Phonics &amp; Global Success)</option>
  <option value="Lớp 2">Lớp 2 (Global Success)</option>
  <option value="Lớp 3">Lớp 3 (Global Success)</option>
@@ -3159,6 +3164,7 @@
  bind:value={newStudentForm.grade}
  class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-emerald-500"
  >
+ <option value="" disabled>-- Chọn khối lớp --</option>
  <option value="Lớp 1">Lớp 1</option>
  <option value="Lớp 2">Lớp 2</option>
  <option value="Lớp 3">Lớp 3</option>
@@ -3370,7 +3376,7 @@
  billForm.stars_deducted = Math.min(stars.stars_balance || 0, 10000);
  let meta = {};
  try { meta = typeof found.metadata === 'string' ? JSON.parse(found.metadata) : (found.metadata || {}); } catch {}
- billForm.grade_level = meta.grade || 'Lớp 7';
+ billForm.grade_level = meta.grade || '';
  billForm.parent_name = meta.parent_name || '';
  billForm.parent_phone = meta.parent_phone || '';
  }

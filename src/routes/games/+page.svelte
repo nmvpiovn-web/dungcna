@@ -21,7 +21,7 @@
  let currentUser = $state(null);
  let gameSettings = $state(getGameArenaSettings());
  let activeGame = $state('menu'); // 'menu' | 'match' | 'scramble' | 'meteor' | 'sentence' | 'tense' | 'memory' | 'duel'
- let playerName = $state('Học sinh Lớp 7');
+ let playerName = $state('Học sinh');
  let studentStarBalance = $state(850);
  let starRewardToast = $state('');
  let teacherNotice = $state('');

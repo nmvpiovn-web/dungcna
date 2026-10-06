@@ -91,7 +91,7 @@ export async function POST({ request, platform }) {
           saved.student_name || body.student_name,
           auth.user.id,
           auth.user.name || auth.user.username || '',
-          saved.grade_level || body.grade_level || 'Lớp 7',
+          saved.grade_level || body.grade_level || '',
           Number(saved.listening_score ?? body.listening_score ?? 0),
           Number(saved.reading_score ?? body.reading_score ?? 0),
           Number(saved.writing_score ?? body.writing_score ?? 0),

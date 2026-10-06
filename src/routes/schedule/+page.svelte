@@ -280,7 +280,7 @@
  <!-- Student Header Badge if logged in as student -->
  {#if currentUser?.role === 'student'}
  {@const isOfficial = currentUser.approval_status === 'official' || (currentUser.status === 'active' && !currentUser.is_trial && !currentUser.metadata?.includes('"is_trial":true'))}
- {@const primaryGrade = currentUser.grade || 'Lớp 7'}
+ {@const primaryGrade = currentUser.grade || 'Chưa có lớp'}
  <div class="rounded-lg bg-indigo-950/40 border border-indigo-500/30 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
  <div class="flex items-center gap-3.5">
  <div class="w-11 h-11 rounded-lg bg-indigo-600/30 border border-indigo-500/40 text-indigo-300 font-bold flex items-center justify-center text-xl shadow-md">

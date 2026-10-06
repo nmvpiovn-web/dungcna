@@ -45,7 +45,7 @@
  id: '',
  student_id: '',
  student_name: '',
- grade_level: 'Lớp 7',
+ grade_level: '',
  listening_score: 7.0,
  reading_score: 7.0,
  writing_score: 7.0,
@@ -71,7 +71,7 @@
  let newStudentForm = $state({
  name: '',
  email: '',
- grade: 'Lớp 7',
+ grade: '',
  school: '',
  target: '',
  parent_name: '',
@@ -166,7 +166,7 @@
  id: '',
  student_id: student.id,
  student_name: student.name,
- grade_level: meta.grade || 'Lớp 7',
+ grade_level: meta.grade || '',
  listening_score: 7.0,
  reading_score: 7.0,
  writing_score: 7.0,
@@ -273,6 +273,10 @@
  alert('Vui lòng nhập họ tên học sinh!');
  return;
  }
+ if (!newStudentForm.grade) {
+ alert('Vui lòng chọn khối lớp cho học sinh!');
+ return;
+ }
  const created = addStudent(newStudentForm);
  loadData();
  showAddStudentModal = false;
@@ -280,7 +284,7 @@
  newStudentForm = {
  name: '',
  email: '',
- grade: 'Lớp 7',
+ grade: '',
  school: '',
  target: '',
  parent_name: '',
@@ -445,7 +449,7 @@
  <!-- Student Header Badge if logged in as student -->
  {#if currentUser?.role === 'student'}
  {@const isOfficial = currentUser.approval_status === 'official' || (currentUser.status === 'active' && !currentUser.is_trial && !currentUser.metadata?.includes('"is_trial":true'))}
- {@const primaryGrade = currentUser.grade || 'Lớp 7'}
+ {@const primaryGrade = currentUser.grade || 'Chưa có lớp'}
  <div class="rounded-2xl bg-white border border-cx-200 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg">
  <div class="flex items-center gap-3.5">
  <div class="w-11 h-11 rounded-2xl bg-cx-100 border border-cx-300 text-cx-900 font-bold flex items-center justify-center text-xl shadow-md">
@@ -815,7 +819,7 @@
  </div>
  </td>
  <td class="p-3">
- <span class="font-semibold text-slate-800">{meta.grade || 'Lớp 7'}</span>
+ <span class="font-semibold text-slate-800">{meta.grade || '—'}</span>
  {#if meta.school}
  <div class="text-[10px] text-slate-700">{meta.school}</div>
  {/if}
@@ -1165,6 +1169,7 @@
  bind:value={newStudentForm.grade}
  class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-950"
  >
+ <option value="" disabled>-- Chọn khối lớp --</option>
  <option value="Lớp 1">Lớp 1</option>
  <option value="Lớp 2">Lớp 2</option>
  <option value="Lớp 3">Lớp 3</option>
