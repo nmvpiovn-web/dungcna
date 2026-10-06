@@ -10,6 +10,24 @@ export const SUPERADMIN_EMAILS = ['nmvpiovn@gmail.com', 'msdung@timbk.io.vn'];
 const enc = new TextEncoder();
 
 /**
+ * Constant-time string comparison (timing-attack resistant).
+ * Use for HMAC signatures, password hashes, and shared secrets —
+ * never compare secrets with === (finding: HMAC/signature compare was not constant-time).
+ */
+export function constantTimeEqual(a, b) {
+  const aStr = typeof a === 'string' ? a : String(a ?? '');
+  const bStr = typeof b === 'string' ? b : String(b ?? '');
+  const aBuf = enc.encode(aStr);
+  const bBuf = enc.encode(bStr);
+  let diff = aBuf.length ^ bBuf.length;
+  const len = Math.max(aBuf.length, bBuf.length);
+  for (let i = 0; i < len; i++) {
+    diff |= (aBuf[i] || 0) ^ (bBuf[i] || 0);
+  }
+  return diff === 0;
+}
+
+/**
  * Retrieve auth secret from platform runtime environment with fail-closed defense.
  * Returns null if secret is not properly configured.
  */
@@ -101,7 +119,7 @@ export async function verifySignedToken(token, secret) {
     return null;
   }
 
-  if (providedSig !== expectedSig) {
+  if (!constantTimeEqual(providedSig, expectedSig)) {
     return null; // Signature verification failed
   }
 
@@ -169,7 +187,7 @@ export async function verifyPassword(password, storedHash) {
         256
       );
       const derivedHashHex = Array.from(new Uint8Array(derivedKey)).map(b => b.toString(16).padStart(2, '0')).join('');
-      return derivedHashHex === expectedHashHex;
+      return constantTimeEqual(derivedHashHex, expectedHashHex);
     } catch {
       return false;
     }
@@ -301,6 +319,17 @@ export async function verifyServerAuth(request, platform) {
       status: 401,
       user: null,
       error: 'Unauthorized: Chữ ký token xác thực không hợp lệ hoặc token đã hết hạn'
+    };
+  }
+
+  // Fail-Closed: every minted token carries a session id (sid); a token without
+  // sid cannot be revoked via /api/auth/logout, so it must not be accepted.
+  if (!verifiedPayload.sid || typeof verifiedPayload.sid !== 'string') {
+    return {
+      authenticated: false,
+      status: 401,
+      user: null,
+      error: 'Unauthorized: Token thiếu mã phiên đăng nhập (sid).'
     };
   }
 

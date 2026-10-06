@@ -275,7 +275,8 @@ export async function GET({ url, request, platform }) {
       existing_record: existingRecord
     });
   } catch (err) {
-    return json({ success: false, error: err.message }, { status: 500 });
+    console.error('Payroll GET error:', err);
+    return json({ success: false, error: 'Lỗi máy chủ: Không thể tải bảng lương lúc này.' }, { status: 500 });
   }
 }
 
@@ -1155,6 +1156,7 @@ export async function POST({ request, platform }) {
       payroll: calculated
     });
   } catch (err) {
-    return json({ success: false, error: err.message }, { status: 500 });
+    console.error('Payroll POST error:', err);
+    return json({ success: false, error: 'Lỗi máy chủ: Không thể xử lý bảng lương lúc này.' }, { status: 500 });
   }
 }

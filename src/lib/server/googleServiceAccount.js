@@ -95,6 +95,12 @@ export async function getServiceAccountToken(platform) {
   }
 }
 
+// Xoá token đang cache (gọi khi Drive trả 401 — token có thể bị revoke/hết hạn sớm).
+export function invalidateServiceAccountToken() {
+  cachedToken = null;
+  cachedExpiry = 0;
+}
+
 // Credential nhạy cảm chỉ được đọc từ runtime secret, tuyệt đối không đọc từ D1.
 export async function hasServiceAccount(platform) {
   return Boolean(

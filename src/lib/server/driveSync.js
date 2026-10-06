@@ -3,7 +3,7 @@
 // - POST /api/drive/sync (manager trigger thủ công)
 // - POST /api/drive/poll (cron trigger tự động)
 // Issue #2 P1: cron gọi chung hàm server nội bộ, fail-closed
-import { getServiceAccountToken, hasServiceAccount } from './googleServiceAccount.js';
+import { getServiceAccountToken, hasServiceAccount, invalidateServiceAccountToken } from './googleServiceAccount.js';
 
 export const DEFAULT_DRIVE_FOLDER = '1_V4YUCuTJ4uui49S6AfcaI8lZmIszKou';
 const MAX_FILE_CONTENT = 20000;
@@ -12,7 +12,14 @@ const MAX_FILES = 10000;
 async function getAuth(platform) {
   if (await hasServiceAccount(platform)) {
     const token = await getServiceAccountToken(platform);
-    if (token) return { bearer: token };
+    if (token) return {
+      bearer: token,
+      // Làm mới token khi Drive trả 401 (cache có thể hết hạn sớm / bị revoke)
+      refreshBearer: async () => {
+        invalidateServiceAccountToken();
+        return getServiceAccountToken(platform);
+      }
+    };
   }
   let key = platform?.env?.GOOGLE_DRIVE_API_KEY;
   if (!key && platform?.env?.DB) {
@@ -24,7 +31,14 @@ async function getAuth(platform) {
   return key ? { apiKey: key } : {};
 }
 
-async function driveFetch(url, auth) {
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// Fetch Drive dùng chung: 401 → invalidate token cache + thử lại 1 lần với token
+// mới; 429/503 → backoff 1 lần theo Retry-After (tối đa 5s). Mọi call ở đây đều
+// là GET nên retry an toàn.
+async function driveRawFetch(url, auth, retried = false) {
   const headers = {};
   let finalUrl = url;
   if (auth.bearer) {
@@ -33,18 +47,24 @@ async function driveFetch(url, auth) {
     finalUrl = url + (url.includes('?') ? '&' : '?') + `key=${encodeURIComponent(auth.apiKey)}`;
   }
   const res = await fetch(finalUrl, { headers });
+  if (res.status === 401 && auth.bearer && typeof auth.refreshBearer === 'function' && !retried) {
+    const fresh = await auth.refreshBearer().catch(() => null);
+    if (fresh) return driveRawFetch(url, { ...auth, bearer: fresh }, true);
+  }
+  if ((res.status === 429 || res.status === 503) && !retried) {
+    await sleep(Math.min(Number(res.headers.get('retry-after')) || 2, 5) * 1000);
+    return driveRawFetch(url, auth, true);
+  }
+  return res;
+}
+
+async function driveFetch(url, auth) {
+  const res = await driveRawFetch(url, auth);
   return res.json();
 }
 
 async function driveFetchText(url, auth) {
-  const headers = {};
-  let finalUrl = url;
-  if (auth.bearer) {
-    headers['Authorization'] = `Bearer ${auth.bearer}`;
-  } else if (auth.apiKey) {
-    finalUrl = url + (url.includes('?') ? '&' : '?') + `key=${encodeURIComponent(auth.apiKey)}`;
-  }
-  const res = await fetch(finalUrl, { headers });
+  const res = await driveRawFetch(url, auth);
   if (!res.ok) return '';
   return res.text();
 }
@@ -89,9 +109,7 @@ async function exportDocText(fileId, mimeType, auth) {
 
 async function driveFetchBytes(url, auth) {
   try {
-    const headers = {};
-    if (auth.bearer) headers['Authorization'] = `Bearer ${auth.bearer}`;
-    const res = await fetch(url, { headers });
+    const res = await driveRawFetch(url, auth);
     if (!res.ok) return null;
     return await res.arrayBuffer();
   } catch {
@@ -236,7 +254,7 @@ export async function runDriveSync(platform, opts = {}) {
           continue;
         }
         // Check if already in DB with same modified time (skip download if unchanged)
-        const existing = await db.prepare(`SELECT source_hash FROM knowledge_vault WHERE id = ? LIMIT 1`).bind(vid).first().catch(() => null);
+        const existing = await db.prepare(`SELECT source_hash, content_markdown FROM knowledge_vault WHERE id = ? LIMIT 1`).bind(vid).first().catch(() => null);
         // Use modifiedTime as hash to detect changes
         const fileHash = `drive_${f.id}_${f.modifiedTime || ''}`;
         if (existing && existing.source_hash === fileHash) {
@@ -246,13 +264,29 @@ export async function runDriveSync(platform, opts = {}) {
         }
         const content = await exportDocText(f.id, f.mimeType, driveAuth);
         stats.files++;
-        if (content) stats.with_content++; else stats.skipped++;
-
-        const md = `# ${mdEscape(f.name)}\n\n` +
-          `- **Loại:** ${f.mimeType}\n` +
-          `- **Phân loại:** ${cls.category}${cls.grade ? ` / ${cls.grade}` : ''}\n` +
-          (content ? `---\n\n${mdEscape(content)}\n\n---\n\n` : `*(Không trích xuất được nội dung text)*\n\n`) +
-          `🔗 [Mở file gốc trên Drive](${f.webViewLink || '#'})\n`;
+        // Nếu trích xuất lại thất bại (lỗi thoáng qua) mà DB đã có nội dung thật từ
+        // lần trước: giữ nội dung cũ thay vì ghi đè bằng placeholder rỗng.
+        const oldContent = existing?.content_markdown;
+        const hasRealContent = oldContent && !oldContent.includes('Không trích xuất được nội dung text');
+        let md;
+        if (content) {
+          stats.with_content++;
+          md = `# ${mdEscape(f.name)}\n\n` +
+            `- **Loại:** ${f.mimeType}\n` +
+            `- **Phân loại:** ${cls.category}${cls.grade ? ` / ${cls.grade}` : ''}\n` +
+            `---\n\n${mdEscape(content)}\n\n---\n\n` +
+            `🔗 [Mở file gốc trên Drive](${f.webViewLink || '#'})\n`;
+        } else if (hasRealContent) {
+          stats.skipped++;
+          md = oldContent;
+        } else {
+          stats.skipped++;
+          md = `# ${mdEscape(f.name)}\n\n` +
+            `- **Loại:** ${f.mimeType}\n` +
+            `- **Phân loại:** ${cls.category}${cls.grade ? ` / ${cls.grade}` : ''}\n` +
+            `*(Không trích xuất được nội dung text)*\n\n` +
+            `🔗 [Mở file gốc trên Drive](${f.webViewLink || '#'})\n`;
+        }
 
         try {
           await db.prepare(`
@@ -279,7 +313,9 @@ export async function runDriveSync(platform, opts = {}) {
 
   try {
     await syncFolder(folderId);
-    try { await db.prepare(`INSERT INTO knowledge_fts(knowledge_fts) VALUES('rebuild')`).run(); } catch (e) { errors.push(`fts: ${e.message}`); }
+    // Không rebuild FTS thủ công: triggers trg_knowledge_vault_ai/ad/au (migration
+    // 0002) đã đồng bộ knowledge_fts theo từng INSERT/UPDATE/DELETE. Rebuild full
+    // sau mỗi batch chỉ tốn tài nguyên trên toàn bộ vault.
 
     const status = errors.length ? 'failed' : 'completed';
     await db.prepare(`

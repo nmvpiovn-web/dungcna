@@ -348,7 +348,8 @@ export async function GET({ url, request, platform }) {
       total_questions_bank: totalBank
     });
   } catch (err) {
-    return json({ success: false, error: err.message }, { status: 500 });
+    console.error('Exams GET error:', err);
+    return json({ success: false, error: 'Lỗi máy chủ: Không thể tải dữ liệu đề thi lúc này.' }, { status: 500 });
   }
 }
 
@@ -924,6 +925,7 @@ export async function POST({ request, platform }) {
       attempt: saved
     });
   } catch (err) {
-    return json({ success: false, error: err.message }, { status: 500 });
+    console.error('Exams submit error:', err);
+    return json({ success: false, error: 'Lỗi máy chủ: Không thể nộp bài lúc này.' }, { status: 500 });
   }
 }

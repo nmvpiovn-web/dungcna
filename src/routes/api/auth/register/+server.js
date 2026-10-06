@@ -253,6 +253,7 @@ export async function POST({ request, platform }) {
     }, { status: 201 });
 
   } catch (err) {
-    return json({ success: false, error: err.message || 'Lỗi xử lý đăng ký' }, { status: 500 });
+    console.error('Register handler error:', err);
+    return json({ success: false, error: 'Lỗi máy chủ: Không thể xử lý đăng ký lúc này.' }, { status: 500 });
   }
 }

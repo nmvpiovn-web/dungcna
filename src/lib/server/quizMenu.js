@@ -35,8 +35,20 @@ export function validateQuestion(input, index = 0) {
   if (type === 'picture_guess' && !String(input.prompt_image_url || '').trim()) {
     return { error: `Câu nhìn hình thiếu ảnh tại vị trí ${index + 1}` };
   }
-  if (OBJECTIVE_TYPES.has(type) && (input.correct_answer === undefined || input.correct_answer === null || input.correct_answer === '')) {
-    return { error: `Câu khách quan thiếu đáp án tại vị trí ${index + 1}` };
+  if (OBJECTIVE_TYPES.has(type)) {
+    const rawAnswer = input.correct_answer;
+    const answerBlank = rawAnswer === undefined || rawAnswer === null ||
+      (typeof rawAnswer === 'string' && rawAnswer.trim() === '') ||
+      (typeof rawAnswer === 'object' && !Array.isArray(rawAnswer) && Object.keys(rawAnswer).length === 0);
+    if (answerBlank) {
+      return { error: `Câu khách quan thiếu đáp án tại vị trí ${index + 1}` };
+    }
+    if (type === 'matching') {
+      const parsed = parseJson(typeof rawAnswer === 'string' ? rawAnswer : JSON.stringify(rawAnswer), null);
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed) || Object.keys(parsed).length === 0) {
+        return { error: `Câu nối từ thiếu đáp án tại vị trí ${index + 1}` };
+      }
+    }
   }
   const options = type === 'matching'
     ? parseJson(input.options_json, input.options_json)
@@ -54,7 +66,7 @@ export function validateQuestion(input, index = 0) {
       prompt,
       prompt_image_url: String(input.prompt_image_url || '').trim() || null,
       options_json: options == null ? null : JSON.stringify(options),
-      correct_answer: typeof input.correct_answer === 'string' ? input.correct_answer : JSON.stringify(input.correct_answer ?? ''),
+      correct_answer: typeof input.correct_answer === 'string' ? input.correct_answer.trim() : JSON.stringify(input.correct_answer ?? ''),
       explanation: String(input.explanation || '').trim() || null,
       points,
       q_order: Number.isInteger(Number(input.q_order)) ? Number(input.q_order) : index

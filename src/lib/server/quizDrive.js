@@ -1,4 +1,4 @@
-import { getServiceAccountToken } from './googleServiceAccount.js';
+import { getServiceAccountToken, invalidateServiceAccountToken } from './googleServiceAccount.js';
 import { makeId, sha256, validateQuestion } from './quizMenu.js';
 
 export const MAX_QUIZ_FILE_BYTES = 10 * 1024 * 1024;
@@ -65,12 +65,27 @@ async function accessToken(platform) {
   return token;
 }
 
-async function driveRequest(platform, path, init = {}) {
+async function driveRequest(platform, path, init = {}, retried = false) {
   const token = await accessToken(platform);
   const response = await fetch(`https://www.googleapis.com${path}`, {
     ...init,
     headers: { authorization: `Bearer ${token}`, ...(init.headers || {}) }
   });
+  // 401: token service account trong cache có thể hết hạn sớm → invalidate + thử lại 1 lần.
+  // (Không áp dụng khi dùng GOOGLE_DRIVE_ACCESS_TOKEN cấu hình tay.)
+  if (response.status === 401 && !retried && !platform?.env?.GOOGLE_DRIVE_ACCESS_TOKEN) {
+    invalidateServiceAccountToken();
+    return driveRequest(platform, path, init, true);
+  }
+  // 429/503: backoff 1 lần theo Retry-After (tối đa 5s); chỉ retry request idempotent
+  // để tránh upload trùng khi POST/PATCH đã được xử lý phía server.
+  const method = String(init.method || 'GET').toUpperCase();
+  const idempotent = method === 'GET' || method === 'DELETE' || method === 'HEAD';
+  if ((response.status === 429 || response.status === 503) && !retried && idempotent) {
+    const waitMs = Math.min(Number(response.headers.get('retry-after')) || 2, 5) * 1000;
+    await new Promise((resolve) => setTimeout(resolve, waitMs));
+    return driveRequest(platform, path, init, true);
+  }
   if (!response.ok) {
     let detail = '';
     try { detail = (await response.json())?.error?.message || ''; } catch {}
@@ -311,6 +326,13 @@ function decodePdfString(s) {
     .replace(/\\\(/g, '(').replace(/\\\)/g, ')').replace(/\\\\/g, '\\');
 }
 
+function assertExtractedText(text) {
+  if (!text || text.trim().length < 50) {
+    throw new QuizDriveError('Không đọc được nội dung tệp (tệp rỗng hoặc định dạng không đọc được)', 400, 'EmptyExtraction');
+  }
+  return text;
+}
+
 export async function uploadQuizSource(platform, file) {
   const validated = validateQuizFile(file);
   const bytes = new Uint8Array(await file.arrayBuffer());
@@ -319,9 +341,7 @@ export async function uploadQuizSource(platform, file) {
     const text = validated.mimeType === 'text/plain'
       ? new TextDecoder().decode(bytes)
       : await extractBytesLocal(validated, bytes);
-    if (!text || text.trim().length < 50) {
-      throw new QuizDriveError('Không đọc được nội dung tệp (tệp rỗng hoặc định dạng không đọc được)', 400, 'EmptyExtraction');
-    }
+    assertExtractedText(text);
     // Best-effort Drive archival (service accounts can't upload to regular shared folders)
     let uploaded = null;
     let uploadFolderId = null;
@@ -339,6 +359,8 @@ export async function uploadQuizSource(platform, file) {
   const folder = await ensureQuizUploadsFolder(platform);
   const uploaded = await uploadBytes(platform, { ...validated, bytes, folderId: folder.id });
   const text = await extractBytes(platform, validated, bytes, folder.id);
+  // Fail-closed: không lưu quiz 0 câu hỏi khi OCR/extraction không đọc được ảnh
+  assertExtractedText(text);
   return { file: uploaded, text, uploadFolderId: folder.id };
 }
 
@@ -363,10 +385,10 @@ export async function readAllowedDriveSource(platform, id) {
   const allowed = await allowedQuizFolderIds(platform);
   const parent = (file.parents || []).find((folderId) => allowed.has(folderId));
   if (!parent) throw new QuizDriveError('Tệp không nằm trong thư mục Drive được phép', 403, 'DriveFolderForbidden');
-  if (file.mimeType === GOOGLE_DOC_MIME) return { file, text: await exportGoogleDoc(platform, file.id) };
+  if (file.mimeType === GOOGLE_DOC_MIME) return { file, text: assertExtractedText(await exportGoogleDoc(platform, file.id)) };
   const response = await driveRequest(platform, `/drive/v3/files/${encodeURIComponent(file.id)}?alt=media&supportsAllDrives=true`);
   const bytes = await response.arrayBuffer();
-  return { file, text: await extractBytes(platform, { name: file.name, mimeType: file.mimeType }, bytes, parent) };
+  return { file, text: assertExtractedText(await extractBytes(platform, { name: file.name, mimeType: file.mimeType }, bytes, parent)) };
 }
 
 export async function listQuizDriveFiles(platform) {
@@ -429,7 +451,15 @@ export function generateDraftQuestions(text) {
       prompt_image_url: null, options_json: null, correct_answer: null, explanation: null, points: 1, q_order: questions.length
     });
   }
-  return questions;
+  // Validate từng câu draft: loại bỏ câu khách quan thiếu đáp án (vd trắc nghiệm
+  // không tìm được answer key) thay vì lưu correct_answer null vào DB.
+  const validated = [];
+  for (let i = 0; i < questions.length; i++) {
+    const checked = validateQuestion(questions[i], i);
+    if (checked.error) continue;
+    validated.push({ ...checked.value, id: questions[i].id, q_order: validated.length });
+  }
+  return validated;
 }
 
 const AI_SYSTEM_PROMPT = `Bạn là trợ lý tạo đề kiểm tra tiếng Anh. Từ nội dung tài liệu người dùng cung cấp, hãy tạo 10 câu hỏi kiểm tra.

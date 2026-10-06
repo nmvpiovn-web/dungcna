@@ -5,6 +5,55 @@ import { createSignedToken, sanitizeUser, getAuthSecret, verifyPassword, hashPas
 
 export const prerender = false;
 
+// ---- Brute-force defense (per-isolate, same pattern as /api/ai/deepseek) ----
+// Cloudflare Workers keep module-scope state per isolate; this raises the cost
+// of credential-stuffing from a single client without adding DB writes.
+const LOGIN_ATTEMPTS = new Map(); // key: ip|username -> { count, start }
+const LOGIN_IP_ATTEMPTS = new Map(); // key: ip -> { count, start } (anti credential-stuffing across usernames)
+const LOGIN_WINDOW_MS = 10 * 60 * 1000;
+const LOGIN_MAX_ATTEMPTS = 50; // per ip+username
+const LOGIN_MAX_ATTEMPTS_PER_IP = 300; // per ip across all usernames
+
+function getClientIp(request) {
+  return request.headers.get('cf-connecting-ip')
+    || (request.headers.get('x-forwarded-for') || '').split(',')[0].trim()
+    || 'unknown';
+}
+
+function checkBucket(map, key, max) {
+  const now = Date.now();
+  const rec = map.get(key);
+  if (rec && now - rec.start < LOGIN_WINDOW_MS) {
+    if (rec.count >= max) return false;
+    rec.count += 1;
+    return true;
+  }
+  // Opportunistic cleanup of expired buckets
+  if (map.size > 5000) {
+    for (const [k, v] of map) {
+      if (now - v.start >= LOGIN_WINDOW_MS) map.delete(k);
+    }
+  }
+  map.set(key, { count: 1, start: now });
+  return true;
+}
+
+function checkLoginRateLimit(ip, username) {
+  // Kimi review #3: without any IP header every client would share one bucket and
+  // an attacker could lock out other users' logins. Cloudflare production always
+  // sets cf-connecting-ip, so only skip when the IP is genuinely unknown.
+  if (!ip || ip === 'unknown') return true;
+  const userKey = `${ip}|${String(username || '').toLowerCase()}`;
+  // Kimi review #2: an attacker rotating usernames must still hit the IP-wide bucket
+  return checkBucket(LOGIN_IP_ATTEMPTS, ip, LOGIN_MAX_ATTEMPTS_PER_IP)
+    && checkBucket(LOGIN_ATTEMPTS, userKey, LOGIN_MAX_ATTEMPTS);
+}
+
+// Dummy PBKDF2 hash — NOT a credential. Runs a real PBKDF2 verification when the
+// username does not exist so "user not found" takes the same time as "wrong
+// password" (anti user-enumeration via timing).
+const DUMMY_PBKDF2_HASH = 'pbkdf2:100000:' + '0'.repeat(32) + ':' + '0'.repeat(64);
+
 export async function POST({ request, platform, cookies }) {
   try {
     const secret = getAuthSecret(platform);
@@ -28,6 +77,14 @@ export async function POST({ request, platform, cookies }) {
       return json({ success: false, error: 'Thiếu tên đăng nhập hoặc mật khẩu' }, { status: 400 });
     }
 
+    // Brute-force protection: too many attempts from this IP+username -> 429
+    if (!checkLoginRateLimit(getClientIp(request), username)) {
+      return json({
+        success: false,
+        error: 'TooManyRequests: Quá nhiều lần đăng nhập, vui lòng thử lại sau ít phút.'
+      }, { status: 429, headers: { 'Retry-After': '600' } });
+    }
+
     let user = null;
 
     // 1. Check Cloudflare D1 (Primary Production Source)
@@ -38,6 +95,8 @@ export async function POST({ request, platform, cookies }) {
         `).bind(username, username, username).first();
 
         if (!d1User) {
+          // Anti-enumeration: burn the same PBKDF2 cost as a real password check
+          await verifyPassword(password, DUMMY_PBKDF2_HASH);
           return json({ success: false, error: 'Tên đăng nhập hoặc mật khẩu không chính xác' }, { status: 401 });
         }
 
@@ -59,7 +118,7 @@ export async function POST({ request, platform, cookies }) {
         }
       } catch (e) {
         console.error('D1 login error:', e);
-        return json({ success: false, error: 'Lỗi truy vấn cơ sở dữ liệu: ' + (e.message || String(e)) }, { status: 500 });
+        return json({ success: false, error: 'Lỗi máy chủ: Không thể xử lý đăng nhập lúc này, vui lòng thử lại sau.' }, { status: 500 });
       }
     } else if (platform?.env?.ENABLE_LOCAL_MOCK === 'true' || process.env.ENABLE_LOCAL_MOCK === 'true') {
       // 2. Fallback to local store ONLY when ENABLE_LOCAL_MOCK is explicitly configured (isolated dev/testing)
@@ -67,7 +126,9 @@ export async function POST({ request, platform, cookies }) {
       const candidate = allUsers.find(u =>
         (u.username === username || u.email === username || u.phone === username)
       );
-      if (!candidate || !(await verifyPassword(password, candidate.password))) {
+      // Anti-enumeration: equalize timing even when the account does not exist
+      const candidateHash = candidate ? candidate.password : DUMMY_PBKDF2_HASH;
+      if (!candidate || !(await verifyPassword(password, candidateHash))) {
         return json({ success: false, error: 'Tên đăng nhập hoặc mật khẩu không chính xác' }, { status: 401 });
       }
       user = candidate;
@@ -121,6 +182,7 @@ export async function POST({ request, platform, cookies }) {
       user: safeUser
     });
   } catch (err) {
-    return json({ success: false, error: err.message }, { status: 500 });
+    console.error('Login handler error:', err);
+    return json({ success: false, error: 'Lỗi máy chủ: Không thể xử lý đăng nhập lúc này.' }, { status: 500 });
   }
 }

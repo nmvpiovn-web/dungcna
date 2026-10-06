@@ -200,7 +200,10 @@ test('P0-03: D1 database query error causes login to fail-closed with HTTP 500 w
 
   assert.equal(res.status, 500);
   const data = await res.json();
-  assert.match(data.error, /D1_STORAGE_IO_FAILURE/);
+  // 2026-10-06 Kimi security fix (finding 7): raw DB error text must NOT leak to
+  // unauthenticated clients. Fail-closed = 500 + generic message, no mock fallback.
+  assert.ok(!/D1_STORAGE_IO_FAILURE/.test(data.error), 'raw D1 error text must not leak to client');
+  assert.match(data.error, /Lỗi máy chủ/);
 });
 
 // =========================================================================

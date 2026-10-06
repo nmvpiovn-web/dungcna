@@ -149,6 +149,7 @@ export async function POST({ request, platform }) {
       errors: errors.slice(0, 20)
     });
   } catch (err) {
-    return json({ success: false, error: err.message, stats }, { status: 500 });
+    console.error('Second-brain sync error:', err);
+    return json({ success: false, error: 'Lỗi máy chủ nội bộ.', stats }, { status: 500 });
   }
 }

@@ -6,7 +6,7 @@
 // - Chỉ commit last_change_token SAU KHI sync thành công
 // - Fail-closed: kiểm tra kết quả sync, không báo success giả
 import { json } from '@sveltejs/kit';
-import { verifyServerAuth, isManager } from '../../../../lib/server/auth.js';
+import { verifyServerAuth, isManager, constantTimeEqual } from '../../../../lib/server/auth.js';
 import {
   getStartPageToken,
   checkDriveChanges,
@@ -17,9 +17,10 @@ import {
 export const prerender = false;
 
 function isAuthorizedCron(request, platform) {
-  const cronSecret = request.headers.get('x-cron-secret');
-  const expectedSecret = platform?.env?.CRON_SECRET;
-  return !!(cronSecret && expectedSecret && cronSecret === expectedSecret);
+  const cronSecret = request.headers.get('x-cron-secret') || '';
+  const expectedSecret = platform?.env?.CRON_SECRET || '';
+  // Constant-time compare: never === on secrets (timing-attack resistant)
+  return !!(cronSecret && expectedSecret && constantTimeEqual(cronSecret, expectedSecret));
 }
 
 async function isAuthorizedManager(request, platform) {
