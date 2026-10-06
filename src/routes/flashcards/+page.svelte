@@ -589,7 +589,7 @@
     color: #fff;
   }
   .study-cta-icon { font-size: 48px; margin-bottom: 12px; }
-  .study-cta-card h3 { font-size: 20px; font-weight: 800; margin-bottom: 8px; }
+  .study-cta-card h3 { font-size: 20px; font-weight: 800; margin-bottom: 8px; color: #fff; }
   .study-cta-card p { font-size: 14px; color: #a5b4fc; margin-bottom: 20px; max-width: 480px; margin-left: auto; margin-right: auto; }
   .btn-start-study-large {
     padding: 14px 32px;
