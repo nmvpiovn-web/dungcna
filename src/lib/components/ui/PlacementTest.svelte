@@ -203,8 +203,10 @@
 
  const roadmapHint = $derived.by(() => {
  const lvl = result?.cefr_level || 'A1';
+ // Dùng đúng khối lớp user đã chọn ở bước 1 — cấm hardcode "Lớp 7" (user 2026-10-06).
+ const gradeLabel = (GRADES.find((g) => g.key === grade)?.label || 'Lớp 7').replace(/\s*\(.*\)\s*$/, '');
  const map = {
- A1: { text: 'Lộ trình 6 tháng: Nền tảng A1 → A2 (Lớp 7 Chuyên sâu)', href: '/courses' },
+ A1: { text: `Lộ trình 6 tháng: Nền tảng A1 → A2 (${gradeLabel} Chuyên sâu)`, href: '/courses' },
  A2: { text: 'Lộ trình 6 tháng: A2 → B1, sẵn sàng vào 10', href: '/courses' },
  B1: { text: 'Lộ trình: B1 → B2 (Lớp 9 vào 10 / IELTS Foundation)', href: '/courses' },
  B2: { text: 'Lộ trình: B2 → C1 (IELTS 6.0+ / HSG)', href: '/courses' },
@@ -327,7 +329,7 @@
  {/each}
  </div>
 
- <div class="mt-5 p-4 rounded-2xl bg-brand-50 border border-brand-200 text-left">
+ <div class="mt-5 text-left">
  <div class="text-xs font-extrabold uppercase tracking-widest text-brand-700 mb-1">🗺️ Lộ trình gợi ý</div>
  <div class="text-sm font-bold text-ink-900">{roadmapHint.text}</div>
  <div class="text-xs text-ink-500 mt-1">{result.recommendation}</div>
