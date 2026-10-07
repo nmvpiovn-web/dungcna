@@ -277,7 +277,7 @@
  <meta property="og:image:alt" content="Tiếng Anh Cô Dung — Trung Tâm Tiếng Anh K12 & IELTS" />
  <meta name="twitter:card" content="summary_large_image" />
  <meta name="twitter:image" content="https://timbk.io.vn/og-image.png" />
- {#if $page.url.pathname.startsWith('/cpanel') || $page.url.pathname.startsWith('/admin') || $page.url.pathname.startsWith('/second-brain') || $page.url.pathname.startsWith('/schedule') || $page.url.pathname.startsWith('/evaluations')}
+ {#if $page.url.pathname.startsWith('/cpanel') || $page.url.pathname.startsWith('/admin') || $page.url.pathname.startsWith('/second-brain') || $page.url.pathname.startsWith('/schedule') || $page.url.pathname.startsWith('/evaluations') || $page.url.pathname.startsWith('/quiz-menu') || $page.url.pathname.startsWith('/drive') || $page.url.pathname.startsWith('/offline')}
  <meta name="robots" content="noindex, nofollow" />
  {:else}
  <meta name="robots" content="index, follow" />
@@ -300,7 +300,14 @@
  "name": "Tiếng Anh Cô Dung",
  "publisher": { "@id": "https://timbk.io.vn/#org" },
  "inLanguage": "vi-VN"
- }
+ },
+ ...($page.url.pathname !== '/' ? [{
+ "@type": "BreadcrumbList",
+ "itemListElement": [
+ { "@type": "ListItem", "position": 1, "name": "Trang chủ", "item": "https://timbk.io.vn/" },
+ { "@type": "ListItem", "position": 2, "name": $page.data?.seo?.title?.split('|')[0]?.trim() || $page.url.pathname, "item": `https://timbk.io.vn${$page.url.pathname}` }
+ ]
+ }] : [])
  ]
 })}</script>`}
 </svelte:head>

@@ -6,11 +6,6 @@
   }
 </script>
 
-<svelte:head>
-  <title>Mất kết nối — Tiếng Anh Cô Dung</title>
-  <meta name="robots" content="noindex" />
-</svelte:head>
-
 <main>
   <div class="card">
     <div class="icon">📡</div>

@@ -2,6 +2,7 @@ import { getStaticWords, getStaticUnits, getStaticScores } from '$lib/staticDb.j
 
 export function load() {
   return {
+    seo: {"title": "Trò Chơi Học Tiếng Anh Cho Trẻ | Tiếng Anh Cô Dung", "description": "Game học tiếng Anh vui nhộn cho học sinh tiểu học & THCS."},
     words: getStaticWords({ shuffle: true }),
     units: getStaticUnits(),
     leaderboards: {

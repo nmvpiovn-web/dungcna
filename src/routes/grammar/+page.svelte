@@ -56,10 +56,6 @@
  }
 </script>
 
-<svelte:head>
- <title>Chuyên Đề Ngữ Pháp Toàn Diện K12 &amp; HSG — Tiếng Anh Cô Dung</title>
-</svelte:head>
-
 <div class="grammar-page max-w-6xl mx-auto px-4 py-8 space-y-8">
  <!-- Header Banner -->
  <div class="header-card bg-gradient-to-r from-teal-700 via-emerald-600 to-indigo-700 text-white rounded-3xl p-6 sm:p-8 shadow-xl relative overflow-hidden">

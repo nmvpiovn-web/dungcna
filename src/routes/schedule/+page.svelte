@@ -1,8 +1,3 @@
-<svelte:head>
- <title>Thời Khóa Biểu &amp; Sổ Điểm Danh • Tiếng Anh Cô Dung</title>
- <meta name="robots" content="noindex, nofollow" />
-</svelte:head>
-
 <script>
  import { onMount } from 'svelte';
  import {
