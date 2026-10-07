@@ -1,5 +1,4 @@
 # Robots.txt for Tieng Anh Co Dung Academy (https://timbk.io.vn)
-# Enforce privacy for internal student, payroll, and administration portals
 
 User-agent: *
 Disallow: /admin
@@ -9,30 +8,10 @@ Disallow: /schedule
 Disallow: /evaluations
 Disallow: /second-brain
 Disallow: /api/
-Allow: /
-Allow: /courses
-Allow: /exam
-Allow: /pedagogy
-Allow: /grammar
-Allow: /dictionary
-Allow: /flashcards
-Allow: /quiz
-
-# LLM Crawlers & Search Engines
-User-agent: Googlebot
-Disallow: /admin
-Disallow: /schedule
-Disallow: /evaluations
-Disallow: /second-brain
-Disallow: /api/
-Allow: /
-
-User-agent: GPTBot
-Disallow: /admin
-Disallow: /schedule
-Disallow: /evaluations
-Disallow: /second-brain
-Disallow: /api/
-Allow: /
+Disallow: /quiz-menu/
+Disallow: /drive/
+Disallow: /tools/
+Disallow: /offline
 
 Sitemap: https://timbk.io.vn/sitemap.xml
+# llms.txt: https://timbk.io.vn/llms.txt

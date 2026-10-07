@@ -3,17 +3,23 @@ export const prerender = false;
 const BASE_URL = 'https://timbk.io.vn';
 
 // Only public, indexable pages with HTTP 200 (no admin, cpanel, api, second-brain, private data)
+// lastmod: use deploy date; update when content changes significantly
+const LASTMOD = '2026-10-07';
 const publicRoutes = [
-  { path: '', changefreq: 'daily', priority: '1.0' },
-  { path: '/courses', changefreq: 'weekly', priority: '0.9' },
-  { path: '/grammar', changefreq: 'weekly', priority: '0.8' },
-  { path: '/dictionary', changefreq: 'weekly', priority: '0.8' },
-  { path: '/flashcards', changefreq: 'weekly', priority: '0.7' },
-  { path: '/games', changefreq: 'weekly', priority: '0.7' },
-  { path: '/quiz', changefreq: 'weekly', priority: '0.7' },
-  { path: '/exam', changefreq: 'weekly', priority: '0.8' },
-  { path: '/pedagogy', changefreq: 'monthly', priority: '0.6' },
-  { path: '/recruitment', changefreq: 'monthly', priority: '0.6' }
+  { path: '', lastmod: LASTMOD },
+  { path: '/courses', lastmod: LASTMOD },
+  { path: '/grammar', lastmod: LASTMOD },
+  { path: '/dictionary', lastmod: LASTMOD },
+  { path: '/flashcards', lastmod: LASTMOD },
+  { path: '/games', lastmod: LASTMOD },
+  { path: '/quiz', lastmod: LASTMOD },
+  { path: '/exam', lastmod: LASTMOD },
+  { path: '/pedagogy', lastmod: LASTMOD },
+  { path: '/recruitment', lastmod: LASTMOD },
+  { path: '/bang-gia', lastmod: LASTMOD },
+  { path: '/hall-of-fame', lastmod: LASTMOD },
+  { path: '/truong-hoc', lastmod: LASTMOD },
+  { path: '/tools', lastmod: LASTMOD }
 ];
 
 export async function GET() {
@@ -21,8 +27,7 @@ export async function GET() {
     .map(
       r => `  <url>
     <loc>${BASE_URL}${r.path}</loc>
-    <changefreq>${r.changefreq}</changefreq>
-    <priority>${r.priority}</priority>
+    <lastmod>${r.lastmod}</lastmod>
   </url>`
     )
     .join('\n');

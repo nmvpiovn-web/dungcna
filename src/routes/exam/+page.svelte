@@ -980,6 +980,21 @@
  }
 </script>
 
+<svelte:head>
+<title>Thi Thử Tiếng Anh 5 Phút Miễn Phí — Biết Ngay Trình Độ</title>
+<meta name="description" content="Làm bài thi thử tiếng Anh 5 phút, chấm điểm tự động, đánh giá trình độ CEFR A1–C1 miễn phí." />
+<meta property="og:title" content="Thi Thử Tiếng Anh 5 Phút Miễn Phí — Biết Ngay Trình Độ" />
+<meta property="og:description" content="Làm bài thi thử tiếng Anh 5 phút, chấm điểm tự động, đánh giá trình độ CEFR A1–C1 miễn phí." />
+<meta property="og:image" content="https://timbk.io.vn/og-image.png" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Thi Thử Tiếng Anh 5 Phút Miễn Phí — Biết Ngay Trình Độ" />
+<meta name="twitter:description" content="Làm bài thi thử tiếng Anh 5 phút, chấm điểm tự động, đánh giá trình độ CEFR A1–C1 miễn phí." />
+<meta name="twitter:image" content="https://timbk.io.vn/og-image.png" />
+</svelte:head>
+
+
+
 <div class="space-y-6 min-w-0 max-w-full overflow-x-hidden">
  <!-- Academic Warmth Phase 3: Test xep lop 3 phut (khach, khong can login) -->
  <section id="placement" class="scroll-mt-24">

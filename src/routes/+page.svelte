@@ -322,6 +322,21 @@
  ];
 </script>
 
+<svelte:head>
+<title>Tiếng Anh Cô Dung — Trung Tâm Tiếng Anh K12 & IELTS</title>
+<meta name="description" content="Hệ thống đào tạo tiếng Anh chuẩn K12, Cambridge & IELTS tại Việt Nam. Học liệu miễn phí: ngữ pháp, flashcards 10.000+ từ, thi thử 5 phút." />
+<meta property="og:title" content="Tiếng Anh Cô Dung — Trung Tâm Tiếng Anh K12 & IELTS" />
+<meta property="og:description" content="Hệ thống đào tạo tiếng Anh chuẩn K12, Cambridge & IELTS tại Việt Nam. Học liệu miễn phí: ngữ pháp, flashcards 10.000+ từ, thi thử 5 phút." />
+<meta property="og:image" content="https://timbk.io.vn/og-image.png" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Tiếng Anh Cô Dung — Trung Tâm Tiếng Anh K12 & IELTS" />
+<meta name="twitter:description" content="Hệ thống đào tạo tiếng Anh chuẩn K12, Cambridge & IELTS tại Việt Nam. Học liệu miễn phí: ngữ pháp, flashcards 10.000+ từ, thi thử 5 phút." />
+<meta name="twitter:image" content="https://timbk.io.vn/og-image.png" />
+</svelte:head>
+
+
+
 <div class="max-w-7xl mx-auto px-3 sm:px-4 pb-24 lg:pb-10 space-y-10 sm:space-y-14">
 
  <!-- ===== Logged-in compact strip (giữ logic business) ===== -->

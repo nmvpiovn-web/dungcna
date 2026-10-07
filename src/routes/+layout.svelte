@@ -258,7 +258,7 @@
  <meta property="og:type" content="website" />
  <meta property="og:title" content="Tiếng Anh Cô Dung - Hệ Thống Đào Tạo K12 &amp; Lộ Trình Quốc Tế" />
  <meta property="og:description" content="Đào tạo Tiếng Anh chuẩn K12 &amp; Lộ trình quốc tế - Hệ thống học vụ, bài giảng số hóa và kho tri thức Obsidian." />
- <meta property="og:image" content="https://timbk.io.vn/icon.svg" />
+ <meta property="og:image" content="https://timbk.io.vn/og-image.png" />
  <meta name="twitter:card" content="summary" />
  <meta name="twitter:title" content="Tiếng Anh Cô Dung" />
  <meta name="twitter:description" content="Hệ thống đào tạo K12 &amp; Lộ trình quốc tế" />

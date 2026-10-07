@@ -179,6 +179,21 @@
   });
 </script>
 
+<svelte:head>
+<title>Flashcards 10.000+ Từ Vựng Tiếng Anh</title>
+<meta name="description" content="Học từ vựng tiếng Anh qua flashcards: phát âm IPA, ví dụ minh họa, ôn tập ngắt quãng hiệu quả." />
+<meta property="og:title" content="Flashcards 10.000+ Từ Vựng Tiếng Anh" />
+<meta property="og:description" content="Học từ vựng tiếng Anh qua flashcards: phát âm IPA, ví dụ minh họa, ôn tập ngắt quãng hiệu quả." />
+<meta property="og:image" content="https://timbk.io.vn/og-image.png" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Flashcards 10.000+ Từ Vựng Tiếng Anh" />
+<meta name="twitter:description" content="Học từ vựng tiếng Anh qua flashcards: phát âm IPA, ví dụ minh họa, ôn tập ngắt quãng hiệu quả." />
+<meta name="twitter:image" content="https://timbk.io.vn/og-image.png" />
+</svelte:head>
+
+
+
 <div class="flashcards-page">
   <!-- Header Controls -->
   <div class="page-top">
