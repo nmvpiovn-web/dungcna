@@ -251,22 +251,58 @@
 </script>
 
 <svelte:head>
+ {#if $page.data?.seo?.title}
+ <title>{$page.data.seo.title}</title>
+ <meta name="description" content={$page.data.seo.description} />
+ <meta property="og:title" content={$page.data.seo.title} />
+ <meta property="og:description" content={$page.data.seo.description} />
+ <meta name="twitter:title" content={$page.data.seo.title} />
+ <meta name="twitter:description" content={$page.data.seo.description} />
+ {:else}
  <title>Tiếng Anh Cô Dung - Hệ Thống Đào Tạo K12 &amp; Lộ Trình Quốc Tế</title>
  <meta name="description" content="Hệ thống đào tạo tiếng Anh chuẩn K12 và lộ trình quốc tế Cambridge, IELTS cùng học liệu Obsidian Second Brain và phòng thi số hóa." />
+ <meta property="og:title" content="Tiếng Anh Cô Dung - Hệ Thống Đào Tạo K12 & Lộ Trình Quốc Tế" />
+ <meta property="og:description" content="Đào tạo Tiếng Anh chuẩn K12 & Lộ trình quốc tế - Hệ thống học vụ, bài giảng số hóa và kho tri thức Obsidian." />
+ <meta name="twitter:title" content="Tiếng Anh Cô Dung" />
+ <meta name="twitter:description" content="Hệ thống đào tạo K12 & Lộ trình quốc tế" />
+ {/if}
  <link rel="canonical" href={`https://timbk.io.vn${$page.url.pathname}`} />
  <meta property="og:url" content={`https://timbk.io.vn${$page.url.pathname}`} />
  <meta property="og:type" content="website" />
- <meta property="og:title" content="Tiếng Anh Cô Dung - Hệ Thống Đào Tạo K12 &amp; Lộ Trình Quốc Tế" />
- <meta property="og:description" content="Đào tạo Tiếng Anh chuẩn K12 &amp; Lộ trình quốc tế - Hệ thống học vụ, bài giảng số hóa và kho tri thức Obsidian." />
+ <meta property="og:site_name" content="Tiếng Anh Cô Dung" />
+ <meta property="og:locale" content="vi_VN" />
  <meta property="og:image" content="https://timbk.io.vn/og-image.png" />
- <meta name="twitter:card" content="summary" />
- <meta name="twitter:title" content="Tiếng Anh Cô Dung" />
- <meta name="twitter:description" content="Hệ thống đào tạo K12 &amp; Lộ trình quốc tế" />
+ <meta property="og:image:width" content="1200" />
+ <meta property="og:image:height" content="630" />
+ <meta property="og:image:alt" content="Tiếng Anh Cô Dung — Trung Tâm Tiếng Anh K12 & IELTS" />
+ <meta name="twitter:card" content="summary_large_image" />
+ <meta name="twitter:image" content="https://timbk.io.vn/og-image.png" />
  {#if $page.url.pathname.startsWith('/cpanel') || $page.url.pathname.startsWith('/admin') || $page.url.pathname.startsWith('/second-brain')}
  <meta name="robots" content="noindex, nofollow" />
  {:else}
  <meta name="robots" content="index, follow" />
  {/if}
+ {@html `<script type="application/ld+json">${JSON.stringify({
+ "@context": "https://schema.org",
+ "@graph": [
+ {
+ "@type": "EducationalOrganization",
+ "@id": "https://timbk.io.vn/#org",
+ "name": "Tiếng Anh Cô Dung",
+ "url": "https://timbk.io.vn",
+ "logo": "https://timbk.io.vn/og-image.png",
+ "description": "Hệ thống đào tạo tiếng Anh chuẩn K12 và lộ trình quốc tế Cambridge, IELTS tại Việt Nam."
+ },
+ {
+ "@type": "WebSite",
+ "@id": "https://timbk.io.vn/#website",
+ "url": "https://timbk.io.vn",
+ "name": "Tiếng Anh Cô Dung",
+ "publisher": { "@id": "https://timbk.io.vn/#org" },
+ "inLanguage": "vi-VN"
+ }
+ ]
+})}</script>`}
 </svelte:head>
 
 <!-- Global Click Backdrop for Dropdowns -->

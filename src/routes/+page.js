@@ -2,7 +2,6 @@ import { getCurricula, getExams, getAllEvaluations } from '$lib/unifiedStore';
 import { getStaticStats, getStaticUnits, getStaticWords } from '$lib/staticDb';
 
 export const prerender = false;
-export const ssr = false;
 
 export async function load({ fetch }) {
   const stats = getStaticStats();
@@ -30,6 +29,7 @@ export async function load({ fetch }) {
   }
 
   return {
+    seo: {"title": "Tiếng Anh Cô Dung — Trung Tâm Tiếng Anh K12 & IELTS", "description": "Hệ thống đào tạo tiếng Anh chuẩn K12, Cambridge & IELTS tại Việt Nam. Học liệu miễn phí: ngữ pháp, flashcards 10.000+ từ, thi thử 5 phút."},
     curricula: getCurricula(),
     exams: getExams(),
     evaluations: getAllEvaluations(),

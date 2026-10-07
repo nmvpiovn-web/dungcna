@@ -206,19 +206,6 @@
   }
 </script>
 
-<svelte:head>
-<title>Ngân Hàng Đề Thi & Quiz Tiếng Anh</title>
-<meta name="description" content="Luyện quiz tiếng Anh theo chủ điểm: ngữ pháp, từ vựng, đọc hiểu. Có đáp án và giải thích chi tiết." />
-<meta property="og:title" content="Ngân Hàng Đề Thi & Quiz Tiếng Anh" />
-<meta property="og:description" content="Luyện quiz tiếng Anh theo chủ điểm: ngữ pháp, từ vựng, đọc hiểu. Có đáp án và giải thích chi tiết." />
-<meta property="og:image" content="https://timbk.io.vn/og-image.png" />
-<meta property="og:type" content="website" />
-<meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content="Ngân Hàng Đề Thi & Quiz Tiếng Anh" />
-<meta name="twitter:description" content="Luyện quiz tiếng Anh theo chủ điểm: ngữ pháp, từ vựng, đọc hiểu. Có đáp án và giải thích chi tiết." />
-<meta name="twitter:image" content="https://timbk.io.vn/og-image.png" />
-</svelte:head>
-
 
 
 <svelte:window onkeydown={handleKeydown} />

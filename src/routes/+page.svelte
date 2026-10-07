@@ -320,19 +320,21 @@
  a: 'Học phí tính theo tháng, từ 1.200.000đ/tháng tùy lớp. Đóng theo học kỳ hoặc năm được giảm thêm, xem chi tiết tại trang Bảng giá. Ưu đãi khai giảng: giảm 15–20% + tặng bộ đề PDF.'
  }
  ];
+
+ // JSON-LD FAQPage for rich snippets (uses same content as FaqAccordion)
+ const faqJsonLd = {
+ "@context": "https://schema.org",
+ "@type": "FAQPage",
+ "mainEntity": faqItems.map(f => ({
+ "@type": "Question",
+ "name": f.q,
+ "acceptedAnswer": { "@type": "Answer", "text": f.a }
+ }))
+ };
 </script>
 
 <svelte:head>
-<title>Tiếng Anh Cô Dung — Trung Tâm Tiếng Anh K12 & IELTS</title>
-<meta name="description" content="Hệ thống đào tạo tiếng Anh chuẩn K12, Cambridge & IELTS tại Việt Nam. Học liệu miễn phí: ngữ pháp, flashcards 10.000+ từ, thi thử 5 phút." />
-<meta property="og:title" content="Tiếng Anh Cô Dung — Trung Tâm Tiếng Anh K12 & IELTS" />
-<meta property="og:description" content="Hệ thống đào tạo tiếng Anh chuẩn K12, Cambridge & IELTS tại Việt Nam. Học liệu miễn phí: ngữ pháp, flashcards 10.000+ từ, thi thử 5 phút." />
-<meta property="og:image" content="https://timbk.io.vn/og-image.png" />
-<meta property="og:type" content="website" />
-<meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content="Tiếng Anh Cô Dung — Trung Tâm Tiếng Anh K12 & IELTS" />
-<meta name="twitter:description" content="Hệ thống đào tạo tiếng Anh chuẩn K12, Cambridge & IELTS tại Việt Nam. Học liệu miễn phí: ngữ pháp, flashcards 10.000+ từ, thi thử 5 phút." />
-<meta name="twitter:image" content="https://timbk.io.vn/og-image.png" />
+ {@html `<script type="application/ld+json">${JSON.stringify(faqJsonLd)}</script>`}
 </svelte:head>
 
 

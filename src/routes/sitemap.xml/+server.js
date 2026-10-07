@@ -7,19 +7,19 @@ const BASE_URL = 'https://timbk.io.vn';
 const LASTMOD = '2026-10-07';
 const publicRoutes = [
   { path: '', lastmod: LASTMOD },
-  { path: '/courses', lastmod: LASTMOD },
-  { path: '/grammar', lastmod: LASTMOD },
-  { path: '/dictionary', lastmod: LASTMOD },
-  { path: '/flashcards', lastmod: LASTMOD },
-  { path: '/games', lastmod: LASTMOD },
-  { path: '/quiz', lastmod: LASTMOD },
-  { path: '/exam', lastmod: LASTMOD },
-  { path: '/pedagogy', lastmod: LASTMOD },
-  { path: '/recruitment', lastmod: LASTMOD },
-  { path: '/bang-gia', lastmod: LASTMOD },
-  { path: '/hall-of-fame', lastmod: LASTMOD },
-  { path: '/truong-hoc', lastmod: LASTMOD },
-  { path: '/tools', lastmod: LASTMOD }
+  { path: '/courses/', lastmod: LASTMOD },
+  { path: '/grammar/', lastmod: LASTMOD },
+  { path: '/dictionary/', lastmod: LASTMOD },
+  { path: '/flashcards/', lastmod: LASTMOD },
+  { path: '/games/', lastmod: LASTMOD },
+  { path: '/quiz/', lastmod: LASTMOD },
+  { path: '/exam/', lastmod: LASTMOD },
+  { path: '/pedagogy/', lastmod: LASTMOD },
+  { path: '/recruitment/', lastmod: LASTMOD },
+  { path: '/bang-gia/', lastmod: LASTMOD },
+  { path: '/hall-of-fame/', lastmod: LASTMOD },
+  { path: '/truong-hoc/', lastmod: LASTMOD },
+  { path: '/tools/', lastmod: LASTMOD }
 ];
 
 export async function GET() {

@@ -10,7 +10,6 @@ Disallow: /second-brain
 Disallow: /api/
 Disallow: /quiz-menu/
 Disallow: /drive/
-Disallow: /tools/
 Disallow: /offline
 
 Sitemap: https://timbk.io.vn/sitemap.xml

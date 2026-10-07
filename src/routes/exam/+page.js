@@ -1,5 +1,4 @@
 export const prerender = false;
-export const ssr = false;
 
 // D1-only: tat ca data lay tu API (khong con JSON static)
 export async function load({ fetch }) {
@@ -13,6 +12,7 @@ export async function load({ fetch }) {
   const allQuestions = questionsRes.data || [];
 
   return {
+    seo: {"title": "Thi Thử Tiếng Anh 5 Phút Miễn Phí — Biết Ngay Trình Độ", "description": "Làm bài thi thử tiếng Anh 5 phút, chấm điểm tự động, đánh giá trình độ CEFR A1–C1 miễn phí."},
     exams: examsRes.exams || [],
     curricula: [],
     defaultQuestions: allQuestions.slice(0, 15),

@@ -6,6 +6,7 @@ export const prerender = false;
 
 export async function load() {
   return {
+    seo: {"title": "Flashcards 10.000+ Từ Vựng Tiếng Anh", "description": "Học từ vựng tiếng Anh qua flashcards: phát âm IPA, ví dụ minh họa, ôn tập ngắt quãng hiệu quả."},
     words: getStaticWords(),
     units: getStaticUnits(),
     source: 'static'
