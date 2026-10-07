@@ -24,12 +24,6 @@
  ];
 </script>
 
-<svelte:head>
- <title>Hall of Fame - Tiếng Anh Cô Dung (timbk.io.vn)</title>
- <meta name="description" content="Bảng vàng vinh danh: huy hiệu CEFR, streak ngày học và cam kết chương trình tại Tiếng Anh Cô Dung." />
- <link rel="canonical" href="https://timbk.io.vn/hall-of-fame" />
-</svelte:head>
-
 <div class="max-w-6xl mx-auto px-3 sm:px-4 py-6 sm:py-8 pb-24 lg:pb-10 space-y-10">
  <SectionHeading
  eyebrow="🏆 Hall of Fame"

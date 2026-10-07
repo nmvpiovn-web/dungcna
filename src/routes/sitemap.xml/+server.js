@@ -6,7 +6,7 @@ const BASE_URL = 'https://timbk.io.vn';
 // lastmod: use deploy date; update when content changes significantly
 const LASTMOD = '2026-10-07';
 const publicRoutes = [
-  { path: '', lastmod: LASTMOD },
+  { path: '/', lastmod: LASTMOD },
   { path: '/courses/', lastmod: LASTMOD },
   { path: '/grammar/', lastmod: LASTMOD },
   { path: '/dictionary/', lastmod: LASTMOD },

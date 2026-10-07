@@ -67,12 +67,6 @@
  ];
 </script>
 
-<svelte:head>
- <title>Bảng Giá Học Phí - Tiếng Anh Cô Dung (timbk.io.vn)</title>
- <meta name="description" content="Học phí minh bạch các lớp tiếng Anh THCS và IELTS Foundation tại Tiếng Anh Cô Dung. Ưu đãi khai giảng, tích Sao trừ học phí." />
- <link rel="canonical" href="https://timbk.io.vn/bang-gia" />
-</svelte:head>
-
 <div class="max-w-6xl mx-auto px-3 sm:px-4 py-6 sm:py-8 pb-24 lg:pb-10 space-y-8">
  <SectionHeading
  eyebrow="Học phí minh bạch"

@@ -1,8 +1,3 @@
-<svelte:head>
- <title>Tuyển Dụng Giáo Viên Tiếng Anh • Tiếng Anh Cô Dung</title>
- <meta name="description" content="Cổng thông tin tuyển dụng giáo viên cơ hữu và thời vụ dạy thay tại Tiếng Anh Cô Dung Thủ Đức." />
-</svelte:head>
-
 <script>
  import { onMount, onDestroy } from 'svelte';
  import { playAudioFeedback } from '$lib/speech';

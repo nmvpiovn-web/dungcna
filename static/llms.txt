@@ -4,20 +4,27 @@
 > Đối tượng: phụ huynh & học sinh tiểu học–THPT tại Việt Nam.
 
 ## Khóa học
-- [Tiểu học Cambridge Starters/Movers/Flyers](https://timbk.io.vn/courses)
-- [THCS Global Success](https://timbk.io.vn/courses)
-- [IELTS Foundation & Nâng cao](https://timbk.io.vn/courses)
+- [Tiểu học Cambridge Starters/Movers/Flyers](https://timbk.io.vn/courses/)
+- [THCS Global Success](https://timbk.io.vn/courses/)
+- [IELTS Foundation & Nâng cao](https://timbk.io.vn/courses/)
 
 ## Học liệu miễn phí
-- [Ngữ pháp tiếng Anh toàn diện](https://timbk.io.vn/grammar)
-- [Từ điển & phát âm IPA](https://timbk.io.vn/dictionary)
-- [Flashcards 10.000+ từ vựng](https://timbk.io.vn/flashcards)
-- [Thi thử 5 phút — biết ngay trình độ CEFR](https://timbk.io.vn/exam)
-- [Ngân hàng đề thi & quiz](https://timbk.io.vn/quiz)
-- [Trò chơi học tiếng Anh](https://timbk.io.vn/games)
+- [Ngữ pháp tiếng Anh toàn diện](https://timbk.io.vn/grammar/)
+- [Từ điển & phát âm IPA](https://timbk.io.vn/dictionary/)
+- [Flashcards 10.000+ từ vựng](https://timbk.io.vn/flashcards/)
+- [Thi thử 5 phút — biết ngay trình độ CEFR](https://timbk.io.vn/exam/)
+- [Ngân hàng đề thi & quiz](https://timbk.io.vn/quiz/)
+- [Trò chơi học tiếng Anh](https://timbk.io.vn/games/)
+- [Công cụ học tiếng Anh](https://timbk.io.vn/tools/)
+
+## Về chúng tôi
+- [Phương pháp giảng dạy](https://timbk.io.vn/pedagogy/)
+- [Bảng vàng thành tích](https://timbk.io.vn/hall-of-fame/)
+- [Tuyển dụng](https://timbk.io.vn/recruitment/)
+- [Dành cho trường học](https://timbk.io.vn/truong-hoc/)
 
 ## Bảng giá
-- [Học phí minh bạch](https://timbk.io.vn/bang-gia)
+- [Học phí minh bạch](https://timbk.io.vn/bang-gia/)
 
 ## Liên hệ & Tuyển sinh
-- Website: https://timbk.io.vn
+- Website: https://timbk.io.vn/

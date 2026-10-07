@@ -1,16 +1,15 @@
 # Robots.txt for Tieng Anh Co Dung Academy (https://timbk.io.vn)
 
 User-agent: *
-Disallow: /admin
-Disallow: /admincp
+Disallow: /admin/
+Disallow: /admincp/
 Disallow: /cpanel/
-Disallow: /schedule
-Disallow: /evaluations
-Disallow: /second-brain
+Disallow: /schedule/
+Disallow: /evaluations/
+Disallow: /second-brain/
 Disallow: /api/
 Disallow: /quiz-menu/
 Disallow: /drive/
-Disallow: /offline
+Disallow: /offline/
 
 Sitemap: https://timbk.io.vn/sitemap.xml
-# llms.txt: https://timbk.io.vn/llms.txt

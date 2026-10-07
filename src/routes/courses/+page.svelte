@@ -48,12 +48,6 @@
   ];
 </script>
 
-<svelte:head>
-  <title>Khóa Học Tiếng Anh - Tiếng Anh Cô Dung (timbk.io.vn)</title>
-  <meta name="description" content="Chương trình đào tạo Tiếng Anh K12 chuẩn Bộ GD&ĐT 2025 và IELTS Foundation tại Tiếng Anh Cô Dung. Học vụ số minh bạch, cam kết tiến bộ." />
-  <link rel="canonical" href="https://timbk.io.vn/courses" />
-</svelte:head>
-
 <div class="max-w-6xl mx-auto px-3 sm:px-4 py-6 sm:py-8 pb-24 lg:pb-10 space-y-8">
   <SectionHeading
     eyebrow="Hệ Thống Đào Tạo K12 Chuẩn Bộ GD&ĐT"

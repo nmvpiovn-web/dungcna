@@ -1,8 +1,3 @@
-<svelte:head>
- <title>Ngân Hàng Từ Vựng Sư Phạm &amp; Stealth Pronunciation Engine • Tiếng Anh Cô Dung</title>
- <meta name="description" content="Tra cứu từ vựng chuyên sâu, phân tích ngữ âm IPA, cấu trúc ngữ pháp, luyện phát âm ghi âm đối chiếu rubric và cơ chế giãn cách Spaced Repetition." />
-</svelte:head>
-
 <script>
  import { onMount, onDestroy } from 'svelte';
  import { speakWord, playAudioFeedback } from '$lib/speech.js';

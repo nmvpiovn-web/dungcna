@@ -472,11 +472,6 @@
   }
 </script>
 
-<svelte:head>
-  <title>Quiz Menu | TESOL Learning</title>
-  <meta name="description" content="Tạo, quản lý và làm quiz tiếng Anh trên mọi thiết bị." />
-</svelte:head>
-
 <main class="quiz-page">
   <section class="quiz-hero">
     <div>

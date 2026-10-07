@@ -2,11 +2,23 @@ export const prerender = false;
 
 // D1-only: tat ca data lay tu API (khong con JSON static)
 export async function load({ fetch }) {
+  const safeJson = async (url) => {
+    try {
+      const r = await fetch(url);
+      if (!r.ok) return {};
+      const text = await r.text();
+      if (!text) return {};
+      return JSON.parse(text);
+    } catch {
+      return {};
+    }
+  };
+
   const [examsRes, questionsRes, studentsRes, scheduleRes] = await Promise.all([
-    fetch('/api/exams').then(r => r.json()).catch(() => ({})),
-    fetch('/api/questions?limit=200').then(r => r.json()).catch(() => ({})),
-    fetch('/api/students').then(r => r.json()).catch(() => ({})),
-    fetch('/api/schedule').then(r => r.json()).catch(() => ({}))
+    safeJson('/api/exams'),
+    safeJson('/api/questions?limit=200'),
+    safeJson('/api/students'),
+    safeJson('/api/schedule')
   ]);
 
   const allQuestions = questionsRes.data || [];

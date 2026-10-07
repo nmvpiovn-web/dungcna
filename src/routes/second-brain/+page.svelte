@@ -404,12 +404,6 @@
  }
 </script>
 
-<svelte:head>
- <title>Second Brain Tri Thức - Tiếng Anh Cô Dung (Obsidian Knowledge Vault)</title>
- <meta name="description" content="Lớp tri thức thứ hai (Second Brain) chuẩn hóa 12 năm GDPT và CEFR quốc tế, liên kết đồ thị WikiLinks đa chiều." />
- <meta name="robots" content="noindex, nofollow" />
-</svelte:head>
-
 <div class="min-h-screen bg-slate-50 font-sans text-slate-800 flex flex-col">
  <!-- Top Banner / Header -->
  <header class="bg-gradient-to-r from-slate-900 via-teal-950 to-slate-950 text-white border-b border-teal-500/20 px-4 py-4 sm:px-6 shadow-md">

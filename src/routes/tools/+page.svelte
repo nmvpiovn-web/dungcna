@@ -65,12 +65,6 @@
  ];
 </script>
 
-<svelte:head>
- <title>Bộ Công Cụ Học Tập &amp; Lộ Trình Đa Giác Quan - Tiếng Anh Cô Dung</title>
- <meta name="description" content="Trung tâm công cụ học tập tiếng Anh: Từ điển IPA Cambridge, Flashcards 3D, Game Hub phản xạ từ vựng, Sơ đồ ngữ pháp Mindmap và Phòng thi bấm giờ trực tuyến." />
- <link rel="canonical" href="https://timbk.io.vn/tools" />
-</svelte:head>
-
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
  <!-- Hero Banner -->
  <div class="rounded-3xl bg-gradient-to-br from-cx-900 via-indigo-900 to-slate-950 text-white p-8 sm:p-12 shadow-2xl relative overflow-hidden">

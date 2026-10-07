@@ -277,7 +277,7 @@
  <meta property="og:image:alt" content="Tiếng Anh Cô Dung — Trung Tâm Tiếng Anh K12 & IELTS" />
  <meta name="twitter:card" content="summary_large_image" />
  <meta name="twitter:image" content="https://timbk.io.vn/og-image.png" />
- {#if $page.url.pathname.startsWith('/cpanel') || $page.url.pathname.startsWith('/admin') || $page.url.pathname.startsWith('/second-brain')}
+ {#if $page.url.pathname.startsWith('/cpanel') || $page.url.pathname.startsWith('/admin') || $page.url.pathname.startsWith('/second-brain') || $page.url.pathname.startsWith('/schedule') || $page.url.pathname.startsWith('/evaluations')}
  <meta name="robots" content="noindex, nofollow" />
  {:else}
  <meta name="robots" content="index, follow" />

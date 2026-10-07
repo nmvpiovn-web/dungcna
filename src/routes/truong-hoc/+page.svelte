@@ -31,12 +31,6 @@
  ];
 </script>
 
-<svelte:head>
- <title>Trường Học - Tiếng Anh Cô Dung (timbk.io.vn)</title>
- <meta name="description" content="Giới thiệu hệ thống đào tạo tiếng Anh K12 của cô Dung: phương pháp, lộ trình CEFR, lớp nhỏ 1:1/1:3 và học phí minh bạch." />
- <link rel="canonical" href="https://timbk.io.vn/truong-hoc" />
-</svelte:head>
-
 <div class="max-w-6xl mx-auto px-3 sm:px-4 py-6 sm:py-8 pb-24 lg:pb-10 space-y-10">
  <!-- Hero -->
  <section class="rounded-3xl bg-brand-600 text-white p-6 sm:p-10 shadow-sm relative overflow-hidden">
