@@ -6,27 +6,33 @@ export const prerender = false;
 
 async function ensureTuitionBillColumns(db) {
   // Prod D1 drift: migration 0004 ALTERs were never fully applied (e.g. approved_by
-  // missing -> 500 on bill create). Idempotent: ignore duplicate-column errors.
+  // missing -> 500 on bill create). PRAGMA once, ALTER only missing columns.
   if (!db) return;
   const cols = [
-    'version INTEGER DEFAULT 1', 'age INTEGER DEFAULT 13',
-    "grade_level TEXT DEFAULT ''", 'program_name TEXT DEFAULT \'Tiếng Anh K12\'',
-    'billing_period TEXT', 'base_tuition_vnd REAL DEFAULT 0',
-    'attendance_total_sessions INTEGER DEFAULT 12', 'attendance_attended_sessions INTEGER DEFAULT 12',
-    'stars_available INTEGER DEFAULT 0', 'stars_deducted INTEGER DEFAULT 0',
-    'discount_vnd REAL DEFAULT 0', 'final_amount_vnd REAL DEFAULT 0',
-    'vietqr_url TEXT', 'bank_name TEXT', 'bank_account TEXT', 'account_holder TEXT',
-    "growth_status TEXT DEFAULT 'normal'", 'growth_percentage REAL DEFAULT 0', 'growth_notes TEXT',
-    'eval_listening REAL DEFAULT 8.0', 'eval_reading REAL DEFAULT 8.0', 'eval_writing REAL DEFAULT 8.0',
-    'eval_speaking REAL DEFAULT 8.0', 'eval_grammar REAL DEFAULT 8.0',
-    'test_score_15m REAL DEFAULT 8.0', 'test_score_45m REAL DEFAULT 8.5',
-    'template_id INTEGER DEFAULT 1', 'superadmin_notes TEXT', 'approved_by TEXT',
-    'parent_name TEXT', 'parent_phone TEXT', 'parent_zalo_id TEXT',
-    'month_label TEXT', 'amount REAL DEFAULT 0', 'total_amount REAL DEFAULT 0'
+    ['version', 'INTEGER DEFAULT 1'], ['age', 'INTEGER DEFAULT 13'],
+    ['grade_level', "TEXT DEFAULT ''"], ['program_name', "TEXT DEFAULT 'Tiếng Anh K12'"],
+    ['billing_period', 'TEXT'], ['base_tuition_vnd', 'REAL DEFAULT 0'],
+    ['attendance_total_sessions', 'INTEGER DEFAULT 12'], ['attendance_attended_sessions', 'INTEGER DEFAULT 12'],
+    ['stars_available', 'INTEGER DEFAULT 0'], ['stars_deducted', 'INTEGER DEFAULT 0'],
+    ['discount_vnd', 'REAL DEFAULT 0'], ['final_amount_vnd', 'REAL DEFAULT 0'],
+    ['vietqr_url', 'TEXT'], ['bank_name', 'TEXT'], ['bank_account', 'TEXT'], ['account_holder', 'TEXT'],
+    ['growth_status', "TEXT DEFAULT 'normal'"], ['growth_percentage', 'REAL DEFAULT 0'], ['growth_notes', 'TEXT'],
+    ['eval_listening', 'REAL DEFAULT 8.0'], ['eval_reading', 'REAL DEFAULT 8.0'], ['eval_writing', 'REAL DEFAULT 8.0'],
+    ['eval_speaking', 'REAL DEFAULT 8.0'], ['eval_grammar', 'REAL DEFAULT 8.0'],
+    ['test_score_15m', 'REAL DEFAULT 8.0'], ['test_score_45m', 'REAL DEFAULT 8.5'],
+    ['template_id', 'INTEGER DEFAULT 1'], ['superadmin_notes', 'TEXT'], ['approved_by', 'TEXT'],
+    ['parent_name', 'TEXT'], ['parent_phone', 'TEXT'], ['parent_zalo_id', 'TEXT'],
+    ['month_label', 'TEXT'], ['amount', 'REAL DEFAULT 0'], ['total_amount', 'REAL DEFAULT 0']
   ];
-  for (const c of cols) {
-    try { await db.prepare(`ALTER TABLE tuition_bills ADD COLUMN ${c}`).run(); }
-    catch (e) { if (!/duplicate column name/i.test(e?.message || '')) throw e; }
+  let existing = new Set();
+  try {
+    const info = await db.prepare('PRAGMA table_info(tuition_bills)').all();
+    existing = new Set((info?.results || []).map((r) => r.name));
+  } catch { /* fall through: try ALTERs individually */ }
+  for (const [name, def] of cols) {
+    if (existing.has(name)) continue;
+    try { await db.prepare(`ALTER TABLE tuition_bills ADD COLUMN ${name} ${def}`).run(); }
+    catch (e) { if (!/duplicate column name/i.test((e?.message || '') + ' ' + (e?.cause?.message || ''))) throw e; }
   }
 }
 

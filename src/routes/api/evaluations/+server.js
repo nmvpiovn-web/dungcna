@@ -43,17 +43,23 @@ export async function POST({ request, platform }) {
     }
     const localMock = platform?.env?.ENABLE_LOCAL_MOCK === 'true' || (typeof process !== 'undefined' && process.env?.ENABLE_LOCAL_MOCK === 'true');
     if (!platform?.env?.DB && !localMock) return json({ success: false, error: 'DatabaseUnavailable: Thiếu D1 binding.' }, { status: 503 });
-    // Prod D1 drift: ensure all INSERT columns exist (idempotent).
+    // Prod D1 drift: ensure all INSERT columns exist. PRAGMA once, ALTER only missing.
     if (platform?.env?.DB) {
-      const cols = ['teacher_id TEXT', 'teacher_name TEXT', 'grade_level TEXT',
-        'listening_score REAL DEFAULT 0', 'reading_score REAL DEFAULT 0', 'writing_score REAL DEFAULT 0',
-        'speaking_score REAL DEFAULT 0', 'grammar_vocab_score REAL DEFAULT 0', 'overall_score REAL DEFAULT 0',
-        'primary_aptitude TEXT', 'secondary_aptitude TEXT', 'strengths TEXT', 'weaknesses TEXT',
-        'teacher_feedback TEXT', 'action_plan TEXT', 'recommended_materials TEXT',
-        'parent_name TEXT', 'parent_phone TEXT', 'parent_zalo_id TEXT'];
-      for (const c of cols) {
-        try { await platform.env.DB.prepare(`ALTER TABLE student_evaluations ADD COLUMN ${c}`).run(); }
-        catch (e) { if (!/duplicate column name/i.test(e?.message || '')) throw e; }
+      const cols = [['teacher_id', 'TEXT'], ['teacher_name', 'TEXT'], ['grade_level', 'TEXT'],
+        ['listening_score', 'REAL DEFAULT 0'], ['reading_score', 'REAL DEFAULT 0'], ['writing_score', 'REAL DEFAULT 0'],
+        ['speaking_score', 'REAL DEFAULT 0'], ['grammar_vocab_score', 'REAL DEFAULT 0'], ['overall_score', 'REAL DEFAULT 0'],
+        ['primary_aptitude', 'TEXT'], ['secondary_aptitude', 'TEXT'], ['strengths', 'TEXT'], ['weaknesses', 'TEXT'],
+        ['teacher_feedback', 'TEXT'], ['action_plan', 'TEXT'], ['recommended_materials', 'TEXT'],
+        ['parent_name', 'TEXT'], ['parent_phone', 'TEXT'], ['parent_zalo_id', 'TEXT']];
+      let existing = new Set();
+      try {
+        const info = await platform.env.DB.prepare('PRAGMA table_info(student_evaluations)').all();
+        existing = new Set((info?.results || []).map((r) => r.name));
+      } catch { /* fall through */ }
+      for (const [name, def] of cols) {
+        if (existing.has(name)) continue;
+        try { await platform.env.DB.prepare(`ALTER TABLE student_evaluations ADD COLUMN ${name} ${def}`).run(); }
+        catch (e) { if (!/duplicate column name/i.test((e?.message || '') + ' ' + (e?.cause?.message || ''))) throw e; }
       }
     }
     const payloadToSave = {
