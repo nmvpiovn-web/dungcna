@@ -351,8 +351,8 @@
 </script>
 
 <div class="space-y-6">
- <!-- Top Welcome Banner (Academic Navy / Slate) -->
- <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 text-white shadow-sm relative overflow-hidden">
+ <!-- Top Welcome Banner (Emerald) -->
+ <div class="bg-emerald-900 border border-emerald-800 rounded-xl p-6 text-white shadow-sm relative overflow-hidden">
  <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
  <div>
  <div class="flex items-center gap-2 text-cx-400 text-xs font-semibold uppercase tracking-wider mb-1">
@@ -766,7 +766,7 @@
  <div class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
  <div class="bg-white text-slate-900 rounded-xl max-w-4xl w-full border border-slate-300 shadow-2xl overflow-hidden flex flex-col my-auto">
  <!-- Toolbar (Non-printable) -->
- <div class="p-4 bg-slate-900 text-white flex items-center justify-between print:hidden">
+ <div class="p-4 bg-emerald-900 text-white flex items-center justify-between print:hidden">
  <div class="flex items-center gap-2">
  <span class="text-xl">🖨️</span>
  <div>

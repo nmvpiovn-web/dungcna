@@ -256,8 +256,8 @@
 </script>
 
 <div class="space-y-6 max-w-full overflow-x-hidden">
- <!-- Teacher Banner (Academic Ledger Style: Firm Navy, 8px radius, Restrained Borders) -->
- <header class="bg-slate-900 border border-slate-800 rounded-lg p-4 sm:p-6 text-slate-100 shadow-sm relative overflow-hidden min-w-0">
+ <!-- Teacher Banner (Academic Ledger Style: Emerald, 8px radius, Restrained Borders) -->
+ <header class="bg-emerald-900 border border-emerald-800 rounded-lg p-4 sm:p-6 text-slate-100 shadow-sm relative overflow-hidden min-w-0">
  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
  <div class="space-y-2 min-w-0">
  <div class="flex items-center gap-2 text-cx-400 text-xs font-semibold uppercase tracking-wider">

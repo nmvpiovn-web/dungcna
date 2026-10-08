@@ -121,8 +121,8 @@
 </script>
 
 <div class="space-y-6 max-w-7xl mx-auto">
- <!-- Parent Header Banner (Academic Ledger Style: Firm Navy, Restrained borders, 390px responsive) -->
- <header class="bg-slate-900 border border-slate-800 rounded-lg p-4 sm:p-6 text-slate-100 shadow-sm relative overflow-hidden">
+ <!-- Parent Header Banner (Academic Ledger Style: Emerald, Restrained borders, 390px responsive) -->
+ <header class="bg-emerald-900 border border-emerald-800 rounded-lg p-4 sm:p-6 text-slate-100 shadow-sm relative overflow-hidden">
  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
  <div class="space-y-2 min-w-0">
  <div class="flex items-center gap-2 text-cx-400 text-xs font-semibold uppercase tracking-wider">
@@ -141,15 +141,15 @@
 
  <!-- Quick Metrics (Academic Ledger: Tabular Numbers, Restrained Borders, Non-overflowing 390px) -->
  <div class="grid grid-cols-3 gap-2 sm:gap-3 w-full md:w-auto min-w-0">
- <div class="bg-slate-800/80 border border-slate-700/60 rounded-md p-2.5 sm:p-3 text-center min-w-0">
+ <div class="bg-emerald-800/80 border border-emerald-700/60 rounded-md p-2.5 sm:p-3 text-center min-w-0">
  <div class="text-lg sm:text-xl font-semibold text-amber-400 tabular-nums truncate">{totalStarsEarned}</div>
  <div class="text-[11px] sm:text-xs text-slate-400 mt-0.5 truncate">Sao Tích Lũy</div>
  </div>
- <div class="bg-slate-800/80 border border-slate-700/60 rounded-md p-2.5 sm:p-3 text-center min-w-0">
+ <div class="bg-emerald-800/80 border border-emerald-700/60 rounded-md p-2.5 sm:p-3 text-center min-w-0">
  <div class="text-lg sm:text-xl font-semibold text-white tabular-nums truncate">{totalGraded}/{assignments.length}</div>
  <div class="text-[11px] sm:text-xs text-slate-400 mt-0.5 truncate">Đã Chấm</div>
  </div>
- <div class="bg-slate-800/80 border border-slate-700/60 rounded-md p-2.5 sm:p-3 text-center min-w-0">
+ <div class="bg-emerald-800/80 border border-emerald-700/60 rounded-md p-2.5 sm:p-3 text-center min-w-0">
  <div class="text-lg sm:text-xl font-semibold text-cx-400 tabular-nums truncate">{avgScore}</div>
  <div class="text-[11px] sm:text-xs text-slate-400 mt-0.5 truncate">Điểm TB</div>
  </div>

@@ -7,7 +7,7 @@
  saveClassSession
  } from '$lib/unifiedStore';
 
- let { isOpen = $bindable(false), session = null, onSaved = () => {} } = $props();
+ let { isOpen = $bindable(false), session = null, preset = null, onSaved = () => {} } = $props();
 
  let currentUser = $state(null);
  let allStudents = $state([]);
@@ -81,7 +81,8 @@
  notify_minutes_before: 10,
  room_notes: 'Phòng VIP 201',
  status: 'active',
- student_ids: allStudents.slice(0, 3).map(s => s.id)
+ student_ids: allStudents.slice(0, 3).map(s => s.id),
+ ...(preset || {})
  };
  }
  }

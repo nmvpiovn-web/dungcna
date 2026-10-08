@@ -41,9 +41,12 @@
  // Filters
  let activeTabFilter = $state('all'); // 'all' | 'my_schedule' | 'primary' | 'secondary' | 'high_school'
  let dayFilter = $state('all'); // 'all' | 1 | 2 | 3 | 4 | 5 | 6 | 0
+ let classFilter = $state('all'); // 'all' | class_id
+ let teacherFilter = $state('all'); // 'all' | teacher_id
  let weekOffset = $state(0);
  let selectedWeekDay = $state(null);
  let toastMsg = $state('');
+ let sessionPreset = $state(null); // preset for quick-add from week grid cell
 
  const dayLabels = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
  function toIsoDate(date) {
@@ -64,11 +67,37 @@
    });
  }
  let calendarWeek = $derived(buildWeek(weekOffset));
- function sessionsForCell(day, time) {
-   return filteredSessions.filter((session) => {
-     const sameDay = session.session_date ? session.session_date === day.iso : Number(session.day_of_week) === day.dayOfWeek;
-     return sameDay && session.start_time === time;
-   });
+
+ // Shift buckets: Sáng / Chiều / Tối (for the 7-day week grid)
+ const SHIFTS = [
+   { id: 'morning', label: '☀️ Sáng', sub: '05:00 – 11:59', defaultStart: '08:00' },
+   { id: 'afternoon', label: '🌤️ Chiều', sub: '12:00 – 17:59', defaultStart: '14:00' },
+   { id: 'evening', label: '🌙 Tối', sub: '18:00 – 23:59', defaultStart: '18:00' }
+ ];
+ function shiftOf(startTime) {
+   if (!startTime) return 'evening';
+   const h = Number(String(startTime).split(':')[0]);
+   if (Number.isNaN(h)) return 'evening';
+   if (h < 12) return 'morning';
+   if (h < 18) return 'afternoon';
+   return 'evening';
+ }
+ function sessionsForShiftCell(day, shiftId) {
+   return filteredSessions
+     .filter((session) => {
+       const sameDay = session.session_date ? session.session_date === day.iso : Number(session.day_of_week) === day.dayOfWeek;
+       return sameDay && shiftOf(session.start_time) === shiftId;
+     })
+     .sort((a, b) => String(a.start_time || '').localeCompare(String(b.start_time || '')));
+ }
+ function quickAddSession(day, shift) {
+   sessionPreset = {
+     day_of_week: day.dayOfWeek,
+     day_name: ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'][day.dayOfWeek],
+     start_time: shift.defaultStart,
+     end_time: ''
+   };
+   handleOpenEdit(null);
  }
  function selectCalendarDay(day) {
    selectedWeekDay = day.iso;
@@ -76,6 +105,11 @@
  }
  function shiftWeek(step) {
    weekOffset += step;
+   selectedWeekDay = null;
+   dayFilter = 'all';
+ }
+ function resetWeek() {
+   weekOffset = 0;
    selectedWeekDay = null;
    dayFilter = 'all';
  }
@@ -184,6 +218,14 @@
  list = list.filter(s => Number(s.day_of_week) === Number(dayFilter));
  }
 
+ if (classFilter !== 'all') {
+ list = list.filter(s => s.class_id === classFilter);
+ }
+
+ if (teacherFilter !== 'all') {
+ list = list.filter(s => [s.teacher_id, s.assistant_teacher_id, s.substitute_teacher_id].includes(teacherFilter));
+ }
+
  // Sort by day of week then time
  return [...list].sort((a, b) => {
  const dayA = a.day_of_week === 0 ? 7 : a.day_of_week;
@@ -193,9 +235,30 @@
  });
  });
 
- let calendarTimes = $derived.by(() => {
- const values = filteredSessions.map((session) => session.start_time).filter(Boolean);
- return [...new Set(values)].sort().slice(0, 8);
+ // Distinct classes / teachers for the filter dropdowns
+ let classOptions = $derived.by(() => {
+ const map = new Map();
+ for (const s of sessions) {
+ const id = s.class_id || s.class_name;
+ if (!id) continue;
+ if (!map.has(id)) map.set(id, { id, label: s.class_name || s.class_id });
+ }
+ return [...map.values()].sort((a, b) => a.label.localeCompare(b.label, 'vi'));
+ });
+ let teacherOptions = $derived.by(() => {
+ const map = new Map();
+ for (const s of sessions) {
+ const pairs = [
+ [s.teacher_id, s.teacher_name],
+ [s.assistant_teacher_id, s.assistant_teacher_name],
+ [s.substitute_teacher_id, s.substitute_teacher_name]
+ ];
+ for (const [id, name] of pairs) {
+ if (!id || map.has(id)) continue;
+ map.set(id, { id, label: name || id });
+ }
+ }
+ return [...map.values()].sort((a, b) => a.label.localeCompare(b.label, 'vi'));
  });
 
  // Test schedule reminder notification
@@ -358,7 +421,7 @@
 
  <button
  type="button"
- onclick={() => handleOpenEdit(null)}
+ onclick={() => { sessionPreset = null; handleOpenEdit(null); }}
  class="px-3.5 py-2.5 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md shadow-emerald-600/20 transition-all flex items-center gap-1.5"
  >
  <span>➕ Thêm Buổi Học Mới</span>
@@ -436,50 +499,67 @@
  <section class="rounded-lg bg-white border border-slate-200 shadow-sm overflow-hidden" aria-label="Lịch tuần">
  <div class="px-4 py-3 border-b border-slate-200 flex items-center justify-between gap-3">
  <div>
- <div class="text-xs font-semibold uppercase tracking-wider text-sky-700">Ma trận lịch tuần</div>
+ <div class="text-xs font-semibold uppercase tracking-wider text-emerald-700">Thời khóa biểu tuần — 7 ngày × ca Sáng / Chiều / Tối</div>
  <div class="text-sm font-semibold text-slate-900">
  {calendarWeek[0].date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })} – {calendarWeek[6].date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })}
  </div>
  </div>
  <div class="flex items-center gap-1">
  <button type="button" onclick={() => shiftWeek(-1)} class="w-9 h-9 rounded-md border border-slate-300 text-slate-700 hover:bg-slate-50" aria-label="Tuần trước">‹</button>
+ <button type="button" onclick={resetWeek} class="px-3 h-9 rounded-md border border-slate-300 text-slate-700 hover:bg-slate-50 text-xs font-bold" aria-label="Tuần hiện tại">Hôm nay</button>
  <button type="button" onclick={() => shiftWeek(1)} class="w-9 h-9 rounded-md border border-slate-300 text-slate-700 hover:bg-slate-50" aria-label="Tuần sau">›</button>
  </div>
  </div>
  <div class="overflow-x-auto">
- <div class="min-w-[720px]">
- <div class="grid grid-cols-[72px_repeat(7,minmax(88px,1fr))] border-b border-slate-200 bg-slate-50">
- <div class="p-2 text-[11px] font-semibold text-slate-500">Giờ</div>
+ <div class="min-w-[760px]">
+ <div class="grid grid-cols-[96px_repeat(7,minmax(96px,1fr))] border-b border-slate-200 bg-slate-50">
+ <div class="p-2 text-[11px] font-semibold text-slate-500 self-center">Ca học</div>
  {#each calendarWeek as day}
- <button type="button" onclick={() => selectCalendarDay(day)} class="p-2 border-l border-slate-200 text-center {selectedWeekDay === day.iso ? 'bg-sky-600 text-white' : 'text-slate-700 hover:bg-sky-50'}">
+ <button type="button" onclick={() => selectCalendarDay(day)} class="p-2 border-l border-slate-200 text-center {selectedWeekDay === day.iso ? 'bg-emerald-600 text-white' : 'text-slate-700 hover:bg-emerald-50'}">
  <span class="block text-[11px] font-semibold">{day.label}</span>
  <strong class="block text-sm">{day.date.getDate()}</strong>
  </button>
  {/each}
  </div>
- {#if calendarTimes.length === 0}
- <div class="p-8 text-center text-sm text-slate-500">Chưa có ca học trong bộ lọc hiện tại.</div>
- {:else}
- {#each calendarTimes as time}
- <div class="grid grid-cols-[72px_repeat(7,minmax(88px,1fr))] min-h-20 border-b last:border-b-0 border-slate-100">
- <div class="p-2 text-xs font-semibold text-slate-600 bg-slate-50/70">{time}</div>
+ {#each SHIFTS as shift}
+ <div class="grid grid-cols-[96px_repeat(7,minmax(96px,1fr))] min-h-24 border-b last:border-b-0 border-slate-100">
+ <div class="p-2 bg-slate-50/70">
+ <div class="text-xs font-bold text-slate-800">{shift.label}</div>
+ <div class="text-[10px] text-slate-500">{shift.sub}</div>
+ </div>
  {#each calendarWeek as day}
- {@const cellSessions = sessionsForCell(day, time)}
- <button type="button" onclick={() => selectCalendarDay(day)} class="p-1.5 border-l border-slate-100 text-left hover:bg-sky-50/60">
+ {@const cellSessions = sessionsForShiftCell(day, shift.id)}
+ <div class="p-1.5 border-l border-slate-100 group">
  {#each cellSessions as session}
- <span class="block rounded-md border border-sky-200 bg-sky-50 p-1.5 text-[10px] leading-tight text-sky-900 mb-1">
+ <button
+ type="button"
+ onclick={() => handleOpenEdit(session)}
+ class="block w-full text-left rounded-md border border-emerald-200 bg-emerald-50 p-1.5 text-[10px] leading-tight text-emerald-950 mb-1 hover:bg-emerald-100"
+ title="Sửa buổi học này"
+ >
  <strong class="block line-clamp-2">{session.class_name}</strong>
- <span>{session.start_time}–{session.end_time}</span>
- </span>
- {/each}
+ <span class="font-mono">{session.start_time}{#if session.end_time}–{session.end_time}{/if}</span>
+ {#if session.teacher_name}<span class="block truncate text-emerald-800">👩‍🏫 {session.teacher_name}</span>{/if}
+ {#if session.location}<span class="block truncate text-slate-500">📍 {session.location}</span>{/if}
  </button>
  {/each}
- </div>
- {/each}
+ {#if currentUser && isTeacherOrAdmin(currentUser)}
+ <button
+ type="button"
+ onclick={() => quickAddSession(day, shift)}
+ class="w-full mt-0.5 rounded-md border border-dashed border-slate-300 text-slate-400 hover:text-emerald-700 hover:border-emerald-400 hover:bg-emerald-50/60 text-[11px] font-bold py-1 opacity-0 group-hover:opacity-100 transition-opacity"
+ title="Thêm buổi học ca {shift.label} ngày {day.label} {day.date.getDate()}"
+ >
+ ＋ Thêm
+ </button>
  {/if}
  </div>
+ {/each}
  </div>
- <div class="px-4 py-2 border-t border-slate-200 text-[11px] text-slate-500">Chọn một ngày để lọc danh sách chi tiết bên dưới. Lịch phụ huynh chỉ gồm học sinh đã xác minh liên kết.</div>
+ {/each}
+ </div>
+ </div>
+ <div class="px-4 py-2 border-t border-slate-200 text-[11px] text-slate-500">Bấm vào buổi học để sửa • Bấm ngày trên đầu cột để lọc danh sách chi tiết bên dưới • Lịch phụ huynh chỉ gồm học sinh đã xác minh liên kết.</div>
  </section>
 
  <!-- Filter Ribbon -->
@@ -571,6 +651,43 @@
  >
  CN
  </button>
+ </div>
+
+ <!-- Class & Teacher Filters -->
+ <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 text-xs">
+ <label class="flex items-center gap-2 flex-1">
+ <span class="font-bold text-slate-600 whitespace-nowrap">🏫 Lớp:</span>
+ <select
+ bind:value={classFilter}
+ class="flex-1 bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-slate-800 font-semibold focus:outline-none focus:border-emerald-500"
+ >
+ <option value="all">Tất cả lớp ({classOptions.length})</option>
+ {#each classOptions as c}
+ <option value={c.id}>{c.label}</option>
+ {/each}
+ </select>
+ </label>
+ <label class="flex items-center gap-2 flex-1">
+ <span class="font-bold text-slate-600 whitespace-nowrap">👩‍🏫 Giáo viên:</span>
+ <select
+ bind:value={teacherFilter}
+ class="flex-1 bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-slate-800 font-semibold focus:outline-none focus:border-emerald-500"
+ >
+ <option value="all">Tất cả giáo viên ({teacherOptions.length})</option>
+ {#each teacherOptions as t}
+ <option value={t.id}>{t.label}</option>
+ {/each}
+ </select>
+ </label>
+ {#if classFilter !== 'all' || teacherFilter !== 'all'}
+ <button
+ type="button"
+ onclick={() => { classFilter = 'all'; teacherFilter = 'all'; }}
+ class="px-3 py-1.5 rounded-lg border border-rose-300 text-rose-700 font-bold hover:bg-rose-50 whitespace-nowrap"
+ >
+ ✕ Xóa lọc
+ </button>
+ {/if}
  </div>
  </div>
  </div>
@@ -719,6 +836,7 @@
 <SessionEditModal
  bind:isOpen={showEditModal}
  session={selectedSession}
+ preset={sessionPreset}
  onSaved={loadData}
 />
 

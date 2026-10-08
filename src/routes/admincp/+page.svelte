@@ -8,6 +8,8 @@
  import { currentLang, toggleLanguage, t } from '$lib/i18n';
  import { playAudioFeedback } from '$lib/speech';
  import ThemeStudioPanel from '$lib/components/ThemeStudioPanel.svelte';
+ import QuizMakeForm from '$lib/components/QuizMakeForm.svelte';
+ import AdminUsersPanel from '$lib/components/AdminUsersPanel.svelte';
  import { applyThemeVars, clearLocal } from '$lib/themeStudio.js';
 
  let currentUser = $state(null);
@@ -16,7 +18,7 @@
  let assignments = $state([]);
  let submissions = $state([]);
  let loading = $state(true);
- let activeTab = $state('campuses'); // 'campuses' | 'streams' | 'cross_reminders' | 'storage_audit' | 'theme'
+ let activeTab = $state('campuses'); // 'campuses' | 'streams' | 'cross_reminders' | 'storage_audit' | 'theme' | 'quiz_make' | 'users'
  let selectedCampusFilter = $state('all');
  let lang = $state('vi');
 
@@ -257,6 +259,18 @@
  >
  🎨 Giao Diện &amp; Màu Sắc
  </button>
+ <button 
+ onclick={() => activeTab = 'quiz_make'}
+ class="px-4 py-2 rounded-md text-xs font-bold transition-all {activeTab === 'quiz_make' ? 'bg-rose-600 text-white shadow-sm' : 'text-slate-700 hover:bg-slate-100'}"
+ >
+ 📝 Tạo Quiz
+ </button>
+ <button 
+ onclick={() => activeTab = 'users'}
+ class="px-4 py-2 rounded-md text-xs font-bold transition-all {activeTab === 'users' ? 'bg-rose-600 text-white shadow-sm' : 'text-slate-700 hover:bg-slate-100'}"
+ >
+ 👥 Tài Khoản
+ </button>
  </div>
 
  <!-- Campus Filter Dropdown -->
@@ -488,5 +502,11 @@
  Lưu ý: đổi theme không ảnh hưởng dữ liệu hay tài khoản nào — chỉ đổi màu hiển thị.
  </p>
  </div>
+ <!-- TAB 6: TAO QUIZ -->
+ {:else if activeTab === 'quiz_make'}
+ <QuizMakeForm />
+ <!-- TAB 7: QUAN LY TAI KHOAN -->
+ {:else if activeTab === 'users'}
+ <AdminUsersPanel />
  {/if}
 </div>

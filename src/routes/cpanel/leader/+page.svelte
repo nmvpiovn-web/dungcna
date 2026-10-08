@@ -10,6 +10,8 @@
  import LeaderUserManager from '$lib/components/LeaderUserManager.svelte';
  import LeaderFinance from '$lib/components/LeaderFinance.svelte';
  import LeaderNotifier from '$lib/components/LeaderNotifier.svelte';
+ import TeacherRegisterModal from '$lib/components/TeacherRegisterModal.svelte';
+ import TeacherStaffModal from '$lib/components/TeacherStaffModal.svelte';
 
  let currentUser = $state(null);
  let assignments = $state([]);
@@ -32,6 +34,8 @@
 
  // Interview scheduling modal state
  let showInterviewModal = $state(false);
+ // Teacher registration modal state
+ let showTeacherRegisterModal = $state(false);
  let selectedCandidate = $state(null);
  let interviewTime = $state('');
  let interviewerName = $state('Cô Dung');
@@ -282,6 +286,10 @@
  let salaryType = $state('per_session');
  let isSavingSalary = $state(false);
 
+ // Teacher list & salary edit modal (Tab Giáo Viên & Lương)
+ let showStaffSalaryModal = $state(false);
+ let editingStaffProfile = $state(null);
+
  function syncSelectedTeacherSalary() {
  const selected = knownTeachers.find(t => t.id === payrollTeacherId)?.profile;
  if (!selected) return;
@@ -325,6 +333,52 @@
  } finally {
  isSavingSalary = false;
  }
+ }
+
+ // ---- TAB: Giáo Viên & Lương (danh sách + modal chỉnh lương) ----
+ function fmtVnd(n) {
+ return Number(n || 0).toLocaleString('vi-VN') + 'đ';
+ }
+
+ function salaryTypeLabel(st) {
+ const map = {
+ per_session: 'Theo ca dạy',
+ monthly: 'Lương tháng',
+ monthly_lead: 'Lương tháng Leader',
+ monthly_with_allowance: 'Lương tháng + phụ cấp',
+ hourly_temp: 'Theo giờ/thời vụ'
+ };
+ return map[st] || st || '—';
+ }
+
+ function openStaffSalaryModal(teacherEntry) {
+ editingStaffProfile = teacherEntry?.profile || null;
+ showStaffSalaryModal = true;
+ }
+
+ async function refreshTeacherProfiles() {
+ try {
+ const token = typeof window !== 'undefined' ? localStorage.getItem('tienganh_token') : '';
+ const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+ const res = await fetch('/api/teachers/staff', { headers });
+ const data = await res.json();
+ if (data.success) {
+ knownTeachers = (data.profiles || []).map(profile => ({
+ id: profile.teacher_id,
+ name: `${profile.teacher_name} (@${profile.username})`,
+ profile
+ }));
+ syncSelectedTeacherSalary();
+ }
+ } catch (e) {
+ console.error('Failed to refresh teacher profiles:', e);
+ }
+ }
+
+ async function handleStaffSalarySaved() {
+ showStaffSalaryModal = false;
+ await refreshTeacherProfiles();
+ showMessage('Đã lưu cấu hình lương giáo viên');
  }
 
  async function fetchLeaderPayroll() {
@@ -429,8 +483,8 @@
 </script>
 
 <div class="space-y-6 max-w-full overflow-x-hidden">
- <!-- Leader Banner (Academic Ledger Style: Firm Navy, 8px radius, Restrained Borders) -->
- <header class="bg-slate-900 border border-slate-800 rounded-lg p-4 sm:p-6 text-slate-100 shadow-sm relative overflow-hidden min-w-0">
+ <!-- Leader Banner (Academic Ledger Style: Emerald, 8px radius, Restrained Borders) -->
+ <header class="bg-emerald-900 border border-emerald-800 rounded-lg p-4 sm:p-6 text-slate-100 shadow-sm relative overflow-hidden min-w-0">
  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
  <div class="space-y-2 min-w-0">
  <div class="flex items-center gap-2 text-cx-400 text-xs font-semibold uppercase tracking-wider">
@@ -515,6 +569,15 @@
  class="whitespace-nowrap shrink-0 flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-md text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cx-500 {activeTab === 'payroll' ? 'bg-cx-600 text-white' : 'text-slate-600 hover:bg-slate-100'}"
  >
  <span>Khóa Sổ &amp; Bảng Lương</span>
+ </button>
+ <button
+ onclick={() => activeTab = 'teachers'}
+ class="whitespace-nowrap shrink-0 flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-md text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cx-500 {activeTab === 'teachers' ? 'bg-cx-600 text-white' : 'text-slate-600 hover:bg-slate-100'}"
+ >
+ <span>👩‍🏫 Giáo Viên &amp; Lương</span>
+ {#if knownTeachers.length > 0}
+ <span class="px-1.5 py-0.5 rounded bg-emerald-600 text-white text-[11px] font-bold tabular-nums">{knownTeachers.length}</span>
+ {/if}
  </button>
  <button
  onclick={() => activeTab = 'users'}
@@ -815,13 +878,20 @@
  <!-- TAB 4: RECRUITMENT PIPELINE -->
  {:else if activeTab === 'recruitment'}
  <div class="space-y-4">
- <div class="flex items-center justify-between">
+ <div class="flex items-center justify-between gap-3">
  <div>
  <h2 class="text-base font-semibold text-slate-900">Quy Trình Tuyển Dụng Giáo Viên Cơ Hữu &amp; Thời Vụ</h2>
  <p class="text-xs text-slate-500 mt-0.5">
  Ứng viên nộp hồ sơ trực tuyến, qua vòng sàng lọc hồ sơ, xếp lịch phỏng vấn và dạy thử trước khi cấp quyền giáo viên.
  </p>
  </div>
+ <button
+ type="button"
+ onclick={() => showTeacherRegisterModal = true}
+ class="shrink-0 px-4 py-2.5 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md shadow-emerald-600/20 transition-all"
+ >
+ ➕ Đăng Ký Giáo Viên Mới
+ </button>
  </div>
 
  {#if recruitment.length === 0}
@@ -1287,6 +1357,72 @@
  </div>
  </div>
 
+ {:else if activeTab === 'teachers'}
+ <div class="space-y-6">
+ <!-- TAB: Giáo Viên & Lương (danh sách hồ sơ D1 + chỉnh lương qua modal) -->
+ <div class="bg-white rounded-lg border border-slate-200 p-5 shadow-sm">
+ <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 pb-3 mb-4">
+ <div>
+ <h2 class="text-base font-semibold text-slate-900">👩‍🏫 Giáo Viên &amp; Lương</h2>
+ <p class="text-xs text-slate-500 mt-0.5">
+ Danh sách hồ sơ giáo viên trên D1 — bấm <strong>💰 Sửa lương</strong> để chỉnh loại lương, lương cơ bản và đơn giá/ca.
+ </p>
+ </div>
+ <button
+ onclick={refreshTeacherProfiles}
+ class="shrink-0 px-3 py-2 rounded-md text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition-colors"
+ >
+ ↻ Tải Lại Danh Sách
+ </button>
+ </div>
+
+ {#if knownTeachers.length === 0}
+ <p class="text-xs text-slate-500">Chưa có hồ sơ giáo viên nào trên D1.</p>
+ {:else}
+ <div class="overflow-x-auto -mx-1">
+ <table class="w-full text-xs min-w-[680px]">
+ <thead>
+ <tr class="text-left text-slate-500 uppercase tracking-wider text-[11px] border-b border-slate-200">
+ <th class="py-2 px-3 font-semibold">Giáo viên</th>
+ <th class="py-2 px-3 font-semibold">Chức danh</th>
+ <th class="py-2 px-3 font-semibold">Loại lương</th>
+ <th class="py-2 px-3 font-semibold text-right">Lương cơ bản</th>
+ <th class="py-2 px-3 font-semibold text-right">Đơn giá/ca</th>
+ <th class="py-2 px-3 font-semibold text-right">Thao tác</th>
+ </tr>
+ </thead>
+ <tbody>
+ {#each knownTeachers as t}
+ <tr class="border-b border-slate-100 hover:bg-slate-50/60">
+ <td class="py-2.5 px-3">
+ <div class="font-semibold text-slate-900">{t.profile.teacher_name}</div>
+ <div class="text-slate-400 text-[11px] font-mono">@{t.profile.username}</div>
+ </td>
+ <td class="py-2.5 px-3 text-slate-700">{t.profile.role_title || '—'}</td>
+ <td class="py-2.5 px-3">
+ <span class="inline-flex px-2 py-0.5 rounded bg-cx-50 border border-cx-200 text-cx-700 font-semibold text-[11px]">
+ {salaryTypeLabel(t.profile.salary_type)}
+ </span>
+ </td>
+ <td class="py-2.5 px-3 text-right font-bold text-slate-900 tabular-nums">{fmtVnd(t.profile.base_salary_vnd)}</td>
+ <td class="py-2.5 px-3 text-right font-bold text-slate-900 tabular-nums">{fmtVnd(t.profile.rate_per_session_vnd)}</td>
+ <td class="py-2.5 px-3 text-right">
+ <button
+ onclick={() => openStaffSalaryModal(t)}
+ class="px-3 py-1.5 rounded-md text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white shadow-sm transition-colors"
+ >
+ 💰 Sửa lương
+ </button>
+ </td>
+ </tr>
+ {/each}
+ </tbody>
+ </table>
+ </div>
+ {/if}
+ </div>
+ </div>
+
  {:else if activeTab === 'users'}
  <LeaderUserManager />
 
@@ -1296,3 +1432,19 @@
  {:else if activeTab === 'notify'}
  <LeaderNotifier />
 {/if}
+
+<!-- Teacher Registration Modal -->
+<TeacherRegisterModal
+ bind:isOpen={showTeacherRegisterModal}
+ onRegistered={() => loadData()}
+/>
+
+<!-- MODAL: Cấu hình lương & role giáo viên (TeacherStaffModal -> API update_role_salary) -->
+<TeacherStaffModal
+ bind:isOpen={showStaffSalaryModal}
+ staffProfile={editingStaffProfile}
+ teacherId={editingStaffProfile?.teacher_id}
+ currentUser={currentUser}
+ onSaved={handleStaffSalarySaved}
+ onUpdated={handleStaffSalarySaved}
+/>
