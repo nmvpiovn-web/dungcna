@@ -41,6 +41,23 @@ export async function GET({ url, request, platform }) {
     const query = mine
       ? `SELECT id, title, description, creator_name, time_limit_minutes, status, created_at, updated_at FROM quizzes WHERE created_by = ? ORDER BY updated_at DESC LIMIT ?`
       : `SELECT id, title, description, creator_name, time_limit_minutes, status, created_at, updated_at FROM quizzes WHERE status = 'published' ORDER BY updated_at DESC LIMIT ?`;
+    // Student đã đăng nhập: catalog public cũng lọc theo quiz được giao (chống bypass gỡ auth)
+    const studentRole = auth?.authenticated && String(auth.user.role || '').toLowerCase() === 'student';
+    if (!mine && !assigned && studentRole) {
+      const rows = await platform.env.DB.prepare(`
+        SELECT q.id, q.title, q.description, q.creator_name, q.time_limit_minutes, q.status, q.created_at, q.updated_at,
+               ha.class_name AS assigned_class_name, ha.due_date AS assigned_due_date, ha.id AS assignment_id
+        FROM quizzes q
+        JOIN homework_assignments ha ON ha.source_quiz_id = q.id
+        WHERE q.status = 'published' AND ha.status = 'published'
+          AND ha.class_id IN (
+            SELECT class_id FROM class_enrollments WHERE user_id = ? AND status = 'active'
+          )
+        ORDER BY ha.due_date ASC, ha.created_at DESC
+        LIMIT ?
+      `).bind(auth.user.id, limit).all();
+      return json({ success: true, quizzes: rows.results || [], assigned: true });
+    }
     const rows = mine
       ? await platform.env.DB.prepare(query).bind(auth.user.id, limit).all()
       : await platform.env.DB.prepare(query).bind(limit).all();

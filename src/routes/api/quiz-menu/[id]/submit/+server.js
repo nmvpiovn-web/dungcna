@@ -1,5 +1,5 @@
 import { json } from '@sveltejs/kit';
-import { verifyServerAuth } from '../../../../../lib/server/auth.js';
+import { isStaffUser, verifyServerAuth } from '../../../../../lib/server/auth.js';
 import { gradeAnswers, makeId, requestIp, sanitizeGuestName, sha256 } from '../../../../../lib/server/quizMenu.js';
 
 export const prerender = false;
@@ -21,6 +21,17 @@ export async function POST({ params, request, platform }) {
   if (!quiz || quiz.status !== 'published') return json({ success: false, error: 'QuizNotFound' }, { status: 404 });
 
   if (action === 'start') {
+    // Student isolation: chỉ được làm quiz được giao cho lớp mình
+    if (auth?.authenticated && !isStaffUser(auth.user) && String(auth.user.role || '').toLowerCase() === 'student') {
+      const assigned = await db.prepare(`
+        SELECT 1 FROM homework_assignments ha
+        JOIN class_enrollments ce ON ce.class_id = ha.class_id
+        WHERE ha.source_quiz_id = ? AND ha.status = 'published'
+          AND ce.user_id = ? AND ce.status = 'active'
+        LIMIT 1
+      `).bind(params.id, auth.user.id).first();
+      if (!assigned) return json({ success: false, error: 'QuizNotFound' }, { status: 404 });
+    }
     const guestName = auth ? null : sanitizeGuestName(body.guest_name);
     const guestClass = auth ? null : sanitizeGuestName(body.guest_class);
     if (!auth && !guestClass) return json({ success: false, error: 'Vui lòng nhập lớp' }, { status: 400 });

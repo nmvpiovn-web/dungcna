@@ -422,6 +422,9 @@
       guestName = ''; guestClass = '';
       startPanel = true;
     } catch (err) {
+      // Không mở cache khi 404 (quiz không được giao / không tồn tại) — chống bypass isolation
+      const is404 = /QuizNotFound|404|không khả dụng/i.test(err.message || '');
+      if (is404) { error = 'Quiz không khả dụng hoặc bạn không được giao quiz này.'; return; }
       const cached = await getCachedQuizData(`quiz:${quiz.id}`).catch(() => null);
       if (cached?.quiz) {
         selectedQuiz = cached.quiz; answers = {}; guestName = ''; guestClass = ''; startPanel = true;

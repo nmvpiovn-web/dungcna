@@ -98,13 +98,27 @@ export async function GET({ url, request, platform }) {
     } catch {}
 
     // 4. Published Quiz Menu changes for authenticated app sync.
+    // Student: chỉ quiz được giao cho lớp mình (isolation)
     try {
-      const quizzes = await db.prepare(`
-        SELECT id, title, description, creator_name, time_limit_minutes, status, created_at, updated_at
-        FROM quizzes
-        WHERE status = 'published' AND datetime(updated_at) > datetime(?)
-        ORDER BY updated_at DESC LIMIT 50
-      `).bind(since).all();
+      const isStudent = role === 'student';
+      const quizzes = isStudent
+        ? await db.prepare(`
+          SELECT q.id, q.title, q.description, q.creator_name, q.time_limit_minutes, q.status, q.created_at, q.updated_at
+          FROM quizzes q
+          JOIN homework_assignments ha ON ha.source_quiz_id = q.id
+          WHERE q.status = 'published' AND ha.status = 'published'
+            AND datetime(q.updated_at) > datetime(?)
+            AND ha.class_id IN (
+              SELECT class_id FROM class_enrollments WHERE user_id = ? AND status = 'active'
+            )
+          ORDER BY q.updated_at DESC LIMIT 50
+        `).bind(since, user.id).all()
+        : await db.prepare(`
+          SELECT id, title, description, creator_name, time_limit_minutes, status, created_at, updated_at
+          FROM quizzes
+          WHERE status = 'published' AND datetime(updated_at) > datetime(?)
+          ORDER BY updated_at DESC LIMIT 50
+        `).bind(since).all();
       result.changes.quizzes = quizzes.results || [];
     } catch {}
 
