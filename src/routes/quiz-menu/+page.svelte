@@ -71,7 +71,7 @@
     const withJson = !!options.body && !(options.body instanceof FormData);
     const response = await fetch(url, { ...options, headers: { ...headers(withJson), ...(options.headers || {}) } });
     const body = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(body.error || 'Không thể kết nối máy chủ');
+    if (!response.ok) throw new Error(body.message || body.error || 'Không thể kết nối máy chủ');
     return body;
   }
 
