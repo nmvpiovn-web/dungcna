@@ -201,7 +201,13 @@ export async function POST({ request, platform }) {
 
     // Bước 2: chặn trùng lịch (409) — cùng session_date, giờ overlap,
     // cho teacher_id, assistant_teacher_id, student_ids, room
-    if (db && body.end_time) {
+    // BUG-2 fix: bắt buộc end_time, không skip check khi thiếu
+    if (!body.end_time) {
+      return json({ success: false, error: 'Thiếu giờ kết thúc' }, { status: 400 });
+    }
+    // BUG-1 fix: map room từ body.room ?? body.room_notes để check trùng đúng
+    const roomVal = body.room ?? body.room_notes ?? '';
+    if (db) {
       const newStudentIds = Array.isArray(body.student_ids) ? body.student_ids : [];
       const conflicts = await db.prepare(`
         SELECT id, class_name, teacher_id, assistant_teacher_id, student_ids, room, start_time, end_time
@@ -225,7 +231,8 @@ export async function POST({ request, platform }) {
         try { rStudentIds = typeof r.student_ids === 'string' ? JSON.parse(r.student_ids || '[]') : (r.student_ids || []); } catch {}
         const teacherOverlap = teacherIds.some(t => [r.teacher_id, r.assistant_teacher_id].includes(t));
         const studentOverlap = newStudentIds.some(s => rStudentIds.includes(s));
-        const roomOverlap = body.room && r.room && String(body.room).trim() === String(r.room).trim();
+        // BUG-1 fix: dùng roomVal đã map (body.room ?? body.room_notes), không dùng body.room trực tiếp
+        const roomOverlap = roomVal && r.room && String(roomVal).trim() === String(r.room).trim();
         if (teacherOverlap || studentOverlap || roomOverlap) {
           const reason = teacherOverlap ? 'giáo viên' : studentOverlap ? 'học sinh' : 'phòng học';
           return json({
@@ -242,7 +249,7 @@ export async function POST({ request, platform }) {
     const studentIdsStr = Array.isArray(body.student_ids) ? JSON.stringify(body.student_ids) : (body.student_ids || '[]');
     // Map form field names to DB columns (two-way compatibility)
     const topicVal = body.topic ?? body.subject_topic ?? '';
-    const roomVal = body.room ?? body.room_notes ?? '';
+    // roomVal đã định nghĩa ở trên (dùng cho check trùng lịch)
 
     let savedSession = {
       ...body,
