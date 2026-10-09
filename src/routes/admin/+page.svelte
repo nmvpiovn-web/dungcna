@@ -858,9 +858,20 @@
 
  function handleDeleteSession(id, name) {
  if (confirm(`Bạn có chắc muốn xóa buổi học "${name}"?`)) {
- deleteClassSession(id, currentUser);
- loadData();
- showToast('Đã xóa buổi học khỏi thời khóa biểu!');
+ // Bước 3: một đường delete — gọi API trước, rồi mới cập nhật local
+ const token = typeof window !== 'undefined' ? localStorage.getItem('tienganh_token') : null;
+ const doLocal = () => { deleteClassSession(id, currentUser); loadData(); showToast('Đã xóa buổi học khỏi thời khóa biểu!'); };
+ if (token) {
+ fetch(`/api/schedule?id=${encodeURIComponent(id)}`, {
+ method: 'DELETE',
+ headers: { 'Authorization': `Bearer ${token}` }
+ }).then(r => r.json()).then(data => {
+ if (!data.success) { alert(data.error || 'Lỗi xóa trên máy chủ'); return; }
+ doLocal();
+ }).catch(err => alert(err.message || 'Lỗi kết nối'));
+ } else {
+ doLocal();
+ }
  }
  }
 

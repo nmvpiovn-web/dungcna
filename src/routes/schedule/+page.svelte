@@ -92,6 +92,7 @@
  }
  function quickAddSession(day, shift) {
    sessionPreset = {
+     session_date: day.iso,
      day_of_week: day.dayOfWeek,
      day_name: ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'][day.dayOfWeek],
      start_time: shift.defaultStart,
@@ -205,13 +206,22 @@
  let list = sessions;
 
  if (activeTabFilter === 'my_schedule' && currentUser) {
- list = getSessionsForUser(currentUser);
+ // Bước 3: "Lịch của tôi" lọc trên mảng sessions đã scope từ API (server đã lọc theo role).
+ // Không dùng getSessionsForUser vì nó trả về mọi ca khi phụ huynh chưa liên kết con.
+ const uid = currentUser.id;
+ const role = String(currentUser.role || '').toLowerCase();
+ if (role === 'teacher') {
+ list = list.filter(s => [s.teacher_id, s.assistant_teacher_id, s.substitute_teacher_id].includes(uid));
+ } else if (role === 'student') {
+ list = list.filter(s => Array.isArray(s.student_ids) && s.student_ids.includes(uid));
+ }
+ // parent/manager: giữ nguyên list đã scope từ API
  } else if (activeTabFilter === 'primary') {
  list = list.filter(s => ['Lớp 1', 'Lớp 2', 'Lớp 3', 'Lớp 4', 'Lớp 5'].includes(s.grade_level));
  } else if (activeTabFilter === 'secondary') {
  list = list.filter(s => ['Lớp 6', 'Lớp 7', 'Lớp 8', 'Lớp 9'].includes(s.grade_level));
  } else if (activeTabFilter === 'high_school') {
- list = list.filter(s => ['Lớp 10', 'Lớp 11', 'Lớp 12'].includes(s.grade_level) || s.class_id.includes('IELTS'));
+ list = list.filter(s => ['Lớp 10', 'Lớp 11', 'Lớp 12'].includes(s.grade_level) || String(s.class_id || '').includes('IELTS'));
  }
 
  if (dayFilter !== 'all') {
@@ -491,7 +501,7 @@
  </div>
  </div>
  <span class="px-3 py-1 rounded-md bg-amber-500 text-white font-bold text-[11px] whitespace-nowrap shadow-sm">
- Đang Hoạt Động (10m Lead Time)
+ Đang Hoạt Động
  </span>
  </div>
 
@@ -547,7 +557,7 @@
  <button
  type="button"
  onclick={() => quickAddSession(day, shift)}
- class="w-full mt-0.5 rounded-md border border-dashed border-slate-300 text-slate-400 hover:text-emerald-700 hover:border-emerald-400 hover:bg-emerald-50/60 text-[11px] font-bold py-1 opacity-0 group-hover:opacity-100 transition-opacity"
+ class="w-full mt-0.5 rounded-md border border-dashed border-slate-300 text-slate-400 hover:text-emerald-700 hover:border-emerald-400 hover:bg-emerald-50/60 text-[11px] font-bold py-2 min-h-[44px] md:opacity-0 md:group-hover:opacity-100 transition-opacity"
  title="Thêm buổi học ca {shift.label} ngày {day.label} {day.date.getDate()}"
  >
  ＋ Thêm
@@ -696,10 +706,11 @@
  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
  {#each filteredSessions as s}
  {@const todayAtt = getTodayAttendanceSummary(s.id)}
- {@const [startH, startM] = s.start_time.split(':').map(Number)}
+ {@const [startH, startM] = String(s.start_time || '00:00').split(':').map(Number)}
  {@const notifyMin = s.notify_minutes_before || 10}
- {@const notifyH = Math.floor((startH * 60 + startM - notifyMin) / 60)}
- {@const notifyM = (startH * 60 + startM - notifyMin) % 60}
+ {@const notifyTotalMin = Math.max(0, startH * 60 + startM - notifyMin)}
+ {@const notifyH = Math.floor(notifyTotalMin / 60)}
+ {@const notifyM = notifyTotalMin % 60}
  {@const notifyTimeStr = `${String(notifyH).padStart(2, '0')}:${String(notifyM).padStart(2, '0')}`}
 
  <div class="rounded-lg bg-white border border-slate-200 p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-4">
@@ -811,13 +822,7 @@
  </button>
  {/if}
  {:else}
- <button
- type="button"
- onclick={() => handleSendReminderNotification(s)}
- class="w-full py-2 px-3 rounded-md bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-sm transition-all flex items-center justify-center gap-1"
- >
- <span>🔔 Đăng Ký Nhắc Lịch Học (Zalo)</span>
- </button>
+ <!-- Bước 5: ẩn nút nhắc lịch với học sinh/phụ huynh (thông báo do cron server gửi) -->
  {/if}
  </div>
  </div>

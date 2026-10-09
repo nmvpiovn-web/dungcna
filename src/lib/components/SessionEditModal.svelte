@@ -15,7 +15,7 @@
 
  let form = $state({
  id: '',
- class_id: 'L7_GLOBAL_SUCCESS_A1',
+ class_id: '',
  class_name: 'Lớp 7 - Global Success & KET A2',
  grade_level: 'Lớp 7',
  subject_topic: '',
@@ -31,7 +31,7 @@
  end_time: '19:30',
  notify_minutes_before: 10,
  room_notes: 'Phòng VIP 201',
- status: 'active',
+ status: 'scheduled',
  student_ids: []
  });
 
@@ -51,10 +51,23 @@
  if (isOpen) {
  if (!wasOpen) {
  wasOpen = true;
+ errorMessage = '';
  currentUser = getCurrentUser();
  const users = getAllUsers();
- allStudents = users.filter(u => u.role === 'student');
  allTeachers = users.filter(u => u.role === 'teacher' || u.role === 'superadmin');
+ // Bước 4: picker học sinh từ API, không dùng local
+ allStudents = users.filter(u => u.role === 'student');
+ const token = typeof window !== 'undefined' ? localStorage.getItem('tienganh_token') : null;
+ if (token) {
+ fetch('/api/students', { headers: { 'Authorization': `Bearer ${token}` } })
+ .then(r => r.json())
+ .then(data => {
+ if (data.success && Array.isArray(data.students)) {
+ allStudents = data.students;
+ }
+ })
+ .catch(() => {});
+ }
 
  if (session) {
  form = {
@@ -64,7 +77,7 @@
  } else {
  form = {
  id: '',
- class_id: 'L7_GLOBAL_SUCCESS_A1',
+ class_id: '',
  class_name: 'Lớp 7 - Global Success & KET A2',
  grade_level: 'Lớp 7',
  subject_topic: 'Chuyên đề Ngữ pháp & Giao tiếp phản xạ',
@@ -80,8 +93,8 @@
  end_time: '19:30',
  notify_minutes_before: 10,
  room_notes: 'Phòng VIP 201',
- status: 'active',
- student_ids: allStudents.slice(0, 3).map(s => s.id),
+ status: 'scheduled',
+ student_ids: [],
  ...(preset || {})
  };
  }
@@ -100,11 +113,17 @@
  }
 
  let errorMessage = $state('');
+ let saving = $state(false);
 
  async function handleSave() {
  errorMessage = '';
+ if (saving) return;
  if (!form.class_name.trim() || !form.start_time) {
  alert('Vui lòng điền đầy đủ tên lớp và giờ học!');
+ return;
+ }
+ if (form.end_time && form.start_time >= form.end_time) {
+ errorMessage = 'Giờ kết thúc phải sau giờ bắt đầu.';
  return;
  }
 
@@ -120,8 +139,9 @@
  const token = typeof window !== 'undefined' ? localStorage.getItem('tienganh_token') : null;
  let savedData = { ...form };
 
- if (token) {
+ saving = true;
  try {
+ if (token) {
  const res = await fetch('/api/schedule', {
  method: 'POST',
  headers: {
@@ -141,15 +161,16 @@
  if (data.session) {
  savedData = data.session;
  }
- } catch (err) {
- errorMessage = err.message || 'Lỗi kết nối';
- return;
- }
  }
 
  const saved = saveClassSession(savedData, currentUser);
  onSaved(saved);
  isOpen = false;
+ } catch (err) {
+ errorMessage = err.message || 'Lỗi kết nối';
+ } finally {
+ saving = false;
+ }
  }
 </script>
 
@@ -363,20 +384,22 @@
  </div>
 
  <!-- Action Buttons -->
- <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+ <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 pt-3 border-t border-slate-100 sticky bottom-0 bg-white -mx-6 md:-mx-8 px-6 md:px-8 pb-1">
  <button
  type="button"
  onclick={() => isOpen = false}
- class="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold text-xs hover:bg-slate-100"
+ disabled={saving}
+ class="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold text-xs hover:bg-slate-100 disabled:opacity-50"
  >
  Hủy
  </button>
  <button
  type="button"
  onclick={handleSave}
- class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-cx-600 hover:from-indigo-500 hover:to-cx-500 text-white font-bold text-xs shadow-md shadow-indigo-600/30 transition-all hover:scale-105"
+ disabled={saving}
+ class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-cx-600 hover:from-indigo-500 hover:to-cx-500 text-white font-bold text-xs shadow-md shadow-indigo-600/30 transition-all hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 w-full sm:w-auto"
  >
- 💾 Lưu Buổi Học &amp; Thời Khóa Biểu
+ {saving ? '⏳ Đang lưu...' : '💾 Lưu Buổi Học & Thời Khóa Biểu'}
  </button>
  </div>
  </div>
