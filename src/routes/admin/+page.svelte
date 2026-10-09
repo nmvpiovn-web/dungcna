@@ -1194,6 +1194,7 @@
  {/if}
  </button>
 
+ {#if currentUser && ['superadmin', 'admin', 'leader'].includes((currentUser.role || '').toLowerCase())}
  <button
  onclick={() => activeTab = 'hiring'}
  class="px-3.5 py-2 rounded-xl transition-all whitespace-nowrap flex items-center gap-2 {activeTab === 'hiring' ? 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg shadow-violet-600/30' : 'bg-slate-950 text-slate-400 hover:text-white hover:bg-slate-800'}"
@@ -1205,6 +1206,7 @@
  </span>
  {/if}
  </button>
+ {/if}
 
  <button
  onclick={() => activeTab = 'students'}

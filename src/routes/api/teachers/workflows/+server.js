@@ -1010,6 +1010,14 @@ export async function POST({ request, platform }) {
     if (!isAdmin(auth.user)) {
       return json({ success: false, error: 'Forbidden: Chỉ superadmin/admin mới được cấp tài khoản giáo viên' }, { status: 403 });
     }
+    // Rate limit: tối đa 10 lần cấp/giờ/admin
+    try {
+      const { checkRateLimit } = await import('../../../../lib/server/rateLimit.js');
+      const rl = await checkRateLimit(db, { key: `provision_account:${auth.user.id}`, limit: 10, windowMs: 3600000 });
+      if (!rl.allowed) {
+        return json({ success: false, error: 'Quá nhiều yêu cầu, thử lại sau' }, { status: 429 });
+      }
+    } catch {}
     const recruitment_id = String(body.recruitment_id || '').trim();
     if (!recruitment_id) {
       return json({ success: false, error: 'Thiếu recruitment_id' }, { status: 400 });
@@ -1022,25 +1030,37 @@ export async function POST({ request, platform }) {
       if (rec.status !== 'accepted') {
         return json({ success: false, error: 'Chỉ cấp tài khoản cho hồ sơ đã trúng tuyển (accepted)' }, { status: 400 });
       }
-      // Check đã cấp chưa
-      const existing = await db.prepare("SELECT id FROM users WHERE phone = ? OR email = ? LIMIT 1").bind(rec.phone || '', rec.email || '').first();
+      // Chuẩn hóa phone/email để chống trùng
+      const normPhone = String(rec.phone || '').replace(/\D/g, '');
+      const normEmail = String(rec.email || '').toLowerCase().trim();
+      // Check đã cấp chưa (atomic via unique constraint sẽ catch race)
+      const existing = await db.prepare("SELECT id FROM users WHERE (phone = ? AND ? != '') OR (email = ? AND ? != '') LIMIT 1").bind(normPhone, normPhone, normEmail, normEmail).first();
       if (existing) {
         return json({ success: false, error: 'SĐT/email này đã có tài khoản trong hệ thống' }, { status: 409 });
       }
       const { hashPassword } = await import('../../../../lib/server/auth.js');
-      const username = `gv_${Date.now().toString(36)}`;
-      const tempPassword = `Timbk@${Math.random().toString(36).substring(2, 8)}`;
+      // Username unique: thêm random suffix để tránh trùng cùng millisecond
+      const randSuffix = crypto.randomUUID().substring(0, 8);
+      const username = `gv_${Date.now().toString(36)}_${randSuffix}`;
+      // Temp password mạnh: crypto.getRandomValues (128 bit)
+      const randBytes = new Uint8Array(16);
+      crypto.getRandomValues(randBytes);
+      const tempPassword = 'Timbk@' + Array.from(randBytes).map(b => b.toString(36)).join('').substring(0, 12);
       const passwordHash = await hashPassword(tempPassword);
-      const userId = `user_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+      const userId = `user_${crypto.randomUUID()}`;
 
       await db.batch([
-        db.prepare(`INSERT INTO users (id, username, password_hash, name, phone, email, role, status, created_at) VALUES (?, ?, ?, ?, ?, ?, 'teacher', 'active', CURRENT_TIMESTAMP)`).bind(userId, username, passwordHash, rec.candidate_name, rec.phone || null, rec.email || null),
-        db.prepare(`INSERT INTO teacher_profiles (id, user_id, recruitment_id, full_name, phone, email, role_type, experience_years, certificates, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', CURRENT_TIMESTAMP)`).bind(`tp_${Date.now()}`, userId, recruitment_id, rec.candidate_name, rec.phone || null, rec.email || null, rec.role_type || 'lead', rec.experience_years || 0, rec.certificates || ''),
-        db.prepare(`UPDATE teacher_recruitment SET status = 'onboarded', updated_at = CURRENT_TIMESTAMP WHERE id = ?`).bind(recruitment_id)
+        db.prepare(`INSERT INTO users (id, username, password_hash, name, phone, email, role, status, metadata, created_at) VALUES (?, ?, ?, ?, ?, ?, 'teacher', 'active', ?, CURRENT_TIMESTAMP)`).bind(userId, username, passwordHash, rec.candidate_name, normPhone || null, normEmail || null, JSON.stringify({ must_change_password: true, provisioned_from: recruitment_id, provisioned_by: auth.user.id, provisioned_at: new Date().toISOString() })),
+        db.prepare(`INSERT INTO teacher_profiles (id, user_id, recruitment_id, full_name, phone, email, role_type, experience_years, certificates, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', CURRENT_TIMESTAMP)`).bind(`tp_${crypto.randomUUID()}`, userId, recruitment_id, rec.candidate_name, normPhone || null, normEmail || null, rec.role_type || 'lead', rec.experience_years || 0, rec.certificates || ''),
+        db.prepare(`UPDATE teacher_recruitment SET status = 'onboarded', updated_at = CURRENT_TIMESTAMP WHERE id = ? AND status = 'accepted'`).bind(recruitment_id)
       ]);
 
-      return json({ success: true, message: 'Đã cấp tài khoản giáo viên', username, temp_password: tempPassword, user_id: userId });
+      return json({ success: true, message: 'Đã cấp tài khoản giáo viên. Yêu cầu đổi mật khẩu ở lần đăng nhập đầu.', username, temp_password: tempPassword, user_id: userId, must_change_password: true });
     } catch (e) {
+      // Catch unique constraint violation (race condition)
+      if (e.message && e.message.includes('UNIQUE')) {
+        return json({ success: false, error: 'SĐT/email đã được đăng ký (race detected)' }, { status: 409 });
+      }
       return json({ success: false, error: `Lỗi cấp tài khoản: ${e.message}` }, { status: 500 });
     }
   }
