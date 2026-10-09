@@ -22,6 +22,17 @@ export async function GET({ params, url, request, platform }) {
   const auth = await optionalAuth(request, platform);
   const staff = !!(auth && isStaffUser(auth.user));
   if (quiz.status !== 'published' && !staff) return json({ success: false, error: 'QuizNotFound' }, { status: 404 });
+  // Student isolation: chỉ được xem quiz published ĐƯỢC GIAO cho lớp mình
+  if (auth?.authenticated && !staff && String(auth.user.role || '').toLowerCase() === 'student') {
+    const assigned = await db.prepare(`
+      SELECT 1 FROM homework_assignments ha
+      JOIN class_enrollments ce ON ce.class_id = ha.class_id
+      WHERE ha.source_quiz_id = ? AND ha.status = 'published'
+        AND ce.user_id = ? AND ce.status = 'active'
+      LIMIT 1
+    `).bind(params.id, auth.user.id).first();
+    if (!assigned) return json({ success: false, error: 'QuizNotFound' }, { status: 404 });
+  }
   const includeAnswers = staff && url.searchParams.get('include_answers') === '1';
   const rows = await db.prepare(`SELECT * FROM quiz_questions WHERE quiz_id = ? ORDER BY q_order, id`).bind(params.id).all();
   return json({

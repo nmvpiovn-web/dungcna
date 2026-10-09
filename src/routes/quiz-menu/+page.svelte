@@ -109,8 +109,11 @@
           ? await api('/api/quiz-menu?assigned=1')
           : await api('/api/quiz-menu');
       } catch (err) {
-        // Fallback: nếu endpoint assigned lỗi (vd token cũ), student vẫn thấy public
-        if (isStudent) publicData = await api('/api/quiz-menu');
+        // Student: KHÔNG fallback về public (isolation). Hiển thị trống + thông báo.
+        if (isStudent) {
+          publicData = { quizzes: [], assigned: true };
+          error = 'Không tải được quiz được giao. Hãy thử lại.';
+        }
         else throw err;
       }
       publicQuizzes = publicData.quizzes || [];
