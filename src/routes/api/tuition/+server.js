@@ -110,6 +110,9 @@ export async function GET({ url, request, platform }) {
 
   const user = auth.user;
   const requestedStudentId = url.searchParams.get('student_id');
+  // Normalize role once: the branches below are case-sensitive, an unnormalized
+  // role (e.g. 'Student') would otherwise fall through to an unscoped SELECT *.
+  const role = String(user.role || '').toLowerCase();
 
   // 2. Cloudflare D1 Authoritative Path (Fail-Closed)
   if (platform?.env?.DB) {
@@ -120,7 +123,7 @@ export async function GET({ url, request, platform }) {
       if (isStaffUser(user)) {
         // Staff can inspect any student or all students
         allowedStudentId = requestedStudentId;
-      } else if (user.role === 'student') {
+      } else if (role === 'student') {
         // Student can ONLY access their own bills
         if (requestedStudentId && requestedStudentId !== user.id) {
           return json({
@@ -129,7 +132,7 @@ export async function GET({ url, request, platform }) {
           }, { status: 403 });
         }
         allowedStudentId = user.id;
-      } else if (user.role === 'parent') {
+      } else if (role === 'parent') {
         // STRICT ID-ONLY PARENT VERIFICATION:
         // Exclusively query parent_student_links based on parent_user_id.
         // Names and phone numbers are NEVER used to establish parental access rights.
@@ -169,6 +172,12 @@ export async function GET({ url, request, platform }) {
             source: 'cloudflare_d1'
           });
         }
+      } else {
+        // Fail-closed: unknown/unexpected role must never reach the unscoped SELECT * below
+        return json({
+          success: false,
+          error: 'Forbidden: Vai trò tài khoản không được phép tra cứu học phí'
+        }, { status: 403 });
       }
 
       // Query D1 tuition_bills for staff or single student

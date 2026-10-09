@@ -1,5 +1,6 @@
 import { json } from '@sveltejs/kit';
 import { isStaffUser, verifyServerAuth } from '../../../../../lib/server/auth.js';
+import { canManageQuiz } from '../../../../../lib/server/quizMenu.js';
 import { importGoogleDocToQuizBundle, publishBundleHomework, publishQuizBundle, QuizDriveError } from '../../../../../lib/server/quizDrive.js';
 
 export const prerender = false;
@@ -10,6 +11,9 @@ export async function POST({ params, request, platform }) {
   if (!isStaffUser(auth.user)) return json({ success: false, error: 'Forbidden' }, { status: 403 });
   const db = platform?.env?.DB;
   if (!db) return json({ success: false, error: 'DatabaseUnavailable' }, { status: 500 });
+  const quiz = await db.prepare(`SELECT id, created_by FROM quizzes WHERE id = ? LIMIT 1`).bind(params.id).first();
+  if (!quiz) return json({ success: false, error: 'QuizNotFound' }, { status: 404 });
+  if (!canManageQuiz(auth.user, quiz)) return json({ success: false, error: 'Forbidden: Bạn chỉ được thao tác trên quiz do mình tạo' }, { status: 403 });
   let body = {};
   try { body = await request.json(); } catch { return json({ success: false, error: 'Invalid JSON' }, { status: 400 }); }
   const direction = body.direction || null;

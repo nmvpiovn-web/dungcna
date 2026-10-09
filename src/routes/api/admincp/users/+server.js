@@ -117,6 +117,10 @@ export async function POST({ request, platform }) {
       if (!ASSIGNABLE_ROLES.includes(newRole)) {
         return json({ success: false, error: `InvalidRole: Role phải là một trong: ${ASSIGNABLE_ROLES.join(', ')}` }, { status: 400 });
       }
+      // Chỉ superadmin mới được gán role admin; admin thường chỉ gán tối đa leader
+      if (newRole === 'admin' && String(me.role || '').toLowerCase() !== 'superadmin') {
+        return json({ success: false, error: 'Forbidden: Chỉ superadmin mới được gán role admin' }, { status: 403 });
+      }
       // Chống tự hạ role của chính mình (tránh lock-out) và cấm đổi role superadmin nếu mình không phải superadmin.
       if (target.id === me.id) {
         return json({ success: false, error: 'SelfRoleChange: Không được tự đổi role của chính mình' }, { status: 403 });

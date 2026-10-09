@@ -1,5 +1,6 @@
 import { json } from '@sveltejs/kit';
 import { isStaffUser, verifyServerAuth } from '../../../../../lib/server/auth.js';
+import { canManageQuiz } from '../../../../../lib/server/quizMenu.js';
 import { generateDraftQuestions, generateQuestionsWithAI, publishQuizBundle, QuizDriveError, readAllowedDriveSource, saveQuizSourceAndDrafts } from '../../../../../lib/server/quizDrive.js';
 
 export const prerender = false;
@@ -10,8 +11,9 @@ export async function POST({ params, request, platform }) {
   if (!isStaffUser(auth.user)) return json({ success: false, error: 'Forbidden' }, { status: 403 });
   const db = platform?.env?.DB;
   if (!db) return json({ success: false, error: 'DatabaseUnavailable' }, { status: 500 });
-  const quiz = await db.prepare(`SELECT id, status FROM quizzes WHERE id = ? LIMIT 1`).bind(params.id).first();
+  const quiz = await db.prepare(`SELECT id, status, created_by FROM quizzes WHERE id = ? LIMIT 1`).bind(params.id).first();
   if (!quiz) return json({ success: false, error: 'QuizNotFound' }, { status: 404 });
+  if (!canManageQuiz(auth.user, quiz)) return json({ success: false, error: 'Forbidden: Bạn chỉ được thao tác trên quiz do mình tạo' }, { status: 403 });
   if (quiz.status !== 'draft') return json({ success: false, error: 'QuizMustBeDraft' }, { status: 409 });
   let body;
   try { body = await request.json(); } catch { return json({ success: false, error: 'Invalid JSON' }, { status: 400 }); }

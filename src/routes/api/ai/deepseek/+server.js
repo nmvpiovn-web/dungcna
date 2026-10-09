@@ -1,5 +1,6 @@
 import { json } from '@sveltejs/kit';
 import { verifyServerAuth } from '../../../../lib/server/auth.js';
+import { checkRateLimit } from '../../../../lib/server/rateLimit.js';
 
 export const prerender = false;
 
@@ -7,38 +8,9 @@ const TIMEOUT_MS = 15000;
 const MAX_QUERY_LEN = 500;
 const MAX_OUTPUT_TOKENS = 800;
 
-// Rate limiting in-memory map: IP -> { count, resetTime }
-const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
-const MAX_REQUESTS_PER_WINDOW = 60;
-const ipRequestCounts = new Map();
-
-function checkRateLimit(clientIp) {
-  const now = Date.now();
-  const record = ipRequestCounts.get(clientIp);
-
-  if (!record || now > record.resetTime) {
-    ipRequestCounts.set(clientIp, { count: 1, resetTime: now + RATE_LIMIT_WINDOW_MS });
-    return { allowed: true };
-  }
-
-  if (record.count >= MAX_REQUESTS_PER_WINDOW) {
-    const retryAfterSeconds = Math.ceil((record.resetTime - now) / 1000);
-    return { allowed: false, retryAfterSeconds };
-  }
-
-  record.count += 1;
-  return { allowed: true };
-}
-
-// Clean up old IP records every 5 minutes
-if (typeof setInterval !== 'undefined') {
-  setInterval(() => {
-    const now = Date.now();
-    for (const [ip, data] of ipRequestCounts.entries()) {
-      if (now > data.resetTime) ipRequestCounts.delete(ip);
-    }
-  }, 5 * 60 * 1000);
-}
+// Rate limiting: D1-backed sliding window keyed by user.id (60 req/min).
+// The old per-isolate in-memory Map never triggered on Cloudflare Workers
+// (multi-isolate), so it is replaced by the shared `rate_limits` D1 table.
 
 /**
  * Verified offline pedagogical dictionary for common K12 vocabulary.
@@ -180,28 +152,20 @@ export async function POST({ request, platform, getClientAddress }) {
     return json({ success: false, error: auth.error || 'Unauthorized: Vui lòng đăng nhập' }, { status: auth.status || 401 });
   }
 
-  // 1. Rate Limiting Check
-  let clientIp = '127.0.0.1';
-  try {
-    if (typeof getClientAddress === 'function') {
-      clientIp = getClientAddress();
-    } else {
-      clientIp = request.headers.get('x-forwarded-for')?.split(',')[0].trim() || '127.0.0.1';
-    }
-  } catch {
-    clientIp = '127.0.0.1';
-  }
-
-  const rateCheck = checkRateLimit(clientIp);
-  if (!rateCheck.allowed) {
+  // 1. Rate Limiting Check (D1-backed, keyed by user.id — works across isolates)
+  const db = platform?.env?.DB || null;
+  const allowed = await checkRateLimit(db, {
+    key: `deepseek:${auth.user.id}`,
+    limit: 60,
+    windowMs: 60 * 1000
+  });
+  if (!allowed) {
     return json({
       success: false,
-      error: `Quá giới hạn truy vấn (Rate limit exceeded). Vui lòng thử lại sau ${rateCheck.retryAfterSeconds} giây.`
+      error: 'Quá giới hạn truy vấn (Rate limit exceeded). Vui lòng thử lại sau 1 phút.'
     }, {
       status: 429,
-      headers: {
-        'Retry-After': String(rateCheck.retryAfterSeconds)
-      }
+      headers: { 'Retry-After': '60' }
     });
   }
 

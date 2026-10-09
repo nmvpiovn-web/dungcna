@@ -7,7 +7,7 @@ import {
   getAttendanceStatsForStudent,
   getAttendedStudentsForSession
 } from '../../../lib/unifiedStore.js';
-import { verifyServerAuth, isStaffUser } from '../../../lib/server/auth.js';
+import { verifyServerAuth, isStaffUser, isManager } from '../../../lib/server/auth.js';
 
 export const prerender = false;
 
@@ -182,7 +182,6 @@ export async function POST({ request, platform }) {
     const sessionId = body.session_id;
     const sessionDate = body.session_date || new Date().toISOString().slice(0, 10);
     const attendanceList = body.students || [];
-    const teacherUser = body.teacher || auth.user;
 
     if (!sessionId || !Array.isArray(attendanceList) || attendanceList.length === 0) {
       return json({ 
@@ -191,8 +190,22 @@ export async function POST({ request, platform }) {
       }, { status: 400 });
     }
 
-    const teacherId = teacherUser?.id || auth.user.id || 'usr_super_2';
-    const teacherName = teacherUser?.name || auth.user.name || 'Ms. Dung';
+    // Ownership: non-managers may only mark attendance for sessions they are in charge of
+    if (!isManager(auth.user) && platform?.env?.DB) {
+      const sess = await platform.env.DB.prepare(
+        `SELECT teacher_id, assistant_teacher_id, substitute_teacher_id FROM class_sessions WHERE id = ? LIMIT 1`
+      ).bind(sessionId).first();
+      if (sess) {
+        const mine = [sess.teacher_id, sess.assistant_teacher_id, sess.substitute_teacher_id].includes(auth.user.id);
+        if (!mine) {
+          return json({ success: false, error: 'Forbidden: Bạn chỉ được điểm danh buổi học mình phụ trách' }, { status: 403 });
+        }
+      }
+    }
+
+    // marked_by is always the authenticated user — never trust body.teacher (identity spoof)
+    const teacherId = auth.user.id;
+    const teacherName = auth.user.name || auth.user.username || 'Giáo viên';
     const nowIso = new Date().toISOString();
 
     // Prepare standardized records with strict NaN defense
@@ -205,7 +218,7 @@ export async function POST({ request, platform }) {
       const instantStars = Number.isFinite(rawStars) && rawStars >= 0 ? Math.floor(rawStars) : (status === 'present' ? 5 : 0);
 
       return {
-        id: item.id || `att_${sessionId}_${sessionDate}_${studentId}`,
+        id: `att_${sessionId}_${sessionDate}_${studentId}`,
         session_id: sessionId,
         session_date: sessionDate,
         student_id: studentId,
@@ -217,7 +230,7 @@ export async function POST({ request, platform }) {
         instant_stars_rewarded: instantStars,
         marked_by_teacher_id: teacherId,
         marked_by_teacher_name: teacherName,
-        created_at: item.created_at || nowIso
+        created_at: nowIso
       };
     });
 

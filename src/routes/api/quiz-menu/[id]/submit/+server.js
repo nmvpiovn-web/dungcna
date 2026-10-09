@@ -101,9 +101,21 @@ export async function POST({ params, request, platform }) {
   `).bind(serializedAnswers, score.autoScore, finalScore, score.maxScore, status, duration, attempt.id).run();
   const changed = committed?.meta?.changes ?? committed?.changes;
   if (changed === 0) return json({ success: false, error: 'AttemptAlreadyClosed' }, { status: 409 });
+  // Guests only learn correct/wrong per question — never the answer key or
+  // explanations (prevents submit-once-to-harvest-answers, then retake).
+  const isGuestSubmit = !attempt.user_id;
+  const grading = isGuestSubmit
+    ? score.grading.map(g => ({
+        question_id: g.question_id,
+        type: g.type,
+        correct: g.correct,
+        awarded_points: g.awarded_points,
+        max_points: g.max_points
+      }))
+    : score.grading;
   return json({
     success: true,
     attempt: { id: attempt.id, status, auto_score: score.autoScore, final_score: finalScore, max_score: score.maxScore, duration_seconds: duration },
-    grading: score.grading
+    grading
   });
 }

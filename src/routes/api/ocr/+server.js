@@ -1,5 +1,5 @@
 import { json } from '@sveltejs/kit';
-import { verifyServerAuth } from '../../../lib/server/auth.js';
+import { verifyServerAuth, isStaffUser } from '../../../lib/server/auth.js';
 
 export const prerender = false;
 
@@ -15,6 +15,10 @@ export async function POST({ request, platform }) {
   const auth = await verifyServerAuth(request, platform);
   if (!auth.authenticated) {
     return json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  // Chỉ staff được dùng OCR (Vision API tốn tiền)
+  if (!isStaffUser(auth.user)) {
+    return json({ error: 'Forbidden: Chỉ giáo viên/staff được sử dụng OCR' }, { status: 403 });
   }
 
   try {

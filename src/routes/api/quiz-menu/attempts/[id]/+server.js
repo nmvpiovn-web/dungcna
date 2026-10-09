@@ -45,7 +45,11 @@ export async function GET({ params, request, platform }) {
     `).bind(attempt.id).all(),
     db.prepare(`SELECT * FROM quiz_questions WHERE quiz_id = ? ORDER BY q_order, id`).bind(attempt.quiz_id).all()
   ]);
-  const revealAnswers = staff || attempt.status === 'graded';
+  // Guests never receive the answer key via GET attempt (they only learn
+  // correct/wrong at submit time). Staff and the authenticated owner of a
+  // graded attempt may review answers.
+  const isGuestAttempt = !attempt.user_id;
+  const revealAnswers = staff || (!isGuestAttempt && attempt.status === 'graded');
   return json({
     success: true,
     attempt: {

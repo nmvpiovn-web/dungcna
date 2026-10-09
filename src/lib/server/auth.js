@@ -252,6 +252,17 @@ export function isManager(user) {
 }
 
 /**
+ * Check if a user has admin-level privileges (superadmin, admin only).
+ * Used for sensitive financial lifecycle actions (payroll approve/lock/disburse/adjust)
+ * where leader is intentionally excluded — leader keeps view + save_draft only.
+ */
+export function isAdmin(user) {
+  if (!user) return false;
+  const role = String(user.role || '').toLowerCase();
+  return role === 'superadmin' || role === 'admin';
+}
+
+/**
  * Route guard helper for admin layout load() functions (RB-C1 fix, 2026-09-30).
  * Verifies the signed session token (Authorization header or session_token cookie)
  * and checks the user's role against the allowed set (case-insensitive).

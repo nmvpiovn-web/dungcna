@@ -91,11 +91,11 @@ export async function POST({ request, platform }) {
       if (!payload.student_id) {
         return json({ success: false, error: 'ValidationError: student_id là bắt buộc.' }, { status: 400 });
       }
-      const existing = await db.prepare('SELECT id, name FROM users WHERE id = ? LIMIT 1').bind(payload.student_id).first();
+      const existing = await db.prepare("SELECT id, name FROM users WHERE id = ? AND role = 'student' LIMIT 1").bind(payload.student_id).first();
       if (!existing) {
         return json({ success: false, error: `Không tìm thấy học sinh có ID ${payload.student_id} trong hệ thống.` }, { status: 404 });
       }
-      await db.prepare('DELETE FROM users WHERE id = ?').bind(payload.student_id).run();
+      await db.prepare("DELETE FROM users WHERE id = ? AND role = 'student'").bind(payload.student_id).run();
       return json({
         success: true,
         message: `🤖 [Bot Zalo] Đã xóa học sinh "${existing.name}" (${payload.student_id}) khỏi hệ thống.`

@@ -89,7 +89,7 @@ export async function PATCH({ request, platform }) {
         if (!['active', 'locked', 'suspended'].includes(status)) return json({ success: false, error: 'Trạng thái không hợp lệ (active/locked/suspended).' }, { status: 400 });
         const metadata = parseMetadata(row.metadata);
         metadata.account_status = status;
-        const result = await db.prepare(`UPDATE users SET metadata=?,profile_version=COALESCE(profile_version,0)+1,updated_at=CURRENT_TIMESTAMP WHERE id=? AND COALESCE(profile_version,0)=?`).bind(JSON.stringify(metadata), studentId, row.profile_version).run();
+        const result = await db.prepare(`UPDATE users SET status=?,metadata=?,profile_version=COALESCE(profile_version,0)+1,updated_at=CURRENT_TIMESTAMP WHERE id=? AND COALESCE(profile_version,0)=?`).bind(status, JSON.stringify(metadata), studentId, row.profile_version).run();
         if ((result?.meta?.changes ?? result?.changes ?? 0) !== 1) return json({ success: false, error: 'ConcurrencyConflict: Hồ sơ đã thay đổi.' }, { status: 409 });
         return json({ success: true, action, student_id: studentId, status, profile_version: row.profile_version + 1 });
       }

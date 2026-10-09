@@ -4,8 +4,21 @@
 import { json } from '@sveltejs/kit';
 import { verifyServerAuth, isStaffUser } from '$lib/server/auth.js';
 import { getServiceAccountToken, hasServiceAccount } from '$lib/server/googleServiceAccount.js';
+import { DEFAULT_DRIVE_FOLDER } from '$lib/server/driveSync.js';
 
 export const prerender = false;
+
+// Drive folder IDs are URL-safe base64-ish strings; reject anything else to
+// block query-injection via the `folder_id` / `q` params.
+const FOLDER_ID_RE = /^[A-Za-z0-9_-]{10,100}$/;
+
+function getAllowedFolderIds(platform) {
+  return String(
+    platform?.env?.DRIVE_SYNC_ALLOWED_FOLDER_IDS ||
+    platform?.env?.GOOGLE_DRIVE_ALLOWED_FOLDER_IDS ||
+    DEFAULT_DRIVE_FOLDER
+  ).split(',').map((id) => id.trim()).filter(Boolean);
+}
 
 export async function GET({ url, request, platform }) {
   const auth = await verifyServerAuth(request, platform);
@@ -45,8 +58,16 @@ export async function GET({ url, request, platform }) {
     }, { status: 503 });
   }
 
-  const folderId = url.searchParams.get('folder_id') || '1_V4YUCuTJ4uui49S6AfcaI8lZmIszKou';
+  const folderId = url.searchParams.get('folder_id') || DEFAULT_DRIVE_FOLDER;
   const query = url.searchParams.get('q') || '';
+
+  // Validate folder_id format (regex) + allowlist (same as /api/drive/sync)
+  if (!FOLDER_ID_RE.test(folderId)) {
+    return json({ success: false, error: 'InvalidFolderId: folder_id không đúng định dạng' }, { status: 400 });
+  }
+  if (!new Set(getAllowedFolderIds(platform)).has(folderId)) {
+    return json({ success: false, error: 'Forbidden: folder_id không nằm trong danh sách cho phép' }, { status: 403 });
+  }
 
   try {
     let driveQuery = `'${folderId}' in parents and trashed = false`;

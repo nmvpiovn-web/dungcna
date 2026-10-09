@@ -1,6 +1,6 @@
 import { json } from '@sveltejs/kit';
 import { getAllEvaluations, getEvaluationsByStudent, saveEvaluation, formatParentReportCard, dispatchBotReport } from '../../../lib/unifiedStore.js';
-import { verifyServerAuth, isStaffUser } from '../../../lib/server/auth.js';
+import { verifyServerAuth, isStaffUser, isManager } from '../../../lib/server/auth.js';
 
 export const prerender = false;
 
@@ -70,6 +70,25 @@ export async function POST({ request, platform }) {
       teacher_feedback: body.teacher_feedback !== undefined ? body.teacher_feedback : (body.teacher_direct_feedback || ''),
       action_plan: body.action_plan !== undefined ? body.action_plan : ''
     };
+    // Ownership + server-generated id: when body.id matches an existing evaluation,
+    // non-managers may only update their own. New evaluations always get a
+    // server-generated id (client-supplied ids can no longer overwrite others).
+    let evaluationId = null;
+    if (body.id && platform?.env?.DB) {
+      const existingEval = await platform.env.DB.prepare(
+        `SELECT teacher_id FROM student_evaluations WHERE id = ? LIMIT 1`
+      ).bind(body.id).first();
+      if (existingEval) {
+        if (!isManager(auth.user) && String(existingEval.teacher_id || '') !== String(auth.user.id)) {
+          return json({ success: false, error: 'Forbidden: Bạn chỉ được sửa đánh giá do mình tạo' }, { status: 403 });
+        }
+        evaluationId = body.id;
+      }
+    }
+    if (!evaluationId) {
+      evaluationId = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : `eval_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    }
+    payloadToSave.id = evaluationId;
     const saved = saveEvaluation(payloadToSave, auth.user);
     if (body.teacher_feedback !== undefined) saved.teacher_feedback = body.teacher_feedback;
     if (body.action_plan !== undefined) saved.action_plan = body.action_plan;
@@ -105,7 +124,7 @@ export async function POST({ request, platform }) {
             parent_zalo_id = excluded.parent_zalo_id,
             updated_at = CURRENT_TIMESTAMP;
         `).bind(
-          saved.id || body.id,
+          evaluationId,
           saved.student_id || body.student_id,
           saved.student_name || body.student_name,
           auth.user.id,

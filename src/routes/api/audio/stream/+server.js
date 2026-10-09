@@ -1,7 +1,26 @@
 import { json } from '@sveltejs/kit';
+import { verifyServerAuth } from '../../../../lib/server/auth.js';
 import audioManifest from '../../../../lib/data/audio_manifest.json' with { type: 'json' };
 
 export const prerender = false;
+
+// Fields stripped for guests (unauthenticated): answer-key-ish content and
+// internal Drive provenance.
+const GUEST_STRIPPED_FIELDS = ['transcript', 'drive_file_id', 'drive_path', 'key_vocabulary', 'file_hash_sha256'];
+
+function sanitizeTrackForGuest(track) {
+  const clean = { ...track };
+  for (const f of GUEST_STRIPPED_FIELDS) delete clean[f];
+  return clean;
+}
+
+async function optionalAuth(request, platform) {
+  if (!request.headers.get('authorization') && !request.headers.get('cookie')?.includes('session_token=')) return null;
+  try {
+    const auth = await verifyServerAuth(request, platform);
+    return auth.authenticated ? auth : null;
+  } catch { return null; }
+}
 
 export async function GET({ url, request, platform }) {
   const trackId = url.searchParams.get('id');
@@ -27,10 +46,12 @@ export async function GET({ url, request, platform }) {
   }
 
   // Return track provenance metadata if requested
+  // (guests get a sanitized view: no transcript / drive_file_id)
   if (infoOnly) {
+    const auth = await optionalAuth(request, platform);
     return json({
       success: true,
-      track
+      track: auth ? track : sanitizeTrackForGuest(track)
     });
   }
 
@@ -119,13 +140,16 @@ export async function GET({ url, request, platform }) {
   }
 
   // 3. Fail-closed fallback: reported as pending download if not physically synced
+  // (guests get a sanitized view: no transcript / drive_file_id)
+  const fallbackAuth = await optionalAuth(request, platform);
+  const fallbackTrack = fallbackAuth ? track : sanitizeTrackForGuest(track);
   return json({
     success: false,
     status: 'source_pending_download',
     error: 'Tệp audio gốc từ kho Google Drive (2.254 tracks) chưa được đồng bộ về máy chủ.',
-    track_id: track.id,
-    title: track.title,
-    drive_path: track.drive_path,
-    transcript: track.transcript
+    track_id: fallbackTrack.id,
+    title: fallbackTrack.title,
+    drive_path: fallbackTrack.drive_path,
+    transcript: fallbackTrack.transcript
   }, { status: 503 });
 }

@@ -147,10 +147,29 @@ export async function POST({ request, platform }) {
     const body = await request.json();
     const action = body.action || 'save_session';
 
+    const isMgr = isManager(auth.user);
+    const db = platform?.env?.DB;
+
+    // Ownership helper: non-managers may only touch sessions they are in charge of
+    // (main / assistant / substitute teacher).
+    async function assertOwnSession(sessionId) {
+      if (isMgr || !db || !sessionId) return;
+      const existing = await db.prepare(
+        `SELECT teacher_id, assistant_teacher_id, substitute_teacher_id FROM class_sessions WHERE id = ? LIMIT 1`
+      ).bind(sessionId).first();
+      if (existing) {
+        const mine = [existing.teacher_id, existing.assistant_teacher_id, existing.substitute_teacher_id].includes(auth.user.id);
+        if (!mine) {
+          throw { status: 403, message: 'Forbidden: Bạn chỉ được sửa lịch mình phụ trách' };
+        }
+      }
+    }
+
     if (action === 'assign_students') {
+      await assertOwnSession(body.session_id);
       const res = assignStudentsToClassSession(body.session_id, body.student_ids);
-      if (platform?.env?.DB) {
-        await platform.env.DB.prepare(`
+      if (db) {
+        await db.prepare(`
           UPDATE class_sessions SET student_ids = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
         `).bind(JSON.stringify(body.student_ids || []), body.session_id).run();
       }
@@ -159,6 +178,12 @@ export async function POST({ request, platform }) {
 
     if (!body.class_name || !body.start_time) {
       return json({ success: false, error: 'Thiếu thông tin tên lớp hoặc thời gian bắt đầu buổi học' }, { status: 400 });
+    }
+
+    await assertOwnSession(body.id);
+    // Non-managers cannot create sessions assigned to other teachers
+    if (!isMgr && body.teacher_id && body.teacher_id !== auth.user.id) {
+      return json({ success: false, error: 'Forbidden: Bạn chỉ được tạo lịch cho chính mình' }, { status: 403 });
     }
 
     const id = body.id || `sess_${crypto.randomUUID()}`;
@@ -228,8 +253,11 @@ export async function POST({ request, platform }) {
       session: savedSession
     });
   } catch (err) {
-    console.error('POST /api/schedule error:', err);
-    return json({ success: false, error: err.message }, { status: 500 });
+    console.error('POST /api/schedule error:', err?.message || err);
+    if (err && typeof err.status === 'number') {
+      return json({ success: false, error: err.message }, { status: err.status });
+    }
+    return json({ success: false, error: err?.message || 'Internal Server Error' }, { status: 500 });
   }
 }
 
@@ -253,6 +281,19 @@ export async function DELETE({ url, request, platform }) {
   try {
     const id = url.searchParams.get('id');
     if (!id) return json({ success: false, error: 'Thiếu session ID' }, { status: 400 });
+
+    // Non-managers can only delete sessions they are in charge of
+    if (!isManager(auth.user) && platform?.env?.DB) {
+      const existing = await platform.env.DB.prepare(
+        `SELECT teacher_id, assistant_teacher_id, substitute_teacher_id FROM class_sessions WHERE id = ? LIMIT 1`
+      ).bind(id).first();
+      if (existing) {
+        const mine = [existing.teacher_id, existing.assistant_teacher_id, existing.substitute_teacher_id].includes(auth.user.id);
+        if (!mine) {
+          return json({ success: false, error: 'Forbidden: Bạn chỉ được xóa lịch mình phụ trách' }, { status: 403 });
+        }
+      }
+    }
 
     if (platform?.env?.DB) {
       await platform.env.DB.prepare('DELETE FROM class_sessions WHERE id = ?').bind(id).run();

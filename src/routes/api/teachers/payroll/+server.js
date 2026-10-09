@@ -1,5 +1,5 @@
 import { json } from '@sveltejs/kit';
-import { verifyServerAuth, isStaffUser, isManager } from '../../../../lib/server/auth.js';
+import { verifyServerAuth, isStaffUser, isManager, isAdmin } from '../../../../lib/server/auth.js';
 import { calculateTeacherMonthlyPayroll, buildRateModelFromProfile } from '../../../../lib/server/payrollEngine.js';
 
 export const prerender = false;
@@ -330,9 +330,10 @@ export async function POST({ request, platform }) {
 
   const billingCycle = body.billing_cycle || '2026-09';
 
-  // Administrative lifecycle actions strictly require Leader / Manager role
-  if (['approve', 'lock', 'disburse', 'adjust', 'create_adjustment'].includes(action) && !manager) {
-    return json({ success: false, error: 'Forbidden: Chỉ Ban Quản Lý (Leader/Admin) mới có quyền khóa sổ, duyệt chi hoặc điều chỉnh bảng lương' }, { status: 403 });
+  // Administrative lifecycle actions strictly require Admin / Superadmin role.
+  // Leader keeps view + save_draft only (cannot approve, lock, disburse or adjust payroll).
+  if (['approve', 'lock', 'disburse', 'adjust', 'create_adjustment'].includes(action) && !isAdmin(auth.user)) {
+    return json({ success: false, error: 'Forbidden: Chỉ Admin/Superadmin mới có quyền duyệt, khóa sổ, chi trả hoặc điều chỉnh bảng lương' }, { status: 403 });
   }
 
   if (!db && action !== 'preview') {

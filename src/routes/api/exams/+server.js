@@ -206,9 +206,15 @@ export async function GET({ url, request, platform }) {
       if (auth && auth.authenticated) {
         user = auth.user;
         isStaff = isStaffUser(user);
+      } else if (auth && auth.status === 500) {
+        // Auth infrastructure failure (e.g. missing AUTH_SECRET / D1 down) is NOT
+        // a normal unauthenticated request — fail closed instead of serving as guest.
+        return json({ success: false, error: auth.error || 'Internal Server Error: Lỗi hạ tầng xác thực' }, { status: 500 });
       }
+      // status 401 → normal guest; proceed with public catalog permissions only.
     } catch {
-      // Unauthenticated caller or missing token; proceed with public exam catalog permissions
+      // Unexpected auth failure — never silently downgrade to guest.
+      return json({ success: false, error: 'Internal Server Error: Lỗi xác thực' }, { status: 500 });
     }
   }
 
@@ -219,6 +225,12 @@ export async function GET({ url, request, platform }) {
   const includeQuestions = url.searchParams.get('include_questions') === '1';
   const includeAnswers = url.searchParams.get('include_answers') === '1';
   const isRandom = url.searchParams.get('random') === '1';
+
+  // Question payloads (full question list / random generator / answers) require login.
+  // Guests use the dedicated /api/exams/guest session-token flow instead.
+  if ((includeQuestions || isRandom || includeAnswers) && !user) {
+    return json({ success: false, error: 'Unauthorized: Vui lòng đăng nhập để xem nội dung đề thi' }, { status: 401 });
+  }
 
   try {
     // 1. Dynamic random test generator from questions pool (Strict blueprints & shortage check)
