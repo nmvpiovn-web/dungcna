@@ -13,7 +13,7 @@ const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf
 export async function POST({ request, platform }) {
   // Auth check
   const auth = await verifyServerAuth(request, platform);
-  if (!auth.ok) {
+  if (!auth.authenticated) {
     return json({ error: 'Unauthorized' }, { status: 401 });
   }
 

@@ -311,7 +311,15 @@ export async function GET({ request, url, platform }) {
           }
         }
 
-        const sRes = await db.prepare('SELECT * FROM homework_submissions WHERE assignment_id = ?').bind(assignmentId).all();
+        const sRes = role === 'student'
+          ? await db.prepare('SELECT * FROM homework_submissions WHERE assignment_id = ? AND student_id = ?').bind(assignmentId, user.id).all()
+          : role === 'parent'
+          ? await db.prepare(`
+              SELECT hs.* FROM homework_submissions hs
+              JOIN parent_student_links psl ON psl.student_user_id = hs.student_id
+              WHERE hs.assignment_id = ? AND psl.parent_user_id = ? AND psl.verification_status = 'verified'
+            `).bind(assignmentId, user.id).all()
+          : await db.prepare('SELECT * FROM homework_submissions WHERE assignment_id = ?').bind(assignmentId).all();
         return json({ success: true, assignment: aRes, submissions: sRes.results || [] });
       }
 
@@ -687,7 +695,7 @@ export async function POST({ request, platform }) {
       if (now > deadline) isOnTime = 0;
     } catch {}
 
-    const submissionId = body.id || `sub_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    const submissionId = `sub_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
     const submissionRecord = {
       id: submissionId,
       assignment_id,
