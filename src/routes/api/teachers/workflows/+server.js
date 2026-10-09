@@ -1010,14 +1010,16 @@ export async function POST({ request, platform }) {
     if (!isAdmin(auth.user)) {
       return json({ success: false, error: 'Forbidden: Chỉ superadmin/admin mới được cấp tài khoản giáo viên' }, { status: 403 });
     }
-    // Rate limit: tối đa 10 lần cấp/giờ/admin
+    // Rate limit: tối đa 10 lần cấp/giờ/admin (checkRateLimit trả boolean)
     try {
       const { checkRateLimit } = await import('../../../../lib/server/rateLimit.js');
-      const rl = await checkRateLimit(db, { key: `provision_account:${auth.user.id}`, limit: 10, windowMs: 3600000 });
-      if (!rl.allowed) {
+      const allowed = await checkRateLimit(db, { key: `provision_account:${auth.user.id}`, limit: 10, windowMs: 3600000 });
+      if (!allowed) {
         return json({ success: false, error: 'Quá nhiều yêu cầu, thử lại sau' }, { status: 429 });
       }
-    } catch {}
+    } catch (e) {
+      console.error('Rate limit check failed:', e.message);
+    }
     const recruitment_id = String(body.recruitment_id || '').trim();
     if (!recruitment_id) {
       return json({ success: false, error: 'Thiếu recruitment_id' }, { status: 400 });
@@ -1040,26 +1042,35 @@ export async function POST({ request, platform }) {
       }
       const { hashPassword } = await import('../../../../lib/server/auth.js');
       // Username unique: thêm random suffix để tránh trùng cùng millisecond
-      const randSuffix = crypto.randomUUID().substring(0, 8);
+      const randSuffix = crypto.randomUUID().replace(/-/g, '').substring(0, 8);
       const username = `gv_${Date.now().toString(36)}_${randSuffix}`;
-      // Temp password mạnh: crypto.getRandomValues (128 bit)
-      const randBytes = new Uint8Array(16);
+      // Temp password mạnh: crypto.getRandomValues, charset đầy đủ
+      const charset = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#';
+      const randBytes = new Uint8Array(12);
       crypto.getRandomValues(randBytes);
-      const tempPassword = 'Timbk@' + Array.from(randBytes).map(b => b.toString(36)).join('').substring(0, 12);
+      const tempPassword = Array.from(randBytes).map(b => charset[b % charset.length]).join('');
       const passwordHash = await hashPassword(tempPassword);
       const userId = `user_${crypto.randomUUID()}`;
+      const profileId = `tp_${crypto.randomUUID()}`;
 
+      // Schema: users dùng cột `password` (không phải password_hash)
+      // teacher_profiles: id, user_id, bio, degree, certifications, hourly_rate, is_native, specialty, created_at
       await db.batch([
-        db.prepare(`INSERT INTO users (id, username, password_hash, name, phone, email, role, status, metadata, created_at) VALUES (?, ?, ?, ?, ?, ?, 'teacher', 'active', ?, CURRENT_TIMESTAMP)`).bind(userId, username, passwordHash, rec.candidate_name, normPhone || null, normEmail || null, JSON.stringify({ must_change_password: true, provisioned_from: recruitment_id, provisioned_by: auth.user.id, provisioned_at: new Date().toISOString() })),
-        db.prepare(`INSERT INTO teacher_profiles (id, user_id, recruitment_id, full_name, phone, email, role_type, experience_years, certificates, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', CURRENT_TIMESTAMP)`).bind(`tp_${crypto.randomUUID()}`, userId, recruitment_id, rec.candidate_name, normPhone || null, normEmail || null, rec.role_type || 'lead', rec.experience_years || 0, rec.certificates || ''),
+        db.prepare(`INSERT INTO users (id, username, password, name, phone, email, role, status, metadata, created_at) VALUES (?, ?, ?, ?, ?, ?, 'teacher', 'active', ?, CURRENT_TIMESTAMP)`).bind(userId, username, passwordHash, rec.candidate_name, normPhone || null, normEmail || null, JSON.stringify({ must_change_password: true, provisioned_from: recruitment_id, provisioned_by: auth.user.id, provisioned_at: new Date().toISOString() })),
+        db.prepare(`INSERT INTO teacher_profiles (id, user_id, bio, degree, certifications, specialty, created_at) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`).bind(profileId, userId, `Ứng viên từ recruitment ${recruitment_id}`, rec.role_type || '', rec.certificates || '', rec.specialty || ''),
         db.prepare(`UPDATE teacher_recruitment SET status = 'onboarded', updated_at = CURRENT_TIMESTAMP WHERE id = ? AND status = 'accepted'`).bind(recruitment_id)
       ]);
+
+      // Audit log
+      try {
+        await db.prepare(`INSERT INTO audit_logs (id, action, actor_id, target_id, details, created_at) VALUES (?, 'provision_teacher_account', ?, ?, ?, CURRENT_TIMESTAMP)`).bind(`audit_${crypto.randomUUID()}`, auth.user.id, userId, JSON.stringify({ recruitment_id, username }));
+      } catch {}
 
       return json({ success: true, message: 'Đã cấp tài khoản giáo viên. Yêu cầu đổi mật khẩu ở lần đăng nhập đầu.', username, temp_password: tempPassword, user_id: userId, must_change_password: true });
     } catch (e) {
       // Catch unique constraint violation (race condition)
-      if (e.message && e.message.includes('UNIQUE')) {
-        return json({ success: false, error: 'SĐT/email đã được đăng ký (race detected)' }, { status: 409 });
+      if (e.message && (e.message.includes('UNIQUE') || e.message.includes('unique'))) {
+        return json({ success: false, error: 'Tài khoản đã tồn tại (trùng username/SĐT/email)' }, { status: 409 });
       }
       return json({ success: false, error: `Lỗi cấp tài khoản: ${e.message}` }, { status: 500 });
     }

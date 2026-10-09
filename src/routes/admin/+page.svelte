@@ -1980,6 +1980,7 @@
 
  <!-- ================= TAB: DUYỆT GIÁO VIÊN (HIRING PIPELINE) ================= -->
  {:else if activeTab === 'hiring'}
+ {#if currentUser && ['superadmin', 'admin', 'leader'].includes((currentUser.role || '').toLowerCase())}
  <div class="space-y-6 animate-in fade-in duration-200">
  <!-- Header Deck -->
  <div class="p-6 rounded-3xl bg-gradient-to-r from-slate-900 via-violet-950/40 to-slate-900 border border-violet-500/30 shadow-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -2131,7 +2132,9 @@
  </div>
  <div class="text-xs text-slate-300">📞 {rec.phone || 'Chưa có'} {rec.email ? `· ✉️ ${rec.email}` : ''}</div>
  <div class="flex gap-2 pt-2">
+ {#if currentUser && ['superadmin', 'admin'].includes((currentUser.role || '').toLowerCase())}
  <button type="button" onclick={() => handleProvisionAccount(rec.id)} class="flex-1 px-3 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-bold text-xs">🔑 Cấp Tài Khoản GV</button>
+ {/if}
  <a href="/admin?tab=schedule" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs border border-slate-700 text-center">📅 Phân Công</a>
  </div>
  </div>
@@ -2152,6 +2155,9 @@
  </div>
  {/if}
  </div>
+ {:else}
+ <div class="p-8 text-center text-slate-400">Không có quyền truy cập tab này.</div>
+ {/if}
 
  <!-- ================= TAB 1: QUẢN LÝ HỌC SINH & DUYỆT TRIAL ================= -->
  {:else if activeTab === 'students'}
