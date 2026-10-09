@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
 import { isStaffUser, verifyServerAuth } from '../../../../../lib/server/auth.js';
 import { canManageQuiz } from '../../../../../lib/server/quizMenu.js';
-import { generateDraftQuestions, generateQuestionsWithAI, publishQuizBundle, QuizDriveError, readAllowedDriveSource, saveQuizSourceAndDrafts } from '../../../../../lib/server/quizDrive.js';
+import { generateDraftQuestions, generateQuestionsWithAI, publishQuizBundle, QuizDriveError, readAllowedDriveSource, readDriveSourceFromUrl, saveQuizSourceAndDrafts } from '../../../../../lib/server/quizDrive.js';
 
 export const prerender = false;
 
@@ -18,7 +18,14 @@ export async function POST({ params, request, platform }) {
   let body;
   try { body = await request.json(); } catch { return json({ success: false, error: 'Invalid JSON' }, { status: 400 }); }
   try {
-    const source = await readAllowedDriveSource(platform, body.file_id);
+    const fileId = String(body.file_id || '').trim();
+    const url = String(body.url || '').trim();
+    if (!fileId && !url) {
+      return json({ success: false, error: 'Thiếu file_id hoặc url', message: 'Hãy chọn file trong Drive hoặc dán link Google Drive/Docs.' }, { status: 400 });
+    }
+    // file_id trực tiếp: giữ nguyên allowlist (không nới lỏng).
+    // url dán vào: parse link, copy vào Quiz Uploads nếu ngoài folder cho phép.
+    const source = url ? await readDriveSourceFromUrl(platform, url) : await readAllowedDriveSource(platform, fileId);
     const aiQuestions = await generateQuestionsWithAI(source.text, platform);
     const questions = aiQuestions || generateDraftQuestions(source.text);
     const metadata = await saveQuizSourceAndDrafts(db, params.id, source.file, source.text, questions);

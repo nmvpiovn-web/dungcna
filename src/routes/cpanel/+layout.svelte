@@ -23,11 +23,13 @@
  { path: '/cpanel/student', label: t('studentDesk', lang), icon: '🎒' },
  { path: '/cpanel/student#homework', label: t('homeworkTab', lang), icon: '📝' },
  { path: '/exam', label: t('examTab', lang), icon: '🎯' },
+ { path: '/quiz-menu', label: 'Làm Quiz', icon: '▶' },
  { path: '/schedule', label: t('scheduleTab', lang), icon: '📅' }
  ],
  parent: [
  { path: '/cpanel/parent', label: t('parentPortal', lang), icon: '👨‍👩‍👧' },
  { path: '/cpanel/parent#homework', label: t('homeworkTab', lang), icon: '📊' },
+ { path: '/quiz-menu?tab=results', label: 'Kết quả Quiz của con', icon: '📈' },
  { path: '/cpanel/parent#tuition', label: t('tuitionTab', lang), icon: '💳' },
  { path: '/schedule', label: t('scheduleTab', lang), icon: '🗓️' }
  ],
@@ -42,6 +44,7 @@
  { path: '/cpanel/leader', label: t('academicTesting', lang), icon: '👑' },
  { path: '/cpanel/leader#quality', label: t('homeworkTab', lang), icon: '📈' },
  { path: '/cpanel/leader#curriculum', label: t('secondBrainTab', lang), icon: '🗺️' },
+ { path: '/quiz-menu', label: t('quizMenuTab', lang), icon: '🧩' },
  { path: '/admincp', label: t('adminCP', lang), icon: '⚡' }
  ],
  superadmin: [

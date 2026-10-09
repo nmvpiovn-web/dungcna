@@ -2,6 +2,8 @@
   import { onMount, onDestroy } from 'svelte';
   import { getCurrentUser } from '$lib/unifiedStore';
   import QuizReviewPanel from '$lib/components/QuizReviewPanel.svelte';
+  import QuizCameraCapture from '$lib/components/QuizCameraCapture.svelte';
+  import QuizChildResults from '$lib/components/QuizChildResults.svelte';
   import { cacheQuizData, getCachedQuizData, installQuizOnlineSync, queueQuizAttempt } from '$lib/quizOffline.js';
 
   const questionTypes = [
@@ -39,6 +41,7 @@
   let sourceFile = $state(null);
   let driveFiles = $state([]);
   let selectedDriveFileId = $state('');
+  let driveUrl = $state('');
   let selectedManageQuiz = $state(null);
   let bundle = $state(null);
   let bundleBusy = $state(false);
@@ -51,6 +54,16 @@
   });
 
   let isStaff = $derived(['teacher', 'leader', 'admin', 'superadmin'].includes((currentUser?.role || '').toLowerCase()));
+  // Role-aware tabs: staff thấy Tạo/Quản lý/Làm; parent thấy Làm + Kết quả con; student/guest chỉ Làm
+  let userRole = $derived((currentUser?.role || '').toLowerCase());
+  let visibleTabs = $derived(
+    ['teacher', 'leader', 'admin', 'superadmin'].includes(userRole) ? ['create', 'mine', 'take']
+    : userRole === 'parent' ? ['take', 'results']
+    : ['take']
+  );
+  function ensureVisibleTab() {
+    if (!visibleTabs.includes(activeTab)) activeTab = 'take';
+  }
   let answeredCount = $derived(selectedQuiz?.questions?.filter((q) => answerHasValue(answers[q.id])).length || 0);
   let progress = $derived(selectedQuiz?.questions?.length ? Math.round(answeredCount / selectedQuiz.questions.length * 100) : 0);
 
@@ -82,9 +95,12 @@
       const publicData = await api('/api/quiz-menu');
       publicQuizzes = publicData.quizzes || [];
       cacheQuizData('catalog', publicData).catch(() => {});
-      if (isStaff) {
+      // Chỉ gọi ?mine=1 khi role có tab mine
+      if (visibleTabs.includes('mine')) {
         const mineData = await api('/api/quiz-menu?mine=1');
         myQuizzes = mineData.quizzes || [];
+      } else {
+        myQuizzes = [];
       }
     } catch (err) {
       const cached = await getCachedQuizData('catalog').catch(() => null);
@@ -99,11 +115,17 @@
 
   onMount(() => {
     currentUser = getCurrentUser();
+    const params = new URLSearchParams(window.location.search);
+    const tabParam = params.get('tab');
+    if (tabParam) activeTab = tabParam;
+    ensureVisibleTab();
     loadQuizzes();
-    const sharedQuizId = new URLSearchParams(window.location.search).get('quiz');
+    // Deep link ?quiz= luôn mở luồng làm bài
+    const sharedQuizId = params.get('quiz');
     if (sharedQuizId) openQuiz({ id: sharedQuizId });
     const authListener = (event) => {
       currentUser = event.detail;
+      ensureVisibleTab();
       loadQuizzes();
     };
     window.addEventListener('tienganh:auth-change', authListener);
@@ -119,6 +141,7 @@
   });
 
   function selectTab(tab) {
+    if (!visibleTabs.includes(tab)) return;
     activeTab = tab;
     message = '';
     error = '';
@@ -231,8 +254,10 @@
         const form = new FormData(); form.set('file', sourceFile);
         data = await api(`/api/quiz-menu/${id}/upload`, { method: 'POST', body: form, headers: {} });
       } else {
-        if (!selectedDriveFileId) throw new Error('Hãy chọn một file trong Drive.');
-        data = await api(`/api/quiz-menu/${id}/from-drive`, { method: 'POST', body: JSON.stringify({ file_id: selectedDriveFileId }) });
+        const pastedUrl = driveUrl.trim();
+        if (!selectedDriveFileId && !pastedUrl) throw new Error('Hãy chọn một file trong Drive hoặc dán link.');
+        const payload = pastedUrl ? { url: pastedUrl } : { file_id: selectedDriveFileId };
+        data = await api(`/api/quiz-menu/${id}/from-drive`, { method: 'POST', body: JSON.stringify(payload) });
       }
       draft = { ...draft, questions: (data.questions || []).map(fromApiQuestion) };
       bundle = data.bundle || null;
@@ -268,7 +293,7 @@
       if (!bundle) bundle = (await api(`/api/quiz-menu/${id}/sync-bundle`, { method: 'POST', body: JSON.stringify({ direction: 'publish_quiz_to_docs' }) })).bundle;
       message = publish ? 'Đã xuất bản quiz.' : 'Đã lưu bản nháp.';
       draft = { id: null, title: '', description: '', time_limit_minutes: 20, questions: [] };
-      bundle = null; sourceFile = null; selectedDriveFileId = ''; sourceMode = 'manual';
+      bundle = null; sourceFile = null; selectedDriveFileId = ''; driveUrl = ''; sourceMode = 'manual';
       await loadQuizzes();
       activeTab = 'mine';
     } catch (err) {
@@ -526,23 +551,26 @@
   </section>
 
   <nav class="tabs" aria-label="Chức năng Quiz Menu">
-    <button class:active={activeTab === 'create'} on:click={() => selectTab('create')}><span>✦</span>Tạo Quiz</button>
-    <button class:active={activeTab === 'mine'} on:click={() => selectTab('mine')}><span>▤</span>Quiz của tôi</button>
-    <button class:active={activeTab === 'take'} on:click={() => selectTab('take')}><span>▶</span>Làm Quiz</button>
+    {#if visibleTabs.includes('create')}<button class:active={activeTab === 'create'} on:click={() => selectTab('create')}><span>✦</span>Tạo Quiz</button>{/if}
+    {#if visibleTabs.includes('mine')}<button class:active={activeTab === 'mine'} on:click={() => selectTab('mine')}><span>▤</span>Quiz của tôi</button>{/if}
+    {#if visibleTabs.includes('take')}<button class:active={activeTab === 'take'} on:click={() => selectTab('take')}><span>▶</span>Làm Quiz</button>{/if}
+    {#if visibleTabs.includes('results')}<button class:active={activeTab === 'results'} on:click={() => selectTab('results')}><span>📊</span>Kết quả con</button>{/if}
   </nav>
 
   {#if message}<div class="notice success" role="status">✓ {message}</div>{/if}
   {#if error}<div class="notice error" role="alert">{error}</div>{/if}
 
   {#if activeTab === 'create'}
+    {#if !isStaff}
+    <section class="workspace">
+      <div class="permission-card"><span>🔒</span><div><strong>Cần tài khoản giáo viên hoặc leader</strong><p>Đăng nhập đúng vai trò để tạo quiz.</p></div></div>
+    </section>
+    {:else}
     <section class="workspace create-workspace">
       <div class="section-heading">
         <div><span class="section-kicker">SOẠN BÀI</span><h2>Tạo quiz mới</h2></div>
         <span class="draft-count">{draft.questions.length} câu</span>
       </div>
-      {#if !isStaff}
-        <div class="permission-card"><span>🔒</span><div><strong>Cần tài khoản giáo viên hoặc leader</strong><p>Bạn vẫn có thể xem giao diện soạn bài. Đăng nhập đúng vai trò để lưu và xuất bản.</p></div></div>
-      {/if}
       <div class="source-grid">
         <button class:active-source={sourceMode === 'manual'} class="source-card" type="button" on:click={() => chooseSource('manual')}><span>✍</span><strong>Soạn thủ công</strong><small>Thêm từng câu hỏi</small></button>
         <button class:active-source={sourceMode === 'upload'} class="source-card" type="button" disabled={!isStaff} on:click={() => chooseSource('upload')}><span>⇧</span><strong>Tải tài liệu</strong><small>PDF, DOCX, TXT, ảnh</small></button>
@@ -556,9 +584,16 @@
       {#if sourceMode !== 'manual'}
         <div class="source-panel">
           {#if sourceMode === 'upload'}
-            <label>File nguồn<input type="file" accept=".pdf,.docx,.txt,.png,.jpg,.jpeg" on:change={(event) => sourceFile = event.currentTarget.files?.[0] || null} /></label>
+            <div>
+              <label>File nguồn<input type="file" accept=".pdf,.docx,.txt,.png,.jpg,.jpeg" on:change={(event) => sourceFile = event.currentTarget.files?.[0] || null} /></label>
+              {#if sourceFile}<p class="file-chosen">Đã chọn: {sourceFile.name}</p>{/if}
+              <QuizCameraCapture onCapture={(file) => { sourceFile = file; message = 'Đã chụp ảnh tài liệu. Bấm "Tạo bộ tài liệu" để xử lý.'; }} />
+            </div>
           {:else}
-            <label>File trong Google Drive<select bind:value={selectedDriveFileId}><option value="">Chọn file...</option>{#each driveFiles as file}<option value={file.id}>{file.name}</option>{/each}</select></label>
+            <div>
+              <label>File trong Google Drive<select bind:value={selectedDriveFileId}><option value="">Chọn file...</option>{#each driveFiles as file}<option value={file.id}>{file.name}</option>{/each}</select></label>
+              <label>Dán link Drive/Docs<input type="url" bind:value={driveUrl} placeholder="https://drive.google.com/..." inputmode="url" /></label>
+            </div>
           {/if}
           <div><strong>Một lần tạo, ba nơi dùng</strong><p>DOCX để in · Quiz tương tác · BTVN nháp trên timbk.io.vn</p></div>
           <button class="btn-main" disabled={sourceBusy} on:click={importSource}>{sourceBusy ? 'Đang xử lý...' : 'Tạo bộ tài liệu'}</button>
@@ -632,6 +667,7 @@
         <button class="btn-main" disabled={!isStaff} on:click={() => saveDraft(true)}>Xuất bản Quiz</button>
       </div>
     </section>
+    {/if}
   {:else if activeTab === 'mine'}
     <section class="workspace">
       <div class="section-heading"><div><span class="section-kicker">THƯ VIỆN</span><h2>Quiz của tôi</h2></div><button class="btn-main compact" on:click={() => selectTab('create')}>＋ Tạo mới</button></div>
@@ -653,6 +689,11 @@
       {:else}
         <div class="empty-state"><span>▤</span><h3>Chưa có quiz nào</h3><p>Tạo quiz đầu tiên để giao bài cho học viên.</p><button class="btn-main" on:click={() => selectTab('create')}>Tạo Quiz</button></div>
       {/if}
+    </section>
+  {:else if activeTab === 'results'}
+    <section class="workspace">
+      <div class="section-heading"><div><span class="section-kicker">PHỤ HUYNH</span><h2>Kết quả học tập của con</h2></div></div>
+      <QuizChildResults />
     </section>
   {:else}
     <section class="workspace">
@@ -765,14 +806,15 @@
 
 <style>
   :global(body) { background: #f5f8fb; }
-  .quiz-page { max-width: 1180px; margin: 0 auto; padding: 28px 20px 100px; color: #132238; }
+  .quiz-page { max-width: 1180px; margin: 0 auto; padding: 28px 20px calc(96px + env(safe-area-inset-bottom)); color: #132238; overflow-x: hidden; }
   .quiz-hero { min-height: 190px; display:flex; align-items:center; justify-content:space-between; padding:34px 42px; color:white; background:linear-gradient(125deg,#075985,#0891b2 56%,#14b8a6); border-radius:16px; overflow:hidden; position:relative; box-shadow:0 12px 30px rgba(8,145,178,.17); }
   .quiz-hero:after { content:''; position:absolute; width:260px; height:260px; right:-50px; top:-100px; border:38px solid rgba(255,255,255,.08); border-radius:50%; }
   .eyebrow,.section-kicker { font-size:.72rem; letter-spacing:.16em; font-weight:700; color:#0891b2; }
   .quiz-hero .eyebrow { color:#a5f3fc; }.quiz-hero h1 { color:white; font-size:clamp(1.65rem,4vw,2.6rem); margin:5px 0 6px; }.quiz-hero p { max-width:600px; color:#e0f2fe; }
   .hero-mark { width:100px; height:100px; flex:0 0 100px; display:grid; place-items:center; border:1px solid rgba(255,255,255,.3); background:rgba(255,255,255,.12); backdrop-filter:blur(8px); border-radius:22px; font-size:3rem; font-weight:700; transform:rotate(4deg); z-index:1; }.hero-mark span{color:#67e8f9}
-  .tabs { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:22px 0; padding:6px; background:white; border:1px solid #dce5ec; border-radius:10px; box-shadow:0 2px 8px rgba(15,23,42,.04); }
-  .tabs button { min-height:48px; border:0; background:transparent; border-radius:7px; color:#52657a; font-weight:600; font-size:.92rem; }.tabs button span{margin-right:8px;color:#0891b2}.tabs button.active{background:#ecfeff;color:#0e7490;box-shadow:inset 0 0 0 1px #a5f3fc}
+  .tabs { display:flex; gap:8px; margin:22px 0; padding:6px; background:white; border:1px solid #dce5ec; border-radius:10px; box-shadow:0 2px 8px rgba(15,23,42,.04); }
+  .tabs button { flex:1; min-height:48px; border:0; background:transparent; border-radius:7px; color:#52657a; font-weight:600; font-size:.92rem; }.tabs button span{margin-right:8px;color:#0891b2}.tabs button.active{background:#ecfeff;color:#0e7490;box-shadow:inset 0 0 0 1px #a5f3fc}
+  .file-chosen { font-size:.8rem; color:#0e7490; margin-top:6px; }
   .workspace { background:white; border:1px solid #dce5ec; border-radius:12px; padding:28px; box-shadow:0 3px 14px rgba(15,23,42,.045); }
   .section-heading { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:24px; }.section-heading h2{font-size:1.5rem;margin-top:2px}.draft-count,.live-dot{padding:6px 10px;background:#f1f5f9;border-radius:5px;color:#52657a;font-size:.8rem;font-weight:600}.live-dot i{display:inline-block;width:7px;height:7px;background:#16a34a;border-radius:50%;margin-right:6px}
   .notice{padding:12px 16px;margin-bottom:16px;border-radius:7px;border:1px solid;font-weight:500}.notice.success{background:#f0fdf4;border-color:#bbf7d0;color:#166534}.notice.error{background:#fef2f2;border-color:#fecaca;color:#b91c1c}
@@ -787,5 +829,8 @@
   .exam-shell{position:fixed;inset:0;z-index:100;background:#f4f7fa;overflow:auto;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);color:#17283d}.exam-topbar{position:sticky;top:0;z-index:5;min-height:74px;padding:10px max(18px,env(safe-area-inset-right)) 10px max(18px,env(safe-area-inset-left));display:grid;grid-template-columns:1fr auto 1fr;align-items:center;background:white;border-bottom:1px solid #dce5ec;box-shadow:0 2px 8px rgba(15,23,42,.05)}.exam-title{display:flex;align-items:center;gap:10px}.exam-title>span{width:43px;height:43px;display:grid;place-items:center;border-radius:7px;background:#0891b2;color:white;font-size:.68rem;font-weight:800}.exam-title small{display:block;color:#718195}.countdown{text-align:center;padding:5px 18px;border-left:1px solid #e2e8f0;border-right:1px solid #e2e8f0}.countdown small{display:block;font-size:.62rem;letter-spacing:.1em;color:#64748b}.countdown strong{font-size:1.25rem;font-variant-numeric:tabular-nums}.countdown.urgent{color:#dc2626;background:#fef2f2}.abandon{justify-self:end;min-height:44px;border:1px solid #fecaca;background:white;color:#b91c1c;border-radius:6px;padding:8px 13px;font-weight:600}.abandon.armed{background:#dc2626;color:white}.progress-track{position:sticky;top:74px;z-index:6;height:4px;background:#dfe7ed}.progress-track span{display:block;height:100%;background:#14b8a6;transition:width .25s}.exam-content{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:190px 1fr;gap:26px;padding:28px 20px 80px}.exam-content aside{position:sticky;top:105px;align-self:start;background:white;border:1px solid #dce5ec;border-radius:8px;padding:15px}.question-map{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:12px 0}.question-map a{height:34px;display:grid;place-items:center;text-decoration:none;border:1px solid #dce5ec;border-radius:5px;color:#64748b;font-size:.8rem}.question-map a.done{background:#ecfeff;border-color:#67e8f9;color:#0e7490;font-weight:700}.exam-content aside p{font-size:.72rem;color:#718195}.exam-content aside i{display:inline-block;width:7px;height:7px;background:#14b8a6;border-radius:50%;margin-right:5px}.exam-questions{display:flex;flex-direction:column;gap:16px}.exam-question{background:white;border:1px solid #dce5ec;border-radius:10px;padding:24px;scroll-margin-top:100px}.exam-question.deferred{border-color:#fdba74;background:#fffbeb}.question-head{display:flex;justify-content:space-between;align-items:center;color:#0e7490;font-size:.76rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em}.question-head>div{display:flex;align-items:center;gap:8px}.question-head b{padding:3px 7px;background:#f1f5f9;color:#64748b;border-radius:4px}.defer-button{min-height:36px;padding:6px 10px;border:1px solid #fdba74;background:#fff7ed;color:#9a3412;border-radius:6px;font-weight:700;text-transform:none}.deferred-note{padding:14px;background:white;border:1px solid #fed7aa;border-radius:7px;color:#9a3412}.exam-question h2{font-size:1.15rem;margin:12px 0 18px;line-height:1.55}.question-image{display:block;max-width:100%;max-height:320px;object-fit:contain;margin:0 auto 18px;border-radius:8px}.answer-options{display:grid;gap:9px}.answer-options label{display:grid;grid-template-columns:22px 36px 1fr;align-items:center;gap:8px;min-height:56px;padding:8px 12px;border:1px solid #dce5ec;border-radius:7px;cursor:pointer}.answer-options label.selected{background:#ecfeff;border-color:#22d3ee}.answer-options input{width:18px;min-height:18px;accent-color:#0891b2}.answer-options label>span{width:32px;height:32px;display:grid;place-items:center;background:#f1f5f9;border-radius:5px;color:#52657a}.answer-options label.selected>span{background:#0891b2;color:white}.matching-answer{display:grid;gap:9px}.matching-answer label{display:grid;grid-template-columns:1fr 32px 1fr;align-items:center;background:#f8fafc;padding:9px;border-radius:7px}.matching-answer label>span{text-align:center;color:#0891b2}.long-answer textarea{min-height:150px}.long-answer small{text-align:right;color:#778798}.short-answer input{font-size:1rem}.submit-panel{display:flex;align-items:center;justify-content:space-between;gap:16px;background:#17283d;color:white;padding:18px 20px;border-radius:9px}.submit-panel p{font-size:.8rem;color:#bac6d1}.submit-actions{display:flex;gap:8px}.score-ring{width:145px;height:145px;margin:20px auto;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:50%;border:10px solid #cffafe;box-shadow:inset 0 0 0 2px #22d3ee}.score-ring strong{font-size:2.4rem;color:#087e9b}.score-ring span{color:#64748b;font-size:.82rem}.result-stats{display:flex;justify-content:center;gap:8px;margin-bottom:18px}.result-stats span{padding:7px 10px;background:#f1f5f9;border-radius:5px;color:#52657a;font-size:.8rem}
   @media(max-width:800px){.quiz-page{padding:16px 12px 90px}.quiz-hero{padding:26px 22px;min-height:160px}.hero-mark{width:70px;height:70px;flex-basis:70px;font-size:2rem}.workspace{padding:18px}.source-grid,.type-grid,.quiz-grid,.loading-grid{grid-template-columns:1fr 1fr}.source-panel{grid-template-columns:1fr}.bundle-grid,.homework-fields{grid-template-columns:1fr 1fr}.exam-content{grid-template-columns:1fr;padding:18px 12px 70px}.exam-content aside{position:static}.question-map{grid-template-columns:repeat(8,1fr)}.exam-topbar{grid-template-columns:1fr auto}.abandon{grid-column:1/-1;width:100%;margin-top:6px}.progress-track{top:124px}.exam-question{scroll-margin-top:135px}}
   @media(max-width:560px){.quiz-hero{align-items:flex-end}.hero-mark{position:absolute;right:18px;top:18px;opacity:.38}.quiz-hero p{padding-right:20px}.tabs{gap:3px}.tabs button{font-size:.75rem;padding:5px}.tabs button span{display:block;margin:0;font-size:1rem}.source-grid,.type-grid,.quiz-grid,.loading-grid,.form-grid,.bundle-grid,.homework-fields{grid-template-columns:1fr}.form-grid .wide{grid-column:1}.source-card{min-height:78px}.type-grid button{min-height:58px}.editor-card{padding:13px}.editor-card header{flex-wrap:wrap}.editor-card header select{order:3;width:100%;max-width:none}.editor-actions{margin-left:auto}.editor-bottom{grid-template-columns:90px 1fr}.save-bar{flex-wrap:wrap;bottom:8px}.save-bar>div{width:100%}.save-bar button{flex:1}.section-heading{align-items:flex-start}.question-map{grid-template-columns:repeat(6,1fr)}.exam-topbar{padding:8px 10px}.exam-title>span{display:none}.exam-title strong{display:block;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.countdown{padding:4px 10px}.exam-question{padding:17px}.question-head{align-items:flex-start}.question-head>div{flex-direction:column-reverse;align-items:flex-end}.matching-answer label{grid-template-columns:1fr}.matching-answer label>span{transform:rotate(90deg)}.submit-panel{align-items:stretch;flex-direction:column}.submit-actions{flex-direction:column}.start-dialog,.result-dialog,.bundle-dialog{padding:25px 18px}.modal-backdrop{padding:10px}.rules{grid-template-columns:1fr 1fr}}
+  @media(max-width:1024px){.save-bar{bottom:calc(84px + env(safe-area-inset-bottom))}}
+  @media(max-width:640px){.source-grid,.type-grid,.quiz-grid,.loading-grid{grid-template-columns:1fr}.quiz-page{padding-left:12px;padding-right:12px}}
+  @media(max-width:390px){.hero-mark{display:none}.modal-backdrop{padding:0}.start-dialog,.result-dialog,.bundle-dialog{width:100%;max-height:100dvh;border-radius:0;padding:22px 14px}.exam-topbar{grid-template-columns:1fr auto}.quiz-page{overflow-x:hidden}}
   @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
 </style>

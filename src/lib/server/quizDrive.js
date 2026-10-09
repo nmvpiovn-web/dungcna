@@ -401,6 +401,70 @@ export async function readAllowedDriveSource(platform, id) {
   return { file, text: assertExtractedText(await extractBytes(platform, { name: file.name, mimeType: file.mimeType }, bytes, parent)) };
 }
 
+/**
+ * Parse Google Drive/Docs share link → file ID.
+ * Chỉ nhận HTTPS và các dạng:
+ * - docs.google.com/document/d/{id}
+ * - drive.google.com/file/d/{id}
+ * - drive.google.com/open?id={id}
+ * - drive.google.com/uc?id={id}
+ * ID phải khớp [A-Za-z0-9_-]{6,200}.
+ */
+export function parseDriveLink(url) {
+  const raw = String(url || '').trim();
+  if (!/^https:\/\//i.test(raw)) {
+    throw new QuizDriveError('Link phải bắt đầu bằng https://', 400, 'InvalidDriveLink');
+  }
+  let id = null;
+  let m = raw.match(/^https:\/\/docs\.google\.com\/document\/d\/([A-Za-z0-9_-]+)/i);
+  if (m) id = m[1];
+  if (!id) {
+    m = raw.match(/^https:\/\/drive\.google\.com\/file\/d\/([A-Za-z0-9_-]+)/i);
+    if (m) id = m[1];
+  }
+  if (!id) {
+    try {
+      const u = new URL(raw);
+      if (u.hostname.toLowerCase() === 'drive.google.com' && (u.pathname === '/open' || u.pathname === '/uc')) {
+        const qid = u.searchParams.get('id');
+        if (qid) id = qid;
+      }
+    } catch { /* invalid URL → handled below */ }
+  }
+  if (!id || !/^[A-Za-z0-9_-]{6,200}$/.test(id)) {
+    throw new QuizDriveError('Link Google Drive/Docs không hợp lệ', 400, 'InvalidDriveLink');
+  }
+  return id;
+}
+
+/**
+ * Đọc nội dung từ link Drive/Docs dán vào.
+ * - File đã nằm trong thư mục Quiz Uploads (hoặc folder cho phép): đọc trực tiếp.
+ * - File ngoài folder: copy vào Quiz Uploads rồi đọc — chỉ thành công khi
+ *   service account có quyền xem file. Không nới allowlist cho file_id tùy ý.
+ */
+export async function readDriveSourceFromUrl(platform, url) {
+  const id = parseDriveLink(url);
+  const file = await getDriveFileMetadata(platform, id);
+  assertSupportedMetadata(file);
+  const folder = await ensureQuizUploadsFolder(platform);
+  const allowed = new Set([folder.id, ...configuredFolderIds(platform)]);
+  const parent = (file.parents || []).find((folderId) => allowed.has(folderId));
+  if (parent) return readAllowedDriveSource(platform, id);
+  try {
+    const copied = await (await driveRequest(platform, `/drive/v3/files/${encodeURIComponent(id)}/copy?fields=id&supportsAllDrives=true`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ name: file.name, parents: [folder.id] })
+    })).json();
+    if (!copied?.id) throw new Error('copy returned no id');
+    return await readAllowedDriveSource(platform, copied.id);
+  } catch (e) {
+    if (e instanceof QuizDriveError && (e.code === 'DriveNotConfigured' || e.code === 'DriveParentNotConfigured')) throw e;
+    throw new QuizDriveError('Không đọc được file từ link này (cần quyền xem file trên Google Drive)', 403, 'DriveLinkForbidden');
+  }
+}
+
 export async function listQuizDriveFiles(platform) {
   const folders = await allowedQuizFolderIds(platform);
   const files = [];
