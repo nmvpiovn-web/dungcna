@@ -14,9 +14,30 @@ export async function GET({ url, request, platform }) {
   if (!platform?.env?.DB) return json({ success: false, error: 'DatabaseUnavailable' }, { status: 500 });
   const auth = await optionalAuth(request, platform);
   const mine = url.searchParams.get('mine') === '1';
+  const assigned = url.searchParams.get('assigned') === '1';
   if (mine && (!auth || !isStaffUser(auth.user))) return json({ success: false, error: 'Unauthorized' }, { status: 401 });
   const limit = Math.min(Math.max(Number.parseInt(url.searchParams.get('limit') || '50', 10) || 50, 1), 100);
   try {
+    // Quiz được giao: student chỉ thấy quiz có homework_assignments (source_quiz_id)
+    // cho lớp mà mình đang enrolled (class_enrollments active). Guest/staff không dùng.
+    if (assigned) {
+      if (!auth) return json({ success: false, error: 'Unauthorized' }, { status: 401 });
+      const role = String(auth.user.role || '').toLowerCase();
+      if (role !== 'student') return json({ success: false, error: 'Forbidden: Chỉ học sinh dùng luồng quiz được giao' }, { status: 403 });
+      const rows = await platform.env.DB.prepare(`
+        SELECT q.id, q.title, q.description, q.creator_name, q.time_limit_minutes, q.status, q.created_at, q.updated_at,
+               ha.class_name AS assigned_class_name, ha.due_date AS assigned_due_date, ha.id AS assignment_id
+        FROM quizzes q
+        JOIN homework_assignments ha ON ha.source_quiz_id = q.id
+        WHERE q.status = 'published' AND ha.status = 'published'
+          AND ha.class_id IN (
+            SELECT class_id FROM class_enrollments WHERE user_id = ? AND status = 'active'
+          )
+        ORDER BY ha.due_date ASC, ha.created_at DESC
+        LIMIT ?
+      `).bind(auth.user.id, limit).all();
+      return json({ success: true, quizzes: rows.results || [], assigned: true });
+    }
     const query = mine
       ? `SELECT id, title, description, creator_name, time_limit_minutes, status, created_at, updated_at FROM quizzes WHERE created_by = ? ORDER BY updated_at DESC LIMIT ?`
       : `SELECT id, title, description, creator_name, time_limit_minutes, status, created_at, updated_at FROM quizzes WHERE status = 'published' ORDER BY updated_at DESC LIMIT ?`;

@@ -47,6 +47,14 @@
   let bundleBusy = $state(false);
   let homeworkForm = $state({ session_id: '', class_id: '', class_name: '', deadline_date: '', deadline_time: '18:00' });
   let selectedReviewQuizId = $state('');
+  let assignedMode = $state(false); // true khi student đang xem quiz được giao
+  // Giao quiz: modal state
+  let assignQuiz = $state(null);
+  let assignClasses = $state([]);
+  let assignForm = $state({ class_id: '', due_date: '' });
+  let assignBusy = $state(false);
+  let assignError = $state('');
+  let assignMessage = $state('');
   let removeOnlineSync = () => {};
 
   let draft = $state({
@@ -92,8 +100,21 @@
     loading = true;
     error = '';
     try {
-      const publicData = await api('/api/quiz-menu');
+      // Student: chỉ thấy quiz được giao cho lớp của mình (assignment flow).
+      // Staff/guest/parent: giữ luồng quiz public như cũ.
+      const isStudent = userRole === 'student';
+      let publicData;
+      try {
+        publicData = isStudent
+          ? await api('/api/quiz-menu?assigned=1')
+          : await api('/api/quiz-menu');
+      } catch (err) {
+        // Fallback: nếu endpoint assigned lỗi (vd token cũ), student vẫn thấy public
+        if (isStudent) publicData = await api('/api/quiz-menu');
+        else throw err;
+      }
       publicQuizzes = publicData.quizzes || [];
+      assignedMode = !!publicData.assigned;
       cacheQuizData('catalog', publicData).catch(() => {});
       // Chỉ gọi ?mine=1 khi role có tab mine
       if (visibleTabs.includes('mine')) {
@@ -348,6 +369,42 @@
       await loadQuizzes();
     } catch (err) {
       error = 'Không xóa được: ' + err.message;
+    }
+  }
+
+  // Giao quiz cho lớp: mở modal, tải danh sách lớp, submit
+  async function openAssignModal(quiz) {
+    assignQuiz = quiz;
+    assignClasses = [];
+    assignForm = { class_id: '', due_date: '' };
+    assignError = '';
+    assignMessage = '';
+    try {
+      const data = await api(`/api/quiz-menu/${quiz.id}/assign`);
+      assignClasses = data.classes || [];
+      if (!assignClasses.length) assignError = 'Bạn chưa có lớp dạy nào trong thời khóa biểu.';
+    } catch (err) {
+      assignError = 'Không tải được danh sách lớp: ' + err.message;
+    }
+  }
+
+  async function submitAssign() {
+    assignError = '';
+    assignMessage = '';
+    if (!assignForm.class_id) { assignError = 'Hãy chọn lớp để giao quiz.'; return; }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(assignForm.due_date)) { assignError = 'Hạn nộp phải có dạng YYYY-MM-DD.'; return; }
+    assignBusy = true;
+    try {
+      const data = await api(`/api/quiz-menu/${assignQuiz.id}/assign`, {
+        method: 'POST',
+        body: JSON.stringify({ class_id: assignForm.class_id, due_date: assignForm.due_date })
+      });
+      assignMessage = data.message || 'Đã giao quiz.';
+      message = data.message || 'Đã giao quiz.';
+    } catch (err) {
+      assignError = err.message;
+    } finally {
+      assignBusy = false;
     }
   }
 
@@ -681,7 +738,7 @@
             <article class="quiz-card">
               <div class="quiz-card-top"><span class:published={quiz.status === 'published'}>{quiz.status === 'published' ? 'Đã xuất bản' : quiz.status === 'draft' ? 'Bản nháp' : 'Đã lưu trữ'}</span><b>{quiz.time_limit_minutes} phút</b></div>
               <h3>{quiz.title}</h3><p>{quiz.description || 'Chưa có mô tả.'}</p>
-              <footer><small>Cập nhật {new Date(quiz.updated_at).toLocaleDateString('vi-VN')}</small><div><button on:click={() => selectedReviewQuizId = selectedReviewQuizId === quiz.id ? '' : quiz.id}>Chấm bài</button><button on:click={() => openBundle(quiz)}>DOCX &amp; BTVN</button><button on:click={() => editQuiz(quiz)}>✏️ Sửa</button><button on:click={() => deleteQuiz(quiz)} style="color:#dc2626">🗑️ Xóa</button>{#if quiz.status === 'published'}<button on:click={() => shareQuiz(quiz)}>Sao chép link</button><button on:click={() => { activeTab = 'take'; openQuiz(quiz); }}>Xem bài →</button>{/if}</div></footer>
+              <footer><small>Cập nhật {new Date(quiz.updated_at).toLocaleDateString('vi-VN')}</small><div><button on:click={() => selectedReviewQuizId = selectedReviewQuizId === quiz.id ? '' : quiz.id}>Chấm bài</button><button on:click={() => openBundle(quiz)}>DOCX &amp; BTVN</button><button on:click={() => editQuiz(quiz)}>✏️ Sửa</button><button on:click={() => deleteQuiz(quiz)} style="color:#dc2626">🗑️ Xóa</button>{#if quiz.status === 'published'}<button class="assign-btn" on:click={() => openAssignModal(quiz)}>📤 Giao bài</button><button on:click={() => shareQuiz(quiz)}>Sao chép link</button><button on:click={() => { activeTab = 'take'; openQuiz(quiz); }}>Xem bài →</button>{/if}</div></footer>
             </article>
           {/each}
         </div>
@@ -697,7 +754,7 @@
     </section>
   {:else}
     <section class="workspace">
-      <div class="section-heading"><div><span class="section-kicker">LUYỆN TẬP</span><h2>Chọn một thử thách</h2></div><span class="live-dot"><i></i>{publicQuizzes.length} quiz đang mở</span></div>
+      <div class="section-heading"><div><span class="section-kicker">LUYỆN TẬP</span><h2>{assignedMode ? 'Quiz được giao' : 'Chọn một thử thách'}</h2></div><span class="live-dot"><i></i>{publicQuizzes.length} quiz đang mở</span></div>
       {#if loading}
         <div class="loading-grid"><i></i><i></i><i></i></div>
       {:else if publicQuizzes.length}
@@ -705,12 +762,16 @@
           {#each publicQuizzes as quiz, index}
             <article class="quiz-card take-card">
               <div class="cover cover-{index % 4}"><span>{index % 3 === 0 ? 'ABC' : index % 3 === 1 ? 'Aa' : '✦'}</span></div>
-              <div class="quiz-card-body"><div class="meta"><span>⏱ {quiz.time_limit_minutes} phút</span><span>•</span><span>{quiz.creator_name || 'TESOL Learning'}</span></div><h3>{quiz.title}</h3><p>{quiz.description || 'Luyện tập kiến thức và nhận kết quả sau khi hoàn thành.'}</p><button class="start-button" on:click={() => openQuiz(quiz)}>Bắt đầu <span>→</span></button></div>
+              <div class="quiz-card-body">
+                {#if quiz.assigned_class_name}
+                  <div class="assigned-badge"><span>📩 Được giao</span><small>{quiz.assigned_class_name}{quiz.assigned_due_date ? ` · Hạn ${quiz.assigned_due_date}` : ''}</small></div>
+                {/if}
+                <div class="meta"><span>⏱ {quiz.time_limit_minutes} phút</span><span>•</span><span>{quiz.creator_name || 'TESOL Learning'}</span></div><h3>{quiz.title}</h3><p>{quiz.description || 'Luyện tập kiến thức và nhận kết quả sau khi hoàn thành.'}</p><button class="start-button" on:click={() => openQuiz(quiz)}>Bắt đầu <span>→</span></button></div>
             </article>
           {/each}
         </div>
       {:else}
-        <div class="empty-state"><span>☁</span><h3>Chưa có quiz đang mở</h3><p>Hãy quay lại sau khi giáo viên xuất bản bài mới.</p></div>
+        <div class="empty-state"><span>☁</span><h3>{assignedMode ? 'Chưa có quiz nào được giao' : 'Chưa có quiz đang mở'}</h3><p>{assignedMode ? 'Giáo viên sẽ giao quiz cho lớp của bạn tại đây.' : 'Hãy quay lại sau khi giáo viên xuất bản bài mới.'}</p></div>
       {/if}
     </section>
   {/if}
@@ -792,6 +853,27 @@
   </div>
 {/if}
 
+{#if assignQuiz}
+  <div class="modal-backdrop" role="presentation" on:click={(e) => e.currentTarget === e.target && (assignQuiz = null)}>
+    <section class="start-dialog" role="dialog" aria-modal="true" aria-labelledby="assign-title">
+      <button class="dialog-close" aria-label="Đóng" on:click={() => assignQuiz = null}>×</button>
+      <div class="dialog-icon">📤</div><span class="section-kicker">GIAO BÀI</span>
+      <h2 id="assign-title">{assignQuiz.title}</h2>
+      <p>Học sinh trong lớp sẽ thấy quiz này ở tab Làm Quiz, kèm hạn nộp.</p>
+      {#if assignError}<div class="notice error" role="alert">{assignError}</div>{/if}
+      {#if assignMessage}<div class="notice success" role="status">✓ {assignMessage}</div>{/if}
+      <label class="guest-field">Lớp học
+        <select bind:value={assignForm.class_id} aria-label="Chọn lớp">
+          <option value="">— Chọn lớp —</option>
+          {#each assignClasses as c}<option value={c.class_id}>{c.class_name}</option>{/each}
+        </select>
+      </label>
+      <label class="guest-field">Hạn nộp<input type="date" bind:value={assignForm.due_date} /></label>
+      <button class="btn-main full" disabled={assignBusy} on:click={submitAssign}>{assignBusy ? 'Đang giao...' : 'Giao quiz cho lớp'}</button>
+    </section>
+  </div>
+{/if}
+
 {#if result}
   <div class="modal-backdrop">
     <section class="result-dialog" role="dialog" aria-modal="true" aria-labelledby="result-title">
@@ -824,7 +906,7 @@
   .form-grid{display:grid;grid-template-columns:2fr 1fr;gap:16px;padding:20px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px}.wide{grid-column:auto}.form-grid .wide:last-child{grid-column:1/-1}label{display:flex;flex-direction:column;gap:6px;font-size:.83rem;font-weight:600;color:#3b4d61}input,textarea,select{width:100%;border:1px solid #cbd5e1;background:white;color:#17283d;border-radius:6px;padding:10px 12px;font:inherit;font-weight:400;min-height:44px}textarea{resize:vertical}input:focus,textarea:focus,select:focus{outline:3px solid rgba(34,211,238,.18);border-color:#0891b2}
   .type-picker{margin:26px 0}.type-picker h3{font-size:1rem;margin-bottom:12px}.type-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.type-grid button{display:flex;align-items:center;text-align:left;gap:10px;min-height:66px;padding:10px;border:1px solid #dce5ec;background:white;border-radius:7px;color:#263a50}.type-grid button:hover{border-color:#0891b2;background:#f0fdff}.type-grid button>span{color:#0891b2;font-size:1.2rem}.type-grid small{display:block;color:#7a8a9b;font-weight:400;margin-top:2px}
   .question-editor-list{display:flex;flex-direction:column;gap:14px}.editor-card{border:1px solid #dce5ec;border-radius:9px;padding:18px;background:white}.editor-card header{display:flex;align-items:center;gap:10px;margin-bottom:16px}.question-number{width:34px;height:34px;display:grid;place-items:center;background:#0891b2;color:white;border-radius:6px;font-weight:700}.editor-card header select{width:auto;max-width:220px}.editor-actions{margin-left:auto;display:flex;gap:4px}.editor-actions button,.option-row button{width:44px;height:44px;border:1px solid #dce5ec;background:white;border-radius:6px;font-size:1.1rem}.editor-actions button.delete{color:#dc2626}.editor-actions button:disabled{opacity:.35}.option-editor,.pair-editor{margin-top:14px}.field-label{display:block;font-size:.83rem;font-weight:600;margin-bottom:7px}.option-row{display:grid;grid-template-columns:44px 1fr 44px;gap:6px;margin-bottom:7px}.option-row input[type=radio]{width:20px;min-height:20px;align-self:center;justify-self:center;accent-color:#0891b2}.text-button{min-height:44px;border:0;background:transparent;color:#087e9b;font-weight:600}.pair-editor>div{display:grid;grid-template-columns:1fr 30px 1fr;align-items:center;gap:5px;margin-bottom:7px}.pair-editor>div span{text-align:center;color:#0891b2}.review-note{margin-top:12px;padding:11px 13px;background:#eff6ff;color:#31577c;border-left:3px solid #3b82f6;font-size:.85rem}.editor-bottom{display:grid;grid-template-columns:120px 1fr;gap:12px;margin-top:14px}.empty-editor,.empty-state{text-align:center;padding:48px 20px;color:#617184}.empty-editor>span,.empty-state>span{display:block;font-size:2.2rem;color:#0891b2;margin-bottom:8px}.empty-editor p,.empty-state p{margin:5px auto 16px;max-width:450px}.save-bar{position:sticky;bottom:12px;margin-top:20px;display:flex;align-items:center;justify-content:flex-end;gap:10px;background:#17283d;color:white;padding:13px 15px;border-radius:9px;box-shadow:0 8px 24px rgba(15,23,42,.25);z-index:5}.save-bar>div{margin-right:auto}.save-bar small{display:block;color:#b7c4d1}.btn-main,.btn-outline{border:1px solid #0e7490;border-radius:6px;min-height:44px;padding:9px 17px;font-weight:600}.btn-main{background:#0891b2;color:white}.btn-main:hover{background:#0e7490}.btn-main:disabled,.btn-outline:disabled{opacity:.45;cursor:not-allowed}.btn-outline{background:white;color:#0e7490;border-color:#a5f3fc}.btn-main.compact{padding:8px 13px}.btn-main.full{width:100%}
-  .quiz-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.quiz-card{border:1px solid #dce5ec;border-radius:9px;padding:18px;background:white;transition:.18s ease}.quiz-card:hover{transform:translateY(-2px);border-color:#8dddea;box-shadow:0 8px 20px rgba(15,23,42,.07)}.quiz-card-top,.quiz-card footer{display:flex;align-items:center;justify-content:space-between;gap:8px}.quiz-card-top span{padding:3px 7px;background:#fff7ed;color:#c2410c;border-radius:4px;font-size:.72rem;font-weight:700}.quiz-card-top span.published{background:#f0fdf4;color:#15803d}.quiz-card-top b{font-size:.78rem;color:#64748b}.quiz-card h3{margin:16px 0 6px}.quiz-card p{font-size:.88rem;color:#66778a;min-height:46px}.quiz-card footer{border-top:1px solid #edf1f4;margin-top:16px;padding-top:12px}.quiz-card footer small{color:#8492a2}.quiz-card footer>div{display:flex;flex-wrap:wrap;justify-content:flex-end}.quiz-card footer button{border:0;background:transparent;color:#087e9b;font-weight:600;min-height:44px}.review-wrap{margin-top:22px}.take-card{padding:0;overflow:hidden}.cover{height:100px;display:grid;place-items:center;background:linear-gradient(135deg,#e0f2fe,#cffafe);color:#0e7490;font-size:1.7rem;font-weight:700}.cover-1{background:linear-gradient(135deg,#ede9fe,#fae8ff);color:#7e22ce}.cover-2{background:linear-gradient(135deg,#dcfce7,#ecfccb);color:#15803d}.cover-3{background:linear-gradient(135deg,#ffedd5,#fef3c7);color:#c2410c}.quiz-card-body{padding:17px}.meta{display:flex;gap:7px;color:#748496;font-size:.75rem}.start-button{width:100%;height:44px;border:1px solid #a5f3fc;background:#ecfeff;color:#0e7490;border-radius:6px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:9px;margin-top:14px}.loading-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.loading-grid i{height:220px;border-radius:9px;background:linear-gradient(90deg,#f1f5f9,#e2e8f0,#f1f5f9);background-size:200%;animation:shimmer 1.2s infinite}@keyframes shimmer{to{background-position:-200%}}
+  .quiz-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.quiz-card{border:1px solid #dce5ec;border-radius:9px;padding:18px;background:white;transition:.18s ease}.quiz-card:hover{transform:translateY(-2px);border-color:#8dddea;box-shadow:0 8px 20px rgba(15,23,42,.07)}.quiz-card-top,.quiz-card footer{display:flex;align-items:center;justify-content:space-between;gap:8px}.quiz-card-top span{padding:3px 7px;background:#fff7ed;color:#c2410c;border-radius:4px;font-size:.72rem;font-weight:700}.quiz-card-top span.published{background:#f0fdf4;color:#15803d}.quiz-card-top b{font-size:.78rem;color:#64748b}.quiz-card h3{margin:16px 0 6px}.quiz-card p{font-size:.88rem;color:#66778a;min-height:46px}.quiz-card footer{border-top:1px solid #edf1f4;margin-top:16px;padding-top:12px}.quiz-card footer small{color:#8492a2}.quiz-card footer>div{display:flex;flex-wrap:wrap;justify-content:flex-end}.quiz-card footer button{border:0;background:transparent;color:#087e9b;font-weight:600;min-height:44px}.review-wrap{margin-top:22px}.take-card{padding:0;overflow:hidden}.cover{height:100px;display:grid;place-items:center;background:linear-gradient(135deg,#e0f2fe,#cffafe);color:#0e7490;font-size:1.7rem;font-weight:700}.cover-1{background:linear-gradient(135deg,#ede9fe,#fae8ff);color:#7e22ce}.cover-2{background:linear-gradient(135deg,#dcfce7,#ecfccb);color:#15803d}.cover-3{background:linear-gradient(135deg,#ffedd5,#fef3c7);color:#c2410c}.quiz-card-body{padding:17px}.meta{display:flex;gap:7px;color:#748496;font-size:.75rem}.start-button{width:100%;height:44px;border:1px solid #a5f3fc;background:#ecfeff;color:#0e7490;border-radius:6px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:9px;margin-top:14px}.assign-btn{color:#7c3aed !important}.assigned-badge{display:flex;align-items:center;gap:8px;background:#f5f3ff;border:1px solid #ddd6fe;border-radius:7px;padding:8px 10px;margin-bottom:10px}.assigned-badge span{font-weight:700;color:#6d28d9;font-size:.8rem;white-space:nowrap}.assigned-badge small{color:#7c6aa8;font-size:.75rem}.loading-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.loading-grid i{height:220px;border-radius:9px;background:linear-gradient(90deg,#f1f5f9,#e2e8f0,#f1f5f9);background-size:200%;animation:shimmer 1.2s infinite}@keyframes shimmer{to{background-position:-200%}}
   .modal-backdrop{position:fixed;inset:0;z-index:90;background:rgba(15,23,42,.5);backdrop-filter:blur(5px);display:grid;place-items:center;padding:20px}.start-dialog,.result-dialog,.bundle-dialog{position:relative;width:min(480px,100%);max-height:calc(100dvh - 40px);overflow:auto;background:white;border-radius:12px;padding:30px;text-align:center;box-shadow:0 24px 70px rgba(15,23,42,.3)}.bundle-dialog{width:min(760px,100%);text-align:left}.dialog-close{position:absolute;right:10px;top:10px;width:44px;height:44px;border:0;background:#f1f5f9;border-radius:6px;font-size:1.4rem}.dialog-icon,.result-burst{width:60px;height:60px;display:grid;place-items:center;margin:0 auto 12px;border-radius:12px;background:#ecfeff;color:#0891b2;font-size:1.5rem}.start-dialog>p,.result-dialog>p{color:#66778a;margin:7px 0 18px}.rules{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:16px 0}.rules>div{display:grid;padding:12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:7px}.rules>div>span{font-size:1.25rem}.rules small{color:#78889a}.identity,.guest-field{padding:12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:7px;margin:14px 0;text-align:left}.guest-field{background:white;border:0;padding:0}.privacy-note{display:block;color:#7a8a9b;margin-top:10px}.bundle-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:18px 0}.bundle-grid>*{display:grid;grid-template-columns:40px 1fr;grid-template-rows:auto auto;column-gap:9px;padding:13px;border:1px solid #dce5ec;border-radius:8px;color:#20354a;text-decoration:none}.bundle-grid span{grid-row:1/3;width:38px;height:38px;display:grid;place-items:center;border-radius:7px;background:#ecfeff;color:#0e7490;font-weight:800}.bundle-grid small{color:#718195}.sync-actions{display:flex;gap:8px}.sync-actions button{flex:1;min-height:44px;border:1px solid #a5f3fc;background:#ecfeff;color:#0e7490;border-radius:6px;font-weight:700}.conflict-box{padding:12px;background:#fff7ed;border:1px solid #fdba74;color:#9a3412;border-radius:7px;margin-bottom:10px}.homework-publish{margin-top:18px;padding-top:18px;border-top:1px solid #e2e8f0}.homework-publish h3{margin-bottom:10px}.homework-fields{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
   .exam-shell{position:fixed;inset:0;z-index:100;background:#f4f7fa;overflow:auto;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);color:#17283d}.exam-topbar{position:sticky;top:0;z-index:5;min-height:74px;padding:10px max(18px,env(safe-area-inset-right)) 10px max(18px,env(safe-area-inset-left));display:grid;grid-template-columns:1fr auto 1fr;align-items:center;background:white;border-bottom:1px solid #dce5ec;box-shadow:0 2px 8px rgba(15,23,42,.05)}.exam-title{display:flex;align-items:center;gap:10px}.exam-title>span{width:43px;height:43px;display:grid;place-items:center;border-radius:7px;background:#0891b2;color:white;font-size:.68rem;font-weight:800}.exam-title small{display:block;color:#718195}.countdown{text-align:center;padding:5px 18px;border-left:1px solid #e2e8f0;border-right:1px solid #e2e8f0}.countdown small{display:block;font-size:.62rem;letter-spacing:.1em;color:#64748b}.countdown strong{font-size:1.25rem;font-variant-numeric:tabular-nums}.countdown.urgent{color:#dc2626;background:#fef2f2}.abandon{justify-self:end;min-height:44px;border:1px solid #fecaca;background:white;color:#b91c1c;border-radius:6px;padding:8px 13px;font-weight:600}.abandon.armed{background:#dc2626;color:white}.progress-track{position:sticky;top:74px;z-index:6;height:4px;background:#dfe7ed}.progress-track span{display:block;height:100%;background:#14b8a6;transition:width .25s}.exam-content{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:190px 1fr;gap:26px;padding:28px 20px 80px}.exam-content aside{position:sticky;top:105px;align-self:start;background:white;border:1px solid #dce5ec;border-radius:8px;padding:15px}.question-map{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:12px 0}.question-map a{height:34px;display:grid;place-items:center;text-decoration:none;border:1px solid #dce5ec;border-radius:5px;color:#64748b;font-size:.8rem}.question-map a.done{background:#ecfeff;border-color:#67e8f9;color:#0e7490;font-weight:700}.exam-content aside p{font-size:.72rem;color:#718195}.exam-content aside i{display:inline-block;width:7px;height:7px;background:#14b8a6;border-radius:50%;margin-right:5px}.exam-questions{display:flex;flex-direction:column;gap:16px}.exam-question{background:white;border:1px solid #dce5ec;border-radius:10px;padding:24px;scroll-margin-top:100px}.exam-question.deferred{border-color:#fdba74;background:#fffbeb}.question-head{display:flex;justify-content:space-between;align-items:center;color:#0e7490;font-size:.76rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em}.question-head>div{display:flex;align-items:center;gap:8px}.question-head b{padding:3px 7px;background:#f1f5f9;color:#64748b;border-radius:4px}.defer-button{min-height:36px;padding:6px 10px;border:1px solid #fdba74;background:#fff7ed;color:#9a3412;border-radius:6px;font-weight:700;text-transform:none}.deferred-note{padding:14px;background:white;border:1px solid #fed7aa;border-radius:7px;color:#9a3412}.exam-question h2{font-size:1.15rem;margin:12px 0 18px;line-height:1.55}.question-image{display:block;max-width:100%;max-height:320px;object-fit:contain;margin:0 auto 18px;border-radius:8px}.answer-options{display:grid;gap:9px}.answer-options label{display:grid;grid-template-columns:22px 36px 1fr;align-items:center;gap:8px;min-height:56px;padding:8px 12px;border:1px solid #dce5ec;border-radius:7px;cursor:pointer}.answer-options label.selected{background:#ecfeff;border-color:#22d3ee}.answer-options input{width:18px;min-height:18px;accent-color:#0891b2}.answer-options label>span{width:32px;height:32px;display:grid;place-items:center;background:#f1f5f9;border-radius:5px;color:#52657a}.answer-options label.selected>span{background:#0891b2;color:white}.matching-answer{display:grid;gap:9px}.matching-answer label{display:grid;grid-template-columns:1fr 32px 1fr;align-items:center;background:#f8fafc;padding:9px;border-radius:7px}.matching-answer label>span{text-align:center;color:#0891b2}.long-answer textarea{min-height:150px}.long-answer small{text-align:right;color:#778798}.short-answer input{font-size:1rem}.submit-panel{display:flex;align-items:center;justify-content:space-between;gap:16px;background:#17283d;color:white;padding:18px 20px;border-radius:9px}.submit-panel p{font-size:.8rem;color:#bac6d1}.submit-actions{display:flex;gap:8px}.score-ring{width:145px;height:145px;margin:20px auto;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:50%;border:10px solid #cffafe;box-shadow:inset 0 0 0 2px #22d3ee}.score-ring strong{font-size:2.4rem;color:#087e9b}.score-ring span{color:#64748b;font-size:.82rem}.result-stats{display:flex;justify-content:center;gap:8px;margin-bottom:18px}.result-stats span{padding:7px 10px;background:#f1f5f9;border-radius:5px;color:#52657a;font-size:.8rem}
   @media(max-width:800px){.quiz-page{padding:16px 12px 90px}.quiz-hero{padding:26px 22px;min-height:160px}.hero-mark{width:70px;height:70px;flex-basis:70px;font-size:2rem}.workspace{padding:18px}.source-grid,.type-grid,.quiz-grid,.loading-grid{grid-template-columns:1fr 1fr}.source-panel{grid-template-columns:1fr}.bundle-grid,.homework-fields{grid-template-columns:1fr 1fr}.exam-content{grid-template-columns:1fr;padding:18px 12px 70px}.exam-content aside{position:static}.question-map{grid-template-columns:repeat(8,1fr)}.exam-topbar{grid-template-columns:1fr auto}.abandon{grid-column:1/-1;width:100%;margin-top:6px}.progress-track{top:124px}.exam-question{scroll-margin-top:135px}}
