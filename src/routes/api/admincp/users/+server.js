@@ -137,7 +137,7 @@ export async function POST({ request, platform }) {
       if (target.id === me.id) {
         return json({ success: false, error: 'SelfLock: Không được tự khóa tài khoản của chính mình' }, { status: 403 });
       }
-      if (target.role === 'superadmin' && me.role !== 'superadmin') {
+      if (String(target.role || '').toLowerCase() === 'superadmin' && String(me.role || '').toLowerCase() !== 'superadmin') {
         return json({ success: false, error: 'Forbidden: Chỉ superadmin mới được khóa/mở superadmin' }, { status: 403 });
       }
       const newStatus = (target.status || 'active') === 'locked' ? 'active' : 'locked';
