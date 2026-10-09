@@ -1,5 +1,5 @@
 import { json } from '@sveltejs/kit';
-import { verifyServerAuth, isStaffUser, isManager } from '../../../../lib/server/auth.js';
+import { verifyServerAuth, isStaffUser, isManager, isAdmin } from '../../../../lib/server/auth.js';
 
 export const prerender = false;
 
@@ -1002,6 +1002,46 @@ export async function POST({ request, platform }) {
       } catch (e) {
         return json({ success: false, error: `Lỗi cập nhật tuyển dụng: ${e.message}` }, { status: 500 });
       }
+    }
+  }
+
+  // ACTION 9: PROVISION TEACHER ACCOUNT FROM RECRUITMENT (superadmin/admin only)
+  if (action === 'provision_account') {
+    if (!isAdmin(auth.user)) {
+      return json({ success: false, error: 'Forbidden: Chỉ superadmin/admin mới được cấp tài khoản giáo viên' }, { status: 403 });
+    }
+    const recruitment_id = String(body.recruitment_id || '').trim();
+    if (!recruitment_id) {
+      return json({ success: false, error: 'Thiếu recruitment_id' }, { status: 400 });
+    }
+    try {
+      const rec = await db.prepare('SELECT * FROM teacher_recruitment WHERE id = ? LIMIT 1').bind(recruitment_id).first();
+      if (!rec) {
+        return json({ success: false, error: 'Không tìm thấy hồ sơ tuyển dụng' }, { status: 404 });
+      }
+      if (rec.status !== 'accepted') {
+        return json({ success: false, error: 'Chỉ cấp tài khoản cho hồ sơ đã trúng tuyển (accepted)' }, { status: 400 });
+      }
+      // Check đã cấp chưa
+      const existing = await db.prepare("SELECT id FROM users WHERE phone = ? OR email = ? LIMIT 1").bind(rec.phone || '', rec.email || '').first();
+      if (existing) {
+        return json({ success: false, error: 'SĐT/email này đã có tài khoản trong hệ thống' }, { status: 409 });
+      }
+      const { hashPassword } = await import('../../../../lib/server/auth.js');
+      const username = `gv_${Date.now().toString(36)}`;
+      const tempPassword = `Timbk@${Math.random().toString(36).substring(2, 8)}`;
+      const passwordHash = await hashPassword(tempPassword);
+      const userId = `user_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+
+      await db.batch([
+        db.prepare(`INSERT INTO users (id, username, password_hash, name, phone, email, role, status, created_at) VALUES (?, ?, ?, ?, ?, ?, 'teacher', 'active', CURRENT_TIMESTAMP)`).bind(userId, username, passwordHash, rec.candidate_name, rec.phone || null, rec.email || null),
+        db.prepare(`INSERT INTO teacher_profiles (id, user_id, recruitment_id, full_name, phone, email, role_type, experience_years, certificates, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', CURRENT_TIMESTAMP)`).bind(`tp_${Date.now()}`, userId, recruitment_id, rec.candidate_name, rec.phone || null, rec.email || null, rec.role_type || 'lead', rec.experience_years || 0, rec.certificates || ''),
+        db.prepare(`UPDATE teacher_recruitment SET status = 'onboarded', updated_at = CURRENT_TIMESTAMP WHERE id = ?`).bind(recruitment_id)
+      ]);
+
+      return json({ success: true, message: 'Đã cấp tài khoản giáo viên', username, temp_password: tempPassword, user_id: userId });
+    } catch (e) {
+      return json({ success: false, error: `Lỗi cấp tài khoản: ${e.message}` }, { status: 500 });
     }
   }
 

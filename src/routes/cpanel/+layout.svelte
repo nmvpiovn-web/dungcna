@@ -45,6 +45,7 @@
  { path: '/admincp', label: t('adminCP', lang), icon: '⚡' }
  ],
  superadmin: [
+ { path: '/admin?tab=hiring', label: 'Duyệt giáo viên', icon: '✅' },
  { path: '/cpanel/student', label: t('studentDesk', lang), icon: '🎒' },
  { path: '/cpanel/parent', label: t('parentPortal', lang), icon: '👨‍👩‍👧' },
  { path: '/cpanel/teacher', label: t('teacherWorkplace', lang), icon: '👩‍🏫' },
