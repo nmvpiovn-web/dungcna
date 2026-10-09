@@ -31,8 +31,21 @@ let cachedExpiry = 0;
 export async function getServiceAccountToken(platform) {
   // Test-only runtime hook; production environments do not define this secret.
   if (platform?.env?.DRIVE_TEST_TOKEN) return platform.env.DRIVE_TEST_TOKEN;
-  const email = platform?.env?.GOOGLE_SERVICE_ACCOUNT_EMAIL;
-  const privateKey = platform?.env?.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY;
+  let email = platform?.env?.GOOGLE_SERVICE_ACCOUNT_EMAIL;
+  let privateKey = platform?.env?.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY;
+
+  // Fallback: đọc từ D1 site_settings (đã lưu từ 02/10, Pages secret put từng thất bại)
+  if ((!email || !privateKey) && platform?.env?.DB) {
+    try {
+      const rows = await platform.env.DB.prepare(
+        `SELECT key, value FROM site_settings WHERE key IN ('google_service_account_email', 'google_service_account_private_key')`
+      ).all();
+      for (const r of (rows.results || [])) {
+        if (r.key === 'google_service_account_email' && !email) email = r.value;
+        if (r.key === 'google_service_account_private_key' && !privateKey) privateKey = r.value;
+      }
+    } catch {}
+  }
 
   if (!email || !privateKey) {
     return null; // Chưa cấu hình service account

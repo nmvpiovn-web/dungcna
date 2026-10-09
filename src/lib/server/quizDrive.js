@@ -356,12 +356,22 @@ export async function uploadQuizSource(platform, file) {
     return { file: fileInfo, text, uploadFolderId };
   }
   // Images (PNG/JPG): need Drive/OCR path
-  const folder = await ensureQuizUploadsFolder(platform);
-  const uploaded = await uploadBytes(platform, { ...validated, bytes, folderId: folder.id });
-  const text = await extractBytes(platform, validated, bytes, folder.id);
-  // Fail-closed: không lưu quiz 0 câu hỏi khi OCR/extraction không đọc được ảnh
-  assertExtractedText(text);
-  return { file: uploaded, text, uploadFolderId: folder.id };
+  // BUG-2 fix: bọc try/catch với thông báo tiếng Việt rõ ràng (trước đây chết cứng 503)
+  try {
+    const folder = await ensureQuizUploadsFolder(platform);
+    const uploaded = await uploadBytes(platform, { ...validated, bytes, folderId: folder.id });
+    const text = await extractBytes(platform, validated, bytes, folder.id);
+    // Fail-closed: không lưu quiz 0 câu hỏi khi OCR/extraction không đọc được ảnh
+    assertExtractedText(text);
+    return { file: uploaded, text, uploadFolderId: folder.id };
+  } catch (e) {
+    if (e instanceof QuizDriveError) throw e;
+    throw new QuizDriveError(
+      'Không xử lý được ảnh. Google Drive chưa được cấu hình hoặc OCR thất bại. Hãy thử upload file PDF/DOCX/TXT.',
+      503,
+      'ImageProcessingFailed'
+    );
+  }
 }
 
 export async function getDriveFileMetadata(platform, id) {
