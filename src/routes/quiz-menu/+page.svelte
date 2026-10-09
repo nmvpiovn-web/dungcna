@@ -50,7 +50,7 @@
     id: null, title: '', description: '', time_limit_minutes: 20, questions: []
   });
 
-  let isStaff = $derived(['teacher', 'leader', 'admin', 'superadmin'].includes(currentUser?.role));
+  let isStaff = $derived(['teacher', 'leader', 'admin', 'superadmin'].includes((currentUser?.role || '').toLowerCase()));
   let answeredCount = $derived(selectedQuiz?.questions?.filter((q) => answerHasValue(answers[q.id])).length || 0);
   let progress = $derived(selectedQuiz?.questions?.length ? Math.round(answeredCount / selectedQuiz.questions.length * 100) : 0);
 
@@ -281,6 +281,49 @@
     link.searchParams.set('quiz', quiz.id);
     try { await navigator.clipboard.writeText(link.href); message = 'Đã sao chép link. Khách có thể nhập tên và lớp để làm bài.'; }
     catch { message = `Link làm bài: ${link.href}`; }
+  }
+
+  async function editQuiz(quiz) {
+    message = '';
+    error = '';
+    try {
+      const data = await api(`/api/quiz-menu/${quiz.id}?include_answers=1`);
+      const q = data.quiz;
+      draft = {
+        id: q.id,
+        title: q.title || '',
+        description: q.description || '',
+        time_limit_minutes: q.time_limit_minutes || 20,
+        questions: (q.questions || []).map((qq, idx) => ({
+          id: qq.id || `q${idx}`,
+          type: qq.type || 'mcq',
+          prompt: qq.prompt || '',
+          options: qq.options || ['', '', '', ''],
+          correct_answer: qq.correct_answer ?? 0,
+          explanation: qq.explanation || '',
+          points: qq.points || 1
+        }))
+      };
+      bundle = null;
+      sourceMode = 'manual';
+      activeTab = 'create';
+      message = `Đang sửa quiz: ${q.title}`;
+    } catch (err) {
+      error = 'Không tải được quiz: ' + err.message;
+    }
+  }
+
+  async function deleteQuiz(quiz) {
+    if (!confirm(`Xóa quiz "${quiz.title}"? Hành động này không thể hoàn tác.`)) return;
+    message = '';
+    error = '';
+    try {
+      await api(`/api/quiz-menu/${quiz.id}`, { method: 'DELETE' });
+      message = `Đã xóa quiz "${quiz.title}".`;
+      await loadQuizzes();
+    } catch (err) {
+      error = 'Không xóa được: ' + err.message;
+    }
   }
 
   async function openQuiz(quiz) {
@@ -602,7 +645,7 @@
             <article class="quiz-card">
               <div class="quiz-card-top"><span class:published={quiz.status === 'published'}>{quiz.status === 'published' ? 'Đã xuất bản' : quiz.status === 'draft' ? 'Bản nháp' : 'Đã lưu trữ'}</span><b>{quiz.time_limit_minutes} phút</b></div>
               <h3>{quiz.title}</h3><p>{quiz.description || 'Chưa có mô tả.'}</p>
-              <footer><small>Cập nhật {new Date(quiz.updated_at).toLocaleDateString('vi-VN')}</small><div><button on:click={() => selectedReviewQuizId = selectedReviewQuizId === quiz.id ? '' : quiz.id}>Chấm bài</button><button on:click={() => openBundle(quiz)}>DOCX &amp; BTVN</button>{#if quiz.status === 'published'}<button on:click={() => shareQuiz(quiz)}>Sao chép link</button><button on:click={() => { activeTab = 'take'; openQuiz(quiz); }}>Xem bài →</button>{/if}</div></footer>
+              <footer><small>Cập nhật {new Date(quiz.updated_at).toLocaleDateString('vi-VN')}</small><div><button on:click={() => selectedReviewQuizId = selectedReviewQuizId === quiz.id ? '' : quiz.id}>Chấm bài</button><button on:click={() => openBundle(quiz)}>DOCX &amp; BTVN</button><button on:click={() => editQuiz(quiz)}>✏️ Sửa</button><button on:click={() => deleteQuiz(quiz)} style="color:#dc2626">🗑️ Xóa</button>{#if quiz.status === 'published'}<button on:click={() => shareQuiz(quiz)}>Sao chép link</button><button on:click={() => { activeTab = 'take'; openQuiz(quiz); }}>Xem bài →</button>{/if}</div></footer>
             </article>
           {/each}
         </div>

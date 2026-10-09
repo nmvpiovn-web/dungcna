@@ -1,6 +1,6 @@
 import { json } from '@sveltejs/kit';
 import { verifyServerAuth, isStaffUser } from '../../../../lib/server/auth.js';
-import { publicQuestion, validateQuestion } from '../../../../lib/server/quizMenu.js';
+import { publicQuestion, validateQuestion, canManageQuiz } from '../../../../lib/server/quizMenu.js';
 
 export const prerender = false;
 
@@ -43,6 +43,8 @@ export async function PUT({ params, request, platform }) {
   if (!db) return json({ success: false, error: 'DatabaseUnavailable' }, { status: 500 });
   const existing = await getQuiz(db, params.id);
   if (!existing) return json({ success: false, error: 'QuizNotFound' }, { status: 404 });
+  // Ownership check: teacher chỉ sửa quiz của mình, leader/admin/superadmin sửa được tất cả
+  if (!canManageQuiz(auth.user, existing)) return json({ success: false, error: 'Forbidden: bạn chỉ sửa được quiz do mình tạo' }, { status: 403 });
   let body;
   try { body = await request.json(); } catch { return json({ success: false, error: 'Invalid JSON' }, { status: 400 }); }
   const title = String(body.title ?? existing.title).trim();
@@ -97,6 +99,8 @@ export async function DELETE({ params, request, platform }) {
   if (!isStaffUser(auth.user)) return json({ success: false, error: 'Forbidden' }, { status: 403 });
   const quiz = await getQuiz(platform.env.DB, params.id);
   if (!quiz) return json({ success: false, error: 'QuizNotFound' }, { status: 404 });
+  // Ownership check: teacher chỉ xóa quiz của mình, leader/admin/superadmin xóa được tất cả
+  if (!canManageQuiz(auth.user, quiz)) return json({ success: false, error: 'Forbidden: bạn chỉ xóa được quiz do mình tạo' }, { status: 403 });
   await platform.env.DB.prepare(`DELETE FROM quizzes WHERE id = ?`).bind(params.id).run();
   return json({ success: true });
 }

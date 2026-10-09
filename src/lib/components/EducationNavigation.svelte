@@ -96,6 +96,9 @@
         <a href="/schedule" onclick={closeMenus} class="min-h-16 rounded-lg border border-slate-200 p-3 font-bold text-slate-900 hover:border-cx-400 hover:bg-cx-50">📅 Lịch học</a>
         <a href="/evaluations" onclick={closeMenus} class="min-h-16 rounded-lg border border-slate-200 p-3 font-bold text-slate-900 hover:border-cx-400 hover:bg-cx-50">📊 Đánh giá</a>
         <a href="/pedagogy" onclick={closeMenus} class="min-h-16 rounded-lg border border-slate-200 p-3 font-bold text-slate-900 hover:border-cx-400 hover:bg-cx-50">👩‍🏫 Học liệu</a>
+        {#if ['teacher', 'leader', 'admin', 'superadmin'].includes((currentUser?.role || '').toLowerCase())}
+        <a href="/quiz-menu" onclick={closeMenus} class="min-h-16 rounded-lg border border-indigo-200 bg-indigo-50 p-3 font-bold text-indigo-900 hover:border-indigo-400 hover:bg-indigo-100">🧩 Tạo Quiz</a>
+        {/if}
       </div>
       {#if currentUser?.role === 'teacher' || currentUser?.role === 'leader' || currentUser?.role === 'admin' || currentUser?.role === 'superadmin'}
         <button type="button" class="mt-3 min-h-11 w-full rounded-lg border border-amber-300 bg-amber-50 px-4 text-left font-bold text-amber-950" onclick={() => { closeMenus(); onLeaderNotifications(); }}>🔔 Trung tâm điều hành {#if leaderUnreadCount > 0}({leaderUnreadCount} mới){/if}</button>
