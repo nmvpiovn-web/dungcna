@@ -66,6 +66,7 @@
  import SessionRollCallModal from '$lib/components/SessionRollCallModal.svelte';
  import SessionEditModal from '$lib/components/SessionEditModal.svelte';
  import TeacherStaffModal from '$lib/components/TeacherStaffModal.svelte';
+	import ProvisionCredentialModal from '$lib/components/ProvisionCredentialModal.svelte';
 
  let currentUser = $state(null);
  let allUsers = $state([]);
@@ -151,6 +152,8 @@
  // Teacher Staff Management Modal State
  let showStaffModal = $state(false);
  let editingStaffProfile = $state(null);
+	let showProvisionModal = $state(false);
+	let provisionedCredential = $state({ username: '', temp_password: '', candidate_name: '', user_id: '' });
 
  // Webhook Form State
  let webhookForm = $state({
@@ -443,32 +446,39 @@
  }
  }
 
- async function handleProvisionAccount(recId) {
- const token = localStorage.getItem('tienganh_token');
- if (!token) return;
- if (!confirm('Cấp tài khoản giáo viên từ hồ sơ này? Hệ thống sẽ tạo user (role=teacher) + teacher_profiles.')) return;
- try {
- const res = await fetch('/api/teachers/workflows', {
- method: 'POST',
- headers: {
- 'Content-Type': 'application/json',
- 'Authorization': `Bearer ${token}`
- },
- body: JSON.stringify({ action: 'provision_account', recruitment_id: recId })
- });
- const data = await res.json();
- if (data.success) {
- showToast(`✅ Đã cấp tài khoản: ${data.username || ''}`);
- loadAdminWorkflows();
- } else {
- showToast('Lỗi: ' + data.error);
- }
- } catch (e) {
- showToast('Lỗi kết nối: ' + e.message);
- }
- }
+ async function handleProvisionAccount(recId, candidateName = '') {
+		const token = localStorage.getItem('tienganh_token');
+		if (!token) return;
+		if (!confirm('Cấp tài khoản giáo viên từ hồ sơ này? Hệ thống sẽ tạo user (role=teacher) + teacher_profiles.')) return;
+		try {
+			const res = await fetch('/api/teachers/workflows', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					'Authorization': `Bearer ${token}`
+				},
+				body: JSON.stringify({ action: 'provision_account', recruitment_id: recId })
+			});
+			const data = await res.json();
+			if (data.success) {
+				provisionedCredential = {
+					username: data.username || '',
+					temp_password: data.temp_password || '',
+					candidate_name: candidateName,
+					user_id: data.user_id || ''
+				};
+				showProvisionModal = true;
+				showToast(`✅ Đã cấp tài khoản: ${data.username || ''}`);
+				loadAdminWorkflows();
+			} else {
+				showToast('Lỗi: ' + data.error);
+			}
+		} catch (e) {
+			showToast('Lỗi kết nối: ' + e.message);
+		}
+	}
 
- function loadData() {
+	function loadData() {
  currentUser = getCurrentUser();
  allUsers = getAllUsers();
  snapshots = getAllSnapshots();
@@ -2144,7 +2154,7 @@
  <div class="text-xs text-slate-300">📞 {rec.phone || 'Chưa có'} {rec.email ? `· ✉️ ${rec.email}` : ''}</div>
  <div class="flex gap-2 pt-2">
  {#if currentUser && ['superadmin', 'admin'].includes((currentUser.role || '').toLowerCase())}
- <button type="button" onclick={() => handleProvisionAccount(rec.id)} class="flex-1 px-3 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-bold text-xs">🔑 Cấp Tài Khoản GV</button>
+ <button type="button" onclick={() => handleProvisionAccount(rec.id, rec.candidate_name)} class="flex-1 px-3 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-bold text-xs">🔑 Cấp Tài Khoản GV</button>
  {/if}
  <a href="/admin?tab=schedule" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs border border-slate-700 text-center">📅 Phân Công</a>
  </div>
@@ -3766,4 +3776,11 @@
  </div>
  {/if}
 {/if}
+
+	<!-- MODAL: One-Time Teacher Credential Dialog -->
+	<ProvisionCredentialModal
+		bind:isOpen={showProvisionModal}
+		credential={provisionedCredential}
+		onClose={() => { provisionedCredential = { username: '', temp_password: '', candidate_name: '', user_id: '' }; }}
+	/>
 </div>
