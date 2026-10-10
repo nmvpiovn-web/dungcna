@@ -33,4 +33,6 @@ END;
 INSERT INTO knowledge_fts(id, title, content_markdown, tags, folder)
 SELECT kv.id, kv.title, kv.content_markdown, kv.tags, kv.folder
 FROM knowledge_vault kv
-WHERE kv.id NOT IN (SELECT id FROM knowledge_fts);
+WHERE NOT EXISTS (
+  SELECT 1 FROM knowledge_fts fts WHERE fts.id = kv.id
+);

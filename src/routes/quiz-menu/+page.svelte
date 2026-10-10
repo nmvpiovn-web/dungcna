@@ -73,6 +73,9 @@
   let selectedBankQuestionIds = $state(new Set());
   let importBatchCount = $state(10);
   let importBusy = $state(false);
+  let bankOffset = $state(0);
+  let bankLimit = $state(20);
+  let bankAriaLive = $state('');
 
   let draft = $state({
     id: null, title: '', description: '', time_limit_minutes: 20, questions: []
@@ -321,9 +324,14 @@
     }
   }
 
-  async function loadBankQuestions() {
+  async function loadBankQuestions(resetOffset = false) {
+    if (resetOffset) {
+      bankOffset = 0;
+      selectedBankQuestionIds = new Set();
+    }
     bankLoading = true;
     error = '';
+    bankAriaLive = 'Đang tải danh sách câu hỏi từ kho D1...';
     try {
       const params = new URLSearchParams();
       if (bankFilters.grade_level) params.set('grade_level', bankFilters.grade_level);
@@ -332,16 +340,19 @@
       if (bankFilters.cognitive_level) params.set('cognitive_level', bankFilters.cognitive_level);
       if (bankFilters.question_type) params.set('question_type', bankFilters.question_type);
       if (bankFilters.q) params.set('q', bankFilters.q);
-      params.set('limit', '30');
+      params.set('limit', String(bankLimit));
+      params.set('offset', String(bankOffset));
 
       const data = await api(`/api/quiz-menu/question-bank?${params.toString()}`);
       if (data.success) {
         bankTotalCount = data.total;
         bankFacets = data.facets || bankFacets;
         bankQuestions = data.questions || [];
+        bankAriaLive = `Đã tải ${bankQuestions.length} câu hỏi. Tổng cộng ${bankTotalCount} câu phù hợp.`;
       }
     } catch (err) {
       error = friendlyError(err.message);
+      bankAriaLive = `Lỗi tải câu hỏi: ${error}`;
     } finally {
       bankLoading = false;
     }
@@ -352,13 +363,16 @@
     if (next.has(id)) next.delete(id);
     else next.add(id);
     selectedBankQuestionIds = next;
+    bankAriaLive = `Đã ${next.has(id) ? 'chọn' : 'bỏ chọn'} câu hỏi. Hiện đã chọn ${next.size} câu.`;
   }
 
   function toggleAllBankQuestions() {
     if (selectedBankQuestionIds.size === bankQuestions.length) {
       selectedBankQuestionIds = new Set();
+      bankAriaLive = 'Đã bỏ chọn tất cả câu hỏi trên trang này.';
     } else {
       selectedBankQuestionIds = new Set(bankQuestions.map((q) => q.id));
+      bankAriaLive = `Đã chọn tất cả ${selectedBankQuestionIds.size} câu hỏi trên trang này.`;
     }
   }
 
@@ -366,6 +380,7 @@
     importBusy = true;
     error = '';
     message = '';
+    bankAriaLive = 'Đang nhập câu hỏi vào quiz...';
     try {
       if (!draft.title.trim()) {
         const gradeLabel = bankFilters.grade_level ? `Khối ${bankFilters.grade_level}` : 'Tổng hợp';
@@ -395,8 +410,10 @@
       }
       selectedBankQuestionIds = new Set();
       message = `Đã nhập thành công ${res.imported_count} câu hỏi từ kho câu hỏi D1!`;
+      bankAriaLive = `Đã nhập thành công ${res.imported_count} câu hỏi vào quiz. Tổng số câu hiện tại là ${res.total_questions}.`;
     } catch (err) {
       error = friendlyError(err.message);
+      bankAriaLive = `Lỗi nhập câu hỏi: ${error}`;
     } finally {
       importBusy = false;
     }
@@ -749,10 +766,11 @@
       </div>
       {#if sourceMode === 'question_bank'}
         <div class="bank-panel">
+          <div class="sr-only" aria-live="polite" aria-atomic="true">{bankAriaLive}</div>
           <div class="bank-filters">
             <label>
               Khối lớp
-              <select bind:value={bankFilters.grade_level} on:change={loadBankQuestions}>
+              <select bind:value={bankFilters.grade_level} on:change={() => loadBankQuestions(true)}>
                 <option value="">Tất cả các khối</option>
                 {#each bankFacets.grade_level as g}
                   <option value={g.grade_level}>{g.grade_level} ({g.count} câu)</option>
@@ -761,7 +779,7 @@
             </label>
             <label>
               Kỹ năng
-              <select bind:value={bankFilters.skill_category} on:change={loadBankQuestions}>
+              <select bind:value={bankFilters.skill_category} on:change={() => loadBankQuestions(true)}>
                 <option value="">Tất cả kỹ năng</option>
                 {#each bankFacets.skill_category as s}
                   <option value={s.skill_category}>{s.skill_category} ({s.count})</option>
@@ -770,7 +788,7 @@
             </label>
             <label>
               Mức nhận thức
-              <select bind:value={bankFilters.cognitive_level} on:change={loadBankQuestions}>
+              <select bind:value={bankFilters.cognitive_level} on:change={() => loadBankQuestions(true)}>
                 <option value="">Tất cả mức độ</option>
                 {#each bankFacets.cognitive_level as c}
                   <option value={c.cognitive_level}>{c.cognitive_level} ({c.count})</option>
@@ -780,8 +798,8 @@
             <label class="bank-search-label">
               Tìm kiếm câu hỏi
               <div class="search-input-wrap">
-                <input type="text" placeholder="Tìm theo nội dung..." bind:value={bankFilters.q} on:keydown={(e) => e.key === 'Enter' && loadBankQuestions()} />
-                <button type="button" class="btn-search" on:click={loadBankQuestions}>Tìm</button>
+                <input type="text" placeholder="Tìm theo nội dung..." bind:value={bankFilters.q} on:keydown={(e) => e.key === 'Enter' && loadBankQuestions(true)} />
+                <button type="button" class="btn-search" on:click={() => loadBankQuestions(true)}>Tìm</button>
               </div>
             </label>
           </div>
@@ -814,17 +832,24 @@
             <div class="empty-state">
               <span>🔍</span>
               <p>Không tìm thấy câu hỏi nào phù hợp với bộ lọc hiện tại.</p>
-              <button type="button" class="btn-outline compact" on:click={() => { bankFilters = { grade_level: '', topic: '', skill_category: '', cognitive_level: '', question_type: '', q: '' }; loadBankQuestions(); }}>Đặt lại bộ lọc</button>
+              <button type="button" class="btn-outline compact" on:click={() => { bankFilters = { grade_level: '', topic: '', skill_category: '', cognitive_level: '', question_type: '', q: '' }; loadBankQuestions(true); }}>Đặt lại bộ lọc</button>
             </div>
           {:else}
             <div class="bank-question-list">
               {#each bankQuestions as q, qIdx (q.id)}
-                <div class="bank-q-card" class:selected={selectedBankQuestionIds.has(q.id)} on:click={() => toggleBankQuestion(q.id)} on:keydown={(e) => e.key === 'Enter' && toggleBankQuestion(q.id)} role="button" tabindex="0">
+                <label class="bank-q-card" class:selected={selectedBankQuestionIds.has(q.id)} for={'chk-bank-' + q.id}>
                   <div class="bank-q-header">
-                    <label class="q-checkbox-label" on:click|stopPropagation>
-                      <input type="checkbox" checked={selectedBankQuestionIds.has(q.id)} on:change={() => toggleBankQuestion(q.id)} />
-                      <span class="q-badge">#{qIdx + 1}</span>
-                    </label>
+                    <div class="q-checkbox-wrapper">
+                      <input
+                        id={'chk-bank-' + q.id}
+                        type="checkbox"
+                        class="q-checkbox"
+                        checked={selectedBankQuestionIds.has(q.id)}
+                        on:change={() => toggleBankQuestion(q.id)}
+                        on:keydown={(e) => { if (e.key === 'Enter') { toggleBankQuestion(q.id); e.preventDefault(); } }}
+                      />
+                      <span class="q-badge">#{bankOffset + qIdx + 1}</span>
+                    </div>
                     <div class="bank-tags">
                       <span class="tag grade">{q.grade_level}</span>
                       <span class="tag skill">{q.skill_category}</span>
@@ -842,9 +867,38 @@
                       {/each}
                     </div>
                   {/if}
-                </div>
+                </label>
               {/each}
             </div>
+
+            {#if bankTotalCount > 0}
+              <div class="bank-pagination">
+                <div class="bank-page-info">
+                  Hiển thị <strong>{bankOffset + 1} - {Math.min(bankOffset + bankQuestions.length, bankTotalCount)}</strong> trên tổng số <strong>{bankTotalCount}</strong> câu
+                  {#if bankTotalCount > 0 && bankOffset + bankQuestions.length >= bankTotalCount}
+                    <span class="bank-end-note"> · ✓ Đã đến cuối danh sách</span>
+                  {/if}
+                </div>
+                <div class="bank-page-nav">
+                  <button
+                    type="button"
+                    class="btn-page"
+                    disabled={bankOffset === 0 || bankLoading}
+                    on:click={() => { bankOffset = Math.max(0, bankOffset - bankLimit); loadBankQuestions(false); }}
+                  >
+                    ← Trang trước
+                  </button>
+                  <button
+                    type="button"
+                    class="btn-page"
+                    disabled={bankOffset + bankLimit >= bankTotalCount || bankLoading}
+                    on:click={() => { bankOffset += bankLimit; loadBankQuestions(false); }}
+                  >
+                    Trang sau →
+                  </button>
+                </div>
+              </div>
+            {/if}
           {/if}
         </div>
       {:else if sourceMode !== 'manual'}
@@ -1130,28 +1184,37 @@
   .selection-pill{background:#ecfdf5;color:#059669;border:1px solid #6ee7b7;padding:3px 8px;border-radius:20px;font-size:.78rem;font-weight:700}
   .bank-buttons{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
   .quick-import-wrap{display:flex;align-items:center;gap:6px;margin-left:8px;font-size:.82rem;color:#57534e}
-  .btn-quick{padding:6px 10px;background:#fff7ed;color:#c2410c;border:1px solid #fed7aa;border-radius:6px;font-weight:700;font-size:.8rem;cursor:pointer}
+  .btn-quick{padding:6px 12px;min-height:44px;min-width:44px;background:#fff7ed;color:#c2410c;border:1px solid #fed7aa;border-radius:6px;font-weight:700;font-size:.8rem;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
   .btn-quick:hover{background:#ffedd5}
   .bank-loading{padding:30px;text-align:center;color:#065f46;font-weight:600;display:flex;align-items:center;justify-content:center;gap:10px}
   .spinner{width:18px;height:18px;border:2px solid #a7f3d0;border-top-color:#059669;border-radius:50%;animation:spin .8s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
   .bank-question-list{display:flex;flex-direction:column;gap:10px;max-height:500px;overflow-y:auto;padding-right:4px}
-  .bank-q-card{padding:14px;background:white;border:1px solid #e7e5e4;border-radius:8px;cursor:pointer;transition:.15s ease}
+  .bank-q-card{display:block;padding:14px;background:white;border:1.5px solid #e7e5e4;border-radius:8px;cursor:pointer;transition:.15s ease}
   .bank-q-card:hover{border-color:#6ee7b7;background:#fafffa}
   .bank-q-card.selected{border-color:#059669;background:#ecfdf5;box-shadow:inset 0 0 0 1px #059669}
   .bank-q-header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
-  .q-checkbox-label{display:flex;align-items:center;gap:8px;cursor:pointer}
-  .q-checkbox-label input{width:18px;height:18px;accent-color:#059669}
+  .q-checkbox-wrapper{display:flex;align-items:center;gap:10px}
+  .q-checkbox{width:20px;height:20px;min-width:20px;min-height:20px;accent-color:#059669;cursor:pointer}
+  .q-checkbox:focus-visible{outline:2px solid #059669;outline-offset:2px}
   .q-badge{font-weight:700;font-size:.8rem;color:#059669}
   .bank-tags{display:flex;flex-wrap:wrap;gap:6px}
   .tag{padding:2px 8px;border-radius:4px;font-size:.72rem;font-weight:600}
-  .tag.grade{background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe}
+  .tag.grade{background:#ecfdf5;color:#047857;border:1px solid #a7f3d0}
   .tag.skill{background:#fdf2f8;color:#be185d;border:1px solid #fbcfe8}
   .tag.cognitive{background:#fef3c7;color:#b45309;border:1px solid #fde68a}
   .tag.topic{background:#f5f3ff;color:#6d28d9;border:1px solid #ddd6fe}
   .bank-q-prompt{font-size:.92rem;font-weight:500;line-height:1.45;color:#1c1917;margin-bottom:8px}
   .bank-q-options{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:6px;margin-top:6px}
   .bank-q-option{padding:6px 10px;background:#fafaf9;border:1px solid #e7e5e4;border-radius:6px;font-size:.82rem;color:#44403c}
+  .bank-pagination{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-top:14px;padding:10px 14px;background:white;border:1px solid #a7f3d0;border-radius:8px}
+  .bank-page-info{font-size:.84rem;color:#065f46;font-weight:600}
+  .bank-page-nav{display:flex;align-items:center;gap:8px}
+  .btn-page{min-height:44px;min-width:44px;padding:0 14px;background:#fdfbf7;border:1px solid #d6d3d1;border-radius:6px;font-size:.84rem;font-weight:600;color:#1c1917;cursor:pointer}
+  .btn-page:hover:not(:disabled){background:#f5f5f4;border-color:#059669}
+  .btn-page:disabled{opacity:.4;cursor:not-allowed}
+  .bank-end-note{font-size:.82rem;color:#059669;font-weight:600;margin-left:6px}
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border-width:0}
 
   @media(max-width:800px){.quiz-page{padding:16px 12px 90px}.quiz-hero{padding:26px 22px;min-height:160px}.hero-mark{width:70px;height:70px;flex-basis:70px;font-size:2rem}.workspace{padding:18px}.source-grid,.type-grid,.quiz-grid,.loading-grid{grid-template-columns:1fr 1fr}.bank-filters{grid-template-columns:1fr 1fr}.source-panel{grid-template-columns:1fr}.bundle-grid,.homework-fields{grid-template-columns:1fr 1fr}.exam-content{grid-template-columns:1fr;padding:18px 12px 70px}.exam-content aside{position:static}.question-map{grid-template-columns:repeat(8,1fr)}.exam-topbar{grid-template-columns:1fr auto}.abandon{grid-column:1/-1;width:100%;margin-top:6px}.progress-track{top:124px}.exam-question{scroll-margin-top:135px}}
   @media(max-width:560px){.quiz-hero{align-items:flex-end}.hero-mark{position:absolute;right:18px;top:18px;opacity:.38}.quiz-hero p{padding-right:20px}.tabs{gap:3px}.tabs button{font-size:.75rem;padding:5px}.tabs button span{display:block;margin:0;font-size:1rem}.source-grid,.type-grid,.quiz-grid,.loading-grid,.form-grid,.bundle-grid,.homework-fields,.bank-filters{grid-template-columns:1fr}.form-grid .wide{grid-column:1}.source-card{min-height:78px}.type-grid button{min-height:58px}.editor-card{padding:13px}.editor-card header{flex-wrap:wrap}.editor-card header select{order:3;width:100%;max-width:none}.editor-actions{margin-left:auto}.editor-bottom{grid-template-columns:90px 1fr}.save-bar{flex-wrap:wrap;bottom:8px}.save-bar>div{width:100%}.save-bar button{flex:1}.section-heading{align-items:flex-start}.question-map{grid-template-columns:repeat(6,1fr)}.exam-topbar{padding:8px 10px}.exam-title>span{display:none}.exam-title strong{display:block;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.countdown{padding:4px 10px}.exam-question{padding:17px}.question-head{align-items:flex-start}.question-head>div{flex-direction:column-reverse;align-items:flex-end}.matching-answer label{grid-template-columns:1fr}.matching-answer label>span{transform:rotate(90deg)}.submit-panel{align-items:stretch;flex-direction:column}.submit-actions{flex-direction:column}.start-dialog,.result-dialog,.bundle-dialog{padding:25px 18px}.modal-backdrop{padding:10px}.rules{grid-template-columns:1fr 1fr}.bank-action-bar{flex-direction:column;align-items:stretch}.bank-buttons{flex-direction:column}.bank-buttons button{width:100%}.quick-import-wrap{width:100%;justify-content:space-between;margin-left:0}}

@@ -37,7 +37,7 @@ async function fixture() {
   sqlite.exec(`
     CREATE TABLE users (
       id TEXT PRIMARY KEY, username TEXT, phone TEXT, email TEXT, name TEXT,
-      role TEXT, avatar TEXT, status TEXT, metadata TEXT, created_at TEXT, updated_at TEXT
+      role TEXT, avatar TEXT, status TEXT, approval_status TEXT DEFAULT 'approved', metadata TEXT, created_at TEXT, updated_at TEXT
     );
     CREATE TABLE auth_sessions (id TEXT PRIMARY KEY, revoked_at TEXT, expires_at TEXT);
     CREATE TABLE homework_assignments (
@@ -143,7 +143,7 @@ test('upload TXT lưu vào Quiz Uploads, metadata và câu hỏi nháp trong D1'
     throw new Error(`unexpected ${init.method || 'GET'} ${url}`);
   });
   try {
-    const file = new File([`1. Choose\nA. cat\nB. dog\n\nĐÁP ÁN\n1. B`], '../safe.txt', { type: 'text/plain' });
+    const file = new File([`1. Choose the correct answer for this English exercise.\nA. cat\nB. dog\n\nĐÁP ÁN\n1. B`], '../safe.txt', { type: 'text/plain' });
     const response = await uploadSource({ params: { id: ctx.quizId }, request: uploadRequest(`/api/quiz-menu/${ctx.quizId}/upload`, ctx.teacherToken, file), platform: ctx.platform });
     const body = await response.json();
     assert.equal(response.status, 201);
@@ -227,6 +227,8 @@ test('học sinh đánh dấu không hiểu và lưu để làm lại mà chưa 
   const ctx = await fixture();
   ctx.sqlite.prepare(`INSERT INTO quiz_questions (id,quiz_id,type,prompt,options_json,correct_answer,points,q_order) VALUES ('q-defer',?,'multiple_choice','Choose','["A","B"]','B',1,0)`).run(ctx.quizId);
   ctx.sqlite.prepare(`UPDATE quizzes SET status = 'published' WHERE id = ?`).run(ctx.quizId);
+  ctx.sqlite.prepare(`INSERT INTO class_enrollments (id, class_id, user_id, status) VALUES ('enr-1', 'class-7a', 'student-1', 'active')`).run();
+  ctx.sqlite.prepare(`INSERT INTO homework_assignments (id, session_id, class_id, class_name, title, due_date, created_by, source_quiz_id, status) VALUES ('hw-1', 'sess-1', 'class-7a', 'Lớp 7A', 'HW', '2099-01-01', 'teacher-1', ?, 'published')`).run(ctx.quizId);
   const started = await submitQuiz({
     params: { id: ctx.quizId }, platform: ctx.platform,
     request: jsonRequest(`/api/quiz-menu/${ctx.quizId}/submit`, ctx.studentToken, { action: 'start' })

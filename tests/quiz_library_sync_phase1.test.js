@@ -145,6 +145,22 @@ describe('PHASE 1: QUIZ LIBRARY SYNC & MIGRATION TEST SUITE', () => {
       const triggerCount = db.prepare("SELECT COUNT(*) AS count FROM sqlite_master WHERE type='trigger' AND tbl_name='knowledge_vault';").get().count;
       assert.strictEqual(triggerCount, 3, 'Re-running migration must maintain exactly 3 triggers');
     });
+
+    test('FTS-05: NULL-id in knowledge_fts does NOT break backfill due to NOT EXISTS semantics', () => {
+      const nullTestDb = new DatabaseSync(':memory:');
+      nullTestDb.exec(`
+        CREATE TABLE knowledge_vault (id TEXT PRIMARY KEY, title TEXT, folder TEXT, tags TEXT, content_markdown TEXT);
+        CREATE VIRTUAL TABLE knowledge_fts USING fts5(id UNINDEXED, title, content_markdown, tags, folder);
+      `);
+      nullTestDb.exec(`
+        INSERT INTO knowledge_vault VALUES ('v1', 'V1', 'f1', 't1', 'c1'), ('v2', 'V2', 'f2', 't2', 'c2');
+        INSERT INTO knowledge_fts VALUES (NULL, 'Orphan Note', 'content with null id', 'tag', 'f');
+      `);
+      const migrationSql = fs.readFileSync('migrations/0018_knowledge_fts_triggers_backfill.sql', 'utf8');
+      nullTestDb.exec(migrationSql);
+      const count = nullTestDb.prepare("SELECT COUNT(*) count FROM knowledge_fts WHERE id IN ('v1', 'v2')").get().count;
+      assert.strictEqual(count, 2, 'Both v1 and v2 must be backfilled even if an existing row has NULL id');
+    });
   });
 
   describe('Part B: Question Bank Bridge Logic & Security', () => {
@@ -314,6 +330,34 @@ describe('PHASE 1: QUIZ LIBRARY SYNC & MIGRATION TEST SUITE', () => {
       const questionCount = db.prepare('SELECT COUNT(*) AS count FROM quiz_questions;').get().count;
       assert.strictEqual(questionCount, 13 * 12, 'Re-running seed must not create duplicate questions');
     });
+
+    test('CATALOG-03: Contract check - each of the 13 quizzes has 12 questions with balanced A,B,C,D distribution (2-4 each) and source traceability', () => {
+      const quizzes = db.prepare('SELECT id, title FROM quizzes ORDER BY id;').all();
+      assert.strictEqual(quizzes.length, 13, 'Expected 13 quizzes');
+
+      for (const q of quizzes) {
+        const questions = db.prepare('SELECT id, correct_answer FROM quiz_questions WHERE quiz_id = ? ORDER BY q_order;').all(q.id);
+        assert.strictEqual(questions.length, 12, `Quiz ${q.id} must have exactly 12 questions`);
+
+        const distribution = { A: 0, B: 0, C: 0, D: 0 };
+        for (const item of questions) {
+          const letter = item.correct_answer?.[0];
+          assert.ok(['A', 'B', 'C', 'D'].includes(letter), `Invalid answer letter "${letter}" for question ${item.id}`);
+          distribution[letter]++;
+
+          // Traceability check: ID starts with qq_{quizId}_
+          assert.match(item.id, new RegExp(`^qq_${q.id}_.+`), `Question ID ${item.id} must trace back to question_bank`);
+        }
+
+        // Contract: every option A, B, C, D must appear between 2 and 4 times
+        for (const [letter, count] of Object.entries(distribution)) {
+          assert.ok(
+            count >= 2 && count <= 4,
+            `Quiz ${q.id} option ${letter} appears ${count} times (must be between 2 and 4)`
+          );
+        }
+      }
+    });
   });
 
   describe('Part D: Public / Guest Protection & Answer Stripping', () => {
@@ -327,19 +371,25 @@ describe('PHASE 1: QUIZ LIBRARY SYNC & MIGRATION TEST SUITE', () => {
         correct_answer: 'A. Yes',
         explanation: 'Yes is correct because of rule X',
         points: 1,
-        q_order: 0
+        q_order: 0,
+        source_type: 'question_bank',
+        source_id: 'qb_123'
       };
 
       // Non-staff / guest view
       const guestView = publicQuestion(row, false);
       assert.strictEqual('correct_answer' in guestView, false, 'Guest view must NOT contain correct_answer');
       assert.strictEqual('explanation' in guestView, false, 'Guest view must NOT contain explanation');
+      assert.strictEqual('source_type' in guestView, false, 'Guest view must NOT contain source_type');
+      assert.strictEqual('source_id' in guestView, false, 'Guest view must NOT contain source_id');
       assert.deepStrictEqual(guestView.options, ['A. Yes', 'B. No']);
 
       // Staff / review view
       const staffView = publicQuestion(row, true);
       assert.strictEqual(staffView.correct_answer, 'A. Yes', 'Staff view includes correct_answer');
       assert.strictEqual(staffView.explanation, 'Yes is correct because of rule X', 'Staff view includes explanation');
+      assert.strictEqual(staffView.source_type, 'question_bank', 'Staff view includes source_type');
+      assert.strictEqual(staffView.source_id, 'qb_123', 'Staff view includes source_id');
     });
 
     test('SECURITY-02: gradeAnswers correctly evaluates submitted answers', () => {
@@ -358,6 +408,47 @@ describe('PHASE 1: QUIZ LIBRARY SYNC & MIGRATION TEST SUITE', () => {
       assert.strictEqual(result.maxScore, 2);
       assert.strictEqual(result.grading[0].correct, true);
       assert.strictEqual(result.grading[1].correct, false);
+    });
+  });
+
+  describe('Part E: Migration 0020 Provenance & Deduplication Contract', () => {
+    test('PROV-01: Migration 0020 adds source_type and source_id columns and backfills existing seed rows', () => {
+      const migrationSql = fs.readFileSync('migrations/0020_quiz_question_provenance.sql', 'utf8');
+      db.exec(migrationSql);
+
+      const sample = db.prepare("SELECT id, quiz_id, source_type, source_id FROM quiz_questions WHERE id LIKE 'qq_%' LIMIT 5;").all();
+      assert.strictEqual(sample.length, 5);
+      for (const row of sample) {
+        assert.strictEqual(row.source_type, 'question_bank', 'Backfilled source_type must be question_bank');
+        assert.ok(row.source_id && row.source_id.length > 0, `Backfilled source_id "${row.source_id}" must not be empty`);
+      }
+
+      // Check no seed questions have null source_type or source_id
+      const nullCount = db.prepare("SELECT COUNT(*) count FROM quiz_questions WHERE id LIKE 'qq_%' AND (source_type IS NULL OR source_id IS NULL);").get().count;
+      assert.strictEqual(nullCount, 0, 'All catalog questions must have non-null provenance');
+    });
+
+    test('PROV-02: Unique index enforces deduplication on (quiz_id, source_type, source_id)', () => {
+      // Trying to insert another row with the same quiz_id, source_type, and source_id must fail
+      const firstRow = db.prepare("SELECT * FROM quiz_questions WHERE quiz_id = 'quiz_pub_grade_1' LIMIT 1;").get();
+
+      assert.throws(() => {
+        db.prepare(`
+          INSERT INTO quiz_questions (id, quiz_id, type, prompt, options_json, correct_answer, points, q_order, source_type, source_id)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+        `).run(
+          'qq_duplicate_test',
+          firstRow.quiz_id,
+          'multiple_choice',
+          'Duplicate test question',
+          '["A","B"]',
+          'A',
+          1,
+          99,
+          firstRow.source_type,
+          firstRow.source_id
+        );
+      }, /UNIQUE constraint failed/, 'Duplicate (quiz_id, source_type, source_id) must be rejected by unique index');
     });
   });
 });

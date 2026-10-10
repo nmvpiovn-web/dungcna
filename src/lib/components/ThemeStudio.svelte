@@ -53,14 +53,14 @@
 
 {#if visible}
 <div style="position:fixed;right:12px;bottom:12px;z-index:99990;width:300px;max-height:82vh;overflow-y:auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;box-shadow:0 12px 40px rgba(0,0,0,.18);font-family:system-ui,sans-serif;">
-  <button onclick={()=>open=!open} style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#0f172a;color:#fff;border:none;border-radius:16px 16px 0 0;cursor:pointer;font-weight:800;font-size:14px;">
+  <button onclick={()=>open=!open} style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#1c1917;color:#fff;border:none;border-radius:16px 16px 0 0;cursor:pointer;font-weight:800;font-size:14px;">
     <span>🎨 Theme Studio</span><span>{open ? '▾' : '▸'}</span>
   </button>
   {#if open}
   <div style="padding:12px 14px;">
     <ThemeStudioPanel {activeName} onApply={(c,hof,name)=>apply(c,hof,name,true)} />
     <div style="display:flex;gap:6px;margin-top:12px;">
-      <button onclick={copyCss} style="flex:1;padding:8px;border:none;border-radius:10px;background:#0f172a;color:#fff;font-weight:800;font-size:12px;cursor:pointer;">{copied ? '✓ Đã copy!' : '📋 Copy CSS'}</button>
+      <button onclick={copyCss} style="flex:1;padding:8px;border:none;border-radius:10px;background:#1c1917;color:#fff;font-weight:800;font-size:12px;cursor:pointer;">{copied ? '✓ Đã copy!' : '📋 Copy CSS'}</button>
       <button onclick={()=>{clearLocal();location.reload();}} style="padding:8px 12px;border:1px solid #e2e8f0;border-radius:10px;background:#fff;color:#475569;font-weight:700;font-size:12px;cursor:pointer;">Reset</button>
     </div>
     <div style="font-size:10.5px;color:#94a3b8;line-height:1.5;margin-top:8px;">

@@ -88,6 +88,8 @@ export function publicQuestion(row, includeAnswers = false) {
   if (includeAnswers) {
     question.correct_answer = parseJson(row.correct_answer, row.correct_answer);
     question.explanation = row.explanation || null;
+    if (row.source_type) question.source_type = row.source_type;
+    if (row.source_id) question.source_id = row.source_id;
   }
   return question;
 }

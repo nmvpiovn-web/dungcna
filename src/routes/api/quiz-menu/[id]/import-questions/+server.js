@@ -34,7 +34,7 @@ export async function POST({ params, request, platform }) {
   const count = Math.min(Math.max(Number.isFinite(countParam) ? countParam : 10, 1), 50);
   const filters = body.filters && typeof body.filters === 'object' ? body.filters : {};
 
-  // Fetch candidate bank rows
+  // Fetch candidate bank rows excluding questions already in this quiz
   let bankRows = [];
   if (questionIds && questionIds.length > 0) {
     if (questionIds.length > 50) {
@@ -42,61 +42,84 @@ export async function POST({ params, request, platform }) {
     }
     const placeholders = questionIds.map(() => '?').join(', ');
     const res = await db.prepare(
-      `SELECT * FROM question_bank WHERE id IN (${placeholders}) AND status = 'published' ORDER BY id ASC`
-    ).bind(...questionIds).all();
+      `SELECT qb.* FROM question_bank qb
+       WHERE qb.id IN (${placeholders})
+         AND qb.status = 'published'
+         AND NOT EXISTS (
+           SELECT 1 FROM quiz_questions qq
+           WHERE qq.quiz_id = ?
+             AND (
+               (qq.source_type = 'question_bank' AND qq.source_id = qb.id)
+               OR qq.id = ('qq_' || ? || '_' || qb.id)
+             )
+         )
+       ORDER BY qb.id ASC`
+    ).bind(...questionIds, params.id, params.id).all();
     bankRows = res.results || [];
   } else {
-    // Filter-based import
-    const whereConditions = ["status = 'published'"];
+    // Filter-based import: fetch next batch of matching questions not yet in this quiz
+    const whereConditions = ["qb.status = 'published'"];
     const bindings = [];
 
     const gradeLevel = filters.grade_level?.trim();
     if (gradeLevel) {
       if (gradeLevel === '7' || gradeLevel === 'lop_7') {
-        whereConditions.push("(grade_level = '7' OR grade_level = 'lop_7')");
+        whereConditions.push("(qb.grade_level = '7' OR qb.grade_level = 'lop_7')");
       } else {
-        whereConditions.push('grade_level = ?');
+        whereConditions.push('qb.grade_level = ?');
         bindings.push(gradeLevel);
       }
     }
     if (filters.curriculum_id?.trim()) {
-      whereConditions.push('curriculum_id = ?');
+      whereConditions.push('qb.curriculum_id = ?');
       bindings.push(filters.curriculum_id.trim());
     }
     if (filters.topic?.trim()) {
-      whereConditions.push('topic = ?');
+      whereConditions.push('qb.topic = ?');
       bindings.push(filters.topic.trim());
     }
     if (filters.skill_category?.trim()) {
-      whereConditions.push('skill_category = ?');
+      whereConditions.push('qb.skill_category = ?');
       bindings.push(filters.skill_category.trim());
     }
     if (filters.cognitive_level?.trim()) {
-      whereConditions.push('cognitive_level = ?');
+      whereConditions.push('qb.cognitive_level = ?');
       bindings.push(filters.cognitive_level.trim());
     }
     if (filters.question_type?.trim()) {
-      whereConditions.push('question_type = ?');
+      whereConditions.push('qb.question_type = ?');
       bindings.push(filters.question_type.trim());
     }
 
     const whereSql = whereConditions.join(' AND ');
     const res = await db.prepare(
-      `SELECT * FROM question_bank WHERE ${whereSql} ORDER BY id ASC LIMIT ?`
-    ).bind(...bindings, count).all();
+      `SELECT qb.* FROM question_bank qb
+       WHERE ${whereSql}
+         AND NOT EXISTS (
+           SELECT 1 FROM quiz_questions qq
+           WHERE qq.quiz_id = ?
+             AND (
+               (qq.source_type = 'question_bank' AND qq.source_id = qb.id)
+               OR qq.id = ('qq_' || ? || '_' || qb.id)
+               OR TRIM(qq.prompt) = TRIM(qb.question_text)
+             )
+         )
+       ORDER BY qb.id ASC LIMIT ?`
+    ).bind(...bindings, params.id, params.id, count).all();
     bankRows = res.results || [];
   }
 
   if (!bankRows.length) {
-    return json({ success: false, error: 'Không tìm thấy câu hỏi nào phù hợp từ kho câu hỏi' }, { status: 400 });
+    return json({ success: false, error: 'Không tìm thấy câu hỏi nào phù hợp từ kho câu hỏi (hoặc tất cả câu phù hợp đã được nhập)' }, { status: 400 });
   }
 
   // Fetch current questions for deduplication and ordering
   const existingQuestionsRes = await db.prepare(
-    `SELECT id, prompt, q_order FROM quiz_questions WHERE quiz_id = ? ORDER BY q_order ASC`
+    `SELECT id, prompt, q_order, source_id FROM quiz_questions WHERE quiz_id = ? ORDER BY q_order ASC`
   ).bind(params.id).all();
   const existingQuestions = existingQuestionsRes.results || [];
   const existingIds = new Set(existingQuestions.map((q) => q.id));
+  const existingSourceIds = new Set(existingQuestions.map((q) => q.source_id).filter(Boolean));
   const existingPrompts = new Set(existingQuestions.map((q) => q.prompt.trim()));
 
   let nextOrder = existingQuestions.length > 0
@@ -106,12 +129,13 @@ export async function POST({ params, request, platform }) {
   const toInsert = [];
   for (const row of bankRows) {
     const candidate = mapBankQuestionToQuizQuestion(row, params.id, nextOrder);
-    // Deduplication by deterministic ID and trimmed prompt
-    if (existingIds.has(candidate.id) || existingPrompts.has(candidate.prompt.trim())) {
+    // Extra guard against duplication
+    if (existingIds.has(candidate.id) || existingSourceIds.has(row.id) || existingPrompts.has(candidate.prompt.trim())) {
       continue;
     }
     toInsert.push(candidate);
     existingIds.add(candidate.id);
+    existingSourceIds.add(row.id);
     existingPrompts.add(candidate.prompt.trim());
     nextOrder++;
   }
@@ -135,9 +159,9 @@ export async function POST({ params, request, platform }) {
   try {
     const statements = toInsert.map((q) =>
       db.prepare(`
-        INSERT INTO quiz_questions (id, quiz_id, type, prompt, prompt_image_url, options_json, correct_answer, explanation, points, q_order)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `).bind(q.id, q.quiz_id, q.type, q.prompt, q.prompt_image_url, q.options_json, q.correct_answer, q.explanation, q.points, q.q_order)
+        INSERT INTO quiz_questions (id, quiz_id, type, prompt, prompt_image_url, options_json, correct_answer, explanation, points, q_order, source_type, source_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).bind(q.id, q.quiz_id, q.type, q.prompt, q.prompt_image_url, q.options_json, q.correct_answer, q.explanation, q.points, q.q_order, q.source_type, q.source_id)
     );
 
     statements.push(
@@ -156,7 +180,9 @@ export async function POST({ params, request, platform }) {
         prompt: q.prompt,
         options: JSON.parse(q.options_json),
         points: q.points,
-        q_order: q.q_order
+        q_order: q.q_order,
+        source_type: q.source_type,
+        source_id: q.source_id
       }))
     });
   } catch (err) {

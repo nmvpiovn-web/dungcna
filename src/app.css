@@ -31,15 +31,15 @@
   --warning-light: #fffbeb;     /* Amber 50 */
   --warning-border: #fde68a;    /* Amber 200 */
 
-  --text-main: #0f172a;         /* Slate 900 */
-  --text-muted: #475569;        /* Slate 600 */
-  --text-sub: #64748b;          /* Slate 500 */
+  --text-main: #1c1917;         /* Stone 900 */
+  --text-muted: #57534e;        /* Stone 600 */
+  --text-sub: #78716c;          /* Stone 500 */
 
-  --bg-page: #f8fafc;           /* Slate 50 */
+  --bg-page: #fdfbf7;           /* Warm Ivory */
   --bg-card: #ffffff;
-  --bg-surface: #f1f5f9;        /* Slate 100 */
+  --bg-surface: #f7f3ec;        /* Warm Surface */
 
-  --border-color: #cbd5e1;      /* Slate 300 */
+  --border-color: #d6d3d1;      /* Stone 300 */
 
   /* Chuẩn hóa Bo góc: Tinh gọn, lịch lãm, loại bỏ bo góc tròn 20-28px */
   --border-radius-xs: 3px;
@@ -51,7 +51,7 @@
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --shadow-md: 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
   --shadow-lg: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
-  --shadow-card: 0 1px 3px 0 rgba(15, 23, 42, 0.08), 0 1px 2px -1px rgba(15, 23, 42, 0.04);
+  --shadow-card: 0 1px 3px 0 rgba(28, 25, 23, 0.08), 0 1px 2px -1px rgba(28, 25, 23, 0.04);
 }
 
 /* ========================================================================= */
@@ -113,7 +113,7 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   font-family: 'Lexend', system-ui, -apple-system, sans-serif;
   letter-spacing: -0.015em;
   font-weight: 600 !important;
-  color: #0f172a;
+  color: #1c1917;
 }
 
 /* Enforce body 400, label 500, heading/bold 600 strictly */
@@ -306,7 +306,7 @@ input, select, textarea {
   border-radius: var(--border-radius-sm);
   padding: 8px 12px;
   background-color: #ffffff;
-  color: #0f172a;
+  color: #1c1917;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -430,7 +430,7 @@ input:focus, select:focus, textarea:focus {
 /* ACADEMIC WARMTH — DESIGN TOKENS (2026-09-30)                                */
 /* 3 theme x 12 token = 36 bien. Moi component MOI chi dung token nay        */
 /* (bg-surface-0, text-ink-900, bg-brand-600, border-line...).                 */
-/* Cam hardcode bg-white / text-slate-900 / bg-cx-600 trong code moi.        */
+/* Cam hardcode bg-white / text-stone-900 / bg-cx-600 trong code moi.        */
 /* ========================================================================= */
 
 :root {
@@ -448,16 +448,16 @@ input:focus, select:focus, textarea:focus {
   --c-500: #06b6d4;  --c-500-rgb: 6 182 212;
   --c-600: #0891b2;  --c-600-rgb: 8 145 178;
   --c-700: #0e7490;  --c-700-rgb: 14 116 144;
-  --c-800: #155e75;  --c-800-rgb: 21 94 117;
-  --c-900: #164e63;  --c-900-rgb: 22 78 99;
-  --c-950: #083344;  --c-950-rgb: 8 51 68;
+  --c-800: #292524;  --c-800-rgb: 41 37 36;
+  --c-900: #1c1917;  --c-900-rgb: 28 25 23;
+  --c-950: #0c0a09;  --c-950-rgb: 12 10 9;
   /* ---- Hall of Fame gradient stops ---- */
   --hof-1: #a5f3fc; --hof-2: #67e8f9; --hof-3: #22d3ee; --hof-4: #06b6d4;
   --accent-500: #f59e0b; --accent-500-rgb: 245 158 11;
   --success-600: #16a34a; --success-600-rgb: 22 163 74;
   --danger-600: #dc2626; --danger-600-rgb: 220 38 38;
-  --ink-900: #0f172a;    --ink-900-rgb: 15 23 42;
-  --ink-500: #64748b;    --ink-500-rgb: 100 116 139;
+  --ink-900: #1c1917;    --ink-900-rgb: 28 25 23;
+  --ink-500: #78716c;    --ink-500-rgb: 120 113 108;
   --surface-0: #ffffff;  --surface-0-rgb: 255 255 255;
   --surface-1: #f8fafc;  --surface-1-rgb: 248 250 252;
   --line: #e2e8f0;       --line-rgb: 226 232 240;
@@ -479,15 +479,15 @@ html.theme-sky {
   --c-500: #06b6d4;  --c-500-rgb: 6 182 212;
   --c-600: #0891b2;  --c-600-rgb: 8 145 178;
   --c-700: #0e7490;  --c-700-rgb: 14 116 144;
-  --c-800: #155e75;  --c-800-rgb: 21 94 117;
-  --c-900: #164e63;  --c-900-rgb: 22 78 99;
-  --c-950: #083344;  --c-950-rgb: 8 51 68;
+  --c-800: #292524;  --c-800-rgb: 41 37 36;
+  --c-900: #1c1917;  --c-900-rgb: 28 25 23;
+  --c-950: #0c0a09;  --c-950-rgb: 12 10 9;
   --hof-1: #a5f3fc; --hof-2: #67e8f9; --hof-3: #22d3ee; --hof-4: #06b6d4;
   --accent-500: #f59e0b; --accent-500-rgb: 245 158 11;
   --success-600: #16a34a; --success-600-rgb: 22 163 74;
   --danger-600: #dc2626; --danger-600-rgb: 220 38 38;
-  --ink-900: #0c1a2b;    --ink-900-rgb: 12 26 43;
-  --ink-500: #475569;    --ink-500-rgb: 71 85 105;
+  --ink-900: #1c1917;    --ink-900-rgb: 28 25 23;
+  --ink-500: #78716c;    --ink-500-rgb: 120 113 108;
   --surface-0: #ffffff;  --surface-0-rgb: 255 255 255;
   --surface-1: #ecfeff;  --surface-1-rgb: 240 249 255;
   --line: #a5f3fc;       --line-rgb: 186 230 253;

@@ -65,15 +65,99 @@ export function formatQuestionPrompt(questionText, readingPassage) {
 }
 
 /**
+ * Balances options deterministically so correct answers are distributed across A, B, C, D
+ * @param {string|Array<any>} rawOptions
+ * @param {string} rawCorrectId
+ * @param {string|null} [targetLetter]
+ * @returns {{ options: string[], correct_answer: string }}
+ */
+export function balanceBankOptions(rawOptions, rawCorrectId, targetLetter = null) {
+  let parsed = rawOptions;
+  if (typeof parsed === 'string') {
+    try { parsed = JSON.parse(parsed); } catch { parsed = []; }
+  }
+  if (!Array.isArray(parsed) || parsed.length < 2) {
+    const opts = normalizeBankOptions(rawOptions);
+    return {
+      options: opts,
+      correct_answer: determineCorrectAnswer(opts, rawCorrectId)
+    };
+  }
+
+  // Extract clean text and original letter/id for each option
+  const items = parsed.map((item, idx) => {
+    let text = '';
+    let letter = String.fromCharCode(65 + idx);
+    if (typeof item === 'string') {
+      text = item.trim().replace(/^[A-Za-z]\.\s*/, '');
+    } else if (item && typeof item === 'object') {
+      text = String(item.text ?? '').trim().replace(/^[A-Za-z]\.\s*/, '');
+      if (item.id) letter = String(item.id).trim().toUpperCase();
+    }
+    return { letter, text, raw: item };
+  });
+
+  // Find correct option index
+  const normCorrect = String(rawCorrectId ?? '').trim().toUpperCase();
+  let correctIdx = items.findIndex((it) => it.letter === normCorrect);
+  if (correctIdx === -1) {
+    correctIdx = ['A', 'B', 'C', 'D', 'E', 'F'].indexOf(normCorrect);
+  }
+  if (correctIdx === -1 || !items[correctIdx]) {
+    correctIdx = items.findIndex((it) => it.text.toUpperCase() === normCorrect);
+  }
+  if (correctIdx === -1) correctIdx = 0;
+
+  const correctItem = items[correctIdx];
+  const distractors = items.filter((_, idx) => idx !== correctIdx);
+
+  if (targetLetter) {
+    const letters = ['A', 'B', 'C', 'D'];
+    const targetIdx = letters.indexOf(targetLetter.toUpperCase());
+    if (targetIdx >= 0 && targetIdx < items.length) {
+      const reordered = [];
+      let distractorPointer = 0;
+      for (let i = 0; i < items.length; i++) {
+        if (i === targetIdx) {
+          reordered.push(correctItem);
+        } else {
+          reordered.push(distractors[distractorPointer++]);
+        }
+      }
+      const formattedOptions = reordered.map((it, idx) => `${letters[idx]}. ${it.text}`);
+      const formattedCorrect = `${targetLetter.toUpperCase()}. ${correctItem.text}`;
+      return {
+        options: formattedOptions,
+        correct_answer: formattedCorrect
+      };
+    }
+  }
+
+  const defaultFormatted = items.map((it, idx) => `${String.fromCharCode(65 + idx)}. ${it.text}`);
+  return {
+    options: defaultFormatted,
+    correct_answer: `${String.fromCharCode(65 + correctIdx)}. ${correctItem.text}`
+  };
+}
+
+/**
  * Maps a question_bank row into a quiz_questions row
  * @param {object} bankRow
  * @param {string} quizId
  * @param {number} orderIndex
+ * @param {string|null} [targetLetter]
  * @returns {object}
  */
-export function mapBankQuestionToQuizQuestion(bankRow, quizId, orderIndex) {
-  const options = normalizeBankOptions(bankRow.options_json);
-  const correctAnswer = determineCorrectAnswer(options, bankRow.correct_option_id);
+export function mapBankQuestionToQuizQuestion(bankRow, quizId, orderIndex, targetLetter = null) {
+  let options, correctAnswer;
+  if (targetLetter) {
+    const balanced = balanceBankOptions(bankRow.options_json, bankRow.correct_option_id, targetLetter);
+    options = balanced.options;
+    correctAnswer = balanced.correct_answer;
+  } else {
+    options = normalizeBankOptions(bankRow.options_json);
+    correctAnswer = determineCorrectAnswer(options, bankRow.correct_option_id);
+  }
   const prompt = formatQuestionPrompt(bankRow.question_text, bankRow.reading_passage);
 
   return {
