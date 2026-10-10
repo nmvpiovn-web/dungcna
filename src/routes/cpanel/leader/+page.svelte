@@ -12,7 +12,6 @@
  import LeaderNotifier from '$lib/components/LeaderNotifier.svelte';
  import TeacherRegisterModal from '$lib/components/TeacherRegisterModal.svelte';
  import TeacherStaffModal from '$lib/components/TeacherStaffModal.svelte';
-	import ProvisionCredentialModal from '$lib/components/ProvisionCredentialModal.svelte';
 
  let currentUser = $state(null);
  let assignments = $state([]);
@@ -43,8 +42,6 @@
  let interviewNotes = $state('');
  let candidateStatus = $state('interview_scheduled');
  let trialFeedback = $state('');
-	let showProvisionModal = $state(false);
-	let provisionedCredential = $state({ username: '', temp_password: '', candidate_name: '', user_id: '' });
 
  currentLang.subscribe(val => {
  lang = val;
@@ -240,43 +237,7 @@
  }
 
  // ACTION: Save Interview / Screening updates
- 	async function handleProvisionCandidate(cand) {
-		if (!cand || isProcessing) return;
-		if (!confirm(`Cấp tài khoản giáo viên cho ứng viên "${cand.candidate_name}"? Hệ thống sẽ tạo tài khoản teacher và bắt buộc đổi mật khẩu lần đầu.`)) return;
-		isProcessing = true;
-		try {
-			const token = localStorage.getItem('tienganh_token') || getAuthToken() || '';
-			const res = await fetch('/api/teachers/workflows', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-					'Authorization': `Bearer ${token}`
-				},
-				body: JSON.stringify({ action: 'provision_account', recruitment_id: cand.id })
-			});
-			const data = await res.json();
-			if (data.success) {
-				provisionedCredential = {
-					username: data.username || '',
-					temp_password: data.temp_password || '',
-					candidate_name: cand.candidate_name,
-					user_id: data.user_id || ''
-				};
-				showProvisionModal = true;
-				showInterviewModal = false;
-				showMessage(`✅ Đã cấp tài khoản giáo viên: ${data.username || ''}`);
-				loadData();
-			} else {
-				showMessage('Lỗi cấp tài khoản: ' + data.error, false);
-			}
-		} catch (e) {
-			showMessage('Lỗi kết nối: ' + e.message, false);
-		} finally {
-			isProcessing = false;
-		}
-	}
-
-	async function saveCandidateUpdates() {
+ async function saveCandidateUpdates() {
  if (!selectedCandidate) return;
  isProcessing = true;
  try {
@@ -969,23 +930,14 @@
  </div>
  </div>
 
- 						<div class="flex items-center gap-2">
-							{#if cand.status === 'accepted'}
-								<button 
-									onclick={() => handleProvisionCandidate(cand)}
-									disabled={isProcessing}
-									class="px-3.5 py-2 rounded-md text-xs font-bold bg-violet-600 hover:bg-violet-700 text-white shadow-sm transition-colors"
-								>
-									🔑 Cấp Tài Khoản GV
-								</button>
-							{/if}
-							<button 
-								onclick={() => openInterviewModal(cand)}
-								class="px-4 py-2 rounded-md text-xs font-semibold bg-cx-600 hover:bg-cx-700 text-white transition-colors"
-							>
-								Xử Lý Hồ Sơ / Phỏng Vấn
-							</button>
-						</div>
+ <div>
+ <button 
+ onclick={() => openInterviewModal(cand)}
+ class="px-4 py-2 rounded-md text-xs font-semibold bg-cx-600 hover:bg-cx-700 text-white transition-colors"
+ >
+ Xử Lý Hồ Sơ / Phỏng Vấn
+ </button>
+ </div>
  </div>
  {/each}
  </div>
@@ -1393,17 +1345,7 @@
  </div>
 
  <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
- {#if candidateStatus === 'accepted' || selectedCandidate?.status === 'accepted'}
-				<button 
-					type="button"
-					onclick={() => handleProvisionCandidate(selectedCandidate)}
-					disabled={isProcessing}
-					class="px-4 py-2 rounded-md font-bold bg-violet-600 hover:bg-violet-700 text-white shadow-sm transition-colors mr-auto"
-				>
-					🔑 Cấp Tài Khoản Ngay
-				</button>
-			{/if}
-			<button onclick={() => showInterviewModal = false} class="px-4 py-2 rounded-md font-medium text-slate-600 hover:bg-slate-100">Đóng</button>
+ <button onclick={() => showInterviewModal = false} class="px-4 py-2 rounded-md font-medium text-slate-600 hover:bg-slate-100">Đóng</button>
  <button 
  onclick={saveCandidateUpdates}
  disabled={isProcessing}
@@ -1505,11 +1447,4 @@
  currentUser={currentUser}
  onSaved={handleStaffSalarySaved}
  onUpdated={handleStaffSalarySaved}
-/>
-
-<!-- MODAL: One-Time Teacher Credential Dialog -->
-<ProvisionCredentialModal
-	bind:isOpen={showProvisionModal}
-	credential={provisionedCredential}
-	onClose={() => { provisionedCredential = { username: '', temp_password: '', candidate_name: '', user_id: '' }; }}
 />

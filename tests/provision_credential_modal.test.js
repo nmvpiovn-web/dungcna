@@ -21,19 +21,29 @@ test('MODAL-01: ProvisionCredentialModal exists and implements accessibility and
   assert.doesNotMatch(content, /localStorage\.setItem.*password/i, 'Modal must NEVER store password in localStorage');
   assert.doesNotMatch(content, /sessionStorage\.setItem.*password/i, 'Modal must NEVER store password in sessionStorage');
 
-  // Must support mobile 360px (min-w-[320px] and max-w-lg)
-  assert.match(content, /min-w-\[320px\]/, 'Modal must support small mobile screen down to 320-360px');
+  // Must enforce confirmation of credential saving before closing (cannot close immediately)
+  assert.match(content, /hasConfirmedSaved/, 'Modal must require user confirmation before closing');
+  assert.match(content, /confirm-saved-cred/, 'Modal must have confirmation checkbox');
+  assert.match(content, /disabled=\{!hasConfirmedSaved\}/, 'Close button must be disabled until confirmed');
+
+  // Responsive padding: no rigid min-w-[320px] that breaks 320px screens with outer padding
+  assert.doesNotMatch(content, /min-w-\[320px\]/, 'Modal should not enforce rigid min-w-[320px] causing horizontal overflow on 320px screens');
+  assert.match(content, /max-w-lg/, 'Modal must constrain max width');
+
+  // Neutral branding in credential copy text
+  assert.doesNotMatch(content, /Tiếng Anh Cô Dung/i, 'Copy text should not re-introduce removed brand name');
+  assert.match(content, /Tài khoản Giáo viên/i, 'Copy text should use neutral teacher account label');
 });
 
-test('MODAL-02: Admin and Leader CP integrate ProvisionCredentialModal and pass one-time credential', () => {
+test('MODAL-02: Admin CP integrates ProvisionCredentialModal and captures one-time credential', () => {
   const adminPage = fs.readFileSync('src/routes/admin/+page.svelte', 'utf8');
   assert.match(adminPage, /ProvisionCredentialModal/, 'Admin page must import ProvisionCredentialModal');
   assert.match(adminPage, /showProvisionModal/, 'Admin page must maintain showProvisionModal state');
   assert.match(adminPage, /provisionedCredential/, 'Admin page must maintain provisionedCredential state');
   assert.match(adminPage, /temp_password/, 'Admin page must capture temp_password on provision');
 
+  // RBAC scope check: Leader CP must not expose provision button because API is strictly admin/superadmin
   const leaderPage = fs.readFileSync('src/routes/cpanel/leader/+page.svelte', 'utf8');
-  assert.match(leaderPage, /ProvisionCredentialModal/, 'Leader page must import ProvisionCredentialModal');
-  assert.match(leaderPage, /showProvisionModal/, 'Leader page must maintain showProvisionModal state');
-  assert.match(leaderPage, /handleProvisionCandidate/, 'Leader page must implement handleProvisionCandidate');
+  assert.doesNotMatch(leaderPage, /handleProvisionCandidate/, 'Leader page must not have provision button calling admin-only endpoint');
+  assert.doesNotMatch(leaderPage, /action:\s*['"]provision_account['"]/, 'Leader page must not invoke provision_account');
 });

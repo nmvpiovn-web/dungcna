@@ -9,6 +9,7 @@
   let copiedPass = $state(false);
   let copiedAll = $state(false);
   let copyFeedback = $state('');
+  let hasConfirmedSaved = $state(false);
 
   async function copyToClipboard(text, type) {
     try {
@@ -44,24 +45,28 @@
   }
 
   function handleClose() {
+    if (!hasConfirmedSaved) {
+      return;
+    }
     isOpen = false;
     copyFeedback = '';
     copiedUser = false;
     copiedPass = false;
     copiedAll = false;
+    hasConfirmedSaved = false;
     onClose();
   }
 </script>
 
 {#if isOpen}
 <div 
-  class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-in fade-in duration-200"
+  class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 overflow-y-auto animate-in fade-in duration-200"
   role="dialog"
   aria-modal="true"
   aria-labelledby="cred-modal-title"
 >
   <div 
-    class="bg-slate-900 border border-emerald-500/40 rounded-3xl w-full max-w-lg p-5 sm:p-6 shadow-2xl space-y-5 text-white my-auto max-h-[92vh] overflow-y-auto min-w-[320px]"
+    class="bg-slate-900 border border-emerald-500/40 rounded-3xl w-full max-w-lg p-4 sm:p-6 shadow-2xl space-y-4 sm:space-y-5 text-white my-auto max-h-[94vh] overflow-y-auto"
   >
     <!-- Modal Header -->
     <div class="flex items-start justify-between gap-3 border-b border-slate-800 pb-3">
@@ -78,6 +83,7 @@
           </p>
         </div>
       </div>
+      {#if hasConfirmedSaved}
       <button 
         type="button" 
         onclick={handleClose}
@@ -86,6 +92,7 @@
       >
         ✕
       </button>
+      {/if}
     </div>
 
     <!-- Security Alert Box -->
@@ -175,19 +182,35 @@
       </ol>
     </div>
 
+    <!-- Confirmation Checkbox before Close -->
+    <div class="p-3 rounded-2xl bg-slate-950/80 border border-slate-800 text-xs">
+      <label class="flex items-start gap-2.5 cursor-pointer text-slate-300 select-none">
+        <input 
+          id="confirm-saved-cred"
+          type="checkbox" 
+          bind:checked={hasConfirmedSaved}
+          class="mt-0.5 rounded border-slate-700 bg-slate-900 text-emerald-500 focus:ring-emerald-500 shrink-0 w-4 h-4 cursor-pointer"
+        />
+        <span class="leading-snug">
+          Tôi xác nhận đã sao chép và lưu trữ an toàn mật khẩu tạm để bàn giao cho giáo viên.
+        </span>
+      </label>
+    </div>
+
     <!-- Actions Bar -->
     <div class="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-2.5 pt-3 border-t border-slate-800">
       <button 
         type="button"
         onclick={handleClose}
-        class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition-colors text-center"
+        disabled={!hasConfirmedSaved}
+        class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed text-slate-200 text-xs font-bold transition-colors text-center"
       >
         Đóng Hộp Thoại
       </button>
 
       <button 
         type="button"
-        onclick={() => copyToClipboard(`Tài khoản Tiếng Anh Cô Dung:\nTên đăng nhập: ${credential.username}\nMật khẩu tạm: ${credential.temp_password}\n(Lưu ý: Bắt buộc đổi mật khẩu ở lần đăng nhập đầu tiên)`, 'all')}
+        onclick={() => copyToClipboard(`Tài khoản Giáo viên:\nTên đăng nhập: ${credential.username}\nMật khẩu tạm: ${credential.temp_password}\n(Lưu ý: Bắt buộc đổi mật khẩu ở lần đăng nhập đầu tiên)`, 'all')}
         class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-1.5 transition-all"
       >
         <span>📋</span>
