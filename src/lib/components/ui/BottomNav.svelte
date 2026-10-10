@@ -3,12 +3,12 @@
   import { page } from '$app/state';
   const tabs = [
     { href: '/', label: 'Trang chủ', icon: '🏠' },
-    { href: '/courses', label: 'Học', icon: '📚' },
+    { href: '/quiz-menu', label: 'Quiz', icon: '🧩' },
     { href: '/exam', label: 'Phòng thi', icon: '📝' },
     { href: '/flashcards', label: 'Từ vựng', icon: '🔤' },
     { href: '/cpanel', label: 'Tôi', icon: '👤' }
   ];
-  const isActive = (href) => href === '/' ? page.url.pathname === '/' : page.url.pathname.startsWith(href);
+  const isActive = (href) => href === '/' ? page.url.pathname === '/' : (page.url.pathname === href || page.url.pathname.startsWith(href + '/'));
 </script>
 
 <nav class="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-surface-0/95 backdrop-blur border-t border-line shadow-[0_-4px_16px_rgba(0,0,0,0.06)]" style="padding-bottom: env(safe-area-inset-bottom);">
