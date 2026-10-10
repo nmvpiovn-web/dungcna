@@ -45,8 +45,8 @@ export async function POST({ request, platform }) {
 
     // Remove must_change_password from metadata
     await db.prepare(`
-      UPDATE users 
-      SET password = ?, 
+      UPDATE users
+      SET password = ?,
           metadata = json_remove(COALESCE(metadata, '{}'), '$.must_change_password'),
           updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
