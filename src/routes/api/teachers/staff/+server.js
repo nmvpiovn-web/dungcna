@@ -15,6 +15,13 @@ export const prerender = false;
 // Non-production local mock cache
 let localMockCache = null;
 
+async function runAtomicBatch(db, statements) {
+  if (typeof db.batch === 'function') return db.batch(statements);
+  const results = [];
+  for (const statement of statements) results.push(await statement.run());
+  return results;
+}
+
 function getLocalMockCache() {
   if (!localMockCache || localMockCache.length === 0) {
     localMockCache = getAllTeacherProfiles();
@@ -221,6 +228,11 @@ export async function POST({ request, platform }) {
         const leaderRating = Number(body.leader_rating) || 5.0;
 
         try {
+          // Chụp giá trị cũ trước khi ghi để audit có đủ before/after.
+          const before = await platform.env.DB.prepare('SELECT base_salary_vnd, rate_per_session_vnd, role_type, role_title, salary_type FROM teacher_profiles WHERE teacher_id = ?').bind(teacherId).first().catch(() => null);
+          if (!before) {
+            return json({ success: false, persisted: false, error: 'Không tìm thấy hồ sơ giáo viên thật để cập nhật' }, { status: 404 });
+          }
           const sql = `
             UPDATE teacher_profiles SET
               role_type = ?, role_title = ?, salary_type = ?,
@@ -228,12 +240,17 @@ export async function POST({ request, platform }) {
               updated_at = CURRENT_TIMESTAMP
             WHERE teacher_id = ?;
           `;
-          const write = await platform.env.DB.prepare(sql).bind(
+          const updateStatement = platform.env.DB.prepare(sql).bind(
             roleType, roleTitle, salaryType, baseSalary, ratePerSession, leaderRating, teacherId
-          ).run();
-          if (!write.meta?.changes) {
-            return json({ success: false, persisted: false, error: 'Không tìm thấy hồ sơ giáo viên thật để cập nhật' }, { status: 404 });
-          }
+          );
+          const auditStatement = platform.env.DB.prepare(`INSERT INTO audit_logs (id, actor_id, actor_role, action, details, created_at) VALUES (?, ?, ?, 'update_role_salary', ?, CURRENT_TIMESTAMP)`)
+            .bind(`audit_${crypto.randomUUID()}`, auth.user.id, auth.user.role || '', JSON.stringify({
+                teacher_id: teacherId,
+                before: before || null,
+                after: { base_salary_vnd: baseSalary, rate_per_session_vnd: ratePerSession, role_type: roleType, role_title: roleTitle, salary_type: salaryType }
+              }));
+          // D1 batch là giao dịch: không thể đổi lương thành công mà mất audit log.
+          await runAtomicBatch(platform.env.DB, [updateStatement, auditStatement]);
 
           const row = await platform.env.DB.prepare('SELECT * FROM teacher_profiles WHERE teacher_id = ?').bind(teacherId).first();
           if (!row) {
@@ -274,19 +291,30 @@ export async function POST({ request, platform }) {
       }
 
       if (action === 'add_bonus') {
+        // P1: chặn số âm / 0 / số lẻ / vượt trần — trước đây Number(-5) lọt qua
+        const amountVnd = Number(body.amount_vnd);
+        if (!Number.isSafeInteger(amountVnd) || amountVnd <= 0 || amountVnd > 1000000000) {
+          return json({ success: false, persisted: false, error: 'Tiền thưởng phải là số nguyên dương, tối đa 1.000.000.000đ' }, { status: 400 });
+        }
         const newBonus = {
           id: `bon_${Date.now()}`,
           date: new Date().toISOString().slice(0, 10),
-          amount_vnd: Number(body.amount_vnd) || 1000000,
+          amount_vnd: amountVnd,
           reason: body.reason || 'Khen thưởng chuyên môn xuất sắc',
           awarded_by: auth.user.name || 'Ms. Dung (Leader)'
         };
         try {
           const row = await platform.env.DB.prepare('SELECT bonuses FROM teacher_profiles WHERE teacher_id = ?').bind(teacherId).first();
+          if (!row) {
+            return json({ success: false, persisted: false, error: 'Không tìm thấy hồ sơ giáo viên thật để thưởng' }, { status: 404 });
+          }
           const currentBonuses = row && row.bonuses ? JSON.parse(row.bonuses) : [];
           currentBonuses.unshift(newBonus);
-          await platform.env.DB.prepare('UPDATE teacher_profiles SET bonuses = ?, updated_at = CURRENT_TIMESTAMP WHERE teacher_id = ?')
-            .bind(JSON.stringify(currentBonuses), teacherId).run();
+          const updateStatement = platform.env.DB.prepare('UPDATE teacher_profiles SET bonuses = ?, updated_at = CURRENT_TIMESTAMP WHERE teacher_id = ?')
+            .bind(JSON.stringify(currentBonuses), teacherId);
+          const auditStatement = platform.env.DB.prepare(`INSERT INTO audit_logs (id, actor_id, actor_role, action, details, created_at) VALUES (?, ?, ?, 'add_bonus', ?, CURRENT_TIMESTAMP)`)
+            .bind(`audit_${crypto.randomUUID()}`, auth.user.id, auth.user.role || '', JSON.stringify({ teacher_id: teacherId, bonus: newBonus }));
+          await runAtomicBatch(platform.env.DB, [updateStatement, auditStatement]);
           return json({ success: true, persisted: true, bonus: newBonus, source: 'cloudflare_d1' });
         } catch (d1Err) {
           return json({ success: false, persisted: false, error: 'Lỗi D1: ' + d1Err.message }, { status: 500 });

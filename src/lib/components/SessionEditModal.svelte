@@ -27,6 +27,7 @@
  location: 'Tại nhà Cô Dung (123 Phố Vọng, Hai Bà Trưng, Hà Nội)',
  day_of_week: 1,
  day_name: 'Thứ Hai',
+ session_date: '',
  start_time: '18:00',
  end_time: '19:30',
  notify_minutes_before: 10,
@@ -44,6 +45,38 @@
  { value: 6, label: 'Thứ Bảy' },
  { value: 0, label: 'Chủ Nhật' }
  ];
+
+ function formatLocalDate(date) {
+ const year = date.getFullYear();
+ const month = String(date.getMonth() + 1).padStart(2, '0');
+ const day = String(date.getDate()).padStart(2, '0');
+ return `${year}-${month}-${day}`;
+ }
+
+ function parseLocalDate(value) {
+ const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value || ''));
+ if (!match) return null;
+ const date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+ return Number.isNaN(date.getTime()) ? null : date;
+ }
+
+ function syncDateFromDay() {
+ const dayOfWeek = Number(form.day_of_week);
+ if (Number.isNaN(dayOfWeek)) return;
+ const date = parseLocalDate(form.session_date) || new Date();
+ date.setDate(date.getDate() + ((dayOfWeek - date.getDay() + 7) % 7));
+ form.session_date = formatLocalDate(date);
+ const day = DAY_OPTIONS.find(option => option.value === dayOfWeek);
+ if (day) form.day_name = day.label;
+ }
+
+ function syncDayFromDate() {
+ const date = parseLocalDate(form.session_date);
+ if (!date) return;
+ form.day_of_week = date.getDay();
+ const day = DAY_OPTIONS.find(option => option.value === form.day_of_week);
+ if (day) form.day_name = day.label;
+ }
 
  let wasOpen = false;
 
@@ -89,6 +122,7 @@
  location: 'Tại nhà Cô Dung (123 Phố Vọng, Hai Bà Trưng, Hà Nội)',
  day_of_week: 1,
  day_name: 'Thứ Hai',
+ session_date: '',
  start_time: '18:00',
  end_time: '19:30',
  notify_minutes_before: 10,
@@ -97,6 +131,12 @@
  student_ids: [],
  ...(preset || {})
  };
+ // Buổi mới không có preset ngày -> tự điền ngày gần nhất khớp thứ đã chọn
+ if (!form.session_date) {
+ syncDateFromDay();
+ } else {
+ syncDayFromDate();
+ }
  }
  }
  } else {
@@ -127,8 +167,14 @@
  return;
  }
 
- const dayObj = DAY_OPTIONS.find(d => d.value === Number(form.day_of_week));
- if (dayObj) form.day_name = dayObj.label;
+ // Tự điền session_date cho buổi mới: lấy ngày gần nhất khớp thứ đã chọn
+ // (nút "Thêm Buổi Học Mới" không truyền preset nên thiếu field này -> API 400)
+ if (!form.session_date) {
+ syncDateFromDay();
+ } else {
+ // Ngày cụ thể là nguồn chuẩn; tránh lưu ngày Thứ Ba nhưng metadata lại là Thứ Hai.
+ syncDayFromDate();
+ }
 
  const tObj = allTeachers.find(t => t.id === form.teacher_id);
  if (tObj) form.teacher_name = tObj.name;
@@ -279,16 +325,29 @@
  />
  </div>
 
+ <div class="grid grid-cols-2 gap-2">
  <div>
  <label class="block font-bold text-slate-700 mb-1">Thứ Trong Tuần</label>
  <select
  bind:value={form.day_of_week}
+ onchange={syncDateFromDay}
  class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:border-indigo-500 font-semibold"
  >
  {#each DAY_OPTIONS as opt}
  <option value={opt.value}>{opt.label}</option>
  {/each}
  </select>
+ </div>
+ <div>
+ <label class="block font-bold text-slate-700 mb-1">Ngày Học *</label>
+ <input
+ type="date"
+ bind:value={form.session_date}
+ onchange={syncDayFromDate}
+ required
+ class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:border-indigo-500 font-semibold"
+ />
+ </div>
  </div>
 
  <div class="grid grid-cols-2 gap-2">
@@ -384,7 +443,7 @@
  </div>
 
  <!-- Action Buttons -->
- <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 pt-3 border-t border-slate-100 sticky bottom-0 bg-white -mx-6 md:-mx-8 px-6 md:px-8 pb-1">
+ <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 pt-3 border-t border-slate-100 bg-white -mx-6 md:-mx-8 px-6 md:px-8 pb-1">
  <button
  type="button"
  onclick={() => isOpen = false}

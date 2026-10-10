@@ -1055,16 +1055,16 @@ export async function POST({ request, platform }) {
 
       // Schema: users dùng cột `password` (không phải password_hash)
       // teacher_profiles: id, user_id, bio, degree, certifications, hourly_rate, is_native, specialty, created_at
+      // P1 fix: backfill teacher_id (= user_id theo quy ước seed) để update_role_salary
+      // (WHERE teacher_id = ?) tìm được hồ sơ của giáo viên tuyển qua hiring flow.
+      // Schema migration 0001 không có cột teacher_id -> ALTER thử, kệ lỗi nếu đã có.
+      try { await db.prepare('ALTER TABLE teacher_profiles ADD COLUMN teacher_id TEXT').run(); } catch {}
       await db.batch([
         db.prepare(`INSERT INTO users (id, username, password, name, phone, email, role, status, metadata, created_at) VALUES (?, ?, ?, ?, ?, ?, 'teacher', 'active', ?, CURRENT_TIMESTAMP)`).bind(userId, username, passwordHash, rec.candidate_name, normPhone || null, normEmail || null, JSON.stringify({ must_change_password: true, provisioned_from: recruitment_id, provisioned_by: auth.user.id, provisioned_at: new Date().toISOString() })),
-        db.prepare(`INSERT INTO teacher_profiles (id, user_id, bio, degree, certifications, specialty, created_at) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`).bind(profileId, userId, `Ứng viên từ recruitment ${recruitment_id}`, rec.role_type || '', rec.certificates || '', rec.specialty || ''),
-        db.prepare(`UPDATE teacher_recruitment SET status = 'onboarded', updated_at = CURRENT_TIMESTAMP WHERE id = ? AND status = 'accepted'`).bind(recruitment_id)
+        db.prepare(`INSERT INTO teacher_profiles (id, teacher_id, user_id, bio, degree, certifications, specialty, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`).bind(profileId, userId, userId, `Ứng viên từ recruitment ${recruitment_id}`, rec.role_type || '', rec.certificates || '', rec.specialty || ''),
+        db.prepare(`UPDATE teacher_recruitment SET status = 'onboarded', updated_at = CURRENT_TIMESTAMP WHERE id = ? AND status = 'accepted'`).bind(recruitment_id),
+        db.prepare(`INSERT INTO audit_logs (id, actor_id, actor_role, action, details, created_at) VALUES (?, ?, ?, 'provision_teacher_account', ?, CURRENT_TIMESTAMP)`).bind(`audit_${crypto.randomUUID()}`, auth.user.id, auth.user.role || '', JSON.stringify({ recruitment_id, username, user_id: userId }))
       ]);
-
-      // Audit log
-      try {
-        await db.prepare(`INSERT INTO audit_logs (id, action, actor_id, target_id, details, created_at) VALUES (?, 'provision_teacher_account', ?, ?, ?, CURRENT_TIMESTAMP)`).bind(`audit_${crypto.randomUUID()}`, auth.user.id, userId, JSON.stringify({ recruitment_id, username }));
-      } catch {}
 
       return json({ success: true, message: 'Đã cấp tài khoản giáo viên. Yêu cầu đổi mật khẩu ở lần đăng nhập đầu.', username, temp_password: tempPassword, user_id: userId, must_change_password: true });
     } catch (e) {
