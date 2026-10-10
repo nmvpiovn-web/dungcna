@@ -204,13 +204,17 @@ export function sanitizeUser(user) {
   const clone = { ...user };
   delete clone.password;
   delete clone.secret;
-  if (!clone.grade && clone.metadata) {
+  if (clone.metadata) {
     try {
-      const meta = typeof clone.metadata === 'string' ? JSON.parse(clone.metadata) : clone.metadata;
-      if (meta && meta.grade) {
-        clone.grade = meta.grade;
+      clone.metadata = typeof clone.metadata === 'string' ? JSON.parse(clone.metadata) : clone.metadata;
+      if (!clone.grade && clone.metadata && clone.metadata.grade) {
+        clone.grade = clone.metadata.grade;
       }
-    } catch {}
+    } catch {
+      clone.metadata = {};
+    }
+  } else {
+    clone.metadata = {};
   }
   return clone;
 }
@@ -229,18 +233,39 @@ export function sanitizeUserList(users) {
  */
 export function isStaffUser(user) {
   if (!user) return false;
-  
-  if (user.role === 'teacher' && user.approval_status && user.approval_status !== 'approved') {
-    return false;
-  }
 
-  const role = (user.role || '').toLowerCase();
-  return (
+  const role = String(user.role || '').trim().toLowerCase();
+  const isStaffRole = (
     role === 'superadmin' ||
     role === 'admin' ||
     role === 'leader' ||
     role === 'teacher'
   );
+  if (!isStaffRole) return false;
+
+  let meta = user.metadata;
+  if (typeof meta === 'string') {
+    try {
+      meta = JSON.parse(meta);
+    } catch {
+      meta = {};
+    }
+  }
+  if (meta && meta.must_change_password === true) {
+    return false;
+  }
+
+  if (role === 'teacher') {
+    const approval = String(user.approval_status || 'approved').trim().toLowerCase();
+    if (approval === 'trial' || approval === 'pending' || approval === 'rejected') {
+      return false;
+    }
+    if (approval !== 'approved' && approval !== 'official') {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 /**
@@ -354,12 +379,26 @@ export async function verifyServerAuth(request, platform) {
   // 1. Check Cloudflare D1 if available (Primary Production Source)
   if (platform?.env?.DB) {
     try {
-      const d1Res = await platform.env.DB.prepare(`
-        SELECT id, username, phone, email, name, role, avatar, status, metadata, created_at, updated_at
-        FROM users
-        WHERE id = ? OR username = ?
-        LIMIT 1
-      `).bind(userId, userId).first();
+      let d1Res;
+      try {
+        d1Res = await platform.env.DB.prepare(`
+          SELECT id, username, phone, email, name, role, avatar, status, approval_status, metadata, created_at, updated_at
+          FROM users
+          WHERE id = ? OR username = ?
+          LIMIT 1
+        `).bind(userId, userId).first();
+      } catch (colErr) {
+        if (/no such column: approval_status/i.test(colErr?.message || '')) {
+          d1Res = await platform.env.DB.prepare(`
+            SELECT id, username, phone, email, name, role, avatar, status, metadata, created_at, updated_at
+            FROM users
+            WHERE id = ? OR username = ?
+            LIMIT 1
+          `).bind(userId, userId).first();
+        } else {
+          throw colErr;
+        }
+      }
 
       if (!d1Res) {
         return {

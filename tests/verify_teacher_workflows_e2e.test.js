@@ -127,15 +127,24 @@ describe('TEACHER WORKFLOWS & SUBSTITUTE 2-STEP APPROVAL AUDIT SUITE', () => {
         role TEXT NOT NULL,
         avatar TEXT,
         status TEXT DEFAULT 'active',
+        approval_status TEXT DEFAULT 'approved',
         metadata TEXT,
         created_at TEXT DEFAULT CURRENT_TIMESTAMP,
         updated_at TEXT DEFAULT CURRENT_TIMESTAMP
       );
 
-      INSERT INTO users (id, username, role, name, status) VALUES
-        ('usr_msdung', 'msdung', 'leader', 'Cô Dung', 'active'),
-        ('usr_teacher_a', 'hung', 'teacher', 'Thầy Hưng', 'active'),
-        ('usr_teacher_b', 'lan', 'teacher', 'Cô Lan', 'active');
+      CREATE TABLE auth_sessions (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        expires_at TEXT,
+        revoked_at TEXT
+      );
+
+      INSERT INTO users (id, username, role, name, status, approval_status) VALUES
+        ('usr_msdung', 'msdung', 'leader', 'Cô Dung', 'active', 'approved'),
+        ('usr_teacher_a', 'hung', 'teacher', 'Thầy Hưng', 'active', 'approved'),
+        ('usr_teacher_b', 'lan', 'teacher', 'Cô Lan', 'active', 'approved');
     `);
 
     mockPlatform = {
@@ -145,9 +154,16 @@ describe('TEACHER WORKFLOWS & SUBSTITUTE 2-STEP APPROVAL AUDIT SUITE', () => {
       }
     };
 
-    leaderToken = await createSignedToken({ id: 'usr_msdung', username: 'msdung', role: 'leader', name: 'Cô Dung', status: 'active' }, TEST_SECRET);
-    teacherAToken = await createSignedToken({ id: 'usr_teacher_a', username: 'hung', role: 'teacher', name: 'Thầy Hưng', status: 'active' }, TEST_SECRET);
-    teacherBToken = await createSignedToken({ id: 'usr_teacher_b', username: 'lan', role: 'teacher', name: 'Cô Lan', status: 'active' }, TEST_SECRET);
+    sqliteDb.prepare(`
+      INSERT INTO auth_sessions (id, user_id, expires_at) VALUES
+        ('sess_leader', 'usr_msdung', '2099-01-01'),
+        ('sess_teacher_a', 'usr_teacher_a', '2099-01-01'),
+        ('sess_teacher_b', 'usr_teacher_b', '2099-01-01');
+    `).run();
+
+    leaderToken = await createSignedToken({ id: 'usr_msdung', username: 'msdung', role: 'leader', name: 'Cô Dung', status: 'active' }, TEST_SECRET, 100000, 'sess_leader');
+    teacherAToken = await createSignedToken({ id: 'usr_teacher_a', username: 'hung', role: 'teacher', name: 'Thầy Hưng', status: 'active' }, TEST_SECRET, 100000, 'sess_teacher_a');
+    teacherBToken = await createSignedToken({ id: 'usr_teacher_b', username: 'lan', role: 'teacher', name: 'Cô Lan', status: 'active' }, TEST_SECRET, 100000, 'sess_teacher_b');
   });
 
   test('WF-01: Leader cannot approve leave request when substitute teacher has NOT confirmed yet (precondition check)', async () => {
