@@ -16,6 +16,7 @@ const FORBIDDEN_DARK_BLUE_TOKENS = [
   '#1e293b',
   '#334155',
   '#475569',
+  '#64748b',
   '#0c4a6e',
   'slate-950',
   'bg-slate-900',
@@ -41,7 +42,7 @@ const SHELL_FILES = [
   'src/lib/components/QuizChildResults.svelte'
 ];
 
-const DARK_NAVY_REGEX = /(?:#0f172a|#1e293b|#334155|#475569|#17283d|#075985|#0c4a6e|#155e75|#164e63|#083344|#172554|#0b132b|#0c1a2b)\b/i;
+const DARK_NAVY_REGEX = /(?:#0f172a|#1e293b|#334155|#475569|#64748b|#17283d|#075985|#0c4a6e|#155e75|#164e63|#083344|#172554|#0b132b|#0c1a2b)\b/i;
 
 function hexToLuminance(hex) {
   const rgb = hex.replace('#', '').match(/.{2}/g).map((x) => parseInt(x, 16) / 255).map((c) => c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4));

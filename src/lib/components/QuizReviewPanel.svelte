@@ -191,25 +191,25 @@
   .refresh { border: 1px solid #ddd6fe; background: #f5f3ff; color: #6d28d9; border-radius: 12px; padding: 8px 12px; }
   .workspace { display: grid; grid-template-columns: minmax(170px, .34fr) minmax(0, 1fr); gap: 18px; }
   .attempt-list { display: flex; flex-direction: column; gap: 8px; }
-  .attempt-list button { text-align: left; border: 1px solid #e2e8f0; background: #f8fafc; border-radius: 13px; padding: 11px; }
+  .attempt-list button { text-align: left; border: 1px solid #e7e5e4; background: #fafaf9; border-radius: 13px; padding: 11px; }
   .attempt-list button.active { border-color: #8b5cf6; background: #f5f3ff; }
   .attempt-list strong, .attempt-list span { display: block; }
-  .attempt-list span { color: #64748b; font-size: .78rem; margin-top: 3px; }
+  .attempt-list span { color: #78716c; font-size: .78rem; margin-top: 3px; }
   .attempt-list em { display:block; margin-top:5px; color:#b45309; font-size:.72rem; font-style:normal; font-weight:800; }
   .review-form { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
-  .score-strip { flex-wrap: wrap; padding: 10px 12px; background: #f1f5f9; border-radius: 13px; font-size: .84rem; }
-  .question { border: 1px solid #e2e8f0; border-radius: 15px; padding: 14px; }
+  .score-strip { flex-wrap: wrap; padding: 10px 12px; background: #f5f5f4; border-radius: 13px; font-size: .84rem; }
+  .question { border: 1px solid #e7e5e4; border-radius: 15px; padding: 14px; }
   .needs-help { padding:13px 15px; border:1px solid #fdba74; background:#fffbeb; color:#92400e; border-radius:13px; }
   .needs-help p { margin-top:3px; font-size:.84rem; }.needs-help ul{margin:8px 0 0;padding-left:20px;font-size:.82rem}
-  .answer { margin: 9px 0 12px; white-space: pre-wrap; padding: 10px; background: #f8fafc; border-radius: 10px; }
+  .answer { margin: 9px 0 12px; white-space: pre-wrap; padding: 10px; background: #fafaf9; border-radius: 10px; }
   .grade-row label:first-child { flex: 0 0 145px; }
   .grade-row label:last-child { flex: 1; }
   label { display: flex; flex-direction: column; gap: 5px; font-size: .82rem; font-weight: 700; }
-  input, textarea { box-sizing: border-box; width: 100%; border: 1px solid #cbd5e1; border-radius: 10px; padding: 9px 10px; font: inherit; font-weight: 400; }
+  input, textarea { box-sizing: border-box; width: 100%; border: 1px solid #d6d3d1; border-radius: 10px; padding: 9px 10px; font: inherit; font-weight: 400; }
   textarea { resize: vertical; }
   .override { max-width: 320px; }
   .save { align-self: flex-end; border: 0; color: #fff; background: linear-gradient(135deg,#7c3aed,#4f46e5); border-radius: 12px; padding: 11px 16px; font-weight: 800; }
   .error { color: #b91c1c; background: #fef2f2; border-radius: 10px; padding: 10px; margin-bottom: 12px; }
-  .empty { color: #64748b; padding: 24px 0; text-align: center; }
+  .empty { color: #78716c; padding: 24px 0; text-align: center; }
   @media (max-width: 720px) { .workspace { grid-template-columns: 1fr; } .attempt-list { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); } .grade-row { align-items: stretch; flex-direction: column; } .grade-row label:first-child { flex-basis: auto; } }
 </style>
