@@ -412,20 +412,30 @@ describe('PHASE 1: QUIZ LIBRARY SYNC & MIGRATION TEST SUITE', () => {
   });
 
   describe('Part E: Migration 0020 Provenance & Deduplication Contract', () => {
-    test('PROV-01: Migration 0020 adds source_type and source_id columns and backfills existing seed rows', () => {
+    test('PROV-01: Migration 0020 adds source_type and source_id columns, backfills 156 seed rows, and preserves NULL for manual questions', () => {
+      // 1. Insert a manual question with qq_ prefix in a draft quiz before migration 0020
+      db.prepare(`
+        INSERT INTO quizzes (id, title, created_by, status) VALUES ('quiz_draft_manual_prov', 'Manual Quiz', 'teacher1', 'draft');
+      `).run();
+      db.prepare(`
+        INSERT INTO quiz_questions (id, quiz_id, type, prompt, options_json, correct_answer, points, q_order)
+        VALUES ('qq_manual_rnd98765', 'quiz_draft_manual_prov', 'multiple_choice', 'Manual question prompt', '["A","B"]', 'A', 1, 1);
+      `).run();
+
       const migrationSql = fs.readFileSync('migrations/0020_quiz_question_provenance.sql', 'utf8');
       db.exec(migrationSql);
 
-      const sample = db.prepare("SELECT id, quiz_id, source_type, source_id FROM quiz_questions WHERE id LIKE 'qq_%' LIMIT 5;").all();
-      assert.strictEqual(sample.length, 5);
-      for (const row of sample) {
-        assert.strictEqual(row.source_type, 'question_bank', 'Backfilled source_type must be question_bank');
-        assert.ok(row.source_id && row.source_id.length > 0, `Backfilled source_id "${row.source_id}" must not be empty`);
-      }
+      // Verify manual question was NOT backfilled and remains NULL
+      const manualRow = db.prepare("SELECT id, quiz_id, source_type, source_id FROM quiz_questions WHERE id = 'qq_manual_rnd98765';").get();
+      assert.strictEqual(manualRow.source_type, null, 'Manual question must retain NULL source_type');
+      assert.strictEqual(manualRow.source_id, null, 'Manual question must retain NULL source_id');
 
-      // Check no seed questions have null source_type or source_id
-      const nullCount = db.prepare("SELECT COUNT(*) count FROM quiz_questions WHERE id LIKE 'qq_%' AND (source_type IS NULL OR source_id IS NULL);").get().count;
-      assert.strictEqual(nullCount, 0, 'All catalog questions must have non-null provenance');
+      // Verify all 156 catalog questions have source_type = 'question_bank'
+      const catalogCount = db.prepare("SELECT COUNT(*) AS count FROM quiz_questions WHERE quiz_id LIKE 'quiz_pub_%' AND source_type = 'question_bank' AND source_id IS NOT NULL;").get().count;
+      assert.strictEqual(catalogCount, 156, 'All 156 catalog questions must have source_type=question_bank and valid source_id');
+
+      const nullCatalogCount = db.prepare("SELECT COUNT(*) AS count FROM quiz_questions WHERE quiz_id LIKE 'quiz_pub_%' AND (source_type IS NULL OR source_id IS NULL);").get().count;
+      assert.strictEqual(nullCatalogCount, 0, 'No catalog questions may have NULL source_type or source_id');
     });
 
     test('PROV-02: Unique index enforces deduplication on (quiz_id, source_type, source_id)', () => {

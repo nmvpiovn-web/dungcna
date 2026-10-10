@@ -708,7 +708,7 @@
  onclick={closeAllDropdowns}
  class="flex items-center gap-3 p-2.5 rounded-md hover:bg-surface-1 transition-colors group"
  >
- <div class="w-8 h-8 rounded-md bg-blue-100 text-blue-700 flex items-center justify-center text-sm font-semibold">
+ <div class="w-8 h-8 rounded-md bg-emerald-100 text-emerald-800 flex items-center justify-center text-sm font-semibold">
  📚
  </div>
  <div>
@@ -1238,11 +1238,11 @@
  <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
  Hệ thống hoạt động ổn định
  </span>
- <span class="text-slate-300">•</span>
+ <span class="text-stone-300">•</span>
  <a href="/evaluations" class="hover:text-brand-600">Đánh giá học sinh</a>
- <span class="text-slate-300">•</span>
+ <span class="text-stone-300">•</span>
  <a href="/pedagogy" class="hover:text-brand-600">Giáo án 5512</a>
- <span class="text-slate-300">•</span>
+ <span class="text-stone-300">•</span>
  <button
  onclick={() => showTourModal = true}
  class="hover:text-brand-600 flex items-center gap-1 font-semibold text-ink-500 transition-colors"
@@ -1250,7 +1250,7 @@
  >
  <span>❓</span> <span>Hướng Dẫn &amp; Tầm Nhìn</span>
  </button>
- <span class="text-slate-300">•</span>
+ <span class="text-stone-300">•</span>
  <button
  onclick={() => apkUpdaterRef?.checkForUpdate(true)}
  class="hover:text-brand-600 flex items-center gap-1 font-semibold text-brand-700"

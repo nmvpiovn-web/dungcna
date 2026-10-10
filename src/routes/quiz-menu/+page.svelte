@@ -844,6 +844,7 @@
                         id={'chk-bank-' + q.id}
                         type="checkbox"
                         class="q-checkbox"
+                        aria-label={`Chọn câu hỏi #${bankOffset + qIdx + 1}: ${q.prompt ? q.prompt.slice(0, 80) : ''}`}
                         checked={selectedBankQuestionIds.has(q.id)}
                         on:change={() => toggleBankQuestion(q.id)}
                         on:keydown={(e) => { if (e.key === 'Enter') { toggleBankQuestion(q.id); e.preventDefault(); } }}
@@ -1192,6 +1193,7 @@
   .bank-question-list{display:flex;flex-direction:column;gap:10px;max-height:500px;overflow-y:auto;padding-right:4px}
   .bank-q-card{display:block;padding:14px;background:white;border:1.5px solid #e7e5e4;border-radius:8px;cursor:pointer;transition:.15s ease}
   .bank-q-card:hover{border-color:#6ee7b7;background:#fafffa}
+  .bank-q-card:focus-within{border-color:#059669;box-shadow:0 0 0 2px rgba(5,150,105,0.25)}
   .bank-q-card.selected{border-color:#059669;background:#ecfdf5;box-shadow:inset 0 0 0 1px #059669}
   .bank-q-header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
   .q-checkbox-wrapper{display:flex;align-items:center;gap:10px}

@@ -13,11 +13,16 @@ const FORBIDDEN_DARK_BLUE_TOKENS = [
   '#155e75',
   '#164e63',
   '#083344',
+  '#1e293b',
+  '#334155',
+  '#475569',
+  '#0c4a6e',
   'slate-950',
   'bg-slate-900',
   'text-slate-900',
   'bg-blue-900',
   'text-blue-900',
+  'bg-blue-100 text-blue-700',
   '15 23 42',
   '12 26 43'
 ];
@@ -28,10 +33,15 @@ const SHELL_FILES = [
   'src/lib/components/EducationNavigation.svelte',
   'src/lib/components/ui/BottomNav.svelte',
   'src/lib/components/ThemeStudio.svelte',
+  'src/lib/components/ThemeStudioPanel.svelte',
+  'src/lib/components/PersonalThemeModal.svelte',
   'src/routes/quiz-menu/+page.svelte',
   'src/lib/components/QuizCameraCapture.svelte',
-  'src/lib/components/QuizReviewPanel.svelte'
+  'src/lib/components/QuizReviewPanel.svelte',
+  'src/lib/components/QuizChildResults.svelte'
 ];
+
+const DARK_NAVY_REGEX = /(?:#0f172a|#1e293b|#334155|#475569|#17283d|#075985|#0c4a6e|#155e75|#164e63|#083344|#172554|#0b132b|#0c1a2b)\b/i;
 
 function hexToLuminance(hex) {
   const rgb = hex.replace('#', '').match(/.{2}/g).map((x) => parseInt(x, 16) / 255).map((c) => c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4));
@@ -51,7 +61,7 @@ describe('QUIZ THEME & RESPONSIVE CONTRACT SUITE', () => {
   const quizPageContent = fs.readFileSync(quizPagePath, 'utf8');
   const appCssContent = fs.readFileSync('src/app.css', 'utf8');
 
-  test('THEME-01: Full shell scan - zero occurrences of navy/dark blue in all rendered files', () => {
+  test('THEME-01: Full shell scan - zero occurrences of navy/dark blue in all 11 shell files', () => {
     for (const filePath of SHELL_FILES) {
       if (!fs.existsSync(filePath)) continue;
       const content = fs.readFileSync(filePath, 'utf8');
@@ -62,6 +72,11 @@ describe('QUIZ THEME & RESPONSIVE CONTRACT SUITE', () => {
           `Found forbidden dark blue token "${token}" in ${filePath}`
         );
       }
+      assert.strictEqual(
+        DARK_NAVY_REGEX.test(content),
+        false,
+        `Regex matched dark navy/slate pattern in ${filePath}`
+      );
     }
   });
 
@@ -117,6 +132,11 @@ describe('QUIZ THEME & RESPONSIVE CONTRACT SUITE', () => {
     // Accessible cards: semantic label without nested button role
     assert.match(quizPageContent, /<label class="bank-q-card"/, 'bank-q-card must be semantic label');
     assert.strictEqual(quizPageContent.includes('<div class="bank-q-card" role="button"'), false, 'Must not use div role="button"');
+    assert.match(quizPageContent, /\.bank-q-card:focus-within/, 'Must style :focus-within on bank card');
+    assert.match(quizPageContent, /\.q-checkbox:focus-visible/, 'Must style :focus-visible on checkbox');
+    assert.match(quizPageContent, /aria-label=\{`Chọn câu hỏi #/, 'Must provide descriptive aria-label on checkbox');
+    assert.match(quizPageContent, /on:keydown=\{.*?Enter.*?toggleBankQuestion/, 'Checkbox must handle Enter key');
+    assert.match(quizPageContent, /on:change=\{.*?toggleBankQuestion/, 'Checkbox must handle change event (triggered by Space and click)');
     assert.match(quizPageContent, /aria-live="polite"/, 'Must contain aria-live region for announcements');
   });
 
