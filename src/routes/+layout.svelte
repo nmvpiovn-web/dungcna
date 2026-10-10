@@ -626,6 +626,16 @@
  <span class="whitespace-nowrap">Thời Khóa Biểu</span>
  </a>
 
+ <!-- Item 5: Quiz (Direct Link, public - guest/student/teacher) -->
+ <a
+ href="/quiz-menu"
+ onclick={closeAllDropdowns}
+ class="flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-semibold tracking-wide transition-all {$page.url.pathname.startsWith('/quiz-menu') ? 'bg-rose-600 text-white shadow-xs' : 'text-ink-500 hover:text-ink-900 hover:bg-surface-1'}"
+ >
+ <span>📝</span>
+ <span class="whitespace-nowrap">Quiz</span>
+ </a>
+
  <!-- Role-based Portal Link: Sổ Phụ Huynh (parent only) / Sổ Giáo Viên (teacher only) -->
  {#if currentUser?.role === 'parent'}
  <a
@@ -1052,6 +1062,16 @@
  <span>🎮</span> <span>Đấu Trường Game Từ Vựng</span>
  </div>
  <span class="text-[11px] px-2 py-0.5 rounded bg-purple-200 uppercase font-semibold">Speed Match</span>
+ </a>
+ <a
+ href="/quiz-menu"
+ onclick={() => mobileMenuOpen = false}
+ class="col-span-2 flex items-center justify-between p-2.5 rounded-md bg-rose-50 text-rose-800 text-xs font-semibold border border-rose-200/50"
+ >
+ <div class="flex items-center gap-2">
+ <span>📝</span> <span>Quiz - Làm Bài & Ôn Tập</span>
+ </div>
+ <span class="text-[11px] px-2 py-0.5 rounded bg-rose-200 uppercase font-semibold">Public</span>
  </a>
  </div>
 
