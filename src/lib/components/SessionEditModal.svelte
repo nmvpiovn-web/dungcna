@@ -46,6 +46,38 @@
  { value: 0, label: 'Chủ Nhật' }
  ];
 
+ function formatLocalDate(date) {
+ const year = date.getFullYear();
+ const month = String(date.getMonth() + 1).padStart(2, '0');
+ const day = String(date.getDate()).padStart(2, '0');
+ return `${year}-${month}-${day}`;
+ }
+
+ function parseLocalDate(value) {
+ const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value || ''));
+ if (!match) return null;
+ const date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+ return Number.isNaN(date.getTime()) ? null : date;
+ }
+
+ function syncDateFromDay() {
+ const dayOfWeek = Number(form.day_of_week);
+ if (Number.isNaN(dayOfWeek)) return;
+ const date = parseLocalDate(form.session_date) || new Date();
+ date.setDate(date.getDate() + ((dayOfWeek - date.getDay() + 7) % 7));
+ form.session_date = formatLocalDate(date);
+ const day = DAY_OPTIONS.find(option => option.value === dayOfWeek);
+ if (day) form.day_name = day.label;
+ }
+
+ function syncDayFromDate() {
+ const date = parseLocalDate(form.session_date);
+ if (!date) return;
+ form.day_of_week = date.getDay();
+ const day = DAY_OPTIONS.find(option => option.value === form.day_of_week);
+ if (day) form.day_name = day.label;
+ }
+
  let wasOpen = false;
 
  $effect(() => {
@@ -101,12 +133,9 @@
  };
  // Buổi mới không có preset ngày -> tự điền ngày gần nhất khớp thứ đã chọn
  if (!form.session_date) {
- const dow0 = Number(form.day_of_week);
- if (!Number.isNaN(dow0)) {
- const dd0 = new Date();
- dd0.setDate(dd0.getDate() + ((dow0 - dd0.getDay() + 7) % 7));
- form.session_date = `${dd0.getFullYear()}-${String(dd0.getMonth() + 1).padStart(2, '0')}-${String(dd0.getDate()).padStart(2, '0')}`;
- }
+ syncDateFromDay();
+ } else {
+ syncDayFromDate();
  }
  }
  }
@@ -138,20 +167,13 @@
  return;
  }
 
- const dayObj = DAY_OPTIONS.find(d => d.value === Number(form.day_of_week));
- if (dayObj) form.day_name = dayObj.label;
-
  // Tự điền session_date cho buổi mới: lấy ngày gần nhất khớp thứ đã chọn
  // (nút "Thêm Buổi Học Mới" không truyền preset nên thiếu field này -> API 400)
  if (!form.session_date) {
- const dow = Number(form.day_of_week);
- if (!Number.isNaN(dow)) {
- const d = new Date();
- d.setDate(d.getDate() + ((dow - d.getDay() + 7) % 7));
- const mm = String(d.getMonth() + 1).padStart(2, '0');
- const dd = String(d.getDate()).padStart(2, '0');
- form.session_date = `${d.getFullYear()}-${mm}-${dd}`;
- }
+ syncDateFromDay();
+ } else {
+ // Ngày cụ thể là nguồn chuẩn; tránh lưu ngày Thứ Ba nhưng metadata lại là Thứ Hai.
+ syncDayFromDate();
  }
 
  const tObj = allTeachers.find(t => t.id === form.teacher_id);
@@ -308,6 +330,7 @@
  <label class="block font-bold text-slate-700 mb-1">Thứ Trong Tuần</label>
  <select
  bind:value={form.day_of_week}
+ onchange={syncDateFromDay}
  class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:border-indigo-500 font-semibold"
  >
  {#each DAY_OPTIONS as opt}
@@ -320,6 +343,8 @@
  <input
  type="date"
  bind:value={form.session_date}
+ onchange={syncDayFromDate}
+ required
  class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:border-indigo-500 font-semibold"
  />
  </div>

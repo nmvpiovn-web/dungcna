@@ -14,7 +14,7 @@ function makeD1() {
   sqlite.exec(`
     CREATE TABLE users (
       id TEXT PRIMARY KEY, username TEXT, phone TEXT, email TEXT, name TEXT, role TEXT, avatar TEXT,
-      status TEXT, metadata TEXT, created_at TEXT, updated_at TEXT, grade TEXT
+      status TEXT, metadata TEXT, created_at TEXT, updated_at TEXT, grade TEXT, password TEXT
     );
     CREATE TABLE auth_sessions (id TEXT PRIMARY KEY, user_id TEXT, expires_at TEXT, revoked_at TEXT);
     INSERT INTO users (id,username,name,role,status,avatar,grade,metadata) VALUES
@@ -35,17 +35,28 @@ function makeD1() {
       id TEXT PRIMARY KEY, teacher_id TEXT UNIQUE, user_id TEXT, teacher_name TEXT, username TEXT,
       role_type TEXT, role_title TEXT, salary_type TEXT, base_salary_vnd REAL, rate_per_session_vnd REAL,
       total_sessions_taught INTEGER, leader_rating REAL, leader_appraisal TEXT, bonuses TEXT,
-      private_reminders TEXT, updated_at TEXT
+      private_reminders TEXT, bio TEXT, degree TEXT, certifications TEXT, hourly_rate REAL,
+      is_native INTEGER, specialty TEXT, created_at TEXT, updated_at TEXT
     );
-    INSERT INTO teacher_profiles VALUES
-      ('teacher_1','teacher_1','teacher_1','Giáo viên thật','teacher','lead','Giáo viên','per_session',10000000,300000,0,5,'','[]','[]',CURRENT_TIMESTAMP);
+    INSERT INTO teacher_profiles (
+      id, teacher_id, user_id, teacher_name, username, role_type, role_title, salary_type,
+      base_salary_vnd, rate_per_session_vnd, total_sessions_taught, leader_rating,
+      leader_appraisal, bonuses, private_reminders, created_at, updated_at
+    ) VALUES
+      ('teacher_1','teacher_1','teacher_1','Giáo viên thật','teacher','lead','Giáo viên','per_session',10000000,300000,0,5,'','[]','[]',CURRENT_TIMESTAMP,CURRENT_TIMESTAMP);
     CREATE TABLE teacher_recruitment (
       id TEXT PRIMARY KEY, full_name TEXT NOT NULL, candidate_name TEXT, phone TEXT NOT NULL, email TEXT,
       role_type TEXT, experience_years INTEGER, certificates TEXT, status TEXT, interview_notes TEXT,
       selected_grades_json TEXT DEFAULT '[]', selected_subjects_json TEXT DEFAULT '[]',
-      interview_preference TEXT, availability TEXT, cv_link TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP
+      interview_preference TEXT, availability TEXT, cv_link TEXT, specialty TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP, updated_at TEXT
     );
     CREATE TABLE system_notifications (id TEXT PRIMARY KEY, target_role TEXT, title TEXT, body TEXT, category TEXT, reference_id TEXT);
+    CREATE TABLE audit_logs (
+      id TEXT PRIMARY KEY, actor_id TEXT, actor_role TEXT, action TEXT NOT NULL,
+      details TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE TABLE rate_limits (key TEXT PRIMARY KEY, count INTEGER NOT NULL, window_start INTEGER NOT NULL);
   `);
   return {
     sqlite,
@@ -57,6 +68,18 @@ function makeD1() {
         async all() { return { results: sqlite.prepare(sql).all(...args) }; },
         async run() { const result = sqlite.prepare(sql).run(...args); return { meta: { changes: Number(result.changes) } }; }
       };
+    },
+    async batch(statements) {
+      const results = [];
+      sqlite.exec('BEGIN');
+      try {
+        for (const statement of statements) results.push(await statement.run());
+        sqlite.exec('COMMIT');
+        return results;
+      } catch (error) {
+        sqlite.exec('ROLLBACK');
+        throw error;
+      }
     }
   };
 }
@@ -123,12 +146,52 @@ test('V63-SALARY-02: manager updates only an existing real teacher and D1 confir
   assert.equal(data.persisted, true);
   assert.equal(data.profile.base_salary_vnd, 12340000);
   assert.equal(data.profile.rate_per_session_vnd, 456000);
+  const salaryAudit = d1.sqlite.prepare("SELECT * FROM audit_logs WHERE action = 'update_role_salary'").get();
+  assert.equal(salaryAudit.actor_id, 'admin_1');
+  assert.equal(JSON.parse(salaryAudit.details).before.base_salary_vnd, 10000000);
 
   req = request('http://local/api/teachers/staff', 'POST', adminToken, {
     action: 'update_role_salary', teacher_id: 'teacher_fake', base_salary_vnd: 1, rate_per_session_vnd: 1
   });
   res = await staffPost({ request: req, platform });
   assert.equal(res.status, 404);
+});
+
+test('V63-SALARY-03: bonus validation rejects invalid money and persists the valid bonus with audit', async () => {
+  const d1 = makeD1();
+  const adminToken = await token({ id: 'admin_1', username: 'admin', role: 'superadmin' }, 'sid_admin');
+  const platform = { env: { DB: d1, AUTH_SECRET: SECRET } };
+
+  let req = request('http://local/api/teachers/staff', 'POST', adminToken, {
+    action: 'add_bonus', teacher_id: 'teacher_1', amount_vnd: -5
+  });
+  let res = await staffPost({ request: req, platform });
+  assert.equal(res.status, 400);
+
+  req = request('http://local/api/teachers/staff', 'POST', adminToken, {
+    action: 'add_bonus', teacher_id: 'teacher_1', amount_vnd: 500000, reason: 'Dạy tốt'
+  });
+  res = await staffPost({ request: req, platform });
+  assert.equal(res.status, 200);
+  const profile = d1.sqlite.prepare("SELECT bonuses FROM teacher_profiles WHERE teacher_id = 'teacher_1'").get();
+  assert.equal(JSON.parse(profile.bonuses)[0].amount_vnd, 500000);
+  const audit = d1.sqlite.prepare("SELECT * FROM audit_logs WHERE action = 'add_bonus'").get();
+  assert.equal(JSON.parse(audit.details).bonus.amount_vnd, 500000);
+});
+
+test('V63-SALARY-04: salary write rolls back when its mandatory audit log cannot be stored', async () => {
+  const d1 = makeD1();
+  d1.sqlite.exec('DROP TABLE audit_logs');
+  const adminToken = await token({ id: 'admin_1', username: 'admin', role: 'superadmin' }, 'sid_admin');
+  const platform = { env: { DB: d1, AUTH_SECRET: SECRET } };
+  const req = request('http://local/api/teachers/staff', 'POST', adminToken, {
+    action: 'update_role_salary', teacher_id: 'teacher_1', role_type: 'lead', role_title: 'Giáo viên',
+    salary_type: 'per_session', base_salary_vnd: 99999999, rate_per_session_vnd: 456000, leader_rating: 5
+  });
+  const res = await staffPost({ request: req, platform });
+  assert.equal(res.status, 500);
+  const profile = d1.sqlite.prepare("SELECT base_salary_vnd FROM teacher_profiles WHERE teacher_id = 'teacher_1'").get();
+  assert.equal(profile.base_salary_vnd, 10000000);
 });
 
 test('V63-RECRUIT-03: multiple grades and subjects are persisted in structured columns', async () => {
@@ -147,6 +210,32 @@ test('V63-RECRUIT-03: multiple grades and subjects are persisted in structured c
   assert.deepEqual(JSON.parse(row.selected_subjects_json), ['Phonics', 'IELTS']);
 });
 
+test('V63-RECRUIT-04: provisioning creates the teacher profile and audit log in one batch', async () => {
+  const d1 = makeD1();
+  d1.sqlite.prepare(`
+    INSERT INTO teacher_recruitment (
+      id, full_name, candidate_name, phone, email, role_type, certificates, specialty, status
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'accepted')
+  `).run('rec_ready', 'Giáo viên mới', 'Giáo viên mới', '0901111222', 'new.teacher@example.test', 'lead', 'TESOL', 'IELTS');
+  const adminToken = await token({ id: 'admin_1', username: 'admin', role: 'superadmin' }, 'sid_admin');
+  const platform = { env: { DB: d1, AUTH_SECRET: SECRET } };
+  const req = request('http://local/api/teachers/workflows', 'POST', adminToken, {
+    action: 'provision_account', recruitment_id: 'rec_ready'
+  });
+  const res = await workflowPost({ request: req, platform });
+  const data = await res.json();
+  assert.equal(res.status, 200);
+  assert.equal(data.success, true);
+  assert.equal(data.must_change_password, true);
+
+  const profile = d1.sqlite.prepare('SELECT * FROM teacher_profiles WHERE user_id = ?').get(data.user_id);
+  assert.equal(profile.teacher_id, data.user_id);
+  const recruitment = d1.sqlite.prepare("SELECT status FROM teacher_recruitment WHERE id = 'rec_ready'").get();
+  assert.equal(recruitment.status, 'onboarded');
+  const audit = d1.sqlite.prepare("SELECT * FROM audit_logs WHERE action = 'provision_teacher_account'").get();
+  assert.equal(JSON.parse(audit.details).user_id, data.user_id);
+});
+
 test('V63-UI-04: flashcard, evaluation modal, and site theme keep the repaired contracts', () => {
   const flash = fs.readFileSync('src/routes/flashcards/+page.svelte', 'utf8');
   const evaluation = fs.readFileSync('src/routes/evaluations/+page.svelte', 'utf8');
@@ -161,4 +250,12 @@ test('V63-UI-04: flashcard, evaluation modal, and site theme keep the repaired c
   assert.match(evaluation, /Phiếu năng lực và thông tin phụ huynh chỉ hiển thị/);
   assert.doesNotMatch(store, /classList\.add\('dark'\)/);
   assert.match(store, /saved === 'light' \|\| saved === 'sky'/);
+});
+
+test('V63-SCHEDULE-05: session date is required and kept in sync with the selected weekday', () => {
+  const modal = fs.readFileSync('src/lib/components/SessionEditModal.svelte', 'utf8');
+  assert.match(modal, /function syncDateFromDay\(\)/);
+  assert.match(modal, /function syncDayFromDate\(\)/);
+  assert.match(modal, /bind:value=\{form\.day_of_week\}[\s\S]*?onchange=\{syncDateFromDay\}/);
+  assert.match(modal, /bind:value=\{form\.session_date\}[\s\S]*?onchange=\{syncDayFromDate\}[\s\S]*?required/);
 });

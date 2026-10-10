@@ -1062,13 +1062,9 @@ export async function POST({ request, platform }) {
       await db.batch([
         db.prepare(`INSERT INTO users (id, username, password, name, phone, email, role, status, metadata, created_at) VALUES (?, ?, ?, ?, ?, ?, 'teacher', 'active', ?, CURRENT_TIMESTAMP)`).bind(userId, username, passwordHash, rec.candidate_name, normPhone || null, normEmail || null, JSON.stringify({ must_change_password: true, provisioned_from: recruitment_id, provisioned_by: auth.user.id, provisioned_at: new Date().toISOString() })),
         db.prepare(`INSERT INTO teacher_profiles (id, teacher_id, user_id, bio, degree, certifications, specialty, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`).bind(profileId, userId, userId, `Ứng viên từ recruitment ${recruitment_id}`, rec.role_type || '', rec.certificates || '', rec.specialty || ''),
-        db.prepare(`UPDATE teacher_recruitment SET status = 'onboarded', updated_at = CURRENT_TIMESTAMP WHERE id = ? AND status = 'accepted'`).bind(recruitment_id)
+        db.prepare(`UPDATE teacher_recruitment SET status = 'onboarded', updated_at = CURRENT_TIMESTAMP WHERE id = ? AND status = 'accepted'`).bind(recruitment_id),
+        db.prepare(`INSERT INTO audit_logs (id, actor_id, actor_role, action, details, created_at) VALUES (?, ?, ?, 'provision_teacher_account', ?, CURRENT_TIMESTAMP)`).bind(`audit_${crypto.randomUUID()}`, auth.user.id, auth.user.role || '', JSON.stringify({ recruitment_id, username, user_id: userId }))
       ]);
-
-      // Audit log (schema thật: id, actor_id, actor_role, action, details, created_at — không có cột target_id)
-      try {
-        await db.prepare(`INSERT INTO audit_logs (id, actor_id, actor_role, action, details, created_at) VALUES (?, ?, ?, 'provision_teacher_account', ?, CURRENT_TIMESTAMP)`).bind(`audit_${crypto.randomUUID()}`, auth.user.id, auth.user.role || '', JSON.stringify({ recruitment_id, username, user_id: userId }));
-      } catch {}
 
       return json({ success: true, message: 'Đã cấp tài khoản giáo viên. Yêu cầu đổi mật khẩu ở lần đăng nhập đầu.', username, temp_password: tempPassword, user_id: userId, must_change_password: true });
     } catch (e) {
