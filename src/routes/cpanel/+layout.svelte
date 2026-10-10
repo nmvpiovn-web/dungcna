@@ -3,6 +3,7 @@
  import { onMount } from 'svelte';
  import { goto } from '$app/navigation';
  import { getCurrentUser, isSuperAdmin, getStudentStars, getAuthToken } from '$lib/unifiedStore';
+ import { shouldForcePasswordChange } from '$lib/userMetadata';
  import { currentLang, toggleLanguage, t } from '$lib/i18n';
 
  let { children } = $props();
@@ -141,18 +142,7 @@
 
  let navItems = $derived(roleNavItems[currentRoleKey] || roleNavItems.student);
 
- let showChangePasswordModal = $derived.by(() => {
-   if (!currentUser) return false;
-   let meta = currentUser.metadata;
-   if (typeof meta === 'string') {
-     try {
-       meta = JSON.parse(meta);
-     } catch {
-       meta = {};
-     }
-   }
-   return Boolean(meta && meta.must_change_password === true);
- });
+ let showChangePasswordModal = $derived(shouldForcePasswordChange(currentUser));
  let cpOldPassword = $state('');
  let cpNewPassword = $state('');
  let cpConfirmPassword = $state('');

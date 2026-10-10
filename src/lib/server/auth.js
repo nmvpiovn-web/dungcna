@@ -252,10 +252,7 @@ export function isStaffUser(user) {
   }
 
   if (role === 'teacher') {
-    const approval = String(user.approval_status || 'approved').trim().toLowerCase();
-    if (approval === 'trial' || approval === 'pending' || approval === 'rejected') {
-      return false;
-    }
+    const approval = String(user.approval_status || '').trim().toLowerCase();
     if (approval !== 'approved' && approval !== 'official') {
       return false;
     }
@@ -391,6 +388,9 @@ export async function verifyServerAuth(request, platform) {
             WHERE id = ? OR username = ?
             LIMIT 1
           `).bind(userId, userId).first();
+          if (d1Res) {
+            d1Res.approval_status = 'missing_schema';
+          }
         } else {
           throw colErr;
         }

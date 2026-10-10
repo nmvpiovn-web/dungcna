@@ -8,8 +8,10 @@ import {
   isStaffUser,
   verifyServerAuth,
   hashPassword,
-  verifyPassword
+  verifyPassword,
+  sanitizeUser
 } from '../src/lib/server/auth.js';
+import { shouldForcePasswordChange, parseUserMetadata } from '../src/lib/userMetadata.js';
 import crypto from 'node:crypto';
 
 if (!globalThis.crypto) {
@@ -119,39 +121,39 @@ function createBaseSchema(sqlite) {
   `);
 }
 
-test('R1: metadata D1 dạng JSON string vẫn phát hiện must_change_password', () => {
+test('R1: parseUserMetadata & shouldForcePasswordChange production helper handles string & object', () => {
   const userWithStringMeta = {
     id: 't_str',
     role: 'teacher',
     metadata: '{"must_change_password":true}'
   };
-  let meta = userWithStringMeta.metadata;
-  if (typeof meta === 'string') {
-    try {
-      meta = JSON.parse(meta);
-    } catch {
-      meta = {};
-    }
-  }
-  assert.equal(Boolean(meta && meta.must_change_password === true), true);
+  assert.equal(shouldForcePasswordChange(userWithStringMeta), true);
 
   const userWithObjMeta = {
     id: 't_obj',
     role: 'teacher',
     metadata: { must_change_password: true }
   };
-  let metaObj = userWithObjMeta.metadata;
-  if (typeof metaObj === 'string') {
-    try {
-      metaObj = JSON.parse(metaObj);
-    } catch {
-      metaObj = {};
-    }
-  }
-  assert.equal(Boolean(metaObj && metaObj.must_change_password === true), true);
+  assert.equal(shouldForcePasswordChange(userWithObjMeta), true);
+
+  const normalUser = {
+    id: 't_normal',
+    role: 'teacher',
+    metadata: '{"is_trial":false}'
+  };
+  assert.equal(shouldForcePasswordChange(normalUser), false);
+  assert.equal(shouldForcePasswordChange(null), false);
 });
 
-test('R2: isStaffUser approved+official PASS, trial+pending+rejected FAIL', () => {
+test('R1-REGRESSION: sanitizeUser preserves raw string metadata so existing screens do not TypeError', () => {
+  const rawString = JSON.stringify({ is_trial: true, permissions: ['read'] });
+  const sanitized = sanitizeUser({ id: 'u1', username: 'u1', metadata: rawString });
+  assert.equal(typeof sanitized.metadata, 'string');
+  assert.equal(typeof sanitized.metadata.includes, 'function');
+  assert.equal(sanitized.metadata.includes('is_trial'), true);
+});
+
+test('R2: isStaffUser approved+official PASS, trial+pending+rejected+missing FAIL', () => {
   assert.equal(isStaffUser({ role: 'teacher', approval_status: 'approved' }), true);
   assert.equal(isStaffUser({ role: 'teacher', approval_status: 'official' }), true);
   assert.equal(isStaffUser({ role: 'teacher', approval_status: 'APPROVED' }), true);
@@ -160,6 +162,9 @@ test('R2: isStaffUser approved+official PASS, trial+pending+rejected FAIL', () =
   assert.equal(isStaffUser({ role: 'teacher', approval_status: 'pending' }), false);
   assert.equal(isStaffUser({ role: 'teacher', approval_status: 'rejected' }), false);
   assert.equal(isStaffUser({ role: 'teacher', approval_status: 'unapproved' }), false);
+  assert.equal(isStaffUser({ role: 'teacher', approval_status: undefined }), false);
+  assert.equal(isStaffUser({ role: 'teacher', approval_status: null }), false);
+  assert.equal(isStaffUser({ role: 'teacher', approval_status: 'missing_schema' }), false);
 });
 
 test('R3: verifyServerAuth thực sự SELECT approval_status từ D1', async () => {
@@ -185,6 +190,27 @@ test('R3: verifyServerAuth thực sự SELECT approval_status từ D1', async ()
   assert.equal(auth.authenticated, true);
   assert.equal(auth.user.approval_status, 'official');
   assert.equal(isStaffUser(auth.user), true);
+});
+
+test('R3-FAIL-CLOSED: DB missing approval_status does not grant teacher staff privileges', async () => {
+  const sqlite = new DatabaseSync(':memory:');
+  sqlite.exec(`
+    CREATE TABLE users (id TEXT PRIMARY KEY, username TEXT, phone TEXT, email TEXT, avatar TEXT, role TEXT, name TEXT, status TEXT, metadata TEXT, created_at TEXT, updated_at TEXT);
+    CREATE TABLE auth_sessions (id TEXT PRIMARY KEY, user_id TEXT, expires_at TEXT, revoked_at TEXT);
+    INSERT INTO users (id, username, phone, email, avatar, role, name, status, metadata) VALUES ('u_legacy', 'u_legacy', '0900000000', 'legacy@test.com', '', 'teacher', 'Teacher Legacy', 'active', '{}');
+    INSERT INTO auth_sessions (id, user_id, expires_at) VALUES ('sess_legacy', 'u_legacy', '2099-01-01');
+  `);
+  const platform = createMemoryPlatform(sqlite);
+
+  const token = await createSignedToken({ id: 'u_legacy', role: 'teacher' }, 'testsecret', 100000, 'sess_legacy');
+  const req = new Request('https://t.test', {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+
+  const auth = await verifyServerAuth(req, platform);
+  assert.equal(auth.authenticated, true);
+  assert.equal(auth.user.approval_status, 'missing_schema');
+  assert.equal(isStaffUser(auth.user), false); // Fail-closed: missing schema denied teacher role
 });
 
 test('R4: teacher có must_change_password bị chặn staff trước đổi và được mở sau đổi', async () => {
