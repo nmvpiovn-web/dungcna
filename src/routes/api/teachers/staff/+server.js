@@ -221,6 +221,8 @@ export async function POST({ request, platform }) {
         const leaderRating = Number(body.leader_rating) || 5.0;
 
         try {
+          // P1: chụp giá trị cũ để ghi audit log đổi lương
+          const before = await platform.env.DB.prepare('SELECT base_salary_vnd, rate_per_session_vnd, role_type, role_title, salary_type FROM teacher_profiles WHERE teacher_id = ?').bind(teacherId).first().catch(() => null);
           const sql = `
             UPDATE teacher_profiles SET
               role_type = ?, role_title = ?, salary_type = ?,
@@ -234,6 +236,16 @@ export async function POST({ request, platform }) {
           if (!write.meta?.changes) {
             return json({ success: false, persisted: false, error: 'Không tìm thấy hồ sơ giáo viên thật để cập nhật' }, { status: 404 });
           }
+
+          // P1: audit log đổi lương/chức danh (dữ liệu nhạy cảm, phải có dấu vết)
+          try {
+            await platform.env.DB.prepare(`INSERT INTO audit_logs (id, actor_id, actor_role, action, details, created_at) VALUES (?, ?, ?, 'update_role_salary', ?, CURRENT_TIMESTAMP)`)
+              .bind(`audit_${crypto.randomUUID()}`, auth.user.id, auth.user.role || '', JSON.stringify({
+                teacher_id: teacherId,
+                before: before || null,
+                after: { base_salary_vnd: baseSalary, rate_per_session_vnd: ratePerSession, role_type: roleType, role_title: roleTitle, salary_type: salaryType }
+              })).run();
+          } catch {}
 
           const row = await platform.env.DB.prepare('SELECT * FROM teacher_profiles WHERE teacher_id = ?').bind(teacherId).first();
           if (!row) {
@@ -274,10 +286,15 @@ export async function POST({ request, platform }) {
       }
 
       if (action === 'add_bonus') {
+        // P1: chặn số âm / 0 / số lẻ / vượt trần — trước đây Number(-5) lọt qua
+        const amountVnd = Number(body.amount_vnd);
+        if (!Number.isSafeInteger(amountVnd) || amountVnd <= 0 || amountVnd > 1000000000) {
+          return json({ success: false, persisted: false, error: 'Tiền thưởng phải là số nguyên dương, tối đa 1.000.000.000đ' }, { status: 400 });
+        }
         const newBonus = {
           id: `bon_${Date.now()}`,
           date: new Date().toISOString().slice(0, 10),
-          amount_vnd: Number(body.amount_vnd) || 1000000,
+          amount_vnd: amountVnd,
           reason: body.reason || 'Khen thưởng chuyên môn xuất sắc',
           awarded_by: auth.user.name || 'Ms. Dung (Leader)'
         };
@@ -287,6 +304,11 @@ export async function POST({ request, platform }) {
           currentBonuses.unshift(newBonus);
           await platform.env.DB.prepare('UPDATE teacher_profiles SET bonuses = ?, updated_at = CURRENT_TIMESTAMP WHERE teacher_id = ?')
             .bind(JSON.stringify(currentBonuses), teacherId).run();
+          // P1: audit log thưởng (kèm actor để truy vết)
+          try {
+            await platform.env.DB.prepare(`INSERT INTO audit_logs (id, actor_id, actor_role, action, details, created_at) VALUES (?, ?, ?, 'add_bonus', ?, CURRENT_TIMESTAMP)`)
+              .bind(`audit_${crypto.randomUUID()}`, auth.user.id, auth.user.role || '', JSON.stringify({ teacher_id: teacherId, bonus: newBonus })).run();
+          } catch {}
           return json({ success: true, persisted: true, bonus: newBonus, source: 'cloudflare_d1' });
         } catch (d1Err) {
           return json({ success: false, persisted: false, error: 'Lỗi D1: ' + d1Err.message }, { status: 500 });
