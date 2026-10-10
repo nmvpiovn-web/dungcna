@@ -44,7 +44,7 @@ function d1Adapter(sqlite) {
 async function fixture() {
   const sqlite = new DatabaseSync(':memory:');
   sqlite.exec(`
-    CREATE TABLE users (id TEXT PRIMARY KEY, username TEXT, phone TEXT, email TEXT, name TEXT, role TEXT, avatar TEXT, status TEXT, metadata TEXT, created_at TEXT, updated_at TEXT);
+    CREATE TABLE users (id TEXT PRIMARY KEY, username TEXT, phone TEXT, email TEXT, name TEXT, role TEXT, avatar TEXT, status TEXT, approval_status TEXT DEFAULT 'approved', metadata TEXT, created_at TEXT, updated_at TEXT);
     CREATE TABLE auth_sessions (id TEXT PRIMARY KEY, revoked_at TEXT, expires_at TEXT);
   `);
   sqlite.exec(fs.readFileSync('migrations/0012_quiz_menu.sql', 'utf8'));

@@ -179,7 +179,7 @@
 </section>
 
 <style>
-  .review-panel { color: #1e293b; background: #fff; border: 1px solid #e2e8f0; border-radius: 22px; padding: 20px; box-shadow: 0 18px 45px rgba(15,23,42,.08); }
+  .review-panel { color: #1c1917; background: #fff; border: 1px solid #e7e5e4; border-radius: 22px; padding: 20px; box-shadow: 0 18px 45px rgba(0,0,0,.06); }
   header, .score-strip, .grade-row { display: flex; gap: 12px; align-items: center; }
   header { justify-content: space-between; margin-bottom: 16px; }
   h2, h3, p { margin: 0; }
