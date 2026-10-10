@@ -27,6 +27,7 @@
  location: 'Tại nhà Cô Dung (123 Phố Vọng, Hai Bà Trưng, Hà Nội)',
  day_of_week: 1,
  day_name: 'Thứ Hai',
+ session_date: '',
  start_time: '18:00',
  end_time: '19:30',
  notify_minutes_before: 10,
@@ -89,6 +90,7 @@
  location: 'Tại nhà Cô Dung (123 Phố Vọng, Hai Bà Trưng, Hà Nội)',
  day_of_week: 1,
  day_name: 'Thứ Hai',
+ session_date: '',
  start_time: '18:00',
  end_time: '19:30',
  notify_minutes_before: 10,
@@ -97,6 +99,15 @@
  student_ids: [],
  ...(preset || {})
  };
+ // Buổi mới không có preset ngày -> tự điền ngày gần nhất khớp thứ đã chọn
+ if (!form.session_date) {
+ const dow0 = Number(form.day_of_week);
+ if (!Number.isNaN(dow0)) {
+ const dd0 = new Date();
+ dd0.setDate(dd0.getDate() + ((dow0 - dd0.getDay() + 7) % 7));
+ form.session_date = `${dd0.getFullYear()}-${String(dd0.getMonth() + 1).padStart(2, '0')}-${String(dd0.getDate()).padStart(2, '0')}`;
+ }
+ }
  }
  }
  } else {
@@ -129,6 +140,19 @@
 
  const dayObj = DAY_OPTIONS.find(d => d.value === Number(form.day_of_week));
  if (dayObj) form.day_name = dayObj.label;
+
+ // Tự điền session_date cho buổi mới: lấy ngày gần nhất khớp thứ đã chọn
+ // (nút "Thêm Buổi Học Mới" không truyền preset nên thiếu field này -> API 400)
+ if (!form.session_date) {
+ const dow = Number(form.day_of_week);
+ if (!Number.isNaN(dow)) {
+ const d = new Date();
+ d.setDate(d.getDate() + ((dow - d.getDay() + 7) % 7));
+ const mm = String(d.getMonth() + 1).padStart(2, '0');
+ const dd = String(d.getDate()).padStart(2, '0');
+ form.session_date = `${d.getFullYear()}-${mm}-${dd}`;
+ }
+ }
 
  const tObj = allTeachers.find(t => t.id === form.teacher_id);
  if (tObj) form.teacher_name = tObj.name;
@@ -279,6 +303,7 @@
  />
  </div>
 
+ <div class="grid grid-cols-2 gap-2">
  <div>
  <label class="block font-bold text-slate-700 mb-1">Thứ Trong Tuần</label>
  <select
@@ -289,6 +314,15 @@
  <option value={opt.value}>{opt.label}</option>
  {/each}
  </select>
+ </div>
+ <div>
+ <label class="block font-bold text-slate-700 mb-1">Ngày Học *</label>
+ <input
+ type="date"
+ bind:value={form.session_date}
+ class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:border-indigo-500 font-semibold"
+ />
+ </div>
  </div>
 
  <div class="grid grid-cols-2 gap-2">
