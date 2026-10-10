@@ -443,7 +443,7 @@
  </div>
 
  <!-- Action Buttons -->
- <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 pt-3 border-t border-slate-100 sticky bottom-0 bg-white -mx-6 md:-mx-8 px-6 md:px-8 pb-1">
+ <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 pt-3 border-t border-slate-100 bg-white -mx-6 md:-mx-8 px-6 md:px-8 pb-1">
  <button
  type="button"
  onclick={() => isOpen = false}

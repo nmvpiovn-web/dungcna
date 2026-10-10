@@ -258,4 +258,5 @@ test('V63-SCHEDULE-05: session date is required and kept in sync with the select
   assert.match(modal, /function syncDayFromDate\(\)/);
   assert.match(modal, /bind:value=\{form\.day_of_week\}[\s\S]*?onchange=\{syncDateFromDay\}/);
   assert.match(modal, /bind:value=\{form\.session_date\}[\s\S]*?onchange=\{syncDayFromDate\}[\s\S]*?required/);
+  assert.doesNotMatch(modal, /border-t border-slate-100 sticky bottom-0/);
 });
