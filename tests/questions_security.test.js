@@ -65,7 +65,7 @@ async function questionsQuery({ role = null, includeAnswers = false, limit = nul
   const platform = platformFor(null);
   // Mock verifyServerAuth bằng cách patch DB.prepare cho users/auth_sessions
   const realPrepare = platform.env.DB.prepare;
-  const user = role ? { id: `user-${role}`, username: role, name: role, role, status: 'active', metadata: '{}' } : null;
+  const user = role ? { id: `user-${role}`, username: role, name: role, role, status: 'active', approval_status: 'approved', metadata: '{}' } : null;
   platform.env.DB.prepare = (sql) => {
     if (sql.includes('FROM users')) {
       return { bind: () => ({ async first() { return user; }, async all() { return { results: user ? [user] : [] }; } }) };

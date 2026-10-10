@@ -172,12 +172,12 @@
 <style>
   .camera-capture { margin-top: 12px; }
   .camera-start { display: flex; gap: 8px; flex-wrap: wrap; }
-  .camera-live video { width: 100%; max-height: 360px; object-fit: cover; border-radius: 8px; background: #0f172a; }
-  .camera-preview img { width: 100%; max-height: 360px; object-fit: contain; border-radius: 8px; border: 1px solid #dce5ec; background: #f8fafc; }
+  .camera-live video { width: 100%; max-height: 360px; object-fit: cover; border-radius: 8px; background: #18181b; }
+  .camera-preview img { width: 100%; max-height: 360px; object-fit: contain; border-radius: 8px; border: 1px solid #e7e5e4; background: #fdfbf7; }
   .camera-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
   .camera-error { color: #b91c1c; font-size: .85rem; margin-top: 8px; }
   .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
   .btn-main,.btn-outline { border-radius: 6px; min-height: 44px; padding: 9px 17px; font-weight: 600; }
-  .btn-main { background: #0891b2; color: #fff; border: 1px solid #0e7490; }
-  .btn-outline { background: #fff; color: #0e7490; border: 1px solid #a5f3fc; }
+  .btn-main { background: #059669; color: #fff; border: 1px solid #047857; }
+  .btn-outline { background: #fff; color: #059669; border: 1px solid #a7f3d0; }
 </style>

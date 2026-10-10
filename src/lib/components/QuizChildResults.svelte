@@ -108,17 +108,17 @@
 <style>
   .child-results { display: flex; flex-direction: column; gap: 14px; }
   .notice.error { padding: 12px 16px; border-radius: 7px; border: 1px solid #fecaca; background: #fef2f2; color: #b91c1c; }
-  .empty-state { text-align: center; padding: 40px 16px; color: #617184; }
+  .empty-state { text-align: center; padding: 40px 16px; color: #78716c; }
   .empty-state > span { display: block; font-size: 2rem; margin-bottom: 8px; }
   .results-head { display: flex; align-items: center; justify-content: space-between; }
-  .results-head span { color: #64748b; font-size: .85rem; }
+  .results-head span { color: #78716c; font-size: .85rem; }
   .results-list { display: flex; flex-direction: column; gap: 10px; }
-  .result-card { border: 1px solid #dce5ec; border-radius: 9px; padding: 14px 16px; background: #fff; }
+  .result-card { border: 1px solid #e7e5e4; border-radius: 9px; padding: 14px 16px; background: #fff; }
   .result-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
   .result-top h3 { margin: 0; font-size: 1rem; }
   .status { padding: 3px 8px; background: #f0fdf4; color: #15803d; border-radius: 4px; font-size: .75rem; font-weight: 700; white-space: nowrap; }
-  .result-meta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; color: #64748b; font-size: .85rem; }
-  .result-meta strong { color: #0e7490; }
-  label { display: flex; flex-direction: column; gap: 6px; font-size: .83rem; font-weight: 600; color: #3b4d61; max-width: 320px; }
-  select { min-height: 44px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 10px 12px; font: inherit; }
+  .result-meta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; color: #78716c; font-size: .85rem; }
+  .result-meta strong { color: #047857; }
+  label { display: flex; flex-direction: column; gap: 6px; font-size: .83rem; font-weight: 600; color: #1c1917; max-width: 320px; }
+  select { min-height: 44px; border: 1px solid #d6d3d1; border-radius: 6px; padding: 10px 12px; font: inherit; }
 </style>

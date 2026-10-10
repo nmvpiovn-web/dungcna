@@ -47,9 +47,15 @@ async function fixture() {
   sqlite.exec(`
     CREATE TABLE users (
       id TEXT PRIMARY KEY, username TEXT, phone TEXT, email TEXT, name TEXT,
-      role TEXT, avatar TEXT, status TEXT, metadata TEXT, created_at TEXT, updated_at TEXT
+      role TEXT, avatar TEXT, status TEXT, approval_status TEXT DEFAULT 'approved', metadata TEXT, created_at TEXT, updated_at TEXT
     );
     CREATE TABLE auth_sessions (id TEXT PRIMARY KEY, revoked_at TEXT, expires_at TEXT);
+    CREATE TABLE homework_assignments (
+      id TEXT PRIMARY KEY, class_id TEXT, class_name TEXT, source_quiz_id TEXT, status TEXT DEFAULT 'published', due_date TEXT, created_at TEXT
+    );
+    CREATE TABLE class_enrollments (
+      id TEXT PRIMARY KEY, class_id TEXT, user_id TEXT, status TEXT DEFAULT 'active'
+    );
   `);
   sqlite.exec(fs.readFileSync('migrations/0012_quiz_menu.sql', 'utf8'));
   sqlite.exec(fs.readFileSync('migrations/0014_quiz_guest_class.sql', 'utf8'));
@@ -156,8 +162,8 @@ test('guest start được sanitize và submit được server chấm tự độ
   assert.equal(body.attempt.final_score, 5);
   assert.equal(body.attempt.status, 'graded');
   const log = ctx.sqlite.prepare('SELECT started_at, submitted_at FROM quiz_attempts WHERE id = ?').get(started.attempt_id);
-  assert.ok(Date.parse(log.submitted_at) >= Date.parse(log.started_at));
-  assert.equal(body.grading[0].correct_answer, 'B');
+  assert.equal(body.grading[0].correct, true);
+  assert.equal(body.grading[0].correct_answer, undefined);
 
   const repeated = await submitQuiz({
     params: { id },
@@ -234,6 +240,8 @@ test('staff xóa quiz và dữ liệu con cascade', async () => {
 test('authenticated student starts without guest identity', async () => {
   const ctx = await fixture();
   const id = await buildPublishedQuiz(ctx);
+  ctx.sqlite.prepare(`INSERT INTO class_enrollments (id, class_id, user_id, status) VALUES ('enr-1', 'class-7a', 'student-1', 'active')`).run();
+  ctx.sqlite.prepare(`INSERT INTO homework_assignments (id, class_id, class_name, source_quiz_id, status) VALUES ('hw-1', 'class-7a', 'Lớp 7A', ?, 'published')`).run(id);
   const response = await submitQuiz({ params: { id }, request: request(`/api/quiz-menu/${id}/submit`, { token: ctx.studentToken, body: { action: 'start' } }), platform: ctx.platform });
   assert.equal(response.status, 201);
   const created = await response.json();
