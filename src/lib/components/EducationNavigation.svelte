@@ -27,13 +27,13 @@
   );
 
   const primaryItems = $derived([
-    { href: '/courses', icon: '📚', label: 'Học', match: ['/courses', '/'] },
+    { href: '/quiz-menu', icon: '🧩', label: 'Quiz', match: ['/quiz-menu'] },
     { href: '/flashcards', icon: '🗂️', label: 'Luyện tập', match: ['/flashcards', '/dictionary', '/grammar', '/games'] },
-    { href: '/exam', icon: '✍️', label: 'Kiểm tra', match: ['/exam', '/quiz'] },
+    { href: '/exam', icon: '✍️', label: 'Kiểm tra', match: ['/exam'] },
     { href: progressHref, icon: '📈', label: 'Tiến độ', match: ['/cpanel', '/evaluations', '/admin'] }
   ]);
 
-  const isActive = item => item.match.some(path => path === '/' ? $page.url.pathname === '/' : $page.url.pathname.startsWith(path));
+  const isActive = item => item.match.some(path => path === '/' ? $page.url.pathname === '/' : ($page.url.pathname === path || $page.url.pathname.startsWith(path + '/')));
   const closeMenus = () => { moreOpen = false; accountOpen = false; };
 </script>
 
@@ -56,7 +56,7 @@
     <nav class="hidden items-center gap-1 lg:flex" aria-label="Điều hướng học tập chính">
       {#each primaryItems as item}
         <a
-          id={item.label === 'Học' ? 'nav-btn-courses' : item.label === 'Kiểm tra' ? 'nav-btn-exams' : undefined}
+          id={item.label === 'Quiz' ? 'nav-btn-quiz' : item.label === 'Học' ? 'nav-btn-courses' : item.label === 'Kiểm tra' ? 'nav-btn-exams' : undefined}
           href={item.href}
           class="flex min-h-11 items-center gap-2 rounded-lg px-4 text-sm font-bold transition-colors {isActive(item) ? 'bg-cx-100 text-cx-900' : 'text-slate-700 hover:bg-slate-100 hover:text-slate-950'}"
           aria-current={isActive(item) ? 'page' : undefined}
