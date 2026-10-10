@@ -229,6 +229,11 @@ export function sanitizeUserList(users) {
  */
 export function isStaffUser(user) {
   if (!user) return false;
+  
+  if (user.role === 'teacher' && user.approval_status && user.approval_status !== 'approved') {
+    return false;
+  }
+
   const role = (user.role || '').toLowerCase();
   return (
     role === 'superadmin' ||
