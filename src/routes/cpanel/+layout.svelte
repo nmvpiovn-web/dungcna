@@ -2,7 +2,8 @@
  import { page } from '$app/stores';
  import { onMount } from 'svelte';
  import { goto } from '$app/navigation';
- import { getCurrentUser, isSuperAdmin, getStudentStars } from '$lib/unifiedStore';
+ import { getCurrentUser, isSuperAdmin, getStudentStars, getAuthToken } from '$lib/unifiedStore';
+ import { shouldForcePasswordChange } from '$lib/userMetadata';
  import { currentLang, toggleLanguage, t } from '$lib/i18n';
 
  let { children } = $props();
@@ -140,6 +141,52 @@
  });
 
  let navItems = $derived(roleNavItems[currentRoleKey] || roleNavItems.student);
+
+ let showChangePasswordModal = $derived(shouldForcePasswordChange(currentUser));
+ let cpOldPassword = $state('');
+ let cpNewPassword = $state('');
+ let cpConfirmPassword = $state('');
+ let cpError = $state('');
+ let cpSuccess = $state('');
+ let isChangingPassword = $state(false);
+
+ async function handleChangePassword() {
+   cpError = '';
+   if (cpNewPassword !== cpConfirmPassword) {
+     cpError = 'Mật khẩu mới không khớp.';
+     return;
+   }
+   if (cpNewPassword.length < 6) {
+     cpError = 'Mật khẩu mới phải có ít nhất 6 ký tự.';
+     return;
+   }
+   isChangingPassword = true;
+   try {
+     const token = getAuthToken();
+     const headers = { 'Content-Type': 'application/json' };
+     if (token) {
+       headers['Authorization'] = `Bearer ${token}`;
+     }
+     const res = await fetch('/api/auth/change-password', {
+       method: 'POST',
+       headers,
+       body: JSON.stringify({ old_password: cpOldPassword, new_password: cpNewPassword })
+     });
+     const data = await res.json();
+     if (data.success) {
+       cpSuccess = 'Đổi mật khẩu thành công. Vui lòng tải lại trang.';
+       setTimeout(() => {
+         window.location.reload();
+       }, 1500);
+     } else {
+       cpError = data.error || 'Đổi mật khẩu thất bại.';
+     }
+   } catch (e) {
+     cpError = 'Lỗi kết nối.';
+   } finally {
+     isChangingPassword = false;
+   }
+ }
 </script>
 
 <div class="min-h-screen bg-slate-50 text-slate-800 flex flex-col font-sans max-w-full overflow-x-hidden">
@@ -259,3 +306,76 @@
  {@render children()}
  </div>
 </div>
+
+{#if showChangePasswordModal}
+  <div
+    class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-3 sm:p-4 overflow-y-auto"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="change-password-modal-title"
+  >
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden flex flex-col my-auto max-h-[90vh]">
+      <div class="px-4 py-3 sm:px-5 sm:py-4 border-b border-slate-100 flex justify-between items-center bg-rose-50">
+        <h3 id="change-password-modal-title" class="font-bold text-rose-800 text-sm sm:text-base">Bắt Buộc Đổi Mật Khẩu Lần Đầu</h3>
+      </div>
+      <div class="p-4 sm:p-5 space-y-3 sm:space-y-4 overflow-y-auto">
+        <p class="text-xs sm:text-sm text-slate-600 font-medium">
+          Chào mừng bạn đến với hệ thống Tiếng Anh Cô Dung. Vì lý do bảo mật, bạn bắt buộc phải đổi mật khẩu ngay trong lần đăng nhập đầu tiên.
+        </p>
+        {#if cpError}
+          <div class="p-2.5 rounded bg-rose-50 text-rose-700 text-xs font-semibold border border-rose-200" role="alert">{cpError}</div>
+        {/if}
+        {#if cpSuccess}
+          <div class="p-2.5 rounded bg-emerald-50 text-emerald-700 text-xs font-semibold border border-emerald-200" role="status">{cpSuccess}</div>
+        {:else}
+          <form onsubmit={(e) => { e.preventDefault(); handleChangePassword(); }} class="space-y-3">
+            <div>
+              <label for="cp-old-password" class="block text-xs font-bold text-slate-700 mb-1">Mật khẩu tạm thời (cũ)</label>
+              <input
+                id="cp-old-password"
+                type="password"
+                autocomplete="current-password"
+                required
+                bind:value={cpOldPassword}
+                class="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500 text-sm"
+              />
+            </div>
+            <div>
+              <label for="cp-new-password" class="block text-xs font-bold text-slate-700 mb-1">Mật khẩu mới</label>
+              <input
+                id="cp-new-password"
+                type="password"
+                autocomplete="new-password"
+                required
+                minlength="6"
+                bind:value={cpNewPassword}
+                class="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500 text-sm"
+              />
+            </div>
+            <div>
+              <label for="cp-confirm-password" class="block text-xs font-bold text-slate-700 mb-1">Xác nhận mật khẩu mới</label>
+              <input
+                id="cp-confirm-password"
+                type="password"
+                autocomplete="new-password"
+                required
+                minlength="6"
+                bind:value={cpConfirmPassword}
+                class="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500 text-sm"
+              />
+            </div>
+            <div class="pt-2 flex justify-end">
+              <button
+                type="submit"
+                disabled={isChangingPassword}
+                class="w-full sm:w-auto px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold rounded-md shadow-sm transition-colors disabled:opacity-50"
+              >
+                {isChangingPassword ? 'Đang xử lý...' : 'Đổi Mật Khẩu'}
+              </button>
+            </div>
+          </form>
+        {/if}
+      </div>
+    </div>
+  </div>
+{/if}
