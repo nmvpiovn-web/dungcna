@@ -10,7 +10,7 @@ import {
   readDriveSourceFromUrl,
   saveQuizSourceAndDrafts
 } from '../../../../../lib/server/quizDrive.js';
-import { generateDeterministicQuiz } from '../../../../../lib/server/quizAutoBuilder.js';
+import { generateDeterministicQuiz, parseGradeLevel } from '../../../../../lib/server/quizAutoBuilder.js';
 
 export const prerender = false;
 
@@ -32,11 +32,16 @@ export async function POST({ params, request, platform }) {
     if (!fileId && !url) {
       return json({ success: false, error: 'Thiếu file_id hoặc url', message: 'Hãy chọn file trong Drive hoặc dán link Google Drive/Docs.' }, { status: 400 });
     }
+    const gradeValidation = parseGradeLevel(body.grade_level);
+    if (!gradeValidation.valid) {
+      return json({ success: false, error: gradeValidation.code, message: gradeValidation.message }, { status: 400 });
+    }
+    const gradeLevel = gradeValidation.gradeLevel;
+
     // file_id trực tiếp: giữ nguyên allowlist (không nới lỏng).
     // url dán vào: parse link, copy vào Quiz Uploads nếu ngoài folder cho phép.
     const source = url ? await readDriveSourceFromUrl(platform, url) : await readAllowedDriveSource(platform, fileId);
     const questionCount = Number(body.question_count || 10);
-    const gradeLevel = Number(body.grade_level || 7);
     const typeMix = body.type_mix && typeof body.type_mix === 'object' ? body.type_mix : null;
     const difficulty = String(body.difficulty || 'medium');
     const mergeStrategy = String(body.merge_strategy || 'append') === 'replace' ? 'replace' : 'append';

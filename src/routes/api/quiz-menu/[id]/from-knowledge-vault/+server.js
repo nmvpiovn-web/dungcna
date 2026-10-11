@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
 import { isStaffUser, verifyServerAuth } from '../../../../../lib/server/auth.js';
 import { canManageQuiz } from '../../../../../lib/server/quizMenu.js';
-import { generateDeterministicQuiz } from '../../../../../lib/server/quizAutoBuilder.js';
+import { generateDeterministicQuiz, parseGradeLevel } from '../../../../../lib/server/quizAutoBuilder.js';
 import { saveQuizSourceAndDrafts } from '../../../../../lib/server/quizDrive.js';
 
 export const prerender = false;
@@ -31,6 +31,12 @@ export async function POST({ params, request, platform }) {
     return json({ success: false, error: 'VaultIdRequired', message: 'Thiếu ID bài học từ Kho tri thức' }, { status: 400 });
   }
 
+  const gradeValidation = parseGradeLevel(body.grade_level);
+  if (!gradeValidation.valid) {
+    return json({ success: false, error: gradeValidation.code, message: gradeValidation.message }, { status: 400 });
+  }
+  const gradeLevel = gradeValidation.gradeLevel;
+
   const article = await db.prepare(
     `SELECT id, title, content_markdown FROM knowledge_vault WHERE id = ? AND (status = 'active' OR status IS NULL) LIMIT 1`
   ).bind(vaultId).first();
@@ -45,7 +51,6 @@ export async function POST({ params, request, platform }) {
   }
 
   const questionCount = Math.max(1, Math.min(200, Number(body.question_count) || 10));
-  const gradeLevel = Number(body.grade_level || 7);
   const typeMix = body.type_mix && typeof body.type_mix === 'object' ? body.type_mix : null;
   const difficulty = String(body.difficulty || 'medium');
   const mergeStrategy = String(body.merge_strategy || 'append') === 'replace' ? 'replace' : 'append';

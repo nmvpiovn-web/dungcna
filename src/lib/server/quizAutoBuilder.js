@@ -50,13 +50,39 @@ export function validateMultiImages(files) {
 }
 
 /**
+ * Parses and strictly validates grade_level parameter.
+ * Preserves 0 (Tổng hợp / IELTS). Accepts 0..12 integers.
+ */
+export function parseGradeLevel(rawInput) {
+  if (rawInput === undefined || rawInput === null || rawInput === '') {
+    return { valid: true, gradeLevel: 7 };
+  }
+  if (typeof rawInput === 'object') {
+    if (typeof rawInput.arrayBuffer === 'function' || rawInput.name !== undefined || rawInput.size !== undefined) {
+      return { valid: true, gradeLevel: 7 };
+    }
+    return { valid: false, code: 'InvalidGradeLevel', message: 'Khối lớp phải là số nguyên từ 0 đến 12 (0: Tổng hợp / IELTS).' };
+  }
+  const n = Number(rawInput);
+  if (!Number.isInteger(n) || n < 0 || n > 12) {
+    return { valid: false, code: 'InvalidGradeLevel', message: 'Khối lớp phải là số nguyên từ 0 đến 12 (0: Tổng hợp / IELTS).' };
+  }
+  return { valid: true, gradeLevel: n };
+}
+
+/**
  * Validates array of image labels for picture_guess questions.
  * Enforces array shape, bounds count <= fileCount and <= 6, max 80 chars per label, and no control characters.
+ * Requires at least min(requestedCount, fileCount) non-empty labels in order.
  */
-export function validateImageLabels(rawInput, fileCount, pictureGuessRequested = false) {
+export function validateImageLabels(rawInput, fileCount, pictureGuessRequested = 0) {
+  const reqPicCount = typeof pictureGuessRequested === 'number'
+    ? Math.max(0, Math.round(pictureGuessRequested))
+    : (pictureGuessRequested ? (fileCount || 1) : 0);
+
   if (rawInput === undefined || rawInput === null || rawInput === '') {
-    if (pictureGuessRequested) {
-      return { valid: false, code: 'MissingImageLabels', message: 'Vui lòng cung cấp nhãn/đáp án cho ảnh khi yêu cầu câu hỏi nhìn hình (picture_guess).' };
+    if (reqPicCount > 0) {
+      return { valid: false, code: 'EmptyImageLabel', message: 'Vui lòng cung cấp nhãn/đáp án cho ảnh khi yêu cầu câu hỏi nhìn hình (picture_guess).' };
     }
     return { valid: true, labels: [] };
   }
@@ -87,10 +113,12 @@ export function validateImageLabels(rawInput, fileCount, pictureGuessRequested =
     }
     sanitizedLabels.push(trimmed);
   }
-  if (pictureGuessRequested) {
-    const hasValidLabel = sanitizedLabels.some((l) => l.length >= 1);
-    if (!hasValidLabel) {
-      return { valid: false, code: 'EmptyImageLabel', message: 'Vui lòng nhập ít nhất 1 nhãn ảnh hợp lệ (1-80 ký tự) cho câu hỏi nhìn hình.' };
+  if (reqPicCount > 0) {
+    const needed = Math.min(reqPicCount, fileCount > 0 ? fileCount : reqPicCount);
+    for (let i = 0; i < needed; i++) {
+      if (!sanitizedLabels[i] || sanitizedLabels[i].length < 1) {
+        return { valid: false, code: 'EmptyImageLabel', message: `Vui lòng nhập nhãn cho ảnh thứ ${i + 1} (cần tối thiểu ${needed} nhãn cho ${reqPicCount} câu nhìn hình).` };
+      }
     }
   }
   return { valid: true, labels: sanitizedLabels };
@@ -291,10 +319,19 @@ export function generateDeterministicQuiz(text, options = {}) {
   const allocation = allocateTypeMix(questionCount, requestedMix);
   const parsed = parseSourceContent(text);
 
-  const gradeLevel = Number(options.gradeLevel || options.grade_level || 7);
-  const isEarlyPrimary = gradeLevel <= 2;
-  const isPrimary = gradeLevel <= 5;
-  const isHighSchool = gradeLevel >= 10;
+  const rawGrade = options.gradeLevel !== undefined ? options.gradeLevel : options.grade_level;
+  const gradeValidation = parseGradeLevel(rawGrade);
+  if (!gradeValidation.valid) {
+    const err = new Error(gradeValidation.message);
+    err.status = 400;
+    err.code = gradeValidation.code;
+    throw err;
+  }
+  const gradeLevel = gradeValidation.gradeLevel;
+  const isIelts = gradeLevel === 0;
+  const isEarlyPrimary = gradeLevel >= 1 && gradeLevel <= 2;
+  const isPrimary = gradeLevel >= 1 && gradeLevel <= 5;
+  const isHighSchool = gradeLevel >= 10 || isIelts;
 
   // Apply difficulty and grade level to vocabulary and sentences
   const isEasy = difficulty === 'easy' || difficulty === 'nhan_biet';

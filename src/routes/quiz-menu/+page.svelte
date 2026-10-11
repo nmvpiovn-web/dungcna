@@ -85,15 +85,16 @@
     imagePreviewMap.clear();
   }
 
-  function handleFilesSelected(files) {
+  function handleFilesSelected(files, newLabels = null) {
     clearImagePreviews();
     uploadFiles = files;
     sourceFile = files[0] || null;
-    const nextLabels = {};
-    for (let i = 0; i < files.length; i++) {
-      if (imageLabels[i]) nextLabels[i] = imageLabels[i];
+    imageLabels = {};
+    if (Array.isArray(newLabels)) {
+      newLabels.forEach((l, i) => { if (l) imageLabels[i] = l; });
+    } else if (newLabels && typeof newLabels === 'object') {
+      imageLabels = { ...newLabels };
     }
-    imageLabels = nextLabels;
   }
 
   onDestroy(() => {
@@ -446,7 +447,7 @@
 
         form.append('type_mix', JSON.stringify(questionTypeMix));
         form.append('question_count', String(autoConfig.question_count));
-        form.append('grade_level', String(autoConfig.grade_level || 7));
+        form.append('grade_level', String(autoConfig.grade_level ?? 7));
         form.append('difficulty', autoConfig.difficulty);
         form.append('merge_strategy', mergeStrategy);
         const res = await api(`/api/quiz-menu/${quizId}/upload`, { method: 'POST', body: form, headers: {} });
@@ -470,7 +471,7 @@
           ...(pastedUrl ? { url: pastedUrl } : { file_id: selectedDriveFileId }),
           type_mix: questionTypeMix,
           question_count: autoConfig.question_count,
-          grade_level: autoConfig.grade_level || 7,
+          grade_level: autoConfig.grade_level ?? 7,
           difficulty: autoConfig.difficulty,
           merge_strategy: mergeStrategy
         };
@@ -494,7 +495,7 @@
           vault_id: kvSelectedArticleId,
           type_mix: questionTypeMix,
           question_count: autoConfig.question_count,
-          grade_level: autoConfig.grade_level || 7,
+          grade_level: autoConfig.grade_level ?? 7,
           difficulty: autoConfig.difficulty,
           merge_strategy: mergeStrategy
         };
@@ -1402,10 +1403,7 @@
                 {#if sourceFile}<p class="file-chosen">✓ Đã chọn: <strong>{uploadFiles.length > 1 ? `${uploadFiles.length} tệp (${uploadFiles.map(f => f.name).join(', ')})` : sourceFile.name}</strong></p>{/if}
                 <QuizCameraCapture
                   onCaptureFiles={(files, labels) => {
-                    handleFilesSelected(files);
-                    if (Array.isArray(labels)) {
-                      labels.forEach((l, i) => { if (l) imageLabels[i] = l; });
-                    }
+                    handleFilesSelected(files, labels);
                     message = `✓ Đã chọn ${files.length} ảnh tài liệu. Bấm "Tự động tạo Quiz" để xử lý.`;
                   }}
                 />

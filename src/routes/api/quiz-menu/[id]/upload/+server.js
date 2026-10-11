@@ -15,6 +15,7 @@ import {
   validateImageLabels,
   concatenateMultiPageText,
   generateDeterministicQuiz,
+  parseGradeLevel,
   MAX_MULTI_IMAGES
 } from '../../../../../lib/server/quizAutoBuilder.js';
 
@@ -52,7 +53,11 @@ export async function POST({ params, request, platform }) {
   const typeMixRaw = form.get('type_mix');
   const typeMix = typeMixRaw ? parseJson(typeMixRaw, null) : null;
   const questionCount = Number(form.get('question_count') || 10);
-  const gradeLevel = Number(form.get('grade_level') || 7);
+  const gradeValidation = parseGradeLevel(form.get('grade_level'));
+  if (!gradeValidation.valid) {
+    return json({ success: false, error: gradeValidation.code, message: gradeValidation.message }, { status: 400 });
+  }
+  const gradeLevel = gradeValidation.gradeLevel;
   const difficulty = String(form.get('difficulty') || 'medium');
   const mergeStrategy = String(form.get('merge_strategy') || 'append') === 'replace' ? 'replace' : 'append';
 
@@ -73,7 +78,7 @@ export async function POST({ params, request, platform }) {
 
     const picTarget = Number(typeMix?.picture_guess || 0);
     const rawLabels = form.get('image_labels') || form.get('labels_json');
-    const labelValidation = validateImageLabels(rawLabels, filesList.length, picTarget > 0);
+    const labelValidation = validateImageLabels(rawLabels, filesList.length, picTarget);
     if (!labelValidation.valid) {
       return json({ success: false, error: labelValidation.code, message: labelValidation.message }, { status: 400 });
     }

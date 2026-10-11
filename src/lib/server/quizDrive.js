@@ -595,7 +595,15 @@ export async function generateQuestionsWithAI(text, platform, options = {}) {
   const questionCount = Math.max(1, Math.min(50, rawCount || 10));
   const typeMix = options.typeMix && typeof options.typeMix === 'object' ? options.typeMix : null;
   const difficulty = String(options.difficulty || 'medium');
-  const gradeLevel = Number(options.gradeLevel || options.grade_level || 7);
+  const rawGrade = options.gradeLevel !== undefined ? options.gradeLevel : options.grade_level;
+  let gradeLevel = 7;
+  if (rawGrade !== undefined && rawGrade !== null && rawGrade !== '') {
+    const g = Number(rawGrade);
+    if (!Number.isInteger(g) || g < 0 || g > 12) {
+      throw new QuizDriveError('Khối lớp phải là số nguyên từ 0 đến 12.', 400, 'InvalidGradeLevel');
+    }
+    gradeLevel = g;
+  }
 
   let typeMixInstructions = '';
   if (typeMix && Object.keys(typeMix).length > 0) {
@@ -608,10 +616,14 @@ ${lines.join('\n')}
 Tuyệt đối KHÔNG tạo bất kỳ loại câu hỏi nào khác ngoài danh sách trên, và tổng số câu phải CHÍNH XÁC là ${questionCount}.`;
   }
 
+  const gradeInstruction = gradeLevel === 0
+    ? '- Đối tượng / Trình độ: Tổng hợp / IELTS (từ vựng học thuật, ngữ pháp đa dạng, phù hợp chuẩn quốc tế).'
+    : `- Đối tượng học sinh: Lớp ${gradeLevel} (Grade ${gradeLevel}). Hãy điều chỉnh từ vựng, độ phức tạp ngữ pháp và nội dung câu hỏi phù hợp nhất với trình độ học sinh Lớp ${gradeLevel} chương trình Tiếng Anh phổ thông.`;
+
   const dynamicSystemPrompt = `${AI_SYSTEM_PROMPT}
 
 CẤU HÌNH YÊU CẦU:
-- Đối tượng học sinh: Lớp ${gradeLevel} (Grade ${gradeLevel}). Hãy điều chỉnh từ vựng, độ phức tạp ngữ pháp và nội dung câu hỏi phù hợp nhất với trình độ học sinh Lớp ${gradeLevel} chương trình Tiếng Anh phổ thông.
+${gradeInstruction}
 - Số câu cần tạo: ${questionCount}
 - Độ khó: ${difficulty}${typeMixInstructions}`;
 

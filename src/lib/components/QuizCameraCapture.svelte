@@ -68,7 +68,7 @@
         const compressed = await compressToJpeg(img, img.naturalWidth, img.naturalHeight, fileName);
         URL.revokeObjectURL(url);
         const previewUrl = URL.createObjectURL(compressed);
-        items = [...items, { file: compressed, previewUrl, id: `img_${Date.now()}_${Math.random().toString(36).slice(2, 6)}` }];
+        items = [...items, { file: compressed, previewUrl, id: `img_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`, label: '' }];
       }
     } catch {
       cameraError = 'Không thể xử lý một số ảnh. Hãy thử lại.';
@@ -113,7 +113,7 @@
       const vh = videoEl.videoHeight || 720;
       const compressed = await compressToJpeg(videoEl, vw, vh, `page_${items.length + 1}.jpg`);
       const previewUrl = URL.createObjectURL(compressed);
-      items = [...items, { file: compressed, previewUrl, id: `img_${Date.now()}_${Math.random().toString(36).slice(2, 6)}` }];
+      items = [...items, { file: compressed, previewUrl, id: `img_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`, label: '' }];
       if (items.length >= MAX_IMAGES) {
         stopStream();
         cameraOn = false;
@@ -156,7 +156,8 @@
   function confirm() {
     if (!items.length) return;
     const files = items.map((it) => it.file);
-    if (onCaptureFiles) onCaptureFiles(files);
+    const labels = items.map((it) => it.label || '');
+    if (onCaptureFiles) onCaptureFiles(files, labels);
     if (onCapture) onCapture(files.length === 1 ? files[0] : files);
   }
 
@@ -227,6 +228,13 @@
           <div class="thumb-card">
             <span class="thumb-order">{idx + 1}/{items.length}</span>
             <img src={item.previewUrl} alt={`Trang tài liệu ${idx + 1}`} />
+            <input
+              type="text"
+              class="thumb-label-input"
+              placeholder="Nhãn từ vựng..."
+              value={item.label || ''}
+              on:input={(e) => { item.label = e.currentTarget.value; }}
+            />
             <div class="thumb-actions">
               <button
                 type="button"
@@ -287,6 +295,8 @@
   .thumb-card { position: relative; border: 1px solid #e7e5e4; border-radius: 6px; background: #fff; overflow: hidden; display: flex; flex-direction: column; }
   .thumb-card img { width: 100%; height: 110px; object-fit: cover; }
   .thumb-order { position: absolute; top: 4px; left: 4px; background: rgba(28, 25, 23, 0.8); color: #fff; font-size: 0.7rem; font-weight: 700; padding: 2px 6px; border-radius: 4px; }
+  .thumb-label-input { width: 100%; border: none; border-top: 1px solid #e7e5e4; padding: 4px 6px; font-size: 0.75rem; box-sizing: border-box; outline: none; }
+  .thumb-label-input:focus { border-color: #059669; background: #f0fdf4; }
   .thumb-actions { display: flex; justify-content: space-between; background: #f5f5f4; border-top: 1px solid #e7e5e4; padding: 2px; }
   .thumb-actions button { background: none; border: none; font-size: 0.85rem; font-weight: 700; color: #44403c; padding: 4px 8px; cursor: pointer; min-height: 32px; min-width: 32px; border-radius: 4px; }
   .thumb-actions button:hover:not(:disabled) { background: #e7e5e4; }
