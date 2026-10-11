@@ -234,15 +234,27 @@ export function generateDeterministicQuiz(text, options = {}) {
   const degradedTypes = [];
   let degradedReason = null;
 
-  // Check if picture_guess is requested but no valid image assets exist
-  const groundableAssets = imageAssets.filter((a) => a && a.url && (a.answer || a.label || a.name || a.ocr_text));
+  // Check if picture_guess is requested but no valid image assets exist with explicit label/answer
+  const groundableAssets = imageAssets.filter((a) => a && a.url && (a.answer || a.label));
   if (requestedMix.picture_guess && (!hasImages || groundableAssets.length === 0)) {
     degradedTypes.push('picture_guess');
-    degradedReason = 'Tài liệu không có tệp ảnh hợp lệ để tạo câu hỏi nhìn hình đoán chữ (picture_guess).';
+    degradedReason = 'Tài liệu không có tệp ảnh hợp lệ có đáp án xác thực (label/answer) để tạo câu hỏi nhìn hình đoán chữ (picture_guess).';
   }
 
   const allocation = allocateTypeMix(questionCount, requestedMix);
   const parsed = parseSourceContent(text);
+
+  // Apply difficulty and grade level to vocabulary and sentences
+  const isEasy = difficulty === 'easy' || difficulty === 'nhan_biet';
+  const isHard = difficulty === 'hard' || difficulty === 'van_dung' || difficulty === 'van_dung_cao';
+  if (isEasy) {
+    parsed.vocabulary.sort((a, b) => a.word.length - b.word.length);
+    parsed.sentences.sort((a, b) => a.length - b.length);
+  } else if (isHard) {
+    parsed.vocabulary.sort((a, b) => b.word.length - a.word.length);
+    parsed.sentences.sort((a, b) => b.length - a.length);
+  }
+
   const questions = [];
   const seenPrompts = new Set();
 
@@ -359,7 +371,14 @@ export function generateDeterministicQuiz(text, options = {}) {
   let wgAdded = 0;
   for (const v of parsed.vocabulary) {
     if (wgAdded >= targetWg) break;
-    const masked = v.word.split('').map((c, idx) => (idx % 2 === 0 ? c : '_')).join('');
+    let masked;
+    if (isEasy) {
+      masked = v.word.split('').map((c, idx) => (idx % 3 === 1 ? '_' : c)).join('');
+    } else if (isHard) {
+      masked = v.word.split('').map((c, idx) => (idx === 0 || idx === v.word.length - 1 ? c : '_')).join('');
+    } else {
+      masked = v.word.split('').map((c, idx) => (idx % 2 === 0 ? c : '_')).join('');
+    }
     const added = addQuestionSafely({
       type: 'word_guess',
       prompt: `Đoán từ tiếng Anh phù hợp với định nghĩa (${masked}): "${v.definition}"`,
@@ -459,17 +478,7 @@ export function generateDeterministicQuiz(text, options = {}) {
   if (targetPic > 0) {
     for (const asset of groundableAssets) {
       if (picAdded >= targetPic) break;
-      let answer = String(asset.answer || asset.label || '').trim();
-      if (!answer && asset.name) {
-        const cleanName = String(asset.name).replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ').trim();
-        if (cleanName.length >= 2 && /^[a-zA-Z\s]+$/.test(cleanName)) {
-          answer = cleanName;
-        }
-      }
-      if (!answer && asset.ocr_text) {
-        const words = String(asset.ocr_text).split(/\s+/).filter((w) => w.length >= 3 && /^[a-zA-Z]+$/.test(w));
-        if (words.length > 0) answer = words[0];
-      }
+      const answer = String(asset.answer || asset.label || '').trim();
       if (!answer) continue;
 
       const picPrompt = asset.prompt || (asset.name ? `Nhìn hình ảnh (${asset.name}) và viết từ tiếng Anh thích hợp:` : `Nhìn hình ảnh [${picAdded + 1}] và viết từ tiếng Anh thích hợp:`);
@@ -478,7 +487,8 @@ export function generateDeterministicQuiz(text, options = {}) {
         prompt: picPrompt,
         prompt_image_url: asset.url,
         correct_answer: answer,
-        points: 1
+        points: 1,
+        source_sub_id: asset.id || null
       });
       if (added) picAdded++;
     }

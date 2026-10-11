@@ -58,7 +58,7 @@ export async function GET({ url, request, platform }) {
         ).bind(...(category ? [ftsQuery, category, limit, offset] : [ftsQuery, limit, offset])).all();
 
         articles = rows.results || [];
-        ftsOk = true;
+        ftsOk = total > 0;
       } catch {
         ftsOk = false;
       }
@@ -105,7 +105,7 @@ export async function GET({ url, request, platform }) {
               SUBSTR(kv.content_markdown, 1, 300) AS preview,
               LENGTH(kv.content_markdown) AS content_length
        FROM knowledge_vault kv
-       WHERE kv.status = 'active'
+       WHERE (kv.status = 'active' OR kv.status IS NULL)
        ${category ? 'AND kv.category = ?' : ''}
        ORDER BY kv.updated_at DESC, kv.id ASC
        LIMIT ? OFFSET ?`

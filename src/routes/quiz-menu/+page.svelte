@@ -91,7 +91,7 @@
   let timer;
   let abandonArmed = $state(false);
   let abandonTimer;
-  let sourceMode = $state('manual');
+  let sourceMode = $state('upload');
   let sourceBusy = $state(false);
   let sourceFile = $state(null);
   let driveFiles = $state([]);
@@ -807,13 +807,16 @@
         method: 'PUT', body: JSON.stringify({
           title: draft.title, description: draft.description,
           time_limit_minutes: Number(draft.time_limit_minutes),
-          status: publish ? 'published' : 'draft', questions: payloadQuestions()
+          status: publish ? 'published' : 'draft', questions: payloadQuestions(),
+          merge_strategy: 'replace'
         })
       });
       if (!bundle) bundle = (await api(`/api/quiz-menu/${id}/sync-bundle`, { method: 'POST', body: JSON.stringify({ direction: 'publish_quiz_to_docs' }) })).bundle;
       message = publish ? 'Đã xuất bản quiz.' : 'Đã lưu bản nháp.';
       draft = { id: null, title: '', description: '', time_limit_minutes: 20, questions: [] };
-      bundle = null; sourceFile = null; selectedDriveFileId = ''; driveUrl = ''; sourceMode = 'manual';
+      bundle = null; sourceFile = null; selectedDriveFileId = ''; driveUrl = '';
+      builderMode = 'auto';
+      sourceMode = autoConfig.source_type || 'upload';
       await loadQuizzes();
       activeTab = 'mine';
     } catch (err) {
@@ -842,7 +845,7 @@
         questions: (q.questions || []).map(fromApiQuestion)
       };
       bundle = null;
-      sourceMode = 'manual';
+      builderMode = 'manual';
       activeTab = 'create';
       message = `Đang sửa quiz: ${q.title}`;
     } catch (err) {
@@ -1239,67 +1242,81 @@
                   {/each}
                 </select>
               </label>
-              <label>
-                Độ khó
-                <select bind:value={autoConfig.difficulty}>
-                  <option value="easy">Cơ bản (Dễ)</option>
-                  <option value="medium">Trung bình (Chuẩn)</option>
-                  <option value="hard">Nâng cao (Khó)</option>
-                </select>
-              </label>
+              {#if sourceMode === 'question_bank'}
+                <div class="bank-disabled-notice" title="Độ khó được kế thừa từ từng câu hỏi trong kho">
+                  <span class="text-xs text-stone-500 italic block mt-5">ℹ️ Độ khó: theo câu hỏi trong kho</span>
+                </div>
+              {:else}
+                <label>
+                  Độ khó
+                  <select bind:value={autoConfig.difficulty}>
+                    <option value="easy">Cơ bản (Dễ)</option>
+                    <option value="medium">Trung bình (Chuẩn)</option>
+                    <option value="hard">Nâng cao (Khó)</option>
+                  </select>
+                </label>
+              {/if}
             </div>
           </div>
 
           <!-- Phân bổ dạng câu hỏi (Dynamic Mix) -->
-          <div class="type-mix-section">
-            <div class="type-mix-header">
-              <span class="section-label">3. Dạng câu hỏi & Phân bổ:</span>
-              <div class="allocation-pill">
-                Đã phân bổ: <strong>{Object.values(questionTypeMix).reduce((a, b) => a + b, 0)}</strong> / <strong>{autoConfig.question_count}</strong> câu
+          {#if sourceMode === 'question_bank'}
+            <div class="type-mix-section bank-mode-notice-box">
+              <div class="p-3 bg-amber-50/70 border border-amber-200/80 rounded-xl text-stone-700 text-xs">
+                <strong>📚 Nguồn Kho câu hỏi (Question Bank):</strong> Dạng câu hỏi và độ khó được kế thừa trực tiếp từ kho câu hỏi đã chọn. Cấu hình phân bổ Dynamic Mix không áp dụng.
               </div>
             </div>
-
-            <div class="type-mix-grid">
-              {#each ALL_QUESTION_TYPES as typeInfo (typeInfo.id)}
-                <div class="type-mix-card" class:active={questionTypeMix[typeInfo.id] !== undefined}>
-                  <div class="type-card-head">
-                    <label class="type-toggle-label">
-                      <input
-                        type="checkbox"
-                        checked={questionTypeMix[typeInfo.id] !== undefined}
-                        on:change={() => toggleTypeActive(typeInfo.id)}
-                      />
-                      <span class="type-name"><strong>{typeInfo.name}</strong></span>
-                    </label>
-                    <span class="type-icon">{typeInfo.icon}</span>
-                  </div>
-                  <p class="type-desc">{typeInfo.desc}</p>
-                  {#if questionTypeMix[typeInfo.id] !== undefined}
-                    <div class="type-stepper">
-                      <button
-                        type="button"
-                        class="btn-step"
-                        aria-label={`Giảm số câu ${typeInfo.name}`}
-                        disabled={questionTypeMix[typeInfo.id] <= 1}
-                        on:click={() => updateTypeCount(typeInfo.id, -1)}
-                      >
-                        −
-                      </button>
-                      <span class="step-value">{questionTypeMix[typeInfo.id]} câu</span>
-                      <button
-                        type="button"
-                        class="btn-step"
-                        aria-label={`Tăng số câu ${typeInfo.name}`}
-                        on:click={() => updateTypeCount(typeInfo.id, 1)}
-                      >
-                        ＋
-                      </button>
-                    </div>
-                  {/if}
+          {:else}
+            <div class="type-mix-section">
+              <div class="type-mix-header">
+                <span class="section-label">3. Dạng câu hỏi & Phân bổ:</span>
+                <div class="allocation-pill">
+                  Đã phân bổ: <strong>{Object.values(questionTypeMix).reduce((a, b) => a + b, 0)}</strong> / <strong>{autoConfig.question_count}</strong> câu
                 </div>
-              {/each}
+              </div>
+
+              <div class="type-mix-grid">
+                {#each ALL_QUESTION_TYPES as typeInfo (typeInfo.id)}
+                  <div class="type-mix-card" class:active={questionTypeMix[typeInfo.id] !== undefined}>
+                    <div class="type-card-head">
+                      <label class="type-toggle-label">
+                        <input
+                          type="checkbox"
+                          checked={questionTypeMix[typeInfo.id] !== undefined}
+                          on:change={() => toggleTypeActive(typeInfo.id)}
+                        />
+                        <span class="type-name"><strong>{typeInfo.name}</strong></span>
+                      </label>
+                      <span class="type-icon">{typeInfo.icon}</span>
+                    </div>
+                    <p class="type-desc">{typeInfo.desc}</p>
+                    {#if questionTypeMix[typeInfo.id] !== undefined}
+                      <div class="type-stepper">
+                        <button
+                          type="button"
+                          class="btn-step"
+                          aria-label={`Giảm số câu ${typeInfo.name}`}
+                          disabled={questionTypeMix[typeInfo.id] <= 1}
+                          on:click={() => updateTypeCount(typeInfo.id, -1)}
+                        >
+                          −
+                        </button>
+                        <span class="step-value">{questionTypeMix[typeInfo.id]} câu</span>
+                        <button
+                          type="button"
+                          class="btn-step"
+                          aria-label={`Tăng số câu ${typeInfo.name}`}
+                          on:click={() => updateTypeCount(typeInfo.id, 1)}
+                        >
+                          ＋
+                        </button>
+                      </div>
+                    {/if}
+                  </div>
+                {/each}
+              </div>
             </div>
-          </div>
+          {/if}
 
           <!-- Nguồn tài liệu chi tiết -->
           {#if sourceMode === 'upload'}

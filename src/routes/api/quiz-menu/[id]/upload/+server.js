@@ -97,13 +97,25 @@ export async function POST({ params, request, platform }) {
       let degraded_reason = null;
       let ai_generated = false;
 
+      let rawImageLabels = null;
+      try {
+        const lbls = form.get('image_labels') || form.get('labels_json');
+        if (lbls) rawImageLabels = typeof lbls === 'string' ? JSON.parse(lbls) : lbls;
+      } catch {}
+
       const imageAssets = filesList.map((f, idx) => {
-        const baseName = String(f.name || `image_${idx + 1}`).replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ').trim();
-        const ocrWords = String(extractedPages[idx] || '').split(/\s+/).filter((w) => w.length >= 2 && /^[a-zA-Z]+$/.test(w));
-        const label = baseName.length >= 2 && /^[a-zA-Z\s]+$/.test(baseName) ? baseName : (ocrWords[0] || '');
-        const assetUrl = `/api/quiz-menu/${params.id}/assets/${uploadedSources[idx]?.file?.id || `img_${idx}`}`;
+        let label = '';
+        if (Array.isArray(rawImageLabels)) {
+          const item = rawImageLabels[idx];
+          label = typeof item === 'string' ? item : (item?.label || item?.answer || '');
+        } else if (rawImageLabels && typeof rawImageLabels === 'object') {
+          label = rawImageLabels[f.name] || rawImageLabels[idx] || '';
+        }
+        label = String(label || '').trim();
+        const assetId = uploadedSources[idx]?.file?.id || `img_${idx}`;
+        const assetUrl = `/api/quiz-menu/${params.id}/assets/${assetId}`;
         return {
-          id: uploadedSources[idx]?.file?.id || `img_${idx}`,
+          id: assetId,
           name: f.name || `image_${idx + 1}`,
           url: assetUrl,
           label,
@@ -146,7 +158,21 @@ export async function POST({ params, request, platform }) {
         pages_count: filesList.length
       };
 
-      const metadata = await saveQuizSourceAndDrafts(db, params.id, sourceInfo, combinedText, questions, { mergeStrategy });
+      const primarySourceId = uploadedSources[0]?.file?.id || 'upload_batch';
+      for (let i = 0; i < questions.length; i++) {
+        const q = questions[i];
+        q.source_type = 'upload';
+        q.source_id = primarySourceId;
+        if (!q.source_sub_id && filesList.length > 1) {
+          q.source_sub_id = `page_${(i % filesList.length) + 1}`;
+        }
+      }
+
+      const metadata = await saveQuizSourceAndDrafts(db, params.id, sourceInfo, combinedText, questions, {
+        mergeStrategy,
+        sourceType: 'upload',
+        sourceId: primarySourceId
+      });
       return json({
         success: true,
         source: metadata,
@@ -218,7 +244,16 @@ export async function POST({ params, request, platform }) {
       }
     }
 
-    const metadata = await saveQuizSourceAndDrafts(db, params.id, source.file, source.text, questions, { mergeStrategy });
+    const uploadSourceId = source.file?.id || 'upload_file';
+    for (const q of questions) {
+      q.source_type = 'upload';
+      q.source_id = uploadSourceId;
+    }
+    const metadata = await saveQuizSourceAndDrafts(db, params.id, source.file, source.text, questions, {
+      mergeStrategy,
+      sourceType: 'upload',
+      sourceId: uploadSourceId
+    });
     let bundle = null;
     if (questions.length) {
       try {

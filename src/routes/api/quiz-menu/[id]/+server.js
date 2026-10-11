@@ -86,20 +86,21 @@ export async function PUT({ params, request, platform }) {
     if (!Number(count?.count)) return json({ success: false, error: 'Không thể xuất bản quiz chưa có câu hỏi' }, { status: 400 });
   }
   try {
-    const mergeStrategy = body.merge_strategy === 'replace' ? 'replace' : 'append';
+    const mergeStrategy = body.merge_strategy === 'append' ? 'append' : 'replace';
     let startOrder = 0;
     let existingPrompts = new Set();
     let existingIds = new Set();
     if (questions !== undefined && mergeStrategy === 'append') {
-      const maxRow = await db.prepare(`SELECT COALESCE(MAX(q_order), -1) AS max_order, COUNT(*) AS count FROM quiz_questions WHERE quiz_id = ?`).bind(params.id).first();
-      const currentCount = Number(maxRow?.count || 0);
-      if (currentCount + validated.length > 200) {
-        return json({ success: false, error: 'Tổng số câu hỏi không được vượt quá 200' }, { status: 400 });
-      }
-      startOrder = (Number(maxRow?.max_order) ?? -1) + 1;
       const existingRows = await db.prepare(`SELECT id, prompt FROM quiz_questions WHERE quiz_id = ?`).bind(params.id).all();
       existingPrompts = new Set((existingRows?.results || []).map((r) => r.prompt?.trim().toLowerCase()));
       existingIds = new Set((existingRows?.results || []).map((r) => r.id));
+      const currentCount = (existingRows?.results || []).length;
+      const trulyNewCount = validated.filter((q) => !existingPrompts.has(q.prompt?.trim().toLowerCase())).length;
+      if (currentCount + trulyNewCount > 200) {
+        return json({ success: false, error: 'Tổng số câu hỏi không được vượt quá 200' }, { status: 400 });
+      }
+      const maxRow = await db.prepare(`SELECT COALESCE(MAX(q_order), -1) AS max_order FROM quiz_questions WHERE quiz_id = ?`).bind(params.id).first();
+      startOrder = (Number(maxRow?.max_order) ?? -1) + 1;
     }
 
     let hasSourcesTable = false;
@@ -157,11 +158,11 @@ export async function PUT({ params, request, platform }) {
         }
 
         if (hasSourcesTable && q.source_type && q.source_id) {
-          const qqsId = 'qqs_' + params.id + '_' + qId + '_' + q.source_id;
+          const qqsId = 'qqs_' + params.id + '_' + qId + '_' + q.source_type + '_' + q.source_id + '_' + (q.source_sub_id || 0);
           statements.push(db.prepare(`
-            INSERT OR REPLACE INTO quiz_question_sources (id, quiz_id, question_id, source_type, source_id)
-            VALUES (?, ?, ?, ?, ?)
-          `).bind(qqsId, params.id, qId, q.source_type, q.source_id));
+            INSERT OR REPLACE INTO quiz_question_sources (id, quiz_id, question_id, source_type, source_id, source_sub_id)
+            VALUES (?, ?, ?, ?, ?, ?)
+          `).bind(qqsId, params.id, qId, q.source_type, q.source_id, q.source_sub_id || null));
         }
       }
     }

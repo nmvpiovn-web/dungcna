@@ -91,7 +91,11 @@ export async function POST({ params, request, platform }) {
       q.source_id = driveSourceId;
     }
 
-    const metadata = await saveQuizSourceAndDrafts(db, params.id, source.file, source.text, questions, { mergeStrategy });
+    const metadata = await saveQuizSourceAndDrafts(db, params.id, source.file, source.text, questions, {
+      mergeStrategy,
+      sourceType: 'drive',
+      sourceId: driveSourceId
+    });
     const bundle = questions.length ? await publishQuizBundle(platform, db, params.id) : null;
     return json({
       success: true,

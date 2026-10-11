@@ -5,7 +5,7 @@ import { QUIZ_TYPES } from '../../../../lib/server/quizMenu.js';
 export const prerender = false;
 
 const ALLOWED_SOURCES = new Set(['upload', 'drive', 'question_bank', 'knowledge_vault']);
-const ALLOWED_STATUSES = new Set(['draft', 'published']);
+const ALLOWED_STATUSES = new Set(['draft']);
 const ALLOWED_DIFFICULTIES = new Set(['easy', 'medium', 'hard', 'nhan_biet', 'thong_hieu', 'van_dung', 'van_dung_cao']);
 
 const INITIAL_DEFAULTS = {

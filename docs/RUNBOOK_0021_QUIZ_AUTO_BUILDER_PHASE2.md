@@ -7,6 +7,7 @@
   2. Mở rộng ràng buộc `CHECK(type IN (...))` của bảng `quiz_questions` để hỗ trợ đúng 10 dạng câu hỏi chuẩn: `multiple_choice`, `fill_blank`, `matching`, `paragraph`, `picture_guess`, `rewrite`, `true_false`, `word_guess`, `ordering`, `memory_match` (migrating `essay` sang canonical `paragraph`).
   3. Tạo bảng `quiz_question_sources` cho many-to-one provenance truy xuất nguồn gốc bài học / file Google Drive.
 - **An toàn:** Bảng `quiz_questions` được tái tạo bảo toàn 100% dữ liệu hiện có (gồm cả 156 câu seed catalog và provenance metadata từ Migration 0020), chỉ thay đổi CHECK constraint.
+- **Transaction Compatibility:** Sử dụng `PRAGMA defer_foreign_keys = on;` thay vì `foreign_keys = OFF` để tương thích hoàn toàn với Cloudflare D1 transaction runtime và SQLite batch mode.
 
 ---
 

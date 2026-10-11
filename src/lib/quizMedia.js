@@ -20,7 +20,28 @@ export const ALLOWED_IMAGE_HOSTS = new Set([
 export function isAllowedImageUrl(urlStr) {
   if (!urlStr || typeof urlStr !== 'string') return false;
   const trimmed = urlStr.trim();
-  if (trimmed.startsWith('/')) return true;
+  if (!trimmed) return false;
+
+  // Disallow control characters
+  if (/[\x00-\x1F\x7F]/.test(trimmed)) return false;
+
+  // Disallow raw or percent-encoded backslashes
+  if (trimmed.includes('\\') || /%5c/i.test(trimmed)) return false;
+
+  // Handle local relative paths safely
+  if (trimmed.startsWith('/')) {
+    // Disallow protocol-relative URLs (//) or malformed leading characters (/\)
+    if (trimmed.startsWith('//') || trimmed.startsWith('/\\')) return false;
+    try {
+      const u = new URL(trimmed, 'https://dummy.local');
+      if (u.origin !== 'https://dummy.local') return false;
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  // Handle absolute HTTPS URLs against allowlist
   try {
     const u = new URL(trimmed);
     if (u.protocol !== 'https:') return false;

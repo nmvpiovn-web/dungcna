@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS quiz_builder_defaults (
   grade_level INTEGER NOT NULL DEFAULT 7 CHECK(grade_level BETWEEN 0 AND 12),
   difficulty TEXT NOT NULL DEFAULT 'medium' CHECK(difficulty IN ('easy', 'medium', 'hard', 'nhan_biet', 'thong_hieu', 'van_dung', 'van_dung_cao')),
   type_mix_json TEXT NOT NULL DEFAULT '{}',
-  default_status TEXT NOT NULL DEFAULT 'draft' CHECK(default_status IN ('draft', 'published')),
+  default_status TEXT NOT NULL DEFAULT 'draft' CHECK(default_status IN ('draft')),
   created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
   updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
 );
@@ -25,7 +25,7 @@ CREATE INDEX IF NOT EXISTS idx_quiz_builder_defaults_user ON quiz_builder_defaul
 -- multiple_choice, fill_blank, matching, paragraph, picture_guess, rewrite,
 -- true_false, word_guess, ordering, memory_match.
 -- Any legacy 'essay' is normalized to 'paragraph'.
-PRAGMA foreign_keys = OFF;
+PRAGMA defer_foreign_keys = on;
 
 CREATE TABLE quiz_questions_new (
   id TEXT PRIMARY KEY,
@@ -89,12 +89,10 @@ CREATE TABLE IF NOT EXISTS quiz_question_sources (
 CREATE INDEX IF NOT EXISTS idx_qq_sources_quiz ON quiz_question_sources(quiz_id);
 CREATE INDEX IF NOT EXISTS idx_qq_sources_question ON quiz_question_sources(question_id);
 CREATE INDEX IF NOT EXISTS idx_qq_sources_lookup ON quiz_question_sources(source_type, source_id);
-CREATE UNIQUE INDEX IF NOT EXISTS idx_qq_sources_unique ON quiz_question_sources(quiz_id, question_id, source_type, source_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_qq_sources_unique ON quiz_question_sources(quiz_id, question_id, source_type, source_id, IFNULL(source_sub_id, ''));
 
 -- Backfill existing questions into quiz_question_sources
-INSERT OR IGNORE INTO quiz_question_sources (id, quiz_id, question_id, source_type, source_id)
-  SELECT 'qqs_' || id, quiz_id, id, source_type, source_id
+INSERT OR IGNORE INTO quiz_question_sources (id, quiz_id, question_id, source_type, source_id, source_sub_id)
+  SELECT 'qqs_' || quiz_id || '_' || id || '_' || source_type || '_' || source_id || '_0', quiz_id, id, source_type, source_id, NULL
   FROM quiz_questions
   WHERE source_type IS NOT NULL AND source_id IS NOT NULL;
-
-PRAGMA foreign_keys = ON;

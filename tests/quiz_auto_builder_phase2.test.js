@@ -165,9 +165,21 @@ test('PHASE 2: QUIZ AUTO BUILDER & EXPANDED QUESTION TYPES SUITE', async (t) => 
       time_limit_minutes: 45,
       grade_level: 9,
       difficulty: 'hard',
-      default_status: 'published',
+      default_status: 'draft',
       type_mix: { multiple_choice: 15, true_false: 5, fill_blank: 5 }
     };
+
+    // Verify published is rejected
+    const resRejectPub = await updateDefaults({
+      request: new Request('http://localhost/api/quiz-menu/builder-defaults', {
+        method: 'PUT',
+        headers: { authorization: `Bearer ${teacherAToken}`, 'content-type': 'application/json' },
+        body: JSON.stringify({ ...customDefaults, default_status: 'published' })
+      }),
+      platform
+    });
+    assert.equal(resRejectPub.status, 400, 'Must reject default_status: published');
+
     const resPut = await updateDefaults({
       request: new Request('http://localhost/api/quiz-menu/builder-defaults', {
         method: 'PUT',

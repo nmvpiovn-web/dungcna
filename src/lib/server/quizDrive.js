@@ -357,15 +357,18 @@ export async function uploadQuizSource(platform, file) {
     return { file: fileInfo, text, uploadFolderId };
   }
   // Images (PNG/JPG): need Drive/OCR path
-  // BUG-2 fix: bọc try/catch với thông báo tiếng Việt rõ ràng (trước đây chết cứng 503)
+  let uploaded = null;
   try {
     const folder = await ensureQuizUploadsFolder(platform);
-    const uploaded = await uploadBytes(platform, { ...validated, bytes, folderId: folder.id });
+    uploaded = await uploadBytes(platform, { ...validated, bytes, folderId: folder.id });
     const text = await extractBytes(platform, validated, bytes, folder.id);
     // Fail-closed: không lưu quiz 0 câu hỏi khi OCR/extraction không đọc được ảnh
     assertExtractedText(text);
     return { file: uploaded, text, uploadFolderId: folder.id };
   } catch (e) {
+    if (uploaded?.id) {
+      try { await removeDriveFile(platform, uploaded.id); } catch {}
+    }
     if (e instanceof QuizDriveError) throw e;
     throw new QuizDriveError(
       'Không xử lý được ảnh. Google Drive chưa được cấu hình hoặc OCR thất bại. Hãy thử upload file PDF/DOCX/TXT.',
@@ -373,6 +376,21 @@ export async function uploadQuizSource(platform, file) {
       'ImageProcessingFailed'
     );
   }
+}
+
+export async function downloadDriveFile(platform, id) {
+  if (!/^[A-Za-z0-9_-]{6,200}$/.test(String(id || ''))) throw new QuizDriveError('Drive file ID không hợp lệ', 400, 'InvalidFileId');
+  if (platform?.env?.MOCK_DRIVE_DOWNLOAD?.[id]) {
+    return platform.env.MOCK_DRIVE_DOWNLOAD[id];
+  }
+  const meta = await getDriveFileMetadata(platform, id);
+  const response = await driveRequest(platform, `/drive/v3/files/${encodeURIComponent(id)}?alt=media&supportsAllDrives=true`);
+  const bytes = new Uint8Array(await response.arrayBuffer());
+  return {
+    bytes,
+    mimeType: meta.mimeType || 'application/octet-stream',
+    name: meta.name || 'asset'
+  };
 }
 
 export async function getDriveFileMetadata(platform, id) {
@@ -537,25 +555,29 @@ export function generateDraftQuestions(text) {
   return validated;
 }
 
-const AI_SYSTEM_PROMPT = `Bạn là trợ lý tạo đề kiểm tra tiếng Anh. Từ nội dung tài liệu người dùng cung cấp, hãy tạo 10 câu hỏi kiểm tra.
+const AI_SYSTEM_PROMPT = `Bạn là trợ lý chuyên nghiệp tạo đề kiểm tra tiếng Anh từ tài liệu giáo khoa.
 
-QUY TẮC:
-- Ưu tiên các loại: multiple_choice (trắc nghiệm 4 lựa chọn), fill_blank (điền từ), matching (nối từ 2 cột).
-- Có thể thêm paragraph (viết đoạn văn) hoặc rewrite (viết lại câu) nếu nội dung phù hợp, tối đa 2 câu mỗi loại này.
-- Đáp án correct_answer phải chính xác theo nội dung tài liệu.
-- Prompt viết bằng tiếng Việt nếu tài liệu là tiếng Việt, giữ nguyên tiếng Anh cho phần câu hỏi tiếng Anh.
+QUY TẮC CÁC DẠNG CÂU HỎI (chỉ sử dụng đúng 10 loại canonical sau):
+1. multiple_choice: Trắc nghiệm 4 lựa chọn (options là array 4 string [A, B, C, D], correct_answer là 1 string trùng khớp 1 option).
+2. fill_blank: Điền từ vào chỗ trống (prompt có chỗ trống ______; options là null; correct_answer là từ cần điền).
+3. matching: Nối từ/cột (options là object {"left": [...], "right": [...]}; correct_answer là object {"từ trái": "từ phải"}).
+4. paragraph: Viết đoạn văn ngắn (options là null; correct_answer là gợi ý hoặc null).
+5. picture_guess: Nhìn hình đoán chữ (options là null; correct_answer là từ vựng tiếng Anh).
+6. rewrite: Viết lại câu (options là null; correct_answer là câu viết lại hoàn chỉnh).
+7. true_false: Xác định Đúng/Sai (options là ["Đúng", "Sai"] hoặc ["True", "False"]; correct_answer là một trong hai lựa chọn).
+8. word_guess: Đoán từ qua gợi ý/định nghĩa (options là null; correct_answer là từ cần đoán).
+9. ordering: Sắp xếp từ/câu thành câu/đoạn hoàn chỉnh (options là array các phần tử; correct_answer là thứ tự đúng hoặc câu hoàn chỉnh).
+10. memory_match: Cặp thẻ ghi nhớ (options là array các cặp hoặc object; correct_answer là object cặp nối).
 
-TRẢ VỀ DUY NHẤT một JSON object đúng format sau, không thêm chữ nào khác:
-{"questions": [{"type": "multiple_choice|fill_blank|matching|paragraph|rewrite", "prompt": "nội dung câu hỏi", "options": ["A. ...", "B. ..."] hoặc {"left": [...], "right": [...]}, "correct_answer": "đáp án đúng (string, hoặc object cho matching)", "explanation": "giải thích ngắn (có thể null)", "points": 1}]}
-
-- multiple_choice: options là array 4 string, correct_answer là 1 string trùng 1 option.
-- fill_blank: không có options, correct_answer là string đáp án.
-- matching: options là {"left": [...], "right": [...]}, correct_answer là object {"trái": "phải"}.
-- paragraph/rewrite: không có options, correct_answer là null.`;
+YÊU CẦU:
+- Mọi câu hỏi phải bám sát nội dung tài liệu được cung cấp (grounded).
+- Prompt tiếng Việt cho phần hướng dẫn nếu tài liệu là tiếng Việt, giữ nguyên tiếng Anh cho nội dung câu hỏi.
+- Trả về DUY NHẤT một JSON object đúng format sau, không thêm lời chào hay giải thích ngoài JSON:
+{"questions": [{"type": "...", "prompt": "...", "options": ..., "correct_answer": ..., "explanation": "...", "points": 1}]}`;
 
 /**
  * Dùng AI (OpenRouter / OpenAI-compatible) để sinh câu hỏi từ nội dung tài liệu.
- * Trả về array câu hỏi đã validate, hoặc null nếu chưa cấu hình / AI lỗi.
+ * Trả về array câu hỏi đã validate, hoặc null nếu chưa cấu hình / AI lỗi / vi phạm cấu hình.
  * Env: AI_BASE_URL (mặc định https://openrouter.ai/api/v1), AI_API_KEY, AI_MODEL (mặc định deepseek/deepseek-chat).
  */
 export async function generateQuestionsWithAI(text, platform, options = {}) {
@@ -569,12 +591,22 @@ export async function generateQuestionsWithAI(text, platform, options = {}) {
   const typeMix = options.typeMix && typeof options.typeMix === 'object' ? options.typeMix : null;
   const difficulty = String(options.difficulty || 'medium');
 
+  let typeMixInstructions = '';
+  if (typeMix && Object.keys(typeMix).length > 0) {
+    const lines = Object.entries(typeMix)
+      .filter(([_, c]) => Number(c) > 0)
+      .map(([t, c]) => `- ${t}: đúng ${c} câu`);
+    typeMixInstructions = `
+BẮT BUỘC VỀ SỐ LƯỢNG VÀ LOẠI CÂU HỎI:
+${lines.join('\n')}
+Tuyệt đối KHÔNG tạo bất kỳ loại câu hỏi nào khác ngoài danh sách trên, và tổng số câu phải CHÍNH XÁC là ${questionCount}.`;
+  }
+
   const dynamicSystemPrompt = `${AI_SYSTEM_PROMPT}
 
 CẤU HÌNH YÊU CẦU:
 - Số câu cần tạo: ${questionCount}
-- Độ khó: ${difficulty}
-${typeMix ? `- Tỷ lệ các loại câu hỏi: ${JSON.stringify(typeMix)}` : ''}`;
+- Độ khó: ${difficulty}${typeMixInstructions}`;
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 90000);
@@ -624,20 +656,28 @@ ${typeMix ? `- Tỷ lệ các loại câu hỏi: ${JSON.stringify(typeMix)}` : '
       questions.push({ ...checked.value, id: makeId('qq'), q_order: questions.length });
     }
 
+    // Strict count adherence: AI output length must match requested questionCount
+    if (questions.length !== questionCount) {
+      console.warn(`[quizDrive] AI question count mismatch: got ${questions.length}, expected ${questionCount}`);
+      return null;
+    }
+
     if (typeMix && Object.keys(typeMix).length > 0) {
-      // Validate that AI output matches the requested type mix
+      // Validate that AI output matches the requested type mix exactly
       const aiCounts = {};
       for (const q of questions) aiCounts[q.type] = (aiCounts[q.type] || 0) + 1;
-      let mixMismatch = false;
+
       for (const [t, targetCount] of Object.entries(typeMix)) {
-        if (targetCount > 0 && !aiCounts[t]) {
-          mixMismatch = true;
-          break;
+        if ((aiCounts[t] || 0) !== Number(targetCount)) {
+          console.warn(`[quizDrive] AI type mix mismatch for ${t}: got ${aiCounts[t] || 0}, expected ${targetCount}`);
+          return null;
         }
       }
-      if (mixMismatch) {
-        // AI failed to satisfy requested type mix; fallback to deterministic generator
-        return null;
+      for (const t of Object.keys(aiCounts)) {
+        if (!typeMix[t] || Number(typeMix[t]) <= 0) {
+          console.warn(`[quizDrive] AI returned unexpected type ${t}`);
+          return null;
+        }
       }
     }
 
@@ -660,10 +700,28 @@ export async function saveQuizSourceAndDrafts(db, quizId, source, text, question
   };
   const isAppend = options.mergeStrategy === 'append';
   let startOrder = 0;
+
+  const existingQuestionsRes = isAppend
+    ? await db.prepare(`SELECT id, prompt FROM quiz_questions WHERE quiz_id = ?`).bind(quizId).all()
+    : { results: [] };
+  const existingPrompts = new Set((existingQuestionsRes?.results || []).map((q) => q.prompt?.trim().toLowerCase()));
+  const existingIds = new Set((existingQuestionsRes?.results || []).map((q) => q.id));
+
+  // Cap 200 enforcement (P1-11)
   if (isAppend) {
+    const currentCount = (existingQuestionsRes?.results || []).length;
+    const trulyNewCount = questions.filter((q) => !existingPrompts.has(q.prompt?.trim().toLowerCase())).length;
+    if (currentCount + trulyNewCount > 200) {
+      throw new QuizDriveError('Tổng số câu hỏi không được vượt quá 200', 400, 'QuizLimitExceeded');
+    }
     const maxRow = await db.prepare(`SELECT COALESCE(MAX(q_order), -1) AS max_order FROM quiz_questions WHERE quiz_id = ?`).bind(quizId).first();
     startOrder = (Number(maxRow?.max_order) ?? -1) + 1;
+  } else {
+    if (questions.length > 200) {
+      throw new QuizDriveError('Tổng số câu hỏi không được vượt quá 200', 400, 'QuizLimitExceeded');
+    }
   }
+
   const statements = [
     db.prepare(`UPDATE quizzes SET source_file_id = ?, source_file_name = ?, source_metadata_json = ?, source_text_excerpt = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id = ?`)
       .bind(metadata.id, metadata.name, JSON.stringify(metadata), String(text || '').slice(0, 4000) || null, quizId)
@@ -689,12 +747,7 @@ export async function saveQuizSourceAndDrafts(db, quizId, source, text, question
     statements.push(db.prepare(`DELETE FROM quiz_question_sources WHERE quiz_id = ?`).bind(quizId));
   }
 
-  const existingQuestionsRes = isAppend
-    ? await db.prepare(`SELECT id, prompt FROM quiz_questions WHERE quiz_id = ?`).bind(quizId).all()
-    : { results: [] };
-  const existingPrompts = new Set((existingQuestionsRes?.results || []).map((q) => q.prompt?.trim().toLowerCase()));
-  const existingIds = new Set((existingQuestionsRes?.results || []).map((q) => q.id));
-
+  let appendedIndex = 0;
   for (let i = 0; i < questions.length; i++) {
     const q = questions[i];
     if (isAppend && existingPrompts.has(q.prompt?.trim().toLowerCase())) {
@@ -707,9 +760,12 @@ export async function saveQuizSourceAndDrafts(db, quizId, source, text, question
     }
     existingIds.add(qId);
 
-    const qOrder = isAppend ? startOrder + i : (Number.isInteger(Number(q.q_order)) ? Number(q.q_order) : i);
-    const sourceType = q.source_type || (metadata.id ? 'drive' : null);
-    const sourceId = q.source_id || metadata.id || null;
+    const qOrder = isAppend ? startOrder + appendedIndex : (Number.isInteger(Number(q.q_order)) ? Number(q.q_order) : i);
+    appendedIndex++;
+
+    const sourceType = q.source_type || options.sourceType || (metadata.id ? 'drive' : null);
+    const sourceId = q.source_id || options.sourceId || metadata.id || null;
+    const sourceSubId = q.source_sub_id || null;
 
     if (hasProvenance) {
       statements.push(db.prepare(`
@@ -724,11 +780,11 @@ export async function saveQuizSourceAndDrafts(db, quizId, source, text, question
     }
 
     if (hasSourcesTable && sourceType && sourceId) {
-      const qqsId = 'qqs_' + quizId + '_' + qId + '_' + sourceId;
+      const qqsId = 'qqs_' + quizId + '_' + qId + '_' + sourceType + '_' + sourceId + '_' + (sourceSubId || 0);
       statements.push(db.prepare(`
-        INSERT OR REPLACE INTO quiz_question_sources (id, quiz_id, question_id, source_type, source_id)
-        VALUES (?, ?, ?, ?, ?)
-      `).bind(qqsId, quizId, qId, sourceType, sourceId));
+        INSERT OR REPLACE INTO quiz_question_sources (id, quiz_id, question_id, source_type, source_id, source_sub_id)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `).bind(qqsId, quizId, qId, sourceType, sourceId, sourceSubId));
     }
   }
   await db.batch(statements);
