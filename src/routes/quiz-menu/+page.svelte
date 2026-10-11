@@ -5,15 +5,70 @@
   import QuizCameraCapture from '$lib/components/QuizCameraCapture.svelte';
   import QuizChildResults from '$lib/components/QuizChildResults.svelte';
   import { cacheQuizData, getCachedQuizData, installQuizOnlineSync, queueQuizAttempt } from '$lib/quizOffline.js';
+  import { isAllowedImageUrl } from '$lib/quizMedia.js';
 
   const questionTypes = [
     ['multiple_choice', 'Trắc nghiệm', 'Chọn một đáp án đúng'],
+    ['true_false', 'Đúng / Sai', 'Chọn Đúng hoặc Sai'],
     ['fill_blank', 'Điền ô trống', 'Nhập từ hoặc cụm từ'],
     ['matching', 'Nối từ', 'Ghép hai cột tương ứng'],
-    ['paragraph', 'Viết đoạn văn', 'Giáo viên sẽ chấm'],
+    ['word_guess', 'Đoán từ', 'Đoán từ tiếng Anh theo gợi ý'],
+    ['ordering', 'Sắp xếp câu', 'Sắp xếp các từ thành câu hoàn chỉnh'],
+    ['memory_match', 'Ghép cặp trí nhớ', 'Tìm và ghép cặp thẻ tương ứng'],
     ['picture_guess', 'Nhìn hình đoán chữ', 'Quan sát và nhập đáp án'],
-    ['rewrite', 'Viết lại câu', 'Giáo viên sẽ chấm']
+    ['rewrite', 'Viết lại câu', 'Giáo viên sẽ chấm'],
+    ['paragraph', 'Viết đoạn văn', 'Giáo viên sẽ chấm']
   ];
+
+  // Phase 2: Chế độ tạo Quiz (Auto là mặc định)
+  let builderMode = $state('auto'); // 'auto' | 'manual'
+  let modeSwitchWarning = $state(false);
+  let pendingMode = $state(null);
+  let builderDefaultsLoaded = $state(false);
+
+  let autoConfig = $state({
+    source_type: 'upload',
+    question_count: 10,
+    time_limit_minutes: 15,
+    grade_level: 7,
+    difficulty: 'medium',
+    default_status: 'draft'
+  });
+
+  const ALL_QUESTION_TYPES = [
+    { id: 'multiple_choice', name: 'Trắc nghiệm', desc: 'Chọn 1 trong 4 lựa chọn', icon: '◉', defaultCount: 5 },
+    { id: 'true_false', name: 'Đúng / Sai', desc: 'Xác định nhận định đúng hay sai', icon: '✓✗', defaultCount: 2 },
+    { id: 'fill_blank', name: 'Điền ô trống', desc: 'Điền từ thích hợp vào chỗ trống', icon: '＿', defaultCount: 2 },
+    { id: 'matching', name: 'Nối từ', desc: 'Ghép hai cột tương ứng', icon: '⇄', defaultCount: 1 },
+    { id: 'word_guess', name: 'Đoán từ', desc: 'Đoán từ tiếng Anh theo gợi ý', icon: '🔤', defaultCount: 0 },
+    { id: 'ordering', name: 'Sắp xếp câu', desc: 'Sắp xếp từ thành câu hoàn chỉnh', icon: '🔢', defaultCount: 0 },
+    { id: 'memory_match', name: 'Ghép cặp trí nhớ', desc: 'Tìm các cặp thẻ tương ứng', icon: '🃏', defaultCount: 0 },
+    { id: 'picture_guess', name: 'Nhìn hình đoán chữ', desc: 'Quan sát và nhập đáp án', icon: '🖼️', defaultCount: 0 },
+    { id: 'rewrite', name: 'Viết lại câu', desc: 'Viết lại câu giữ nguyên nghĩa', icon: '✍️', defaultCount: 0 },
+    { id: 'paragraph', name: 'Đoạn văn / Tự luận', desc: 'Đọc hiểu và trả lời câu hỏi', icon: '📄', defaultCount: 0 }
+  ];
+
+  let questionTypeMix = $state({
+    multiple_choice: 5,
+    true_false: 2,
+    fill_blank: 2,
+    matching: 1
+  });
+
+  let uploadFiles = $state([]);
+  let autoGenerating = $state(false);
+  let defaultsSaving = $state(false);
+  let mergeStrategy = $state('append'); // 'append' (default safe) | 'replace'
+  let showReplaceConfirm = $state(false);
+  let lastGenerationReport = $state(null);
+
+  // Kho tri thức (Knowledge Vault)
+  let kvQuery = $state('');
+  let kvCategory = $state('');
+  let kvArticles = $state([]);
+  let kvSelectedArticleId = $state('');
+  let kvLoading = $state(false);
+  let kvTotal = $state(null);
 
   let activeTab = $state('take');
   let currentUser = $state(null);
@@ -164,6 +219,7 @@
     if (tabParam) activeTab = tabParam;
     ensureVisibleTab();
     loadQuizzes();
+    loadBuilderDefaults();
     // Deep link ?quiz= luôn mở luồng làm bài
     const sharedQuizId = params.get('quiz');
     if (sharedQuizId) openQuiz({ id: sharedQuizId });
@@ -171,6 +227,7 @@
       currentUser = event.detail;
       ensureVisibleTab();
       loadQuizzes();
+      loadBuilderDefaults();
     };
     window.addEventListener('tienganh:auth-change', authListener);
     removeOnlineSync = installQuizOnlineSync(token);
@@ -190,16 +247,242 @@
     message = '';
     error = '';
     if (tab === 'mine' || tab === 'take') loadQuizzes();
+    if (tab === 'create') loadBuilderDefaults();
+  }
+
+  function switchBuilderMode(mode) {
+    if (builderMode === mode) return;
+    if (draft.questions.length > 0) {
+      pendingMode = mode;
+      modeSwitchWarning = true;
+      return;
+    }
+    builderMode = mode;
+  }
+
+  function confirmModeSwitch() {
+    if (pendingMode) {
+      builderMode = pendingMode;
+      pendingMode = null;
+    }
+    modeSwitchWarning = false;
+  }
+
+  function cancelModeSwitch() {
+    pendingMode = null;
+    modeSwitchWarning = false;
+  }
+
+  function updateTypeCount(typeId, delta) {
+    const current = Number(questionTypeMix[typeId] || 0);
+    const next = Math.max(0, current + delta);
+    if (next === 0) {
+      const copy = { ...questionTypeMix };
+      delete copy[typeId];
+      if (Object.keys(copy).length === 0) {
+        copy.multiple_choice = 5;
+      }
+      questionTypeMix = copy;
+    } else {
+      questionTypeMix = { ...questionTypeMix, [typeId]: next };
+    }
+    const total = Object.values(questionTypeMix).reduce((a, b) => a + b, 0);
+    if (total > 0) autoConfig.question_count = total;
+  }
+
+  function toggleTypeActive(typeId) {
+    if (questionTypeMix[typeId] !== undefined) {
+      const copy = { ...questionTypeMix };
+      delete copy[typeId];
+      if (Object.keys(copy).length === 0) {
+        copy.multiple_choice = autoConfig.question_count || 5;
+      }
+      questionTypeMix = copy;
+    } else {
+      questionTypeMix = { ...questionTypeMix, [typeId]: 2 };
+    }
+    const total = Object.values(questionTypeMix).reduce((a, b) => a + b, 0);
+    if (total > 0) autoConfig.question_count = total;
+  }
+
+  async function loadBuilderDefaults() {
+    if (!isStaff) return;
+    try {
+      const res = await api('/api/quiz-menu/builder-defaults');
+      if (res.success && res.defaults) {
+        autoConfig = {
+          source_type: res.defaults.source_type || 'upload',
+          question_count: res.defaults.question_count || 10,
+          time_limit_minutes: res.defaults.time_limit_minutes || 15,
+          grade_level: res.defaults.grade_level || 7,
+          difficulty: res.defaults.difficulty || 'medium',
+          default_status: res.defaults.default_status || 'draft'
+        };
+        draft.time_limit_minutes = autoConfig.time_limit_minutes;
+        sourceMode = autoConfig.source_type;
+        if (autoConfig.default_status) {
+          draft.status = autoConfig.default_status;
+        }
+        if (res.defaults.type_mix && Object.keys(res.defaults.type_mix).length > 0) {
+          questionTypeMix = res.defaults.type_mix;
+        }
+        builderDefaultsLoaded = true;
+      }
+    } catch {}
+  }
+
+  async function saveBuilderDefaults() {
+    defaultsSaving = true;
+    error = '';
+    message = '';
+    try {
+      const res = await api('/api/quiz-menu/builder-defaults', {
+        method: 'PUT',
+        body: JSON.stringify({
+          source_type: sourceMode,
+          question_count: Number(autoConfig.question_count),
+          time_limit_minutes: Number(autoConfig.time_limit_minutes),
+          grade_level: Number(autoConfig.grade_level),
+          difficulty: autoConfig.difficulty,
+          type_mix: questionTypeMix,
+          default_status: autoConfig.default_status
+        })
+      });
+      if (res.success) {
+        message = '✓ Đã lưu cấu hình mặc định vào tài khoản của bạn!';
+      }
+    } catch (err) {
+      error = err.message || 'Không thể lưu cấu hình mặc định';
+    } finally {
+      defaultsSaving = false;
+    }
+  }
+
+  async function autoGenerateQuiz() {
+    if (mergeStrategy === 'replace' && draft.questions.length > 0 && !showReplaceConfirm) {
+      showReplaceConfirm = true;
+      return;
+    }
+    showReplaceConfirm = false;
+    autoGenerating = true;
+    error = '';
+    message = '';
+    lastGenerationReport = null;
+    try {
+      if (!draft.title.trim()) {
+        const gradeLabel = autoConfig.grade_level ? `Lớp ${autoConfig.grade_level}` : 'Tổng hợp';
+        draft.title = `Quiz Tự Động · ${gradeLabel} · ${new Date().toLocaleDateString('vi-VN')}`;
+      }
+      draft.time_limit_minutes = Number(autoConfig.time_limit_minutes || draft.time_limit_minutes || 15);
+      const quizId = await ensureDraftQuiz();
+
+      if (sourceMode === 'upload') {
+        const filesToUpload = uploadFiles.length ? uploadFiles : (sourceFile ? [sourceFile] : []);
+        if (!filesToUpload.length) {
+          throw new Error('Vui lòng chọn tài liệu (PDF, DOCX, TXT hoặc tối đa 6 ảnh) trước khi tạo.');
+        }
+        const form = new FormData();
+        for (const f of filesToUpload) {
+          form.append('files', f);
+        }
+        form.append('type_mix', JSON.stringify(questionTypeMix));
+        form.append('question_count', String(autoConfig.question_count));
+        form.append('difficulty', autoConfig.difficulty);
+        form.append('merge_strategy', mergeStrategy);
+        const res = await api(`/api/quiz-menu/${quizId}/upload`, { method: 'POST', body: form, headers: {} });
+        lastGenerationReport = {
+          requested_counts: res.requested_counts,
+          generated_counts: res.generated_counts,
+          degraded_types: res.degraded_types,
+          degraded_reason: res.degraded_reason
+        };
+        const quizData = await api(`/api/quiz-menu/${quizId}?include_answers=1`);
+        if (quizData.quiz?.questions) {
+          draft = { ...draft, questions: quizData.quiz.questions.map(fromApiQuestion) };
+        }
+        message = `✓ Đã tự động tạo ${draft.questions.length} câu hỏi từ tài liệu! Bạn có thể kiểm tra và xuất bản ngay.`;
+      } else if (sourceMode === 'drive') {
+        const pastedUrl = driveUrl.trim();
+        if (!selectedDriveFileId && !pastedUrl) {
+          throw new Error('Hãy chọn một file trong Drive hoặc dán link tài liệu.');
+        }
+        const payload = {
+          ...(pastedUrl ? { url: pastedUrl } : { file_id: selectedDriveFileId }),
+          type_mix: questionTypeMix,
+          question_count: autoConfig.question_count,
+          difficulty: autoConfig.difficulty,
+          merge_strategy: mergeStrategy
+        };
+        const res = await api(`/api/quiz-menu/${quizId}/from-drive`, { method: 'POST', body: JSON.stringify(payload) });
+        lastGenerationReport = {
+          requested_counts: res.requested_counts,
+          generated_counts: res.generated_counts,
+          degraded_types: res.degraded_types,
+          degraded_reason: res.degraded_reason
+        };
+        const quizData = await api(`/api/quiz-menu/${quizId}?include_answers=1`);
+        if (quizData.quiz?.questions) {
+          draft = { ...draft, questions: quizData.quiz.questions.map(fromApiQuestion) };
+        }
+        message = `✓ Đã tự động tạo ${draft.questions.length} câu hỏi từ Google Drive!`;
+      } else if (sourceMode === 'knowledge_vault') {
+        if (!kvSelectedArticleId) {
+          throw new Error('Vui lòng chọn một bài học từ Kho tri thức trước khi tạo.');
+        }
+        const payload = {
+          vault_id: kvSelectedArticleId,
+          type_mix: questionTypeMix,
+          question_count: autoConfig.question_count,
+          difficulty: autoConfig.difficulty,
+          merge_strategy: mergeStrategy
+        };
+        const res = await api(`/api/quiz-menu/${quizId}/from-knowledge-vault`, { method: 'POST', body: JSON.stringify(payload) });
+        lastGenerationReport = {
+          requested_counts: res.requested_counts,
+          generated_counts: res.generated_counts,
+          degraded_types: res.degraded_types,
+          degraded_reason: res.degraded_reason
+        };
+        const quizData = await api(`/api/quiz-menu/${quizId}?include_answers=1`);
+        if (quizData.quiz?.questions) {
+          draft = { ...draft, questions: quizData.quiz.questions.map(fromApiQuestion) };
+        }
+        message = `✓ Đã tự động tạo câu hỏi từ bài học "${res.article_title || 'Kho tri thức'}"!`;
+      } else if (sourceMode === 'question_bank') {
+        const res = await api(`/api/quiz-menu/${quizId}/import-questions`, {
+          method: 'POST',
+          body: JSON.stringify({ filters: bankFilters, count: autoConfig.question_count })
+        });
+        lastGenerationReport = null;
+        const quizData = await api(`/api/quiz-menu/${quizId}?include_answers=1`);
+        if (quizData.quiz?.questions) {
+          draft = { ...draft, questions: quizData.quiz.questions.map(fromApiQuestion) };
+        }
+        message = `✓ Đã tự động nhập ${res.imported_count || draft.questions.length} câu hỏi từ Kho câu hỏi D1!`;
+      }
+    } catch (err) {
+      error = friendlyError(err.message);
+    } finally {
+      autoGenerating = false;
+    }
   }
 
   function blankQuestion(type = 'multiple_choice') {
     return {
       id: `draft_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
       type, prompt: '', prompt_image_url: '', points: 1,
-      options: type === 'multiple_choice' ? ['Lựa chọn A', 'Lựa chọn B'] : [],
+      options: type === 'multiple_choice' ? ['Lựa chọn A', 'Lựa chọn B']
+        : type === 'true_false' ? ['Đúng', 'Sai']
+        : type === 'ordering' ? ['Từ 1', 'Từ 2', 'Từ 3']
+        : [],
       left: type === 'matching' ? ['Từ 1', 'Từ 2'] : [],
       right: type === 'matching' ? ['Nghĩa 1', 'Nghĩa 2'] : [],
-      correct_answer: type === 'matching' ? {} : '', explanation: ''
+      correct_answer: type === 'matching' ? {}
+        : type === 'true_false' ? 'Đúng'
+        : type === 'ordering' ? ['Từ 1', 'Từ 2', 'Từ 3']
+        : type === 'memory_match' ? {}
+        : '',
+      explanation: ''
     };
   }
 
@@ -259,22 +542,71 @@
   }
 
   function payloadQuestions() {
-    return draft.questions.map((q, index) => ({
-      id: q.id, type: q.type, prompt: q.prompt, prompt_image_url: q.prompt_image_url || null,
-      options_json: q.type === 'matching' ? { left: q.left, right: q.right } : q.options,
-      correct_answer: q.type === 'matching' ? Object.fromEntries(q.left.map((left, i) => [left, q.right[i] || ''])) : q.correct_answer,
-      explanation: q.explanation, points: Number(q.points) || 1, q_order: index
-    }));
+    return draft.questions.map((q, index) => {
+      let optionsJson = q.options;
+      let correctAnswer = q.correct_answer;
+      if (q.type === 'matching') {
+        optionsJson = { left: q.left, right: q.right };
+        if (typeof correctAnswer !== 'object' || Array.isArray(correctAnswer)) {
+          correctAnswer = Object.fromEntries(q.left.map((left, i) => [left, q.right[i] || '']));
+        }
+      } else if (q.type === 'memory_match') {
+        optionsJson = q.pairs && q.pairs.length ? { pairs: q.pairs } : { left: q.left, right: q.right };
+        if (typeof correctAnswer !== 'object' || Array.isArray(correctAnswer)) {
+          if (q.pairs && q.pairs.length) {
+            correctAnswer = Object.fromEntries(q.pairs.map((p) => [p.a, p.b]));
+          } else {
+            correctAnswer = Object.fromEntries(q.left.map((left, i) => [left, q.right[i] || '']));
+          }
+        }
+      } else if (q.type === 'ordering') {
+        optionsJson = { items: q.options };
+        correctAnswer = q.options;
+      }
+      return {
+        id: q.id,
+        type: q.type,
+        prompt: q.prompt,
+        prompt_image_url: q.prompt_image_url || null,
+        options_json: optionsJson,
+        correct_answer: correctAnswer,
+        explanation: q.explanation || null,
+        points: Number(q.points) || 1,
+        q_order: index,
+        source_type: q.source_type || null,
+        source_id: q.source_id || null
+      };
+    });
   }
 
   function fromApiQuestion(question, index) {
-    let options = question.options_json;
-    if (typeof options === 'string') try { options = JSON.parse(options); } catch { options = []; }
+    let options = question.options ?? question.options_json;
+    if (typeof options === 'string') {
+      try { options = JSON.parse(options); } catch { options = []; }
+    }
+    const items = options?.items || (Array.isArray(options) ? options : []);
+    const left = options?.left || [];
+    const right = options?.right || [];
+    const pairs = options?.pairs || [];
+    let correctAnswer = question.correct_answer;
+    if (typeof correctAnswer === 'string' && (question.type === 'matching' || question.type === 'memory_match' || question.type === 'ordering')) {
+      try { correctAnswer = JSON.parse(correctAnswer); } catch {}
+    }
     return {
-      id: question.id, type: question.type, prompt: question.prompt, prompt_image_url: question.prompt_image_url || '',
-      points: Number(question.points || 1), options: Array.isArray(options) ? options : [],
-      left: options?.left || [], right: options?.right || [], correct_answer: question.correct_answer || '',
-      explanation: question.explanation || '', q_order: index
+      id: question.id,
+      type: question.type,
+      prompt: question.prompt,
+      prompt_image_url: question.prompt_image_url || '',
+      points: Number(question.points || 1),
+      options: items,
+      left,
+      right,
+      pairs,
+      correct_answer: correctAnswer || '',
+      explanation: question.explanation || '',
+      q_order: Number.isInteger(Number(question.order ?? question.q_order)) ? Number(question.order ?? question.q_order) : index,
+      source_type: question.source_type || null,
+      source_id: question.source_id || null
     };
   }
 
@@ -310,6 +642,24 @@
     finally { sourceBusy = false; }
   }
 
+  function isSupportedDriveFile(file) {
+    if (!file) return false;
+    if (file.mimeType === 'application/vnd.google-apps.document') return true;
+    const name = String(file.name || '').toLowerCase();
+    const dot = name.lastIndexOf('.');
+    const ext = dot >= 0 ? name.slice(dot) : '';
+    const supportedExts = ['.pdf', '.docx', '.txt', '.png', '.jpg', '.jpeg', '.webp'];
+    const supportedMimes = [
+      'application/pdf',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'text/plain',
+      'image/png',
+      'image/jpeg',
+      'image/webp'
+    ];
+    return supportedExts.includes(ext) || supportedMimes.includes(file.mimeType);
+  }
+
   async function chooseSource(mode) {
     sourceMode = mode; error = '';
     if (mode === 'drive' && !driveFiles.length) {
@@ -321,6 +671,33 @@
       if (!bankQuestions.length) {
         await loadBankQuestions();
       }
+    } else if (mode === 'knowledge_vault') {
+      if (!kvArticles.length) {
+        await loadKnowledgeVaultArticles();
+      }
+    }
+  }
+
+  async function loadKnowledgeVaultArticles() {
+    kvLoading = true;
+    error = '';
+    try {
+      const params = new URLSearchParams();
+      if (kvQuery.trim()) params.set('q', kvQuery.trim());
+      if (kvCategory.trim()) params.set('category', kvCategory.trim());
+      params.set('limit', '20');
+      const res = await api(`/api/quiz-menu/knowledge-vault?${params.toString()}`);
+      if (res.success) {
+        kvArticles = res.articles || [];
+        kvTotal = res.total || 0;
+        if (kvArticles.length > 0 && !kvSelectedArticleId) {
+          kvSelectedArticleId = kvArticles[0].id;
+        }
+      }
+    } catch (err) {
+      error = friendlyError(err.message || 'Không thể tải danh sách bài học từ Kho tri thức');
+    } finally {
+      kvLoading = false;
     }
   }
 
@@ -462,15 +839,7 @@
         title: q.title || '',
         description: q.description || '',
         time_limit_minutes: q.time_limit_minutes || 20,
-        questions: (q.questions || []).map((qq, idx) => ({
-          id: qq.id || `q${idx}`,
-          type: qq.type || 'mcq',
-          prompt: qq.prompt || '',
-          options: qq.options || ['', '', '', ''],
-          correct_answer: qq.correct_answer ?? 0,
-          explanation: qq.explanation || '',
-          points: qq.points || 1
-        }))
+        questions: (q.questions || []).map(fromApiQuestion)
       };
       bundle = null;
       sourceMode = 'manual';
@@ -589,6 +958,7 @@
 
   function answerHasValue(value) {
     if (value?.state === 'not_understood') return false;
+    if (Array.isArray(value)) return value.length > 0;
     if (value && typeof value === 'object') return Object.values(value).some(Boolean);
     return String(value ?? '').trim().length > 0;
   }
@@ -648,6 +1018,16 @@
 
   function setMatching(id, left, value) {
     answers = { ...answers, [id]: { ...(answers[id] || {}), [left]: value } };
+  }
+
+  function moveOrderItem(qid, idx, dir) {
+    const q = selectedQuiz?.questions?.find((item) => item.id === qid);
+    const initial = q?.options?.items || (Array.isArray(q?.options) ? q.options : []);
+    const current = Array.isArray(answers[qid]) ? [...answers[qid]] : [...initial];
+    const target = idx + dir;
+    if (target < 0 || target >= current.length) return;
+    [current[idx], current[target]] = [current[target], current[idx]];
+    setAnswer(qid, current);
   }
 
   async function submitAttempt(auto = false) {
@@ -749,244 +1129,655 @@
     </section>
     {:else}
     <section class="workspace create-workspace">
-      <div class="section-heading">
-        <div><span class="section-kicker">SOẠN BÀI</span><h2>Tạo quiz mới</h2></div>
-        <span class="draft-count">{draft.questions.length} câu</span>
-      </div>
-      <div class="source-grid">
-        <button class:active-source={sourceMode === 'manual'} class="source-card" type="button" on:click={() => chooseSource('manual')}><span>✍</span><strong>Soạn thủ công</strong><small>Thêm từng câu hỏi</small></button>
-        <button class:active-source={sourceMode === 'question_bank'} class="source-card" type="button" disabled={!isStaff} on:click={() => chooseSource('question_bank')}><span>📚</span><strong>Kho câu hỏi D1</strong><small>{bankTotalCount !== null ? `${bankTotalCount} câu sẵn sàng` : '1375+ câu D1'}</small></button>
-        <button class:active-source={sourceMode === 'upload'} class="source-card" type="button" disabled={!isStaff} on:click={() => chooseSource('upload')}><span>⇧</span><strong>Tải tài liệu</strong><small>PDF, DOCX, TXT, ảnh</small></button>
-        <button class:active-source={sourceMode === 'drive'} class="source-card" type="button" disabled={!isStaff} on:click={() => chooseSource('drive')}><span>△</span><strong>Chọn từ Drive</strong><small>Quiz Uploads</small></button>
-      </div>
-      <div class="form-grid">
-        <label class="wide">Tên quiz<input bind:value={draft.title} maxlength="150" placeholder="Ví dụ: Unit 3 · At home" /></label>
-        <label>Thời gian (phút)<input type="number" min="1" max="180" bind:value={draft.time_limit_minutes} /></label>
-        <label class="wide">Mô tả<textarea bind:value={draft.description} maxlength="2000" rows="2" placeholder="Mục tiêu và hướng dẫn ngắn"></textarea></label>
-      </div>
-      {#if sourceMode === 'question_bank'}
-        <div class="bank-panel">
-          <div class="sr-only" aria-live="polite" aria-atomic="true">{bankAriaLive}</div>
-          <div class="bank-filters">
-            <label>
-              Khối lớp
-              <select bind:value={bankFilters.grade_level} on:change={() => loadBankQuestions(true)}>
-                <option value="">Tất cả các khối</option>
-                {#each bankFacets.grade_level as g}
-                  <option value={g.grade_level}>{g.grade_level} ({g.count} câu)</option>
-                {/each}
-              </select>
-            </label>
-            <label>
-              Kỹ năng
-              <select bind:value={bankFilters.skill_category} on:change={() => loadBankQuestions(true)}>
-                <option value="">Tất cả kỹ năng</option>
-                {#each bankFacets.skill_category as s}
-                  <option value={s.skill_category}>{s.skill_category} ({s.count})</option>
-                {/each}
-              </select>
-            </label>
-            <label>
-              Mức nhận thức
-              <select bind:value={bankFilters.cognitive_level} on:change={() => loadBankQuestions(true)}>
-                <option value="">Tất cả mức độ</option>
-                {#each bankFacets.cognitive_level as c}
-                  <option value={c.cognitive_level}>{c.cognitive_level} ({c.count})</option>
-                {/each}
-              </select>
-            </label>
-            <label class="bank-search-label">
-              Tìm kiếm câu hỏi
-              <div class="search-input-wrap">
-                <input type="text" placeholder="Tìm theo nội dung..." bind:value={bankFilters.q} on:keydown={(e) => e.key === 'Enter' && loadBankQuestions(true)} />
-                <button type="button" class="btn-search" on:click={() => loadBankQuestions(true)}>Tìm</button>
-              </div>
-            </label>
+      <!-- Mode Switcher -->
+      <div class="builder-mode-switcher" role="tablist" aria-label="Chế độ tạo quiz">
+        <button
+          type="button"
+          class="mode-btn"
+          class:active={builderMode === 'auto'}
+          role="tab"
+          aria-selected={builderMode === 'auto'}
+          on:click={() => switchBuilderMode('auto')}
+        >
+          <span class="mode-icon">⚡</span>
+          <div>
+            <strong>Tự động (Auto)</strong>
+            <small>Chọn nguồn + cấu hình; máy tự sinh câu</small>
           </div>
-
-          <div class="bank-action-bar">
-            <div class="bank-stats">
-              <strong>{bankTotalCount !== null ? bankTotalCount : '...'}</strong> câu hỏi phù hợp trong kho D1
-              {#if selectedBankQuestionIds.size > 0}
-                <span class="selection-pill">Đã chọn {selectedBankQuestionIds.size} câu</span>
-              {/if}
-            </div>
-            <div class="bank-buttons">
-              <button type="button" class="btn-outline compact" on:click={toggleAllBankQuestions}>
-                {selectedBankQuestionIds.size === bankQuestions.length && bankQuestions.length > 0 ? 'Bỏ chọn tất cả' : 'Chọn trang này'}
-              </button>
-              <button type="button" class="btn-accent compact" disabled={importBusy || selectedBankQuestionIds.size === 0} on:click={() => importFromBank('selected')}>
-                {importBusy ? 'Đang nhập...' : `Nhập ${selectedBankQuestionIds.size} câu đã chọn`}
-              </button>
-              <div class="quick-import-wrap">
-                <span>Nhập nhanh:</span>
-                <button type="button" class="btn-quick" disabled={importBusy} on:click={() => { importBatchCount = 10; importFromBank('batch'); }}>+10 câu</button>
-                <button type="button" class="btn-quick" disabled={importBusy} on:click={() => { importBatchCount = 20; importFromBank('batch'); }}>+20 câu</button>
-              </div>
-            </div>
+        </button>
+        <button
+          type="button"
+          class="mode-btn"
+          class:active={builderMode === 'manual'}
+          role="tab"
+          aria-selected={builderMode === 'manual'}
+          on:click={() => switchBuilderMode('manual')}
+        >
+          <span class="mode-icon">✍</span>
+          <div>
+            <strong>Nhập thủ công</strong>
+            <small>Tự thêm và soạn từng câu</small>
           </div>
+        </button>
+      </div>
 
-          {#if bankLoading}
-            <div class="bank-loading"><div class="spinner"></div> Đang tải câu hỏi từ kho D1...</div>
-          {:else if bankQuestions.length === 0}
-            <div class="empty-state">
-              <span>🔍</span>
-              <p>Không tìm thấy câu hỏi nào phù hợp với bộ lọc hiện tại.</p>
-              <button type="button" class="btn-outline compact" on:click={() => { bankFilters = { grade_level: '', topic: '', skill_category: '', cognitive_level: '', question_type: '', q: '' }; loadBankQuestions(true); }}>Đặt lại bộ lọc</button>
-            </div>
-          {:else}
-            <div class="bank-question-list">
-              {#each bankQuestions as q, qIdx (q.id)}
-                <label class="bank-q-card" class:selected={selectedBankQuestionIds.has(q.id)} for={'chk-bank-' + q.id}>
-                  <div class="bank-q-header">
-                    <div class="q-checkbox-wrapper">
-                      <input
-                        id={'chk-bank-' + q.id}
-                        type="checkbox"
-                        class="q-checkbox"
-                        aria-label={`Chọn câu hỏi #${bankOffset + qIdx + 1}: ${q.prompt ? q.prompt.slice(0, 80) : ''}`}
-                        checked={selectedBankQuestionIds.has(q.id)}
-                        on:change={() => toggleBankQuestion(q.id)}
-                        on:keydown={(e) => { if (e.key === 'Enter') { toggleBankQuestion(q.id); e.preventDefault(); } }}
-                      />
-                      <span class="q-badge">#{bankOffset + qIdx + 1}</span>
-                    </div>
-                    <div class="bank-tags">
-                      <span class="tag grade">{q.grade_level}</span>
-                      <span class="tag skill">{q.skill_category}</span>
-                      <span class="tag cognitive">{q.cognitive_level}</span>
-                      {#if q.topic}<span class="tag topic">{q.topic}</span>{/if}
-                    </div>
-                  </div>
-                  <div class="bank-q-prompt">
-                    {q.prompt}
-                  </div>
-                  {#if q.options && q.options.length}
-                    <div class="bank-q-options">
-                      {#each q.options as opt}
-                        <div class="bank-q-option">{opt}</div>
-                      {/each}
-                    </div>
-                  {/if}
-                </label>
-              {/each}
-            </div>
-
-            {#if bankTotalCount > 0}
-              <div class="bank-pagination">
-                <div class="bank-page-info">
-                  Hiển thị <strong>{bankOffset + 1} - {Math.min(bankOffset + bankQuestions.length, bankTotalCount)}</strong> trên tổng số <strong>{bankTotalCount}</strong> câu
-                  {#if bankTotalCount > 0 && bankOffset + bankQuestions.length >= bankTotalCount}
-                    <span class="bank-end-note"> · ✓ Đã đến cuối danh sách</span>
-                  {/if}
-                </div>
-                <div class="bank-page-nav">
-                  <button
-                    type="button"
-                    class="btn-page"
-                    disabled={bankOffset === 0 || bankLoading}
-                    on:click={() => { bankOffset = Math.max(0, bankOffset - bankLimit); loadBankQuestions(false); }}
-                  >
-                    ← Trang trước
-                  </button>
-                  <button
-                    type="button"
-                    class="btn-page"
-                    disabled={bankOffset + bankLimit >= bankTotalCount || bankLoading}
-                    on:click={() => { bankOffset += bankLimit; loadBankQuestions(false); }}
-                  >
-                    Trang sau →
-                  </button>
-                </div>
-              </div>
-            {/if}
-          {/if}
-        </div>
-      {:else if sourceMode !== 'manual'}
-        <div class="source-panel">
-          {#if sourceMode === 'upload'}
-            <div>
-              <label>File nguồn<input type="file" accept=".pdf,.docx,.txt,.png,.jpg,.jpeg" on:change={(event) => sourceFile = event.currentTarget.files?.[0] || null} /></label>
-              {#if sourceFile}<p class="file-chosen">Đã chọn: {sourceFile.name}</p>{/if}
-              <QuizCameraCapture onCapture={(file) => { sourceFile = file; message = 'Đã chụp ảnh tài liệu. Bấm "Tạo bộ tài liệu" để xử lý.'; }} />
-            </div>
-          {:else}
-            <div>
-              <label>File trong Google Drive<select bind:value={selectedDriveFileId}><option value="">Chọn file...</option>{#each driveFiles as file}<option value={file.id}>{file.name}</option>{/each}</select></label>
-              <label>Dán link Drive/Docs<input type="url" bind:value={driveUrl} placeholder="https://drive.google.com/..." inputmode="url" /></label>
-            </div>
-          {/if}
-          <div><strong>Một lần tạo, ba nơi dùng</strong><p>DOCX để in · Quiz tương tác · BTVN nháp trên timbk.io.vn</p></div>
-          <button class="btn-main" disabled={sourceBusy} on:click={importSource}>{sourceBusy ? 'Đang xử lý...' : 'Tạo bộ tài liệu'}</button>
+      {#if modeSwitchWarning}
+        <div class="mode-warning-banner" role="alert">
+          <div class="warning-text">
+            <strong>⚠️ Đang có {draft.questions.length} câu hỏi trong bản nháp!</strong>
+            <p>Chuyển sang chế độ {pendingMode === 'auto' ? 'Tự động' : 'Nhập thủ công'} sẽ giữ lại các câu hỏi hiện tại. Bạn có muốn tiếp tục?</p>
+          </div>
+          <div class="warning-actions">
+            <button type="button" class="btn-main compact" on:click={confirmModeSwitch}>Tiếp tục chuyển</button>
+            <button type="button" class="btn-outline compact" on:click={cancelModeSwitch}>Giữ nguyên</button>
+          </div>
         </div>
       {/if}
 
-      <div class="type-picker">
-        <h3>Thêm dạng câu hỏi</h3>
-        <div class="type-grid">
-          {#each questionTypes as type}
-            <button type="button" on:click={() => addQuestion(type[0])}><span>＋</span><div><strong>{type[1]}</strong><small>{type[2]}</small></div></button>
-          {/each}
-        </div>
-      </div>
-
-      <div class="question-editor-list">
-        {#each draft.questions as question, index (question.id)}
-          <article class="editor-card">
-            <header>
-              <span class="question-number">{index + 1}</span>
-              <select aria-label={`Dạng câu ${index + 1}`} value={question.type} on:change={(e) => changeQuestionType(question, e.currentTarget.value)}>
-                {#each questionTypes as type}<option value={type[0]}>{type[1]}</option>{/each}
-              </select>
-              <div class="editor-actions">
-                <button aria-label="Đưa câu lên" on:click={() => moveQuestion(index, -1)} disabled={index === 0}>↑</button>
-                <button aria-label="Đưa câu xuống" on:click={() => moveQuestion(index, 1)} disabled={index === draft.questions.length - 1}>↓</button>
-                <button class="delete" aria-label="Xóa câu" on:click={() => removeQuestion(index)}>×</button>
-              </div>
-            </header>
-            <label>Nội dung câu hỏi<textarea bind:value={question.prompt} rows="2" placeholder="Nhập câu hỏi..."></textarea></label>
-            {#if question.type === 'picture_guess'}
-              <label>Đường dẫn ảnh<input type="url" bind:value={question.prompt_image_url} placeholder="https://..." /></label>
-            {/if}
-            {#if question.type === 'multiple_choice'}
-              <div class="option-editor">
-                <span class="field-label">Các lựa chọn và đáp án đúng</span>
-                {#each question.options as option, optionIndex}
-                  <div class="option-row">
-                    <input type="radio" name={`correct-${question.id}`} value={option} checked={question.correct_answer === option} on:change={() => question.correct_answer = option} aria-label={`Chọn đáp án ${optionIndex + 1} là đúng`} />
-                    <input value={option} on:input={(e) => updateOption(question, optionIndex, e.currentTarget.value)} aria-label={`Lựa chọn ${optionIndex + 1}`} />
-                    <button on:click={() => removeOption(question, optionIndex)} aria-label="Xóa lựa chọn">×</button>
-                  </div>
-                {/each}
-                <button class="text-button" on:click={() => addOption(question)}>＋ Thêm lựa chọn</button>
-              </div>
-            {:else if question.type === 'matching'}
-              <div class="pair-editor">
-                <span class="field-label">Các cặp đúng</span>
-                {#each question.left as left, pairIndex}
-                  <div><input value={left} on:input={(e) => updatePair(question, 'left', pairIndex, e.currentTarget.value)} aria-label={`Vế trái ${pairIndex + 1}`} /><span>↔</span><input value={question.right[pairIndex]} on:input={(e) => updatePair(question, 'right', pairIndex, e.currentTarget.value)} aria-label={`Vế phải ${pairIndex + 1}`} /></div>
-                {/each}
-                <button class="text-button" on:click={() => addPair(question)}>＋ Thêm cặp</button>
-              </div>
-            {:else if !['paragraph', 'rewrite'].includes(question.type)}
-              <label>Đáp án đúng<input bind:value={question.correct_answer} placeholder="Đáp án để chấm tự động" /></label>
-            {:else}
-              <div class="review-note">Câu này sẽ được giáo viên hoặc leader chấm sau khi học viên nộp bài.</div>
-            {/if}
-            <div class="editor-bottom">
-              <label>Điểm<input type="number" min="0" max="100" step="0.5" bind:value={question.points} /></label>
-              <label>Giải thích<input bind:value={question.explanation} placeholder="Hiện sau khi chấm" /></label>
+      {#if builderMode === 'auto'}
+        <div class="auto-builder-shell">
+          <div class="section-heading">
+            <div>
+              <span class="section-kicker">AUTO BUILDER</span>
+              <h2>Cấu hình tự động tạo Quiz</h2>
             </div>
-          </article>
-        {:else}
-          <div class="empty-editor"><span>✦</span><h3>Bắt đầu bằng một câu hỏi</h3><p>Chọn một trong sáu dạng phía trên.</p></div>
-        {/each}
-      </div>
-      <div class="save-bar">
-        <div><strong>{draft.questions.length} câu hỏi</strong><small>Kiểm tra nội dung trước khi xuất bản</small></div>
-        <button class="btn-outline" disabled={!isStaff} on:click={() => saveDraft(false)}>Lưu nháp</button>
-        <button class="btn-main" disabled={!isStaff} on:click={() => saveDraft(true)}>Xuất bản Quiz</button>
-      </div>
+            <span class="draft-count">{draft.questions.length} câu đã có</span>
+          </div>
+
+          <!-- Nguồn tài liệu -->
+          <div class="source-picker-section">
+            <span class="section-label">1. Chọn nguồn tài liệu:</span>
+            <div class="source-grid">
+              <button class:active-source={sourceMode === 'upload'} class="source-card" type="button" on:click={() => chooseSource('upload')}>
+                <span>⇧</span><strong>Tải tài liệu</strong><small>DOCX, PDF, TXT hoặc tối đa 6 ảnh</small>
+              </button>
+              <button class:active-source={sourceMode === 'drive'} class="source-card" type="button" on:click={() => chooseSource('drive')}>
+                <span>△</span><strong>Google Drive</strong><small>Chọn file hoặc dán link Docs</small>
+              </button>
+              <button class:active-source={sourceMode === 'question_bank'} class="source-card" type="button" on:click={() => chooseSource('question_bank')}>
+                <span>📚</span><strong>Kho câu hỏi D1</strong><small>{bankTotalCount !== null ? `${bankTotalCount} câu D1` : '1375+ câu D1'}</small>
+              </button>
+              <button class:active-source={sourceMode === 'knowledge_vault'} class="source-card" type="button" on:click={() => chooseSource('knowledge_vault')}>
+                <span>📖</span><strong>Kho tri thức</strong><small>{kvTotal !== null ? `${kvTotal} bài học` : 'Knowledge Vault'}</small>
+              </button>
+            </div>
+          </div>
+
+          <!-- Cấu hình thông số -->
+          <div class="auto-config-section">
+            <span class="section-label">2. Thiết lập thông số quiz:</span>
+            <div class="form-grid">
+              <label class="wide">
+                Tiêu đề quiz
+                <input bind:value={draft.title} maxlength="150" placeholder="Ví dụ: Kiểm tra 15 phút Unit 4 · My Neighborhood" />
+              </label>
+              <label>
+                Số lượng câu hỏi (1 - 200)
+                <input
+                  type="number"
+                  min="1"
+                  max="200"
+                  bind:value={autoConfig.question_count}
+                  on:change={() => {
+                    const curTotal = Object.values(questionTypeMix).reduce((a, b) => a + b, 0);
+                    if (curTotal > 0 && curTotal !== autoConfig.question_count) {
+                      const keys = Object.keys(questionTypeMix);
+                      questionTypeMix[keys[0]] = Math.max(1, questionTypeMix[keys[0]] + (autoConfig.question_count - curTotal));
+                    }
+                  }}
+                />
+              </label>
+              <label>
+                Thời gian (phút)
+                <input type="number" min="1" max="180" bind:value={autoConfig.time_limit_minutes} />
+              </label>
+              <label>
+                Khối lớp
+                <select bind:value={autoConfig.grade_level}>
+                  {#each Array.from({length: 13}, (_, i) => i) as g}
+                    <option value={g}>{g === 0 ? 'Tổng hợp / IELTS' : `Lớp ${g}`}</option>
+                  {/each}
+                </select>
+              </label>
+              <label>
+                Độ khó
+                <select bind:value={autoConfig.difficulty}>
+                  <option value="easy">Cơ bản (Dễ)</option>
+                  <option value="medium">Trung bình (Chuẩn)</option>
+                  <option value="hard">Nâng cao (Khó)</option>
+                </select>
+              </label>
+            </div>
+          </div>
+
+          <!-- Phân bổ dạng câu hỏi (Dynamic Mix) -->
+          <div class="type-mix-section">
+            <div class="type-mix-header">
+              <span class="section-label">3. Dạng câu hỏi & Phân bổ:</span>
+              <div class="allocation-pill">
+                Đã phân bổ: <strong>{Object.values(questionTypeMix).reduce((a, b) => a + b, 0)}</strong> / <strong>{autoConfig.question_count}</strong> câu
+              </div>
+            </div>
+
+            <div class="type-mix-grid">
+              {#each ALL_QUESTION_TYPES as typeInfo (typeInfo.id)}
+                <div class="type-mix-card" class:active={questionTypeMix[typeInfo.id] !== undefined}>
+                  <div class="type-card-head">
+                    <label class="type-toggle-label">
+                      <input
+                        type="checkbox"
+                        checked={questionTypeMix[typeInfo.id] !== undefined}
+                        on:change={() => toggleTypeActive(typeInfo.id)}
+                      />
+                      <span class="type-name"><strong>{typeInfo.name}</strong></span>
+                    </label>
+                    <span class="type-icon">{typeInfo.icon}</span>
+                  </div>
+                  <p class="type-desc">{typeInfo.desc}</p>
+                  {#if questionTypeMix[typeInfo.id] !== undefined}
+                    <div class="type-stepper">
+                      <button
+                        type="button"
+                        class="btn-step"
+                        aria-label={`Giảm số câu ${typeInfo.name}`}
+                        disabled={questionTypeMix[typeInfo.id] <= 1}
+                        on:click={() => updateTypeCount(typeInfo.id, -1)}
+                      >
+                        −
+                      </button>
+                      <span class="step-value">{questionTypeMix[typeInfo.id]} câu</span>
+                      <button
+                        type="button"
+                        class="btn-step"
+                        aria-label={`Tăng số câu ${typeInfo.name}`}
+                        on:click={() => updateTypeCount(typeInfo.id, 1)}
+                      >
+                        ＋
+                      </button>
+                    </div>
+                  {/if}
+                </div>
+              {/each}
+            </div>
+          </div>
+
+          <!-- Nguồn tài liệu chi tiết -->
+          {#if sourceMode === 'upload'}
+            <div class="source-panel auto-source-box">
+              <span class="box-title">📁 Tải tài liệu nguồn (DOCX, PDF, TXT hoặc tối đa 6 ảnh)</span>
+              <div class="upload-options">
+                <label class="file-label">
+                  Chọn file từ máy (DOCX/PDF/TXT):
+                  <input
+                    type="file"
+                    accept=".pdf,.docx,.txt,.png,.jpg,.jpeg,.webp"
+                    on:change={(e) => {
+                      sourceFile = e.currentTarget.files?.[0] || null;
+                      uploadFiles = sourceFile ? [sourceFile] : [];
+                    }}
+                  />
+                </label>
+                {#if sourceFile}<p class="file-chosen">✓ Đã chọn file: <strong>{sourceFile.name}</strong></p>{/if}
+                <QuizCameraCapture
+                  onCaptureFiles={(files) => {
+                    uploadFiles = files;
+                    sourceFile = files[0] || null;
+                    message = `✓ Đã chọn ${files.length} ảnh tài liệu. Bấm "Tự động tạo Quiz" để xử lý.`;
+                  }}
+                />
+              </div>
+            </div>
+          {:else if sourceMode === 'drive'}
+            <div class="source-panel auto-source-box">
+              <span class="box-title">△ Chọn tài liệu Google Drive / Google Docs</span>
+              <div>
+                <label>File trong Google Drive (Quiz Uploads):<select bind:value={selectedDriveFileId}><option value="">Chọn file đã đồng bộ...</option>{#each driveFiles as file}<option value={file.id} disabled={!isSupportedDriveFile(file)}>{file.name}{!isSupportedDriveFile(file) ? ' (Không hỗ trợ)' : ''}</option>{/each}</select></label>
+                <label>Hoặc dán link Google Docs/Drive:<input type="url" bind:value={driveUrl} placeholder="https://docs.google.com/document/d/..." inputmode="url" /></label>
+              </div>
+            </div>
+          {:else if sourceMode === 'question_bank'}
+            <div class="bank-panel">
+              <div class="sr-only" aria-live="polite" aria-atomic="true">{bankAriaLive}</div>
+              <div class="bank-filters">
+                <label>
+                  Khối lớp
+                  <select bind:value={bankFilters.grade_level} on:change={() => loadBankQuestions(true)}>
+                    <option value="">Tất cả các khối</option>
+                    {#each bankFacets.grade_level as g}
+                      <option value={g.grade_level}>{g.grade_level} ({g.count} câu)</option>
+                    {/each}
+                  </select>
+                </label>
+                <label>
+                  Kỹ năng
+                  <select bind:value={bankFilters.skill_category} on:change={() => loadBankQuestions(true)}>
+                    <option value="">Tất cả kỹ năng</option>
+                    {#each bankFacets.skill_category as s}
+                      <option value={s.skill_category}>{s.skill_category} ({s.count})</option>
+                    {/each}
+                  </select>
+                </label>
+                <label>
+                  Mức nhận thức
+                  <select bind:value={bankFilters.cognitive_level} on:change={() => loadBankQuestions(true)}>
+                    <option value="">Tất cả mức độ</option>
+                    {#each bankFacets.cognitive_level as c}
+                      <option value={c.cognitive_level}>{c.cognitive_level} ({c.count})</option>
+                    {/each}
+                  </select>
+                </label>
+                <label class="bank-search-label">
+                  Tìm kiếm câu hỏi
+                  <div class="search-input-wrap">
+                    <input type="text" placeholder="Tìm theo nội dung..." bind:value={bankFilters.q} on:keydown={(e) => e.key === 'Enter' && loadBankQuestions(true)} />
+                    <button type="button" class="btn-search" on:click={() => loadBankQuestions(true)}>Tìm</button>
+                  </div>
+                </label>
+              </div>
+
+              <div class="bank-action-bar">
+                <div class="bank-stats">
+                  <strong>{bankTotalCount !== null ? bankTotalCount : '...'}</strong> câu hỏi phù hợp trong kho D1
+                  {#if selectedBankQuestionIds.size > 0}
+                    <span class="selection-pill">Đã chọn {selectedBankQuestionIds.size} câu</span>
+                  {/if}
+                </div>
+                <div class="bank-buttons">
+                  <button type="button" class="btn-outline compact" on:click={toggleAllBankQuestions}>
+                    {selectedBankQuestionIds.size === bankQuestions.length && bankQuestions.length > 0 ? 'Bỏ chọn tất cả' : 'Chọn trang này'}
+                  </button>
+                  <button type="button" class="btn-accent compact" disabled={importBusy || selectedBankQuestionIds.size === 0} on:click={() => importFromBank('selected')}>
+                    {importBusy ? 'Đang nhập...' : `Nhập ${selectedBankQuestionIds.size} câu đã chọn`}
+                  </button>
+                  <div class="quick-import-wrap">
+                    <span>Nhập nhanh:</span>
+                    <button type="button" class="btn-quick" disabled={importBusy} on:click={() => { importBatchCount = 10; importFromBank('batch'); }}>+10 câu</button>
+                    <button type="button" class="btn-quick" disabled={importBusy} on:click={() => { importBatchCount = 20; importFromBank('batch'); }}>+20 câu</button>
+                  </div>
+                </div>
+              </div>
+
+              {#if bankLoading}
+                <div class="bank-loading"><div class="spinner"></div> Đang tải câu hỏi từ kho D1...</div>
+              {:else if bankQuestions.length === 0}
+                <div class="empty-state">
+                  <span>🔍</span>
+                  <p>Không tìm thấy câu hỏi nào phù hợp với bộ lọc hiện tại.</p>
+                  <button type="button" class="btn-outline compact" on:click={() => { bankFilters = { grade_level: '', topic: '', skill_category: '', cognitive_level: '', question_type: '', q: '' }; loadBankQuestions(true); }}>Đặt lại bộ lọc</button>
+                </div>
+              {:else}
+                <div class="bank-question-list">
+                  {#each bankQuestions as q, qIdx (q.id)}
+                    <label class="bank-q-card" class:selected={selectedBankQuestionIds.has(q.id)} for={'chk-bank-' + q.id}>
+                      <div class="bank-q-header">
+                        <div class="q-checkbox-wrapper">
+                          <input
+                            id={'chk-bank-' + q.id}
+                            type="checkbox"
+                            class="q-checkbox"
+                            aria-label={`Chọn câu hỏi #${bankOffset + qIdx + 1}: ${q.prompt ? q.prompt.slice(0, 80) : ''}`}
+                            checked={selectedBankQuestionIds.has(q.id)}
+                            on:change={() => toggleBankQuestion(q.id)}
+                            on:keydown={(e) => { if (e.key === 'Enter') { toggleBankQuestion(q.id); e.preventDefault(); } }}
+                          />
+                          <span class="q-badge">#{bankOffset + qIdx + 1}</span>
+                        </div>
+                        <div class="bank-tags">
+                          <span class="tag grade">{q.grade_level}</span>
+                          <span class="tag skill">{q.skill_category}</span>
+                          <span class="tag cognitive">{q.cognitive_level}</span>
+                          {#if q.topic}<span class="tag topic">{q.topic}</span>{/if}
+                        </div>
+                      </div>
+                      <div class="bank-q-prompt">
+                        {q.prompt}
+                      </div>
+                      {#if q.options && q.options.length}
+                        <div class="bank-q-options">
+                          {#each q.options as opt}
+                            <div class="bank-q-option">{opt}</div>
+                          {/each}
+                        </div>
+                      {/if}
+                    </label>
+                  {/each}
+                </div>
+
+                {#if bankTotalCount > 0}
+                  <div class="bank-pagination">
+                    <div class="bank-page-info">
+                      Hiển thị <strong>{bankOffset + 1} - {Math.min(bankOffset + bankQuestions.length, bankTotalCount)}</strong> trên tổng số <strong>{bankTotalCount}</strong> câu
+                      {#if bankTotalCount > 0 && bankOffset + bankQuestions.length >= bankTotalCount}
+                        <span class="bank-end-note"> · ✓ Đã đến cuối danh sách</span>
+                      {/if}
+                    </div>
+                    <div class="bank-page-nav">
+                      <button
+                        type="button"
+                        class="btn-page"
+                        disabled={bankOffset === 0 || bankLoading}
+                        on:click={() => { bankOffset = Math.max(0, bankOffset - bankLimit); loadBankQuestions(false); }}
+                      >
+                        ← Trang trước
+                      </button>
+                      <button
+                        type="button"
+                        class="btn-page"
+                        disabled={bankOffset + bankLimit >= bankTotalCount || bankLoading}
+                        on:click={() => { bankOffset += bankLimit; loadBankQuestions(false); }}
+                      >
+                        Trang sau →
+                      </button>
+                    </div>
+                  </div>
+                {/if}
+              {/if}
+            </div>
+          {:else if sourceMode === 'knowledge_vault'}
+            <div class="kv-panel auto-source-box">
+              <span class="box-title">📖 Chọn bài học từ Kho tri thức (Knowledge Vault)</span>
+              <div class="kv-search-bar">
+                <input
+                  type="text"
+                  placeholder="Tìm kiếm bài học theo chủ đề, tiêu đề (VD: Grammar, Unit 7)..."
+                  bind:value={kvQuery}
+                  on:keydown={(e) => e.key === 'Enter' && loadKnowledgeVaultArticles()}
+                />
+                <button type="button" class="btn-search" on:click={() => loadKnowledgeVaultArticles()}>Tìm kiếm</button>
+              </div>
+              {#if kvLoading}
+                <div class="bank-loading"><div class="spinner"></div> Đang tìm bài học từ Kho tri thức...</div>
+              {:else if kvArticles.length === 0}
+                <div class="empty-state">
+                  <span>🔍</span>
+                  <p>Chưa tìm thấy bài học nào phù hợp. Bấm "Tất cả bài học" hoặc nhập từ khóa khác.</p>
+                  <button type="button" class="btn-outline compact" on:click={() => { kvQuery = ''; loadKnowledgeVaultArticles(); }}>Tất cả bài học</button>
+                </div>
+              {:else}
+                <div class="kv-article-list">
+                  {#each kvArticles as art (art.id)}
+                    <label class="kv-article-card" class:selected={kvSelectedArticleId === art.id}>
+                      <input
+                        type="radio"
+                        name="kv_article_choice"
+                        value={art.id}
+                        checked={kvSelectedArticleId === art.id}
+                        on:change={() => kvSelectedArticleId = art.id}
+                      />
+                      <div class="kv-article-info">
+                        <div class="kv-article-title">
+                          <strong>{art.title}</strong>
+                          {#if art.category}<span class="tag grade">{art.category}</span>{/if}
+                        </div>
+                        {#if art.preview}<p class="kv-article-preview">{art.preview}...</p>{/if}
+                      </div>
+                    </label>
+                  {/each}
+                </div>
+              {/if}
+            </div>
+          {/if}
+
+          <!-- Chế độ thêm câu hỏi (Merge Strategy) -->
+          <div class="merge-strategy-section">
+            <span class="section-label">4. Chế độ thêm câu hỏi vào đề:</span>
+            <div class="merge-options-group">
+              <label class="merge-option" class:active={mergeStrategy === 'append'}>
+                <input type="radio" bind:group={mergeStrategy} value="append" />
+                <div class="merge-text">
+                  <strong>➕ Thêm vào đề (Mặc định)</strong>
+                  <small>Giữ nguyên các câu hỏi đã có trong bản nháp, bổ sung câu hỏi mới</small>
+                </div>
+              </label>
+              <label class="merge-option" class:active={mergeStrategy === 'replace'}>
+                <input
+                  type="radio"
+                  bind:group={mergeStrategy}
+                  value="replace"
+                  on:change={() => {
+                    if (draft.questions.length > 0) showReplaceConfirm = true;
+                  }}
+                />
+                <div class="merge-text">
+                  <strong>🔄 Thay thế toàn bộ</strong>
+                  <small>Xóa các câu hỏi cũ trong bản nháp khi sinh mới</small>
+                </div>
+              </label>
+            </div>
+            {#if mergeStrategy === 'replace' && draft.questions.length > 0}
+              <div class="replace-warning-banner">
+                <span class="warning-icon">⚠️</span>
+                <div>
+                  <strong>Cảnh báo Thay thế:</strong> Bạn đang chọn thay thế toàn bộ. Khi bấm tạo đề, tất cả <b>{draft.questions.length}</b> câu hỏi hiện tại trong bản nháp sẽ bị xóa và thay thế.
+                </div>
+              </div>
+            {/if}
+          </div>
+
+          <!-- Báo cáo chất lượng sinh câu hỏi / Degraded Reason -->
+          {#if lastGenerationReport}
+            <div class="generation-report-banner" class:degraded={lastGenerationReport.degraded_reason || (lastGenerationReport.degraded_types && lastGenerationReport.degraded_types.length > 0)}>
+              {#if lastGenerationReport.degraded_reason || (lastGenerationReport.degraded_types && lastGenerationReport.degraded_types.length > 0)}
+                <div class="report-header">
+                  <span class="report-icon">⚠️</span>
+                  <div>
+                    <strong>Thông báo chất lượng sinh đề:</strong>
+                    <p>{lastGenerationReport.degraded_reason || 'Một số dạng câu hỏi không đủ dữ liệu grounded để sinh.'}</p>
+                    {#if lastGenerationReport.degraded_types?.length}
+                      <small>Dạng bị giảm/bỏ qua: {lastGenerationReport.degraded_types.join(', ')}</small>
+                    {/if}
+                  </div>
+                </div>
+              {:else}
+                <div class="report-header">
+                  <span class="report-icon">✅</span>
+                  <div>
+                    <strong>Sinh câu hỏi thành công đầy đủ theo cấu hình!</strong>
+                  </div>
+                </div>
+              {/if}
+              {#if lastGenerationReport.requested_counts || lastGenerationReport.generated_counts}
+                <div class="report-breakdown">
+                  <span>Chi tiết số lượng:</span>
+                  {#each Object.entries(lastGenerationReport.requested_counts || {}) as [t, reqCount]}
+                    <span class="count-badge">
+                      {t}: {lastGenerationReport.generated_counts?.[t] || 0}/{reqCount}
+                    </span>
+                  {/each}
+                </div>
+              {/if}
+            </div>
+          {/if}
+
+          <!-- Auto Action Bar -->
+          <div class="auto-action-bar">
+            <button
+              type="button"
+              class="btn-main btn-generate"
+              disabled={autoGenerating}
+              on:click={autoGenerateQuiz}
+            >
+              {autoGenerating ? '⏳ Đang tự động phân tích & tạo quiz...' : '⚡ Tự động tạo Quiz'}
+            </button>
+            <button
+              type="button"
+              class="btn-outline"
+              disabled={defaultsSaving}
+              on:click={saveBuilderDefaults}
+            >
+              {defaultsSaving ? 'Đang lưu...' : '💾 Lưu cấu hình mặc định'}
+            </button>
+          </div>
+
+          <!-- Preview & Lưu sau khi Auto sinh câu hỏi -->
+          {#if draft.questions.length > 0}
+            <div class="generated-preview-section">
+              <div class="section-heading">
+                <div>
+                  <span class="section-kicker">KẾT QUẢ TỰ ĐỘNG</span>
+                  <h3>Bản nháp ({draft.questions.length} câu)</h3>
+                  <small>Kiểm tra nội dung trước khi xuất bản hoặc sửa trực tiếp bên dưới.</small>
+                </div>
+              </div>
+
+              <div class="question-editor-list">
+                {#each draft.questions as question, index (question.id)}
+                  <article class="editor-card">
+                    <header>
+                      <span class="question-number">{index + 1}</span>
+                      <select aria-label={`Dạng câu ${index + 1}`} value={question.type} on:change={(e) => changeQuestionType(question, e.currentTarget.value)}>
+                        {#each questionTypes as type}<option value={type[0]}>{type[1]}</option>{/each}
+                      </select>
+                      <div class="editor-actions">
+                        <button aria-label="Đưa câu lên" on:click={() => moveQuestion(index, -1)} disabled={index === 0}>↑</button>
+                        <button aria-label="Đưa câu xuống" on:click={() => moveQuestion(index, 1)} disabled={index === draft.questions.length - 1}>↓</button>
+                        <button class="delete" aria-label="Xóa câu" on:click={() => removeQuestion(index)}>×</button>
+                      </div>
+                    </header>
+                    <label>Nội dung câu hỏi<textarea bind:value={question.prompt} rows="2" placeholder="Nhập câu hỏi..."></textarea></label>
+                    {#if question.type === 'picture_guess'}
+                      <label>Đường dẫn ảnh<input type="url" bind:value={question.prompt_image_url} placeholder="https://..." /></label>
+                    {/if}
+                    {#if question.type === 'multiple_choice'}
+                      <div class="option-editor">
+                        <span class="field-label">Các lựa chọn và đáp án đúng</span>
+                        {#each question.options as option, optionIndex}
+                          <div class="option-row">
+                            <input type="radio" name={`correct-${question.id}`} value={option} checked={question.correct_answer === option} on:change={() => question.correct_answer = option} aria-label={`Chọn đáp án ${optionIndex + 1} là đúng`} />
+                            <input value={option} on:input={(e) => updateOption(question, optionIndex, e.currentTarget.value)} aria-label={`Lựa chọn ${optionIndex + 1}`} />
+                            <button on:click={() => removeOption(question, optionIndex)} aria-label="Xóa lựa chọn">×</button>
+                          </div>
+                        {/each}
+                        <button class="text-button" on:click={() => addOption(question)}>＋ Thêm lựa chọn</button>
+                      </div>
+                    {:else if question.type === 'true_false'}
+                      <div class="option-editor">
+                        <span class="field-label">Đáp án đúng</span>
+                        <div class="tf-choices">
+                          <label><input type="radio" name={`tf-${question.id}`} value="Đúng" checked={question.correct_answer === 'Đúng'} on:change={() => question.correct_answer = 'Đúng'} /> Đúng</label>
+                          <label><input type="radio" name={`tf-${question.id}`} value="Sai" checked={question.correct_answer === 'Sai'} on:change={() => question.correct_answer = 'Sai'} /> Sai</label>
+                        </div>
+                      </div>
+                    {:else if question.type === 'matching' || question.type === 'memory_match'}
+                      <div class="pair-editor">
+                        <span class="field-label">Các cặp đúng</span>
+                        {#each question.left as left, pairIndex}
+                          <div><input value={left} on:input={(e) => updatePair(question, 'left', pairIndex, e.currentTarget.value)} aria-label={`Vế trái ${pairIndex + 1}`} /><span>↔</span><input value={question.right[pairIndex]} on:input={(e) => updatePair(question, 'right', pairIndex, e.currentTarget.value)} aria-label={`Vế phải ${pairIndex + 1}`} /></div>
+                        {/each}
+                        <button class="text-button" on:click={() => addPair(question)}>＋ Thêm cặp</button>
+                      </div>
+                    {:else if !['paragraph', 'rewrite', 'essay'].includes(question.type)}
+                      <label>Đáp án đúng<input bind:value={question.correct_answer} placeholder="Đáp án để chấm tự động" /></label>
+                    {:else}
+                      <div class="review-note">Câu này sẽ được giáo viên chấm sau khi học viên nộp bài.</div>
+                    {/if}
+                    <div class="editor-bottom">
+                      <label>Điểm<input type="number" min="0" max="100" step="0.5" bind:value={question.points} /></label>
+                      <label>Giải thích<input bind:value={question.explanation} placeholder="Hiện sau khi chấm" /></label>
+                    </div>
+                  </article>
+                {/each}
+              </div>
+
+              <div class="save-bar">
+                <div><strong>{draft.questions.length} câu hỏi</strong><small>Kiểm tra nội dung trước khi xuất bản</small></div>
+                <button class="btn-outline" disabled={!isStaff} on:click={() => saveDraft(false)}>Lưu nháp</button>
+                <button class="btn-main" disabled={!isStaff} on:click={() => saveDraft(true)}>Xuất bản Quiz</button>
+              </div>
+            </div>
+          {/if}
+        </div>
+      {:else}
+        <!-- Manual Mode Workspace -->
+        <div class="manual-builder-shell">
+          <div class="section-heading">
+            <div><span class="section-kicker">SOẠN BÀI THỦ CÔNG</span><h2>Tự soạn từng câu hỏi</h2></div>
+            <span class="draft-count">{draft.questions.length} câu</span>
+          </div>
+
+          <div class="form-grid">
+            <label class="wide">Tên quiz<input bind:value={draft.title} maxlength="150" placeholder="Ví dụ: Unit 3 · At home" /></label>
+            <label>Thời gian (phút)<input type="number" min="1" max="180" bind:value={draft.time_limit_minutes} /></label>
+            <label class="wide">Mô tả<textarea bind:value={draft.description} maxlength="2000" rows="2" placeholder="Mục tiêu và hướng dẫn ngắn"></textarea></label>
+          </div>
+
+          <div class="type-picker">
+            <h3>Thêm dạng câu hỏi</h3>
+            <div class="type-grid">
+              {#each questionTypes as type}
+                <button type="button" on:click={() => addQuestion(type[0])}><span>＋</span><div><strong>{type[1]}</strong><small>{type[2]}</small></div></button>
+              {/each}
+            </div>
+          </div>
+
+          <div class="question-editor-list">
+            {#each draft.questions as question, index (question.id)}
+              <article class="editor-card">
+                <header>
+                  <span class="question-number">{index + 1}</span>
+                  <select aria-label={`Dạng câu ${index + 1}`} value={question.type} on:change={(e) => changeQuestionType(question, e.currentTarget.value)}>
+                    {#each questionTypes as type}<option value={type[0]}>{type[1]}</option>{/each}
+                  </select>
+                  <div class="editor-actions">
+                    <button aria-label="Đưa câu lên" on:click={() => moveQuestion(index, -1)} disabled={index === 0}>↑</button>
+                    <button aria-label="Đưa câu xuống" on:click={() => moveQuestion(index, 1)} disabled={index === draft.questions.length - 1}>↓</button>
+                    <button class="delete" aria-label="Xóa câu" on:click={() => removeQuestion(index)}>×</button>
+                  </div>
+                </header>
+                <label>Nội dung câu hỏi<textarea bind:value={question.prompt} rows="2" placeholder="Nhập câu hỏi..."></textarea></label>
+                {#if question.type === 'picture_guess'}
+                  <label>Đường dẫn ảnh<input type="url" bind:value={question.prompt_image_url} placeholder="https://..." /></label>
+                {/if}
+                {#if question.type === 'multiple_choice'}
+                  <div class="option-editor">
+                    <span class="field-label">Các lựa chọn và đáp án đúng</span>
+                    {#each question.options as option, optionIndex}
+                      <div class="option-row">
+                        <input type="radio" name={`correct-${question.id}`} value={option} checked={question.correct_answer === option} on:change={() => question.correct_answer = option} aria-label={`Chọn đáp án ${optionIndex + 1} là đúng`} />
+                        <input value={option} on:input={(e) => updateOption(question, optionIndex, e.currentTarget.value)} aria-label={`Lựa chọn ${optionIndex + 1}`} />
+                        <button on:click={() => removeOption(question, optionIndex)} aria-label="Xóa lựa chọn">×</button>
+                      </div>
+                    {/each}
+                    <button class="text-button" on:click={() => addOption(question)}>＋ Thêm lựa chọn</button>
+                  </div>
+                {:else if question.type === 'true_false'}
+                  <div class="option-editor">
+                    <span class="field-label">Đáp án đúng</span>
+                    <div class="tf-choices">
+                      <label><input type="radio" name={`tf-${question.id}`} value="Đúng" checked={question.correct_answer === 'Đúng'} on:change={() => question.correct_answer = 'Đúng'} /> Đúng</label>
+                      <label><input type="radio" name={`tf-${question.id}`} value="Sai" checked={question.correct_answer === 'Sai'} on:change={() => question.correct_answer = 'Sai'} /> Sai</label>
+                    </div>
+                  </div>
+                {:else if question.type === 'matching' || question.type === 'memory_match'}
+                  <div class="pair-editor">
+                    <span class="field-label">Các cặp đúng</span>
+                    {#each question.left as left, pairIndex}
+                      <div><input value={left} on:input={(e) => updatePair(question, 'left', pairIndex, e.currentTarget.value)} aria-label={`Vế trái ${pairIndex + 1}`} /><span>↔</span><input value={question.right[pairIndex]} on:input={(e) => updatePair(question, 'right', pairIndex, e.currentTarget.value)} aria-label={`Vế phải ${pairIndex + 1}`} /></div>
+                    {/each}
+                    <button class="text-button" on:click={() => addPair(question)}>＋ Thêm cặp</button>
+                  </div>
+                {:else if !['paragraph', 'rewrite', 'essay'].includes(question.type)}
+                  <label>Đáp án đúng<input bind:value={question.correct_answer} placeholder="Đáp án để chấm tự động" /></label>
+                {:else}
+                  <div class="review-note">Câu này sẽ được giáo viên hoặc leader chấm sau khi học viên nộp bài.</div>
+                {/if}
+                <div class="editor-bottom">
+                  <label>Điểm<input type="number" min="0" max="100" step="0.5" bind:value={question.points} /></label>
+                  <label>Giải thích<input bind:value={question.explanation} placeholder="Hiện sau khi chấm" /></label>
+                </div>
+              </article>
+            {:else}
+              <div class="empty-editor"><span>✦</span><h3>Bắt đầu bằng một câu hỏi</h3><p>Chọn một trong các dạng phía trên để thêm câu hỏi.</p></div>
+            {/each}
+          </div>
+
+          <div class="save-bar">
+            <div><strong>{draft.questions.length} câu hỏi</strong><small>Kiểm tra nội dung trước khi xuất bản</small></div>
+            <button class="btn-outline" disabled={!isStaff} on:click={() => saveDraft(false)}>Lưu nháp</button>
+            <button class="btn-main" disabled={!isStaff} on:click={() => saveDraft(true)}>Xuất bản Quiz</button>
+          </div>
+        </div>
+      {/if}
     </section>
     {/if}
   {:else if activeTab === 'mine'}
@@ -1078,11 +1869,71 @@
           <article class:deferred={isDeferred(question.id)} class="exam-question" id={`question-${question.id}`}>
             <div class="question-head"><span>Câu {index + 1}</span><div><button class="defer-button" on:click={() => toggleDeferred(question.id)}>{isDeferred(question.id) ? '✓ Để làm sau' : 'Không hiểu'}</button><b>{question.points} điểm</b></div></div>
             <h2>{question.prompt}</h2>
-            {#if question.prompt_image_url}<img class="question-image" src={question.prompt_image_url} alt="Minh họa câu hỏi" />{/if}
+            {#if question.prompt_image_url}
+              {#if isAllowedImageUrl(question.prompt_image_url)}
+                <img
+                  class="question-image"
+                  src={question.prompt_image_url}
+                  alt="Minh họa câu hỏi"
+                  on:error={(e) => {
+                    e.currentTarget.style.display = 'none';
+                    const fb = e.currentTarget.nextElementSibling;
+                    if (fb) fb.style.display = 'flex';
+                  }}
+                />
+                <div class="image-fallback-placeholder" style="display:none; padding:10px; background:#f5f5f4; border:1px dashed #d6d3d1; border-radius:6px; color:#78716c; font-size:12px; align-items:center; gap:6px;">
+                  <span>🖼️</span> Không thể tải ảnh minh họa
+                </div>
+              {:else}
+                <div class="image-blocked-placeholder" style="padding:10px; background:#fffbeb; border:1px dashed #f59e0b; border-radius:6px; color:#b45309; font-size:12px; display:flex; align-items:center; gap:6px;">
+                  <span>⚠️</span> Ảnh từ nguồn bên ngoài chưa được kiểm duyệt để đảm bảo an toàn riêng tư
+                </div>
+              {/if}
+            {/if}
             {#if isDeferred(question.id)}
               <div class="deferred-note">Phần này đã được lưu để bạn hỏi giáo viên và sửa sau. Bấm “Để làm sau” lần nữa khi đã hiểu.</div>
             {:else if question.type === 'multiple_choice'}
               <div class="answer-options">{#each question.options || [] as option, optionIndex}<label class:selected={answers[question.id] === option}><input type="radio" name={question.id} value={option} checked={answers[question.id] === option} on:change={() => setAnswer(question.id, option)} /><span>{String.fromCharCode(65 + optionIndex)}</span><strong>{option}</strong></label>{/each}</div>
+            {:else if question.type === 'true_false'}
+              <div class="answer-options tf-options" style="display:flex; gap:12px;">
+                {#each (question.options || ['Đúng', 'Sai']) as opt}
+                  <label class:selected={answers[question.id] === opt} style="display:flex; align-items:center; gap:8px; padding:10px 16px; border:1px solid #e7e5e4; border-radius:8px; cursor:pointer;">
+                    <input type="radio" name={question.id} value={opt} checked={answers[question.id] === opt} on:change={() => setAnswer(question.id, opt)} />
+                    <strong>{opt}</strong>
+                  </label>
+                {/each}
+              </div>
+            {:else if question.type === 'ordering'}
+              <div class="ordering-answer">
+                <p style="font-size:12px; color:#78716c; margin-bottom:8px;">Sắp xếp theo thứ tự đúng (bấm ▲ / ▼ để đổi vị trí):</p>
+                <div style="display:flex; flex-direction:column; gap:6px;">
+                  {#each (answers[question.id] || question.options?.items || (Array.isArray(question.options) ? question.options : [])) as item, itemIdx}
+                    <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 12px; background:#f5f5f4; border:1px solid #e7e5e4; border-radius:6px;">
+                      <span style="font-weight:600; font-size:13px;">{itemIdx + 1}. {item}</span>
+                      <div style="display:flex; gap:4px;">
+                        <button type="button" class="btn-step" disabled={itemIdx === 0} on:click={() => moveOrderItem(question.id, itemIdx, -1)} aria-label="Lên">▲</button>
+                        <button type="button" class="btn-step" disabled={itemIdx === (answers[question.id] || question.options?.items || question.options || []).length - 1} on:click={() => moveOrderItem(question.id, itemIdx, 1)} aria-label="Xuống">▼</button>
+                      </div>
+                    </div>
+                  {/each}
+                </div>
+              </div>
+            {:else if question.type === 'memory_match'}
+              <div class="memory-answer">
+                <p style="font-size:12px; color:#78716c; margin-bottom:8px;">Ghép đôi các thẻ nhớ tương ứng:</p>
+                {#each (question.options?.pairs ? question.options.pairs.map(p => p.a) : question.options?.left || []) as leftItem}
+                  <label style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+                    <strong style="min-width:120px;">{leftItem}</strong>
+                    <span>↔</span>
+                    <select value={answers[question.id]?.[leftItem] || ''} on:change={(e) => setMatching(question.id, leftItem, e.currentTarget.value)}>
+                      <option value="">Chọn thẻ ghép cặp</option>
+                      {#each (question.options?.pairs ? question.options.pairs.map(p => p.b) : question.options?.right || []) as rightItem}
+                        <option value={rightItem}>{rightItem}</option>
+                      {/each}
+                    </select>
+                  </label>
+                {/each}
+              </div>
             {:else if question.type === 'matching'}
               <div class="matching-answer">{#each question.options?.left || [] as left}<label><strong>{left}</strong><span>→</span><select value={answers[question.id]?.[left] || ''} on:change={(e) => setMatching(question.id, left, e.currentTarget.value)}><option value="">Chọn đáp án</option>{#each question.options?.right || [] as right}<option value={right}>{right}</option>{/each}</select></label>{/each}</div>
             {:else if ['paragraph', 'rewrite'].includes(question.type)}
@@ -1218,8 +2069,78 @@
   .bank-end-note{font-size:.82rem;color:#059669;font-weight:600;margin-left:6px}
   .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border-width:0}
 
-  @media(max-width:800px){.quiz-page{padding:16px 12px 90px}.quiz-hero{padding:26px 22px;min-height:160px}.hero-mark{width:70px;height:70px;flex-basis:70px;font-size:2rem}.workspace{padding:18px}.source-grid,.type-grid,.quiz-grid,.loading-grid{grid-template-columns:1fr 1fr}.bank-filters{grid-template-columns:1fr 1fr}.source-panel{grid-template-columns:1fr}.bundle-grid,.homework-fields{grid-template-columns:1fr 1fr}.exam-content{grid-template-columns:1fr;padding:18px 12px 70px}.exam-content aside{position:static}.question-map{grid-template-columns:repeat(8,1fr)}.exam-topbar{grid-template-columns:1fr auto}.abandon{grid-column:1/-1;width:100%;margin-top:6px}.progress-track{top:124px}.exam-question{scroll-margin-top:135px}}
-  @media(max-width:560px){.quiz-hero{align-items:flex-end}.hero-mark{position:absolute;right:18px;top:18px;opacity:.38}.quiz-hero p{padding-right:20px}.tabs{gap:3px}.tabs button{font-size:.75rem;padding:5px}.tabs button span{display:block;margin:0;font-size:1rem}.source-grid,.type-grid,.quiz-grid,.loading-grid,.form-grid,.bundle-grid,.homework-fields,.bank-filters{grid-template-columns:1fr}.form-grid .wide{grid-column:1}.source-card{min-height:78px}.type-grid button{min-height:58px}.editor-card{padding:13px}.editor-card header{flex-wrap:wrap}.editor-card header select{order:3;width:100%;max-width:none}.editor-actions{margin-left:auto}.editor-bottom{grid-template-columns:90px 1fr}.save-bar{flex-wrap:wrap;bottom:8px}.save-bar>div{width:100%}.save-bar button{flex:1}.section-heading{align-items:flex-start}.question-map{grid-template-columns:repeat(6,1fr)}.exam-topbar{padding:8px 10px}.exam-title>span{display:none}.exam-title strong{display:block;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.countdown{padding:4px 10px}.exam-question{padding:17px}.question-head{align-items:flex-start}.question-head>div{flex-direction:column-reverse;align-items:flex-end}.matching-answer label{grid-template-columns:1fr}.matching-answer label>span{transform:rotate(90deg)}.submit-panel{align-items:stretch;flex-direction:column}.submit-actions{flex-direction:column}.start-dialog,.result-dialog,.bundle-dialog{padding:25px 18px}.modal-backdrop{padding:10px}.rules{grid-template-columns:1fr 1fr}.bank-action-bar{flex-direction:column;align-items:stretch}.bank-buttons{flex-direction:column}.bank-buttons button{width:100%}.quick-import-wrap{width:100%;justify-content:space-between;margin-left:0}}
+  /* Auto Builder & Mode Switcher Styles */
+  .builder-mode-switcher{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px;padding:6px;background:#f5f5f4;border:1px solid #e7e5e4;border-radius:12px}
+  .mode-btn{display:flex;align-items:center;gap:12px;padding:12px 18px;border:1px solid transparent;background:transparent;border-radius:9px;color:#57534e;cursor:pointer;text-align:left;transition:all .18s ease;min-height:56px}
+  .mode-btn:hover{background:white;color:#1c1917}
+  .mode-btn.active{background:white;border-color:#a7f3d0;color:#065f46;box-shadow:0 4px 14px rgba(5,150,105,.1)}
+  .mode-icon{font-size:1.4rem;display:grid;place-items:center;width:38px;height:38px;border-radius:8px;background:#f5f5f4;color:#059669;flex-shrink:0}
+  .mode-btn.active .mode-icon{background:#ecfdf5}
+  .mode-btn strong{display:block;font-size:.95rem;color:#1c1917}
+  .mode-btn small{display:block;font-size:.78rem;color:#78716c;margin-top:2px}
+  .mode-warning-banner{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;padding:14px 18px;background:#fffbeb;border:1.5px solid #fde68a;border-radius:10px;margin-bottom:20px}
+  .warning-text strong{color:#92400e;display:block;margin-bottom:2px}
+  .warning-text p{margin:0;font-size:.85rem;color:#78350f}
+  .warning-actions{display:flex;gap:8px}
+  .auto-builder-shell,.manual-builder-shell{display:flex;flex-direction:column;gap:20px}
+  .section-label{font-size:.88rem;font-weight:700;color:#292524;display:block;margin-bottom:10px}
+  .type-mix-section{background:#fafaf9;border:1px solid #e7e5e4;border-radius:10px;padding:18px}
+  .type-mix-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px}
+  .allocation-pill{background:#ecfdf5;color:#059669;border:1px solid #a7f3d0;padding:4px 10px;border-radius:20px;font-size:.82rem;font-weight:600}
+  .type-mix-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+  .type-mix-card{border:1px solid #e7e5e4;border-radius:8px;padding:12px;background:white;display:flex;flex-direction:column;justify-content:space-between;gap:8px;transition:border-color .15s ease}
+  .type-mix-card.active{border-color:#34d399;background:#fafffa;box-shadow:inset 0 0 0 1px #a7f3d0}
+  .type-card-head{display:flex;align-items:center;justify-content:space-between;gap:6px}
+  .type-toggle-label{display:flex;align-items:center;gap:8px;cursor:pointer;flex:1}
+  .type-toggle-label input{width:18px;height:18px;min-height:18px;accent-color:#059669;cursor:pointer}
+  .type-name{font-size:.86rem;color:#1c1917}
+  .type-icon{font-size:1.1rem;color:#059669}
+  .type-desc{font-size:.76rem;color:#78716c;margin:0;line-height:1.35}
+  .type-stepper{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-top:8px;border-top:1px solid #f5f5f4}
+  .btn-step{width:34px;height:34px;min-height:34px;border:1px solid #d6d3d1;background:#fafaf9;border-radius:6px;font-weight:700;font-size:1.1rem;color:#1c1917;cursor:pointer;display:grid;place-items:center}
+  .btn-step:hover:not(:disabled){background:#ecfdf5;border-color:#059669;color:#059669}
+  .btn-step:disabled{opacity:.35;cursor:not-allowed}
+  .step-value{font-size:.84rem;font-weight:700;color:#059669}
+  .auto-source-box{display:flex;flex-direction:column;gap:12px}
+  .box-title{font-size:.9rem;font-weight:700;color:#065f46}
+  .upload-options{display:flex;flex-direction:column;gap:12px}
+  .file-label{font-size:.84rem;font-weight:600;color:#44403c}
+  .auto-action-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:16px;background:#fafaf9;border:1px solid #e7e5e4;border-radius:10px}
+  .btn-generate{font-size:1rem;font-weight:700;padding:12px 24px}
+  .tf-choices{display:flex;gap:20px;padding:8px 0}
+  .merge-strategy-section{background:#fafaf9;border:1px solid #e7e5e4;border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:12px}
+  .merge-options-group{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .merge-option{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border:1.5px solid #e7e5e4;border-radius:8px;background:white;cursor:pointer;transition:border-color .15s ease}
+  .merge-option input{margin-top:3px;accent-color:#059669}
+  .merge-option.active{border-color:#059669;background:#fafffa}
+  .merge-text strong{display:block;font-size:.9rem;color:#1c1917}
+  .merge-text small{display:block;font-size:.78rem;color:#78716c;margin-top:2px}
+  .replace-warning-banner{display:flex;align-items:center;gap:10px;padding:12px 16px;background:#fffbeb;border:1.5px solid #fde68a;border-radius:8px;color:#92400e;font-size:.85rem}
+  .warning-icon{font-size:1.2rem}
+  .generation-report-banner{background:#ecfdf5;border:1.5px solid #a7f3d0;border-radius:10px;padding:14px 18px;display:flex;flex-direction:column;gap:10px}
+  .generation-report-banner.degraded{background:#fffbeb;border-color:#fde68a}
+  .report-header{display:flex;align-items:flex-start;gap:10px}
+  .report-icon{font-size:1.2rem}
+  .report-header strong{font-size:.92rem;color:#1c1917;display:block}
+  .report-header p{margin:2px 0 0;font-size:.84rem;color:#44403c}
+  .report-header small{display:block;font-size:.78rem;color:#78716c;margin-top:3px}
+  .report-breakdown{display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding-top:8px;border-top:1px dashed #d6d3d1;font-size:.82rem;color:#57534e}
+  .count-badge{background:white;border:1px solid #d6d3d1;padding:2px 8px;border-radius:12px;font-size:.78rem;font-weight:600;color:#292524}
+  .kv-panel{display:flex;flex-direction:column;gap:12px}
+  .kv-search-bar{display:flex;gap:8px}
+  .kv-search-bar input{flex:1;min-height:40px;padding:0 12px;border:1px solid #d6d3d1;border-radius:6px;font-size:.88rem}
+  .kv-article-list{display:flex;flex-direction:column;gap:8px;max-height:280px;overflow-y:auto;padding-right:4px}
+  .kv-article-card{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;border:1px solid #e7e5e4;border-radius:8px;background:white;cursor:pointer;transition:border-color .15s ease}
+  .kv-article-card:hover{border-color:#a8a29e}
+  .kv-article-card.selected{border-color:#059669;background:#fafffa}
+  .kv-article-card input{margin-top:4px;accent-color:#059669}
+  .kv-article-info{flex:1;min-width:0}
+  .kv-article-title{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .kv-article-title strong{font-size:.9rem;color:#1c1917}
+  .kv-article-preview{font-size:.78rem;color:#78716c;margin:3px 0 0;line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+  @media(max-width:800px){.quiz-page{padding:16px 12px 90px}.quiz-hero{padding:26px 22px;min-height:160px}.hero-mark{width:70px;height:70px;flex-basis:70px;font-size:2rem}.workspace{padding:18px}.source-grid,.type-grid,.quiz-grid,.loading-grid{grid-template-columns:1fr 1fr}.bank-filters{grid-template-columns:1fr 1fr}.source-panel{grid-template-columns:1fr}.bundle-grid,.homework-fields{grid-template-columns:1fr 1fr}.builder-mode-switcher{grid-template-columns:1fr}.type-mix-grid{grid-template-columns:1fr 1fr}.merge-options-group{grid-template-columns:1fr}.exam-content{grid-template-columns:1fr;padding:18px 12px 70px}.exam-content aside{position:static}.question-map{grid-template-columns:repeat(8,1fr)}.exam-topbar{grid-template-columns:1fr auto}.abandon{grid-column:1/-1;width:100%;margin-top:6px}.progress-track{top:124px}.exam-question{scroll-margin-top:135px}}
+  @media(max-width:560px){.quiz-hero{align-items:flex-end}.hero-mark{position:absolute;right:18px;top:18px;opacity:.38}.quiz-hero p{padding-right:20px}.tabs{gap:3px}.tabs button{font-size:.75rem;padding:5px}.tabs button span{display:block;margin:0;font-size:1rem}.source-grid,.type-grid,.quiz-grid,.loading-grid,.form-grid,.bundle-grid,.homework-fields,.bank-filters{grid-template-columns:1fr}.type-mix-grid{grid-template-columns:1fr}.auto-action-bar{flex-direction:column;align-items:stretch}.auto-action-bar button{width:100%}.form-grid .wide{grid-column:1}.source-card{min-height:78px}.type-grid button{min-height:58px}.editor-card{padding:13px}.editor-card header{flex-wrap:wrap}.editor-card header select{order:3;width:100%;max-width:none}.editor-actions{margin-left:auto}.editor-bottom{grid-template-columns:90px 1fr}.save-bar{flex-wrap:wrap;bottom:8px}.save-bar>div{width:100%}.save-bar button{flex:1}.section-heading{align-items:flex-start}.question-map{grid-template-columns:repeat(6,1fr)}.exam-topbar{padding:8px 10px}.exam-title>span{display:none}.exam-title strong{display:block;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.countdown{padding:4px 10px}.exam-question{padding:17px}.question-head{align-items:flex-start}.question-head>div{flex-direction:column-reverse;align-items:flex-end}.matching-answer label{grid-template-columns:1fr}.matching-answer label>span{transform:rotate(90deg)}.submit-panel{align-items:stretch;flex-direction:column}.submit-actions{flex-direction:column}.start-dialog,.result-dialog,.bundle-dialog{padding:25px 18px}.modal-backdrop{padding:10px}.rules{grid-template-columns:1fr 1fr}.bank-action-bar{flex-direction:column;align-items:stretch}.bank-buttons{flex-direction:column}.bank-buttons button{width:100%}.quick-import-wrap{width:100%;justify-content:space-between;margin-left:0}}
   @media(max-width:1024px){.save-bar{bottom:calc(84px + env(safe-area-inset-bottom))}}
   @media(max-width:640px){.source-grid,.type-grid,.quiz-grid,.loading-grid{grid-template-columns:1fr}.quiz-page{padding-left:12px;padding-right:12px}}
   @media(max-width:390px){.hero-mark{display:none}.modal-backdrop{padding:0}.start-dialog,.result-dialog,.bundle-dialog{width:100%;max-height:100dvh;border-radius:0;padding:22px 14px}.exam-topbar{grid-template-columns:1fr auto}.quiz-page{overflow-x:hidden}.bank-q-options{grid-template-columns:1fr}}

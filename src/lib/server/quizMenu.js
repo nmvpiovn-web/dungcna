@@ -1,7 +1,11 @@
 export const QUIZ_TYPES = new Set([
-  'multiple_choice', 'fill_blank', 'matching', 'paragraph', 'picture_guess', 'rewrite'
+  'multiple_choice', 'fill_blank', 'matching', 'paragraph', 'picture_guess', 'rewrite',
+  'true_false', 'word_guess', 'ordering', 'memory_match'
 ]);
-export const OBJECTIVE_TYPES = new Set(['multiple_choice', 'fill_blank', 'matching', 'picture_guess']);
+export const OBJECTIVE_TYPES = new Set([
+  'multiple_choice', 'fill_blank', 'matching', 'picture_guess',
+  'true_false', 'word_guess', 'ordering', 'memory_match'
+]);
 
 export function makeId(prefix) {
   return `${prefix}_${Date.now().toString(36)}_${crypto.randomUUID().replaceAll('-', '').slice(0, 12)}`;
@@ -25,51 +29,91 @@ function parseJson(value, fallback) {
   try { return JSON.parse(value); } catch { return fallback; }
 }
 
+import { ALLOWED_IMAGE_HOSTS, isAllowedImageUrl } from '../quizMedia.js';
+export { ALLOWED_IMAGE_HOSTS, isAllowedImageUrl };
+
 export function validateQuestion(input, index = 0) {
-  const type = String(input?.type || '');
+  let type = String(input?.type || '');
+  if (type === 'essay') type = 'paragraph'; // normalize legacy essay to canonical paragraph
   const prompt = String(input?.prompt || '').trim();
   const points = Number(input?.points ?? 1);
   if (!QUIZ_TYPES.has(type)) return { error: `Loại câu hỏi không hợp lệ tại vị trí ${index + 1}` };
   if (!prompt || prompt.length > 5000) return { error: `Nội dung câu hỏi không hợp lệ tại vị trí ${index + 1}` };
   if (!Number.isFinite(points) || points < 0 || points > 100) return { error: `Điểm câu hỏi không hợp lệ tại vị trí ${index + 1}` };
-  if (type === 'picture_guess' && !String(input.prompt_image_url || '').trim()) {
+
+  let prompt_image_url = null;
+  const rawImageUrl = input?.prompt_image_url;
+  if (rawImageUrl !== undefined && rawImageUrl !== null && String(rawImageUrl).trim() !== '') {
+    const trimmed = String(rawImageUrl).trim();
+    if (!isAllowedImageUrl(trimmed)) {
+      return { error: `URL ảnh chỉ chấp nhận đường dẫn nội bộ (bắt đầu bằng /) hoặc domain https được kiểm duyệt tại vị trí ${index + 1}` };
+    }
+    prompt_image_url = trimmed;
+  }
+
+  if (type === 'picture_guess' && !prompt_image_url) {
     return { error: `Câu nhìn hình thiếu ảnh tại vị trí ${index + 1}` };
   }
   if (OBJECTIVE_TYPES.has(type)) {
     const rawAnswer = input.correct_answer;
     const answerBlank = rawAnswer === undefined || rawAnswer === null ||
       (typeof rawAnswer === 'string' && rawAnswer.trim() === '') ||
-      (typeof rawAnswer === 'object' && !Array.isArray(rawAnswer) && Object.keys(rawAnswer).length === 0);
+      (typeof rawAnswer === 'object' && !Array.isArray(rawAnswer) && Object.keys(rawAnswer).length === 0) ||
+      (Array.isArray(rawAnswer) && rawAnswer.length === 0);
     if (answerBlank) {
       return { error: `Câu khách quan thiếu đáp án tại vị trí ${index + 1}` };
     }
-    if (type === 'matching') {
+    if (type === 'matching' || type === 'memory_match') {
       const parsed = parseJson(typeof rawAnswer === 'string' ? rawAnswer : JSON.stringify(rawAnswer), null);
-      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed) || Object.keys(parsed).length === 0) {
-        return { error: `Câu nối từ thiếu đáp án tại vị trí ${index + 1}` };
+      if (!parsed || typeof parsed !== 'object' || Object.keys(parsed).length === 0) {
+        return { error: `Câu ghép nối thiếu đáp án tại vị trí ${index + 1}` };
       }
     }
   }
-  const options = type === 'matching'
-    ? parseJson(input.options_json, input.options_json)
-    : parseJson(input.options_json, []);
-  if (type === 'multiple_choice' && (!Array.isArray(options) || options.length < 2 || options.length > 8)) {
-    return { error: `Câu trắc nghiệm cần 2-8 lựa chọn tại vị trí ${index + 1}` };
+  let options = input.options_json !== undefined ? input.options_json : input.options;
+  if (typeof options === 'string') {
+    options = parseJson(options, options);
   }
-  if (type === 'matching' && (!options || !Array.isArray(options.left) || !Array.isArray(options.right))) {
-    return { error: `Câu nối từ thiếu hai danh sách tại vị trí ${index + 1}` };
+  if (type === 'multiple_choice') {
+    if (!Array.isArray(options) || options.length < 2 || options.length > 8) {
+      return { error: `Câu trắc nghiệm cần 2-8 lựa chọn tại vị trí ${index + 1}` };
+    }
+  } else if (type === 'true_false') {
+    if (!options) options = ['Đúng', 'Sai'];
+    if (!Array.isArray(options) || options.length !== 2) {
+      return { error: `Câu Đúng/Sai cần đúng 2 lựa chọn tại vị trí ${index + 1}` };
+    }
+  } else if (type === 'matching') {
+    if (!options || !Array.isArray(options.left) || !Array.isArray(options.right)) {
+      return { error: `Câu nối từ thiếu hai danh sách tại vị trí ${index + 1}` };
+    }
+  } else if (type === 'ordering') {
+    const items = Array.isArray(options?.items) ? options.items : (Array.isArray(options) ? options : null);
+    if (!items || items.length < 2) {
+      return { error: `Câu sắp xếp thứ tự cần ít nhất 2 mục tại vị trí ${index + 1}` };
+    }
+    if (!options.items) options = { items };
+  } else if (type === 'memory_match') {
+    const pairs = Array.isArray(options?.pairs) ? options.pairs : (Array.isArray(options) ? options : null);
+    if (!pairs || pairs.length < 1) {
+      return { error: `Câu ghép trí nhớ cần ít nhất 1 cặp thẻ tại vị trí ${index + 1}` };
+    }
+    if (!options.pairs) options = { pairs };
   }
+
   return {
     value: {
       id: String(input.id || makeId('qq')),
       type,
       prompt,
-      prompt_image_url: String(input.prompt_image_url || '').trim() || null,
+      prompt_image_url,
       options_json: options == null ? null : JSON.stringify(options),
       correct_answer: typeof input.correct_answer === 'string' ? input.correct_answer.trim() : JSON.stringify(input.correct_answer ?? ''),
       explanation: String(input.explanation || '').trim() || null,
       points,
-      q_order: Number.isInteger(Number(input.q_order)) ? Number(input.q_order) : index
+      q_order: Number.isInteger(Number(input.q_order)) ? Number(input.q_order) : index,
+      source_type: input.source_type ? String(input.source_type) : null,
+      source_id: input.source_id ? String(input.source_id) : null
     }
   };
 }
@@ -102,6 +146,16 @@ function matchingEqual(actual, expected) {
   return keys.length === Object.keys(a).length && keys.every((key) => normalizeAnswer(a[key]) === normalizeAnswer(e[key]));
 }
 
+function orderingEqual(actual, expected) {
+  const a = parseJson(actual, actual);
+  const e = parseJson(expected, expected);
+  if (Array.isArray(a) && Array.isArray(e)) {
+    if (a.length !== e.length) return false;
+    return a.every((item, idx) => normalizeAnswer(item) === normalizeAnswer(e[idx]));
+  }
+  return normalizeAnswer(a) === normalizeAnswer(e);
+}
+
 export function gradeAnswers(questionRows, answers) {
   const safeAnswers = answers && typeof answers === 'object' && !Array.isArray(answers) ? answers : {};
   let autoScore = 0;
@@ -115,9 +169,13 @@ export function gradeAnswers(questionRows, answers) {
     const objective = OBJECTIVE_TYPES.has(row.type);
     let correct = null;
     if (objective) {
-      correct = row.type === 'matching'
-        ? matchingEqual(submitted, row.correct_answer)
-        : normalizeAnswer(submitted) === normalizeAnswer(parseJson(row.correct_answer, row.correct_answer));
+      if (row.type === 'matching' || row.type === 'memory_match') {
+        correct = matchingEqual(submitted, row.correct_answer);
+      } else if (row.type === 'ordering') {
+        correct = orderingEqual(submitted, row.correct_answer);
+      } else {
+        correct = normalizeAnswer(submitted) === normalizeAnswer(parseJson(row.correct_answer, row.correct_answer));
+      }
       if (correct) autoScore += points;
     } else {
       needsReview = true;

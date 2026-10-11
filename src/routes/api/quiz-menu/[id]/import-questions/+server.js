@@ -110,7 +110,24 @@ export async function POST({ params, request, platform }) {
   }
 
   if (!bankRows.length) {
-    return json({ success: false, error: 'Không tìm thấy câu hỏi nào phù hợp từ kho câu hỏi (hoặc tất cả câu phù hợp đã được nhập)' }, { status: 400 });
+    if (questionIds && questionIds.length > 0) {
+      // Check if those question IDs exist in question_bank
+      const placeholders = questionIds.map(() => '?').join(', ');
+      const qbCheck = await db.prepare(
+        `SELECT COUNT(*) as c FROM question_bank WHERE id IN (${placeholders})`
+      ).bind(...questionIds).first();
+
+      if (qbCheck && qbCheck.c > 0) {
+        const totalCount = (await db.prepare('SELECT COUNT(*) as c FROM quiz_questions WHERE quiz_id = ?').bind(params.id).first())?.c || 0;
+        return json({
+          success: true,
+          imported_count: 0,
+          total_questions: totalCount,
+          message: 'Tất cả câu hỏi được chọn đã có trong quiz này (tránh trùng lặp).'
+        });
+      }
+    }
+    return json({ success: false, error: 'Không tìm thấy câu hỏi nào phù hợp từ kho câu hỏi' }, { status: 400 });
   }
 
   // Fetch current questions for deduplication and ordering

@@ -12,7 +12,8 @@ const TYPES = new Map([
   ['.txt', 'text/plain'],
   ['.png', 'image/png'],
   ['.jpg', 'image/jpeg'],
-  ['.jpeg', 'image/jpeg']
+  ['.jpeg', 'image/jpeg'],
+  ['.webp', 'image/webp']
 ]);
 
 export class QuizDriveError extends Error {
@@ -42,7 +43,7 @@ export function validateQuizFile(file) {
   const dot = name.lastIndexOf('.');
   const ext = dot >= 0 ? name.slice(dot).toLowerCase() : '';
   const expected = TYPES.get(ext);
-  if (!expected) throw new QuizDriveError('Chỉ hỗ trợ PDF, DOCX, TXT, PNG, JPG', 415, 'UnsupportedFileType');
+  if (!expected) throw new QuizDriveError('Chỉ hỗ trợ PDF, DOCX, TXT, PNG, JPG, WEBP', 415, 'UnsupportedFileType');
   if (!Number.isFinite(file.size) || file.size <= 0) throw new QuizDriveError('Tệp rỗng', 400, 'EmptyFile');
   if (file.size > MAX_QUIZ_FILE_BYTES) throw new QuizDriveError('Tệp vượt quá giới hạn 10MB', 413, 'FileTooLarge');
   const supplied = String(file.type || '').toLowerCase();
@@ -140,7 +141,7 @@ async function exportGoogleDoc(platform, id) {
   return response.text();
 }
 
-async function removeDriveFile(platform, id) {
+export async function removeDriveFile(platform, id) {
   await driveRequest(platform, `/drive/v3/files/${encodeURIComponent(id)}?supportsAllDrives=true`, { method: 'DELETE' });
 }
 
@@ -557,13 +558,24 @@ TRẢ VỀ DUY NHẤT một JSON object đúng format sau, không thêm chữ n�
  * Trả về array câu hỏi đã validate, hoặc null nếu chưa cấu hình / AI lỗi.
  * Env: AI_BASE_URL (mặc định https://openrouter.ai/api/v1), AI_API_KEY, AI_MODEL (mặc định deepseek/deepseek-chat).
  */
-export async function generateQuestionsWithAI(text, platform) {
+export async function generateQuestionsWithAI(text, platform, options = {}) {
   const apiKey = platform?.env?.AI_API_KEY;
   if (!apiKey) return null;
   const clean = String(text || '').replace(/\r/g, '').trim().slice(0, 6000);
   if (!clean) return null;
   const baseUrl = String(platform?.env?.AI_BASE_URL || 'https://openrouter.ai/api/v1').replace(/\/+$/, '');
   const model = platform?.env?.AI_MODEL || 'deepseek/deepseek-chat';
+  const questionCount = Math.max(1, Math.min(50, Number(options.questionCount) || 10));
+  const typeMix = options.typeMix && typeof options.typeMix === 'object' ? options.typeMix : null;
+  const difficulty = String(options.difficulty || 'medium');
+
+  const dynamicSystemPrompt = `${AI_SYSTEM_PROMPT}
+
+CẤU HÌNH YÊU CẦU:
+- Số câu cần tạo: ${questionCount}
+- Độ khó: ${difficulty}
+${typeMix ? `- Tỷ lệ các loại câu hỏi: ${JSON.stringify(typeMix)}` : ''}`;
+
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 90000);
   try {
@@ -579,7 +591,7 @@ export async function generateQuestionsWithAI(text, platform) {
       body: JSON.stringify({
         model,
         messages: [
-          { role: 'system', content: AI_SYSTEM_PROMPT },
+          { role: 'system', content: dynamicSystemPrompt },
           { role: 'user', content: clean }
         ],
         temperature: 0.3,
@@ -596,7 +608,7 @@ export async function generateQuestionsWithAI(text, platform) {
     try { parsed = JSON.parse(content); } catch { return null; }
     const rawList = Array.isArray(parsed?.questions) ? parsed.questions : [];
     const questions = [];
-    for (const raw of rawList.slice(0, 20)) {
+    for (const raw of rawList.slice(0, 50)) {
       const mapped = {
         type: String(raw?.type || ''),
         prompt: String(raw?.prompt || ''),
@@ -611,6 +623,24 @@ export async function generateQuestionsWithAI(text, platform) {
       if (checked.error) continue;
       questions.push({ ...checked.value, id: makeId('qq'), q_order: questions.length });
     }
+
+    if (typeMix && Object.keys(typeMix).length > 0) {
+      // Validate that AI output matches the requested type mix
+      const aiCounts = {};
+      for (const q of questions) aiCounts[q.type] = (aiCounts[q.type] || 0) + 1;
+      let mixMismatch = false;
+      for (const [t, targetCount] of Object.entries(typeMix)) {
+        if (targetCount > 0 && !aiCounts[t]) {
+          mixMismatch = true;
+          break;
+        }
+      }
+      if (mixMismatch) {
+        // AI failed to satisfy requested type mix; fallback to deterministic generator
+        return null;
+      }
+    }
+
     return questions.length ? questions : null;
   } catch {
     clearTimeout(timer);
@@ -618,23 +648,89 @@ export async function generateQuestionsWithAI(text, platform) {
   }
 }
 
-export async function saveQuizSourceAndDrafts(db, quizId, source, text, questions) {
+export async function saveQuizSourceAndDrafts(db, quizId, source, text, questions, options = {}) {
   // source may be null when Drive archival was skipped — synthesize from available info
   const s = source || {};
   const metadata = {
-    id: s.id || null, name: s.name || 'uploaded.txt', mime_type: s.mimeType || 'text/plain', size: Number(s.size || 0) || null,
-    parents: s.parents || [], web_view_link: s.webViewLink || null,
-    created_time: s.createdTime || null, modified_time: s.modifiedTime || null
+    id: s.id || null, name: s.name || 'uploaded.txt', mime_type: s.mimeType || s.mime_type || 'text/plain', size: Number(s.size || 0) || null,
+    parents: s.parents || [], web_view_link: s.webViewLink || s.web_view_link || null,
+    created_time: s.createdTime || s.created_time || null, modified_time: s.modifiedTime || s.modified_time || null,
+    manifest: s.manifest || null,
+    pages_count: s.pages_count || null
   };
+  const isAppend = options.mergeStrategy === 'append';
+  let startOrder = 0;
+  if (isAppend) {
+    const maxRow = await db.prepare(`SELECT COALESCE(MAX(q_order), -1) AS max_order FROM quiz_questions WHERE quiz_id = ?`).bind(quizId).first();
+    startOrder = (Number(maxRow?.max_order) ?? -1) + 1;
+  }
   const statements = [
     db.prepare(`UPDATE quizzes SET source_file_id = ?, source_file_name = ?, source_metadata_json = ?, source_text_excerpt = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id = ?`)
-      .bind(metadata.id, metadata.name, JSON.stringify(metadata), String(text || '').slice(0, 4000) || null, quizId),
-    db.prepare(`DELETE FROM quiz_questions WHERE quiz_id = ?`).bind(quizId)
+      .bind(metadata.id, metadata.name, JSON.stringify(metadata), String(text || '').slice(0, 4000) || null, quizId)
   ];
-  for (const q of questions) statements.push(db.prepare(`
-    INSERT INTO quiz_questions (id, quiz_id, type, prompt, prompt_image_url, options_json, correct_answer, explanation, points, q_order)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).bind(q.id, quizId, q.type, q.prompt, q.prompt_image_url, q.options_json, q.correct_answer, q.explanation, q.points, q.q_order));
+  if (!isAppend) {
+    statements.push(db.prepare(`DELETE FROM quiz_questions WHERE quiz_id = ?`).bind(quizId));
+  }
+  let hasProvenance = false;
+  try {
+    await db.prepare(`SELECT source_type FROM quiz_questions LIMIT 1`).first();
+    hasProvenance = true;
+  } catch {
+    hasProvenance = false;
+  }
+  let hasSourcesTable = false;
+  try {
+    await db.prepare(`SELECT 1 FROM quiz_question_sources LIMIT 1`).first();
+    hasSourcesTable = true;
+  } catch {
+    hasSourcesTable = false;
+  }
+  if (!isAppend && hasSourcesTable) {
+    statements.push(db.prepare(`DELETE FROM quiz_question_sources WHERE quiz_id = ?`).bind(quizId));
+  }
+
+  const existingQuestionsRes = isAppend
+    ? await db.prepare(`SELECT id, prompt FROM quiz_questions WHERE quiz_id = ?`).bind(quizId).all()
+    : { results: [] };
+  const existingPrompts = new Set((existingQuestionsRes?.results || []).map((q) => q.prompt?.trim().toLowerCase()));
+  const existingIds = new Set((existingQuestionsRes?.results || []).map((q) => q.id));
+
+  for (let i = 0; i < questions.length; i++) {
+    const q = questions[i];
+    if (isAppend && existingPrompts.has(q.prompt?.trim().toLowerCase())) {
+      // Deduplicate identical question prompt already in this quiz
+      continue;
+    }
+    let qId = q.id;
+    if (existingIds.has(qId)) {
+      qId = makeId('qq');
+    }
+    existingIds.add(qId);
+
+    const qOrder = isAppend ? startOrder + i : (Number.isInteger(Number(q.q_order)) ? Number(q.q_order) : i);
+    const sourceType = q.source_type || (metadata.id ? 'drive' : null);
+    const sourceId = q.source_id || metadata.id || null;
+
+    if (hasProvenance) {
+      statements.push(db.prepare(`
+        INSERT INTO quiz_questions (id, quiz_id, type, prompt, prompt_image_url, options_json, correct_answer, explanation, points, q_order, source_type, source_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).bind(qId, quizId, q.type, q.prompt, q.prompt_image_url || null, q.options_json || null, q.correct_answer || null, q.explanation || null, q.points, qOrder, sourceType, sourceId));
+    } else {
+      statements.push(db.prepare(`
+        INSERT INTO quiz_questions (id, quiz_id, type, prompt, prompt_image_url, options_json, correct_answer, explanation, points, q_order)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).bind(qId, quizId, q.type, q.prompt, q.prompt_image_url || null, q.options_json || null, q.correct_answer || null, q.explanation || null, q.points, qOrder));
+    }
+
+    if (hasSourcesTable && sourceType && sourceId) {
+      const qqsId = 'qqs_' + quizId + '_' + qId + '_' + sourceId;
+      statements.push(db.prepare(`
+        INSERT OR REPLACE INTO quiz_question_sources (id, quiz_id, question_id, source_type, source_id)
+        VALUES (?, ?, ?, ?, ?)
+      `).bind(qqsId, quizId, qId, sourceType, sourceId));
+    }
+  }
   await db.batch(statements);
   return metadata;
 }
