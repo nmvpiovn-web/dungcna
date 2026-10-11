@@ -6,6 +6,7 @@ import {
   generateQuestionsWithAI,
   publishQuizBundle,
   QuizDriveError,
+  removeDriveFile,
   saveQuizSourceAndDrafts,
   uploadQuizSource
 } from '../../../../../lib/server/quizDrive.js';
@@ -50,6 +51,7 @@ export async function POST({ params, request, platform }) {
   const typeMixRaw = form.get('type_mix');
   const typeMix = typeMixRaw ? parseJson(typeMixRaw, null) : null;
   const questionCount = Number(form.get('question_count') || 10);
+  const mergeStrategy = String(form.get('merge_strategy') || 'replace');
 
   // Check if multiple images
   const isImageBatch = filesList.length > 1 || (filesList.length === 1 && String(filesList[0].type || '').startsWith('image/'));
@@ -66,13 +68,19 @@ export async function POST({ params, request, platform }) {
       return json({ success: false, error: validation.code, message: validation.message }, { status });
     }
 
+    const uploadedDriveIds = [];
     try {
       const extractedPages = [];
       let lastUploadedFile = null;
+      const uploadedSources = [];
 
       for (let i = 0; i < filesList.length; i++) {
         const file = filesList[i];
         const source = await uploadQuizSource(platform, file);
+        if (source?.file?.id) {
+          uploadedDriveIds.push(source.file.id);
+        }
+        uploadedSources.push(source);
         if (!source?.text || source.text.trim().length < 20) {
           throw new QuizDriveError(`Ảnh thứ ${i + 1} (${file.name || ''}) không đọc được nội dung chữ.`, 400, 'EmptyImageExtraction');
         }
@@ -96,7 +104,21 @@ export async function POST({ params, request, platform }) {
         questions = genResult.questions;
       }
 
-      const metadata = await saveQuizSourceAndDrafts(db, params.id, lastUploadedFile, combinedText, questions);
+      const manifest = filesList.map((f, idx) => ({
+        index: idx + 1,
+        name: f.name || `image_${idx + 1}`,
+        mime_type: f.type || 'image/jpeg',
+        size: Number(f.size || 0),
+        drive_file_id: uploadedSources[idx]?.file?.id || null
+      }));
+
+      const sourceInfo = {
+        ...(lastUploadedFile || {}),
+        manifest,
+        pages_count: filesList.length
+      };
+
+      const metadata = await saveQuizSourceAndDrafts(db, params.id, sourceInfo, combinedText, questions, { mergeStrategy });
       return json({
         success: true,
         source: metadata,
@@ -107,6 +129,9 @@ export async function POST({ params, request, platform }) {
         ai_generated: !!aiQuestions
       }, { status: 201 });
     } catch (error) {
+      for (const fileId of uploadedDriveIds) {
+        try { await removeDriveFile(platform, fileId); } catch {}
+      }
       const status = error instanceof QuizDriveError ? error.status : 500;
       return json({ success: false, error: error.code || 'UploadFailed', message: error.message }, { status });
     }
@@ -131,7 +156,7 @@ export async function POST({ params, request, platform }) {
       questions = generateDraftQuestions(source.text);
     }
 
-    const metadata = await saveQuizSourceAndDrafts(db, params.id, source.file, source.text, questions);
+    const metadata = await saveQuizSourceAndDrafts(db, params.id, source.file, source.text, questions, { mergeStrategy });
     let bundle = null;
     if (questions.length) {
       try {

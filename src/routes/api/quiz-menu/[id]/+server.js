@@ -33,7 +33,8 @@ export async function GET({ params, url, request, platform }) {
     `).bind(params.id, auth.user.id).first();
     if (!assigned) return json({ success: false, error: 'QuizNotFound' }, { status: 404 });
   }
-  const includeAnswers = staff && url.searchParams.get('include_answers') === '1';
+  const reqUrl = url || (request?.url ? new URL(request.url) : null);
+  const includeAnswers = staff && reqUrl?.searchParams?.get('include_answers') === '1';
   const rows = await db.prepare(`SELECT * FROM quiz_questions WHERE quiz_id = ? ORDER BY q_order, id`).bind(params.id).all();
   return json({
     success: true,
@@ -85,16 +86,64 @@ export async function PUT({ params, request, platform }) {
     if (!Number(count?.count)) return json({ success: false, error: 'Không thể xuất bản quiz chưa có câu hỏi' }, { status: 400 });
   }
   try {
+    const mergeStrategy = body.merge_strategy === 'append' ? 'append' : 'replace';
+    let startOrder = 0;
+    if (questions !== undefined && mergeStrategy === 'append') {
+      const maxRow = await db.prepare(`SELECT COALESCE(MAX(q_order), -1) AS max_order, COUNT(*) AS count FROM quiz_questions WHERE quiz_id = ?`).bind(params.id).first();
+      const currentCount = Number(maxRow?.count || 0);
+      if (currentCount + validated.length > 200) {
+        return json({ success: false, error: 'Tổng số câu hỏi không được vượt quá 200' }, { status: 400 });
+      }
+      startOrder = (Number(maxRow?.max_order) ?? -1) + 1;
+    }
+
+    let hasSourcesTable = false;
+    let hasSourceCols = false;
+    try {
+      await db.prepare(`SELECT 1 FROM quiz_question_sources LIMIT 1`).first();
+      hasSourcesTable = true;
+    } catch {
+      hasSourcesTable = false;
+    }
+    try {
+      await db.prepare(`SELECT source_type, source_id FROM quiz_questions LIMIT 1`).first();
+      hasSourceCols = true;
+    } catch {
+      hasSourceCols = false;
+    }
+
     const statements = [db.prepare(`
       UPDATE quizzes SET title = ?, description = ?, time_limit_minutes = ?, status = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id = ?
     `).bind(title, description || null, timeLimit, status, params.id)];
+
     if (questions !== undefined) {
-      statements.push(db.prepare(`DELETE FROM quiz_questions WHERE quiz_id = ?`).bind(params.id));
-      for (const q of validated) {
-        statements.push(db.prepare(`
-          INSERT INTO quiz_questions (id, quiz_id, type, prompt, prompt_image_url, options_json, correct_answer, explanation, points, q_order)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `).bind(q.id, params.id, q.type, q.prompt, q.prompt_image_url, q.options_json, q.correct_answer, q.explanation, q.points, q.q_order));
+      if (mergeStrategy !== 'append') {
+        statements.push(db.prepare(`DELETE FROM quiz_questions WHERE quiz_id = ?`).bind(params.id));
+        if (hasSourcesTable) {
+          statements.push(db.prepare(`DELETE FROM quiz_question_sources WHERE quiz_id = ?`).bind(params.id));
+        }
+      }
+      for (let i = 0; i < validated.length; i++) {
+        const q = validated[i];
+        const order = mergeStrategy === 'append' ? startOrder + i : q.q_order;
+        if (hasSourceCols) {
+          statements.push(db.prepare(`
+            INSERT INTO quiz_questions (id, quiz_id, type, prompt, prompt_image_url, options_json, correct_answer, explanation, points, q_order, source_type, source_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `).bind(q.id, params.id, q.type, q.prompt, q.prompt_image_url, q.options_json, q.correct_answer, q.explanation, q.points, order, q.source_type || null, q.source_id || null));
+        } else {
+          statements.push(db.prepare(`
+            INSERT INTO quiz_questions (id, quiz_id, type, prompt, prompt_image_url, options_json, correct_answer, explanation, points, q_order)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `).bind(q.id, params.id, q.type, q.prompt, q.prompt_image_url, q.options_json, q.correct_answer, q.explanation, q.points, order));
+        }
+
+        if (hasSourcesTable && q.source_type && q.source_id) {
+          statements.push(db.prepare(`
+            INSERT OR IGNORE INTO quiz_question_sources (quiz_id, question_id, source_type, source_id)
+            VALUES (?, ?, ?, ?)
+          `).bind(params.id, q.id, q.source_type, q.source_id));
+        }
       }
     }
     await db.batch(statements);

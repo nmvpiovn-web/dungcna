@@ -1,5 +1,6 @@
 import { json } from '@sveltejs/kit';
 import { isStaffUser, verifyServerAuth } from '../../../../lib/server/auth.js';
+import { QUIZ_TYPES } from '../../../../lib/server/quizMenu.js';
 
 export const prerender = false;
 
@@ -107,10 +108,28 @@ export async function PUT({ request, platform }) {
     return json({ success: false, error: 'InvalidDefaultStatus' }, { status: 400 });
   }
 
-  let typeMixJson = '{}';
-  if (body.type_mix && typeof body.type_mix === 'object') {
-    typeMixJson = JSON.stringify(body.type_mix);
+  let validatedTypeMix = {};
+  if (body.type_mix !== undefined) {
+    if (typeof body.type_mix !== 'object' || body.type_mix === null || Array.isArray(body.type_mix)) {
+      return json({ success: false, error: 'InvalidTypeMix', message: 'type_mix phải là một đối tượng' }, { status: 400 });
+    }
+    let totalMix = 0;
+    for (const [key, val] of Object.entries(body.type_mix)) {
+      if (!QUIZ_TYPES.has(key)) {
+        return json({ success: false, error: 'InvalidTypeMixKey', message: `Loại câu hỏi ${key} không hợp lệ` }, { status: 400 });
+      }
+      const num = Number(val);
+      if (!Number.isInteger(num) || num < 0 || num > 200) {
+        return json({ success: false, error: 'InvalidTypeMixCount', message: `Số lượng cho loại ${key} phải là số nguyên từ 0 đến 200` }, { status: 400 });
+      }
+      totalMix += num;
+      if (num > 0) validatedTypeMix[key] = num;
+    }
+    if (totalMix > 200) {
+      return json({ success: false, error: 'InvalidTypeMixTotal', message: 'Tổng số câu hỏi trong type_mix không được vượt quá 200' }, { status: 400 });
+    }
   }
+  const typeMixJson = JSON.stringify(validatedTypeMix);
 
   await db.prepare(`
     INSERT INTO quiz_builder_defaults (

@@ -106,7 +106,7 @@ test('PHASE 2: QUIZ AUTO BUILDER & EXPANDED QUESTION TYPES SUITE', async (t) => 
 
     // Verify quiz_questions allows expanded types
     sqlite.exec("INSERT INTO quizzes (id, title, created_by) VALUES ('q_test_types', 'Test Types', 'user_staff_1')");
-    const testTypes = ['true_false', 'word_guess', 'ordering', 'memory_match', 'essay'];
+    const testTypes = ['true_false', 'word_guess', 'ordering', 'memory_match', 'paragraph'];
     for (const type of testTypes) {
       sqlite.exec(`INSERT INTO quiz_questions (id, quiz_id, type, prompt, points, q_order) VALUES ('qq_${type}', 'q_test_types', '${type}', 'Prompt for ${type}', 1.0, 0)`);
     }

@@ -1,6 +1,6 @@
 export const QUIZ_TYPES = new Set([
   'multiple_choice', 'fill_blank', 'matching', 'paragraph', 'picture_guess', 'rewrite',
-  'true_false', 'word_guess', 'ordering', 'memory_match', 'essay'
+  'true_false', 'word_guess', 'ordering', 'memory_match'
 ]);
 export const OBJECTIVE_TYPES = new Set([
   'multiple_choice', 'fill_blank', 'matching', 'picture_guess',
@@ -31,13 +31,24 @@ function parseJson(value, fallback) {
 
 export function validateQuestion(input, index = 0) {
   let type = String(input?.type || '');
-  if (type === 'essay') type = 'paragraph'; // normalize essay to paragraph internally if needed, or preserve
+  if (type === 'essay') type = 'paragraph'; // normalize legacy essay to canonical paragraph
   const prompt = String(input?.prompt || '').trim();
   const points = Number(input?.points ?? 1);
   if (!QUIZ_TYPES.has(type)) return { error: `Loại câu hỏi không hợp lệ tại vị trí ${index + 1}` };
   if (!prompt || prompt.length > 5000) return { error: `Nội dung câu hỏi không hợp lệ tại vị trí ${index + 1}` };
   if (!Number.isFinite(points) || points < 0 || points > 100) return { error: `Điểm câu hỏi không hợp lệ tại vị trí ${index + 1}` };
-  if (type === 'picture_guess' && !String(input.prompt_image_url || '').trim()) {
+
+  let prompt_image_url = null;
+  const rawImageUrl = input?.prompt_image_url;
+  if (rawImageUrl !== undefined && rawImageUrl !== null && String(rawImageUrl).trim() !== '') {
+    const trimmed = String(rawImageUrl).trim();
+    if (!trimmed.startsWith('https://') && !trimmed.startsWith('/')) {
+      return { error: `URL ảnh chỉ chấp nhận https:// hoặc / tại vị trí ${index + 1}` };
+    }
+    prompt_image_url = trimmed;
+  }
+
+  if (type === 'picture_guess' && !prompt_image_url) {
     return { error: `Câu nhìn hình thiếu ảnh tại vị trí ${index + 1}` };
   }
   if (OBJECTIVE_TYPES.has(type)) {
@@ -56,7 +67,7 @@ export function validateQuestion(input, index = 0) {
       }
     }
   }
-  let options = input.options_json;
+  let options = input.options_json !== undefined ? input.options_json : input.options;
   if (typeof options === 'string') {
     options = parseJson(options, options);
   }
@@ -92,12 +103,14 @@ export function validateQuestion(input, index = 0) {
       id: String(input.id || makeId('qq')),
       type,
       prompt,
-      prompt_image_url: String(input.prompt_image_url || '').trim() || null,
+      prompt_image_url,
       options_json: options == null ? null : JSON.stringify(options),
       correct_answer: typeof input.correct_answer === 'string' ? input.correct_answer.trim() : JSON.stringify(input.correct_answer ?? ''),
       explanation: String(input.explanation || '').trim() || null,
       points,
-      q_order: Number.isInteger(Number(input.q_order)) ? Number(input.q_order) : index
+      q_order: Number.isInteger(Number(input.q_order)) ? Number(input.q_order) : index,
+      source_type: input.source_type ? String(input.source_type) : null,
+      source_id: input.source_id ? String(input.source_id) : null
     }
   };
 }

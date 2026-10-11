@@ -82,14 +82,14 @@ CREATE TABLE IF NOT EXISTS quiz_builder_defaults (
 CREATE INDEX IF NOT EXISTS idx_quiz_builder_defaults_user ON quiz_builder_defaults(user_id);
 ```
 
-### Mở rộng CHECK Constraint của `quiz_questions`
-Tái cấu trúc bảng `quiz_questions` trong migration 0021 để hỗ trợ 10 dạng câu hỏi:
+### Mở rộng CHECK Constraint của `quiz_questions` & Bảng Provenance Many-to-One
+Tái cấu trúc bảng `quiz_questions` trong migration 0021 để hỗ trợ đúng 10 dạng câu hỏi chuẩn (`paragraph` là canonical thay cho `essay`):
 ```sql
 PRAGMA foreign_keys = OFF;
 CREATE TABLE quiz_questions_new (
   id TEXT PRIMARY KEY,
   quiz_id TEXT NOT NULL REFERENCES quizzes(id) ON DELETE CASCADE,
-  type TEXT NOT NULL CHECK(type IN ('multiple_choice','fill_blank','matching','paragraph','picture_guess','rewrite','true_false','word_guess','ordering','memory_match','essay')),
+  type TEXT NOT NULL CHECK(type IN ('multiple_choice','fill_blank','matching','paragraph','picture_guess','rewrite','true_false','word_guess','ordering','memory_match')),
   prompt TEXT NOT NULL,
   prompt_image_url TEXT,
   options_json TEXT,
@@ -101,21 +101,39 @@ CREATE TABLE quiz_questions_new (
   source_id TEXT
 );
 INSERT INTO quiz_questions_new (id, quiz_id, type, prompt, prompt_image_url, options_json, correct_answer, explanation, points, q_order, source_type, source_id)
-  SELECT id, quiz_id, type, prompt, prompt_image_url, options_json, correct_answer, explanation, points, q_order, source_type, source_id
+  SELECT id, quiz_id, CASE WHEN type = 'essay' THEN 'paragraph' ELSE type END, prompt, prompt_image_url, options_json, correct_answer, explanation, points, q_order, source_type, source_id
   FROM quiz_questions;
 DROP TABLE quiz_questions;
 ALTER TABLE quiz_questions_new RENAME TO quiz_questions;
 CREATE INDEX IF NOT EXISTS idx_quiz_questions_quiz ON quiz_questions(quiz_id, q_order);
-CREATE UNIQUE INDEX IF NOT EXISTS idx_quiz_questions_quiz_source
+CREATE INDEX IF NOT EXISTS idx_quiz_questions_quiz_source
   ON quiz_questions(quiz_id, source_type, source_id)
   WHERE source_type IS NOT NULL AND source_id IS NOT NULL;
+
+-- Bảng lưu quan hệ nguồn many-to-one (cho phép nhiều câu hỏi từ 1 file Drive/Docx mà không bị xung đột UNIQUE)
+CREATE TABLE IF NOT EXISTS quiz_question_sources (
+  id TEXT PRIMARY KEY,
+  quiz_id TEXT NOT NULL REFERENCES quizzes(id) ON DELETE CASCADE,
+  question_id TEXT REFERENCES quiz_questions(id) ON DELETE CASCADE,
+  source_type TEXT NOT NULL,
+  source_id TEXT NOT NULL,
+  metadata_json TEXT,
+  created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+);
+CREATE INDEX IF NOT EXISTS idx_qq_sources_quiz ON quiz_question_sources(quiz_id);
+CREATE INDEX IF NOT EXISTS idx_qq_sources_question ON quiz_question_sources(question_id);
+CREATE INDEX IF NOT EXISTS idx_qq_sources_lookup ON quiz_question_sources(source_type, source_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_qq_sources_unique ON quiz_question_sources(quiz_id, question_id, source_type, source_id);
 PRAGMA foreign_keys = ON;
 ```
 
 ---
 
-## 3. Lộ Trình & Cam Kết Kỷ Luật
+## 3. Lộ Trình, Giới Hạn Còn Lại & Cam Kết Kỷ Luật
 - **Branch:** `agy/quiz-auto-builder-phase2`
 - **Base:** `agy/quiz-library-sync-phase1` commit `87001c91951dcfc2fed9de00cdd2a3c5d71625fd`
-- **Pull Request:** Mở Draft PR stacked phụ thuộc PR #27.
+- **Chiến lược Merge:** Hỗ trợ `append` (mặc định an toàn, thêm vào sau cùng) và `replace` (thay thế sau khi xác nhận).
+- **Giới hạn còn lại (Phase 3 Roadmap):**
+  1. Tích hợp trực tiếp Knowledge Vault FTS search vào UI picker (đang hoàn thiện ở Phase 3).
+  2. Background scheduled sync hai chiều giữa Google Drive Docs và D1 quiz items.
 - **Cam kết:** KHÔNG merge, KHÔNG deploy, KHÔNG apply remote D1 migrations mà chưa có phê duyệt từ Codex Maintainer/Auditor.

@@ -478,31 +478,68 @@
     return draft.questions.map((q, index) => {
       let optionsJson = q.options;
       let correctAnswer = q.correct_answer;
-      if (q.type === 'matching' || q.type === 'memory_match') {
+      if (q.type === 'matching') {
         optionsJson = { left: q.left, right: q.right };
-        correctAnswer = Object.fromEntries(q.left.map((left, i) => [left, q.right[i] || '']));
+        if (typeof correctAnswer !== 'object' || Array.isArray(correctAnswer)) {
+          correctAnswer = Object.fromEntries(q.left.map((left, i) => [left, q.right[i] || '']));
+        }
+      } else if (q.type === 'memory_match') {
+        optionsJson = q.pairs && q.pairs.length ? { pairs: q.pairs } : { left: q.left, right: q.right };
+        if (typeof correctAnswer !== 'object' || Array.isArray(correctAnswer)) {
+          if (q.pairs && q.pairs.length) {
+            correctAnswer = Object.fromEntries(q.pairs.map((p) => [p.a, p.b]));
+          } else {
+            correctAnswer = Object.fromEntries(q.left.map((left, i) => [left, q.right[i] || '']));
+          }
+        }
       } else if (q.type === 'ordering') {
         optionsJson = { items: q.options };
         correctAnswer = q.options;
       }
       return {
-        id: q.id, type: q.type, prompt: q.prompt, prompt_image_url: q.prompt_image_url || null,
+        id: q.id,
+        type: q.type,
+        prompt: q.prompt,
+        prompt_image_url: q.prompt_image_url || null,
         options_json: optionsJson,
         correct_answer: correctAnswer,
-        explanation: q.explanation, points: Number(q.points) || 1, q_order: index
+        explanation: q.explanation || null,
+        points: Number(q.points) || 1,
+        q_order: index,
+        source_type: q.source_type || null,
+        source_id: q.source_id || null
       };
     });
   }
 
   function fromApiQuestion(question, index) {
-    let options = question.options_json;
-    if (typeof options === 'string') try { options = JSON.parse(options); } catch { options = []; }
+    let options = question.options ?? question.options_json;
+    if (typeof options === 'string') {
+      try { options = JSON.parse(options); } catch { options = []; }
+    }
     const items = options?.items || (Array.isArray(options) ? options : []);
+    const left = options?.left || [];
+    const right = options?.right || [];
+    const pairs = options?.pairs || [];
+    let correctAnswer = question.correct_answer;
+    if (typeof correctAnswer === 'string' && (question.type === 'matching' || question.type === 'memory_match' || question.type === 'ordering')) {
+      try { correctAnswer = JSON.parse(correctAnswer); } catch {}
+    }
     return {
-      id: question.id, type: question.type, prompt: question.prompt, prompt_image_url: question.prompt_image_url || '',
-      points: Number(question.points || 1), options: items,
-      left: options?.left || [], right: options?.right || [], correct_answer: question.correct_answer || '',
-      explanation: question.explanation || '', q_order: index
+      id: question.id,
+      type: question.type,
+      prompt: question.prompt,
+      prompt_image_url: question.prompt_image_url || '',
+      points: Number(question.points || 1),
+      options: items,
+      left,
+      right,
+      pairs,
+      correct_answer: correctAnswer || '',
+      explanation: question.explanation || '',
+      q_order: Number.isInteger(Number(question.order ?? question.q_order)) ? Number(question.order ?? question.q_order) : index,
+      source_type: question.source_type || null,
+      source_id: question.source_id || null
     };
   }
 
@@ -536,6 +573,24 @@
       message = `Đã tạo ${draft.questions.length} câu và đồng bộ DOCX, Quiz, BTVN nháp.`;
     } catch (err) { error = friendlyError(err.message); }
     finally { sourceBusy = false; }
+  }
+
+  function isSupportedDriveFile(file) {
+    if (!file) return false;
+    if (file.mimeType === 'application/vnd.google-apps.document') return true;
+    const name = String(file.name || '').toLowerCase();
+    const dot = name.lastIndexOf('.');
+    const ext = dot >= 0 ? name.slice(dot) : '';
+    const supportedExts = ['.pdf', '.docx', '.txt', '.png', '.jpg', '.jpeg', '.webp'];
+    const supportedMimes = [
+      'application/pdf',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'text/plain',
+      'image/png',
+      'image/jpeg',
+      'image/webp'
+    ];
+    return supportedExts.includes(ext) || supportedMimes.includes(file.mimeType);
   }
 
   async function chooseSource(mode) {
@@ -690,15 +745,7 @@
         title: q.title || '',
         description: q.description || '',
         time_limit_minutes: q.time_limit_minutes || 20,
-        questions: (q.questions || []).map((qq, idx) => ({
-          id: qq.id || `q${idx}`,
-          type: qq.type || 'mcq',
-          prompt: qq.prompt || '',
-          options: qq.options || ['', '', '', ''],
-          correct_answer: qq.correct_answer ?? 0,
-          explanation: qq.explanation || '',
-          points: qq.points || 1
-        }))
+        questions: (q.questions || []).map(fromApiQuestion)
       };
       bundle = null;
       sourceMode = 'manual';
@@ -817,6 +864,7 @@
 
   function answerHasValue(value) {
     if (value?.state === 'not_understood') return false;
+    if (Array.isArray(value)) return value.length > 0;
     if (value && typeof value === 'object') return Object.values(value).some(Boolean);
     return String(value ?? '').trim().length > 0;
   }
@@ -876,6 +924,16 @@
 
   function setMatching(id, left, value) {
     answers = { ...answers, [id]: { ...(answers[id] || {}), [left]: value } };
+  }
+
+  function moveOrderItem(qid, idx, dir) {
+    const q = selectedQuiz?.questions?.find((item) => item.id === qid);
+    const initial = q?.options?.items || (Array.isArray(q?.options) ? q.options : []);
+    const current = Array.isArray(answers[qid]) ? [...answers[qid]] : [...initial];
+    const target = idx + dir;
+    if (target < 0 || target >= current.length) return;
+    [current[idx], current[target]] = [current[target], current[idx]];
+    setAnswer(qid, current);
   }
 
   async function submitAttempt(auto = false) {
@@ -1176,7 +1234,7 @@
             <div class="source-panel auto-source-box">
               <span class="box-title">△ Chọn tài liệu Google Drive / Google Docs</span>
               <div>
-                <label>File trong Google Drive (Quiz Uploads):<select bind:value={selectedDriveFileId}><option value="">Chọn file đã đồng bộ...</option>{#each driveFiles as file}<option value={file.id}>{file.name}</option>{/each}</select></label>
+                <label>File trong Google Drive (Quiz Uploads):<select bind:value={selectedDriveFileId}><option value="">Chọn file đã đồng bộ...</option>{#each driveFiles as file}<option value={file.id} disabled={!isSupportedDriveFile(file)}>{file.name}{!isSupportedDriveFile(file) ? ' (Không hỗ trợ)' : ''}</option>{/each}</select></label>
                 <label>Hoặc dán link Google Docs/Drive:<input type="url" bind:value={driveUrl} placeholder="https://docs.google.com/document/d/..." inputmode="url" /></label>
               </div>
             </div>
@@ -1600,11 +1658,65 @@
           <article class:deferred={isDeferred(question.id)} class="exam-question" id={`question-${question.id}`}>
             <div class="question-head"><span>Câu {index + 1}</span><div><button class="defer-button" on:click={() => toggleDeferred(question.id)}>{isDeferred(question.id) ? '✓ Để làm sau' : 'Không hiểu'}</button><b>{question.points} điểm</b></div></div>
             <h2>{question.prompt}</h2>
-            {#if question.prompt_image_url}<img class="question-image" src={question.prompt_image_url} alt="Minh họa câu hỏi" />{/if}
+            {#if question.prompt_image_url}
+              <img
+                class="question-image"
+                src={question.prompt_image_url}
+                alt="Minh họa câu hỏi"
+                on:error={(e) => {
+                  e.currentTarget.style.display = 'none';
+                  const fb = e.currentTarget.nextElementSibling;
+                  if (fb) fb.style.display = 'flex';
+                }}
+              />
+              <div class="image-fallback-placeholder" style="display:none; padding:10px; background:#f5f5f4; border:1px dashed #d6d3d1; border-radius:6px; color:#78716c; font-size:12px; align-items:center; gap:6px;">
+                <span>🖼️</span> Không thể tải ảnh minh họa
+              </div>
+            {/if}
             {#if isDeferred(question.id)}
               <div class="deferred-note">Phần này đã được lưu để bạn hỏi giáo viên và sửa sau. Bấm “Để làm sau” lần nữa khi đã hiểu.</div>
             {:else if question.type === 'multiple_choice'}
               <div class="answer-options">{#each question.options || [] as option, optionIndex}<label class:selected={answers[question.id] === option}><input type="radio" name={question.id} value={option} checked={answers[question.id] === option} on:change={() => setAnswer(question.id, option)} /><span>{String.fromCharCode(65 + optionIndex)}</span><strong>{option}</strong></label>{/each}</div>
+            {:else if question.type === 'true_false'}
+              <div class="answer-options tf-options" style="display:flex; gap:12px;">
+                {#each (question.options || ['Đúng', 'Sai']) as opt}
+                  <label class:selected={answers[question.id] === opt} style="display:flex; align-items:center; gap:8px; padding:10px 16px; border:1px solid #e7e5e4; border-radius:8px; cursor:pointer;">
+                    <input type="radio" name={question.id} value={opt} checked={answers[question.id] === opt} on:change={() => setAnswer(question.id, opt)} />
+                    <strong>{opt}</strong>
+                  </label>
+                {/each}
+              </div>
+            {:else if question.type === 'ordering'}
+              <div class="ordering-answer">
+                <p style="font-size:12px; color:#78716c; margin-bottom:8px;">Sắp xếp theo thứ tự đúng (bấm ▲ / ▼ để đổi vị trí):</p>
+                <div style="display:flex; flex-direction:column; gap:6px;">
+                  {#each (answers[question.id] || question.options?.items || (Array.isArray(question.options) ? question.options : [])) as item, itemIdx}
+                    <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 12px; background:#f5f5f4; border:1px solid #e7e5e4; border-radius:6px;">
+                      <span style="font-weight:600; font-size:13px;">{itemIdx + 1}. {item}</span>
+                      <div style="display:flex; gap:4px;">
+                        <button type="button" class="btn-step" disabled={itemIdx === 0} on:click={() => moveOrderItem(question.id, itemIdx, -1)} aria-label="Lên">▲</button>
+                        <button type="button" class="btn-step" disabled={itemIdx === (answers[question.id] || question.options?.items || question.options || []).length - 1} on:click={() => moveOrderItem(question.id, itemIdx, 1)} aria-label="Xuống">▼</button>
+                      </div>
+                    </div>
+                  {/each}
+                </div>
+              </div>
+            {:else if question.type === 'memory_match'}
+              <div class="memory-answer">
+                <p style="font-size:12px; color:#78716c; margin-bottom:8px;">Ghép đôi các thẻ nhớ tương ứng:</p>
+                {#each (question.options?.pairs ? question.options.pairs.map(p => p.a) : question.options?.left || []) as leftItem}
+                  <label style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+                    <strong style="min-width:120px;">{leftItem}</strong>
+                    <span>↔</span>
+                    <select value={answers[question.id]?.[leftItem] || ''} on:change={(e) => setMatching(question.id, leftItem, e.currentTarget.value)}>
+                      <option value="">Chọn thẻ ghép cặp</option>
+                      {#each (question.options?.pairs ? question.options.pairs.map(p => p.b) : question.options?.right || []) as rightItem}
+                        <option value={rightItem}>{rightItem}</option>
+                      {/each}
+                    </select>
+                  </label>
+                {/each}
+              </div>
             {:else if question.type === 'matching'}
               <div class="matching-answer">{#each question.options?.left || [] as left}<label><strong>{left}</strong><span>→</span><select value={answers[question.id]?.[left] || ''} on:change={(e) => setMatching(question.id, left, e.currentTarget.value)}><option value="">Chọn đáp án</option>{#each question.options?.right || [] as right}<option value={right}>{right}</option>{/each}</select></label>{/each}</div>
             {:else if ['paragraph', 'rewrite'].includes(question.type)}

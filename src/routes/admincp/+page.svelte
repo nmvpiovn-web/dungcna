@@ -8,7 +8,6 @@
  import { currentLang, toggleLanguage, t } from '$lib/i18n';
  import { playAudioFeedback } from '$lib/speech';
  import ThemeStudioPanel from '$lib/components/ThemeStudioPanel.svelte';
- import QuizMakeForm from '$lib/components/QuizMakeForm.svelte';
  import AdminUsersPanel from '$lib/components/AdminUsersPanel.svelte';
  import { applyThemeVars, clearLocal } from '$lib/themeStudio.js';
 
@@ -259,12 +258,12 @@
  >
  🎨 Giao Diện &amp; Màu Sắc
  </button>
- <button 
- onclick={() => activeTab = 'quiz_make'}
- class="px-4 py-2 rounded-md text-xs font-bold transition-all {activeTab === 'quiz_make' ? 'bg-rose-600 text-white shadow-sm' : 'text-slate-700 hover:bg-slate-100'}"
+ <a
+ href="/quiz-menu?tab=create"
+ class="px-4 py-2 rounded-md text-xs font-bold transition-all text-slate-700 hover:bg-slate-100 flex items-center gap-1"
  >
  📝 Tạo Quiz
- </button>
+ </a>
  <button 
  onclick={() => activeTab = 'users'}
  class="px-4 py-2 rounded-md text-xs font-bold transition-all {activeTab === 'users' ? 'bg-rose-600 text-white shadow-sm' : 'text-slate-700 hover:bg-slate-100'}"
@@ -502,10 +501,7 @@
  Lưu ý: đổi theme không ảnh hưởng dữ liệu hay tài khoản nào — chỉ đổi màu hiển thị.
  </p>
  </div>
- <!-- TAB 6: TAO QUIZ -->
- {:else if activeTab === 'quiz_make'}
- <QuizMakeForm />
- <!-- TAB 7: QUAN LY TAI KHOAN -->
+ <!-- TAB 6: QUAN LY TAI KHOAN -->
  {:else if activeTab === 'users'}
  <AdminUsersPanel />
  {/if}

@@ -57,7 +57,8 @@ export async function POST({ params, request, platform }) {
       q.source_id = driveSourceId;
     }
 
-    const metadata = await saveQuizSourceAndDrafts(db, params.id, source.file, source.text, questions);
+    const mergeStrategy = String(body.merge_strategy || 'replace');
+    const metadata = await saveQuizSourceAndDrafts(db, params.id, source.file, source.text, questions, { mergeStrategy });
     const bundle = questions.length ? await publishQuizBundle(platform, db, params.id) : null;
     return json({ success: true, source: metadata, extracted_text_length: source.text.length, questions, bundle, ai_generated: !!aiQuestions });
   } catch (error) {

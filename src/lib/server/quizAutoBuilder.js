@@ -131,32 +131,21 @@ function parseSourceContent(text) {
   const mcqBlocks = [];
   const sentences = [];
 
-  // Parse lines
   let currentMcq = null;
+
+  function flushCurrentMcq() {
+    if (!currentMcq) return;
+    if (currentMcq.options.length >= 2) {
+      mcqBlocks.push(currentMcq);
+    } else if (currentMcq.prompt && currentMcq.prompt.length >= 15) {
+      sentences.push(currentMcq.prompt);
+    }
+    currentMcq = null;
+  }
+
   for (const line of lines) {
     // Page boundary markers
     if (/^---\s*Trang\s*\d+\/\d+\s*---$/i.test(line)) continue;
-
-    // Vocab definition: "word: definition" or "- word: definition"
-    const vocabMatch = line.match(/^[-*•]?\s*([a-zA-Z\s]{2,25})\s*[:=–—]\s*(.+)$/);
-    if (vocabMatch) {
-      const word = vocabMatch[1].trim();
-      const def = vocabMatch[2].trim();
-      if (word.length >= 2 && def.length >= 4) {
-        vocabulary.push({ word, definition: def });
-        continue;
-      }
-    }
-
-    // MCQ question start: "1. What is..." or "Question 1: ..."
-    const qStartMatch = line.match(/^(?:(?:Question|Câu)\s*\d+[:.]|\d+[.)])\s*(.+)$/i);
-    if (qStartMatch) {
-      if (currentMcq && currentMcq.options.length >= 2) {
-        mcqBlocks.push(currentMcq);
-      }
-      currentMcq = { prompt: qStartMatch[1].trim(), options: [], answer: null };
-      continue;
-    }
 
     // MCQ options: A. ... B. ...
     const optMatch = line.match(/^([A-Da-d])[.)]\s*(.+)$/);
@@ -172,17 +161,63 @@ function parseSourceContent(text) {
       continue;
     }
 
+    // Vocab definition: "word: definition" or "- word: definition"
+    const vocabMatch = line.match(/^[-*•]?\s*([a-zA-Z\s]{2,25})\s*[:=–—]\s*(.+)$/);
+    if (vocabMatch) {
+      flushCurrentMcq();
+      const word = vocabMatch[1].trim();
+      const def = vocabMatch[2].trim();
+      if (word.length >= 2 && def.length >= 4) {
+        vocabulary.push({ word, definition: def });
+        continue;
+      }
+    }
+
+    // MCQ question start: "1. What is..." or "Question 1: ..."
+    const qStartMatch = line.match(/^(?:(?:Question|Câu)\s*\d+[:.]|\d+[.)])\s*(.+)$/i);
+    if (qStartMatch) {
+      flushCurrentMcq();
+      currentMcq = { prompt: qStartMatch[1].trim(), options: [], answer: null };
+      continue;
+    }
+
+    flushCurrentMcq();
+
     // Regular informative sentence for True/False, Blank, Ordering
-    if (line.length >= 20 && /[.?!]$/.test(line) && !line.includes(':')) {
+    if (line.length >= 15 && /[.?!]$/.test(line) && !line.includes(':')) {
       sentences.push(line);
     }
   }
 
-  if (currentMcq && currentMcq.options.length >= 2) {
-    mcqBlocks.push(currentMcq);
-  }
+  flushCurrentMcq();
 
   return { vocabulary, mcqBlocks, sentences, rawText: clean };
+}
+
+function deterministicId(prefix, text, index) {
+  let hash = 0x811c9dc5;
+  const str = `${text}::${index}`;
+  for (let i = 0; i < str.length; i++) {
+    hash ^= str.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  const hex = (hash >>> 0).toString(16).padStart(8, '0');
+  return `${prefix}_det_${hex}_${index}`;
+}
+
+function deterministicShuffle(tokens, seedStr = '') {
+  let seed = 0;
+  for (let i = 0; i < seedStr.length; i++) seed = (seed * 31 + seedStr.charCodeAt(i)) >>> 0;
+  const result = [...tokens];
+  for (let i = result.length - 1; i > 0; i--) {
+    seed = (seed * 1664525 + 1013904223) >>> 0;
+    const j = seed % (i + 1);
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  if (result.length > 1 && result.every((val, idx) => val === tokens[idx])) {
+    [result[0], result[1]] = [result[1], result[0]];
+  }
+  return result;
 }
 
 /**
@@ -195,9 +230,11 @@ export function generateDeterministicQuiz(text, options = {}) {
   let requestedMix = { ...(options.typeMix || { multiple_choice: questionCount }) };
 
   const degradedTypes = [];
+  let degradedReason = null;
   // Graceful degradation: if picture_guess is requested but no images exist, degrade to multiple_choice
   if (!hasImages && requestedMix.picture_guess) {
     degradedTypes.push('picture_guess');
+    degradedReason = 'Tài liệu không có tệp ảnh để tạo câu hỏi nhìn hình đoán chữ (picture_guess).';
     const picCount = requestedMix.picture_guess;
     delete requestedMix.picture_guess;
     requestedMix.multiple_choice = (requestedMix.multiple_choice || 0) + picCount;
@@ -214,7 +251,8 @@ export function generateDeterministicQuiz(text, options = {}) {
     const validated = validateQuestion(candidate, questions.length);
     if (validated.error) return false;
     seenPrompts.add(normPrompt);
-    questions.push({ ...validated.value, id: makeId('qq'), q_order: questions.length });
+    const qId = candidate.id || deterministicId('qq', candidate.prompt, questions.length);
+    questions.push({ ...validated.value, id: qId, q_order: questions.length });
     return true;
   }
 
@@ -253,6 +291,26 @@ export function generateDeterministicQuiz(text, options = {}) {
         prompt: `Nghĩa chính xác của từ "${item.word}" là gì?`,
         options_json: opts,
         correct_answer: item.definition,
+        points: 1
+      });
+      if (added) mcqAdded++;
+    }
+  }
+  if (mcqAdded < targetMcq && parsed.sentences.length > 0) {
+    for (let i = 0; i < parsed.sentences.length && mcqAdded < targetMcq; i++) {
+      const s = parsed.sentences[i];
+      const correct = s;
+      const distractors = [
+        s.replace(/\b(is|are|was|were|can|will|should)\b/i, '$1 not'),
+        s.replace(/\b(protect|major|rare|threat|wildlife|animals)\b/i, 'other'),
+        `Nhận định không có trong bài học [${i + 1}]`
+      ];
+      const opts = [correct, ...distractors.slice(0, 3)].sort();
+      const added = addQuestionSafely({
+        type: 'multiple_choice',
+        prompt: `Theo bài học, nhận định nào sau đây là chính xác? [${i + 1}]`,
+        options_json: opts,
+        correct_answer: correct,
         points: 1
       });
       if (added) mcqAdded++;
@@ -317,7 +375,7 @@ export function generateDeterministicQuiz(text, options = {}) {
     if (ordAdded >= targetOrd) break;
     const tokens = s.replace(/[.?!]$/, '').split(/\s+/).filter(Boolean);
     if (tokens.length >= 3 && tokens.length <= 10) {
-      const scrambled = [...tokens].sort(() => 0.5 - Math.random());
+      const scrambled = deterministicShuffle(tokens, s);
       const added = addQuestionSafely({
         type: 'ordering',
         prompt: 'Sắp xếp các từ sau thành câu hoàn chỉnh:',
@@ -394,35 +452,29 @@ export function generateDeterministicQuiz(text, options = {}) {
     }
   }
 
-  // Backfill fallback: if total questions generated is still less than questionCount,
-  // create straightforward comprehension questions from remaining text
-  while (questions.length < questionCount) {
-    const idx = questions.length + 1;
-    const snippet = parsed.sentences[idx % (parsed.sentences.length || 1)] || `Nội dung phần ${idx}`;
-    const added = addQuestionSafely({
+  // Grounded completion: if questions.length < questionCount, only add grounded true/false
+  // from unused parsed sentences without hallucinations or fake prompts.
+  let sentenceIdx = 0;
+  while (questions.length < questionCount && sentenceIdx < parsed.sentences.length) {
+    const s = parsed.sentences[sentenceIdx++];
+    addQuestionSafely({
       type: 'true_false',
-      prompt: `Đúng hay Sai: "${snippet}"`,
+      prompt: `Đúng hay Sai: "${s}"`,
       options_json: ['Đúng', 'Sai'],
       correct_answer: 'Đúng',
       points: 1
     });
-    if (!added) {
-      // Emergency unique fallback
-      questions.push({
-        id: makeId('qq'),
-        type: 'true_false',
-        prompt: `Nhận định #${idx}: Thông tin trong bài học phản ánh đúng nội dung được cung cấp.`,
-        options_json: JSON.stringify(['Đúng', 'Sai']),
-        correct_answer: 'Đúng',
-        points: 1,
-        q_order: questions.length
-      });
-    }
+  }
+
+  if (questions.length < questionCount) {
+    const note = `Nội dung tài liệu ngắn, chỉ trích xuất được ${questions.length} câu grounded thay vì ${questionCount} câu.`;
+    degradedReason = degradedReason ? `${degradedReason}; ${note}` : note;
   }
 
   return {
     questions: questions.slice(0, questionCount),
     degraded_types: degradedTypes.length ? degradedTypes : undefined,
+    degraded_reason: degradedReason || undefined,
     allocation
   };
 }

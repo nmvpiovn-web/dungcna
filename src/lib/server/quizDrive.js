@@ -12,7 +12,8 @@ const TYPES = new Map([
   ['.txt', 'text/plain'],
   ['.png', 'image/png'],
   ['.jpg', 'image/jpeg'],
-  ['.jpeg', 'image/jpeg']
+  ['.jpeg', 'image/jpeg'],
+  ['.webp', 'image/webp']
 ]);
 
 export class QuizDriveError extends Error {
@@ -42,7 +43,7 @@ export function validateQuizFile(file) {
   const dot = name.lastIndexOf('.');
   const ext = dot >= 0 ? name.slice(dot).toLowerCase() : '';
   const expected = TYPES.get(ext);
-  if (!expected) throw new QuizDriveError('Chỉ hỗ trợ PDF, DOCX, TXT, PNG, JPG', 415, 'UnsupportedFileType');
+  if (!expected) throw new QuizDriveError('Chỉ hỗ trợ PDF, DOCX, TXT, PNG, JPG, WEBP', 415, 'UnsupportedFileType');
   if (!Number.isFinite(file.size) || file.size <= 0) throw new QuizDriveError('Tệp rỗng', 400, 'EmptyFile');
   if (file.size > MAX_QUIZ_FILE_BYTES) throw new QuizDriveError('Tệp vượt quá giới hạn 10MB', 413, 'FileTooLarge');
   const supplied = String(file.type || '').toLowerCase();
@@ -140,7 +141,7 @@ async function exportGoogleDoc(platform, id) {
   return response.text();
 }
 
-async function removeDriveFile(platform, id) {
+export async function removeDriveFile(platform, id) {
   await driveRequest(platform, `/drive/v3/files/${encodeURIComponent(id)}?supportsAllDrives=true`, { method: 'DELETE' });
 }
 
@@ -618,19 +619,29 @@ export async function generateQuestionsWithAI(text, platform) {
   }
 }
 
-export async function saveQuizSourceAndDrafts(db, quizId, source, text, questions) {
+export async function saveQuizSourceAndDrafts(db, quizId, source, text, questions, options = {}) {
   // source may be null when Drive archival was skipped — synthesize from available info
   const s = source || {};
   const metadata = {
-    id: s.id || null, name: s.name || 'uploaded.txt', mime_type: s.mimeType || 'text/plain', size: Number(s.size || 0) || null,
-    parents: s.parents || [], web_view_link: s.webViewLink || null,
-    created_time: s.createdTime || null, modified_time: s.modifiedTime || null
+    id: s.id || null, name: s.name || 'uploaded.txt', mime_type: s.mimeType || s.mime_type || 'text/plain', size: Number(s.size || 0) || null,
+    parents: s.parents || [], web_view_link: s.webViewLink || s.web_view_link || null,
+    created_time: s.createdTime || s.created_time || null, modified_time: s.modifiedTime || s.modified_time || null,
+    manifest: s.manifest || null,
+    pages_count: s.pages_count || null
   };
+  const isAppend = options.mergeStrategy === 'append';
+  let startOrder = 0;
+  if (isAppend) {
+    const maxRow = await db.prepare(`SELECT COALESCE(MAX(q_order), -1) AS max_order FROM quiz_questions WHERE quiz_id = ?`).bind(quizId).first();
+    startOrder = (Number(maxRow?.max_order) ?? -1) + 1;
+  }
   const statements = [
     db.prepare(`UPDATE quizzes SET source_file_id = ?, source_file_name = ?, source_metadata_json = ?, source_text_excerpt = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id = ?`)
-      .bind(metadata.id, metadata.name, JSON.stringify(metadata), String(text || '').slice(0, 4000) || null, quizId),
-    db.prepare(`DELETE FROM quiz_questions WHERE quiz_id = ?`).bind(quizId)
+      .bind(metadata.id, metadata.name, JSON.stringify(metadata), String(text || '').slice(0, 4000) || null, quizId)
   ];
+  if (!isAppend) {
+    statements.push(db.prepare(`DELETE FROM quiz_questions WHERE quiz_id = ?`).bind(quizId));
+  }
   let hasProvenance = false;
   try {
     await db.prepare(`SELECT source_type FROM quiz_questions LIMIT 1`).first();
@@ -638,17 +649,40 @@ export async function saveQuizSourceAndDrafts(db, quizId, source, text, question
   } catch {
     hasProvenance = false;
   }
-  for (const q of questions) {
+  let hasSourcesTable = false;
+  try {
+    await db.prepare(`SELECT 1 FROM quiz_question_sources LIMIT 1`).first();
+    hasSourcesTable = true;
+  } catch {
+    hasSourcesTable = false;
+  }
+  if (!isAppend && hasSourcesTable) {
+    statements.push(db.prepare(`DELETE FROM quiz_question_sources WHERE quiz_id = ?`).bind(quizId));
+  }
+
+  for (let i = 0; i < questions.length; i++) {
+    const q = questions[i];
+    const qOrder = isAppend ? startOrder + i : (Number.isInteger(Number(q.q_order)) ? Number(q.q_order) : i);
+    const sourceType = q.source_type || (metadata.id ? 'drive' : null);
+    const sourceId = q.source_id || metadata.id || null;
+
     if (hasProvenance) {
       statements.push(db.prepare(`
         INSERT INTO quiz_questions (id, quiz_id, type, prompt, prompt_image_url, options_json, correct_answer, explanation, points, q_order, source_type, source_id)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `).bind(q.id, quizId, q.type, q.prompt, q.prompt_image_url, q.options_json, q.correct_answer, q.explanation, q.points, q.q_order, q.source_type || null, q.source_id || null));
+      `).bind(q.id, quizId, q.type, q.prompt, q.prompt_image_url || null, q.options_json || null, q.correct_answer || null, q.explanation || null, q.points, qOrder, sourceType, sourceId));
     } else {
       statements.push(db.prepare(`
         INSERT INTO quiz_questions (id, quiz_id, type, prompt, prompt_image_url, options_json, correct_answer, explanation, points, q_order)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `).bind(q.id, quizId, q.type, q.prompt, q.prompt_image_url, q.options_json, q.correct_answer, q.explanation, q.points, q.q_order));
+      `).bind(q.id, quizId, q.type, q.prompt, q.prompt_image_url || null, q.options_json || null, q.correct_answer || null, q.explanation || null, q.points, qOrder));
+    }
+
+    if (hasSourcesTable && sourceType && sourceId) {
+      statements.push(db.prepare(`
+        INSERT OR IGNORE INTO quiz_question_sources (quiz_id, question_id, source_type, source_id)
+        VALUES (?, ?, ?, ?)
+      `).bind(quizId, q.id, sourceType, sourceId));
     }
   }
   await db.batch(statements);
