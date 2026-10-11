@@ -5,6 +5,13 @@ import { downloadDriveFile, QuizDriveError } from '../../../../../../lib/server/
 
 export const prerender = false;
 
+const ALLOWED_ASSET_MIMES = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/gif'
+]);
+
 async function optionalAuth(request, platform) {
   if (!request.headers.get('authorization') && !request.headers.get('cookie')?.includes('session_token=')) return null;
   const auth = await verifyServerAuth(request, platform);
@@ -15,6 +22,11 @@ export async function GET({ params, request, platform }) {
   const quizId = params.id;
   const assetId = params.assetId;
 
+  // P1-4: Strict format validation of assetId (prevent SQL/path injection & reject invalid IDs early)
+  if (!assetId || !/^[A-Za-z0-9_-]{6,200}$/.test(assetId)) {
+    return json({ success: false, error: 'InvalidAssetId' }, { status: 404 });
+  }
+
   if (!platform?.env?.DB) {
     return json({ success: false, error: 'DatabaseUnavailable' }, { status: 500 });
   }
@@ -24,55 +36,59 @@ export async function GET({ params, request, platform }) {
     return json({ success: false, error: 'QuizNotFound' }, { status: 404 });
   }
 
+  // P1-5: Authorization aligned 100% with GET /api/quiz-menu/[id]
   const auth = await optionalAuth(request, platform);
   const staff = !!(auth && isStaffUser(auth.user));
-  const isOwner = staff && canManageQuiz(auth.user, quiz);
 
-  if (quiz.status !== 'published' && !isOwner) {
-    return json({ success: false, error: 'Forbidden' }, { status: 403 });
-  }
-
-  // Student isolation for published quiz if assigned
-  if (auth?.authenticated && !staff && String(auth.user.role || '').toLowerCase() === 'student') {
-    const hasAssignments = await db.prepare(`SELECT 1 FROM homework_assignments WHERE source_quiz_id = ? LIMIT 1`).bind(quizId).first();
-    if (hasAssignments) {
-      const assigned = await db.prepare(`
-        SELECT 1 FROM homework_assignments ha
-        JOIN class_enrollments ce ON ce.class_id = ha.class_id
-        WHERE ha.source_quiz_id = ? AND ha.status = 'published'
-          AND ce.user_id = ? AND ce.status = 'active'
-        LIMIT 1
-      `).bind(quizId, auth.user.id).first();
-      if (!assigned) return json({ success: false, error: 'Forbidden' }, { status: 403 });
+  if (quiz.status !== 'published') {
+    if (!staff || !canManageQuiz(auth.user, quiz)) {
+      return json({ success: false, error: 'Forbidden' }, { status: 403 });
     }
   }
 
-  // Verify asset belongs strictly to this quiz (never leak arbitrary Drive files)
+  // Student isolation: must have active enrollment in a published homework assignment for this quiz
+  if (auth?.authenticated && !staff && String(auth.user.role || '').toLowerCase() === 'student') {
+    const assigned = await db.prepare(`
+      SELECT 1 FROM homework_assignments ha
+      JOIN class_enrollments ce ON ce.class_id = ha.class_id
+      WHERE ha.source_quiz_id = ? AND ha.status = 'published'
+        AND ce.user_id = ? AND ce.status = 'active'
+      LIMIT 1
+    `).bind(quizId, auth.user.id).first();
+    if (!assigned) return json({ success: false, error: 'Forbidden' }, { status: 403 });
+  }
+
+  // P1-3 & P1-4: Strict Asset Membership (No LIKE wildcard, No source_file_id leakage)
+  // Only authorize assets that are strictly question image assets for this quiz.
   let assetBelongs = false;
-  if (quiz.source_file_id === assetId) {
+
+  // 1. Direct prompt_image_url canonical equality
+  const canonicalUrl = `/api/quiz-menu/${quizId}/assets/${assetId}`;
+  const qRow = await db.prepare(`SELECT 1 FROM quiz_questions WHERE quiz_id = ? AND prompt_image_url = ? LIMIT 1`)
+    .bind(quizId, canonicalUrl).first();
+  if (qRow) {
     assetBelongs = true;
   }
+
+  // 2. Exact equality in quiz_question_sources (sub_id = assetId)
+  if (!assetBelongs) {
+    try {
+      const sRow = await db.prepare(`SELECT 1 FROM quiz_question_sources WHERE quiz_id = ? AND source_sub_id = ? LIMIT 1`)
+        .bind(quizId, assetId).first();
+      if (sRow) assetBelongs = true;
+    } catch {}
+  }
+
+  // 3. Exact equality in source_metadata_json manifest for image mime types
   if (!assetBelongs && quiz.source_metadata_json) {
     try {
       const meta = typeof quiz.source_metadata_json === 'string' ? JSON.parse(quiz.source_metadata_json) : quiz.source_metadata_json;
-      if (meta.id === assetId) assetBelongs = true;
       if (Array.isArray(meta.manifest)) {
-        if (meta.manifest.some((item) => item.drive_file_id === assetId || item.id === assetId)) {
+        const item = meta.manifest.find((m) => (m.drive_file_id === assetId || m.id === assetId));
+        if (item && String(item.mime_type || '').startsWith('image/')) {
           assetBelongs = true;
         }
       }
-    } catch {}
-  }
-  if (!assetBelongs) {
-    const qRow = await db.prepare(`SELECT 1 FROM quiz_questions WHERE quiz_id = ? AND prompt_image_url LIKE ? LIMIT 1`)
-      .bind(quizId, `%${assetId}%`).first();
-    if (qRow) assetBelongs = true;
-  }
-  if (!assetBelongs) {
-    try {
-      const sRow = await db.prepare(`SELECT 1 FROM quiz_question_sources WHERE quiz_id = ? AND (source_id = ? OR source_sub_id = ?) LIMIT 1`)
-        .bind(quizId, assetId, assetId).first();
-      if (sRow) assetBelongs = true;
     } catch {}
   }
 
@@ -82,10 +98,18 @@ export async function GET({ params, request, platform }) {
 
   try {
     const file = await downloadDriveFile(platform, assetId);
+
+    // P1-3: Strictly verify downloaded MIME is an allowed image format (reject DOCX/PDF/TXT source leaks)
+    const mime = String(file.mimeType || '').toLowerCase();
+    if (!ALLOWED_ASSET_MIMES.has(mime)) {
+      return json({ success: false, error: 'InvalidAssetMimeType', message: 'Chỉ cho phép tải hình ảnh câu hỏi' }, { status: 403 });
+    }
+
     return new Response(file.bytes, {
       status: 200,
       headers: {
-        'Content-Type': file.mimeType || 'application/octet-stream',
+        'Content-Type': mime,
+        'X-Content-Type-Options': 'nosniff',
         'Cache-Control': quiz.status === 'published' ? 'public, max-age=86400' : 'private, no-cache',
         'Content-Disposition': `inline; filename="${encodeURIComponent(file.name || 'asset')}"`
       }

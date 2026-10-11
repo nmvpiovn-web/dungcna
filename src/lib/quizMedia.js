@@ -35,7 +35,22 @@ export function isAllowedImageUrl(urlStr) {
     try {
       const u = new URL(trimmed, 'https://dummy.local');
       if (u.origin !== 'https://dummy.local') return false;
-      return true;
+      const pathname = u.pathname;
+      // Allow exact quiz asset proxy: /api/quiz-menu/{id}/assets/{assetId}
+      if (/^\/api\/quiz-menu\/[a-zA-Z0-9_-]+\/assets\/[a-zA-Z0-9_-]+$/i.test(pathname)) {
+        return true;
+      }
+      // Allow drive file proxy
+      if (/^\/api\/drive\/files\/[a-zA-Z0-9_-]+(\.[a-zA-Z0-9]+)?$/i.test(pathname)) {
+        return true;
+      }
+      // Allow known static assets with image extensions
+      if (/^\/(static\/)?(images|icons|fonts|pwa-)/i.test(pathname) || /^\/favicon\./i.test(pathname)) {
+        if (/\.(jpe?g|png|webp|gif|svg|ico)$/i.test(pathname)) {
+          return true;
+        }
+      }
+      return false;
     } catch {
       return false;
     }

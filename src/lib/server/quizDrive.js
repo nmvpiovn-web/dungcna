@@ -583,11 +583,16 @@ YÊU CẦU:
 export async function generateQuestionsWithAI(text, platform, options = {}) {
   const apiKey = platform?.env?.AI_API_KEY;
   if (!apiKey) return null;
+  const rawCount = Number(options.questionCount);
+  if (rawCount > 50) {
+    // P2-10: Explicitly skip AI when questionCount > 50, allowing caller to handle deterministically with honest metadata
+    return null;
+  }
   const clean = String(text || '').replace(/\r/g, '').trim().slice(0, 6000);
   if (!clean) return null;
   const baseUrl = String(platform?.env?.AI_BASE_URL || 'https://openrouter.ai/api/v1').replace(/\/+$/, '');
   const model = platform?.env?.AI_MODEL || 'deepseek/deepseek-chat';
-  const questionCount = Math.max(1, Math.min(50, Number(options.questionCount) || 10));
+  const questionCount = Math.max(1, Math.min(50, rawCount || 10));
   const typeMix = options.typeMix && typeof options.typeMix === 'object' ? options.typeMix : null;
   const difficulty = String(options.difficulty || 'medium');
 
@@ -707,10 +712,18 @@ export async function saveQuizSourceAndDrafts(db, quizId, source, text, question
   const existingPrompts = new Set((existingQuestionsRes?.results || []).map((q) => q.prompt?.trim().toLowerCase()));
   const existingIds = new Set((existingQuestionsRes?.results || []).map((q) => q.id));
 
-  // Cap 200 enforcement (P1-11)
+  // Cap 200 enforcement (P1-11 & P2-9)
   if (isAppend) {
     const currentCount = (existingQuestionsRes?.results || []).length;
-    const trulyNewCount = questions.filter((q) => !existingPrompts.has(q.prompt?.trim().toLowerCase())).length;
+    const seenBatchPrompts = new Set();
+    let trulyNewCount = 0;
+    for (const q of questions) {
+      const norm = q.prompt?.trim().toLowerCase();
+      if (norm && !existingPrompts.has(norm) && !seenBatchPrompts.has(norm)) {
+        seenBatchPrompts.add(norm);
+        trulyNewCount++;
+      }
+    }
     if (currentCount + trulyNewCount > 200) {
       throw new QuizDriveError('Tổng số câu hỏi không được vượt quá 200', 400, 'QuizLimitExceeded');
     }
@@ -750,9 +763,13 @@ export async function saveQuizSourceAndDrafts(db, quizId, source, text, question
   let appendedIndex = 0;
   for (let i = 0; i < questions.length; i++) {
     const q = questions[i];
-    if (isAppend && existingPrompts.has(q.prompt?.trim().toLowerCase())) {
-      // Deduplicate identical question prompt already in this quiz
+    const norm = q.prompt?.trim().toLowerCase();
+    if (isAppend && norm && existingPrompts.has(norm)) {
+      // Deduplicate identical question prompt already in this quiz or earlier in this batch
       continue;
+    }
+    if (norm) {
+      existingPrompts.add(norm);
     }
     let qId = q.id;
     if (existingIds.has(qId)) {

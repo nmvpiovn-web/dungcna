@@ -113,7 +113,8 @@ export function validateQuestion(input, index = 0) {
       points,
       q_order: Number.isInteger(Number(input.q_order)) ? Number(input.q_order) : index,
       source_type: input.source_type ? String(input.source_type) : null,
-      source_id: input.source_id ? String(input.source_id) : null
+      source_id: input.source_id ? String(input.source_id) : null,
+      source_sub_id: input.source_sub_id ? String(input.source_sub_id).trim() : null
     }
   };
 }
@@ -134,6 +135,7 @@ export function publicQuestion(row, includeAnswers = false) {
     question.explanation = row.explanation || null;
     if (row.source_type) question.source_type = row.source_type;
     if (row.source_id) question.source_id = row.source_id;
+    if (row.source_sub_id) question.source_sub_id = row.source_sub_id;
   }
   return question;
 }

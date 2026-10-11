@@ -163,8 +163,9 @@ export async function POST({ params, request, platform }) {
         const q = questions[i];
         q.source_type = 'upload';
         q.source_id = primarySourceId;
-        if (!q.source_sub_id && filesList.length > 1) {
-          q.source_sub_id = `page_${(i % filesList.length) + 1}`;
+        // Exact provenance: picture questions preserve exact asset ID; OCR non-picture questions keep NULL
+        if (q.type !== 'picture_guess') {
+          q.source_sub_id = null;
         }
       }
 
@@ -198,8 +199,12 @@ export async function POST({ params, request, platform }) {
 
   // Single file (DOCX, PDF, TXT)
   const file = filesList[0];
+  let uploadedDriveId = null;
   try {
     const source = await uploadQuizSource(platform, file);
+    if (source?.file?.id) {
+      uploadedDriveId = source.file.id;
+    }
     let questions = null;
     let requested_counts = typeMix;
     let generated_counts = null;
@@ -276,6 +281,9 @@ export async function POST({ params, request, platform }) {
       merge_strategy: mergeStrategy
     }, { status: 201 });
   } catch (error) {
+    if (uploadedDriveId) {
+      try { await removeDriveFile(platform, uploadedDriveId); } catch {}
+    }
     const status = error instanceof QuizDriveError ? error.status : 500;
     return json({ success: false, error: error.code || 'UploadFailed', message: error.message }, { status });
   }

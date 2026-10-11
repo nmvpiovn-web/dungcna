@@ -21,7 +21,11 @@ export async function GET({ params, url, request, platform }) {
   if (!quiz) return json({ success: false, error: 'QuizNotFound' }, { status: 404 });
   const auth = await optionalAuth(request, platform);
   const staff = !!(auth && isStaffUser(auth.user));
-  if (quiz.status !== 'published' && !staff) return json({ success: false, error: 'QuizNotFound' }, { status: 404 });
+  if (quiz.status !== 'published') {
+    if (!staff || !canManageQuiz(auth.user, quiz)) {
+      return json({ success: false, error: 'QuizNotFound' }, { status: 404 });
+    }
+  }
   // Student isolation: chỉ được xem quiz published ĐƯỢC GIAO cho lớp mình
   if (auth?.authenticated && !staff && String(auth.user.role || '').toLowerCase() === 'student') {
     const assigned = await db.prepare(`
@@ -92,10 +96,21 @@ export async function PUT({ params, request, platform }) {
     let existingIds = new Set();
     if (questions !== undefined && mergeStrategy === 'append') {
       const existingRows = await db.prepare(`SELECT id, prompt FROM quiz_questions WHERE quiz_id = ?`).bind(params.id).all();
-      existingPrompts = new Set((existingRows?.results || []).map((r) => r.prompt?.trim().toLowerCase()));
+      existingPrompts = new Set((existingRows?.results || []).map((r) => r.prompt?.trim().toLowerCase()).filter(Boolean));
       existingIds = new Set((existingRows?.results || []).map((r) => r.id));
       const currentCount = (existingRows?.results || []).length;
-      const trulyNewCount = validated.filter((q) => !existingPrompts.has(q.prompt?.trim().toLowerCase())).length;
+
+      // P2-9: Deduplicate incoming batch against existing prompts and against duplicates within the same batch
+      const seenBatchPrompts = new Set();
+      let trulyNewCount = 0;
+      for (const q of validated) {
+        const norm = q.prompt?.trim().toLowerCase();
+        if (norm && !existingPrompts.has(norm) && !seenBatchPrompts.has(norm)) {
+          seenBatchPrompts.add(norm);
+          trulyNewCount++;
+        }
+      }
+
       if (currentCount + trulyNewCount > 200) {
         return json({ success: false, error: 'Tổng số câu hỏi không được vượt quá 200' }, { status: 400 });
       }
@@ -132,9 +147,13 @@ export async function PUT({ params, request, platform }) {
       let appendedIndex = 0;
       for (let i = 0; i < validated.length; i++) {
         const q = validated[i];
-        if (mergeStrategy === 'append' && existingPrompts.has(q.prompt?.trim().toLowerCase())) {
-          // Deduplicate identical prompt already present in this quiz
+        const norm = q.prompt?.trim().toLowerCase();
+        if (mergeStrategy === 'append' && norm && existingPrompts.has(norm)) {
+          // Deduplicate identical prompt already present in this quiz or earlier in this batch
           continue;
+        }
+        if (norm) {
+          existingPrompts.add(norm);
         }
         let qId = q.id;
         if (existingIds.has(qId)) {

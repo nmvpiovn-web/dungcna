@@ -33,40 +33,51 @@ export async function GET({ url, request, platform }) {
 
   if (q) {
     const ftsQuery = sanitizeFtsQuery(q);
-    let ftsOk = false;
+    const likePattern = `%${q}%`;
+    let useFts = false;
     if (ftsQuery) {
       try {
-        const countRes = await db.prepare(
-          `SELECT COUNT(*) AS total
-           FROM knowledge_fts fts
-           JOIN knowledge_vault kv ON fts.id = kv.id
-            WHERE knowledge_fts MATCH ? AND (kv.status = 'active' OR kv.status IS NULL)
-           ${category ? 'AND kv.category = ?' : ''}`
-        ).bind(...(category ? [ftsQuery, category] : [ftsQuery])).first();
-
-        total = Number(countRes?.total || 0);
-
-        const rows = await db.prepare(
-          `SELECT kv.id, kv.title, kv.category, kv.folder, kv.tags,
-                  SUBSTR(kv.content_markdown, 1, 300) AS preview,
-                  LENGTH(kv.content_markdown) AS content_length
-           FROM knowledge_fts fts
-           JOIN knowledge_vault kv ON fts.id = kv.id
-           WHERE knowledge_fts MATCH ? AND (kv.status = 'active' OR kv.status IS NULL)
-           ${category ? 'AND kv.category = ?' : ''}
-           LIMIT ? OFFSET ?`
-        ).bind(...(category ? [ftsQuery, category, limit, offset] : [ftsQuery, limit, offset])).all();
-
-        articles = rows.results || [];
-        ftsOk = total > 0;
+        await db.prepare(`SELECT 1 FROM knowledge_fts WHERE knowledge_fts MATCH ? LIMIT 1`).bind(ftsQuery).first();
+        useFts = true;
       } catch {
-        ftsOk = false;
+        useFts = false;
       }
     }
 
-    if (!ftsOk) {
-      // LIKE fallback
-      const likePattern = `%${q}%`;
+    if (useFts) {
+      const countRes = await db.prepare(
+        `SELECT COUNT(DISTINCT kv.id) AS total
+         FROM knowledge_vault kv
+         WHERE (kv.status = 'active' OR kv.status IS NULL)
+           ${category ? 'AND kv.category = ?' : ''}
+           AND (
+             kv.id IN (SELECT id FROM knowledge_fts WHERE knowledge_fts MATCH ?)
+             OR kv.title LIKE ?
+             OR kv.content_markdown LIKE ?
+           )`
+      ).bind(...(category ? [category, ftsQuery, likePattern, likePattern] : [ftsQuery, likePattern, likePattern])).first();
+
+      total = Number(countRes?.total || 0);
+
+      const rows = await db.prepare(
+        `SELECT kv.id, kv.title, kv.category, kv.folder, kv.tags,
+                SUBSTR(kv.content_markdown, 1, 300) AS preview,
+                LENGTH(kv.content_markdown) AS content_length
+         FROM knowledge_vault kv
+         WHERE (kv.status = 'active' OR kv.status IS NULL)
+           ${category ? 'AND kv.category = ?' : ''}
+           AND (
+             kv.id IN (SELECT id FROM knowledge_fts WHERE knowledge_fts MATCH ?)
+             OR kv.title LIKE ?
+             OR kv.content_markdown LIKE ?
+           )
+         ORDER BY kv.id ASC
+         LIMIT ? OFFSET ?`
+      ).bind(...(category ? [category, ftsQuery, likePattern, likePattern, limit, offset] : [ftsQuery, likePattern, likePattern, limit, offset])).all();
+
+      articles = rows.results || [];
+    } else {
+      // Direct LIKE query when FTS is unavailable
       const countRes = await db.prepare(
         `SELECT COUNT(*) AS total FROM knowledge_vault kv
          WHERE (kv.status = 'active' OR kv.status IS NULL)

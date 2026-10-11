@@ -65,3 +65,66 @@ npx wrangler d1 execute DB --remote --command "
   PRAGMA foreign_keys = ON;
 "
 ```
+
+---
+
+## 6. Kiểm Thử Cục Bộ Production-Shape (Local Wrangler D1 Simulation)
+
+Để tái lập và xác minh tính toàn vẹn của Migration 0021 trong môi trường mô phỏng chính xác D1 mà không tác động tới remote database:
+
+### 6.1. Lệnh Thực Thi Local Migration
+```bash
+# 1. Kiểm tra danh sách migration cục bộ chờ apply
+npx wrangler d1 migrations list DB --local --persist-to .wrangler/state
+
+# 2. Thực thi apply migration cục bộ
+npx wrangler d1 migrations apply DB --local --persist-to .wrangler/state
+```
+
+### 6.2. Kiểm Tra Ràng Buộc Khóa Ngoại & Schema (Pre & Post Checks)
+```bash
+# 1. Kiểm tra toàn vẹn Foreign Keys (kết quả phải trả về rỗng / 0 violations)
+npx wrangler d1 execute DB --local --persist-to .wrangler/state --command "PRAGMA foreign_key_check;"
+
+# 2. Xác nhận bảo toàn số lượng câu hỏi và nguồn câu hỏi (156 seed questions)
+npx wrangler d1 execute DB --local --persist-to .wrangler/state --command "
+  SELECT count(*) AS total_questions FROM quiz_questions;
+  SELECT count(*) AS total_sources FROM quiz_question_sources;
+"
+
+# 3. Kiểm tra cấu trúc các bảng mới
+npx wrangler d1 execute DB --local --persist-to .wrangler/state --command "
+  PRAGMA table_info(quiz_builder_defaults);
+  PRAGMA table_info(quiz_question_sources);
+"
+
+# 4. Kiểm tra danh sách index đã tạo
+npx wrangler d1 execute DB --local --persist-to .wrangler/state --command "
+  PRAGMA index_list(quiz_builder_defaults);
+  PRAGMA index_list(quiz_question_sources);
+  PRAGMA index_list(quiz_questions);
+"
+```
+
+### 6.3. Bằng Chứng Thực Nghiệm Cục Bộ (Evidence Log)
+- `PRAGMA foreign_key_check;` -> `[]` (0 vi phạm khóa ngoại).
+- `total_questions` -> `156` (100% dữ liệu câu hỏi từ 0019/0020 được bảo toàn nguyên vẹn).
+- `total_sources` -> `156` (100% nguồn được backfill thành công vào `quiz_question_sources`).
+- Cấu trúc `quiz_builder_defaults`:
+  - `user_id TEXT PRIMARY KEY`
+  - `source_type TEXT NOT NULL DEFAULT 'upload'`
+  - `question_count INTEGER NOT NULL DEFAULT 10`
+  - `time_limit_minutes INTEGER NOT NULL DEFAULT 15`
+  - `grade_level INTEGER NOT NULL DEFAULT 7`
+  - `difficulty TEXT NOT NULL DEFAULT 'medium'`
+  - `type_mix_json TEXT NOT NULL DEFAULT '{}'`
+  - `default_status TEXT NOT NULL DEFAULT 'draft'`
+- Cấu trúc `quiz_question_sources`:
+  - `id TEXT PRIMARY KEY NOT NULL`
+  - `quiz_id TEXT NOT NULL`
+  - `question_id TEXT NOT NULL`
+  - `source_type TEXT NOT NULL`
+  - `source_id TEXT NOT NULL`
+  - `source_sub_id TEXT`
+  - `metadata_json TEXT`
+- Indexes: `idx_quiz_builder_defaults_user`, `idx_qq_sources_unique`, `idx_qq_sources_lookup`, `idx_qq_sources_question`, `idx_qq_sources_quiz`, `idx_quiz_questions_source`, `idx_quiz_questions_bank_unique`.
