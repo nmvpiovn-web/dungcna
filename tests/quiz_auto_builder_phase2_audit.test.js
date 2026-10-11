@@ -67,6 +67,7 @@ async function fullSchemaFixture() {
     CREATE TABLE system_notifications (id TEXT PRIMARY KEY, target_role TEXT, target_user_id TEXT, title TEXT, body TEXT, category TEXT, reference_id TEXT);
     CREATE TABLE IF NOT EXISTS knowledge_vault (
       id TEXT PRIMARY KEY, title TEXT, folder TEXT, category TEXT, tags TEXT, content_markdown TEXT,
+      status TEXT DEFAULT 'active',
       created_at TEXT DEFAULT CURRENT_TIMESTAMP, updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
     CREATE VIRTUAL TABLE IF NOT EXISTS knowledge_fts USING fts5(
@@ -215,7 +216,7 @@ describe('PHASE 2 CODEX AUDIT: RED/GREEN TEST SUITE', () => {
         id: 'q_pic_1',
         type: 'picture_guess',
         prompt: 'Look at the image and identify the object',
-        prompt_image_url: 'https://cdn.example.com/quiz-images/cat.png',
+        prompt_image_url: 'https://images.unsplash.com/photo-cat.png',
         options_json: JSON.stringify(['A. cat', 'B. dog']),
         correct_answer: 'A. cat',
         points: 1
@@ -255,7 +256,7 @@ describe('PHASE 2 CODEX AUDIT: RED/GREEN TEST SUITE', () => {
     const matQ = fetched.quiz.questions.find(q => q.type === 'matching');
     const memQ = fetched.quiz.questions.find(q => q.type === 'memory_match');
 
-    assert.strictEqual(picQ.prompt_image_url, 'https://cdn.example.com/quiz-images/cat.png');
+    assert.strictEqual(picQ.prompt_image_url, 'https://images.unsplash.com/photo-cat.png');
     assert.deepStrictEqual(matQ.options.left, ['sun', 'moon']);
     assert.deepStrictEqual(matQ.options.right, ['mặt trời', 'mặt trăng']);
     assert.ok(memQ.options.pairs || memQ.options.left, 'Memory match must retain pairs');
@@ -528,5 +529,196 @@ Animals consume plants or other animals for energy.
     const uploadServerContent = fs.readFileSync('src/routes/api/quiz-menu/[id]/upload/+server.js', 'utf8');
     assert.strictEqual(uploadServerContent.includes('removeDriveFile'), true, 'upload endpoint must import and use removeDriveFile for cleanup on failure');
     assert.strictEqual(uploadServerContent.includes('manifest'), true, 'upload endpoint must construct and pass multi-image manifest');
+  });
+
+  test('P0-picture_guess: Grounding with imageAssets vs honest degradation without silent backfill', () => {
+    const assets = [
+      { id: 'img_1', url: 'https://images.unsplash.com/cat.jpg', label: 'cat' },
+      { id: 'img_2', url: 'https://images.unsplash.com/dog.jpg', label: 'dog' }
+    ];
+
+    // 1. With imageAssets: generates real picture_guess questions with prompt_image_url
+    const resWithAssets = generateDeterministicQuiz('Cat is feline. Dog is canine. Animals are friendly.', {
+      questionCount: 3,
+      typeMix: { picture_guess: 2, multiple_choice: 1 },
+      hasImages: true,
+      imageAssets: assets
+    });
+
+    const pics = resWithAssets.questions.filter(q => q.type === 'picture_guess');
+    assert.strictEqual(pics.length, 2, 'Must generate exactly 2 picture_guess questions from assets');
+    for (const pic of pics) {
+      assert.ok(pic.prompt_image_url, 'Each picture_guess question must have prompt_image_url');
+      assert.ok(pic.correct_answer, 'Each picture_guess question must have grounded correct_answer');
+    }
+    assert.strictEqual(resWithAssets.generated_counts.picture_guess, 2);
+    assert.strictEqual(resWithAssets.degraded_types.length, 0);
+
+    // 2. Without imageAssets: must NOT silently backfill true_false; must report degradation
+    const resNoAssets = generateDeterministicQuiz('Cat is feline. Dog is canine.', {
+      questionCount: 3,
+      typeMix: { picture_guess: 2, multiple_choice: 1 },
+      hasImages: false
+    });
+
+    assert.strictEqual(resNoAssets.questions.filter(q => q.type === 'picture_guess').length, 0);
+    assert.strictEqual(resNoAssets.questions.filter(q => q.type === 'true_false').length, 0, 'Must NOT inject silent true_false backfill');
+    assert.ok(resNoAssets.degraded_types.includes('picture_guess'), 'Must list picture_guess in degraded_types');
+    assert.ok(resNoAssets.degraded_reason, 'Must provide degraded_reason');
+    assert.strictEqual(resNoAssets.generated_counts.picture_guess, 0);
+  });
+
+  test('P1-AI: generateQuestionsWithAI passes options and falls back to deterministic generator gracefully', async () => {
+    const { generateQuestionsWithAI } = await import('../src/lib/server/quizDrive.js');
+    const { generateDeterministicQuiz } = await import('../src/lib/server/quizAutoBuilder.js');
+
+    const failingPlatform = {
+      env: {
+        AI_API_KEY: 'test-key',
+        AI_BASE_URL: 'http://127.0.0.1:59999/unreachable'
+      }
+    };
+
+    const text = 'Mitochondria produce cellular energy. Chloroplasts carry out photosynthesis in plant cells.';
+    const options = {
+      questionCount: 2,
+      typeMix: { multiple_choice: 1, true_false: 1 },
+      difficulty: 'easy'
+    };
+
+    // When AI service fails or is unreachable, generateQuestionsWithAI returns null
+    const aiRes = await generateQuestionsWithAI(text, failingPlatform, options);
+    assert.strictEqual(aiRes, null, 'Unreachable AI service must return null so caller falls back');
+
+    // Caller fallback logic executes generateDeterministicQuiz
+    const fallbackRes = generateDeterministicQuiz(text, options);
+    assert.ok(fallbackRes.questions.length >= 1, 'Fallback must produce questions from text');
+    for (const q of fallbackRes.questions) {
+      assert.ok(q.prompt, 'Every generated fallback question must have a prompt');
+      assert.ok(q.type === 'multiple_choice' || q.type === 'true_false', 'Question type must adhere to requested types');
+    }
+  });
+
+  test('P1-KnowledgeVault: Search, generation endpoint, and provenance tracking', async () => {
+    const ctx = await fullSchemaFixture();
+
+    // 1. Insert article into knowledge_vault and knowledge_fts
+    ctx.sqlite.prepare(`
+      INSERT INTO knowledge_vault (id, title, folder, category, tags, content_markdown, status)
+      VALUES ('kv_art_grammar_01', 'Unit 6: Conditional Sentences', 'grammar', 'grammar', 'grammar,conditional', 'If it rains, we will stay at home. Type 1 conditional sentences describe real possibilities.', 'active')
+    `).run();
+    ctx.sqlite.prepare(`
+      INSERT INTO knowledge_fts (id, title, content_markdown, tags, folder)
+      VALUES ('kv_art_grammar_01', 'Unit 6: Conditional Sentences', 'If it rains, we will stay at home. Type 1 conditional sentences describe real possibilities.', 'grammar,conditional', 'grammar')
+    `).run();
+
+    // 2. Staff GET /api/quiz-menu/knowledge-vault
+    const { GET: getKnowledgeVault } = await import('../src/routes/api/quiz-menu/knowledge-vault/+server.js');
+    const kvReq = {
+      headers: new Headers({ authorization: `Bearer ${ctx.teacher1Token}` })
+    };
+    const kvRes = await getKnowledgeVault({ url: new URL('http://localhost/api/quiz-menu/knowledge-vault?q=Conditional'), request: kvReq, platform: ctx.platform });
+    const kvData = await kvRes.json();
+    assert.strictEqual(kvRes.status, 200);
+    assert.strictEqual(kvData.success, true);
+    assert.ok(kvData.articles.some(a => a.id === 'kv_art_grammar_01'));
+
+    // 3. Student GET /api/quiz-menu/knowledge-vault -> 403 Forbidden
+    const studentReq = {
+      headers: new Headers({ authorization: `Bearer ${ctx.student1Token}` })
+    };
+    const studentRes = await getKnowledgeVault({ url: new URL('http://localhost/api/quiz-menu/knowledge-vault'), request: studentReq, platform: ctx.platform });
+    assert.strictEqual(studentRes.status, 403);
+
+    // 4. POST /api/quiz-menu/[id]/from-knowledge-vault generates questions with provenance
+    const { POST: fromKnowledgeVault } = await import('../src/routes/api/quiz-menu/[id]/from-knowledge-vault/+server.js');
+    const quizId = 'quiz_kv_provenance_test';
+    ctx.sqlite.prepare(`INSERT INTO quizzes (id, title, created_by, status) VALUES (?, 'KV Provenance Quiz', 'teacher-1', 'draft')`).run(quizId);
+
+    const genReq = {
+      headers: new Headers({ authorization: `Bearer ${ctx.teacher1Token}`, 'content-type': 'application/json' }),
+      json: async () => ({
+        vault_id: 'kv_art_grammar_01',
+        question_count: 2,
+        type_mix: { multiple_choice: 2 },
+        difficulty: 'medium',
+        merge_strategy: 'append'
+      })
+    };
+    const genRes = await fromKnowledgeVault({ params: { id: quizId }, request: genReq, platform: ctx.platform });
+    const genData = await genRes.json();
+    assert.strictEqual(genRes.status, 200, JSON.stringify(genData));
+    assert.strictEqual(genData.success, true);
+    assert.strictEqual(genData.vault_id, 'kv_art_grammar_01');
+
+    // Verify DB provenance
+    const rows = ctx.sqlite.prepare(`SELECT source_type, source_id FROM quiz_questions WHERE quiz_id = ?`).all(quizId);
+    assert.ok(rows.length > 0);
+    for (const r of rows) {
+      assert.strictEqual(r.source_type, 'knowledge_vault');
+      assert.strictEqual(r.source_id, 'kv_art_grammar_01');
+    }
+
+    // 5. Append deduplication: re-generating same article with append must NOT crash with PK 500
+    const reGenRes = await fromKnowledgeVault({ params: { id: quizId }, request: genReq, platform: ctx.platform });
+    assert.strictEqual(reGenRes.status, 200, 'Re-generating with append must deduplicate without crashing');
+  });
+
+  test('P1-Provenance-Schema: quiz_question_sources.id is TEXT PRIMARY KEY NOT NULL', async () => {
+    const ctx = await fullSchemaFixture();
+    const cols = ctx.sqlite.prepare(`PRAGMA table_info(quiz_question_sources)`).all();
+    const idCol = cols.find(c => c.name === 'id');
+    assert.ok(idCol, 'Column id must exist in quiz_question_sources');
+    assert.strictEqual(idCol.notnull, 1, 'Column id must be NOT NULL');
+    assert.strictEqual(idCol.pk, 1, 'Column id must be PRIMARY KEY');
+  });
+
+  test('P1-Migration-0021: Migration executes cleanly with PRAGMA foreign_keys = ON inside transaction', () => {
+    const memDb = new DatabaseSync(':memory:');
+    memDb.exec('PRAGMA foreign_keys = ON;');
+    memDb.exec("CREATE TABLE IF NOT EXISTS homework_assignments (id TEXT PRIMARY KEY, created_by TEXT);");
+    memDb.exec(`
+      CREATE TABLE IF NOT EXISTS knowledge_vault (
+        id TEXT PRIMARY KEY, title TEXT, folder TEXT, category TEXT, tags TEXT, content_markdown TEXT,
+        status TEXT DEFAULT 'active', created_at TEXT, updated_at TEXT
+      );
+      CREATE VIRTUAL TABLE IF NOT EXISTS knowledge_fts USING fts5(id UNINDEXED, title, content_markdown, tags, folder, tokenize='unicode61');
+    `);
+    memDb.exec(fs.readFileSync('migrations/0012_quiz_menu.sql', 'utf8'));
+    memDb.exec(fs.readFileSync('migrations/0014_quiz_guest_class.sql', 'utf8'));
+    memDb.exec(fs.readFileSync('migrations/0013_quiz_menu_drive.sql', 'utf8'));
+    memDb.exec(fs.readFileSync('migrations/0018_knowledge_fts_triggers_backfill.sql', 'utf8'));
+    memDb.exec(fs.readFileSync('migrations/0019_seed_public_quiz_catalog.sql', 'utf8'));
+    memDb.exec(fs.readFileSync('migrations/0020_quiz_question_provenance.sql', 'utf8'));
+
+    // Execute 0021 inside transaction
+    memDb.exec('BEGIN TRANSACTION;');
+    memDb.exec(fs.readFileSync('migrations/0021_quiz_auto_builder_defaults.sql', 'utf8'));
+    memDb.exec('COMMIT;');
+
+    const fkCheck = memDb.prepare('PRAGMA foreign_key_check;').all();
+    assert.strictEqual(fkCheck.length, 0, 'Foreign key check must return 0 violations after migration 0021');
+  });
+
+  test('P2-Privacy: isAllowedImageUrl protects student privacy from untrusted domains and trackers', async () => {
+    const { isAllowedImageUrl } = await import('../src/lib/quizMedia.js');
+
+    // Trusted paths & CDNs
+    assert.strictEqual(isAllowedImageUrl('/api/drive/files/photo.png'), true);
+    assert.strictEqual(isAllowedImageUrl('/static/images/logo.webp'), true);
+    assert.strictEqual(isAllowedImageUrl('https://drive.google.com/uc?id=file123'), true);
+    assert.strictEqual(isAllowedImageUrl('https://lh3.googleusercontent.com/abc'), true);
+    assert.strictEqual(isAllowedImageUrl('https://upload.wikimedia.org/wikipedia/commons/test.jpg'), true);
+    assert.strictEqual(isAllowedImageUrl('https://images.unsplash.com/photo-test'), true);
+    assert.strictEqual(isAllowedImageUrl('https://timbk.io.vn/images/banner.png'), true);
+
+    // Untrusted domains / third party trackers / XSS attempts
+    assert.strictEqual(isAllowedImageUrl('https://google-analytics.com/collect?v=1'), false);
+    assert.strictEqual(isAllowedImageUrl('https://track.adnetwork.com/pixel.gif'), false);
+    assert.strictEqual(isAllowedImageUrl('https://evil-phishing.com/image.png'), false);
+    assert.strictEqual(isAllowedImageUrl('http://drive.google.com/insecure.png'), false);
+    assert.strictEqual(isAllowedImageUrl('javascript:alert("xss")'), false);
+    assert.strictEqual(isAllowedImageUrl(null), false);
+    assert.strictEqual(isAllowedImageUrl(''), false);
   });
 });

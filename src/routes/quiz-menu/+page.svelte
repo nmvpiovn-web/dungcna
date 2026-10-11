@@ -5,6 +5,7 @@
   import QuizCameraCapture from '$lib/components/QuizCameraCapture.svelte';
   import QuizChildResults from '$lib/components/QuizChildResults.svelte';
   import { cacheQuizData, getCachedQuizData, installQuizOnlineSync, queueQuizAttempt } from '$lib/quizOffline.js';
+  import { isAllowedImageUrl } from '$lib/quizMedia.js';
 
   const questionTypes = [
     ['multiple_choice', 'Trắc nghiệm', 'Chọn một đáp án đúng'],
@@ -57,6 +58,17 @@
   let uploadFiles = $state([]);
   let autoGenerating = $state(false);
   let defaultsSaving = $state(false);
+  let mergeStrategy = $state('append'); // 'append' (default safe) | 'replace'
+  let showReplaceConfirm = $state(false);
+  let lastGenerationReport = $state(null);
+
+  // Kho tri thức (Knowledge Vault)
+  let kvQuery = $state('');
+  let kvCategory = $state('');
+  let kvArticles = $state([]);
+  let kvSelectedArticleId = $state('');
+  let kvLoading = $state(false);
+  let kvTotal = $state(null);
 
   let activeTab = $state('take');
   let currentUser = $state(null);
@@ -308,6 +320,9 @@
         };
         draft.time_limit_minutes = autoConfig.time_limit_minutes;
         sourceMode = autoConfig.source_type;
+        if (autoConfig.default_status) {
+          draft.status = autoConfig.default_status;
+        }
         if (res.defaults.type_mix && Object.keys(res.defaults.type_mix).length > 0) {
           questionTypeMix = res.defaults.type_mix;
         }
@@ -344,9 +359,15 @@
   }
 
   async function autoGenerateQuiz() {
+    if (mergeStrategy === 'replace' && draft.questions.length > 0 && !showReplaceConfirm) {
+      showReplaceConfirm = true;
+      return;
+    }
+    showReplaceConfirm = false;
     autoGenerating = true;
     error = '';
     message = '';
+    lastGenerationReport = null;
     try {
       if (!draft.title.trim()) {
         const gradeLabel = autoConfig.grade_level ? `Lớp ${autoConfig.grade_level}` : 'Tổng hợp';
@@ -366,8 +387,19 @@
         }
         form.append('type_mix', JSON.stringify(questionTypeMix));
         form.append('question_count', String(autoConfig.question_count));
+        form.append('difficulty', autoConfig.difficulty);
+        form.append('merge_strategy', mergeStrategy);
         const res = await api(`/api/quiz-menu/${quizId}/upload`, { method: 'POST', body: form, headers: {} });
-        draft = { ...draft, questions: (res.questions || []).map(fromApiQuestion) };
+        lastGenerationReport = {
+          requested_counts: res.requested_counts,
+          generated_counts: res.generated_counts,
+          degraded_types: res.degraded_types,
+          degraded_reason: res.degraded_reason
+        };
+        const quizData = await api(`/api/quiz-menu/${quizId}?include_answers=1`);
+        if (quizData.quiz?.questions) {
+          draft = { ...draft, questions: quizData.quiz.questions.map(fromApiQuestion) };
+        }
         message = `✓ Đã tự động tạo ${draft.questions.length} câu hỏi từ tài liệu! Bạn có thể kiểm tra và xuất bản ngay.`;
       } else if (sourceMode === 'drive') {
         const pastedUrl = driveUrl.trim();
@@ -377,16 +409,51 @@
         const payload = {
           ...(pastedUrl ? { url: pastedUrl } : { file_id: selectedDriveFileId }),
           type_mix: questionTypeMix,
-          question_count: autoConfig.question_count
+          question_count: autoConfig.question_count,
+          difficulty: autoConfig.difficulty,
+          merge_strategy: mergeStrategy
         };
         const res = await api(`/api/quiz-menu/${quizId}/from-drive`, { method: 'POST', body: JSON.stringify(payload) });
-        draft = { ...draft, questions: (res.questions || []).map(fromApiQuestion) };
+        lastGenerationReport = {
+          requested_counts: res.requested_counts,
+          generated_counts: res.generated_counts,
+          degraded_types: res.degraded_types,
+          degraded_reason: res.degraded_reason
+        };
+        const quizData = await api(`/api/quiz-menu/${quizId}?include_answers=1`);
+        if (quizData.quiz?.questions) {
+          draft = { ...draft, questions: quizData.quiz.questions.map(fromApiQuestion) };
+        }
         message = `✓ Đã tự động tạo ${draft.questions.length} câu hỏi từ Google Drive!`;
+      } else if (sourceMode === 'knowledge_vault') {
+        if (!kvSelectedArticleId) {
+          throw new Error('Vui lòng chọn một bài học từ Kho tri thức trước khi tạo.');
+        }
+        const payload = {
+          vault_id: kvSelectedArticleId,
+          type_mix: questionTypeMix,
+          question_count: autoConfig.question_count,
+          difficulty: autoConfig.difficulty,
+          merge_strategy: mergeStrategy
+        };
+        const res = await api(`/api/quiz-menu/${quizId}/from-knowledge-vault`, { method: 'POST', body: JSON.stringify(payload) });
+        lastGenerationReport = {
+          requested_counts: res.requested_counts,
+          generated_counts: res.generated_counts,
+          degraded_types: res.degraded_types,
+          degraded_reason: res.degraded_reason
+        };
+        const quizData = await api(`/api/quiz-menu/${quizId}?include_answers=1`);
+        if (quizData.quiz?.questions) {
+          draft = { ...draft, questions: quizData.quiz.questions.map(fromApiQuestion) };
+        }
+        message = `✓ Đã tự động tạo câu hỏi từ bài học "${res.article_title || 'Kho tri thức'}"!`;
       } else if (sourceMode === 'question_bank') {
         const res = await api(`/api/quiz-menu/${quizId}/import-questions`, {
           method: 'POST',
           body: JSON.stringify({ filters: bankFilters, count: autoConfig.question_count })
         });
+        lastGenerationReport = null;
         const quizData = await api(`/api/quiz-menu/${quizId}?include_answers=1`);
         if (quizData.quiz?.questions) {
           draft = { ...draft, questions: quizData.quiz.questions.map(fromApiQuestion) };
@@ -604,6 +671,33 @@
       if (!bankQuestions.length) {
         await loadBankQuestions();
       }
+    } else if (mode === 'knowledge_vault') {
+      if (!kvArticles.length) {
+        await loadKnowledgeVaultArticles();
+      }
+    }
+  }
+
+  async function loadKnowledgeVaultArticles() {
+    kvLoading = true;
+    error = '';
+    try {
+      const params = new URLSearchParams();
+      if (kvQuery.trim()) params.set('q', kvQuery.trim());
+      if (kvCategory.trim()) params.set('category', kvCategory.trim());
+      params.set('limit', '20');
+      const res = await api(`/api/quiz-menu/knowledge-vault?${params.toString()}`);
+      if (res.success) {
+        kvArticles = res.articles || [];
+        kvTotal = res.total || 0;
+        if (kvArticles.length > 0 && !kvSelectedArticleId) {
+          kvSelectedArticleId = kvArticles[0].id;
+        }
+      }
+    } catch (err) {
+      error = friendlyError(err.message || 'Không thể tải danh sách bài học từ Kho tri thức');
+    } finally {
+      kvLoading = false;
     }
   }
 
@@ -1103,6 +1197,9 @@
               <button class:active-source={sourceMode === 'question_bank'} class="source-card" type="button" on:click={() => chooseSource('question_bank')}>
                 <span>📚</span><strong>Kho câu hỏi D1</strong><small>{bankTotalCount !== null ? `${bankTotalCount} câu D1` : '1375+ câu D1'}</small>
               </button>
+              <button class:active-source={sourceMode === 'knowledge_vault'} class="source-card" type="button" on:click={() => chooseSource('knowledge_vault')}>
+                <span>📖</span><strong>Kho tri thức</strong><small>{kvTotal !== null ? `${kvTotal} bài học` : 'Knowledge Vault'}</small>
+              </button>
             </div>
           </div>
 
@@ -1374,6 +1471,120 @@
                     </div>
                   </div>
                 {/if}
+              {/if}
+            </div>
+          {:else if sourceMode === 'knowledge_vault'}
+            <div class="kv-panel auto-source-box">
+              <span class="box-title">📖 Chọn bài học từ Kho tri thức (Knowledge Vault)</span>
+              <div class="kv-search-bar">
+                <input
+                  type="text"
+                  placeholder="Tìm kiếm bài học theo chủ đề, tiêu đề (VD: Grammar, Unit 7)..."
+                  bind:value={kvQuery}
+                  on:keydown={(e) => e.key === 'Enter' && loadKnowledgeVaultArticles()}
+                />
+                <button type="button" class="btn-search" on:click={() => loadKnowledgeVaultArticles()}>Tìm kiếm</button>
+              </div>
+              {#if kvLoading}
+                <div class="bank-loading"><div class="spinner"></div> Đang tìm bài học từ Kho tri thức...</div>
+              {:else if kvArticles.length === 0}
+                <div class="empty-state">
+                  <span>🔍</span>
+                  <p>Chưa tìm thấy bài học nào phù hợp. Bấm "Tất cả bài học" hoặc nhập từ khóa khác.</p>
+                  <button type="button" class="btn-outline compact" on:click={() => { kvQuery = ''; loadKnowledgeVaultArticles(); }}>Tất cả bài học</button>
+                </div>
+              {:else}
+                <div class="kv-article-list">
+                  {#each kvArticles as art (art.id)}
+                    <label class="kv-article-card" class:selected={kvSelectedArticleId === art.id}>
+                      <input
+                        type="radio"
+                        name="kv_article_choice"
+                        value={art.id}
+                        checked={kvSelectedArticleId === art.id}
+                        on:change={() => kvSelectedArticleId = art.id}
+                      />
+                      <div class="kv-article-info">
+                        <div class="kv-article-title">
+                          <strong>{art.title}</strong>
+                          {#if art.category}<span class="tag grade">{art.category}</span>{/if}
+                        </div>
+                        {#if art.preview}<p class="kv-article-preview">{art.preview}...</p>{/if}
+                      </div>
+                    </label>
+                  {/each}
+                </div>
+              {/if}
+            </div>
+          {/if}
+
+          <!-- Chế độ thêm câu hỏi (Merge Strategy) -->
+          <div class="merge-strategy-section">
+            <span class="section-label">4. Chế độ thêm câu hỏi vào đề:</span>
+            <div class="merge-options-group">
+              <label class="merge-option" class:active={mergeStrategy === 'append'}>
+                <input type="radio" bind:group={mergeStrategy} value="append" />
+                <div class="merge-text">
+                  <strong>➕ Thêm vào đề (Mặc định)</strong>
+                  <small>Giữ nguyên các câu hỏi đã có trong bản nháp, bổ sung câu hỏi mới</small>
+                </div>
+              </label>
+              <label class="merge-option" class:active={mergeStrategy === 'replace'}>
+                <input
+                  type="radio"
+                  bind:group={mergeStrategy}
+                  value="replace"
+                  on:change={() => {
+                    if (draft.questions.length > 0) showReplaceConfirm = true;
+                  }}
+                />
+                <div class="merge-text">
+                  <strong>🔄 Thay thế toàn bộ</strong>
+                  <small>Xóa các câu hỏi cũ trong bản nháp khi sinh mới</small>
+                </div>
+              </label>
+            </div>
+            {#if mergeStrategy === 'replace' && draft.questions.length > 0}
+              <div class="replace-warning-banner">
+                <span class="warning-icon">⚠️</span>
+                <div>
+                  <strong>Cảnh báo Thay thế:</strong> Bạn đang chọn thay thế toàn bộ. Khi bấm tạo đề, tất cả <b>{draft.questions.length}</b> câu hỏi hiện tại trong bản nháp sẽ bị xóa và thay thế.
+                </div>
+              </div>
+            {/if}
+          </div>
+
+          <!-- Báo cáo chất lượng sinh câu hỏi / Degraded Reason -->
+          {#if lastGenerationReport}
+            <div class="generation-report-banner" class:degraded={lastGenerationReport.degraded_reason || (lastGenerationReport.degraded_types && lastGenerationReport.degraded_types.length > 0)}>
+              {#if lastGenerationReport.degraded_reason || (lastGenerationReport.degraded_types && lastGenerationReport.degraded_types.length > 0)}
+                <div class="report-header">
+                  <span class="report-icon">⚠️</span>
+                  <div>
+                    <strong>Thông báo chất lượng sinh đề:</strong>
+                    <p>{lastGenerationReport.degraded_reason || 'Một số dạng câu hỏi không đủ dữ liệu grounded để sinh.'}</p>
+                    {#if lastGenerationReport.degraded_types?.length}
+                      <small>Dạng bị giảm/bỏ qua: {lastGenerationReport.degraded_types.join(', ')}</small>
+                    {/if}
+                  </div>
+                </div>
+              {:else}
+                <div class="report-header">
+                  <span class="report-icon">✅</span>
+                  <div>
+                    <strong>Sinh câu hỏi thành công đầy đủ theo cấu hình!</strong>
+                  </div>
+                </div>
+              {/if}
+              {#if lastGenerationReport.requested_counts || lastGenerationReport.generated_counts}
+                <div class="report-breakdown">
+                  <span>Chi tiết số lượng:</span>
+                  {#each Object.entries(lastGenerationReport.requested_counts || {}) as [t, reqCount]}
+                    <span class="count-badge">
+                      {t}: {lastGenerationReport.generated_counts?.[t] || 0}/{reqCount}
+                    </span>
+                  {/each}
+                </div>
               {/if}
             </div>
           {/if}
@@ -1659,19 +1870,25 @@
             <div class="question-head"><span>Câu {index + 1}</span><div><button class="defer-button" on:click={() => toggleDeferred(question.id)}>{isDeferred(question.id) ? '✓ Để làm sau' : 'Không hiểu'}</button><b>{question.points} điểm</b></div></div>
             <h2>{question.prompt}</h2>
             {#if question.prompt_image_url}
-              <img
-                class="question-image"
-                src={question.prompt_image_url}
-                alt="Minh họa câu hỏi"
-                on:error={(e) => {
-                  e.currentTarget.style.display = 'none';
-                  const fb = e.currentTarget.nextElementSibling;
-                  if (fb) fb.style.display = 'flex';
-                }}
-              />
-              <div class="image-fallback-placeholder" style="display:none; padding:10px; background:#f5f5f4; border:1px dashed #d6d3d1; border-radius:6px; color:#78716c; font-size:12px; align-items:center; gap:6px;">
-                <span>🖼️</span> Không thể tải ảnh minh họa
-              </div>
+              {#if isAllowedImageUrl(question.prompt_image_url)}
+                <img
+                  class="question-image"
+                  src={question.prompt_image_url}
+                  alt="Minh họa câu hỏi"
+                  on:error={(e) => {
+                    e.currentTarget.style.display = 'none';
+                    const fb = e.currentTarget.nextElementSibling;
+                    if (fb) fb.style.display = 'flex';
+                  }}
+                />
+                <div class="image-fallback-placeholder" style="display:none; padding:10px; background:#f5f5f4; border:1px dashed #d6d3d1; border-radius:6px; color:#78716c; font-size:12px; align-items:center; gap:6px;">
+                  <span>🖼️</span> Không thể tải ảnh minh họa
+                </div>
+              {:else}
+                <div class="image-blocked-placeholder" style="padding:10px; background:#fffbeb; border:1px dashed #f59e0b; border-radius:6px; color:#b45309; font-size:12px; display:flex; align-items:center; gap:6px;">
+                  <span>⚠️</span> Ảnh từ nguồn bên ngoài chưa được kiểm duyệt để đảm bảo an toàn riêng tư
+                </div>
+              {/if}
             {/if}
             {#if isDeferred(question.id)}
               <div class="deferred-note">Phần này đã được lưu để bạn hỏi giáo viên và sửa sau. Bấm “Để làm sau” lần nữa khi đã hiểu.</div>
@@ -1891,9 +2108,38 @@
   .auto-action-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:16px;background:#fafaf9;border:1px solid #e7e5e4;border-radius:10px}
   .btn-generate{font-size:1rem;font-weight:700;padding:12px 24px}
   .tf-choices{display:flex;gap:20px;padding:8px 0}
-  .tf-choices label{flex-direction:row;align-items:center;gap:6px;cursor:pointer;font-size:.92rem}
+  .merge-strategy-section{background:#fafaf9;border:1px solid #e7e5e4;border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:12px}
+  .merge-options-group{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .merge-option{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border:1.5px solid #e7e5e4;border-radius:8px;background:white;cursor:pointer;transition:border-color .15s ease}
+  .merge-option input{margin-top:3px;accent-color:#059669}
+  .merge-option.active{border-color:#059669;background:#fafffa}
+  .merge-text strong{display:block;font-size:.9rem;color:#1c1917}
+  .merge-text small{display:block;font-size:.78rem;color:#78716c;margin-top:2px}
+  .replace-warning-banner{display:flex;align-items:center;gap:10px;padding:12px 16px;background:#fffbeb;border:1.5px solid #fde68a;border-radius:8px;color:#92400e;font-size:.85rem}
+  .warning-icon{font-size:1.2rem}
+  .generation-report-banner{background:#ecfdf5;border:1.5px solid #a7f3d0;border-radius:10px;padding:14px 18px;display:flex;flex-direction:column;gap:10px}
+  .generation-report-banner.degraded{background:#fffbeb;border-color:#fde68a}
+  .report-header{display:flex;align-items:flex-start;gap:10px}
+  .report-icon{font-size:1.2rem}
+  .report-header strong{font-size:.92rem;color:#1c1917;display:block}
+  .report-header p{margin:2px 0 0;font-size:.84rem;color:#44403c}
+  .report-header small{display:block;font-size:.78rem;color:#78716c;margin-top:3px}
+  .report-breakdown{display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding-top:8px;border-top:1px dashed #d6d3d1;font-size:.82rem;color:#57534e}
+  .count-badge{background:white;border:1px solid #d6d3d1;padding:2px 8px;border-radius:12px;font-size:.78rem;font-weight:600;color:#292524}
+  .kv-panel{display:flex;flex-direction:column;gap:12px}
+  .kv-search-bar{display:flex;gap:8px}
+  .kv-search-bar input{flex:1;min-height:40px;padding:0 12px;border:1px solid #d6d3d1;border-radius:6px;font-size:.88rem}
+  .kv-article-list{display:flex;flex-direction:column;gap:8px;max-height:280px;overflow-y:auto;padding-right:4px}
+  .kv-article-card{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;border:1px solid #e7e5e4;border-radius:8px;background:white;cursor:pointer;transition:border-color .15s ease}
+  .kv-article-card:hover{border-color:#a8a29e}
+  .kv-article-card.selected{border-color:#059669;background:#fafffa}
+  .kv-article-card input{margin-top:4px;accent-color:#059669}
+  .kv-article-info{flex:1;min-width:0}
+  .kv-article-title{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .kv-article-title strong{font-size:.9rem;color:#1c1917}
+  .kv-article-preview{font-size:.78rem;color:#78716c;margin:3px 0 0;line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
-  @media(max-width:800px){.quiz-page{padding:16px 12px 90px}.quiz-hero{padding:26px 22px;min-height:160px}.hero-mark{width:70px;height:70px;flex-basis:70px;font-size:2rem}.workspace{padding:18px}.source-grid,.type-grid,.quiz-grid,.loading-grid{grid-template-columns:1fr 1fr}.bank-filters{grid-template-columns:1fr 1fr}.source-panel{grid-template-columns:1fr}.bundle-grid,.homework-fields{grid-template-columns:1fr 1fr}.builder-mode-switcher{grid-template-columns:1fr}.type-mix-grid{grid-template-columns:1fr 1fr}.exam-content{grid-template-columns:1fr;padding:18px 12px 70px}.exam-content aside{position:static}.question-map{grid-template-columns:repeat(8,1fr)}.exam-topbar{grid-template-columns:1fr auto}.abandon{grid-column:1/-1;width:100%;margin-top:6px}.progress-track{top:124px}.exam-question{scroll-margin-top:135px}}
+  @media(max-width:800px){.quiz-page{padding:16px 12px 90px}.quiz-hero{padding:26px 22px;min-height:160px}.hero-mark{width:70px;height:70px;flex-basis:70px;font-size:2rem}.workspace{padding:18px}.source-grid,.type-grid,.quiz-grid,.loading-grid{grid-template-columns:1fr 1fr}.bank-filters{grid-template-columns:1fr 1fr}.source-panel{grid-template-columns:1fr}.bundle-grid,.homework-fields{grid-template-columns:1fr 1fr}.builder-mode-switcher{grid-template-columns:1fr}.type-mix-grid{grid-template-columns:1fr 1fr}.merge-options-group{grid-template-columns:1fr}.exam-content{grid-template-columns:1fr;padding:18px 12px 70px}.exam-content aside{position:static}.question-map{grid-template-columns:repeat(8,1fr)}.exam-topbar{grid-template-columns:1fr auto}.abandon{grid-column:1/-1;width:100%;margin-top:6px}.progress-track{top:124px}.exam-question{scroll-margin-top:135px}}
   @media(max-width:560px){.quiz-hero{align-items:flex-end}.hero-mark{position:absolute;right:18px;top:18px;opacity:.38}.quiz-hero p{padding-right:20px}.tabs{gap:3px}.tabs button{font-size:.75rem;padding:5px}.tabs button span{display:block;margin:0;font-size:1rem}.source-grid,.type-grid,.quiz-grid,.loading-grid,.form-grid,.bundle-grid,.homework-fields,.bank-filters{grid-template-columns:1fr}.type-mix-grid{grid-template-columns:1fr}.auto-action-bar{flex-direction:column;align-items:stretch}.auto-action-bar button{width:100%}.form-grid .wide{grid-column:1}.source-card{min-height:78px}.type-grid button{min-height:58px}.editor-card{padding:13px}.editor-card header{flex-wrap:wrap}.editor-card header select{order:3;width:100%;max-width:none}.editor-actions{margin-left:auto}.editor-bottom{grid-template-columns:90px 1fr}.save-bar{flex-wrap:wrap;bottom:8px}.save-bar>div{width:100%}.save-bar button{flex:1}.section-heading{align-items:flex-start}.question-map{grid-template-columns:repeat(6,1fr)}.exam-topbar{padding:8px 10px}.exam-title>span{display:none}.exam-title strong{display:block;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.countdown{padding:4px 10px}.exam-question{padding:17px}.question-head{align-items:flex-start}.question-head>div{flex-direction:column-reverse;align-items:flex-end}.matching-answer label{grid-template-columns:1fr}.matching-answer label>span{transform:rotate(90deg)}.submit-panel{align-items:stretch;flex-direction:column}.submit-actions{flex-direction:column}.start-dialog,.result-dialog,.bundle-dialog{padding:25px 18px}.modal-backdrop{padding:10px}.rules{grid-template-columns:1fr 1fr}.bank-action-bar{flex-direction:column;align-items:stretch}.bank-buttons{flex-direction:column}.bank-buttons button{width:100%}.quick-import-wrap{width:100%;justify-content:space-between;margin-left:0}}
   @media(max-width:1024px){.save-bar{bottom:calc(84px + env(safe-area-inset-bottom))}}
   @media(max-width:640px){.source-grid,.type-grid,.quiz-grid,.loading-grid{grid-template-columns:1fr}.quiz-page{padding-left:12px;padding-right:12px}}

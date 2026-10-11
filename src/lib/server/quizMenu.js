@@ -29,6 +29,9 @@ function parseJson(value, fallback) {
   try { return JSON.parse(value); } catch { return fallback; }
 }
 
+import { ALLOWED_IMAGE_HOSTS, isAllowedImageUrl } from '../quizMedia.js';
+export { ALLOWED_IMAGE_HOSTS, isAllowedImageUrl };
+
 export function validateQuestion(input, index = 0) {
   let type = String(input?.type || '');
   if (type === 'essay') type = 'paragraph'; // normalize legacy essay to canonical paragraph
@@ -42,8 +45,8 @@ export function validateQuestion(input, index = 0) {
   const rawImageUrl = input?.prompt_image_url;
   if (rawImageUrl !== undefined && rawImageUrl !== null && String(rawImageUrl).trim() !== '') {
     const trimmed = String(rawImageUrl).trim();
-    if (!trimmed.startsWith('https://') && !trimmed.startsWith('/')) {
-      return { error: `URL ảnh chỉ chấp nhận https:// hoặc / tại vị trí ${index + 1}` };
+    if (!isAllowedImageUrl(trimmed)) {
+      return { error: `URL ảnh chỉ chấp nhận đường dẫn nội bộ (bắt đầu bằng /) hoặc domain https được kiểm duyệt tại vị trí ${index + 1}` };
     }
     prompt_image_url = trimmed;
   }

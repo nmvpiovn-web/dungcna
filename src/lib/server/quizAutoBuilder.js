@@ -227,17 +227,18 @@ function deterministicShuffle(tokens, seedStr = '') {
 export function generateDeterministicQuiz(text, options = {}) {
   const questionCount = Math.max(1, Math.min(MAX_QUIZ_QUESTIONS, Number(options.questionCount) || 10));
   const hasImages = Boolean(options.hasImages);
+  const imageAssets = Array.isArray(options.imageAssets) ? options.imageAssets : [];
+  const difficulty = String(options.difficulty || 'medium');
   let requestedMix = { ...(options.typeMix || { multiple_choice: questionCount }) };
 
   const degradedTypes = [];
   let degradedReason = null;
-  // Graceful degradation: if picture_guess is requested but no images exist, degrade to multiple_choice
-  if (!hasImages && requestedMix.picture_guess) {
+
+  // Check if picture_guess is requested but no valid image assets exist
+  const groundableAssets = imageAssets.filter((a) => a && a.url && (a.answer || a.label || a.name || a.ocr_text));
+  if (requestedMix.picture_guess && (!hasImages || groundableAssets.length === 0)) {
     degradedTypes.push('picture_guess');
-    degradedReason = 'Tài liệu không có tệp ảnh để tạo câu hỏi nhìn hình đoán chữ (picture_guess).';
-    const picCount = requestedMix.picture_guess;
-    delete requestedMix.picture_guess;
-    requestedMix.multiple_choice = (requestedMix.multiple_choice || 0) + picCount;
+    degradedReason = 'Tài liệu không có tệp ảnh hợp lệ để tạo câu hỏi nhìn hình đoán chữ (picture_guess).';
   }
 
   const allocation = allocateTypeMix(questionCount, requestedMix);
@@ -452,29 +453,62 @@ export function generateDeterministicQuiz(text, options = {}) {
     }
   }
 
-  // Grounded completion: if questions.length < questionCount, only add grounded true/false
-  // from unused parsed sentences without hallucinations or fake prompts.
-  let sentenceIdx = 0;
-  while (questions.length < questionCount && sentenceIdx < parsed.sentences.length) {
-    const s = parsed.sentences[sentenceIdx++];
-    addQuestionSafely({
-      type: 'true_false',
-      prompt: `Đúng hay Sai: "${s}"`,
-      options_json: ['Đúng', 'Sai'],
-      correct_answer: 'Đúng',
-      points: 1
-    });
+  // 10. Generate Picture Guess
+  const targetPic = allocation.picture_guess || 0;
+  let picAdded = 0;
+  if (targetPic > 0) {
+    for (const asset of groundableAssets) {
+      if (picAdded >= targetPic) break;
+      let answer = String(asset.answer || asset.label || '').trim();
+      if (!answer && asset.name) {
+        const cleanName = String(asset.name).replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ').trim();
+        if (cleanName.length >= 2 && /^[a-zA-Z\s]+$/.test(cleanName)) {
+          answer = cleanName;
+        }
+      }
+      if (!answer && asset.ocr_text) {
+        const words = String(asset.ocr_text).split(/\s+/).filter((w) => w.length >= 3 && /^[a-zA-Z]+$/.test(w));
+        if (words.length > 0) answer = words[0];
+      }
+      if (!answer) continue;
+
+      const picPrompt = asset.prompt || (asset.name ? `Nhìn hình ảnh (${asset.name}) và viết từ tiếng Anh thích hợp:` : `Nhìn hình ảnh [${picAdded + 1}] và viết từ tiếng Anh thích hợp:`);
+      const added = addQuestionSafely({
+        type: 'picture_guess',
+        prompt: picPrompt,
+        prompt_image_url: asset.url,
+        correct_answer: answer,
+        points: 1
+      });
+      if (added) picAdded++;
+    }
+
+    if (picAdded < targetPic) {
+      if (!degradedTypes.includes('picture_guess')) degradedTypes.push('picture_guess');
+      const note = `Không đủ tài liệu hình ảnh có đáp án xác thực cho ${targetPic} câu nhìn hình đoán chữ (chỉ tạo được ${picAdded} câu).`;
+      degradedReason = degradedReason ? `${degradedReason}; ${note}` : note;
+    }
   }
 
   if (questions.length < questionCount) {
-    const note = `Nội dung tài liệu ngắn, chỉ trích xuất được ${questions.length} câu grounded thay vì ${questionCount} câu.`;
+    const note = `Nội dung tài liệu chỉ trích xuất được ${questions.length} câu grounded thay vì ${questionCount} câu yêu cầu.`;
     degradedReason = degradedReason ? `${degradedReason}; ${note}` : note;
+  }
+
+  const generated_counts = {};
+  for (const k of Object.keys(requestedMix)) {
+    generated_counts[k] = 0;
+  }
+  for (const q of questions) {
+    generated_counts[q.type] = (generated_counts[q.type] || 0) + 1;
   }
 
   return {
     questions: questions.slice(0, questionCount),
-    degraded_types: degradedTypes.length ? degradedTypes : undefined,
-    degraded_reason: degradedReason || undefined,
+    requested_counts: requestedMix,
+    generated_counts,
+    degraded_types: degradedTypes,
+    degraded_reason: degradedReason || null,
     allocation
   };
 }

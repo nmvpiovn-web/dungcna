@@ -558,13 +558,24 @@ TRẢ VỀ DUY NHẤT một JSON object đúng format sau, không thêm chữ n�
  * Trả về array câu hỏi đã validate, hoặc null nếu chưa cấu hình / AI lỗi.
  * Env: AI_BASE_URL (mặc định https://openrouter.ai/api/v1), AI_API_KEY, AI_MODEL (mặc định deepseek/deepseek-chat).
  */
-export async function generateQuestionsWithAI(text, platform) {
+export async function generateQuestionsWithAI(text, platform, options = {}) {
   const apiKey = platform?.env?.AI_API_KEY;
   if (!apiKey) return null;
   const clean = String(text || '').replace(/\r/g, '').trim().slice(0, 6000);
   if (!clean) return null;
   const baseUrl = String(platform?.env?.AI_BASE_URL || 'https://openrouter.ai/api/v1').replace(/\/+$/, '');
   const model = platform?.env?.AI_MODEL || 'deepseek/deepseek-chat';
+  const questionCount = Math.max(1, Math.min(50, Number(options.questionCount) || 10));
+  const typeMix = options.typeMix && typeof options.typeMix === 'object' ? options.typeMix : null;
+  const difficulty = String(options.difficulty || 'medium');
+
+  const dynamicSystemPrompt = `${AI_SYSTEM_PROMPT}
+
+CẤU HÌNH YÊU CẦU:
+- Số câu cần tạo: ${questionCount}
+- Độ khó: ${difficulty}
+${typeMix ? `- Tỷ lệ các loại câu hỏi: ${JSON.stringify(typeMix)}` : ''}`;
+
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 90000);
   try {
@@ -580,7 +591,7 @@ export async function generateQuestionsWithAI(text, platform) {
       body: JSON.stringify({
         model,
         messages: [
-          { role: 'system', content: AI_SYSTEM_PROMPT },
+          { role: 'system', content: dynamicSystemPrompt },
           { role: 'user', content: clean }
         ],
         temperature: 0.3,
@@ -597,7 +608,7 @@ export async function generateQuestionsWithAI(text, platform) {
     try { parsed = JSON.parse(content); } catch { return null; }
     const rawList = Array.isArray(parsed?.questions) ? parsed.questions : [];
     const questions = [];
-    for (const raw of rawList.slice(0, 20)) {
+    for (const raw of rawList.slice(0, 50)) {
       const mapped = {
         type: String(raw?.type || ''),
         prompt: String(raw?.prompt || ''),
@@ -612,6 +623,24 @@ export async function generateQuestionsWithAI(text, platform) {
       if (checked.error) continue;
       questions.push({ ...checked.value, id: makeId('qq'), q_order: questions.length });
     }
+
+    if (typeMix && Object.keys(typeMix).length > 0) {
+      // Validate that AI output matches the requested type mix
+      const aiCounts = {};
+      for (const q of questions) aiCounts[q.type] = (aiCounts[q.type] || 0) + 1;
+      let mixMismatch = false;
+      for (const [t, targetCount] of Object.entries(typeMix)) {
+        if (targetCount > 0 && !aiCounts[t]) {
+          mixMismatch = true;
+          break;
+        }
+      }
+      if (mixMismatch) {
+        // AI failed to satisfy requested type mix; fallback to deterministic generator
+        return null;
+      }
+    }
+
     return questions.length ? questions : null;
   } catch {
     clearTimeout(timer);
@@ -660,8 +689,24 @@ export async function saveQuizSourceAndDrafts(db, quizId, source, text, question
     statements.push(db.prepare(`DELETE FROM quiz_question_sources WHERE quiz_id = ?`).bind(quizId));
   }
 
+  const existingQuestionsRes = isAppend
+    ? await db.prepare(`SELECT id, prompt FROM quiz_questions WHERE quiz_id = ?`).bind(quizId).all()
+    : { results: [] };
+  const existingPrompts = new Set((existingQuestionsRes?.results || []).map((q) => q.prompt?.trim().toLowerCase()));
+  const existingIds = new Set((existingQuestionsRes?.results || []).map((q) => q.id));
+
   for (let i = 0; i < questions.length; i++) {
     const q = questions[i];
+    if (isAppend && existingPrompts.has(q.prompt?.trim().toLowerCase())) {
+      // Deduplicate identical question prompt already in this quiz
+      continue;
+    }
+    let qId = q.id;
+    if (existingIds.has(qId)) {
+      qId = makeId('qq');
+    }
+    existingIds.add(qId);
+
     const qOrder = isAppend ? startOrder + i : (Number.isInteger(Number(q.q_order)) ? Number(q.q_order) : i);
     const sourceType = q.source_type || (metadata.id ? 'drive' : null);
     const sourceId = q.source_id || metadata.id || null;
@@ -670,19 +715,20 @@ export async function saveQuizSourceAndDrafts(db, quizId, source, text, question
       statements.push(db.prepare(`
         INSERT INTO quiz_questions (id, quiz_id, type, prompt, prompt_image_url, options_json, correct_answer, explanation, points, q_order, source_type, source_id)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `).bind(q.id, quizId, q.type, q.prompt, q.prompt_image_url || null, q.options_json || null, q.correct_answer || null, q.explanation || null, q.points, qOrder, sourceType, sourceId));
+      `).bind(qId, quizId, q.type, q.prompt, q.prompt_image_url || null, q.options_json || null, q.correct_answer || null, q.explanation || null, q.points, qOrder, sourceType, sourceId));
     } else {
       statements.push(db.prepare(`
         INSERT INTO quiz_questions (id, quiz_id, type, prompt, prompt_image_url, options_json, correct_answer, explanation, points, q_order)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `).bind(q.id, quizId, q.type, q.prompt, q.prompt_image_url || null, q.options_json || null, q.correct_answer || null, q.explanation || null, q.points, qOrder));
+      `).bind(qId, quizId, q.type, q.prompt, q.prompt_image_url || null, q.options_json || null, q.correct_answer || null, q.explanation || null, q.points, qOrder));
     }
 
     if (hasSourcesTable && sourceType && sourceId) {
+      const qqsId = 'qqs_' + quizId + '_' + qId + '_' + sourceId;
       statements.push(db.prepare(`
-        INSERT OR IGNORE INTO quiz_question_sources (quiz_id, question_id, source_type, source_id)
-        VALUES (?, ?, ?, ?)
-      `).bind(quizId, q.id, sourceType, sourceId));
+        INSERT OR REPLACE INTO quiz_question_sources (id, quiz_id, question_id, source_type, source_id)
+        VALUES (?, ?, ?, ?, ?)
+      `).bind(qqsId, quizId, qId, sourceType, sourceId));
     }
   }
   await db.batch(statements);

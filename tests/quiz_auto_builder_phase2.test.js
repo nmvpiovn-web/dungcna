@@ -387,8 +387,11 @@ Answer: B
     // picture_guess cannot be satisfied without images; generator reallocates without hallucinating fake image URLs
     const picQuestions = degradedGen.questions.filter((q) => q.type === 'picture_guess');
     assert.equal(picQuestions.length, 0, 'picture_guess must degrade to 0 when hasImages is false');
-    assert.equal(degradedGen.questions.length, 4, 'Total count remains 4 after degradation');
+    assert.equal(degradedGen.questions.length, 2, 'Total generated count reflects only fulfillable types (no silent backfill)');
+    assert.equal(degradedGen.generated_counts.picture_guess, 0);
+    assert.equal(degradedGen.generated_counts.multiple_choice, 2);
     assert.ok(degradedGen.degraded_types?.includes('picture_guess'), 'Must document degraded types in metadata');
+    assert.ok(degradedGen.degraded_reason, 'Must provide degraded_reason');
   });
 
   await t.test('Part F: Answer Secrecy & Security Contract', async () => {

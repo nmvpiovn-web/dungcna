@@ -86,8 +86,10 @@ export async function PUT({ params, request, platform }) {
     if (!Number(count?.count)) return json({ success: false, error: 'Không thể xuất bản quiz chưa có câu hỏi' }, { status: 400 });
   }
   try {
-    const mergeStrategy = body.merge_strategy === 'append' ? 'append' : 'replace';
+    const mergeStrategy = body.merge_strategy === 'replace' ? 'replace' : 'append';
     let startOrder = 0;
+    let existingPrompts = new Set();
+    let existingIds = new Set();
     if (questions !== undefined && mergeStrategy === 'append') {
       const maxRow = await db.prepare(`SELECT COALESCE(MAX(q_order), -1) AS max_order, COUNT(*) AS count FROM quiz_questions WHERE quiz_id = ?`).bind(params.id).first();
       const currentCount = Number(maxRow?.count || 0);
@@ -95,6 +97,9 @@ export async function PUT({ params, request, platform }) {
         return json({ success: false, error: 'Tổng số câu hỏi không được vượt quá 200' }, { status: 400 });
       }
       startOrder = (Number(maxRow?.max_order) ?? -1) + 1;
+      const existingRows = await db.prepare(`SELECT id, prompt FROM quiz_questions WHERE quiz_id = ?`).bind(params.id).all();
+      existingPrompts = new Set((existingRows?.results || []).map((r) => r.prompt?.trim().toLowerCase()));
+      existingIds = new Set((existingRows?.results || []).map((r) => r.id));
     }
 
     let hasSourcesTable = false;
@@ -123,26 +128,40 @@ export async function PUT({ params, request, platform }) {
           statements.push(db.prepare(`DELETE FROM quiz_question_sources WHERE quiz_id = ?`).bind(params.id));
         }
       }
+      let appendedIndex = 0;
       for (let i = 0; i < validated.length; i++) {
         const q = validated[i];
-        const order = mergeStrategy === 'append' ? startOrder + i : q.q_order;
+        if (mergeStrategy === 'append' && existingPrompts.has(q.prompt?.trim().toLowerCase())) {
+          // Deduplicate identical prompt already present in this quiz
+          continue;
+        }
+        let qId = q.id;
+        if (existingIds.has(qId)) {
+          qId = makeId('qq');
+        }
+        existingIds.add(qId);
+
+        const order = mergeStrategy === 'append' ? startOrder + appendedIndex : q.q_order;
+        appendedIndex++;
+
         if (hasSourceCols) {
           statements.push(db.prepare(`
             INSERT INTO quiz_questions (id, quiz_id, type, prompt, prompt_image_url, options_json, correct_answer, explanation, points, q_order, source_type, source_id)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-          `).bind(q.id, params.id, q.type, q.prompt, q.prompt_image_url, q.options_json, q.correct_answer, q.explanation, q.points, order, q.source_type || null, q.source_id || null));
+          `).bind(qId, params.id, q.type, q.prompt, q.prompt_image_url, q.options_json, q.correct_answer, q.explanation, q.points, order, q.source_type || null, q.source_id || null));
         } else {
           statements.push(db.prepare(`
             INSERT INTO quiz_questions (id, quiz_id, type, prompt, prompt_image_url, options_json, correct_answer, explanation, points, q_order)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-          `).bind(q.id, params.id, q.type, q.prompt, q.prompt_image_url, q.options_json, q.correct_answer, q.explanation, q.points, order));
+          `).bind(qId, params.id, q.type, q.prompt, q.prompt_image_url, q.options_json, q.correct_answer, q.explanation, q.points, order));
         }
 
         if (hasSourcesTable && q.source_type && q.source_id) {
+          const qqsId = 'qqs_' + params.id + '_' + qId + '_' + q.source_id;
           statements.push(db.prepare(`
-            INSERT OR IGNORE INTO quiz_question_sources (quiz_id, question_id, source_type, source_id)
-            VALUES (?, ?, ?, ?)
-          `).bind(params.id, q.id, q.source_type, q.source_id));
+            INSERT OR REPLACE INTO quiz_question_sources (id, quiz_id, question_id, source_type, source_id)
+            VALUES (?, ?, ?, ?, ?)
+          `).bind(qqsId, params.id, qId, q.source_type, q.source_id));
         }
       }
     }

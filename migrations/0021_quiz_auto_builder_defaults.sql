@@ -76,7 +76,7 @@ CREATE INDEX IF NOT EXISTS idx_quiz_questions_source
 
 -- Dedicated Many-to-One Question Sources Table for Full Traceability
 CREATE TABLE IF NOT EXISTS quiz_question_sources (
-  id TEXT PRIMARY KEY,
+  id TEXT PRIMARY KEY NOT NULL,
   quiz_id TEXT NOT NULL REFERENCES quizzes(id) ON DELETE CASCADE,
   question_id TEXT NOT NULL REFERENCES quiz_questions(id) ON DELETE CASCADE,
   source_type TEXT NOT NULL CHECK(source_type IN ('question_bank', 'drive', 'upload', 'knowledge_vault')),

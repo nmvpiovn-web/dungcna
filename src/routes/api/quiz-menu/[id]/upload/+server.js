@@ -51,7 +51,8 @@ export async function POST({ params, request, platform }) {
   const typeMixRaw = form.get('type_mix');
   const typeMix = typeMixRaw ? parseJson(typeMixRaw, null) : null;
   const questionCount = Number(form.get('question_count') || 10);
-  const mergeStrategy = String(form.get('merge_strategy') || 'replace');
+  const difficulty = String(form.get('difficulty') || 'medium');
+  const mergeStrategy = String(form.get('merge_strategy') || 'append') === 'replace' ? 'replace' : 'append';
 
   // Check if multiple images
   const isImageBatch = filesList.length > 1 || (filesList.length === 1 && String(filesList[0].type || '').startsWith('image/'));
@@ -90,18 +91,45 @@ export async function POST({ params, request, platform }) {
 
       const combinedText = concatenateMultiPageText(extractedPages);
       let questions = null;
+      let requested_counts = typeMix;
+      let generated_counts = null;
+      let degraded_types = null;
+      let degraded_reason = null;
+      let ai_generated = false;
 
-      // Try AI first if configured
-      const aiQuestions = await generateQuestionsWithAI(combinedText, platform);
+      const imageAssets = filesList.map((f, idx) => {
+        const baseName = String(f.name || `image_${idx + 1}`).replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ').trim();
+        const ocrWords = String(extractedPages[idx] || '').split(/\s+/).filter((w) => w.length >= 2 && /^[a-zA-Z]+$/.test(w));
+        const label = baseName.length >= 2 && /^[a-zA-Z\s]+$/.test(baseName) ? baseName : (ocrWords[0] || '');
+        const assetUrl = `/api/quiz-menu/${params.id}/assets/${uploadedSources[idx]?.file?.id || `img_${idx}`}`;
+        return {
+          id: uploadedSources[idx]?.file?.id || `img_${idx}`,
+          name: f.name || `image_${idx + 1}`,
+          url: assetUrl,
+          label,
+          answer: label,
+          ocr_text: extractedPages[idx] || ''
+        };
+      });
+
+      // Try AI first if configured, validating output against typeMix
+      const aiQuestions = await generateQuestionsWithAI(combinedText, platform, { questionCount, typeMix, difficulty });
       if (aiQuestions && aiQuestions.length) {
         questions = aiQuestions;
+        ai_generated = true;
       } else {
         const genResult = generateDeterministicQuiz(combinedText, {
           questionCount,
           typeMix: typeMix || undefined,
-          hasImages: true
+          hasImages: true,
+          imageAssets,
+          difficulty
         });
         questions = genResult.questions;
+        requested_counts = genResult.requested_counts;
+        generated_counts = genResult.generated_counts;
+        degraded_types = genResult.degraded_types;
+        degraded_reason = genResult.degraded_reason;
       }
 
       const manifest = filesList.map((f, idx) => ({
@@ -126,7 +154,12 @@ export async function POST({ params, request, platform }) {
         image_count: filesList.length,
         questions,
         bundle: null,
-        ai_generated: !!aiQuestions
+        ai_generated,
+        requested_counts,
+        generated_counts,
+        degraded_types,
+        degraded_reason,
+        merge_strategy: mergeStrategy
       }, { status: 201 });
     } catch (error) {
       for (const fileId of uploadedDriveIds) {
@@ -142,18 +175,47 @@ export async function POST({ params, request, platform }) {
   try {
     const source = await uploadQuizSource(platform, file);
     let questions = null;
-    const aiQuestions = await generateQuestionsWithAI(source.text, platform);
-    if (aiQuestions && aiQuestions.length) {
-      questions = aiQuestions;
-    } else if (typeMix) {
-      const genResult = generateDeterministicQuiz(source.text, {
-        questionCount,
-        typeMix,
-        hasImages: false
-      });
-      questions = genResult.questions;
+    let requested_counts = typeMix;
+    let generated_counts = null;
+    let degraded_types = null;
+    let degraded_reason = null;
+    let ai_generated = false;
+
+    if (typeMix && Object.keys(typeMix).length > 0) {
+      const aiQuestions = await generateQuestionsWithAI(source.text, platform, { questionCount, typeMix, difficulty });
+      if (aiQuestions && aiQuestions.length) {
+        questions = aiQuestions;
+        ai_generated = true;
+      } else {
+        const genResult = generateDeterministicQuiz(source.text, {
+          questionCount,
+          typeMix,
+          hasImages: false,
+          difficulty
+        });
+        questions = genResult.questions;
+        requested_counts = genResult.requested_counts;
+        generated_counts = genResult.generated_counts;
+        degraded_types = genResult.degraded_types;
+        degraded_reason = genResult.degraded_reason;
+      }
     } else {
-      questions = generateDraftQuestions(source.text);
+      const parsedDraft = generateDraftQuestions(source.text);
+      if (parsedDraft && parsedDraft.length > 0) {
+        questions = parsedDraft;
+      } else {
+        const genResult = generateDeterministicQuiz(source.text, {
+          questionCount,
+          typeMix: undefined,
+          hasImages: false,
+          difficulty
+        });
+        questions = genResult.questions;
+        requested_counts = genResult.requested_counts;
+        generated_counts = genResult.generated_counts;
+        degraded_types = genResult.degraded_types;
+        degraded_reason = genResult.degraded_reason;
+      }
     }
 
     const metadata = await saveQuizSourceAndDrafts(db, params.id, source.file, source.text, questions, { mergeStrategy });
@@ -165,7 +227,19 @@ export async function POST({ params, request, platform }) {
         console.warn('[quiz-upload] Bundle creation skipped:', e.message);
       }
     }
-    return json({ success: true, source: metadata, extracted_text_length: source.text.length, questions, bundle, ai_generated: !!aiQuestions }, { status: 201 });
+    return json({
+      success: true,
+      source: metadata,
+      extracted_text_length: source.text.length,
+      questions,
+      bundle,
+      ai_generated,
+      requested_counts,
+      generated_counts,
+      degraded_types,
+      degraded_reason,
+      merge_strategy: mergeStrategy
+    }, { status: 201 });
   } catch (error) {
     const status = error instanceof QuizDriveError ? error.status : 500;
     return json({ success: false, error: error.code || 'UploadFailed', message: error.message }, { status });
