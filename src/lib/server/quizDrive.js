@@ -631,10 +631,26 @@ export async function saveQuizSourceAndDrafts(db, quizId, source, text, question
       .bind(metadata.id, metadata.name, JSON.stringify(metadata), String(text || '').slice(0, 4000) || null, quizId),
     db.prepare(`DELETE FROM quiz_questions WHERE quiz_id = ?`).bind(quizId)
   ];
-  for (const q of questions) statements.push(db.prepare(`
-    INSERT INTO quiz_questions (id, quiz_id, type, prompt, prompt_image_url, options_json, correct_answer, explanation, points, q_order)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).bind(q.id, quizId, q.type, q.prompt, q.prompt_image_url, q.options_json, q.correct_answer, q.explanation, q.points, q.q_order));
+  let hasProvenance = false;
+  try {
+    await db.prepare(`SELECT source_type FROM quiz_questions LIMIT 1`).first();
+    hasProvenance = true;
+  } catch {
+    hasProvenance = false;
+  }
+  for (const q of questions) {
+    if (hasProvenance) {
+      statements.push(db.prepare(`
+        INSERT INTO quiz_questions (id, quiz_id, type, prompt, prompt_image_url, options_json, correct_answer, explanation, points, q_order, source_type, source_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).bind(q.id, quizId, q.type, q.prompt, q.prompt_image_url, q.options_json, q.correct_answer, q.explanation, q.points, q.q_order, q.source_type || null, q.source_id || null));
+    } else {
+      statements.push(db.prepare(`
+        INSERT INTO quiz_questions (id, quiz_id, type, prompt, prompt_image_url, options_json, correct_answer, explanation, points, q_order)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).bind(q.id, quizId, q.type, q.prompt, q.prompt_image_url, q.options_json, q.correct_answer, q.explanation, q.points, q.q_order));
+    }
+  }
   await db.batch(statements);
   return metadata;
 }

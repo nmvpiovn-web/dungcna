@@ -1,7 +1,16 @@
 import { json } from '@sveltejs/kit';
 import { isStaffUser, verifyServerAuth } from '../../../../../lib/server/auth.js';
 import { canManageQuiz } from '../../../../../lib/server/quizMenu.js';
-import { generateDraftQuestions, generateQuestionsWithAI, publishQuizBundle, QuizDriveError, readAllowedDriveSource, readDriveSourceFromUrl, saveQuizSourceAndDrafts } from '../../../../../lib/server/quizDrive.js';
+import {
+  generateDraftQuestions,
+  generateQuestionsWithAI,
+  publishQuizBundle,
+  QuizDriveError,
+  readAllowedDriveSource,
+  readDriveSourceFromUrl,
+  saveQuizSourceAndDrafts
+} from '../../../../../lib/server/quizDrive.js';
+import { generateDeterministicQuiz } from '../../../../../lib/server/quizAutoBuilder.js';
 
 export const prerender = false;
 
@@ -27,7 +36,27 @@ export async function POST({ params, request, platform }) {
     // url dán vào: parse link, copy vào Quiz Uploads nếu ngoài folder cho phép.
     const source = url ? await readDriveSourceFromUrl(platform, url) : await readAllowedDriveSource(platform, fileId);
     const aiQuestions = await generateQuestionsWithAI(source.text, platform);
-    const questions = aiQuestions || generateDraftQuestions(source.text);
+    let questions = null;
+    if (aiQuestions && aiQuestions.length) {
+      questions = aiQuestions;
+    } else if (body.type_mix) {
+      const genResult = generateDeterministicQuiz(source.text, {
+        questionCount: Number(body.question_count || 10),
+        typeMix: body.type_mix,
+        hasImages: false
+      });
+      questions = genResult.questions;
+    } else {
+      questions = generateDraftQuestions(source.text);
+    }
+
+    // Attach drive provenance metadata to questions
+    const driveSourceId = fileId || source.file?.id || 'drive_doc';
+    for (const q of questions) {
+      q.source_type = 'drive';
+      q.source_id = driveSourceId;
+    }
+
     const metadata = await saveQuizSourceAndDrafts(db, params.id, source.file, source.text, questions);
     const bundle = questions.length ? await publishQuizBundle(platform, db, params.id) : null;
     return json({ success: true, source: metadata, extracted_text_length: source.text.length, questions, bundle, ai_generated: !!aiQuestions });
