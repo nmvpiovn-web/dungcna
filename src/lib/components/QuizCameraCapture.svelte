@@ -227,6 +227,10 @@
         {#each items as item, idx (item.id)}
           <div class="thumb-card">
             <span class="thumb-order">{idx + 1}/{items.length}</span>
+            <img
+              src={item.previewUrl}
+              alt={`Trang tài liệu ${idx + 1}${item.file?.name ? ` (${item.file.name})` : ''}`}
+            />
             <label for={`camera-thumb-label-${item.id}`} class="sr-only">
               Nhãn từ vựng trang {idx + 1}{item.file?.name ? ` (${item.file.name})` : ''}
             </label>
@@ -299,8 +303,8 @@
   .camera-start { display: flex; gap: 8px; flex-wrap: wrap; }
   .camera-live video { width: 100%; max-height: 320px; object-fit: cover; border-radius: 8px; background: #1c1917; }
   .camera-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
-  .gallery-preview { margin-top: 12px; background: #fafaf9; border: 1px solid #e7e5e4; border-radius: 8px; padding: 12px; max-width: 100%; box-sizing: border-box; overflow: hidden; }
-  .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; max-width: 100%; box-sizing: border-box; }
+  .gallery-preview { margin-top: 12px; background: #fafaf9; border: 1px solid #e7e5e4; border-radius: 8px; padding: 10px; max-width: 100%; box-sizing: border-box; overflow: hidden; }
+  .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(136px, 1fr)); gap: 8px; max-width: 100%; box-sizing: border-box; }
   .thumb-card { position: relative; border: 1px solid #e7e5e4; border-radius: 6px; background: #fff; overflow: hidden; display: flex; flex-direction: column; max-width: 100%; box-sizing: border-box; }
   .thumb-card img { width: 100%; height: 110px; object-fit: cover; }
   .thumb-order { position: absolute; top: 4px; left: 4px; background: rgba(28, 25, 23, 0.8); color: #fff; font-size: 0.7rem; font-weight: 700; padding: 2px 6px; border-radius: 4px; }
@@ -315,10 +319,26 @@
     outline: none;
   }
   .thumb-label-input:focus { border-color: #059669; background: #f0fdf4; }
-  .thumb-actions { display: flex; justify-content: space-between; background: #f5f5f4; border-top: 1px solid #e7e5e4; padding: 2px; }
-  .thumb-actions button { background: none; border: none; font-size: 0.85rem; font-weight: 700; color: #44403c; padding: 4px 8px; cursor: pointer; min-height: 32px; min-width: 32px; border-radius: 4px; }
+  .thumb-actions { display: flex; justify-content: space-between; align-items: center; background: #f5f5f4; border-top: 1px solid #e7e5e4; padding: 2px; box-sizing: border-box; width: 100%; }
+  .thumb-actions button {
+    background: none;
+    border: none;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #44403c;
+    padding: 0;
+    cursor: pointer;
+    min-height: 44px;
+    min-width: 44px;
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    box-sizing: border-box;
+  }
   .thumb-actions button:hover:not(:disabled) { background: #e7e5e4; }
-  .thumb-actions button.btn-del { color: #dc2626; font-size: 1rem; }
+  .thumb-actions button.btn-del { color: #dc2626; font-size: 1.2rem; }
   .thumb-actions button:disabled { opacity: 0.3; cursor: not-allowed; }
   .confirm-bar { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
   .camera-error { color: #b91c1c; font-size: .85rem; margin-top: 8px; }
