@@ -12,6 +12,7 @@ import {
 } from '../../../../../lib/server/quizDrive.js';
 import {
   validateMultiImages,
+  validateImageLabels,
   concatenateMultiPageText,
   generateDeterministicQuiz,
   MAX_MULTI_IMAGES
@@ -51,6 +52,7 @@ export async function POST({ params, request, platform }) {
   const typeMixRaw = form.get('type_mix');
   const typeMix = typeMixRaw ? parseJson(typeMixRaw, null) : null;
   const questionCount = Number(form.get('question_count') || 10);
+  const gradeLevel = Number(form.get('grade_level') || 7);
   const difficulty = String(form.get('difficulty') || 'medium');
   const mergeStrategy = String(form.get('merge_strategy') || 'append') === 'replace' ? 'replace' : 'append';
 
@@ -67,6 +69,13 @@ export async function POST({ params, request, platform }) {
       const status = validation.code === 'FileTooLarge' || validation.code === 'PayloadTooLarge' ? 413
         : validation.code === 'UnsupportedFileType' ? 415 : 400;
       return json({ success: false, error: validation.code, message: validation.message }, { status });
+    }
+
+    const picTarget = Number(typeMix?.picture_guess || 0);
+    const rawLabels = form.get('image_labels') || form.get('labels_json');
+    const labelValidation = validateImageLabels(rawLabels, filesList.length, picTarget > 0);
+    if (!labelValidation.valid) {
+      return json({ success: false, error: labelValidation.code, message: labelValidation.message }, { status: 400 });
     }
 
     const uploadedDriveIds = [];
@@ -97,21 +106,8 @@ export async function POST({ params, request, platform }) {
       let degraded_reason = null;
       let ai_generated = false;
 
-      let rawImageLabels = null;
-      try {
-        const lbls = form.get('image_labels') || form.get('labels_json');
-        if (lbls) rawImageLabels = typeof lbls === 'string' ? JSON.parse(lbls) : lbls;
-      } catch {}
-
       const imageAssets = filesList.map((f, idx) => {
-        let label = '';
-        if (Array.isArray(rawImageLabels)) {
-          const item = rawImageLabels[idx];
-          label = typeof item === 'string' ? item : (item?.label || item?.answer || '');
-        } else if (rawImageLabels && typeof rawImageLabels === 'object') {
-          label = rawImageLabels[f.name] || rawImageLabels[idx] || '';
-        }
-        label = String(label || '').trim();
+        const label = String(labelValidation.labels?.[idx] || '').trim();
         const assetId = uploadedSources[idx]?.file?.id || `img_${idx}`;
         const assetUrl = `/api/quiz-menu/${params.id}/assets/${assetId}`;
         return {
@@ -125,7 +121,7 @@ export async function POST({ params, request, platform }) {
       });
 
       // Try AI first if configured, validating output against typeMix
-      const aiQuestions = await generateQuestionsWithAI(combinedText, platform, { questionCount, typeMix, difficulty });
+      const aiQuestions = await generateQuestionsWithAI(combinedText, platform, { questionCount, typeMix, difficulty, gradeLevel });
       if (aiQuestions && aiQuestions.length) {
         questions = aiQuestions;
         ai_generated = true;
@@ -135,7 +131,8 @@ export async function POST({ params, request, platform }) {
           typeMix: typeMix || undefined,
           hasImages: true,
           imageAssets,
-          difficulty
+          difficulty,
+          gradeLevel
         });
         questions = genResult.questions;
         requested_counts = genResult.requested_counts;
@@ -213,7 +210,7 @@ export async function POST({ params, request, platform }) {
     let ai_generated = false;
 
     if (typeMix && Object.keys(typeMix).length > 0) {
-      const aiQuestions = await generateQuestionsWithAI(source.text, platform, { questionCount, typeMix, difficulty });
+      const aiQuestions = await generateQuestionsWithAI(source.text, platform, { questionCount, typeMix, difficulty, gradeLevel });
       if (aiQuestions && aiQuestions.length) {
         questions = aiQuestions;
         ai_generated = true;
@@ -222,7 +219,8 @@ export async function POST({ params, request, platform }) {
           questionCount,
           typeMix,
           hasImages: false,
-          difficulty
+          difficulty,
+          gradeLevel
         });
         questions = genResult.questions;
         requested_counts = genResult.requested_counts;
@@ -239,7 +237,8 @@ export async function POST({ params, request, platform }) {
           questionCount,
           typeMix: undefined,
           hasImages: false,
-          difficulty
+          difficulty,
+          gradeLevel
         });
         questions = genResult.questions;
         requested_counts = genResult.requested_counts;

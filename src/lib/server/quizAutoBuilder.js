@@ -50,6 +50,53 @@ export function validateMultiImages(files) {
 }
 
 /**
+ * Validates array of image labels for picture_guess questions.
+ * Enforces array shape, bounds count <= fileCount and <= 6, max 80 chars per label, and no control characters.
+ */
+export function validateImageLabels(rawInput, fileCount, pictureGuessRequested = false) {
+  if (rawInput === undefined || rawInput === null || rawInput === '') {
+    if (pictureGuessRequested) {
+      return { valid: false, code: 'MissingImageLabels', message: 'Vui lòng cung cấp nhãn/đáp án cho ảnh khi yêu cầu câu hỏi nhìn hình (picture_guess).' };
+    }
+    return { valid: true, labels: [] };
+  }
+  let parsed = rawInput;
+  if (typeof parsed === 'string') {
+    try {
+      parsed = JSON.parse(rawInput);
+    } catch {
+      return { valid: false, code: 'MalformedImageLabels', message: 'Định dạng image_labels không hợp lệ (cần JSON array).' };
+    }
+  }
+  if (!Array.isArray(parsed)) {
+    return { valid: false, code: 'MalformedImageLabels', message: 'image_labels phải là một danh sách (array).' };
+  }
+  if (parsed.length > 6 || (fileCount > 0 && parsed.length > fileCount)) {
+    return { valid: false, code: 'ExcessiveImageLabels', message: 'Số lượng nhãn ảnh vượt quá số lượng tệp ảnh cho phép.' };
+  }
+  const sanitizedLabels = [];
+  for (let i = 0; i < parsed.length; i++) {
+    const raw = parsed[i];
+    const val = typeof raw === 'string' ? raw : (typeof raw === 'object' && raw ? (raw.label || raw.answer || '') : '');
+    const trimmed = String(val ?? '').trim();
+    if (/[\x00-\x1F\x7F]/.test(trimmed)) {
+      return { valid: false, code: 'InvalidImageLabelChars', message: `Nhãn ảnh thứ ${i + 1} chứa ký tự không hợp lệ.` };
+    }
+    if (trimmed.length > 80) {
+      return { valid: false, code: 'ImageLabelTooLong', message: `Nhãn ảnh thứ ${i + 1} vượt quá giới hạn 80 ký tự.` };
+    }
+    sanitizedLabels.push(trimmed);
+  }
+  if (pictureGuessRequested) {
+    const hasValidLabel = sanitizedLabels.some((l) => l.length >= 1);
+    if (!hasValidLabel) {
+      return { valid: false, code: 'EmptyImageLabel', message: 'Vui lòng nhập ít nhất 1 nhãn ảnh hợp lệ (1-80 ký tự) cho câu hỏi nhìn hình.' };
+    }
+  }
+  return { valid: true, labels: sanitizedLabels };
+}
+
+/**
  * Concatenates text extracted from multiple pages/images with clear page delimiters.
  */
 export function concatenateMultiPageText(pages) {
@@ -244,13 +291,19 @@ export function generateDeterministicQuiz(text, options = {}) {
   const allocation = allocateTypeMix(questionCount, requestedMix);
   const parsed = parseSourceContent(text);
 
+  const gradeLevel = Number(options.gradeLevel || options.grade_level || 7);
+  const isEarlyPrimary = gradeLevel <= 2;
+  const isPrimary = gradeLevel <= 5;
+  const isHighSchool = gradeLevel >= 10;
+
   // Apply difficulty and grade level to vocabulary and sentences
   const isEasy = difficulty === 'easy' || difficulty === 'nhan_biet';
   const isHard = difficulty === 'hard' || difficulty === 'van_dung' || difficulty === 'van_dung_cao';
-  if (isEasy) {
+
+  if (isEarlyPrimary || (isEasy && !isHighSchool)) {
     parsed.vocabulary.sort((a, b) => a.word.length - b.word.length);
     parsed.sentences.sort((a, b) => a.length - b.length);
-  } else if (isHard) {
+  } else if (isHighSchool || (isHard && !isPrimary)) {
     parsed.vocabulary.sort((a, b) => b.word.length - a.word.length);
     parsed.sentences.sort((a, b) => b.length - a.length);
   }
@@ -299,9 +352,12 @@ export function generateDeterministicQuiz(text, options = {}) {
         .slice(0, 3);
       while (distractors.length < 3) distractors.push(`Không phải nghĩa của từ ${item.word}`);
       const opts = [item.definition, ...distractors].sort();
+      const mcqPrompt = isEarlyPrimary
+        ? `Từ tiếng Anh "${item.word}" nghĩa là gì?`
+        : (isHighSchool ? `Chọn phương án giải nghĩa chính xác nhất cho thuật ngữ "${item.word}":` : `Nghĩa chính xác của từ "${item.word}" là gì?`);
       const added = addQuestionSafely({
         type: 'multiple_choice',
-        prompt: `Nghĩa chính xác của từ "${item.word}" là gì?`,
+        prompt: mcqPrompt,
         options_json: opts,
         correct_answer: item.definition,
         points: 1

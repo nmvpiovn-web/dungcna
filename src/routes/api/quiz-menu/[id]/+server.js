@@ -39,7 +39,24 @@ export async function GET({ params, url, request, platform }) {
   }
   const reqUrl = url || (request?.url ? new URL(request.url) : null);
   const includeAnswers = staff && reqUrl?.searchParams?.get('include_answers') === '1';
-  const rows = await db.prepare(`SELECT * FROM quiz_questions WHERE quiz_id = ? ORDER BY q_order, id`).bind(params.id).all();
+  let rows;
+  if (includeAnswers) {
+    try {
+      rows = await db.prepare(`
+        SELECT qq.*,
+          (SELECT qqs.source_type FROM quiz_question_sources qqs WHERE qqs.quiz_id = qq.quiz_id AND qqs.question_id = qq.id ORDER BY qqs.id ASC LIMIT 1) AS qqs_source_type,
+          (SELECT qqs.source_id FROM quiz_question_sources qqs WHERE qqs.quiz_id = qq.quiz_id AND qqs.question_id = qq.id ORDER BY qqs.id ASC LIMIT 1) AS qqs_source_id,
+          (SELECT qqs.source_sub_id FROM quiz_question_sources qqs WHERE qqs.quiz_id = qq.quiz_id AND qqs.question_id = qq.id ORDER BY qqs.id ASC LIMIT 1) AS qqs_source_sub_id
+        FROM quiz_questions qq
+        WHERE qq.quiz_id = ?
+        ORDER BY qq.q_order, qq.id
+      `).bind(params.id).all();
+    } catch {
+      rows = await db.prepare(`SELECT * FROM quiz_questions WHERE quiz_id = ? ORDER BY q_order, id`).bind(params.id).all();
+    }
+  } else {
+    rows = await db.prepare(`SELECT * FROM quiz_questions WHERE quiz_id = ? ORDER BY q_order, id`).bind(params.id).all();
+  }
   return json({
     success: true,
     quiz: {

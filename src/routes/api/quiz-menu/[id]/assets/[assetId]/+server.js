@@ -79,8 +79,9 @@ export async function GET({ params, request, platform }) {
     } catch {}
   }
 
-  // 3. Exact equality in source_metadata_json manifest for image mime types
-  if (!assetBelongs && quiz.source_metadata_json) {
+  // 3. Exact equality in source_metadata_json manifest for staff owner preview only (never for guest/student)
+  const isOwner = staff && canManageQuiz(auth?.user, quiz);
+  if (!assetBelongs && isOwner && quiz.source_metadata_json) {
     try {
       const meta = typeof quiz.source_metadata_json === 'string' ? JSON.parse(quiz.source_metadata_json) : quiz.source_metadata_json;
       if (Array.isArray(meta.manifest)) {

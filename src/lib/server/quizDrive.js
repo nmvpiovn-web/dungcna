@@ -595,6 +595,7 @@ export async function generateQuestionsWithAI(text, platform, options = {}) {
   const questionCount = Math.max(1, Math.min(50, rawCount || 10));
   const typeMix = options.typeMix && typeof options.typeMix === 'object' ? options.typeMix : null;
   const difficulty = String(options.difficulty || 'medium');
+  const gradeLevel = Number(options.gradeLevel || options.grade_level || 7);
 
   let typeMixInstructions = '';
   if (typeMix && Object.keys(typeMix).length > 0) {
@@ -610,6 +611,7 @@ Tuyệt đối KHÔNG tạo bất kỳ loại câu hỏi nào khác ngoài danh 
   const dynamicSystemPrompt = `${AI_SYSTEM_PROMPT}
 
 CẤU HÌNH YÊU CẦU:
+- Đối tượng học sinh: Lớp ${gradeLevel} (Grade ${gradeLevel}). Hãy điều chỉnh từ vựng, độ phức tạp ngữ pháp và nội dung câu hỏi phù hợp nhất với trình độ học sinh Lớp ${gradeLevel} chương trình Tiếng Anh phổ thông.
 - Số câu cần tạo: ${questionCount}
 - Độ khó: ${difficulty}${typeMixInstructions}`;
 

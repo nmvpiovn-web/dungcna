@@ -45,6 +45,7 @@ export async function POST({ params, request, platform }) {
   }
 
   const questionCount = Math.max(1, Math.min(200, Number(body.question_count) || 10));
+  const gradeLevel = Number(body.grade_level || 7);
   const typeMix = body.type_mix && typeof body.type_mix === 'object' ? body.type_mix : null;
   const difficulty = String(body.difficulty || 'medium');
   const mergeStrategy = String(body.merge_strategy || 'append') === 'replace' ? 'replace' : 'append';
@@ -53,6 +54,7 @@ export async function POST({ params, request, platform }) {
     questionCount,
     typeMix,
     difficulty,
+    gradeLevel,
     hasImages: false
   });
 

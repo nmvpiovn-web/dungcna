@@ -76,6 +76,30 @@
     return imagePreviewMap.get(file);
   }
 
+  function clearImagePreviews() {
+    for (const url of imagePreviewMap.values()) {
+      try {
+        URL.revokeObjectURL(url);
+      } catch {}
+    }
+    imagePreviewMap.clear();
+  }
+
+  function handleFilesSelected(files) {
+    clearImagePreviews();
+    uploadFiles = files;
+    sourceFile = files[0] || null;
+    const nextLabels = {};
+    for (let i = 0; i < files.length; i++) {
+      if (imageLabels[i]) nextLabels[i] = imageLabels[i];
+    }
+    imageLabels = nextLabels;
+  }
+
+  onDestroy(() => {
+    clearImagePreviews();
+  });
+
   // Kho tri thức (Knowledge Vault)
   let kvQuery = $state('');
   let kvCategory = $state('');
@@ -340,6 +364,7 @@
         if (res.defaults.type_mix && Object.keys(res.defaults.type_mix).length > 0) {
           questionTypeMix = res.defaults.type_mix;
         }
+        bankFilters.grade_level = String(autoConfig.grade_level);
         builderDefaultsLoaded = true;
       }
     } catch {}
@@ -421,6 +446,7 @@
 
         form.append('type_mix', JSON.stringify(questionTypeMix));
         form.append('question_count', String(autoConfig.question_count));
+        form.append('grade_level', String(autoConfig.grade_level || 7));
         form.append('difficulty', autoConfig.difficulty);
         form.append('merge_strategy', mergeStrategy);
         const res = await api(`/api/quiz-menu/${quizId}/upload`, { method: 'POST', body: form, headers: {} });
@@ -444,6 +470,7 @@
           ...(pastedUrl ? { url: pastedUrl } : { file_id: selectedDriveFileId }),
           type_mix: questionTypeMix,
           question_count: autoConfig.question_count,
+          grade_level: autoConfig.grade_level || 7,
           difficulty: autoConfig.difficulty,
           merge_strategy: mergeStrategy
         };
@@ -467,6 +494,7 @@
           vault_id: kvSelectedArticleId,
           type_mix: questionTypeMix,
           question_count: autoConfig.question_count,
+          grade_level: autoConfig.grade_level || 7,
           difficulty: autoConfig.difficulty,
           merge_strategy: mergeStrategy
         };
@@ -608,7 +636,8 @@
         points: Number(q.points) || 1,
         q_order: index,
         source_type: q.source_type || null,
-        source_id: q.source_id || null
+        source_id: q.source_id || null,
+        source_sub_id: q.source_sub_id || null
       };
     });
   }
@@ -640,7 +669,8 @@
       explanation: question.explanation || '',
       q_order: Number.isInteger(Number(question.order ?? question.q_order)) ? Number(question.order ?? question.q_order) : index,
       source_type: question.source_type || null,
-      source_id: question.source_id || null
+      source_id: question.source_id || null,
+      source_sub_id: question.source_sub_id || null
     };
   }
 
@@ -1270,7 +1300,7 @@
               </label>
               <label>
                 Khối lớp
-                <select bind:value={autoConfig.grade_level}>
+                <select bind:value={autoConfig.grade_level} on:change={() => { bankFilters.grade_level = autoConfig.grade_level ? String(autoConfig.grade_level) : ''; if (sourceMode === 'question_bank') loadBankQuestions(true); }}>
                   {#each Array.from({length: 13}, (_, i) => i) as g}
                     <option value={g}>{g === 0 ? 'Tổng hợp / IELTS' : `Lớp ${g}`}</option>
                   {/each}
@@ -1365,16 +1395,14 @@
                     accept=".pdf,.docx,.txt,.png,.jpg,.jpeg,.webp"
                     on:change={(e) => {
                       const fList = Array.from(e.currentTarget.files || []);
-                      sourceFile = fList[0] || null;
-                      uploadFiles = fList;
+                      handleFilesSelected(fList);
                     }}
                   />
                 </label>
                 {#if sourceFile}<p class="file-chosen">✓ Đã chọn: <strong>{uploadFiles.length > 1 ? `${uploadFiles.length} tệp (${uploadFiles.map(f => f.name).join(', ')})` : sourceFile.name}</strong></p>{/if}
                 <QuizCameraCapture
                   onCaptureFiles={(files, labels) => {
-                    uploadFiles = files;
-                    sourceFile = files[0] || null;
+                    handleFilesSelected(files);
                     if (Array.isArray(labels)) {
                       labels.forEach((l, i) => { if (l) imageLabels[i] = l; });
                     }
@@ -1397,13 +1425,14 @@
                         <div class="image-label-card">
                           <div class="image-thumb-wrap">
                             <span class="image-page-badge">Trang {idx + 1}</span>
-                            <img src={getImagePreview(file)} alt={`Trang ${idx + 1}`} class="image-thumb" />
+                            <img src={getImagePreview(file)} alt={`Trang ${idx + 1} - ${file.name || 'Ảnh'}`} class="image-thumb" />
                           </div>
                           <div class="image-info-wrap">
                             <span class="image-filename" title={file.name}>{file.name}</span>
-                            <label class="image-input-wrap">
+                            <label class="image-input-wrap" for={`img-label-input-${idx}`}>
                               <span class="image-input-title">Từ vựng / Đáp án (tiếng Anh):</span>
                               <input
+                                id={`img-label-input-${idx}`}
                                 type="text"
                                 class="image-label-input"
                                 placeholder="VD: apple, bicycle, elephant..."
@@ -2244,13 +2273,13 @@
   .image-filename{font-size:.78rem;font-weight:600;color:#44403c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
   .image-input-wrap{display:flex;flex-direction:column;gap:2px}
   .image-input-title{font-size:.72rem;color:#78716c;font-weight:500}
-  .image-label-input{width:100%;height:32px;padding:4px 8px;border:1px solid #d6d3d1;border-radius:4px;font-size:.82rem;color:#1c1917}
+  .image-label-input{width:100%;min-height:44px;padding:8px 10px;border:1px solid #d6d3d1;border-radius:6px;font-size:.88rem;color:#1c1917;box-sizing:border-box}
   .image-label-input:focus{outline:none;border-color:#059669;box-shadow:0 0 0 2px rgba(5,150,105,0.15)}
 
   @media(max-width:800px){.quiz-page{padding:16px 12px 90px}.quiz-hero{padding:26px 22px;min-height:160px}.hero-mark{width:70px;height:70px;flex-basis:70px;font-size:2rem}.workspace{padding:18px}.source-grid,.type-grid,.quiz-grid,.loading-grid{grid-template-columns:1fr 1fr}.bank-filters{grid-template-columns:1fr 1fr}.source-panel{grid-template-columns:1fr}.bundle-grid,.homework-fields{grid-template-columns:1fr 1fr}.builder-mode-switcher{grid-template-columns:1fr}.type-mix-grid{grid-template-columns:1fr 1fr}.merge-options-group{grid-template-columns:1fr}.exam-content{grid-template-columns:1fr;padding:18px 12px 70px}.exam-content aside{position:static}.question-map{grid-template-columns:repeat(8,1fr)}.exam-topbar{grid-template-columns:1fr auto}.abandon{grid-column:1/-1;width:100%;margin-top:6px}.progress-track{top:124px}.exam-question{scroll-margin-top:135px}}
-  @media(max-width:560px){.quiz-hero{align-items:flex-end}.hero-mark{position:absolute;right:18px;top:18px;opacity:.38}.quiz-hero p{padding-right:20px}.tabs{gap:3px}.tabs button{font-size:.75rem;padding:5px}.tabs button span{display:block;margin:0;font-size:1rem}.source-grid,.type-grid,.quiz-grid,.loading-grid,.form-grid,.bundle-grid,.homework-fields,.bank-filters{grid-template-columns:1fr}.type-mix-grid{grid-template-columns:1fr}.auto-action-bar{flex-direction:column;align-items:stretch}.auto-action-bar button{width:100%}.form-grid .wide{grid-column:1}.source-card{min-height:78px}.type-grid button{min-height:58px}.editor-card{padding:13px}.editor-card header{flex-wrap:wrap}.editor-card header select{order:3;width:100%;max-width:none}.editor-actions{margin-left:auto}.editor-bottom{grid-template-columns:90px 1fr}.save-bar{flex-wrap:wrap;bottom:8px}.save-bar>div{width:100%}.save-bar button{flex:1}.section-heading{align-items:flex-start}.question-map{grid-template-columns:repeat(6,1fr)}.exam-topbar{padding:8px 10px}.exam-title>span{display:none}.exam-title strong{display:block;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.countdown{padding:4px 10px}.exam-question{padding:17px}.question-head{align-items:flex-start}.question-head>div{flex-direction:column-reverse;align-items:flex-end}.matching-answer label{grid-template-columns:1fr}.matching-answer label>span{transform:rotate(90deg)}.submit-panel{align-items:stretch;flex-direction:column}.submit-actions{flex-direction:column}.start-dialog,.result-dialog,.bundle-dialog{padding:25px 18px}.modal-backdrop{padding:10px}.rules{grid-template-columns:1fr 1fr}.bank-action-bar{flex-direction:column;align-items:stretch}.bank-buttons{flex-direction:column}.bank-buttons button{width:100%}.quick-import-wrap{width:100%;justify-content:space-between;margin-left:0}}
+  @media(max-width:560px){.quiz-hero{align-items:flex-end}.hero-mark{position:absolute;right:18px;top:18px;opacity:.38}.quiz-hero p{padding-right:20px}.tabs{gap:3px}.tabs button{font-size:.75rem;padding:5px}.tabs button span{display:block;margin:0;font-size:1rem}.source-grid,.type-grid,.quiz-grid,.loading-grid,.form-grid,.bundle-grid,.homework-fields,.bank-filters{grid-template-columns:1fr}.type-mix-grid{grid-template-columns:1fr}.image-labels-grid{grid-template-columns:1fr}.auto-action-bar{flex-direction:column;align-items:stretch}.auto-action-bar button{width:100%}.form-grid .wide{grid-column:1}.source-card{min-height:78px}.type-grid button{min-height:58px}.editor-card{padding:13px}.editor-card header{flex-wrap:wrap}.editor-card header select{order:3;width:100%;max-width:none}.editor-actions{margin-left:auto}.editor-bottom{grid-template-columns:90px 1fr}.save-bar{flex-wrap:wrap;bottom:8px}.save-bar>div{width:100%}.save-bar button{flex:1}.section-heading{align-items:flex-start}.question-map{grid-template-columns:repeat(6,1fr)}.exam-topbar{padding:8px 10px}.exam-title>span{display:none}.exam-title strong{display:block;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.countdown{padding:4px 10px}.exam-question{padding:17px}.question-head{align-items:flex-start}.question-head>div{flex-direction:column-reverse;align-items:flex-end}.matching-answer label{grid-template-columns:1fr}.matching-answer label>span{transform:rotate(90deg)}.submit-panel{align-items:stretch;flex-direction:column}.submit-actions{flex-direction:column}.start-dialog,.result-dialog,.bundle-dialog{padding:25px 18px}.modal-backdrop{padding:10px}.rules{grid-template-columns:1fr 1fr}.bank-action-bar{flex-direction:column;align-items:stretch}.bank-buttons{flex-direction:column}.bank-buttons button{width:100%}.quick-import-wrap{width:100%;justify-content:space-between;margin-left:0}}
   @media(max-width:1024px){.save-bar{bottom:calc(84px + env(safe-area-inset-bottom))}}
   @media(max-width:640px){.source-grid,.type-grid,.quiz-grid,.loading-grid{grid-template-columns:1fr}.quiz-page{padding-left:12px;padding-right:12px}}
-  @media(max-width:390px){.hero-mark{display:none}.modal-backdrop{padding:0}.start-dialog,.result-dialog,.bundle-dialog{width:100%;max-height:100dvh;border-radius:0;padding:22px 14px}.exam-topbar{grid-template-columns:1fr auto}.quiz-page{overflow-x:hidden}.bank-q-options{grid-template-columns:1fr}}
+  @media(max-width:390px){.hero-mark{display:none}.modal-backdrop{padding:0}.start-dialog,.result-dialog,.bundle-dialog{width:100%;max-height:100dvh;border-radius:0;padding:22px 14px}.exam-topbar{grid-template-columns:1fr auto}.quiz-page{overflow-x:hidden}.bank-q-options{grid-template-columns:1fr}.image-labels-grid{grid-template-columns:1fr}}
   @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
 </style>

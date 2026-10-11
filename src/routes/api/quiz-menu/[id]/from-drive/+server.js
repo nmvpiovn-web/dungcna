@@ -36,6 +36,7 @@ export async function POST({ params, request, platform }) {
     // url dán vào: parse link, copy vào Quiz Uploads nếu ngoài folder cho phép.
     const source = url ? await readDriveSourceFromUrl(platform, url) : await readAllowedDriveSource(platform, fileId);
     const questionCount = Number(body.question_count || 10);
+    const gradeLevel = Number(body.grade_level || 7);
     const typeMix = body.type_mix && typeof body.type_mix === 'object' ? body.type_mix : null;
     const difficulty = String(body.difficulty || 'medium');
     const mergeStrategy = String(body.merge_strategy || 'append') === 'replace' ? 'replace' : 'append';
@@ -48,7 +49,7 @@ export async function POST({ params, request, platform }) {
     let ai_generated = false;
 
     if (typeMix && Object.keys(typeMix).length > 0) {
-      const aiQuestions = await generateQuestionsWithAI(source.text, platform, { questionCount, typeMix, difficulty });
+      const aiQuestions = await generateQuestionsWithAI(source.text, platform, { questionCount, typeMix, difficulty, gradeLevel });
       if (aiQuestions && aiQuestions.length) {
         questions = aiQuestions;
         ai_generated = true;
@@ -57,7 +58,8 @@ export async function POST({ params, request, platform }) {
           questionCount,
           typeMix,
           hasImages: false,
-          difficulty
+          difficulty,
+          gradeLevel
         });
         questions = genResult.questions;
         requested_counts = genResult.requested_counts;
@@ -74,7 +76,8 @@ export async function POST({ params, request, platform }) {
           questionCount,
           typeMix: undefined,
           hasImages: false,
-          difficulty
+          difficulty,
+          gradeLevel
         });
         questions = genResult.questions;
         requested_counts = genResult.requested_counts;

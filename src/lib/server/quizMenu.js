@@ -133,9 +133,12 @@ export function publicQuestion(row, includeAnswers = false) {
   if (includeAnswers) {
     question.correct_answer = parseJson(row.correct_answer, row.correct_answer);
     question.explanation = row.explanation || null;
-    if (row.source_type) question.source_type = row.source_type;
-    if (row.source_id) question.source_id = row.source_id;
-    if (row.source_sub_id) question.source_sub_id = row.source_sub_id;
+    const sType = row.source_type || row.qqs_source_type;
+    const sId = row.source_id || row.qqs_source_id;
+    const sSubId = (row.source_sub_id !== undefined && row.source_sub_id !== null) ? row.source_sub_id : row.qqs_source_sub_id;
+    if (sType) question.source_type = sType;
+    if (sId) question.source_id = sId;
+    if (sSubId) question.source_sub_id = sSubId;
   }
   return question;
 }
