@@ -20,14 +20,17 @@ test('RED-8.1: QuizCameraCapture thumb-card must contain thumbnail img with page
     'QuizCameraCapture thumb-card img must have informative alt with page number and file name'
   );
 
+  // Normalize newlines to support both Windows CRLF and Unix/CI LF cleanly
+  const normalized = compSrc.replace(/\r\n/g, '\n');
+
   // Verify DOM order: badge -> img -> label/input -> actions
-  const cardStart = compSrc.indexOf('<div class="thumb-card">');
+  const cardStart = normalized.indexOf('<div class="thumb-card">');
   assert.ok(cardStart > 0, 'Must have .thumb-card container');
 
-  const cardEnd = compSrc.indexOf('</div>\n        {/each}', cardStart);
-  assert.ok(cardEnd > cardStart, 'Must close each block for thumb-card');
+  const cardMatch = normalized.slice(cardStart).match(/<div class="thumb-card">([\s\S]*?)<\/div>\s*\{\/each\}/);
+  assert.ok(cardMatch, 'Must close each block for thumb-card');
 
-  const cardContent = compSrc.slice(cardStart, cardEnd);
+  const cardContent = cardMatch[1];
 
   const badgeIdx = cardContent.indexOf('class="thumb-order"');
   const imgIdx = cardContent.indexOf('src={item.previewUrl}');
