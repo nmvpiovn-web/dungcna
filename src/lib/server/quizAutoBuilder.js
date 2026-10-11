@@ -52,22 +52,44 @@ export function validateMultiImages(files) {
 /**
  * Parses and strictly validates grade_level parameter.
  * Preserves 0 (Tổng hợp / IELTS). Accepts 0..12 integers.
+ * Fail-closed validation: rejects whitespace-only, booleans, objects/Files, floats, out-of-range.
+ * Only undefined, null, or empty string '' default to 7 (optional fallback).
  */
 export function parseGradeLevel(rawInput) {
   if (rawInput === undefined || rawInput === null || rawInput === '') {
     return { valid: true, gradeLevel: 7 };
   }
+
+  if (typeof rawInput === 'boolean' || typeof rawInput === 'symbol' || typeof rawInput === 'function') {
+    return { valid: false, code: 'InvalidGradeLevel', message: 'Khối lớp không hợp lệ.' };
+  }
+
   if (typeof rawInput === 'object') {
-    if (typeof rawInput.arrayBuffer === 'function' || rawInput.name !== undefined || rawInput.size !== undefined) {
-      return { valid: true, gradeLevel: 7 };
+    return { valid: false, code: 'InvalidGradeLevel', message: 'Khối lớp không được là đối tượng hoặc tập tin.' };
+  }
+
+  if (typeof rawInput === 'string') {
+    if (rawInput.trim() === '') {
+      return { valid: false, code: 'InvalidGradeLevel', message: 'Khối lớp không được chỉ chứa khoảng trắng.' };
     }
-    return { valid: false, code: 'InvalidGradeLevel', message: 'Khối lớp phải là số nguyên từ 0 đến 12 (0: Tổng hợp / IELTS).' };
+    if (!/^\s*-?\d+\s*$/.test(rawInput)) {
+      return { valid: false, code: 'InvalidGradeLevel', message: 'Khối lớp phải là số nguyên từ 0 đến 12 (0: Tổng hợp / IELTS).' };
+    }
+    const n = Number(rawInput.trim());
+    if (!Number.isInteger(n) || n < 0 || n > 12) {
+      return { valid: false, code: 'InvalidGradeLevel', message: 'Khối lớp phải là số nguyên từ 0 đến 12 (0: Tổng hợp / IELTS).' };
+    }
+    return { valid: true, gradeLevel: n };
   }
-  const n = Number(rawInput);
-  if (!Number.isInteger(n) || n < 0 || n > 12) {
-    return { valid: false, code: 'InvalidGradeLevel', message: 'Khối lớp phải là số nguyên từ 0 đến 12 (0: Tổng hợp / IELTS).' };
+
+  if (typeof rawInput === 'number') {
+    if (!Number.isInteger(rawInput) || rawInput < 0 || rawInput > 12) {
+      return { valid: false, code: 'InvalidGradeLevel', message: 'Khối lớp phải là số nguyên từ 0 đến 12 (0: Tổng hợp / IELTS).' };
+    }
+    return { valid: true, gradeLevel: rawInput };
   }
-  return { valid: true, gradeLevel: n };
+
+  return { valid: false, code: 'InvalidGradeLevel', message: 'Khối lớp không hợp lệ.' };
 }
 
 /**

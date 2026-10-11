@@ -1,6 +1,7 @@
 import { json } from '@sveltejs/kit';
 import { isStaffUser, verifyServerAuth } from '../../../../lib/server/auth.js';
 import { QUIZ_TYPES } from '../../../../lib/server/quizMenu.js';
+import { resolveDefaultGradeLevel } from '../../../../lib/quizDefaults.js';
 
 export const prerender = false;
 
@@ -48,7 +49,7 @@ export async function GET({ request, platform }) {
       source_type: row.source_type,
       question_count: Number(row.question_count || 10),
       time_limit_minutes: Number(row.time_limit_minutes || 15),
-      grade_level: Number(row.grade_level || 7),
+      grade_level: resolveDefaultGradeLevel(row.grade_level),
       difficulty: row.difficulty,
       type_mix: parseJson(row.type_mix_json, INITIAL_DEFAULTS.type_mix),
       default_status: row.default_status,

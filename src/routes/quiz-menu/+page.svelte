@@ -6,6 +6,7 @@
   import QuizChildResults from '$lib/components/QuizChildResults.svelte';
   import { cacheQuizData, getCachedQuizData, installQuizOnlineSync, queueQuizAttempt } from '$lib/quizOffline.js';
   import { isAllowedImageUrl } from '$lib/quizMedia.js';
+  import { resolveDefaultGradeLevel } from '$lib/quizDefaults.js';
 
   const questionTypes = [
     ['multiple_choice', 'Trắc nghiệm', 'Chọn một đáp án đúng'],
@@ -353,7 +354,7 @@
           source_type: res.defaults.source_type || 'upload',
           question_count: res.defaults.question_count || 10,
           time_limit_minutes: res.defaults.time_limit_minutes || 15,
-          grade_level: res.defaults.grade_level || 7,
+          grade_level: resolveDefaultGradeLevel(res.defaults.grade_level),
           difficulty: res.defaults.difficulty || 'medium',
           default_status: res.defaults.default_status || 'draft'
         };
@@ -365,7 +366,7 @@
         if (res.defaults.type_mix && Object.keys(res.defaults.type_mix).length > 0) {
           questionTypeMix = res.defaults.type_mix;
         }
-        bankFilters.grade_level = String(autoConfig.grade_level);
+        bankFilters.grade_level = autoConfig.grade_level !== undefined && autoConfig.grade_level !== null ? String(autoConfig.grade_level) : '';
         builderDefaultsLoaded = true;
       }
     } catch {}
@@ -1301,7 +1302,7 @@
               </label>
               <label>
                 Khối lớp
-                <select bind:value={autoConfig.grade_level} on:change={() => { bankFilters.grade_level = autoConfig.grade_level ? String(autoConfig.grade_level) : ''; if (sourceMode === 'question_bank') loadBankQuestions(true); }}>
+                <select bind:value={autoConfig.grade_level} on:change={() => { bankFilters.grade_level = autoConfig.grade_level !== undefined && autoConfig.grade_level !== null ? String(autoConfig.grade_level) : ''; if (sourceMode === 'question_bank') loadBankQuestions(true); }}>
                   {#each Array.from({length: 13}, (_, i) => i) as g}
                     <option value={g}>{g === 0 ? 'Tổng hợp / IELTS' : `Lớp ${g}`}</option>
                   {/each}

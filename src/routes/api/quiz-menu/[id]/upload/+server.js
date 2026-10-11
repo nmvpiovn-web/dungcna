@@ -8,7 +8,8 @@ import {
   QuizDriveError,
   removeDriveFile,
   saveQuizSourceAndDrafts,
-  uploadQuizSource
+  uploadQuizSource,
+  validateQuizFile
 } from '../../../../../lib/server/quizDrive.js';
 import {
   validateMultiImages,
@@ -50,18 +51,7 @@ export async function POST({ params, request, platform }) {
     return json({ success: false, error: 'FileRequired', message: 'Thiếu tệp upload' }, { status: 400 });
   }
 
-  const typeMixRaw = form.get('type_mix');
-  const typeMix = typeMixRaw ? parseJson(typeMixRaw, null) : null;
-  const questionCount = Number(form.get('question_count') || 10);
-  const gradeValidation = parseGradeLevel(form.get('grade_level'));
-  if (!gradeValidation.valid) {
-    return json({ success: false, error: gradeValidation.code, message: gradeValidation.message }, { status: 400 });
-  }
-  const gradeLevel = gradeValidation.gradeLevel;
-  const difficulty = String(form.get('difficulty') || 'medium');
-  const mergeStrategy = String(form.get('merge_strategy') || 'append') === 'replace' ? 'replace' : 'append';
-
-  // Check if multiple images
+  // Check if multiple images or single image batch
   const isImageBatch = filesList.length > 1 || (filesList.length === 1 && String(filesList[0].type || '').startsWith('image/'));
 
   if (isImageBatch) {
@@ -75,7 +65,27 @@ export async function POST({ params, request, platform }) {
         : validation.code === 'UnsupportedFileType' ? 415 : 400;
       return json({ success: false, error: validation.code, message: validation.message }, { status });
     }
+  } else {
+    try {
+      validateQuizFile(filesList[0]);
+    } catch (err) {
+      const status = err instanceof QuizDriveError ? err.status : 400;
+      return json({ success: false, error: err.code || 'InvalidFile', message: err.message }, { status });
+    }
+  }
 
+  const typeMixRaw = form.get('type_mix');
+  const typeMix = typeMixRaw ? parseJson(typeMixRaw, null) : null;
+  const questionCount = Number(form.get('question_count') || 10);
+  const gradeValidation = parseGradeLevel(form.get('grade_level'));
+  if (!gradeValidation.valid) {
+    return json({ success: false, error: gradeValidation.code, message: gradeValidation.message }, { status: 400 });
+  }
+  const gradeLevel = gradeValidation.gradeLevel;
+  const difficulty = String(form.get('difficulty') || 'medium');
+  const mergeStrategy = String(form.get('merge_strategy') || 'append') === 'replace' ? 'replace' : 'append';
+
+  if (isImageBatch) {
     const picTarget = Number(typeMix?.picture_guess || 0);
     const rawLabels = form.get('image_labels') || form.get('labels_json');
     const labelValidation = validateImageLabels(rawLabels, filesList.length, picTarget);

@@ -227,13 +227,22 @@
         {#each items as item, idx (item.id)}
           <div class="thumb-card">
             <span class="thumb-order">{idx + 1}/{items.length}</span>
-            <img src={item.previewUrl} alt={`Trang tài liệu ${idx + 1}`} />
+            <label for={`camera-thumb-label-${item.id}`} class="sr-only">
+              Nhãn từ vựng trang {idx + 1}{item.file?.name ? ` (${item.file.name})` : ''}
+            </label>
             <input
+              id={`camera-thumb-label-${item.id}`}
               type="text"
               class="thumb-label-input"
               placeholder="Nhãn từ vựng..."
+              maxlength="80"
+              aria-label={`Nhãn từ vựng trang ${idx + 1}${item.file?.name ? ` (${item.file.name})` : ''}`}
               value={item.label || ''}
-              on:input={(e) => { item.label = e.currentTarget.value; }}
+              on:input={(e) => {
+                const val = e.currentTarget.value;
+                item.label = val;
+                items[idx] = { ...item, label: val };
+              }}
             />
             <div class="thumb-actions">
               <button
@@ -290,12 +299,21 @@
   .camera-start { display: flex; gap: 8px; flex-wrap: wrap; }
   .camera-live video { width: 100%; max-height: 320px; object-fit: cover; border-radius: 8px; background: #1c1917; }
   .camera-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
-  .gallery-preview { margin-top: 12px; background: #fafaf9; border: 1px solid #e7e5e4; border-radius: 8px; padding: 12px; }
-  .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; }
-  .thumb-card { position: relative; border: 1px solid #e7e5e4; border-radius: 6px; background: #fff; overflow: hidden; display: flex; flex-direction: column; }
+  .gallery-preview { margin-top: 12px; background: #fafaf9; border: 1px solid #e7e5e4; border-radius: 8px; padding: 12px; max-width: 100%; box-sizing: border-box; overflow: hidden; }
+  .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; max-width: 100%; box-sizing: border-box; }
+  .thumb-card { position: relative; border: 1px solid #e7e5e4; border-radius: 6px; background: #fff; overflow: hidden; display: flex; flex-direction: column; max-width: 100%; box-sizing: border-box; }
   .thumb-card img { width: 100%; height: 110px; object-fit: cover; }
   .thumb-order { position: absolute; top: 4px; left: 4px; background: rgba(28, 25, 23, 0.8); color: #fff; font-size: 0.7rem; font-weight: 700; padding: 2px 6px; border-radius: 4px; }
-  .thumb-label-input { width: 100%; border: none; border-top: 1px solid #e7e5e4; padding: 4px 6px; font-size: 0.75rem; box-sizing: border-box; outline: none; }
+  .thumb-label-input {
+    width: 100%;
+    min-height: 44px;
+    border: none;
+    border-top: 1px solid #e7e5e4;
+    padding: 8px 10px;
+    font-size: 0.85rem;
+    box-sizing: border-box;
+    outline: none;
+  }
   .thumb-label-input:focus { border-color: #059669; background: #f0fdf4; }
   .thumb-actions { display: flex; justify-content: space-between; background: #f5f5f4; border-top: 1px solid #e7e5e4; padding: 2px; }
   .thumb-actions button { background: none; border: none; font-size: 0.85rem; font-weight: 700; color: #44403c; padding: 4px 8px; cursor: pointer; min-height: 32px; min-width: 32px; border-radius: 4px; }
