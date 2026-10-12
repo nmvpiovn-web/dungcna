@@ -6,7 +6,7 @@
   import QuizChildResults from '$lib/components/QuizChildResults.svelte';
   import { cacheQuizData, getCachedQuizData, installQuizOnlineSync, queueQuizAttempt } from '$lib/quizOffline.js';
   import { isAllowedImageUrl } from '$lib/quizMedia.js';
-  import { resolveDefaultGradeLevel } from '$lib/quizDefaults.js';
+  import { resolveDefaultGradeLevel, getCanonicalDefaultTypeMix, resolveDefaultTypeMix } from '$lib/quizDefaults.js';
 
   const questionTypes = [
     ['multiple_choice', 'Trắc nghiệm', 'Chọn một đáp án đúng'],
@@ -65,12 +65,7 @@
       .join(', ') || 'Mặc định'
   );
 
-  let questionTypeMix = $state({
-    multiple_choice: 5,
-    true_false: 2,
-    fill_blank: 2,
-    matching: 1
-  });
+  let questionTypeMix = $state(getCanonicalDefaultTypeMix());
 
   let uploadFiles = $state([]);
   let imageLabels = $state({});
@@ -386,7 +381,7 @@
           draft.status = autoConfig.default_status;
         }
         if (res.defaults.type_mix && Object.keys(res.defaults.type_mix).length > 0) {
-          questionTypeMix = res.defaults.type_mix;
+          questionTypeMix = resolveDefaultTypeMix(res.defaults.type_mix);
         }
         bankFilters.grade_level = autoConfig.grade_level !== undefined && autoConfig.grade_level !== null ? String(autoConfig.grade_level) : '';
         builderDefaultsLoaded = true;
@@ -1492,6 +1487,7 @@
                 </label>
                 {#if sourceFile}<p class="file-chosen">✓ Đã chọn: <strong>{uploadFiles.length > 1 ? `${uploadFiles.length} tệp (${uploadFiles.map(f => f.name).join(', ')})` : sourceFile.name}</strong></p>{/if}
                 <QuizCameraCapture
+                  showLabels={(questionTypeMix.picture_guess || 0) > 0}
                   onCaptureFiles={(files, labels) => {
                     handleFilesSelected(files, labels);
                     message = `✓ Đã chọn ${files.length} ảnh tài liệu. Bấm "Tự động tạo Quiz" để xử lý.`;
@@ -1528,17 +1524,21 @@
                           </div>
                           <div class="image-info-wrap">
                             <span class="image-filename" title={file.name}>{file.name}</span>
-                            <label class="image-input-wrap" for={`img-label-input-${idx}`}>
-                              <span class="image-input-title">Từ vựng / Đáp án (tiếng Anh):</span>
-                              <input
-                                id={`img-label-input-${idx}`}
-                                type="text"
-                                class="image-label-input"
-                                placeholder="VD: apple, bicycle, elephant..."
-                                value={imageLabels[idx] || ''}
-                                on:input={(e) => { imageLabels[idx] = e.currentTarget.value; }}
-                              />
-                            </label>
+                            {#if (questionTypeMix.picture_guess || 0) > 0}
+                              <label class="image-input-wrap" for={`img-label-input-${idx}`}>
+                                <span class="image-input-title">Từ vựng / Đáp án (tiếng Anh):</span>
+                                <input
+                                  id={`img-label-input-${idx}`}
+                                  type="text"
+                                  class="image-label-input"
+                                  placeholder="VD: apple, bicycle, elephant..."
+                                  maxlength="80"
+                                  aria-label={`Từ vựng hoặc đáp án tiếng Anh cho ảnh trang ${idx + 1}${file.name ? ` (${file.name})` : ''}`}
+                                  value={imageLabels[idx] || ''}
+                                  on:input={(e) => { imageLabels[idx] = e.currentTarget.value; }}
+                                />
+                              </label>
+                            {/if}
                           </div>
                         </div>
                       {/each}

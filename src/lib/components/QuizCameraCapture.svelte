@@ -1,8 +1,8 @@
 <script>
   import { onDestroy } from 'svelte';
 
-  // Props: onCapture(file | files), onCaptureFiles(files)
-  let { onCapture, onCaptureFiles } = $props();
+  // Props: onCapture(file | files), onCaptureFiles(files), showLabels(boolean)
+  let { onCapture, onCaptureFiles, showLabels = true } = $props();
 
   const MAX_IMAGES = 6;
   let items = $state([]); // { file, previewUrl, id }
@@ -231,23 +231,25 @@
               src={item.previewUrl}
               alt={`Trang tài liệu ${idx + 1}${item.file?.name ? ` (${item.file.name})` : ''}`}
             />
-            <label for={`camera-thumb-label-${item.id}`} class="sr-only">
-              Nhãn từ vựng trang {idx + 1}{item.file?.name ? ` (${item.file.name})` : ''}
-            </label>
-            <input
-              id={`camera-thumb-label-${item.id}`}
-              type="text"
-              class="thumb-label-input"
-              placeholder="Nhãn từ vựng..."
-              maxlength="80"
-              aria-label={`Nhãn từ vựng trang ${idx + 1}${item.file?.name ? ` (${item.file.name})` : ''}`}
-              value={item.label || ''}
-              on:input={(e) => {
-                const val = e.currentTarget.value;
-                item.label = val;
-                items[idx] = { ...item, label: val };
-              }}
-            />
+            {#if showLabels}
+              <label for={`camera-thumb-label-${item.id}`} class="sr-only">
+                Nhãn từ vựng trang {idx + 1}{item.file?.name ? ` (${item.file.name})` : ''}
+              </label>
+              <input
+                id={`camera-thumb-label-${item.id}`}
+                type="text"
+                class="thumb-label-input"
+                placeholder="Nhãn từ vựng..."
+                maxlength="80"
+                aria-label={`Nhãn từ vựng trang ${idx + 1}${item.file?.name ? ` (${item.file.name})` : ''}`}
+                value={item.label || ''}
+                on:input={(e) => {
+                  const val = e.currentTarget.value;
+                  item.label = val;
+                  items[idx] = { ...item, label: val };
+                }}
+              />
+            {/if}
             <div class="thumb-actions">
               <button
                 type="button"

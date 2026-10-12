@@ -1,7 +1,12 @@
 import { json } from '@sveltejs/kit';
 import { isStaffUser, verifyServerAuth } from '../../../../lib/server/auth.js';
 import { QUIZ_TYPES } from '../../../../lib/server/quizMenu.js';
-import { resolveDefaultGradeLevel } from '../../../../lib/quizDefaults.js';
+import {
+  resolveDefaultGradeLevel,
+  resolveDefaultTypeMix,
+  CANONICAL_DEFAULT_TYPE_MIX,
+  getCanonicalDefaultTypeMix
+} from '../../../../lib/quizDefaults.js';
 
 export const prerender = false;
 
@@ -15,7 +20,7 @@ const INITIAL_DEFAULTS = {
   time_limit_minutes: 15,
   grade_level: 7,
   difficulty: 'medium',
-  type_mix: { multiple_choice: 10 },
+  type_mix: CANONICAL_DEFAULT_TYPE_MIX,
   default_status: 'draft'
 };
 
@@ -40,7 +45,7 @@ export async function GET({ request, platform }) {
   `).bind(auth.user.id).first();
 
   if (!row) {
-    return json({ success: true, defaults: INITIAL_DEFAULTS, is_default: true });
+    return json({ success: true, defaults: { ...INITIAL_DEFAULTS, type_mix: getCanonicalDefaultTypeMix() }, is_default: true });
   }
 
   return json({
@@ -51,7 +56,7 @@ export async function GET({ request, platform }) {
       time_limit_minutes: Number(row.time_limit_minutes || 15),
       grade_level: resolveDefaultGradeLevel(row.grade_level),
       difficulty: row.difficulty,
-      type_mix: parseJson(row.type_mix_json, INITIAL_DEFAULTS.type_mix),
+      type_mix: resolveDefaultTypeMix(row.type_mix_json),
       default_status: row.default_status,
       updated_at: row.updated_at
     }
@@ -155,7 +160,7 @@ export async function PUT({ request, platform }) {
       time_limit_minutes: timeLimit,
       grade_level: gradeLevel,
       difficulty,
-      type_mix: parseJson(typeMixJson, {}),
+      type_mix: resolveDefaultTypeMix(typeMixJson),
       default_status: defaultStatus
     }
   });
