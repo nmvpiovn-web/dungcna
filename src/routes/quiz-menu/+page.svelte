@@ -26,6 +26,8 @@
   let modeSwitchWarning = $state(false);
   let pendingMode = $state(null);
   let builderDefaultsLoaded = $state(false);
+  let autoQuestionViewMode = $state('review'); // 'review' | 'edit'
+  let showAdvancedConfig = $state(false); // Collapsed by default
 
   let autoConfig = $state({
     source_type: 'upload',
@@ -48,6 +50,20 @@
     { id: 'rewrite', name: 'Viết lại câu', desc: 'Viết lại câu giữ nguyên nghĩa', icon: '✍️', defaultCount: 0 },
     { id: 'paragraph', name: 'Đoạn văn / Tự luận', desc: 'Đọc hiểu và trả lời câu hỏi', icon: '📄', defaultCount: 0 }
   ];
+
+  function questionTypeBadge(type) {
+    const found = ALL_QUESTION_TYPES.find((t) => t.id === type);
+    if (found) return found.name;
+    const tuple = questionTypes.find((t) => t[0] === type);
+    if (tuple) return tuple[1];
+    return type;
+  }
+
+  let activeTypeNames = $derived(
+    Object.keys(questionTypeMix)
+      .map((k) => questionTypeBadge(k))
+      .join(', ') || 'Mặc định'
+  );
 
   let questionTypeMix = $state({
     multiple_choice: 5,
@@ -298,11 +314,17 @@
       return;
     }
     builderMode = mode;
+    if (mode === 'auto') {
+      autoQuestionViewMode = 'review';
+    }
   }
 
   function confirmModeSwitch() {
     if (pendingMode) {
       builderMode = pendingMode;
+      if (pendingMode === 'auto') {
+        autoQuestionViewMode = 'review';
+      }
       pendingMode = null;
     }
     modeSwitchWarning = false;
@@ -436,11 +458,12 @@
           const picTarget = Number(questionTypeMix.picture_guess || 0);
           if (picTarget > 0) {
             const filledCount = labels.filter((l) => l.label.length > 0).length;
+            const requiredMin = Math.min(picTarget, filesToUpload.length);
             if (filledCount === 0) {
-              throw new Error('Bạn đang chọn tạo câu hỏi nhìn hình đoán chữ (picture_guess). Vui lòng nhập nhãn từ vựng cho các ảnh đã chọn bên dưới, hoặc bỏ chọn loại câu hỏi này để dùng ảnh làm nguồn quét chữ OCR.');
+              throw new Error('Bạn đang chọn tạo câu hỏi nhìn hình đoán chữ (picture_guess). Vui lòng nhập nhãn từ vựng cho các ảnh đã chọn bên dưới, hoặc bỏ chọn loại câu hỏi này trong Tùy chỉnh nâng cao để dùng ảnh làm nguồn quét chữ OCR.');
             }
-            if (filledCount < picTarget) {
-              throw new Error(`Bạn yêu cầu ${picTarget} câu nhìn hình đoán chữ nhưng chỉ nhập ${filledCount} nhãn từ vựng. Vui lòng nhập đủ nhãn hoặc giảm số câu picture_guess.`);
+            if (filledCount < requiredMin) {
+              throw new Error(`Bạn yêu cầu ${picTarget} câu nhìn hình đoán chữ nhưng chỉ nhập ${filledCount} nhãn từ vựng. Vui lòng nhập ít nhất ${requiredMin} nhãn hoặc giảm số câu picture_guess.`);
             }
           }
           form.append('image_labels', JSON.stringify(labels));
@@ -462,7 +485,6 @@
         if (quizData.quiz?.questions) {
           draft = { ...draft, questions: quizData.quiz.questions.map(fromApiQuestion) };
         }
-        message = `✓ Đã tự động tạo ${draft.questions.length} câu hỏi từ tài liệu! Bạn có thể kiểm tra và xuất bản ngay.`;
       } else if (sourceMode === 'drive') {
         const pastedUrl = driveUrl.trim();
         if (!selectedDriveFileId && !pastedUrl) {
@@ -487,7 +509,6 @@
         if (quizData.quiz?.questions) {
           draft = { ...draft, questions: quizData.quiz.questions.map(fromApiQuestion) };
         }
-        message = `✓ Đã tự động tạo ${draft.questions.length} câu hỏi từ Google Drive!`;
       } else if (sourceMode === 'knowledge_vault') {
         if (!kvSelectedArticleId) {
           throw new Error('Vui lòng chọn một bài học từ Kho tri thức trước khi tạo.');
@@ -511,7 +532,6 @@
         if (quizData.quiz?.questions) {
           draft = { ...draft, questions: quizData.quiz.questions.map(fromApiQuestion) };
         }
-        message = `✓ Đã tự động tạo câu hỏi từ bài học "${res.article_title || 'Kho tri thức'}"!`;
       } else if (sourceMode === 'question_bank') {
         const res = await api(`/api/quiz-menu/${quizId}/import-questions`, {
           method: 'POST',
@@ -522,7 +542,13 @@
         if (quizData.quiz?.questions) {
           draft = { ...draft, questions: quizData.quiz.questions.map(fromApiQuestion) };
         }
-        message = `✓ Đã tự động nhập ${res.imported_count || draft.questions.length} câu hỏi từ Kho câu hỏi D1!`;
+      }
+
+      if (draft.questions.length === 0) {
+        error = 'Nguồn tài liệu chưa đủ nội dung để tự động tạo câu hỏi. Vui lòng kiểm tra lại chất lượng tài liệu hoặc thử đổi nguồn/dạng câu hỏi trong Tùy chỉnh nâng cao.';
+      } else {
+        autoQuestionViewMode = 'review';
+        message = `✓ Đã tự động tạo ${draft.questions.length} câu; không cần nhập câu hỏi thủ công.`;
       }
     } catch (err) {
       error = friendlyError(err.message);
@@ -866,7 +892,12 @@
     message = '';
     error = '';
     if (!draft.title.trim()) { error = 'Hãy nhập tên quiz.'; return; }
-    if (!draft.questions.length) { error = 'Hãy thêm ít nhất một câu hỏi.'; return; }
+    if (!draft.questions.length) {
+      error = builderMode === 'auto'
+        ? 'Chưa có câu hỏi nào. Vui lòng chọn nguồn tài liệu và bấm "Tự động tạo Quiz" bên trên.'
+        : 'Hãy thêm ít nhất một câu hỏi.';
+      return;
+    }
     try {
       const id = await ensureDraftQuiz();
       await api(`/api/quiz-menu/${id}`, {
@@ -882,6 +913,7 @@
       draft = { id: null, title: '', description: '', time_limit_minutes: 20, questions: [] };
       bundle = null; sourceFile = null; selectedDriveFileId = ''; driveUrl = '';
       builderMode = 'auto';
+      autoQuestionViewMode = 'review';
       sourceMode = autoConfig.source_type || 'upload';
       await loadQuizzes();
       activeTab = 'mine';
@@ -911,9 +943,11 @@
         questions: (q.questions || []).map(fromApiQuestion)
       };
       bundle = null;
-      builderMode = 'manual';
+      // Round 10: open in auto review mode instead of forcing manual editor (builderMode = 'auto'; // former: builderMode = 'manual')
+      builderMode = 'auto';
+      autoQuestionViewMode = 'review';
       activeTab = 'create';
-      message = `Đang sửa quiz: ${q.title}`;
+      message = `Đang xem quiz: ${q.title}`;
     } catch (err) {
       error = 'Không tải được quiz: ' + err.message;
     }
@@ -1275,114 +1309,169 @@
           <!-- Cấu hình thông số -->
           <div class="auto-config-section">
             <span class="section-label">2. Thiết lập thông số quiz:</span>
-            <div class="form-grid">
+            <div class="form-grid auto-title-grid">
               <label class="wide">
-                Tiêu đề quiz
-                <input bind:value={draft.title} maxlength="150" placeholder="Ví dụ: Kiểm tra 15 phút Unit 4 · My Neighborhood" />
-              </label>
-              <label>
-                Số lượng câu hỏi (1 - 200)
+                <div class="field-title-wrap">
+                  <span>Tiêu đề quiz</span>
+                  <small class="field-optional-hint">Không bắt buộc — hệ thống tự đặt nếu để trống</small>
+                </div>
                 <input
-                  type="number"
-                  min="1"
-                  max="200"
-                  bind:value={autoConfig.question_count}
-                  on:change={() => {
-                    const curTotal = Object.values(questionTypeMix).reduce((a, b) => a + b, 0);
-                    if (curTotal > 0 && curTotal !== autoConfig.question_count) {
-                      const keys = Object.keys(questionTypeMix);
-                      questionTypeMix[keys[0]] = Math.max(1, questionTypeMix[keys[0]] + (autoConfig.question_count - curTotal));
-                    }
-                  }}
+                  bind:value={draft.title}
+                  maxlength="150"
+                  placeholder="Ví dụ: Kiểm tra 15 phút Unit 4 · My Neighborhood (để trống sẽ tự sinh)"
                 />
               </label>
-              <label>
-                Thời gian (phút)
-                <input type="number" min="1" max="180" bind:value={autoConfig.time_limit_minutes} />
-              </label>
-              <label>
-                Khối lớp
-                <select bind:value={autoConfig.grade_level} on:change={() => { bankFilters.grade_level = autoConfig.grade_level !== undefined && autoConfig.grade_level !== null ? String(autoConfig.grade_level) : ''; if (sourceMode === 'question_bank') loadBankQuestions(true); }}>
-                  {#each Array.from({length: 13}, (_, i) => i) as g}
-                    <option value={g}>{g === 0 ? 'Tổng hợp / IELTS' : `Lớp ${g}`}</option>
-                  {/each}
-                </select>
-              </label>
-              {#if sourceMode === 'question_bank'}
-                <div class="bank-disabled-notice" title="Độ khó được kế thừa từ từng câu hỏi trong kho">
-                  <span class="text-xs text-stone-500 italic block mt-5">ℹ️ Độ khó: theo câu hỏi trong kho</span>
+            </div>
+
+            <!-- Concise summary bar -->
+            <div class="config-summary-bar">
+              <div class="summary-chips">
+                <span class="summary-chip">📊 <strong>{autoConfig.question_count}</strong> câu</span>
+                <span class="summary-chip">⏱️ <strong>{autoConfig.time_limit_minutes}</strong> phút</span>
+                <span class="summary-chip">🎓 <strong>{autoConfig.grade_level === 0 ? 'Tổng hợp / IELTS' : `Lớp ${autoConfig.grade_level}`}</strong></span>
+                <span class="summary-chip">🎯 <strong>{autoConfig.difficulty === 'easy' ? 'Dễ' : autoConfig.difficulty === 'hard' ? 'Khó' : 'Chuẩn'}</strong></span>
+                <span class="summary-chip types-chip" title={activeTypeNames}>🧩 {activeTypeNames}</span>
+              </div>
+              <button
+                type="button"
+                class="btn-toggle-advanced"
+                aria-expanded={showAdvancedConfig}
+                aria-controls="advanced-config-panel"
+                on:click={() => showAdvancedConfig = !showAdvancedConfig}
+              >
+                <span class="toggle-icon">{showAdvancedConfig ? '▲' : '⚙️'}</span>
+                <span>{showAdvancedConfig ? 'Thu gọn tùy chỉnh nâng cao' : 'Tùy chỉnh nâng cao'}</span>
+              </button>
+            </div>
+
+            <!-- Advanced Config Panel (Collapsed by default) -->
+            <div
+              id="advanced-config-panel"
+              class="advanced-config-panel"
+              class:is-collapsed={!showAdvancedConfig}
+            >
+              <div class="advanced-inner">
+                <div class="form-grid advanced-form-grid">
+                  <label>
+                    Số lượng câu hỏi (1 - 200)
+                    <input
+                      type="number"
+                      min="1"
+                      max="200"
+                      bind:value={autoConfig.question_count}
+                      on:change={() => {
+                        const curTotal = Object.values(questionTypeMix).reduce((a, b) => a + b, 0);
+                        if (curTotal > 0 && curTotal !== autoConfig.question_count) {
+                          const keys = Object.keys(questionTypeMix);
+                          questionTypeMix[keys[0]] = Math.max(1, questionTypeMix[keys[0]] + (autoConfig.question_count - curTotal));
+                        }
+                      }}
+                    />
+                  </label>
+                  <label>
+                    Thời gian (phút)
+                    <input type="number" min="1" max="180" bind:value={autoConfig.time_limit_minutes} />
+                  </label>
+                  <label>
+                    Khối lớp
+                    <select bind:value={autoConfig.grade_level} on:change={() => { bankFilters.grade_level = autoConfig.grade_level !== undefined && autoConfig.grade_level !== null ? String(autoConfig.grade_level) : ''; if (sourceMode === 'question_bank') loadBankQuestions(true); }}>
+                      {#each Array.from({length: 13}, (_, i) => i) as g}
+                        <option value={g}>{g === 0 ? 'Tổng hợp / IELTS' : `Lớp ${g}`}</option>
+                      {/each}
+                    </select>
+                  </label>
+                  {#if sourceMode === 'question_bank'}
+                    <div class="bank-disabled-notice" title="Độ khó được kế thừa từ từng câu hỏi trong kho">
+                      <span class="text-xs text-stone-500 italic block mt-5">ℹ️ Độ khó: theo câu hỏi trong kho</span>
+                    </div>
+                  {:else}
+                    <label>
+                      Độ khó
+                      <select bind:value={autoConfig.difficulty}>
+                        <option value="easy">Cơ bản (Dễ)</option>
+                        <option value="medium">Trung bình (Chuẩn)</option>
+                        <option value="hard">Nâng cao (Khó)</option>
+                      </select>
+                    </label>
+                  {/if}
                 </div>
-              {:else}
-                <label>
-                  Độ khó
-                  <select bind:value={autoConfig.difficulty}>
-                    <option value="easy">Cơ bản (Dễ)</option>
-                    <option value="medium">Trung bình (Chuẩn)</option>
-                    <option value="hard">Nâng cao (Khó)</option>
-                  </select>
-                </label>
-              {/if}
+
+                <!-- Phân bổ dạng câu hỏi (Dynamic Mix) inside Advanced Panel -->
+                {#if sourceMode === 'question_bank'}
+                  <div class="type-mix-section bank-mode-notice-box">
+                    <div class="p-3 bg-amber-50/70 border border-amber-200/80 rounded-xl text-stone-700 text-xs">
+                      <strong>📚 Nguồn Kho câu hỏi (Question Bank):</strong> Dạng câu hỏi và độ khó được kế thừa trực tiếp từ kho câu hỏi đã chọn. Cấu hình phân bổ Dynamic Mix không áp dụng.
+                    </div>
+                  </div>
+                {:else}
+                  <div class="type-mix-section">
+                    <div class="type-mix-header">
+                      <div>
+                        <span class="section-label">Dạng câu hỏi & Phân bổ mục tiêu:</span>
+                        <p class="type-mix-hint">Phân bổ dạng câu là mục tiêu tùy chọn. Hệ thống sẽ tự động điều chỉnh linh hoạt theo nội dung thực tế của tài liệu nguồn.</p>
+                      </div>
+                      <div class="allocation-pill">
+                        Đã phân bổ: <strong>{Object.values(questionTypeMix).reduce((a, b) => a + b, 0)}</strong> / <strong>{autoConfig.question_count}</strong> câu
+                      </div>
+                    </div>
+
+                    <div class="type-mix-grid">
+                      {#each ALL_QUESTION_TYPES as typeInfo (typeInfo.id)}
+                        <div class="type-mix-card" class:active={questionTypeMix[typeInfo.id] !== undefined}>
+                          <div class="type-card-head">
+                            <label class="type-toggle-label">
+                              <input
+                                type="checkbox"
+                                checked={questionTypeMix[typeInfo.id] !== undefined}
+                                on:change={() => toggleTypeActive(typeInfo.id)}
+                              />
+                              <span class="type-name"><strong>{typeInfo.name}</strong></span>
+                            </label>
+                            <span class="type-icon">{typeInfo.icon}</span>
+                          </div>
+                          <p class="type-desc">{typeInfo.desc}</p>
+                          {#if questionTypeMix[typeInfo.id] !== undefined}
+                            <div class="type-stepper">
+                              <button
+                                type="button"
+                                class="btn-step"
+                                aria-label={`Giảm số câu ${typeInfo.name}`}
+                                disabled={questionTypeMix[typeInfo.id] <= 1}
+                                on:click={() => updateTypeCount(typeInfo.id, -1)}
+                              >
+                                −
+                              </button>
+                              <span class="step-value">{questionTypeMix[typeInfo.id]} câu</span>
+                              <button
+                                type="button"
+                                class="btn-step"
+                                aria-label={`Tăng số câu ${typeInfo.name}`}
+                                on:click={() => updateTypeCount(typeInfo.id, 1)}
+                              >
+                                ＋
+                              </button>
+                            </div>
+                          {/if}
+                        </div>
+                      {/each}
+                    </div>
+                  </div>
+                {/if}
+
+                <div class="advanced-footer">
+                  <button
+                    type="button"
+                    class="btn-outline btn-save-defaults"
+                    disabled={defaultsSaving}
+                    on:click={saveBuilderDefaults}
+                  >
+                    {defaultsSaving ? 'Đang lưu...' : '💾 Lưu cấu hình mặc định vào tài khoản'}
+                  </button>
+                  <small class="save-defaults-note">Cấu hình sẽ được lưu vào tài khoản và tự động áp dụng trong các lần tạo quiz tiếp theo.</small>
+                </div>
+              </div>
             </div>
           </div>
-
-          <!-- Phân bổ dạng câu hỏi (Dynamic Mix) -->
-          {#if sourceMode === 'question_bank'}
-            <div class="type-mix-section bank-mode-notice-box">
-              <div class="p-3 bg-amber-50/70 border border-amber-200/80 rounded-xl text-stone-700 text-xs">
-                <strong>📚 Nguồn Kho câu hỏi (Question Bank):</strong> Dạng câu hỏi và độ khó được kế thừa trực tiếp từ kho câu hỏi đã chọn. Cấu hình phân bổ Dynamic Mix không áp dụng.
-              </div>
-            </div>
-          {:else}
-            <div class="type-mix-section">
-              <div class="type-mix-header">
-                <span class="section-label">3. Dạng câu hỏi & Phân bổ:</span>
-                <div class="allocation-pill">
-                  Đã phân bổ: <strong>{Object.values(questionTypeMix).reduce((a, b) => a + b, 0)}</strong> / <strong>{autoConfig.question_count}</strong> câu
-                </div>
-              </div>
-
-              <div class="type-mix-grid">
-                {#each ALL_QUESTION_TYPES as typeInfo (typeInfo.id)}
-                  <div class="type-mix-card" class:active={questionTypeMix[typeInfo.id] !== undefined}>
-                    <div class="type-card-head">
-                      <label class="type-toggle-label">
-                        <input
-                          type="checkbox"
-                          checked={questionTypeMix[typeInfo.id] !== undefined}
-                          on:change={() => toggleTypeActive(typeInfo.id)}
-                        />
-                        <span class="type-name"><strong>{typeInfo.name}</strong></span>
-                      </label>
-                      <span class="type-icon">{typeInfo.icon}</span>
-                    </div>
-                    <p class="type-desc">{typeInfo.desc}</p>
-                    {#if questionTypeMix[typeInfo.id] !== undefined}
-                      <div class="type-stepper">
-                        <button
-                          type="button"
-                          class="btn-step"
-                          aria-label={`Giảm số câu ${typeInfo.name}`}
-                          disabled={questionTypeMix[typeInfo.id] <= 1}
-                          on:click={() => updateTypeCount(typeInfo.id, -1)}
-                        >
-                          −
-                        </button>
-                        <span class="step-value">{questionTypeMix[typeInfo.id]} câu</span>
-                        <button
-                          type="button"
-                          class="btn-step"
-                          aria-label={`Tăng số câu ${typeInfo.name}`}
-                          on:click={() => updateTypeCount(typeInfo.id, 1)}
-                        >
-                          ＋
-                        </button>
-                      </div>
-                    {/if}
-                  </div>
-                {/each}
-              </div>
-            </div>
-          {/if}
 
           <!-- Nguồn tài liệu chi tiết -->
           {#if sourceMode === 'upload'}
@@ -1414,11 +1503,22 @@
                     <div class="image-labels-header">
                       <span class="image-labels-title">🖼️ Nhãn từ vựng / Đáp án cho câu hỏi nhìn hình ({uploadFiles.length} ảnh):</span>
                       {#if (questionTypeMix.picture_guess || 0) > 0}
-                        <span class="badge-req">Bắt buộc khi có Picture Guess</span>
+                        <span class="badge-req">Bắt buộc nhập ít nhất {Math.min(Number(questionTypeMix.picture_guess), uploadFiles.length)} nhãn (Picture Guess đang bật)</span>
                       {:else}
                         <span class="badge-opt">Không bắt buộc (ảnh dùng quét chữ OCR)</span>
                       {/if}
                     </div>
+                    {#if (questionTypeMix.picture_guess || 0) === 0}
+                      <div class="image-ocr-info-banner">
+                        <span>ℹ️</span>
+                        <p>Ảnh được dùng làm nguồn quét chữ OCR để tạo câu hỏi tự động. Bạn <strong>không cần nhập nhãn</strong> nếu không dùng dạng câu Nhìn hình đoán chữ (Picture Guess).</p>
+                      </div>
+                    {:else}
+                      <div class="image-pg-info-banner">
+                        <span>💡</span>
+                        <p>Bạn đang bật dạng câu <strong>Nhìn hình đoán chữ</strong> ({questionTypeMix.picture_guess} câu). Vui lòng nhập nhãn từ vựng tiếng Anh tương ứng cho các ảnh bên dưới.</p>
+                      </div>
+                    {/if}
                     <div class="image-labels-grid">
                       {#each uploadFiles as file, idx}
                         <div class="image-label-card">
@@ -1719,85 +1819,183 @@
             >
               {autoGenerating ? '⏳ Đang tự động phân tích & tạo quiz...' : '⚡ Tự động tạo Quiz'}
             </button>
-            <button
-              type="button"
-              class="btn-outline"
-              disabled={defaultsSaving}
-              on:click={saveBuilderDefaults}
-            >
-              {defaultsSaving ? 'Đang lưu...' : '💾 Lưu cấu hình mặc định'}
-            </button>
           </div>
 
           <!-- Preview & Lưu sau khi Auto sinh câu hỏi -->
           {#if draft.questions.length > 0}
             <div class="generated-preview-section">
-              <div class="section-heading">
+              <div class="preview-mode-header">
                 <div>
                   <span class="section-kicker">KẾT QUẢ TỰ ĐỘNG</span>
-                  <h3>Bản nháp ({draft.questions.length} câu)</h3>
-                  <small>Kiểm tra nội dung trước khi xuất bản hoặc sửa trực tiếp bên dưới.</small>
+                  <h3>{autoQuestionViewMode === 'review' ? 'Xem trước kết quả' : 'Chỉnh sửa chi tiết'} ({draft.questions.length} câu)</h3>
+                  <p class="preview-mode-desc">
+                    {autoQuestionViewMode === 'review'
+                      ? 'Xem trước bản nháp đã được tạo tự động. Bạn có thể kiểm tra và bấm "Xuất bản Quiz" hoặc "Chỉnh sửa chi tiết" nếu muốn sửa prompt/đáp án.'
+                      : 'Đang ở chế độ chỉnh sửa chi tiết. Bạn có thể thay đổi prompt, đáp án, điểm hoặc thêm/xóa câu.'}
+                  </p>
+                </div>
+                <div class="preview-mode-actions">
+                  {#if autoQuestionViewMode === 'review'}
+                    <button
+                      type="button"
+                      class="btn-outline btn-toggle-view"
+                      on:click={() => autoQuestionViewMode = 'edit'}
+                    >
+                      ✏️ Chỉnh sửa chi tiết
+                    </button>
+                  {:else}
+                    <button
+                      type="button"
+                      class="btn-outline btn-toggle-view"
+                      on:click={() => autoQuestionViewMode = 'review'}
+                    >
+                      👁️ Quay lại xem trước
+                    </button>
+                  {/if}
                 </div>
               </div>
 
-              <div class="question-editor-list">
-                {#each draft.questions as question, index (question.id)}
-                  <article class="editor-card">
-                    <header>
-                      <span class="question-number">{index + 1}</span>
-                      <select aria-label={`Dạng câu ${index + 1}`} value={question.type} on:change={(e) => changeQuestionType(question, e.currentTarget.value)}>
-                        {#each questionTypes as type}<option value={type[0]}>{type[1]}</option>{/each}
-                      </select>
-                      <div class="editor-actions">
-                        <button aria-label="Đưa câu lên" on:click={() => moveQuestion(index, -1)} disabled={index === 0}>↑</button>
-                        <button aria-label="Đưa câu xuống" on:click={() => moveQuestion(index, 1)} disabled={index === draft.questions.length - 1}>↓</button>
-                        <button class="delete" aria-label="Xóa câu" on:click={() => removeQuestion(index)}>×</button>
-                      </div>
-                    </header>
-                    <label>Nội dung câu hỏi<textarea bind:value={question.prompt} rows="2" placeholder="Nhập câu hỏi..."></textarea></label>
-                    {#if question.type === 'picture_guess'}
-                      <label>Đường dẫn ảnh<input type="url" bind:value={question.prompt_image_url} placeholder="https://..." /></label>
-                    {/if}
-                    {#if question.type === 'multiple_choice'}
-                      <div class="option-editor">
-                        <span class="field-label">Các lựa chọn và đáp án đúng</span>
-                        {#each question.options as option, optionIndex}
-                          <div class="option-row">
-                            <input type="radio" name={`correct-${question.id}`} value={option} checked={question.correct_answer === option} on:change={() => question.correct_answer = option} aria-label={`Chọn đáp án ${optionIndex + 1} là đúng`} />
-                            <input value={option} on:input={(e) => updateOption(question, optionIndex, e.currentTarget.value)} aria-label={`Lựa chọn ${optionIndex + 1}`} />
-                            <button on:click={() => removeOption(question, optionIndex)} aria-label="Xóa lựa chọn">×</button>
-                          </div>
-                        {/each}
-                        <button class="text-button" on:click={() => addOption(question)}>＋ Thêm lựa chọn</button>
-                      </div>
-                    {:else if question.type === 'true_false'}
-                      <div class="option-editor">
-                        <span class="field-label">Đáp án đúng</span>
-                        <div class="tf-choices">
-                          <label><input type="radio" name={`tf-${question.id}`} value="Đúng" checked={question.correct_answer === 'Đúng'} on:change={() => question.correct_answer = 'Đúng'} /> Đúng</label>
-                          <label><input type="radio" name={`tf-${question.id}`} value="Sai" checked={question.correct_answer === 'Sai'} on:change={() => question.correct_answer = 'Sai'} /> Sai</label>
+              {#if autoQuestionViewMode === 'review'}
+                <div class="question-review-list">
+                  {#each draft.questions as question, index (question.id)}
+                    <article class="review-card">
+                      <header class="review-card-header">
+                        <div class="review-meta-left">
+                          <span class="question-number">{index + 1}</span>
+                          <span class="review-type-badge">{questionTypeBadge(question.type)}</span>
                         </div>
+                        <span class="review-points-badge">{question.points || 1} điểm</span>
+                      </header>
+
+                      {#if question.prompt_image_url}
+                        <div class="review-image-wrap">
+                          <img src={question.prompt_image_url} alt={`Minh họa câu ${index + 1}`} class="review-image-thumb" />
+                        </div>
+                      {/if}
+
+                      <p class="review-prompt-text">{question.prompt}</p>
+
+                      {#if question.type === 'multiple_choice'}
+                        <div class="review-options-list">
+                          {#each question.options as option, optIdx}
+                            <div class="review-option-item" class:is-correct={question.correct_answer === option}>
+                              <span class="review-opt-letter">{String.fromCharCode(65 + optIdx)}.</span>
+                              <span class="review-opt-text">{option}</span>
+                              {#if question.correct_answer === option}
+                                <span class="review-correct-badge">✓ Đáp án đúng</span>
+                              {/if}
+                            </div>
+                          {/each}
+                        </div>
+                      {:else if question.type === 'true_false'}
+                        <div class="review-tf-options">
+                          <div class="review-tf-item" class:is-correct={question.correct_answer === 'Đúng'}>
+                            <span>Đúng</span>
+                            {#if question.correct_answer === 'Đúng'}<span class="review-correct-badge">✓ Đáp án đúng</span>{/if}
+                          </div>
+                          <div class="review-tf-item" class:is-correct={question.correct_answer === 'Sai'}>
+                            <span>Sai</span>
+                            {#if question.correct_answer === 'Sai'}<span class="review-correct-badge">✓ Đáp án đúng</span>{/if}
+                          </div>
+                        </div>
+                      {:else if question.type === 'matching' || question.type === 'memory_match'}
+                        <div class="review-pairs-list">
+                          <span class="review-field-title">Các cặp ghép đôi:</span>
+                          {#each question.left as leftItem, pIdx}
+                            <div class="review-pair-item">
+                              <span class="review-pair-left">{leftItem}</span>
+                              <span class="review-pair-arrow">↔</span>
+                              <span class="review-pair-right">{question.right[pIdx]}</span>
+                            </div>
+                          {/each}
+                        </div>
+                      {:else if question.type === 'ordering'}
+                        <div class="review-ordering-list">
+                          <span class="review-field-title">Thứ tự đúng:</span>
+                          <ol class="review-order-ol">
+                            {#each question.options as item}
+                              <li>{item}</li>
+                            {/each}
+                          </ol>
+                        </div>
+                      {:else if !['paragraph', 'rewrite', 'essay'].includes(question.type)}
+                        <div class="review-text-answer">
+                          <span class="review-field-title">Đáp án đúng:</span>
+                          <strong class="review-correct-value">{question.correct_answer || '(Chưa có đáp án)'}</strong>
+                        </div>
+                      {:else}
+                        <div class="review-note">Giáo viên sẽ chấm thủ công sau khi học sinh nộp bài.</div>
+                      {/if}
+
+                      {#if question.explanation}
+                        <div class="review-explanation">
+                          <span class="review-expl-label">💡 Giải thích:</span>
+                          <span>{question.explanation}</span>
+                        </div>
+                      {/if}
+                    </article>
+                  {/each}
+                </div>
+              {:else}
+                <div class="question-editor-list">
+                  {#each draft.questions as question, index (question.id)}
+                    <article class="editor-card">
+                      <header>
+                        <span class="question-number">{index + 1}</span>
+                        <select aria-label={`Dạng câu ${index + 1}`} value={question.type} on:change={(e) => changeQuestionType(question, e.currentTarget.value)}>
+                          {#each questionTypes as type}<option value={type[0]}>{type[1]}</option>{/each}
+                        </select>
+                        <div class="editor-actions">
+                          <button aria-label="Đưa câu lên" on:click={() => moveQuestion(index, -1)} disabled={index === 0}>↑</button>
+                          <button aria-label="Đưa câu xuống" on:click={() => moveQuestion(index, 1)} disabled={index === draft.questions.length - 1}>↓</button>
+                          <button class="delete" aria-label="Xóa câu" on:click={() => removeQuestion(index)}>×</button>
+                        </div>
+                      </header>
+                      <label>Nội dung câu hỏi<textarea bind:value={question.prompt} rows="2" placeholder="Nhập câu hỏi..."></textarea></label>
+                      {#if question.type === 'picture_guess'}
+                        <label>Đường dẫn ảnh<input type="url" bind:value={question.prompt_image_url} placeholder="https://..." /></label>
+                      {/if}
+                      {#if question.type === 'multiple_choice'}
+                        <div class="option-editor">
+                          <span class="field-label">Các lựa chọn và đáp án đúng</span>
+                          {#each question.options as option, optionIndex}
+                            <div class="option-row">
+                              <input type="radio" name={`correct-${question.id}`} value={option} checked={question.correct_answer === option} on:change={() => question.correct_answer = option} aria-label={`Chọn đáp án ${optionIndex + 1} là đúng`} />
+                              <input value={option} on:input={(e) => updateOption(question, optionIndex, e.currentTarget.value)} aria-label={`Lựa chọn ${optionIndex + 1}`} />
+                              <button on:click={() => removeOption(question, optionIndex)} aria-label="Xóa lựa chọn">×</button>
+                            </div>
+                          {/each}
+                          <button class="text-button" on:click={() => addOption(question)}>＋ Thêm lựa chọn</button>
+                        </div>
+                      {:else if question.type === 'true_false'}
+                        <div class="option-editor">
+                          <span class="field-label">Đáp án đúng</span>
+                          <div class="tf-choices">
+                            <label><input type="radio" name={`tf-${question.id}`} value="Đúng" checked={question.correct_answer === 'Đúng'} on:change={() => question.correct_answer = 'Đúng'} /> Đúng</label>
+                            <label><input type="radio" name={`tf-${question.id}`} value="Sai" checked={question.correct_answer === 'Sai'} on:change={() => question.correct_answer = 'Sai'} /> Sai</label>
+                          </div>
+                        </div>
+                      {:else if question.type === 'matching' || question.type === 'memory_match'}
+                        <div class="pair-editor">
+                          <span class="field-label">Các cặp đúng</span>
+                          {#each question.left as left, pairIndex}
+                            <div><input value={left} on:input={(e) => updatePair(question, 'left', pairIndex, e.currentTarget.value)} aria-label={`Vế trái ${pairIndex + 1}`} /><span>↔</span><input value={question.right[pairIndex]} on:input={(e) => updatePair(question, 'right', pairIndex, e.currentTarget.value)} aria-label={`Vế phải ${pairIndex + 1}`} /></div>
+                          {/each}
+                          <button class="text-button" on:click={() => addPair(question)}>＋ Thêm cặp</button>
+                        </div>
+                      {:else if !['paragraph', 'rewrite', 'essay'].includes(question.type)}
+                        <label>Đáp án đúng<input bind:value={question.correct_answer} placeholder="Đáp án để chấm tự động" /></label>
+                      {:else}
+                        <div class="review-note">Câu này sẽ được giáo viên chấm sau khi học viên nộp bài.</div>
+                      {/if}
+                      <div class="editor-bottom">
+                        <label>Điểm<input type="number" min="0" max="100" step="0.5" bind:value={question.points} /></label>
+                        <label>Giải thích<input bind:value={question.explanation} placeholder="Hiện sau khi chấm" /></label>
                       </div>
-                    {:else if question.type === 'matching' || question.type === 'memory_match'}
-                      <div class="pair-editor">
-                        <span class="field-label">Các cặp đúng</span>
-                        {#each question.left as left, pairIndex}
-                          <div><input value={left} on:input={(e) => updatePair(question, 'left', pairIndex, e.currentTarget.value)} aria-label={`Vế trái ${pairIndex + 1}`} /><span>↔</span><input value={question.right[pairIndex]} on:input={(e) => updatePair(question, 'right', pairIndex, e.currentTarget.value)} aria-label={`Vế phải ${pairIndex + 1}`} /></div>
-                        {/each}
-                        <button class="text-button" on:click={() => addPair(question)}>＋ Thêm cặp</button>
-                      </div>
-                    {:else if !['paragraph', 'rewrite', 'essay'].includes(question.type)}
-                      <label>Đáp án đúng<input bind:value={question.correct_answer} placeholder="Đáp án để chấm tự động" /></label>
-                    {:else}
-                      <div class="review-note">Câu này sẽ được giáo viên chấm sau khi học viên nộp bài.</div>
-                    {/if}
-                    <div class="editor-bottom">
-                      <label>Điểm<input type="number" min="0" max="100" step="0.5" bind:value={question.points} /></label>
-                      <label>Giải thích<input bind:value={question.explanation} placeholder="Hiện sau khi chấm" /></label>
-                    </div>
-                  </article>
-                {/each}
-              </div>
+                    </article>
+                  {/each}
+                </div>
+              {/if}
 
               <div class="save-bar">
                 <div><strong>{draft.questions.length} câu hỏi</strong><small>Kiểm tra nội dung trước khi xuất bản</small></div>
@@ -2275,10 +2473,64 @@
   .image-label-input{width:100%;min-height:44px;padding:8px 10px;border:1px solid #d6d3d1;border-radius:6px;font-size:.88rem;color:#1c1917;box-sizing:border-box}
   .image-label-input:focus{outline:none;border-color:#059669;box-shadow:0 0 0 2px rgba(5,150,105,0.15)}
 
+  /* Auto Builder Round 10 Styles */
+  .field-title-wrap{display:flex;align-items:baseline;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:4px}
+  .field-optional-hint{font-size:.78rem;font-weight:400;color:#78716c}
+  .config-summary-bar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:12px 16px;background:#fafaf9;border:1px solid #e7e5e4;border-radius:10px;margin-top:12px;box-sizing:border-box}
+  .summary-chips{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+  .summary-chip{display:inline-flex;align-items:center;gap:4px;padding:5px 11px;background:white;border:1px solid #e7e5e4;border-radius:20px;font-size:.8rem;color:#292524}
+  .types-chip{max-width:320px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .btn-toggle-advanced{min-height:44px;padding:8px 16px;border:1px solid #a7f3d0;background:white;color:#065f46;border-radius:8px;font-size:.84rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:all .15s ease}
+  .btn-toggle-advanced:hover{background:#ecfdf5;border-color:#34d399}
+  .btn-toggle-advanced:focus-visible{outline:3px solid rgba(16,185,129,.35);outline-offset:2px}
+  .toggle-icon{font-size:1rem}
+  .advanced-config-panel{margin-top:12px}
+  .advanced-config-panel.is-collapsed{display:none}
+  .advanced-inner{display:flex;flex-direction:column;gap:16px;padding:16px;background:#fafaf9;border:1px solid #e7e5e4;border-radius:10px;box-sizing:border-box}
+  .type-mix-hint{font-size:.76rem;color:#78716c;margin:2px 0 0}
+  .advanced-footer{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding-top:12px;border-top:1px solid #e7e5e4}
+  .save-defaults-note{color:#78716c;font-size:.78rem}
+  .btn-save-defaults{min-height:44px}
+  .image-ocr-info-banner{display:flex;align-items:center;gap:8px;padding:10px 12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;font-size:.82rem;color:#166534}
+  .image-pg-info-banner{display:flex;align-items:center;gap:8px;padding:10px 12px;background:#fffbeb;border:1.5px solid #fde68a;border-radius:6px;font-size:.82rem;color:#92400e}
+  .preview-mode-header{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px}
+  .preview-mode-desc{margin:4px 0 0;font-size:.84rem;color:#57534e}
+  .preview-mode-actions{display:flex;gap:8px}
+  .btn-toggle-view{min-height:44px;padding:8px 16px;font-weight:600}
+  .question-review-list{display:flex;flex-direction:column;gap:16px}
+  .review-card{border:1px solid #e7e5e4;border-radius:10px;padding:20px;background:white;box-shadow:0 1px 4px rgba(0,0,0,.03);display:flex;flex-direction:column;gap:14px;word-break:break-word;overflow-wrap:anywhere;box-sizing:border-box}
+  .review-card-header{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding-bottom:12px;border-bottom:1px solid #f5f5f4}
+  .review-meta-left{display:flex;align-items:center;gap:10px}
+  .review-type-badge{padding:3px 9px;background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0;border-radius:6px;font-size:.78rem;font-weight:700}
+  .review-points-badge{padding:3px 8px;background:#f5f5f4;color:#57534e;border-radius:6px;font-size:.78rem;font-weight:600}
+  .review-image-wrap{max-width:240px;max-height:180px;border-radius:8px;overflow:hidden;border:1px solid #e7e5e4;margin:4px 0}
+  .review-image-thumb{width:100%;height:100%;object-fit:contain}
+  .review-prompt-text{font-size:1rem;font-weight:600;color:#1c1917;margin:0;line-height:1.5}
+  .review-options-list{display:flex;flex-direction:column;gap:8px}
+  .review-option-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border:1px solid #e7e5e4;border-radius:8px;background:#fafaf9;font-size:.88rem;color:#1c1917;box-sizing:border-box}
+  .review-option-item.is-correct{border-color:#34d399;background:#ecfdf5;color:#065f46;font-weight:600}
+  .review-opt-letter{font-weight:700;color:#78716c}
+  .review-option-item.is-correct .review-opt-letter{color:#065f46}
+  .review-correct-badge{margin-left:auto;padding:2px 8px;background:#059669;color:white;border-radius:4px;font-size:.72rem;font-weight:700;flex-shrink:0}
+  .review-tf-options{display:flex;gap:12px}
+  .review-tf-item{display:flex;align-items:center;gap:8px;padding:10px 18px;border:1px solid #e7e5e4;border-radius:8px;background:#fafaf9;font-weight:600;box-sizing:border-box}
+  .review-tf-item.is-correct{border-color:#34d399;background:#ecfdf5;color:#065f46}
+  .review-pairs-list,.review-ordering-list,.review-text-answer{display:flex;flex-direction:column;gap:6px}
+  .review-field-title{font-size:.8rem;font-weight:600;color:#78716c}
+  .review-pair-item{display:flex;align-items:center;gap:10px;padding:8px 12px;background:#fafaf9;border:1px solid #e7e5e4;border-radius:6px;font-size:.88rem;box-sizing:border-box}
+  .review-pair-left{color:#1c1917}
+  .review-pair-arrow{color:#059669;font-weight:700}
+  .review-pair-right{color:#065f46;font-weight:600}
+  .review-order-ol{margin:0;padding-left:20px;font-size:.88rem;display:flex;flex-direction:column;gap:4px}
+  .review-text-answer{padding:10px 14px;background:#fafaf9;border:1px solid #e7e5e4;border-radius:8px;box-sizing:border-box}
+  .review-correct-value{font-size:.95rem;color:#065f46}
+  .review-explanation{padding:10px 12px;background:#fffbeb;border:1.5px solid #fde68a;border-radius:6px;font-size:.82rem;color:#92400e;display:flex;gap:8px;box-sizing:border-box}
+  .review-expl-label{font-weight:700;flex-shrink:0}
+
   @media(max-width:800px){.quiz-page{padding:16px 12px 90px}.quiz-hero{padding:26px 22px;min-height:160px}.hero-mark{width:70px;height:70px;flex-basis:70px;font-size:2rem}.workspace{padding:18px}.source-grid,.type-grid,.quiz-grid,.loading-grid{grid-template-columns:1fr 1fr}.bank-filters{grid-template-columns:1fr 1fr}.source-panel{grid-template-columns:1fr}.bundle-grid,.homework-fields{grid-template-columns:1fr 1fr}.builder-mode-switcher{grid-template-columns:1fr}.type-mix-grid{grid-template-columns:1fr 1fr}.merge-options-group{grid-template-columns:1fr}.exam-content{grid-template-columns:1fr;padding:18px 12px 70px}.exam-content aside{position:static}.question-map{grid-template-columns:repeat(8,1fr)}.exam-topbar{grid-template-columns:1fr auto}.abandon{grid-column:1/-1;width:100%;margin-top:6px}.progress-track{top:124px}.exam-question{scroll-margin-top:135px}}
-  @media(max-width:560px){.quiz-hero{align-items:flex-end}.hero-mark{position:absolute;right:18px;top:18px;opacity:.38}.quiz-hero p{padding-right:20px}.tabs{gap:3px}.tabs button{font-size:.75rem;padding:5px}.tabs button span{display:block;margin:0;font-size:1rem}.source-grid,.type-grid,.quiz-grid,.loading-grid,.form-grid,.bundle-grid,.homework-fields,.bank-filters{grid-template-columns:1fr}.type-mix-grid{grid-template-columns:1fr}.image-labels-grid{grid-template-columns:1fr}.auto-action-bar{flex-direction:column;align-items:stretch}.auto-action-bar button{width:100%}.form-grid .wide{grid-column:1}.source-card{min-height:78px}.type-grid button{min-height:58px}.editor-card{padding:13px}.editor-card header{flex-wrap:wrap}.editor-card header select{order:3;width:100%;max-width:none}.editor-actions{margin-left:auto}.editor-bottom{grid-template-columns:90px 1fr}.save-bar{flex-wrap:wrap;bottom:8px}.save-bar>div{width:100%}.save-bar button{flex:1}.section-heading{align-items:flex-start}.question-map{grid-template-columns:repeat(6,1fr)}.exam-topbar{padding:8px 10px}.exam-title>span{display:none}.exam-title strong{display:block;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.countdown{padding:4px 10px}.exam-question{padding:17px}.question-head{align-items:flex-start}.question-head>div{flex-direction:column-reverse;align-items:flex-end}.matching-answer label{grid-template-columns:1fr}.matching-answer label>span{transform:rotate(90deg)}.submit-panel{align-items:stretch;flex-direction:column}.submit-actions{flex-direction:column}.start-dialog,.result-dialog,.bundle-dialog{padding:25px 18px}.modal-backdrop{padding:10px}.rules{grid-template-columns:1fr 1fr}.bank-action-bar{flex-direction:column;align-items:stretch}.bank-buttons{flex-direction:column}.bank-buttons button{width:100%}.quick-import-wrap{width:100%;justify-content:space-between;margin-left:0}}
+  @media(max-width:560px){.quiz-hero{align-items:flex-end}.hero-mark{position:absolute;right:18px;top:18px;opacity:.38}.quiz-hero p{padding-right:20px}.tabs{gap:3px}.tabs button{font-size:.75rem;padding:5px}.tabs button span{display:block;margin:0;font-size:1rem}.source-grid,.type-grid,.quiz-grid,.loading-grid,.form-grid,.bundle-grid,.homework-fields,.bank-filters{grid-template-columns:1fr}.type-mix-grid{grid-template-columns:1fr}.image-labels-grid{grid-template-columns:1fr}.auto-action-bar{flex-direction:column;align-items:stretch}.auto-action-bar button{width:100%}.form-grid .wide{grid-column:1}.source-card{min-height:78px}.type-grid button{min-height:58px}.editor-card{padding:13px}.editor-card header{flex-wrap:wrap}.editor-card header select{order:3;width:100%;max-width:none}.editor-actions{margin-left:auto}.editor-bottom{grid-template-columns:90px 1fr}.save-bar{flex-wrap:wrap;bottom:8px}.save-bar>div{width:100%}.save-bar button{flex:1}.section-heading{align-items:flex-start}.question-map{grid-template-columns:repeat(6,1fr)}.exam-topbar{padding:8px 10px}.exam-title>span{display:none}.exam-title strong{display:block;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.countdown{padding:4px 10px}.exam-question{padding:17px}.question-head{align-items:flex-start}.question-head>div{flex-direction:column-reverse;align-items:flex-end}.matching-answer label{grid-template-columns:1fr}.matching-answer label>span{transform:rotate(90deg)}.submit-panel{align-items:stretch;flex-direction:column}.submit-actions{flex-direction:column}.start-dialog,.result-dialog,.bundle-dialog{padding:25px 18px}.modal-backdrop{padding:10px}.rules{grid-template-columns:1fr 1fr}.bank-action-bar{flex-direction:column;align-items:stretch}.bank-buttons{flex-direction:column}.bank-buttons button{width:100%}.quick-import-wrap{width:100%;justify-content:space-between;margin-left:0}.config-summary-bar{flex-direction:column;align-items:stretch}.btn-toggle-advanced{width:100%;justify-content:center}.preview-mode-header{flex-direction:column;align-items:stretch}.btn-toggle-view{width:100%;justify-content:center}.review-card{padding:14px}.review-option-item{flex-wrap:wrap}.review-tf-options{flex-direction:column}}
   @media(max-width:1024px){.save-bar{bottom:calc(84px + env(safe-area-inset-bottom))}}
   @media(max-width:640px){.source-grid,.type-grid,.quiz-grid,.loading-grid{grid-template-columns:1fr}.quiz-page{padding-left:12px;padding-right:12px}}
-  @media(max-width:390px){.hero-mark{display:none}.modal-backdrop{padding:0}.start-dialog,.result-dialog,.bundle-dialog{width:100%;max-height:100dvh;border-radius:0;padding:22px 14px}.exam-topbar{grid-template-columns:1fr auto}.quiz-page{overflow-x:hidden}.bank-q-options{grid-template-columns:1fr}.image-labels-grid{grid-template-columns:1fr}}
+  @media(max-width:390px){.hero-mark{display:none}.modal-backdrop{padding:0}.start-dialog,.result-dialog,.bundle-dialog{width:100%;max-height:100dvh;border-radius:0;padding:22px 14px}.exam-topbar{grid-template-columns:1fr auto}.quiz-page{overflow-x:hidden}.bank-q-options{grid-template-columns:1fr}.image-labels-grid{grid-template-columns:1fr}.types-chip{max-width:200px}.review-meta-left{flex-wrap:wrap}}
   @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
 </style>
