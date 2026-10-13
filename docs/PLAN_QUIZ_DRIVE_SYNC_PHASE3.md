@@ -202,3 +202,37 @@ Theo kết quả audit độc lập từ Codex maintainer/auditor, Round 2 khắ
    - Xác thực kết quả tạo/cập nhật Doc và tải lên DOCX; nếu thiếu `id`, ném 502 `DriveInvalidResponse` và bù trừ dọn dẹp các tệp đã tạo.
    - Hàm phân tích `parseStrictExpectedRevision`: từ chối mọi chuỗi khoảng trắng, số thực, `NaN`, đối tượng với mã lỗi 400 `InvalidExpectedRevision`.
    - Lỗi giải phóng lock trong khối `finally` được ghi nhận dưới dạng cảnh báo `cleanup_warning` mà không làm che mất kết quả thành công của request.
+
+## Vòng 4 (Round 4) Remediation & Hardening
+
+1. **P0 RED-3R4.1 — RBAC Mục Tiêu Giao BTVN & Bảo Mật Session:**
+   - Server truy vấn `class_sessions` trực tiếp theo `session_id`, xác minh `class_id` khớp với record DB, trích xuất `class_name` tin cậy từ DB (không tin client payload).
+   - Giáo viên, trợ giảng (`assistant_teacher_id`), và giáo viên dạy thay (`substitute_teacher_id`) chỉ được phép giao bài vào buổi học mà mình được phân công; các vai trò quản lý (`admin`, `superadmin`, `leader`) có thẩm quyền quản lý toàn bộ.
+   - Buổi học không tồn tại trả về 404 `SessionNotFound`; sai lệch lớp học trả về 409 `SessionClassMismatch`; không có quyền trả về 403 `SessionForbidden`. Không truy vấn danh sách học sinh hay ghi thông báo trước khi vượt qua kiểm tra RBAC.
+
+2. **P0 RED-3R4.2 — Khắc Phục Bỏ Sót Thông Báo Cập Nhật Revision:**
+   - Loại bỏ early return sai lệch trong `publishBundleHomework` vốn short-circuit khi `source_content_revision === bundle.revision`.
+   - Chuyển cơ chế phân định sang ledger thông báo lũy đẳng với ID gắn kèm revision và student ID (`_r{revision}_s_{user_id}`) sử dụng `ON CONFLICT(id) DO NOTHING`.
+   - Đảm bảo: Thử lại rev 1 không bị trùng lặp; republish rev 2 dù giữ nguyên lớp/session/deadline vẫn sinh thông báo cập nhật; thử lại rev 2 không sinh trùng lặp; học sinh mới vào lớp trong cùng revision nhận đủ thông báo còn thiếu mà không gửi lại cho học sinh cũ.
+
+3. **P1 RED-3R4.3 — UI Chọn Lịch Dạy Thật & UI Contract Hợp Chuẩn:**
+   - Bổ sung endpoint `/api/quiz-menu/[id]/sessions` và tích hợp `sessions` trong bundle payload, lọc theo RBAC và sắp xếp ưu tiên các buổi học sắp tới.
+   - Trong bundle panel, thay thế hoàn toàn 3 ô nhập văn bản tự do ("Mã buổi học", "Mã lớp", "Tên lớp") bằng dropdown chọn lịch dạy trực quan và card hiển thị chi tiết buổi học đã chọn; tự động suy diễn `class_id` và `class_name`; vô hiệu hóa nút submit nếu chưa chọn buổi học.
+   - Đáp ứng tiêu chuẩn giao diện: tối ưu hiển thị trên màn hình nhỏ 320px/360px, touch target tối thiểu 44px, bảng màu Warm Ivory/Stone/Emerald/Coral, tuyệt đối không chứa dark blue / navy.
+
+4. **P1 RED-3R4.4 — Xác Thực Nghiêm Ngặt Hạn Nộp Gregorian & Múi Giờ:**
+   - Hàm `validateStrictDeadline` phân tích chặt chẽ chuỗi `YYYY-MM-DD` và `HH:mm`; kiểm tra số ngày hợp lệ theo từng tháng và năm nhuận Gregorian (ví dụ: ngày 29/02/2026 không hợp lệ, 29/02/2024 hợp lệ); giới hạn giờ từ 00 đến 23 và phút từ 00 đến 59.
+   - So sánh thời điểm hạn nộp theo múi giờ ứng dụng `Asia/Bangkok` (`+07:00`), chặn các hạn nộp đã qua trong quá khứ nhưng cho phép hạn nộp trong ngày hiện tại nếu thời gian vẫn ở tương lai.
+
+5. **P1 RED-3R4.5 — Bảo Vệ Concurrency Lock Toàn Diện Trong `publishBundleHomework`:**
+   - Nhận `lockToken` từ client/caller và chủ động gia hạn lock qua `renewBundleLock` trước khi kiểm tra live health, sau live health và ngay trước batch ghi D1.
+   - Nếu lock bị mất, hết hạn hoặc bị takeover, tiến trình lập tức hủy bỏ trước khi ghi D1, không sinh bất kỳ phân công hay thông báo nào.
+
+6. **P1 RED-3R4.6 — Observability Quét Giới Hạn (Bounded Scan) & Tổng Số Trung Thực:**
+   - Endpoint `/api/quiz-menu/bundle-observability` hỗ trợ quét có giới hạn với `scan_limit` (tối đa 50) cùng `scan_offset` / `cursor`.
+   - Trả về rõ ràng trạng thái hoàn tất quét: `scan_complete`, `scanned_count`, `matched_count`, `returned_count`, `total` (trả `null` khi scan chưa hoàn tất với bộ lọc live), `total_is_lower_bound: true`, và `next_cursor`.
+   - Kiểm tra allowlist nghiêm ngặt cho `health_status`, từ chối các giá trị không hợp lệ với mã lỗi 400 `InvalidHealthStatusFilter`.
+
+7. **P2 RED-3R4.7 — Bảo Mật Dữ Liệu Kiểm Toán (Event Details Privacy):**
+   - Loại bỏ hoàn toàn trường `details` và `details_json` trong kết quả trả về của `getBundleSyncEvents`, ngăn chặn triệt để nguy cơ lộ lọt Drive file ID (ví dụ `deletedFileId`).
+   - Bảo toàn toàn bộ dữ liệu kiểm toán gốc dạng JSON trong bảng `quiz_bundle_sync_events` ở phía server cho mục đích thanh tra hệ thống.

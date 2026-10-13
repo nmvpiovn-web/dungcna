@@ -1,5 +1,6 @@
 import { getServiceAccountToken, invalidateServiceAccountToken } from './googleServiceAccount.js';
 import { makeId, sha256, validateQuestion } from './quizMenu.js';
+import { isManager } from './auth.js';
 
 export const MAX_QUIZ_FILE_BYTES = 10 * 1024 * 1024;
 export const QUIZ_UPLOAD_FOLDER_NAME = 'Quiz Uploads';
@@ -1026,17 +1027,110 @@ export async function getBundleSyncEvents(db, quizId, limit = 5) {
       LIMIT ?
     `).bind(quizId, boundedLimit).all();
     return (rows.results || []).map((row) => {
-      let details = null;
-      if (row.details_json) {
-        try { details = JSON.parse(row.details_json); } catch {}
-      }
-      const safe = { ...row, details };
-      delete safe.details_json;
-      return safe;
+      // Do NOT expose details_json or arbitrary details containing Drive file IDs to client
+      return {
+        id: row.id,
+        quiz_id: row.quiz_id,
+        actor_id: row.actor_id,
+        event_type: row.event_type,
+        direction: row.direction,
+        resolution: row.resolution,
+        from_revision: row.from_revision,
+        to_revision: row.to_revision,
+        error_code: row.error_code,
+        error_message: row.error_message,
+        created_at: row.created_at
+      };
     });
   } catch {
     return [];
   }
+}
+
+export function validateStrictDeadline(deadlineDate, deadlineTime, options = {}) {
+  const dateStr = String(deadlineDate || '').trim();
+  const timeStr = String(deadlineTime || '').trim();
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr) || !/^\d{2}:\d{2}$/.test(timeStr)) {
+    throw new QuizDriveError('Định dạng hạn nộp không hợp lệ (YYYY-MM-DD HH:mm)', 400, 'InvalidDeadline');
+  }
+
+  const [year, month, day] = dateStr.split('-').map(Number);
+  const [hour, minute] = timeStr.split(':').map(Number);
+
+  if (hour < 0 || hour > 23 || minute < 0 || minute > 59) {
+    throw new QuizDriveError('Giờ hạn nộp không hợp lệ (00:00 - 23:59)', 400, 'InvalidDeadline');
+  }
+
+  if (month < 1 || month > 12) {
+    throw new QuizDriveError('Tháng không hợp lệ (01 - 12)', 400, 'InvalidDeadline');
+  }
+
+  const isLeap = (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
+  const daysInMonth = [0, 31, isLeap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+  if (day < 1 || day > daysInMonth[month]) {
+    throw new QuizDriveError('Ngày không hợp lệ trên lịch Gregorian', 400, 'InvalidDeadline');
+  }
+
+  // Asia/Bangkok is UTC+7 (+07:00, constant offset without DST)
+  const deadlineIso = `${dateStr}T${timeStr}:00+07:00`;
+  const deadlineMs = Date.parse(deadlineIso);
+  if (Number.isNaN(deadlineMs)) {
+    throw new QuizDriveError('Thời điểm hạn nộp không hợp lệ', 400, 'InvalidDeadline');
+  }
+
+  const nowMs = options?.now ? new Date(options.now).getTime() : Date.now();
+  if (deadlineMs <= nowMs) {
+    throw new QuizDriveError('Hạn nộp phải ở thời điểm tương lai', 400, 'InvalidDeadline');
+  }
+
+  return { deadlineDate: dateStr, deadlineTime: timeStr, deadlineMs };
+}
+
+export async function getValidTeachingSessions(db, user, limit = 50) {
+  if (!db) return [];
+  const safeLimit = Math.min(Math.max(Number(limit) || 50, 1), 100);
+  let userRole = String(user?.role || '').toLowerCase();
+  if (!userRole && user?.id) {
+    try {
+      const u = await db.prepare(`SELECT role FROM users WHERE id = ? LIMIT 1`).bind(user.id).first();
+      if (u?.role) userRole = String(u.role).toLowerCase();
+    } catch {}
+  }
+  const isMgr = isManager({ role: userRole }) || ['superadmin', 'admin', 'leader'].includes(userRole);
+
+  const query = isMgr
+    ? `SELECT id, class_id, class_name, session_date, start_time, end_time
+       FROM class_sessions
+       WHERE (status IS NULL OR status != 'cancelled')
+       ORDER BY CASE WHEN session_date >= date('now') THEN 0 ELSE 1 END,
+                CASE WHEN session_date >= date('now') THEN session_date ELSE '' END ASC,
+                CASE WHEN session_date < date('now') THEN session_date ELSE '' END DESC,
+                start_time ASC
+       LIMIT ?`
+    : `SELECT id, class_id, class_name, session_date, start_time, end_time
+       FROM class_sessions
+       WHERE (teacher_id = ? OR assistant_teacher_id = ? OR substitute_teacher_id = ?)
+         AND (status IS NULL OR status != 'cancelled')
+       ORDER BY CASE WHEN session_date >= date('now') THEN 0 ELSE 1 END,
+                CASE WHEN session_date >= date('now') THEN session_date ELSE '' END ASC,
+                CASE WHEN session_date < date('now') THEN session_date ELSE '' END DESC,
+                start_time ASC
+       LIMIT ?`;
+
+  const bindParams = isMgr ? [safeLimit] : [user.id, user.id, user.id, safeLimit];
+  const rows = await db.prepare(query).bind(...bindParams).all();
+
+  return (rows.results || []).map((r) => ({
+    session_id: r.id,
+    id: r.id,
+    class_id: r.class_id,
+    class_name: r.class_name,
+    session_date: r.session_date,
+    start_time: r.start_time,
+    end_time: r.end_time
+  }));
 }
 
 function homeworkDraft(quiz, questions) {
@@ -1628,6 +1722,11 @@ export async function publishBundleHomework(platform, db, quizId, user, input) {
     throw new QuizDriveError('Dữ liệu giao bài là bắt buộc', 400, 'InvalidInput');
   }
 
+  const lockToken = input.lockToken;
+  if (lockToken) {
+    await renewBundleLock(db, quizId, lockToken);
+  }
+
   const bundle = await db.prepare(`SELECT * FROM quiz_bundles WHERE quiz_id = ? LIMIT 1`).bind(quizId).first();
   if (!bundle?.homework_assignment_id) throw new QuizDriveError('Bundle chưa có bài tập nháp', 404, 'HomeworkDraftNotFound');
 
@@ -1648,14 +1747,56 @@ export async function publishBundleHomework(platform, db, quizId, user, input) {
     throw new QuizDriveError('Bundle chưa sẵn sàng hoặc có thay đổi chưa đồng bộ', 409, 'BundleNotReady');
   }
 
+  if (lockToken) {
+    await renewBundleLock(db, quizId, lockToken);
+  }
+
   const sessionId = String(input.session_id || '').trim();
   const classId = String(input.class_id || '').trim();
-  const className = String(input.class_name || classId).trim();
   const deadlineDate = String(input.deadline_date || '').trim();
   const deadlineTime = String(input.deadline_time || '18:00').trim();
-  if (!sessionId || !classId || !className || !/^\d{4}-\d{2}-\d{2}$/.test(deadlineDate) || !/^\d{2}:\d{2}$/.test(deadlineTime)) {
-    throw new QuizDriveError('Cần chọn lớp, buổi học và hạn nộp hợp lệ', 400, 'HomeworkPublishFieldsRequired');
+
+  if (!sessionId) {
+    throw new QuizDriveError('Cần chọn buổi học và lớp hợp lệ', 400, 'HomeworkPublishFieldsRequired');
   }
+
+  // Validate strict Gregorian deadline & timezone (Asia/Bangkok)
+  validateStrictDeadline(deadlineDate, deadlineTime, { now: input.now });
+
+  // Query class_sessions from DB
+  const session = await db.prepare(
+    `SELECT id, class_id, class_name, teacher_id, assistant_teacher_id, substitute_teacher_id FROM class_sessions WHERE id = ? LIMIT 1`
+  ).bind(sessionId).first();
+
+  if (!session) {
+    throw new QuizDriveError('Buổi học không tồn tại', 404, 'SessionNotFound');
+  }
+
+  if (classId && classId !== session.class_id) {
+    throw new QuizDriveError('Mã lớp không khớp với buổi học đã chọn', 409, 'SessionClassMismatch');
+  }
+
+  let userRole = String(user.role || '').toLowerCase();
+  if (!userRole && user?.id) {
+    try {
+      const u = await db.prepare(`SELECT role FROM users WHERE id = ? LIMIT 1`).bind(user.id).first();
+      if (u?.role) userRole = String(u.role).toLowerCase();
+    } catch {}
+  }
+
+  const isMgr = isManager({ role: userRole }) || ['superadmin', 'admin', 'leader'].includes(userRole);
+  if (!isMgr) {
+    const isAssigned = session.teacher_id === user.id ||
+      session.assistant_teacher_id === user.id ||
+      session.substitute_teacher_id === user.id;
+    if (!isAssigned) {
+      throw new QuizDriveError('Bạn không có quyền giao bài cho buổi học này', 403, 'SessionForbidden');
+    }
+  }
+
+  const effectiveClassId = session.class_id;
+  const effectiveClassName = session.class_name || effectiveClassId;
+
   const assignment = await db.prepare(`SELECT * FROM homework_assignments WHERE id = ? LIMIT 1`).bind(bundle.homework_assignment_id).first();
   if (!assignment) throw new QuizDriveError('Không tìm thấy bài tập nháp trong D1', 404, 'HomeworkDraftNotFound');
 
@@ -1663,11 +1804,7 @@ export async function publishBundleHomework(platform, db, quizId, user, input) {
     throw new QuizDriveError('Bài tập nháp không khớp revision với bundle hiện tại', 409, 'BundleNotReady');
   }
 
-  if (assignment.status === 'published' && assignment.source_content_revision === bundle.revision && assignment.class_id === classId && assignment.session_id === sessionId && assignment.deadline_date === deadlineDate && assignment.deadline_time === deadlineTime) {
-    return assignment;
-  }
-
-  const isRepublish = assignment.status === 'published';
+  const isRepublish = Number(bundle.revision) > 1;
   const studentTitle = isRepublish
     ? `📝 Cập nhật BTVN (rev ${bundle.revision}): ${assignment.title}`
     : `📚 BTVN mới: ${assignment.title}`;
@@ -1678,35 +1815,44 @@ export async function publishBundleHomework(platform, db, quizId, user, input) {
     ? `📝 Cập nhật BTVN (rev ${bundle.revision}): ${assignment.title}`
     : `📚 BTVN mới: ${assignment.title}`;
   const parentBody = isRepublish
-    ? `Bài tập lớp ${className} đã được cập nhật nội dung mới. Hạn nộp ${deadlineTime} ngày ${deadlineDate}.`
-    : `Lớp ${className}, hạn nộp ${deadlineTime} ngày ${deadlineDate}.`;
+    ? `Bài tập lớp ${effectiveClassName} đã được cập nhật nội dung mới. Hạn nộp ${deadlineTime} ngày ${deadlineDate}.`
+    : `Lớp ${effectiveClassName}, hạn nộp ${deadlineTime} ngày ${deadlineDate}.`;
 
-  const students = await db.prepare(`SELECT user_id FROM class_enrollments WHERE class_id = ? AND status = 'active'`).bind(classId).all();
+  const students = await db.prepare(`SELECT user_id FROM class_enrollments WHERE class_id = ? AND status = 'active'`).bind(effectiveClassId).all();
   const parents = await db.prepare(`
     SELECT DISTINCT psl.parent_user_id
     FROM parent_student_links psl JOIN class_enrollments ce ON ce.user_id = psl.student_user_id
     WHERE psl.verification_status = 'verified' AND ce.class_id = ? AND ce.status = 'active'
-  `).bind(classId).all();
+  `).bind(effectiveClassId).all();
+
+  // Renew lock right before writing D1 batch to ensure atomicity
+  if (lockToken) {
+    await renewBundleLock(db, quizId, lockToken);
+  }
+
   const teacherName = String(user.name || user.username || assignment.teacher_name || 'Giáo viên').slice(0, 150);
   const statements = [db.prepare(`
     UPDATE homework_assignments SET session_id = ?, class_id = ?, class_name = ?, teacher_id = ?, teacher_name = ?,
       deadline_date = ?, deadline_time = ?, due_date = ?, status = 'published', source_content_revision = ?
     WHERE id = ?
-  `).bind(sessionId, classId, className, user.id, teacherName, deadlineDate, deadlineTime, deadlineDate, bundle.revision, assignment.id)];
+  `).bind(sessionId, effectiveClassId, effectiveClassName, user.id, teacherName, deadlineDate, deadlineTime, deadlineDate, bundle.revision, assignment.id)];
+
   for (const student of students.results || []) statements.push(db.prepare(`
     INSERT INTO system_notifications (id, target_role, target_user_id, title, body, category, reference_id)
     VALUES (?, 'student', ?, ?, ?, 'homework', ?) ON CONFLICT(id) DO NOTHING
   `).bind(`notif_hw_${assignment.id}_r${bundle.revision}_s_${student.user_id}`, student.user_id, studentTitle, studentBody, assignment.id));
+
   for (const parent of parents.results || []) statements.push(db.prepare(`
     INSERT INTO system_notifications (id, target_role, target_user_id, title, body, category, reference_id)
     VALUES (?, 'parent', ?, ?, ?, 'homework', ?) ON CONFLICT(id) DO NOTHING
   `).bind(`notif_hw_${assignment.id}_r${bundle.revision}_p_${parent.parent_user_id}`, parent.parent_user_id, parentTitle, parentBody, assignment.id));
+
   await db.batch(statements);
 
   await logBundleSyncEvent(db, {
     quizId, eventType: 'succeeded', actor: user.id, direction: 'publish_homework',
     fromRevision: bundle.revision, toRevision: bundle.revision,
-    details: { class_id: classId, session_id: sessionId }
+    details: { class_id: effectiveClassId, session_id: sessionId }
   });
 
   return db.prepare(`SELECT * FROM homework_assignments WHERE id = ?`).bind(assignment.id).first();

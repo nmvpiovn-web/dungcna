@@ -1,6 +1,7 @@
 import { json } from '@sveltejs/kit';
 import { verifyServerAuth, isStaffUser, isManager } from '../../../../../lib/server/auth.js';
 import { canManageQuiz, makeId } from '../../../../../lib/server/quizMenu.js';
+import { getValidTeachingSessions, validateStrictDeadline } from '../../../../../lib/server/quizDrive.js';
 
 export const prerender = false;
 
@@ -11,14 +12,19 @@ export async function GET({ params, request, platform }) {
   if (!isStaffUser(auth.user)) return json({ success: false, error: 'Forbidden' }, { status: 403 });
   const db = platform?.env?.DB;
   if (!db) return json({ success: false, error: 'DatabaseUnavailable' }, { status: 500 });
+
+  const quiz = await db.prepare(`SELECT id, created_by FROM quizzes WHERE id = ? LIMIT 1`).bind(params.id).first();
+  if (!quiz) return json({ success: false, error: 'QuizNotFound' }, { status: 404 });
+  if (!canManageQuiz(auth.user, quiz)) {
+    return json({ success: false, error: 'Forbidden: Bạn chỉ được thao tác trên quiz do mình tạo' }, { status: 403 });
+  }
+
   try {
-    // Lớp học = distinct class_id/class_name từ class_sessions (nguồn thật duy nhất của lớp)
-    // Manager thấy mọi lớp; teacher chỉ thấy lớp mình dạy (hoặc dạy thay)
-    const role = String(auth.user.role || '').toLowerCase();
     const rows = isManager(auth.user)
       ? await db.prepare(`SELECT DISTINCT class_id, class_name FROM class_sessions ORDER BY class_name`).all()
-      : await db.prepare(`SELECT DISTINCT class_id, class_name FROM class_sessions WHERE teacher_id = ? OR substitute_teacher_id = ? ORDER BY class_name`).bind(auth.user.id, auth.user.id).all();
-    return json({ success: true, classes: rows.results || [] });
+      : await db.prepare(`SELECT DISTINCT class_id, class_name FROM class_sessions WHERE teacher_id = ? OR assistant_teacher_id = ? OR substitute_teacher_id = ? ORDER BY class_name`).bind(auth.user.id, auth.user.id, auth.user.id).all();
+    const sessions = await getValidTeachingSessions(db, auth.user, 50);
+    return json({ success: true, classes: rows.results || [], sessions });
   } catch (err) {
     return json({ success: false, error: err.message }, { status: 500 });
   }

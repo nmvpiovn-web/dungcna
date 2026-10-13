@@ -127,6 +127,7 @@ export async function POST({ params, request, platform }) {
     } else if (syncDirection === 'publish_homework') {
       bundle = await publishBundleHomework(platform, db, params.id, auth.user, {
         ...body,
+        lockToken: lock.lockToken,
         expected_revision: parsedExpectedRevision
       });
     } else {

@@ -152,6 +152,7 @@
   let bundle = $state(null);
   let bundleHealth = $state(null);
   let bundleEvents = $state([]);
+  let bundleSessions = $state([]);
   let conflictModalOpen = $state(false);
   let bundleBusy = $state(false);
   let homeworkForm = $state({ session_id: '', class_id: '', class_name: '', deadline_date: '', deadline_time: '18:00' });
@@ -1093,12 +1094,14 @@
   }
 
   async function openBundle(quiz) {
-    selectedManageQuiz = quiz; bundle = null; bundleHealth = null; bundleEvents = []; conflictModalOpen = false; bundleBusy = true; error = '';
+    selectedManageQuiz = quiz; bundle = null; bundleHealth = null; bundleEvents = []; bundleSessions = []; conflictModalOpen = false; bundleBusy = true; error = '';
+    homeworkForm = { session_id: '', class_id: '', class_name: '', deadline_date: '', deadline_time: '18:00' };
     try {
       const res = await api(`/api/quiz-menu/${quiz.id}/bundle`);
       bundle = res.bundle;
       bundleHealth = res.health;
       bundleEvents = res.events || [];
+      bundleSessions = res.sessions || [];
       if (bundleHealth?.status === 'both_changed' || bundle?.sync_status === 'conflict') {
         conflictModalOpen = true;
       }
@@ -1121,11 +1124,16 @@
       bundle = res.bundle;
       bundleHealth = res.health;
       bundleEvents = res.events || [];
+      if (res.sessions) bundleSessions = res.sessions;
     } catch {}
   }
 
   async function syncBundle(direction, resolution = null) {
     if (!selectedManageQuiz) return;
+    if (direction === 'publish_homework' && !homeworkForm.session_id) {
+      error = 'Vui lòng chọn lịch dạy phân công trước khi giao bài';
+      return;
+    }
     bundleBusy = true; error = '';
     try {
       const payload = direction === 'publish_homework'
@@ -2418,13 +2426,61 @@
         <div class="homework-publish">
           <h3>Giao vào module BTVN timbk.io.vn</h3>
           <div class="homework-fields">
-            <label>Mã buổi học<input bind:value={homeworkForm.session_id} /></label>
-            <label>Mã lớp<input bind:value={homeworkForm.class_id} /></label>
-            <label>Tên lớp<input bind:value={homeworkForm.class_name} /></label>
-            <label>Hạn nộp<input type="date" bind:value={homeworkForm.deadline_date} /></label>
-            <label>Giờ<input type="time" bind:value={homeworkForm.deadline_time} /></label>
+            <div class="homework-field-full">
+              <label for="bundle-session-select" class="schedule-label">Lịch dạy phân công</label>
+              {#if bundleSessions && bundleSessions.length > 0}
+                <select
+                  id="bundle-session-select"
+                  class="session-select"
+                  value={homeworkForm.session_id}
+                  on:change={(e) => {
+                    const selId = e.currentTarget.value;
+                    const sess = bundleSessions.find(s => (s.session_id || s.id) === selId);
+                    if (sess) {
+                      homeworkForm.session_id = sess.session_id || sess.id;
+                      homeworkForm.class_id = sess.class_id;
+                      homeworkForm.class_name = sess.class_name;
+                    } else {
+                      homeworkForm.session_id = '';
+                      homeworkForm.class_id = '';
+                      homeworkForm.class_name = '';
+                    }
+                  }}
+                  aria-label="Chọn lịch dạy phân công"
+                >
+                  <option value="">-- Chọn lịch dạy phân công --</option>
+                  {#each bundleSessions as sess (sess.session_id || sess.id)}
+                    <option value={sess.session_id || sess.id}>
+                      {sess.session_date} ({sess.start_time || '??'} - {sess.end_time || '??'}) — {sess.class_name} ({sess.class_id})
+                    </option>
+                  {/each}
+                </select>
+                {#if homeworkForm.session_id}
+                  <div class="selected-session-card" role="status" aria-live="polite">
+                    <span class="selected-badge">Đã chọn:</span>
+                    <strong class="selected-class">{homeworkForm.class_name}</strong>
+                    <span class="selected-id">({homeworkForm.class_id})</span>
+                  </div>
+                {/if}
+              {:else}
+                <div class="no-sessions-notice">
+                  <span>Chưa có lịch dạy phân công phù hợp trong hệ thống.</span>
+                </div>
+              {/if}
+            </div>
+            <label for="bundle-deadline-date">Hạn nộp
+              <input id="bundle-deadline-date" type="date" bind:value={homeworkForm.deadline_date} aria-label="Hạn nộp" />
+            </label>
+            <label for="bundle-deadline-time">Giờ
+              <input id="bundle-deadline-time" type="time" bind:value={homeworkForm.deadline_time} aria-label="Giờ hạn nộp" />
+            </label>
           </div>
-          <button class="btn-main full" on:click={() => syncBundle('publish_homework')} disabled={bundleBusy}>
+          <button
+            class="btn-main full"
+            on:click={() => syncBundle('publish_homework')}
+            disabled={bundleBusy || !homeworkForm.session_id}
+            aria-disabled={bundleBusy || !homeworkForm.session_id}
+          >
             Giao bài &amp; thông báo
           </button>
         </div>
@@ -2528,7 +2584,17 @@
   .type-picker{margin:26px 0}.type-picker h3{font-size:1rem;margin-bottom:12px;color:#1c1917}.type-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.type-grid button{display:flex;align-items:center;text-align:left;gap:10px;min-height:66px;padding:10px;border:1px solid #e7e5e4;background:white;border-radius:7px;color:#292524}.type-grid button:hover{border-color:#059669;background:#f0fdf4}.type-grid button>span{color:#059669;font-size:1.2rem}.type-grid small{display:block;color:#78716c;font-weight:400;margin-top:2px}
   .question-editor-list{display:flex;flex-direction:column;gap:14px}.editor-card{border:1px solid #e7e5e4;border-radius:9px;padding:18px;background:white}.editor-card header{display:flex;align-items:center;gap:10px;margin-bottom:16px}.question-number{width:34px;height:34px;display:grid;place-items:center;background:#059669;color:white;border-radius:6px;font-weight:700}.editor-card header select{width:auto;max-width:220px}.editor-actions{margin-left:auto;display:flex;gap:4px}.editor-actions button,.option-row button{width:44px;height:44px;border:1px solid #e7e5e4;background:white;border-radius:6px;font-size:1.1rem}.editor-actions button.delete{color:#dc2626}.editor-actions button:disabled{opacity:.35}.option-editor,.pair-editor{margin-top:14px}.field-label{display:block;font-size:.83rem;font-weight:600;margin-bottom:7px}.option-row{display:grid;grid-template-columns:44px 1fr 44px;gap:6px;margin-bottom:7px}.option-row input[type=radio]{width:20px;min-height:20px;align-self:center;justify-self:center;accent-color:#059669}.text-button{min-height:44px;border:0;background:transparent;color:#059669;font-weight:600}.pair-editor>div{display:grid;grid-template-columns:1fr 30px 1fr;align-items:center;gap:5px;margin-bottom:7px}.pair-editor>div span{text-align:center;color:#059669}.review-note{margin-top:12px;padding:11px 13px;background:#f5f3ff;color:#5b21b6;border-left:3px solid #8b5cf6;font-size:.85rem}.editor-bottom{display:grid;grid-template-columns:120px 1fr;gap:12px;margin-top:14px}.empty-editor,.empty-state{text-align:center;padding:48px 20px;color:#78716c}.empty-editor>span,.empty-state>span{display:block;font-size:2.2rem;color:#059669;margin-bottom:8px}.empty-editor p,.empty-state p{margin:5px auto 16px;max-width:450px}.save-bar{position:sticky;bottom:12px;margin-top:20px;display:flex;align-items:center;justify-content:flex-end;gap:10px;background:#ffffff;color:#1c1917;border:1.5px solid #e7e5e4;padding:14px 18px;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.08);z-index:5}.save-bar>div{margin-right:auto}.save-bar small{display:block;color:#78716c}.btn-main,.btn-outline,.btn-accent{border-radius:6px;min-height:44px;padding:9px 17px;font-weight:600;cursor:pointer}.btn-main{background:#059669;color:white;border:1px solid #047857}.btn-main:hover{background:#047857}.btn-main:disabled,.btn-outline:disabled,.btn-accent:disabled{opacity:.45;cursor:not-allowed}.btn-outline{background:white;color:#059669;border:1px solid #a7f3d0}.btn-outline:hover{background:#ecfdf5}.btn-accent{background:#ea580c;color:white;border:1px solid #c2410c}.btn-accent:hover{background:#c2410c}.btn-main.compact,.btn-outline.compact,.btn-accent.compact{padding:7px 13px;min-height:38px;font-size:.85rem}.btn-main.full{width:100%}
   .quiz-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.quiz-card{border:1px solid #e7e5e4;border-radius:9px;padding:18px;background:white;transition:.18s ease}.quiz-card:hover{transform:translateY(-2px);border-color:#6ee7b7;box-shadow:0 8px 20px rgba(5,150,105,.1)}.quiz-card-top,.quiz-card footer{display:flex;align-items:center;justify-content:space-between;gap:8px}.quiz-card-top span{padding:3px 7px;background:#fff7ed;color:#c2410c;border-radius:4px;font-size:.72rem;font-weight:700}.quiz-card-top span.published{background:#f0fdf4;color:#15803d}.quiz-card-top b{font-size:.78rem;color:#78716c}.quiz-card h3{margin:16px 0 6px;color:#1c1917}.quiz-card p{font-size:.88rem;color:#57534e;min-height:46px}.quiz-card footer{border-top:1px solid #f5f5f4;margin-top:16px;padding-top:12px}.quiz-card footer small{color:#78716c}.quiz-card footer>div{display:flex;flex-wrap:wrap;justify-content:flex-end}.quiz-card footer button{border:0;background:transparent;color:#059669;font-weight:600;min-height:44px}.review-wrap{margin-top:22px}.take-card{padding:0;overflow:hidden}.cover{height:100px;display:grid;place-items:center;background:linear-gradient(135deg,#ecfdf5,#d1fae5);color:#065f46;font-size:1.7rem;font-weight:700}.cover-1{background:linear-gradient(135deg,#f5f3ff,#ede9fe);color:#6d28d9}.cover-2{background:linear-gradient(135deg,#dcfce7,#ecfccb);color:#15803d}.cover-3{background:linear-gradient(135deg,#fff7ed,#fef3c7);color:#c2410c}.quiz-card-body{padding:17px}.meta{display:flex;gap:7px;color:#78716c;font-size:.75rem}.start-button{width:100%;height:44px;border:1px solid #a7f3d0;background:#ecfdf5;color:#065f46;border-radius:6px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:9px;margin-top:14px}.start-button:hover{background:#d1fae5}.assign-btn{color:#7c3aed !important}.assigned-badge{display:flex;align-items:center;gap:8px;background:#f5f3ff;border:1px solid #ddd6fe;border-radius:7px;padding:8px 10px;margin-bottom:10px}.assigned-badge span{font-weight:700;color:#6d28d9;font-size:.8rem;white-space:nowrap}.assigned-badge small{color:#7c6aa8;font-size:.75rem}.loading-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.loading-grid i{height:220px;border-radius:9px;background:linear-gradient(90deg,#f5f5f4,#e7e5e4,#f5f5f4);background-size:200%;animation:shimmer 1.2s infinite}@keyframes shimmer{to{background-position:-200%}}
-  .modal-backdrop{position:fixed;inset:0;z-index:90;background:rgba(28,25,23,.5);backdrop-filter:blur(5px);display:grid;place-items:center;padding:20px}.start-dialog,.result-dialog,.bundle-dialog{position:relative;width:min(480px,100%);max-height:calc(100dvh - 40px);overflow:auto;background:white;border-radius:12px;padding:30px;text-align:center;box-shadow:0 24px 70px rgba(0,0,0,.25)}.bundle-dialog{width:min(760px,100%);text-align:left}.dialog-close{position:absolute;right:10px;top:10px;width:44px;height:44px;border:0;background:#f5f5f4;border-radius:6px;font-size:1.4rem;cursor:pointer}.dialog-icon,.result-burst{width:60px;height:60px;display:grid;place-items:center;margin:0 auto 12px;border-radius:12px;background:#ecfdf5;color:#059669;font-size:1.5rem}.start-dialog>p,.result-dialog>p{color:#57534e;margin:7px 0 18px}.rules{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:16px 0}.rules>div{display:grid;padding:12px;background:#fafaf9;border:1px solid #e7e5e4;border-radius:7px}.rules>div>span{font-size:1.25rem}.rules small{color:#78716c}.identity,.guest-field{padding:12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:7px;margin:14px 0;text-align:left}.guest-field{background:white;border:0;padding:0}.privacy-note{display:block;color:#78716c;margin-top:10px}.bundle-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:18px 0}.bundle-grid>*{display:grid;grid-template-columns:40px 1fr;grid-template-rows:auto auto;column-gap:9px;padding:13px;border:1px solid #e7e5e4;border-radius:8px;color:#292524;text-decoration:none}.bundle-grid span{grid-row:1/3;width:38px;height:38px;display:grid;place-items:center;border-radius:7px;background:#ecfdf5;color:#065f46;font-weight:800}.bundle-grid small{color:#78716c}.sync-actions{display:flex;gap:8px}.sync-actions button{flex:1;min-height:44px;min-width:44px;border:1px solid #a7f3d0;background:#ecfdf5;color:#065f46;border-radius:6px;font-weight:700;cursor:pointer}.conflict-box{padding:14px;background:#fff7ed;border:1px solid #fdba74;color:#9a3412;border-radius:8px;margin-bottom:12px;font-size:.88rem}.homework-publish{margin-top:18px;padding-top:18px;border-top:1px solid #e7e5e4}.homework-publish h3{margin-bottom:10px}.homework-fields{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
+  .modal-backdrop{position:fixed;inset:0;z-index:90;background:rgba(28,25,23,.5);backdrop-filter:blur(5px);display:grid;place-items:center;padding:20px}.start-dialog,.result-dialog,.bundle-dialog{position:relative;width:min(480px,100%);max-height:calc(100dvh - 40px);overflow:auto;background:white;border-radius:12px;padding:30px;text-align:center;box-shadow:0 24px 70px rgba(0,0,0,.25)}.bundle-dialog{width:min(760px,100%);text-align:left}.dialog-close{position:absolute;right:10px;top:10px;width:44px;height:44px;border:0;background:#f5f5f4;border-radius:6px;font-size:1.4rem;cursor:pointer}.dialog-icon,.result-burst{width:60px;height:60px;display:grid;place-items:center;margin:0 auto 12px;border-radius:12px;background:#ecfdf5;color:#059669;font-size:1.5rem}.start-dialog>p,.result-dialog>p{color:#57534e;margin:7px 0 18px}.rules{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:16px 0}.rules>div{display:grid;padding:12px;background:#fafaf9;border:1px solid #e7e5e4;border-radius:7px}.rules>div>span{font-size:1.25rem}.rules small{color:#78716c}.identity,.guest-field{padding:12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:7px;margin:14px 0;text-align:left}.guest-field{background:white;border:0;padding:0}.privacy-note{display:block;color:#78716c;margin-top:10px}.bundle-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:18px 0}.bundle-grid>*{display:grid;grid-template-columns:40px 1fr;grid-template-rows:auto auto;column-gap:9px;padding:13px;border:1px solid #e7e5e4;border-radius:8px;color:#292524;text-decoration:none}.bundle-grid span{grid-row:1/3;width:38px;height:38px;display:grid;place-items:center;border-radius:7px;background:#ecfdf5;color:#065f46;font-weight:800}.bundle-grid small{color:#78716c}.sync-actions{display:flex;gap:8px}.sync-actions button{flex:1;min-height:44px;min-width:44px;border:1px solid #a7f3d0;background:#ecfdf5;color:#065f46;border-radius:6px;font-weight:700;cursor:pointer}.conflict-box{padding:14px;background:#fff7ed;border:1px solid #fdba74;color:#9a3412;border-radius:8px;margin-bottom:12px;font-size:.88rem}.homework-publish{margin-top:18px;padding-top:18px;border-top:1px solid #e7e5e4}.homework-publish h3{margin-bottom:10px}.homework-fields{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:14px}
+@media(min-width:600px){.homework-fields{grid-template-columns:2fr 1fr 1fr}}
+.homework-field-full{display:flex;flex-direction:column;gap:6px}
+.schedule-label{font-size:.85rem;font-weight:600;color:#292524}
+.session-select{width:100%;min-height:44px;min-width:44px;padding:8px 12px;border:1.5px solid #d6d3d1;border-radius:8px;background:#fafaf9;color:#1c1917;font-size:.88rem;cursor:pointer}
+.session-select:focus{border-color:#059669;outline:none;box-shadow:0 0 0 2px rgba(5,150,105,.2)}
+.selected-session-card{display:flex;align-items:center;gap:6px;padding:8px 12px;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:6px;font-size:.82rem;color:#065f46;margin-top:4px}
+.selected-badge{font-weight:700;color:#059669}
+.selected-class{font-weight:700;color:#065f46}
+.selected-id{color:#57534e;font-size:.78rem}
+.no-sessions-notice{padding:10px 12px;background:#fff7ed;border:1px solid #fed7aa;border-radius:6px;font-size:.82rem;color:#9a3412}
   .bundle-status-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 12px;background:#fafaf9;border:1px solid #e7e5e4;border-radius:7px;margin:12px 0}
   .badge-health{display:inline-flex;align-items:center;padding:4px 8px;border-radius:5px;font-size:.78rem;font-weight:700}
   .badge-clean{background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0}

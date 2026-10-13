@@ -26,6 +26,11 @@ export async function GET({ request, platform, url }) {
   }
   const statusFilter = (rawStatus === 'all') ? '' : rawStatus;
   const rawHealthStatus = url.searchParams.get('health_status')?.trim().toLowerCase() || '';
+  const ALLOWED_HEALTH_STATUSES = new Set(['', 'all', 'clean', 'conflict', 'quiz_changed', 'docs_changed', 'both_changed', 'drive_unavailable', 'bundle_missing']);
+  if (!ALLOWED_HEALTH_STATUSES.has(rawHealthStatus)) {
+    return json({ success: false, error: 'InvalidHealthStatusFilter', message: 'Bộ lọc health_status không hợp lệ' }, { status: 400 });
+  }
+  const healthStatusFilter = (rawHealthStatus === 'all') ? '' : rawHealthStatus;
 
   const rawLimit = Number(url.searchParams.get('limit'));
   const rawOffset = Number(url.searchParams.get('offset'));
@@ -157,7 +162,14 @@ export async function GET({ request, platform, url }) {
   const countRow = await db.prepare(countQuery).bind(...params).first();
   const dbTotal = Number(countRow?.total || 0);
 
-  const scanLimit = Math.min(Math.max(limit * 3, 20), 50);
+  const scanLimitParam = Number(url.searchParams.get('scan_limit'));
+  const scanLimit = Number.isInteger(scanLimitParam) && scanLimitParam > 0
+    ? Math.min(scanLimitParam, 50)
+    : Math.min(Math.max(limit * 3, 20), 50);
+
+  const scanOffsetParam = Number(url.searchParams.get('scan_offset') ?? url.searchParams.get('cursor') ?? url.searchParams.get('offset'));
+  const scanOffset = Number.isInteger(scanOffsetParam) && scanOffsetParam >= 0 ? scanOffsetParam : 0;
+
   const listQuery = `
     SELECT
       qb.quiz_id,
@@ -173,10 +185,10 @@ export async function GET({ request, platform, url }) {
     FROM quiz_bundles qb
     JOIN quizzes q ON q.id = qb.quiz_id
     ${whereClause}
-    ORDER BY qb.updated_at DESC
-    LIMIT ?
+    ORDER BY qb.updated_at DESC, qb.quiz_id DESC
+    LIMIT ? OFFSET ?
   `;
-  const listRows = await db.prepare(listQuery).bind(...params, scanLimit).all();
+  const listRows = await db.prepare(listQuery).bind(...params, scanLimit, scanOffset).all();
   const candidates = listRows.results || [];
   const scanned_count = candidates.length;
 
@@ -217,7 +229,7 @@ export async function GET({ request, platform, url }) {
     };
   }));
 
-  const hasLiveFilter = Boolean(statusFilter || rawHealthStatus);
+  const hasLiveFilter = Boolean(statusFilter || healthStatusFilter);
   let matched = inspected;
 
   if (hasLiveFilter) {
@@ -234,26 +246,36 @@ export async function GET({ request, platform, url }) {
       if (statusFilter === 'stale') {
         return b.last_synced_at ? (Date.now() - new Date(b.last_synced_at).getTime() > 3600000) : true;
       }
-      if (rawHealthStatus) {
-        if (rawHealthStatus === 'conflict') {
+      if (healthStatusFilter) {
+        if (healthStatusFilter === 'conflict') {
           return b.docs_changed || b.quiz_changed || b.health_status === 'both_changed' || b.health_status === 'docs_changed' || b.health_status === 'quiz_changed';
         }
-        return b.health_status === rawHealthStatus;
+        return b.health_status === healthStatusFilter;
       }
       return true;
     });
   }
 
-  const paginated = matched.slice(offset, offset + limit);
+  const scanComplete = (scanOffset + scanned_count >= dbTotal);
+  const nextScanOffset = scanComplete ? null : scanOffset + scanned_count;
+  const nextCursor = scanComplete ? null : String(scanOffset + scanned_count);
 
   return json({
     success: true,
-    bundles: paginated,
-    total: hasLiveFilter ? matched.length : dbTotal,
+    bundles: matched,
+    scan_complete: scanComplete,
+    scan_limit: scanLimit,
+    scan_offset: scanOffset,
+    cursor: nextCursor,
+    next_cursor: nextCursor,
+    next_scan_offset: nextScanOffset,
     scanned_count,
-    returned_count: paginated.length,
+    matched_count: matched.length,
+    returned_count: matched.length,
+    total: scanComplete ? (hasLiveFilter ? matched.length : dbTotal) : null,
+    total_is_lower_bound: !scanComplete && hasLiveFilter,
     limit,
-    offset,
+    offset: scanOffset,
     refresh: true
   });
 }

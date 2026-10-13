@@ -6,6 +6,8 @@ import { createSignedToken } from '../src/lib/server/auth.js';
 import { POST as syncBundleEndpoint } from '../src/routes/api/quiz-menu/[id]/sync-bundle/+server.js';
 import { GET as getBundleEndpoint } from '../src/routes/api/quiz-menu/[id]/bundle/+server.js';
 import { GET as observabilityEndpoint } from '../src/routes/api/quiz-menu/bundle-observability/+server.js';
+import { GET as sessionsEndpoint } from '../src/routes/api/quiz-menu/[id]/sessions/+server.js';
+import { GET as assignEndpoint } from '../src/routes/api/quiz-menu/[id]/assign/+server.js';
 import {
   acquireBundleLock,
   renewBundleLock,
@@ -18,7 +20,9 @@ import {
   publishBundleHomework,
   bundleChecksum,
   renderTeacherDocument,
-  parseStrictExpectedRevision
+  parseStrictExpectedRevision,
+  validateStrictDeadline,
+  getValidTeachingSessions
 } from '../src/lib/server/quizDrive.js';
 
 const secret = 'quiz-drive-sync-phase3-secret';
@@ -62,12 +66,22 @@ async function fixture() {
     CREATE TABLE class_enrollments (id TEXT PRIMARY KEY, user_id TEXT, class_id TEXT, status TEXT);
     CREATE TABLE parent_student_links (id TEXT PRIMARY KEY, parent_user_id TEXT, student_user_id TEXT, verification_status TEXT);
     CREATE TABLE system_notifications (id TEXT PRIMARY KEY, target_role TEXT, target_user_id TEXT, title TEXT, body TEXT, category TEXT, reference_id TEXT);
+    CREATE TABLE class_sessions (
+      id TEXT PRIMARY KEY, class_id TEXT NOT NULL, class_name TEXT NOT NULL,
+      teacher_id TEXT NOT NULL, assistant_teacher_id TEXT, substitute_teacher_id TEXT,
+      session_date TEXT NOT NULL, start_time TEXT, end_time TEXT, status TEXT DEFAULT 'scheduled'
+    );
   `);
 
   sqlite.exec(fs.readFileSync('migrations/0012_quiz_menu.sql', 'utf8'));
   sqlite.exec(fs.readFileSync('migrations/0014_quiz_guest_class.sql', 'utf8'));
   sqlite.exec(fs.readFileSync('migrations/0013_quiz_menu_drive.sql', 'utf8'));
   sqlite.exec(fs.readFileSync('migrations/0022_quiz_bundle_sync_phase3.sql', 'utf8'));
+
+  sqlite.prepare(`
+    INSERT INTO class_sessions (id, class_id, class_name, teacher_id, session_date, start_time, end_time, status)
+    VALUES ('sess-1', 'class-7a', 'Lớp 7A', 'teacher-1', '2026-10-20', '08:00', '09:30', 'scheduled')
+  `).run();
 
   sqlite.prepare(`
     INSERT INTO users (id, username, name, role, status, metadata) VALUES
@@ -276,7 +290,7 @@ test('RED-3.3: acquireBundleLock, concurrent lock rejection, expired takeover, a
 });
 
 test('RED-3.3: logBundleSyncEvent and getBundleSyncEvents audit trail', async () => {
-  const { db } = await fixture();
+  const { db, sqlite } = await fixture();
   const quizId = 'quiz-sync-1';
 
   await logBundleSyncEvent(db, {
@@ -301,7 +315,10 @@ test('RED-3.3: logBundleSyncEvent and getBundleSyncEvents audit trail', async ()
   assert.equal(events.length, 2);
   assert.equal(events[0].event_type, 'succeeded');
   assert.equal(events[0].to_revision, 2);
-  assert.equal(events[0].details.doc_id, 'doc-123');
+  const rawEvent = sqlite.prepare(`SELECT * FROM quiz_bundle_sync_events WHERE id = ?`).get(events[0].id);
+  assert.ok(rawEvent.details_json.includes('doc-123'), 'Audit table stores details server-side');
+  assert.equal(events[0].details, undefined, 'details stripped from client response');
+  assert.equal(events[0].details_json, undefined, 'details_json stripped from client response');
   assert.equal(events[1].event_type, 'started');
 });
 
@@ -652,7 +669,7 @@ test('RED-3.5: Homework revision parity, published status preservation, and publ
       });
     }, (err) => err.code === 'BundleNotReady');
 
-    // 6. Idempotent notification: republishing with same revision does not duplicate notifications
+    // 6. Notification revision parity: rev 2 generates notification; retry does not duplicate
     await db.prepare(`UPDATE quiz_bundles SET sync_status = 'synced' WHERE quiz_id = ?`).bind(quizId).run();
     const notifCountBefore = (await db.prepare(`SELECT COUNT(*) as c FROM system_notifications`).first()).c;
 
@@ -665,7 +682,19 @@ test('RED-3.5: Homework revision parity, published status preservation, and publ
       deadline_time: '18:00'
     });
     const notifCountAfter = (await db.prepare(`SELECT COUNT(*) as c FROM system_notifications`).first()).c;
-    assert.equal(notifCountAfter, notifCountBefore, 'No duplicate notifications created');
+    assert.equal(notifCountAfter, notifCountBefore + 1, 'Rev 2 generates new notification for student');
+
+    // Retry of rev 2 does not duplicate
+    await publishBundleHomework(platform, db, quizId, { id: 'teacher-1' }, {
+      expected_revision: 2,
+      class_id: 'class-7a',
+      class_name: 'Lớp 7A',
+      session_id: 'sess-1',
+      deadline_date: '2026-10-20',
+      deadline_time: '18:00'
+    });
+    const notifCountAfterRetry = (await db.prepare(`SELECT COUNT(*) as c FROM system_notifications`).first()).c;
+    assert.equal(notifCountAfterRetry, notifCountAfter, 'Retry of rev 2 does NOT duplicate notifications');
   } finally {
     mockDrive.restore();
   }
@@ -1054,7 +1083,7 @@ test('RED-3R3.4: getBundleSyncEvents strips details_json, durable started event 
     assert.ok(events.length > 0);
     for (const ev of events) {
       assert.equal(ev.details_json, undefined, 'details_json must be stripped from response');
-      assert.ok(ev.details !== undefined, 'parsed details object exists');
+      assert.equal(ev.details, undefined, 'arbitrary details must not be exposed to client');
     }
 
     // 2. Drop audit table to simulate audit system failure
@@ -1211,3 +1240,485 @@ test('RED-3R3.6: DriveInvalidResponse thrown and compensated when Drive returns 
     globalThis.fetch = originalFetch;
   }
 });
+
+// -------------------------------------------------------------------------------------------------
+// Part K: Round 4 Hardening (RED-3R4.1 -> RED-3R4.7)
+// -------------------------------------------------------------------------------------------------
+
+test('RED-3R4.1: Homework target RBAC: session lookup, DB class_name derivation, class mismatch 409, teacher isolation 403, and manager permissions', async () => {
+  const { platform, db, sqlite } = await fixture();
+  const quizId = 'quiz-sync-1';
+  const mockDrive = createDriveMock();
+
+  try {
+    // 1. Initial publish of bundle
+    await publishQuizBundle(platform, db, quizId);
+
+    // Setup another teacher and another session
+    sqlite.prepare(`
+      INSERT INTO class_sessions (id, class_id, class_name, teacher_id, session_date, start_time, end_time, status)
+      VALUES ('sess-teacher2', 'class-7b', 'Lớp 7B Chuyên', 'teacher-2', '2026-10-25', '14:00', '15:30', 'scheduled')
+    `).run();
+
+    // Case A: Non-existent session -> 404 SessionNotFound
+    await assert.rejects(async () => {
+      await publishBundleHomework(platform, db, quizId, { id: 'teacher-1', role: 'teacher' }, {
+        expected_revision: 1,
+        session_id: 'sess-nonexistent',
+        class_id: 'class-7a',
+        deadline_date: '2026-10-25',
+        deadline_time: '18:00'
+      });
+    }, (err) => err.code === 'SessionNotFound' && err.status === 404);
+
+    // Case B: Class mismatch between client class_id and session.class_id -> 409 SessionClassMismatch
+    await assert.rejects(async () => {
+      await publishBundleHomework(platform, db, quizId, { id: 'teacher-1', role: 'teacher' }, {
+        expected_revision: 1,
+        session_id: 'sess-1',
+        class_id: 'class-wrong',
+        deadline_date: '2026-10-25',
+        deadline_time: '18:00'
+      });
+    }, (err) => err.code === 'SessionClassMismatch' && err.status === 409);
+
+    // Case C: Teacher 1 tries to publish to Teacher 2's session -> 403 SessionForbidden
+    const hwBefore = sqlite.prepare(`SELECT * FROM homework_assignments WHERE source_quiz_id = ?`).get(quizId);
+    const notifsBefore = sqlite.prepare(`SELECT COUNT(*) as c FROM system_notifications`).get().c;
+
+    await assert.rejects(async () => {
+      await publishBundleHomework(platform, db, quizId, { id: 'teacher-1', role: 'teacher' }, {
+        expected_revision: 1,
+        session_id: 'sess-teacher2',
+        class_id: 'class-7b',
+        deadline_date: '2026-10-25',
+        deadline_time: '18:00'
+      });
+    }, (err) => err.code === 'SessionForbidden' && err.status === 403);
+
+    // Verify DB state remained untouched (no notification, no assignment update)
+    const notifsAfter = sqlite.prepare(`SELECT COUNT(*) as c FROM system_notifications`).get().c;
+    assert.equal(notifsAfter, notifsBefore, 'No notifications created when RBAC fails');
+    const hwAfter = sqlite.prepare(`SELECT * FROM homework_assignments WHERE source_quiz_id = ?`).get(quizId);
+    assert.equal(hwAfter.status, hwBefore.status, 'Homework status unchanged when RBAC fails');
+
+    // Case D: Teacher 1 publishes to own session with spoofed client class_name -> server ignores client and derives from DB
+    const pubTeacher1 = await publishBundleHomework(platform, db, quizId, { id: 'teacher-1', role: 'teacher' }, {
+      expected_revision: 1,
+      session_id: 'sess-1',
+      class_id: 'class-7a',
+      class_name: 'Hacked Class Name From Client',
+      deadline_date: '2026-10-25',
+      deadline_time: '18:00'
+    });
+    assert.equal(pubTeacher1.class_name, 'Lớp 7A', 'class_name strictly derived from DB record');
+
+    // Case E: Assistant teacher and substitute teacher are authorized
+    sqlite.prepare(`
+      INSERT INTO class_sessions (id, class_id, class_name, teacher_id, assistant_teacher_id, session_date, start_time, end_time, status)
+      VALUES ('sess-asst', 'class-7c', 'Lớp 7C', 'teacher-2', 'teacher-1', '2026-10-26', '08:00', '09:30', 'scheduled')
+    `).run();
+    const pubAsst = await publishBundleHomework(platform, db, quizId, { id: 'teacher-1', role: 'teacher' }, {
+      expected_revision: 1,
+      session_id: 'sess-asst',
+      class_id: 'class-7c',
+      deadline_date: '2026-10-26',
+      deadline_time: '18:00'
+    });
+    assert.equal(pubAsst.class_name, 'Lớp 7C', 'Assistant teacher authorized');
+
+    // Case F: Manager (admin or leader) can manage any session
+    const pubAdmin = await publishBundleHomework(platform, db, quizId, { id: 'admin-1', role: 'admin' }, {
+      expected_revision: 1,
+      session_id: 'sess-teacher2',
+      class_id: 'class-7b',
+      deadline_date: '2026-10-25',
+      deadline_time: '18:00'
+    });
+    assert.equal(pubAdmin.class_name, 'Lớp 7B Chuyên', 'Manager authorized for all sessions');
+  } finally {
+    mockDrive.restore();
+  }
+});
+
+test('RED-3R4.2: Revision notification parity: rev 1 retry is idempotent, rev 2 with same session/deadline creates rev 2 notification, retry rev 2 is idempotent, and new student in rev 2 receives notification', async () => {
+  const { platform, db, sqlite } = await fixture();
+  const quizId = 'quiz-sync-1';
+  const mockDrive = createDriveMock();
+
+  try {
+    // 1. Publish bundle rev 1
+    const b1 = await publishQuizBundle(platform, db, quizId);
+    assert.equal(b1.revision, 1);
+
+    // Enroll initial student
+    sqlite.prepare(`INSERT INTO class_enrollments VALUES ('ce-1', 'student-1', 'class-7a', 'active')`).run();
+
+    // 2. Publish homework rev 1
+    await publishBundleHomework(platform, db, quizId, { id: 'teacher-1', role: 'teacher' }, {
+      expected_revision: 1,
+      session_id: 'sess-1',
+      class_id: 'class-7a',
+      deadline_date: '2026-10-20',
+      deadline_time: '18:00'
+    });
+
+    const notifsRev1 = sqlite.prepare(`SELECT * FROM system_notifications`).all();
+    assert.equal(notifsRev1.length, 1);
+    assert.ok(notifsRev1[0].id.includes('_r1_'));
+    assert.ok(notifsRev1[0].title.startsWith('📚 BTVN mới:'));
+
+    // 3. Retry publish rev 1 -> 0 new notifications
+    await publishBundleHomework(platform, db, quizId, { id: 'teacher-1', role: 'teacher' }, {
+      expected_revision: 1,
+      session_id: 'sess-1',
+      class_id: 'class-7a',
+      deadline_date: '2026-10-20',
+      deadline_time: '18:00'
+    });
+    assert.equal(sqlite.prepare(`SELECT COUNT(*) as c FROM system_notifications`).get().c, 1);
+
+    // 4. Publish quiz bundle rev 2
+    const b2 = await publishQuizBundle(platform, db, quizId, { expectedRevision: 1 });
+    assert.equal(b2.revision, 2);
+
+    // 5. Publish homework rev 2 with IDENTICAL session, class, deadline_date, deadline_time
+    await publishBundleHomework(platform, db, quizId, { id: 'teacher-1', role: 'teacher' }, {
+      expected_revision: 2,
+      session_id: 'sess-1',
+      class_id: 'class-7a',
+      deadline_date: '2026-10-20',
+      deadline_time: '18:00'
+    });
+
+    const notifsRev2 = sqlite.prepare(`SELECT * FROM system_notifications ORDER BY id`).all();
+    assert.equal(notifsRev2.length, 2, 'Rev 2 generates new notification even when session/deadline unchanged');
+    const rev2Notif = notifsRev2.find(n => n.id.includes('_r2_'));
+    assert.ok(rev2Notif, 'Notification ID contains _r2_');
+    assert.ok(rev2Notif.title.includes('Cập nhật BTVN (rev 2)'));
+
+    // 6. Retry publish rev 2 -> 0 new notifications
+    await publishBundleHomework(platform, db, quizId, { id: 'teacher-1', role: 'teacher' }, {
+      expected_revision: 2,
+      session_id: 'sess-1',
+      class_id: 'class-7a',
+      deadline_date: '2026-10-20',
+      deadline_time: '18:00'
+    });
+    assert.equal(sqlite.prepare(`SELECT COUNT(*) as c FROM system_notifications`).get().c, 2);
+
+    // 7. Newly enrolled student in class during rev 2 receives missing notification without duplicating existing student
+    sqlite.prepare(`INSERT INTO class_enrollments VALUES ('ce-2', 'student-2', 'class-7a', 'active')`).run();
+
+    await publishBundleHomework(platform, db, quizId, { id: 'teacher-1', role: 'teacher' }, {
+      expected_revision: 2,
+      session_id: 'sess-1',
+      class_id: 'class-7a',
+      deadline_date: '2026-10-20',
+      deadline_time: '18:00'
+    });
+
+    const notifsAfterNewStudent = sqlite.prepare(`SELECT * FROM system_notifications ORDER BY id`).all();
+    assert.equal(notifsAfterNewStudent.length, 3, 'New student received notification, existing student not duplicated');
+    const student2Notif = notifsAfterNewStudent.find(n => n.target_user_id === 'student-2');
+    assert.ok(student2Notif, 'Student 2 received notification');
+    assert.ok(student2Notif.id.includes('_r2_s_student-2'));
+  } finally {
+    mockDrive.restore();
+  }
+});
+
+test('RED-3R4.3: Teaching schedule API and UI contract: RBAC filtering, ordering, derivation, touch targets and palette', async () => {
+  const { platform, db, teacherToken, teacher2Token, adminToken, sqlite } = await fixture();
+  const quizId = 'quiz-sync-1';
+  const mockDrive = createDriveMock();
+
+  try {
+    // Publish bundle
+    await publishQuizBundle(platform, db, quizId);
+
+    // Seed multiple sessions: past and upcoming
+    sqlite.prepare(`
+      INSERT INTO class_sessions (id, class_id, class_name, teacher_id, session_date, start_time, end_time, status)
+      VALUES
+      ('sess-t1-future', 'class-7a', 'Lớp 7A', 'teacher-1', '2028-11-01', '08:00', '09:30', 'scheduled'),
+      ('sess-t1-past', 'class-7a', 'Lớp 7A', 'teacher-1', '2024-01-01', '08:00', '09:30', 'completed'),
+      ('sess-t2-future', 'class-7b', 'Lớp 7B', 'teacher-2', '2028-11-02', '14:00', '15:30', 'scheduled'),
+      ('sess-t1-sub', 'class-7c', 'Lớp 7C', 'teacher-2', '2028-11-03', '10:00', '11:30', 'scheduled')
+    `).run();
+    sqlite.prepare(`UPDATE class_sessions SET substitute_teacher_id = 'teacher-1' WHERE id = 'sess-t1-sub'`).run();
+
+    // 1. getValidTeachingSessions for teacher-1:
+    // Only sees sess-1, sess-t1-future, sess-t1-past, sess-t1-sub. Does NOT see sess-t2-future.
+    const t1Sessions = await getValidTeachingSessions(db, { id: 'teacher-1', role: 'teacher' });
+    const t1Ids = t1Sessions.map(s => s.session_id);
+    assert.ok(t1Ids.includes('sess-1'));
+    assert.ok(t1Ids.includes('sess-t1-future'));
+    assert.ok(t1Ids.includes('sess-t1-sub'));
+    assert.ok(!t1Ids.includes('sess-t2-future'), 'Teacher 1 cannot see Teacher 2 exclusive session');
+
+    // Upcoming sessions prioritized before past sessions
+    const futureIdx = t1Sessions.findIndex(s => s.session_id === 'sess-t1-future');
+    const pastIdx = t1Sessions.findIndex(s => s.session_id === 'sess-t1-past');
+    assert.ok(futureIdx < pastIdx, 'Upcoming sessions appear before past sessions');
+
+    // 2. getValidTeachingSessions for admin-1: sees all sessions
+    const adminSessions = await getValidTeachingSessions(db, { id: 'admin-1', role: 'admin' });
+    const adminIds = adminSessions.map(s => s.session_id);
+    assert.ok(adminIds.includes('sess-t2-future'), 'Admin sees Teacher 2 session');
+
+    // 3. GET /api/quiz-menu/[id]/bundle includes sessions in response
+    const bundleRes = await getBundleEndpoint({
+      params: { id: quizId },
+      request: jsonRequest(`/api/quiz-menu/${quizId}/bundle`, teacherToken, null, 'GET'),
+      platform
+    });
+    assert.equal(bundleRes.status, 200);
+    const bundleData = await bundleRes.json();
+    assert.ok(Array.isArray(bundleData.sessions), 'bundle endpoint returns sessions array');
+    assert.ok(bundleData.sessions.length > 0);
+
+    // 4. GET /api/quiz-menu/[id]/sessions returns sessions
+    const sessRes = await sessionsEndpoint({
+      params: { id: quizId },
+      request: jsonRequest(`/api/quiz-menu/${quizId}/sessions`, teacherToken, null, 'GET'),
+      platform
+    });
+    assert.equal(sessRes.status, 200);
+    const sessData = await sessRes.json();
+    assert.ok(Array.isArray(sessData.sessions));
+
+    // 5. UI contract check on +page.svelte
+    const pageSrc = fs.readFileSync('src/routes/quiz-menu/+page.svelte', 'utf8');
+    assert.ok(pageSrc.includes('bundle-session-select'), 'Contains teaching schedule select');
+    assert.ok(pageSrc.includes('selected-session-card'), 'Contains selected session preview card');
+    assert.ok(!pageSrc.includes('bind:value={homeworkForm.session_id}><input'), 'Manual input for session_id removed');
+    assert.ok(!pageSrc.includes('bind:value={homeworkForm.class_id}><input'), 'Manual input for class_id removed');
+    assert.ok(!pageSrc.includes('bind:value={homeworkForm.class_name}><input'), 'Manual input for class_name removed');
+    assert.ok(pageSrc.includes('disabled={bundleBusy || !homeworkForm.session_id}'), 'Submit disabled when no session selected');
+  } finally {
+    mockDrive.restore();
+  }
+});
+
+test('RED-3R4.4: Strict Gregorian deadline and timezone validation: leap years, 24:00, 99:99, past date/time, and future today', async () => {
+  const { platform, db } = await fixture();
+  const quizId = 'quiz-sync-1';
+  const mockDrive = createDriveMock();
+
+  try {
+    await publishQuizBundle(platform, db, quizId);
+
+    const refNow = '2026-10-13T10:00:00+07:00';
+
+    // 1. Valid leap day (2028-02-29 is a valid Gregorian leap day in the future)
+    const validLeap = validateStrictDeadline('2028-02-29', '18:00', { now: refNow });
+    assert.equal(validLeap.deadlineDate, '2028-02-29');
+
+    // 2. Invalid leap day (2026 is NOT a leap year -> 2026-02-29 must fail)
+    assert.throws(
+      () => validateStrictDeadline('2026-02-29', '18:00', { now: refNow }),
+      (err) => err.code === 'InvalidDeadline' && err.status === 400
+    );
+
+    // 3. Malformed Gregorian date (2026-99-99)
+    assert.throws(
+      () => validateStrictDeadline('2026-99-99', '18:00', { now: refNow }),
+      (err) => err.code === 'InvalidDeadline' && err.status === 400
+    );
+
+    // 4. Invalid hour: 24:00
+    assert.throws(
+      () => validateStrictDeadline('2026-10-20', '24:00', { now: refNow }),
+      (err) => err.code === 'InvalidDeadline' && err.status === 400
+    );
+
+    // 5. Malformed time: 99:99
+    assert.throws(
+      () => validateStrictDeadline('2026-10-20', '99:99', { now: refNow }),
+      (err) => err.code === 'InvalidDeadline' && err.status === 400
+    );
+
+    // 6. Past date (yesterday relative to refNow)
+    assert.throws(
+      () => validateStrictDeadline('2026-10-12', '18:00', { now: refNow }),
+      (err) => err.code === 'InvalidDeadline' && err.status === 400
+    );
+
+    // 7. Today at past time (08:00 relative to 10:00 refNow)
+    assert.throws(
+      () => validateStrictDeadline('2026-10-13', '08:00', { now: refNow }),
+      (err) => err.code === 'InvalidDeadline' && err.status === 400
+    );
+
+    // 8. Today at future time (18:00 relative to 10:00 refNow) -> VALID
+    const validToday = validateStrictDeadline('2026-10-13', '18:00', { now: refNow });
+    assert.equal(validToday.deadlineDate, '2026-10-13');
+
+    // 9. publishBundleHomework fails closed when deadline is in the past
+    await assert.rejects(async () => {
+      await publishBundleHomework(platform, db, quizId, { id: 'teacher-1', role: 'teacher' }, {
+        expected_revision: 1,
+        session_id: 'sess-1',
+        class_id: 'class-7a',
+        deadline_date: '2020-01-01',
+        deadline_time: '18:00'
+      });
+    }, (err) => err.code === 'InvalidDeadline' && err.status === 400);
+  } finally {
+    mockDrive.restore();
+  }
+});
+
+test('RED-3R4.5: Concurrency lock covers publish_homework: renews lockToken and aborts before write if stolen', async () => {
+  const { platform, db, sqlite } = await fixture();
+  const quizId = 'quiz-sync-1';
+  const mockDrive = createDriveMock();
+
+  try {
+    await publishQuizBundle(platform, db, quizId);
+
+    // 1. Acquire lock
+    const lock = await acquireBundleLock(db, quizId, 'teacher-1');
+    assert.ok(lock.lockToken);
+
+    // 2. Simulate lock takeover by another process
+    sqlite.prepare(`UPDATE quiz_bundle_sync_locks SET lock_token = 'stolen-token' WHERE quiz_id = ?`).run(quizId);
+
+    // 3. publishBundleHomework with old lockToken throws BundleSyncLockLost
+    const notifsBefore = sqlite.prepare(`SELECT COUNT(*) as c FROM system_notifications`).get().c;
+    await assert.rejects(async () => {
+      await publishBundleHomework(platform, db, quizId, { id: 'teacher-1', role: 'teacher' }, {
+        expected_revision: 1,
+        session_id: 'sess-1',
+        class_id: 'class-7a',
+        deadline_date: '2028-10-20',
+        deadline_time: '18:00',
+        lockToken: lock.lockToken
+      });
+    }, (err) => err.code === 'BundleSyncLockLost' && err.status === 409);
+
+    // Verify 0 notifications sent and assignments not modified
+    const notifsAfter = sqlite.prepare(`SELECT COUNT(*) as c FROM system_notifications`).get().c;
+    assert.equal(notifsAfter, notifsBefore, 'No notifications created when lock is lost');
+  } finally {
+    mockDrive.restore();
+  }
+});
+
+test('RED-3R4.6: Observability refresh bounded scanning, honest total, cursor pagination, and health_status allowlist', async () => {
+  const { platform, adminToken, sqlite } = await fixture();
+  const mockDrive = createDriveMock();
+
+  try {
+    // 1. health_status allowlist rejects garbage values with 400 InvalidHealthStatusFilter
+    const garbageRes = await observabilityEndpoint({
+      request: jsonRequest('/api/quiz-menu/bundle-observability', adminToken, null, 'GET'),
+      platform,
+      url: new URL('https://timbk.io.vn/api/quiz-menu/bundle-observability?health_status=invalid_garbage')
+    });
+    assert.equal(garbageRes.status, 400);
+    assert.equal((await garbageRes.json()).error, 'InvalidHealthStatusFilter');
+
+    // 2. Seed 4 bundles in DB
+    sqlite.prepare(`
+      INSERT INTO quizzes (id, title, status, created_by) VALUES
+      ('quiz-b1', 'Bundle Quiz 1', 'published', 'teacher-1'),
+      ('quiz-b2', 'Bundle Quiz 2', 'published', 'teacher-1'),
+      ('quiz-b3', 'Bundle Quiz 3', 'published', 'teacher-1'),
+      ('quiz-b4', 'Bundle Quiz 4', 'published', 'teacher-1')
+    `).run();
+
+    const quizzes = [
+      { id: 'quiz-b1', doc: 'doc-001', docx: 'docx-001', title: 'Bundle Quiz 1', time: '2026-10-13T10:00:04.000Z' },
+      { id: 'quiz-b2', doc: 'doc-002', docx: 'docx-002', title: 'Bundle Quiz 2', time: '2026-10-13T10:00:03.000Z' },
+      { id: 'quiz-b3', doc: 'doc-003', docx: 'docx-003', title: 'Bundle Quiz 3', time: '2026-10-13T10:00:02.000Z' },
+      { id: 'quiz-b4', doc: 'doc-004', docx: 'docx-004', title: 'Bundle Quiz 4', time: '2026-10-13T10:00:01.000Z' }
+    ];
+    for (const q of quizzes) {
+      const quizRow = sqlite.prepare(`SELECT * FROM quizzes WHERE id = ?`).get(q.id);
+      const cs = await bundleChecksum(quizRow, []);
+      sqlite.prepare(`
+        INSERT INTO quiz_bundles (quiz_id, google_doc_file_id, printable_docx_file_id, revision, quiz_checksum, sync_status, last_synced_at, google_doc_modified_time, homework_draft_json, updated_at)
+        VALUES (?, ?, ?, 1, ?, 'synced', '2026-10-13T10:00:00.000Z', '2026-10-13T10:00:00.000Z', '{}', ?)
+      `).run(q.id, q.doc, q.docx, cs, q.time);
+    }
+
+    // Register all in mock drive; make doc-004 CONFLICT (modified time differs)
+    mockDrive.files.set('doc-001', { id: 'doc-001', name: 'Doc 1', mimeType: 'application/vnd.google-apps.document', modifiedTime: '2026-10-13T10:00:00.000Z', trashed: false });
+    mockDrive.files.set('doc-002', { id: 'doc-002', name: 'Doc 2', mimeType: 'application/vnd.google-apps.document', modifiedTime: '2026-10-13T10:00:00.000Z', trashed: false });
+    mockDrive.files.set('doc-003', { id: 'doc-003', name: 'Doc 3', mimeType: 'application/vnd.google-apps.document', modifiedTime: '2026-10-13T10:00:00.000Z', trashed: false });
+    mockDrive.files.set('doc-004', { id: 'doc-004', name: 'Doc 4', mimeType: 'application/vnd.google-apps.document', modifiedTime: '2026-10-13T12:30:00.000Z', trashed: false }); // Live conflict!
+
+    // 3. Scan Batch 1 (limit 2, offset 0) with status=conflict
+    const batch1Res = await observabilityEndpoint({
+      request: jsonRequest('/api/quiz-menu/bundle-observability', adminToken, null, 'GET'),
+      platform,
+      url: new URL('https://timbk.io.vn/api/quiz-menu/bundle-observability?refresh=1&scan_limit=2&scan_offset=0&status=conflict')
+    });
+    assert.equal(batch1Res.status, 200);
+    const batch1Data = await batch1Res.json();
+    assert.equal(batch1Data.scan_complete, false, 'Batch 1 scan is not complete');
+    assert.equal(batch1Data.scanned_count, 2);
+    assert.equal(batch1Data.matched_count, 0, 'No conflict in first batch');
+    assert.equal(batch1Data.total, null, 'Total is null when scan is incomplete');
+    assert.equal(batch1Data.total_is_lower_bound, true);
+    assert.equal(batch1Data.next_cursor, '2');
+
+    // 4. Scan Batch 2 (cursor=2, limit 2) finds conflict at doc-4
+    const batch2Res = await observabilityEndpoint({
+      request: jsonRequest('/api/quiz-menu/bundle-observability', adminToken, null, 'GET'),
+      platform,
+      url: new URL(`https://timbk.io.vn/api/quiz-menu/bundle-observability?refresh=1&scan_limit=2&cursor=${batch1Data.next_cursor}&status=conflict`)
+    });
+    assert.equal(batch2Res.status, 200);
+    const batch2Data = await batch2Res.json();
+    assert.equal(batch2Data.scanned_count, 2);
+    assert.equal(batch2Data.matched_count, 1, 'Conflict in batch 2 detected');
+    assert.equal(batch2Data.bundles[0].quiz_id, 'quiz-b4');
+    assert.ok(batch2Data.bundles[0].docs_changed);
+    assert.equal(batch2Data.scan_complete, true, 'Scan is complete on batch 2');
+    assert.equal(batch2Data.next_cursor, null);
+  } finally {
+    mockDrive.restore();
+  }
+});
+
+test('RED-3R4.7: Audit events response does not expose arbitrary details or Drive file IDs', async () => {
+  const { platform, db, teacherToken, sqlite } = await fixture();
+  const quizId = 'quiz-sync-1';
+  const mockDrive = createDriveMock();
+
+  try {
+    await publishQuizBundle(platform, db, quizId);
+
+    // Log an event with sensitive details containing Drive file ID
+    await logBundleSyncEvent(db, {
+      quizId,
+      eventType: 'cleanup_warning',
+      actor: 'teacher-1',
+      direction: 'publish_quiz_to_docs',
+      fromRevision: 1,
+      toRevision: 1,
+      details: { deletedFileId: 'drive-sensitive-998877', reason: 'rollback' }
+    });
+
+    // 1. getBundleSyncEvents does NOT leak details object or details_json
+    const events = await getBundleSyncEvents(db, quizId, 5);
+    assert.ok(events.length > 0);
+    const jsonStr = JSON.stringify(events);
+    assert.ok(!jsonStr.includes('drive-sensitive-998877'), 'Drive file ID is NOT leaked in events response');
+    for (const ev of events) {
+      assert.equal(ev.details, undefined, 'details is undefined');
+      assert.equal(ev.details_json, undefined, 'details_json is undefined');
+    }
+
+    // 2. Server-side database retains the full raw audit details
+    const dbRow = sqlite.prepare(`SELECT * FROM quiz_bundle_sync_events WHERE details_json LIKE '%drive-sensitive-998877%'`).get();
+    assert.ok(dbRow, 'Raw audit row exists in DB');
+    assert.ok(dbRow.details_json.includes('drive-sensitive-998877'), 'Server-side DB preserves audit details');
+  } finally {
+    mockDrive.restore();
+  }
+});
+

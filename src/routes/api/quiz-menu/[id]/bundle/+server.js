@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
 import { isStaffUser, verifyServerAuth } from '../../../../../lib/server/auth.js';
 import { canManageQuiz } from '../../../../../lib/server/quizMenu.js';
-import { getBundleSyncEvents, inspectBundleHealth, QuizDriveError } from '../../../../../lib/server/quizDrive.js';
+import { getBundleSyncEvents, getValidTeachingSessions, inspectBundleHealth, QuizDriveError } from '../../../../../lib/server/quizDrive.js';
 
 export const prerender = false;
 
@@ -24,7 +24,8 @@ export async function GET({ params, request, platform }) {
       return json({ success: false, error: 'BundleNotFound', message: 'Quiz chưa có bundle DOCX' }, { status: 404 });
     }
     const events = await getBundleSyncEvents(db, params.id, 5);
-    return json({ success: true, bundle: health.bundle, health, events });
+    const sessions = await getValidTeachingSessions(db, auth.user, 50);
+    return json({ success: true, bundle: health.bundle, health, events, sessions });
   } catch (error) {
     const status = error instanceof QuizDriveError ? error.status : 500;
     return json({ success: false, error: error.code || 'BundleReadFailed', message: error.message }, { status });
