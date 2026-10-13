@@ -1107,6 +1107,23 @@
     finally { bundleBusy = false; }
   }
 
+  let pendingResolution = null;
+
+  function promptConflictResolution(resChoice) {
+    pendingResolution = resChoice;
+    conflictModalOpen = true;
+  }
+
+  async function reloadBundleData(quizId) {
+    if (!quizId) return;
+    try {
+      const res = await api(`/api/quiz-menu/${quizId}/bundle`);
+      bundle = res.bundle;
+      bundleHealth = res.health;
+      bundleEvents = res.events || [];
+    } catch {}
+  }
+
   async function syncBundle(direction, resolution = null) {
     if (!selectedManageQuiz) return;
     bundleBusy = true; error = '';
@@ -1121,12 +1138,11 @@
         message = 'Đã đồng bộ thành công.';
       }
       conflictModalOpen = false;
-      const res = await api(`/api/quiz-menu/${selectedManageQuiz.id}/bundle`);
-      bundle = res.bundle;
-      bundleHealth = res.health;
-      bundleEvents = res.events || [];
+      pendingResolution = null;
+      await reloadBundleData(selectedManageQuiz.id);
     } catch (err) {
-      if (err.message?.includes('BundleSyncConflict') || err.message?.includes('xung đột')) {
+      if (err.message?.includes('BundleSyncConflict') || err.message?.includes('xung đột') || err.message?.includes('BundleRevisionConflict') || err.message?.includes('MissingExpectedRevision')) {
+        await reloadBundleData(selectedManageQuiz.id);
         conflictModalOpen = true;
       } else {
         error = friendlyError(err.message);
@@ -2309,7 +2325,8 @@
             {:else if bundleHealth.status === 'both_changed'}
               <span class="badge-health badge-conflict">⚠ Xung đột: cả 2 bên đã sửa</span>
             {:else if bundleHealth.status === 'drive_unavailable'}
-              <span class="badge-health badge-error">✕ Drive không khả dụng</span>
+              <span class="badge-health badge-error" aria-live="polite">✕ Drive không khả dụng</span>
+              <button class="btn-sync-retry" on:click={() => reloadBundleData(selectedManageQuiz.id)} disabled={bundleBusy} style="min-height:44px;min-width:44px;padding:4px 8px;font-size:0.8rem;cursor:pointer;border-radius:6px;border:1px solid #d1d5db;background:#fff;">Thử lại</button>
             {:else}
               <span class="badge-health badge-clean">{bundleHealth.status}</span>
             {/if}
@@ -2359,13 +2376,13 @@
         </div>
 
         {#if bundleHealth?.status === 'both_changed' || bundle.sync_status === 'conflict'}
-          <div class="conflict-box">
+          <div class="conflict-box" role="region" aria-live="polite">
             <strong>Phát hiện xung đột nội dung:</strong> Cả Quiz và Google Docs đều có chỉnh sửa mới kể từ lần đồng bộ trước (rev {bundle.revision}).
             <div class="conflict-choices">
-              <button class="btn-conflict-resolve btn-keep-quiz" on:click={() => syncBundle('publish_quiz_to_docs', 'keep_quiz')} disabled={bundleBusy}>
+              <button class="btn-conflict-resolve btn-keep-quiz" on:click={() => promptConflictResolution('keep_quiz')} disabled={bundleBusy}>
                 Giữ bản Quiz (Ghi đè Docs)
               </button>
-              <button class="btn-conflict-resolve btn-keep-docs" on:click={() => syncBundle('import_docs_to_quiz', 'keep_docs')} disabled={bundleBusy}>
+              <button class="btn-conflict-resolve btn-keep-docs" on:click={() => promptConflictResolution('keep_docs')} disabled={bundleBusy}>
                 Giữ bản Google Docs (Ghi đè Quiz)
               </button>
             </div>
@@ -2419,30 +2436,40 @@
 {#if conflictModalOpen}
   <div class="modal-backdrop" role="presentation">
     <section class="conflict-dialog" role="dialog" aria-modal="true" aria-labelledby="conflict-modal-title">
-      <button class="dialog-close" aria-label="Đóng" on:click={() => conflictModalOpen = false}>×</button>
+      <button class="dialog-close" aria-label="Đóng" on:click={() => { conflictModalOpen = false; pendingResolution = null; }}>×</button>
       <div class="dialog-icon conflict-icon">⚠</div>
       <span class="section-kicker">GIẢI QUYẾT XUNG ĐỘT ĐỒNG BỘ</span>
-      <h2 id="conflict-modal-title">Chọn phiên bản bạn muốn giữ</h2>
+      <h2 id="conflict-modal-title">
+        {pendingResolution === 'keep_quiz' ? 'Xác nhận ghi đè Google Docs' : (pendingResolution === 'keep_docs' ? 'Xác nhận ghi đè Quiz' : 'Chọn phiên bản bạn muốn giữ')}
+      </h2>
       <p class="conflict-desc">
-        Cả hệ thống Quiz và tài liệu Google Docs đều có chỉnh sửa độc lập kể từ lần đồng bộ trước (revision {bundle?.revision}). Vui lòng chọn bản chuẩn:
+        {pendingResolution === 'keep_quiz'
+          ? 'Hành động này sẽ ghi đè toàn bộ nội dung Google Docs bằng câu hỏi Quiz và sinh lại bản in DOCX mới (rev ' + (bundle?.revision || 0) + ').'
+          : (pendingResolution === 'keep_docs'
+            ? 'Hành động này sẽ tải câu hỏi từ Google Docs về thay thế toàn bộ câu hỏi hiện tại trên Quiz (rev ' + (bundle?.revision || 0) + ').'
+            : 'Cả hệ thống Quiz và tài liệu Google Docs đều có chỉnh sửa độc lập kể từ lần đồng bộ trước (revision ' + (bundle?.revision || 0) + '). Vui lòng chọn bản chuẩn:')}
       </p>
       <div class="conflict-modal-options">
-        <div class="conflict-option-card">
-          <h4>Giữ bản Quiz (Web)</h4>
-          <p>Dữ liệu câu hỏi trên website sẽ ghi đè toàn bộ nội dung Google Docs và sinh lại bản in DOCX mới.</p>
-          <button class="btn-conflict-action btn-keep-quiz" on:click={() => syncBundle('publish_quiz_to_docs', 'keep_quiz')} disabled={bundleBusy}>
-            Giữ bản Quiz (Ghi đè Docs)
-          </button>
-        </div>
-        <div class="conflict-option-card">
-          <h4>Giữ bản Google Docs</h4>
-          <p>Tải câu hỏi từ Google Docs về thay thế toàn bộ câu hỏi hiện tại trên Quiz.</p>
-          <button class="btn-conflict-action btn-keep-docs" on:click={() => syncBundle('import_docs_to_quiz', 'keep_docs')} disabled={bundleBusy}>
-            Giữ bản Google Docs (Ghi đè Quiz)
-          </button>
-        </div>
+        {#if !pendingResolution || pendingResolution === 'keep_quiz'}
+          <div class="conflict-option-card">
+            <h4>Giữ bản Quiz (Web)</h4>
+            <p>Dữ liệu câu hỏi trên website sẽ ghi đè toàn bộ nội dung Google Docs và sinh lại bản in DOCX mới.</p>
+            <button class="btn-conflict-action btn-keep-quiz" on:click={() => syncBundle('publish_quiz_to_docs', 'keep_quiz')} disabled={bundleBusy}>
+              {pendingResolution === 'keep_quiz' ? 'Xác nhận ghi đè Docs' : 'Giữ bản Quiz (Ghi đè Docs)'}
+            </button>
+          </div>
+        {/if}
+        {#if !pendingResolution || pendingResolution === 'keep_docs'}
+          <div class="conflict-option-card">
+            <h4>Giữ bản Google Docs</h4>
+            <p>Tải câu hỏi từ Google Docs về thay thế toàn bộ câu hỏi hiện tại trên Quiz.</p>
+            <button class="btn-conflict-action btn-keep-docs" on:click={() => syncBundle('import_docs_to_quiz', 'keep_docs')} disabled={bundleBusy}>
+              {pendingResolution === 'keep_docs' ? 'Xác nhận ghi đè Quiz' : 'Giữ bản Google Docs (Ghi đè Quiz)'}
+            </button>
+          </div>
+        {/if}
       </div>
-      <button class="btn-cancel-conflict" on:click={() => conflictModalOpen = false}>Hủy bỏ</button>
+      <button class="btn-cancel-conflict" on:click={() => { conflictModalOpen = false; pendingResolution = null; }}>Hủy bỏ</button>
     </section>
   </div>
 {/if}

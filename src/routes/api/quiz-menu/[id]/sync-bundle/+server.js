@@ -4,6 +4,7 @@ import { canManageQuiz } from '../../../../../lib/server/quizMenu.js';
 import {
   acquireBundleLock,
   importGoogleDocToQuizBundle,
+  inspectBundleHealth,
   logBundleSyncEvent,
   publishBundleHomework,
   publishQuizBundle,
@@ -29,12 +30,51 @@ export async function POST({ params, request, platform }) {
   let body = {};
   try { body = await request.json(); } catch { return json({ success: false, error: 'Invalid JSON' }, { status: 400 }); }
   const direction = body.direction || null;
-  if (direction && !['import_docs_to_quiz', 'publish_quiz_to_docs', 'publish_homework'].includes(direction)) {
+  const validDirections = ['import_docs_to_quiz', 'publish_quiz_to_docs', 'publish_homework'];
+  if (direction && !validDirections.includes(direction)) {
     return json({ success: false, error: 'InvalidSyncDirection' }, { status: 400 });
   }
   const syncDirection = direction || 'publish_quiz_to_docs';
 
-  const lock = await acquireBundleLock(db, params.id, auth.user.id);
+  const resolution = body.resolution !== undefined && body.resolution !== null ? String(body.resolution).trim() : null;
+  const validResolutions = ['keep_quiz', 'keep_docs'];
+  if (resolution !== null && !validResolutions.includes(resolution)) {
+    return json({ success: false, error: 'InvalidResolution', message: 'resolution phải là keep_quiz hoặc keep_docs' }, { status: 400 });
+  }
+
+  if (syncDirection === 'publish_homework' && resolution !== null) {
+    return json({ success: false, error: 'ResolutionNotApplicable', message: 'Giao bài không nhận resolution' }, { status: 400 });
+  }
+
+  if (syncDirection === 'publish_quiz_to_docs' && resolution !== null && resolution !== 'keep_quiz') {
+    return json({ success: false, error: 'DirectionResolutionMismatch', message: 'Chiều publish_quiz_to_docs chỉ chấp nhận resolution keep_quiz' }, { status: 400 });
+  }
+
+  if (syncDirection === 'import_docs_to_quiz' && resolution !== null && resolution !== 'keep_docs') {
+    return json({ success: false, error: 'DirectionResolutionMismatch', message: 'Chiều import_docs_to_quiz chỉ chấp nhận resolution keep_docs' }, { status: 400 });
+  }
+
+  if (resolution !== null) {
+    const health = await inspectBundleHealth(platform, db, params.id);
+    if (health.status === 'clean') {
+      return json({ success: false, error: 'ResolutionNotRequired', message: 'Nội dung giữa Quiz và Docs đã khớp, không cần xử lý xung đột' }, { status: 400 });
+    }
+    if (resolution === 'keep_quiz' && !health.docs_changed) {
+      return json({ success: false, error: 'ResolutionNotRequired', message: 'Google Docs không có thay đổi nào để ghi đè' }, { status: 400 });
+    }
+    if (resolution === 'keep_docs' && !health.quiz_changed) {
+      return json({ success: false, error: 'ResolutionNotRequired', message: 'Quiz không có thay đổi nào để ghi đè' }, { status: 400 });
+    }
+  }
+
+  let lock;
+  try {
+    lock = await acquireBundleLock(db, params.id, auth.user.id);
+  } catch (lockErr) {
+    const status = lockErr instanceof QuizDriveError ? lockErr.status : 503;
+    return json({ success: false, error: lockErr.code || 'BundleSyncLockUnavailable', message: lockErr.message }, { status });
+  }
+
   if (!lock.acquired) {
     return json({
       success: false,
@@ -49,7 +89,7 @@ export async function POST({ params, request, platform }) {
       eventType: 'started',
       actor: auth.user.id,
       direction: syncDirection,
-      resolution: body.resolution || null,
+      resolution,
       fromRevision: body.expected_revision ?? null
     });
 
@@ -57,15 +97,15 @@ export async function POST({ params, request, platform }) {
     if (syncDirection === 'import_docs_to_quiz') {
       bundle = await importGoogleDocToQuizBundle(platform, db, params.id, {
         expectedRevision: body.expected_revision,
-        resolution: body.resolution,
+        resolution,
         actor: auth.user.id
       });
     } else if (syncDirection === 'publish_homework') {
-      bundle = await publishBundleHomework(db, params.id, auth.user, body);
+      bundle = await publishBundleHomework(platform, db, params.id, auth.user, body);
     } else {
       bundle = await publishQuizBundle(platform, db, params.id, {
         expectedRevision: body.expected_revision,
-        resolution: body.resolution,
+        resolution,
         actor: auth.user.id
       });
     }
@@ -78,7 +118,7 @@ export async function POST({ params, request, platform }) {
       eventType: isConflict ? 'conflict' : 'failed',
       actor: auth.user.id,
       direction: syncDirection,
-      resolution: body.resolution || null,
+      resolution,
       fromRevision: body.expected_revision ?? null,
       errorCode: error.code || 'BundleSyncFailed',
       errorMessage: error.message
@@ -86,6 +126,8 @@ export async function POST({ params, request, platform }) {
     const status = error instanceof QuizDriveError ? error.status : 500;
     return json({ success: false, error: error.code || 'BundleSyncFailed', message: error.message }, { status });
   } finally {
-    await releaseBundleLock(db, params.id, lock.lockToken);
+    if (lock?.lockToken) {
+      await releaseBundleLock(db, params.id, lock.lockToken);
+    }
   }
 }

@@ -129,3 +129,44 @@ Hệ thống đồng bộ Quiz Menu ↔ Google Docs/DOCX ↔ Bài tập về nh�
    - Bộ test suite bao quát toàn bộ 8 tiêu chí RED-3.1 đến RED-3.8.
    - Chạy toàn bộ 22 test suites hiện tại + suite Phase 3 mới.
    - Kiểm tra `npm run check`, `npm run build`, `git diff --check`.
+
+---
+
+## 4. Phase 3 Round 2 — Audit Remediation (RED-3R2.1 - RED-3R2.8)
+
+Theo kết quả audit độc lập từ Codex maintainer/auditor, Round 2 khắc phục triệt để 8 phát hiện sau:
+1. **P0 RED-3R2.1 — Quiz→Docs D1 Nguyên Tử (Atomic Batch):**
+   - Gộp `homework_assignments` upsert và `quiz_bundles` upsert thành một `db.batch([hwStmt, bundleStmt])` duy nhất trong `publishQuizBundle`.
+   - Bảo toàn các trường `status`, `class_id`, `session_id`, `deadline_date`, `deadline_time` của bài tập đã giao.
+2. **P0 RED-3R2.2 — Compensating Scope Bao Trọn Toàn Bộ Drive Pipeline:**
+   - Đưa Google Doc creation/update, export DOCX, upload printable, và metadata vào try-catch với hàm bù trừ `compensateDrivePipeline`.
+   - Nếu tạo Doc mới: xóa Doc khi downstream fail.
+   - Nếu Doc đã sửa: cập nhật bundle `sync_status = 'error'`.
+   - File printable dở dang được xóa. Mọi lỗi dọn dẹp (cleanup error) ghi audit `cleanup_warning` mà không che khuất lỗi gốc.
+3. **P1 RED-3R2.3 — Xóa Bỏ Hoàn Toàn Backdoor `force`:**
+   - Xóa bỏ tham số `force` khỏi `publishQuizBundle` và `importGoogleDocToQuizBundle`.
+   - Bundle mới cho phép tạo không cần `expected_revision`. Bundle đã tồn tại bắt buộc phải có `expected_revision` và tuân thủ chặt chẽ ma trận xung đột.
+4. **P1 RED-3R2.4 — `publishBundleHomework` Thực Thi Nghiêm Ngặt Revision & Parity:**
+   - Bắt buộc `expected_revision` (trả 409 `MissingExpectedRevision` nếu thiếu, 409 `BundleRevisionConflict` nếu stale).
+   - Kiểm tra live health / parity trước khi giao bài (trả 409 `BundleNotReady` nếu revision nháp lệch với revision bundle hoặc bundle đang conflict/error).
+   - Bảo toàn tính lũy đẳng (idempotent) khi giao lại cùng revision.
+5. **P1 RED-3R2.5 — Concurrency Lock Fail-Closed:**
+   - Xóa bỏ fallback `acquired unmanaged`.
+   - Nếu bảng lock chưa tồn tại trong D1: ném 503 `BundleSyncSchemaMissing`.
+   - Nếu gặp lỗi DB khác: ném 503 `BundleSyncLockUnavailable`.
+   - Trả 409 `BundleSyncBusy` khi có xung đột khóa đang hoạt động.
+6. **P1 RED-3R2.6 — Validate `resolution` Allowlist & Điều Hướng & Single Conflict Event:**
+   - Validate `resolution` thuộc `null | 'keep_quiz' | 'keep_docs'`.
+   - Ghép đôi hướng đồng bộ: `publish_quiz_to_docs` $\to$ `keep_quiz`; `import_docs_to_quiz` $\to$ `keep_docs`.
+   - Kiểm tra `ResolutionNotRequired` (400) nếu nội dung đã khớp hoặc phía tương ứng không có thay đổi.
+   - Ghi nhận chính xác 1 event conflict/failed duy nhất trên mỗi request (loại bỏ double-logging).
+7. **P1 RED-3R2.7 — `bundle-observability` API Refresh Mode & Phân Quyền An Toàn:**
+   - Hỗ trợ `refresh=1`: giới hạn `limit <= 10` và gọi `inspectBundleHealth` trực tiếp cho mỗi dòng để lấy trạng thái live.
+   - Mặc định không refresh: trả `health_mode: 'stored'`, `stale: boolean`, và tóm tắt sự kiện đồng bộ gần nhất.
+   - Validate độ dài tìm kiếm $\le 100$, allowlist status filter, kiểm soát phân trang số nguyên giới hạn.
+   - Tuyệt đối không rò rỉ JSON thô, câu hỏi, đáp án hoặc token riêng tư.
+8. **P2 RED-3R2.8 — An Toàn Giao Diện & Trải Nghiệm:**
+   - Lược bỏ trường `homework_draft_json` khỏi response của `inspectBundleHealth`.
+   - Giải quyết xung đột mang tính phá hủy yêu cầu xác nhận rõ ràng qua modal (không kích hoạt trực tiếp từ inline box).
+   - Tự động làm mới dữ liệu bundle khi nhận mã lỗi 409 revision/xung đột.
+   - Bổ sung vùng `aria-live` và nút thử lại khi Drive không khả dụng hoặc hệ thống bận.

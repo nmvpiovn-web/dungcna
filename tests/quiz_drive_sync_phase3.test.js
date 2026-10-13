@@ -257,6 +257,20 @@ test('RED-3.3: acquireBundleLock, concurrent lock rejection, expired takeover, a
   const lock5 = await acquireBundleLock(db, quizId, 'teacher-1', 1000);
   assert.equal(lock5.acquired, true, 'Expired lock can be taken over');
   await releaseBundleLock(db, quizId, lock5.lockToken);
+
+  // 6. Fail-closed: missing schema throws 503 BundleSyncSchemaMissing
+  const emptyDb = d1Adapter(new DatabaseSync(':memory:'));
+  await assert.rejects(async () => {
+    await acquireBundleLock(emptyDb, 'any-quiz', 'teacher-1', 1000);
+  }, (err) => err.code === 'BundleSyncSchemaMissing' && err.status === 503);
+
+  // 7. Fail-closed: DB error throws 503 BundleSyncLockUnavailable
+  const brokenDb = {
+    prepare() { throw new Error('database disk image is malformed'); }
+  };
+  await assert.rejects(async () => {
+    await acquireBundleLock(brokenDb, 'any-quiz', 'teacher-1', 1000);
+  }, (err) => err.code === 'BundleSyncLockUnavailable' && err.status === 503);
 });
 
 test('RED-3.3: logBundleSyncEvent and getBundleSyncEvents audit trail', async () => {
@@ -303,8 +317,8 @@ test('RED-3.1: inspectBundleHealth truth table (missing, clean, quiz_changed, do
     assert.equal(missing.status, 'bundle_missing');
     assert.equal(missing.bundle, null);
 
-    // Initial publish to set up bundle at rev 1
-    const bundle1 = await publishQuizBundle(platform, db, quizId, { force: true });
+    // Initial publish to set up bundle at rev 1 (no force required for new bundle)
+    const bundle1 = await publishQuizBundle(platform, db, quizId);
     assert.equal(bundle1.revision, 1);
 
     // 2. Clean state
@@ -313,6 +327,7 @@ test('RED-3.1: inspectBundleHealth truth table (missing, clean, quiz_changed, do
     assert.equal(clean.quiz_changed, false);
     assert.equal(clean.docs_changed, false);
     assert.equal(clean.drive_healthy, true);
+    assert.equal(clean.bundle.homework_draft_json, undefined, 'homework_draft_json stripped from response');
 
     // 3. Quiz changed in D1
     sqlite.prepare(`UPDATE quiz_questions SET prompt = 'Updated prompt in D1' WHERE id = 'q1'`).run();
@@ -393,6 +408,39 @@ test('RED-3.2: expected_revision required on existing bundle, stale revision 409
     const staleRevData = await staleRevRes.json();
     assert.equal(staleRevData.error, 'BundleRevisionConflict');
 
+    // 3b. Resolution validation: invalid resolution allowlist
+    const invalidResRes = await syncBundleEndpoint({
+      params: { id: quizId },
+      request: jsonRequest(`/api/quiz-menu/${quizId}/sync-bundle`, teacherToken, {
+        direction: 'publish_quiz_to_docs', expected_revision: 1, resolution: 'force_overwrite'
+      }),
+      platform
+    });
+    assert.equal(invalidResRes.status, 400);
+    assert.equal((await invalidResRes.json()).error, 'InvalidResolution');
+
+    // 3c. Direction-resolution mismatch
+    const mismatchRes = await syncBundleEndpoint({
+      params: { id: quizId },
+      request: jsonRequest(`/api/quiz-menu/${quizId}/sync-bundle`, teacherToken, {
+        direction: 'publish_quiz_to_docs', expected_revision: 1, resolution: 'keep_docs'
+      }),
+      platform
+    });
+    assert.equal(mismatchRes.status, 400);
+    assert.equal((await mismatchRes.json()).error, 'DirectionResolutionMismatch');
+
+    // 3d. Resolution not required when health is clean
+    const notReqRes = await syncBundleEndpoint({
+      params: { id: quizId },
+      request: jsonRequest(`/api/quiz-menu/${quizId}/sync-bundle`, teacherToken, {
+        direction: 'publish_quiz_to_docs', expected_revision: 1, resolution: 'keep_quiz'
+      }),
+      platform
+    });
+    assert.equal(notReqRes.status, 400);
+    assert.equal((await notReqRes.json()).error, 'ResolutionNotRequired');
+
     // 4. Docs changed: publish_quiz_to_docs without resolution returns 409 BundleSyncConflict
     mockDrive.files.set(initData.bundle.google_doc_file_id, {
       id: initData.bundle.google_doc_file_id,
@@ -400,6 +448,8 @@ test('RED-3.2: expected_revision required on existing bundle, stale revision 409
       modifiedTime: '2026-10-13T15:00:00.000Z',
       trashed: false
     });
+
+    const conflictCountBefore = (await getBundleSyncEvents(db, quizId, 20)).filter(e => e.event_type === 'conflict').length;
     const conflictRes = await syncBundleEndpoint({
       params: { id: quizId },
       request: jsonRequest(`/api/quiz-menu/${quizId}/sync-bundle`, teacherToken, { direction: 'publish_quiz_to_docs', expected_revision: 1 }),
@@ -408,6 +458,10 @@ test('RED-3.2: expected_revision required on existing bundle, stale revision 409
     assert.equal(conflictRes.status, 409);
     const conflictData = await conflictRes.json();
     assert.equal(conflictData.error, 'BundleSyncConflict');
+
+    // Check single conflict event recorded for this request
+    const conflictCountAfter = (await getBundleSyncEvents(db, quizId, 20)).filter(e => e.event_type === 'conflict').length;
+    assert.equal(conflictCountAfter - conflictCountBefore, 1, 'Exactly one conflict event recorded per request');
 
     // 5. With explicit resolution: 'keep_quiz', publish succeeds and advances revision to 2
     const resolveRes = await syncBundleEndpoint({
@@ -460,8 +514,8 @@ test('RED-3.4: Old printable file deleted ONLY after D1 commits; cleanup failure
   const mockDrive = createDriveMock();
 
   try {
-    // 1. Initial publish
-    const b1 = await publishQuizBundle(platform, db, quizId, { force: true });
+    // 1. Initial publish (no force)
+    const b1 = await publishQuizBundle(platform, db, quizId);
     assert.equal(b1.revision, 1);
     const firstPrintableId = b1.printable_docx_file_id;
     assert.ok(firstPrintableId);
@@ -493,11 +547,11 @@ test('RED-3.4: Downstream D1 failure cleans up newly uploaded Drive file and mar
   const mockDrive = createDriveMock();
 
   try {
-    const b1 = await publishQuizBundle(platform, db, quizId, { force: true });
+    const b1 = await publishQuizBundle(platform, db, quizId);
     assert.equal(b1.revision, 1);
 
-    // Inject D1 update failure via trigger after uploads have succeeded
-    sqlite.exec(`CREATE TRIGGER fail_bundle_update BEFORE UPDATE ON quiz_bundles BEGIN SELECT RAISE(FAIL, 'simulated D1 update failure'); END;`);
+    // Inject D1 update failure via trigger on homework_assignments (part of atomic batch)
+    sqlite.exec(`CREATE TRIGGER fail_hw_update BEFORE UPDATE ON homework_assignments BEGIN SELECT RAISE(FAIL, 'simulated D1 update failure'); END;`);
 
     let caughtError = null;
     try {
@@ -510,6 +564,14 @@ test('RED-3.4: Downstream D1 failure cleans up newly uploaded Drive file and mar
     // Verify newly uploaded file was deleted by compensating transaction
     const latestUpload = mockDrive.uploads[mockDrive.uploads.length - 1];
     assert.ok(mockDrive.deletedFiles.includes(latestUpload.id), 'Compensating transaction deleted orphaned Drive file');
+
+    // Verify D1 state is untouched: bundle revision still 1
+    const currentBundle = await db.prepare(`SELECT * FROM quiz_bundles WHERE quiz_id = ?`).bind(quizId).first();
+    assert.equal(currentBundle.revision, 1, 'Bundle revision was rolled back/untouched');
+    assert.equal(currentBundle.sync_status, 'error', 'Bundle sync_status marked error on failure');
+
+    const currentHw = await db.prepare(`SELECT * FROM homework_assignments WHERE id = ?`).bind(b1.homework_assignment_id).first();
+    assert.equal(currentHw.source_content_revision, 1, 'Homework revision rolled back in atomic unit');
   } finally {
     mockDrive.restore();
   }
@@ -525,16 +587,26 @@ test('RED-3.5: Homework revision parity, published status preservation, and publ
 
   try {
     // 1. Initial sync creates homework draft with revision 1
-    const b1 = await publishQuizBundle(platform, db, quizId, { force: true });
+    const b1 = await publishQuizBundle(platform, db, quizId);
     assert.equal(b1.revision, 1);
 
     const hw1 = await db.prepare(`SELECT * FROM homework_assignments WHERE id = ?`).bind(b1.homework_assignment_id).first();
     assert.equal(hw1.source_content_revision, 1);
     assert.equal(hw1.status, 'draft');
 
+    // Missing expected_revision throws MissingExpectedRevision
+    await assert.rejects(async () => {
+      await publishBundleHomework(platform, db, quizId, { id: 'teacher-1' }, {
+        class_id: 'class-7a',
+        session_id: 'sess-1',
+        deadline_date: '2026-10-20',
+        deadline_time: '18:00'
+      });
+    }, (err) => err.code === 'MissingExpectedRevision');
+
     // 2. Publish homework
     sqlite.prepare(`INSERT INTO class_enrollments VALUES ('ce-1', 'student-1', 'class-7a', 'active')`).run();
-    const pubHw = await publishBundleHomework(db, quizId, { id: 'teacher-1' }, {
+    const pubHw = await publishBundleHomework(platform, db, quizId, { id: 'teacher-1' }, {
       expected_revision: 1,
       class_id: 'class-7a',
       class_name: 'Lớp 7A',
@@ -557,7 +629,7 @@ test('RED-3.5: Homework revision parity, published status preservation, and publ
 
     // 4. publish_homework with stale revision fails with 409
     await assert.rejects(async () => {
-      await publishBundleHomework(db, quizId, { id: 'teacher-1' }, {
+      await publishBundleHomework(platform, db, quizId, { id: 'teacher-1' }, {
         expected_revision: 1, // stale
         class_id: 'class-7a',
         session_id: 'sess-1',
@@ -569,7 +641,7 @@ test('RED-3.5: Homework revision parity, published status preservation, and publ
     // 5. Block publish when bundle is in conflict
     await db.prepare(`UPDATE quiz_bundles SET sync_status = 'conflict' WHERE quiz_id = ?`).bind(quizId).run();
     await assert.rejects(async () => {
-      await publishBundleHomework(db, quizId, { id: 'teacher-1' }, {
+      await publishBundleHomework(platform, db, quizId, { id: 'teacher-1' }, {
         expected_revision: 2,
         class_id: 'class-7a',
         session_id: 'sess-1',
@@ -582,7 +654,7 @@ test('RED-3.5: Homework revision parity, published status preservation, and publ
     await db.prepare(`UPDATE quiz_bundles SET sync_status = 'synced' WHERE quiz_id = ?`).bind(quizId).run();
     const notifCountBefore = (await db.prepare(`SELECT COUNT(*) as c FROM system_notifications`).first()).c;
 
-    await publishBundleHomework(db, quizId, { id: 'teacher-1' }, {
+    await publishBundleHomework(platform, db, quizId, { id: 'teacher-1' }, {
       expected_revision: 2,
       class_id: 'class-7a',
       class_name: 'Lớp 7A',
@@ -623,18 +695,36 @@ test('RED-3.7: bundle-observability endpoint enforces RBAC, pagination, and stat
     assert.equal(t1Data.total, 1);
     assert.equal(t1Data.bundles[0].quiz_id, 'quiz-sync-1');
     assert.equal(t1Data.bundles[0].created_by, 'teacher-1');
+    assert.equal(t1Data.bundles[0].health_mode, 'stored');
+    assert.equal(typeof t1Data.bundles[0].stale, 'boolean');
 
     // 4. Teacher 2 (who owns no quizzes) sees 0
     const t2Res = await observabilityEndpoint({ request: jsonRequest('/api/quiz-menu/bundle-observability', teacher2Token, null, 'GET'), platform, url: new URL('https://timbk.io.vn/api/quiz-menu/bundle-observability') });
     assert.equal(t2Res.status, 200);
     assert.equal((await t2Res.json()).total, 0);
 
-    // 5. Admin sees all quizzes
+    // 5. Admin sees all quizzes with status filter
     const adminRes = await observabilityEndpoint({ request: jsonRequest('/api/quiz-menu/bundle-observability', adminToken, null, 'GET'), platform, url: new URL('https://timbk.io.vn/api/quiz-menu/bundle-observability?status=synced') });
     assert.equal(adminRes.status, 200);
     const adminData = await adminRes.json();
     assert.equal(adminData.total, 1);
     assert.equal(adminData.bundles[0].sync_status, 'synced');
+
+    // 6. refresh=1 mode: caps limit at 10, returns live health
+    const refreshRes = await observabilityEndpoint({ request: jsonRequest('/api/quiz-menu/bundle-observability', adminToken, null, 'GET'), platform, url: new URL('https://timbk.io.vn/api/quiz-menu/bundle-observability?refresh=1&limit=50') });
+    assert.equal(refreshRes.status, 200);
+    const refreshData = await refreshRes.json();
+    assert.equal(refreshData.limit, 10, 'Limit capped at 10 on refresh mode');
+    assert.equal(refreshData.bundles[0].health_mode, 'live');
+    assert.equal(refreshData.bundles[0].health_status, 'clean');
+
+    // 7. Input validation: search query > 100
+    const longSearchRes = await observabilityEndpoint({ request: jsonRequest('/api/quiz-menu/bundle-observability', adminToken, null, 'GET'), platform, url: new URL('https://timbk.io.vn/api/quiz-menu/bundle-observability?search=' + 'a'.repeat(101)) });
+    assert.equal(longSearchRes.status, 400);
+
+    // 8. Input validation: invalid status
+    const invalidStatusRes = await observabilityEndpoint({ request: jsonRequest('/api/quiz-menu/bundle-observability', adminToken, null, 'GET'), platform, url: new URL('https://timbk.io.vn/api/quiz-menu/bundle-observability?status=corrupted') });
+    assert.equal(invalidStatusRes.status, 400);
   } finally {
     mockDrive.restore();
   }
@@ -654,6 +744,7 @@ test('RED-3.6: +page.svelte contains live health status, conflict modal, 44px ta
   assert.ok(pageSrc.includes('Giữ bản Quiz'), 'Includes Giữ bản Quiz button');
   assert.ok(pageSrc.includes('Giữ bản Google Docs'), 'Includes Giữ bản Google Docs button');
   assert.ok(pageSrc.includes('bundleEvents'), 'Includes 5 recent events listing');
+  assert.ok(pageSrc.includes('btn-sync-retry'), 'Includes retry button for drive unavailable');
 
   // 2. Touch targets >= 44px
   assert.ok(pageSrc.includes('min-height:44px'), 'Touch targets >= 44px');
@@ -667,5 +758,109 @@ test('RED-3.6: +page.svelte contains live health status, conflict modal, 44px ta
   for (const color of forbiddenColors) {
     const regex = new RegExp(`\\b${color}\\b`, 'i');
     assert.ok(!regex.test(pageSrc), `No forbidden dark blue token: ${color}`);
+  }
+});
+
+// -------------------------------------------------------------------------------------------------
+// Part I: RED-3R2.2 & RED-3R2.6 / Extended Behavioral Coverage
+// -------------------------------------------------------------------------------------------------
+test('RED-3R2.2: Compensating scope cleans up new Doc on downstream failure and marks sync_status error on update', async () => {
+  const { db, platform } = await fixture();
+  const quizId = 'quiz-sync-1';
+  const originalFetch = globalThis.fetch;
+
+  // Case A: New Doc creation -> Export fails -> Doc should be deleted
+  const mockDrive = createDriveMock();
+  try {
+    const customFetch = globalThis.fetch;
+    globalThis.fetch = async (input, init = {}) => {
+      const url = String(input);
+      if (url.includes('/export?mimeType=')) {
+        return new Response('Simulated export failure', { status: 500 });
+      }
+      return customFetch(input, init);
+    };
+
+    let caughtErr = null;
+    try {
+      await publishQuizBundle(platform, db, quizId);
+    } catch (e) {
+      caughtErr = e;
+    }
+    assert.ok(caughtErr, 'Threw export error');
+    assert.ok(mockDrive.deletedFiles.length > 0, 'New Doc was cleaned up when export failed');
+  } finally {
+    mockDrive.restore();
+    globalThis.fetch = originalFetch;
+  }
+
+  // Case B: Existing Doc update -> Downstream export fails -> sync_status marked error
+  const mockDrive2 = createDriveMock();
+  try {
+    const b1 = await publishQuizBundle(platform, db, quizId);
+    assert.equal(b1.revision, 1);
+
+    const customFetch = globalThis.fetch;
+    globalThis.fetch = async (input, init = {}) => {
+      const url = String(input);
+      if (url.includes('/export?mimeType=')) {
+        return new Response('Simulated export failure', { status: 500 });
+      }
+      return customFetch(input, init);
+    };
+
+    let caughtErr = null;
+    try {
+      await publishQuizBundle(platform, db, quizId, { expectedRevision: 1 });
+    } catch (e) {
+      caughtErr = e;
+    }
+    assert.ok(caughtErr, 'Threw error on rev 2 export');
+    const bundleAfter = await db.prepare(`SELECT * FROM quiz_bundles WHERE quiz_id = ?`).bind(quizId).first();
+    assert.equal(bundleAfter.sync_status, 'error', 'Bundle marked sync_status error when existing doc was modified');
+  } finally {
+    mockDrive2.restore();
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('RED-3R2.6: Direction and resolution validation matrix', async () => {
+  const { platform, teacherToken } = await fixture();
+  const quizId = 'quiz-sync-1';
+  const mockDrive = createDriveMock();
+
+  try {
+    await syncBundleEndpoint({ params: { id: quizId }, request: jsonRequest(`/api/quiz-menu/${quizId}/sync-bundle`, teacherToken, { direction: 'publish_quiz_to_docs' }), platform });
+
+    // publish_homework does not accept resolution
+    const hwRes = await syncBundleEndpoint({
+      params: { id: quizId },
+      request: jsonRequest(`/api/quiz-menu/${quizId}/sync-bundle`, teacherToken, {
+        direction: 'publish_homework',
+        expected_revision: 1,
+        resolution: 'keep_quiz',
+        class_id: 'c1',
+        session_id: 's1',
+        deadline_date: '2026-10-20'
+      }),
+      platform
+    });
+    assert.equal(hwRes.status, 400);
+    assert.equal((await hwRes.json()).error, 'ResolutionNotApplicable');
+
+    // import_docs_to_quiz does not accept keep_quiz
+    const impRes = await syncBundleEndpoint({
+      params: { id: quizId },
+      request: jsonRequest(`/api/quiz-menu/${quizId}/sync-bundle`, teacherToken, {
+        direction: 'import_docs_to_quiz',
+        expected_revision: 1,
+        resolution: 'keep_quiz'
+      }),
+      platform
+    });
+    assert.equal(impRes.status, 400);
+    assert.equal((await impRes.json()).error, 'DirectionResolutionMismatch');
+  } finally {
+    mockDrive.restore();
   }
 });

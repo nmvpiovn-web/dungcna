@@ -921,9 +921,12 @@ export async function acquireBundleLock(db, quizId, owner, ttlMs = 60000) {
     return { acquired: true, lockToken, expiresAt };
   } catch (err) {
     if (err.message && err.message.includes('no such table')) {
-      return { acquired: true, lockToken: null, unmanaged: true };
+      throw new QuizDriveError('Bảng lock chưa tồn tại trong cơ sở dữ liệu', 503, 'BundleSyncSchemaMissing');
     }
-    return { acquired: false, error: 'BundleSyncBusy' };
+    if (err.message && (err.message.includes('UNIQUE') || err.message.includes('PRIMARY KEY') || err.message.includes('constraint'))) {
+      return { acquired: false, error: 'BundleSyncBusy' };
+    }
+    throw new QuizDriveError('Không thể thiết lập lock đồng bộ: ' + (err.message || 'Lỗi không xác định'), 503, 'BundleSyncLockUnavailable');
   }
 }
 
@@ -1108,6 +1111,9 @@ export async function inspectBundleHealth(platform, db, quizId) {
     }
   }
 
+  const safeBundle = { ...bundle };
+  delete safeBundle.homework_draft_json;
+
   return {
     status,
     quiz_changed,
@@ -1121,7 +1127,7 @@ export async function inspectBundleHealth(platform, db, quizId) {
     last_synced_at: bundle.last_synced_at,
     sync_lag_seconds,
     bundle: {
-      ...bundle,
+      ...safeBundle,
       canonical_source: 'docx',
       homework_draft: (() => { try { return JSON.parse(bundle.homework_draft_json || '{}'); } catch { return {}; } })(),
       google_doc_url: bundle.google_doc_file_id ? `https://docs.google.com/document/d/${bundle.google_doc_file_id}/edit` : null,
@@ -1140,28 +1146,83 @@ export async function inspectBundleConflict(platform, bundle) {
   }
 }
 
-export async function publishQuizBundle(platform, db, quizId, { expectedRevision, resolution = null, actor = 'teacher', force = false } = {}) {
+async function compensateDrivePipeline(platform, db, {
+  quizId,
+  newDocId = null,
+  newPrintableFileId = null,
+  docUpdated = false,
+  previous = null,
+  actor = 'system',
+  direction = null,
+  resolution = null
+}) {
+  if (newPrintableFileId) {
+    try {
+      await removeDriveFile(platform, newPrintableFileId);
+    } catch (cleanErr) {
+      await logBundleSyncEvent(db, {
+        quizId,
+        eventType: 'cleanup_warning',
+        actor,
+        direction,
+        resolution,
+        fromRevision: previous?.revision ?? null,
+        errorCode: 'CleanupNewPrintableFailed',
+        errorMessage: cleanErr.message,
+        details: { fileId: newPrintableFileId }
+      });
+    }
+  }
+  if (newDocId) {
+    try {
+      await removeDriveFile(platform, newDocId);
+    } catch (cleanErr) {
+      await logBundleSyncEvent(db, {
+        quizId,
+        eventType: 'cleanup_warning',
+        actor,
+        direction,
+        resolution,
+        fromRevision: previous?.revision ?? null,
+        errorCode: 'CleanupNewDocFailed',
+        errorMessage: cleanErr.message,
+        details: { fileId: newDocId }
+      });
+    }
+  }
+  if (docUpdated && previous) {
+    try {
+      await db.prepare(`UPDATE quiz_bundles SET sync_status = 'error', updated_at = strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE quiz_id = ?`).bind(quizId).run();
+    } catch (cleanErr) {
+      await logBundleSyncEvent(db, {
+        quizId,
+        eventType: 'cleanup_warning',
+        actor,
+        direction,
+        resolution,
+        fromRevision: previous?.revision ?? null,
+        errorCode: 'MarkSyncStatusErrorFailed',
+        errorMessage: cleanErr.message
+      });
+    }
+  }
+}
+
+export async function publishQuizBundle(platform, db, quizId, { expectedRevision, resolution = null, actor = 'teacher' } = {}) {
   const previous = await db.prepare(`SELECT * FROM quiz_bundles WHERE quiz_id = ? LIMIT 1`).bind(quizId).first();
   if (previous) {
     if (expectedRevision === undefined || expectedRevision === null) {
-      if (!force) {
-        throw new QuizDriveError('Thiếu expected_revision cho bundle đã tồn tại', 409, 'MissingExpectedRevision');
-      }
+      throw new QuizDriveError('Thiếu expected_revision cho bundle đã tồn tại', 409, 'MissingExpectedRevision');
     } else if (Number(expectedRevision) !== Number(previous.revision)) {
       throw new QuizDriveError('Bundle revision conflict', 409, 'BundleRevisionConflict');
     }
 
     const health = await inspectBundleHealth(platform, db, quizId);
-    if (!health.drive_healthy && !force) {
+    if (!health.drive_healthy) {
       throw new QuizDriveError(`Google Drive không khả dụng: ${health.drive_error || 'drive_unavailable'}`, 503, 'DriveUnavailable');
     }
 
-    if (health.docs_changed && resolution !== 'keep_quiz' && !force) {
-      await logBundleSyncEvent(db, {
-        quizId, eventType: 'conflict', actor, direction: 'publish_quiz_to_docs', resolution,
-        fromRevision: previous.revision, errorCode: 'BundleSyncConflict',
-        errorMessage: 'Google Doc đã được sửa sau lần đồng bộ gần nhất; hãy chọn rõ chiều đồng bộ'
-      });
+    if (health.docs_changed && resolution !== 'keep_quiz') {
       await db.prepare(`UPDATE quiz_bundles SET sync_status = 'conflict', updated_at = strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE quiz_id = ?`).bind(quizId).run();
       throw new QuizDriveError('Google Doc đã được sửa sau lần đồng bộ gần nhất; hãy chọn rõ chiều đồng bộ', 409, 'BundleSyncConflict');
     }
@@ -1169,57 +1230,110 @@ export async function publishQuizBundle(platform, db, quizId, { expectedRevision
 
   const { quiz, questions } = await loadQuizBundleInput(db, quizId);
   if (!questions.length) throw new QuizDriveError('Quiz chưa có câu hỏi', 400, 'QuizQuestionsRequired');
-  const folder = await ensureQuizUploadsFolder(platform);
-  const documentText = renderTeacherDocument(quiz, questions);
-  let googleDoc;
-  let isNewDoc = false;
+
+  let newDocId = null;
   let docUpdated = false;
-  if (previous?.google_doc_file_id) {
-    googleDoc = await updateGoogleDoc(platform, previous.google_doc_file_id, documentText);
-    docUpdated = true;
-  } else {
-    googleDoc = await createGoogleDoc(platform, folder.id, `${safeDocTitle(quiz.title)} - Bản giáo viên`, documentText);
-    isNewDoc = true;
-  }
-
-  const docxMime = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-  const docxBytes = await exportGoogleDocBytes(platform, googleDoc.id, docxMime);
-  const printable = await uploadBytes(platform, {
-    name: `${safeDocTitle(quiz.title)} - Bản in giáo viên.docx`, mimeType: docxMime,
-    bytes: docxBytes, folderId: folder.id
-  });
-  const newPrintableFileId = printable?.id;
-
-  const checksum = await bundleChecksum(quiz, questions);
+  let newPrintableFileId = null;
+  let googleDoc = null;
+  let printable = null;
+  let data = null;
   const revision = Number(previous?.revision || 0) + 1;
-  const modified = googleDoc.modifiedTime || (await getDriveFileMetadata(platform, googleDoc.id)).modifiedTime || null;
-  const data = {
-    quiz_id: quizId, google_doc_file_id: googleDoc.id, printable_docx_file_id: printable.id,
-    homework_assignment_id: previous?.homework_assignment_id || `hw_quiz_${quizId}`,
-    homework_draft: homeworkDraft(quiz, questions), revision, quiz_checksum: checksum,
-    google_doc_modified_time: modified, sync_status: 'synced'
-  };
 
   try {
-    data.homework_assignment_id = await upsertHomeworkDraft(db, quiz, questions, data);
-    await upsertBundle(db, data);
-  } catch (d1Err) {
-    if (newPrintableFileId) {
-      try { await removeDriveFile(platform, newPrintableFileId); } catch {}
+    const folder = await ensureQuizUploadsFolder(platform);
+    const documentText = renderTeacherDocument(quiz, questions);
+    if (previous?.google_doc_file_id) {
+      googleDoc = await updateGoogleDoc(platform, previous.google_doc_file_id, documentText);
+      docUpdated = true;
+    } else {
+      googleDoc = await createGoogleDoc(platform, folder.id, `${safeDocTitle(quiz.title)} - Bản giáo viên`, documentText);
+      newDocId = googleDoc.id;
     }
-    if (isNewDoc && googleDoc?.id) {
-      try { await removeDriveFile(platform, googleDoc.id); } catch {}
-    }
-    if (docUpdated && previous) {
-      try {
-        await db.prepare(`UPDATE quiz_bundles SET sync_status = 'error', updated_at = strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE quiz_id = ?`).bind(quizId).run();
-      } catch {}
-    }
-    await logBundleSyncEvent(db, {
-      quizId, eventType: 'failed', actor, direction: 'publish_quiz_to_docs', resolution,
-      fromRevision: previous?.revision || 0, errorCode: 'D1CommitFailed', errorMessage: d1Err.message
+
+    const docxMime = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    const docxBytes = await exportGoogleDocBytes(platform, googleDoc.id, docxMime);
+    printable = await uploadBytes(platform, {
+      name: `${safeDocTitle(quiz.title)} - Bản in giáo viên.docx`, mimeType: docxMime,
+      bytes: docxBytes, folderId: folder.id
     });
-    throw d1Err;
+    newPrintableFileId = printable?.id;
+
+    const checksum = await bundleChecksum(quiz, questions);
+    const docMeta = await getDriveFileMetadata(platform, googleDoc.id);
+    const modified = googleDoc.modifiedTime || docMeta.modifiedTime || null;
+    data = {
+      quiz_id: quizId, google_doc_file_id: googleDoc.id, printable_docx_file_id: printable.id,
+      homework_assignment_id: previous?.homework_assignment_id || `hw_quiz_${quizId}`,
+      homework_draft: homeworkDraft(quiz, questions), revision, quiz_checksum: checksum,
+      google_doc_modified_time: modified, sync_status: 'synced'
+    };
+
+    const hwId = data.homework_assignment_id;
+    const maxScore = questions.reduce((sum, q) => sum + Number(q.points || 0), 0);
+    const description = [
+      quiz.description || `Hoàn thành bài ${quiz.title}`,
+      `Quiz tương tác: /quiz-menu?quiz=${encodeURIComponent(quiz.id)}`,
+      googleDoc.id ? `Google Docs: https://docs.google.com/document/d/${googleDoc.id}/edit` : '',
+      printable.id ? `DOCX để in (Drive ID): ${printable.id}` : ''
+    ].filter(Boolean).join('\n');
+    const today = new Date().toISOString().slice(0, 10);
+
+    const hwStmt = db.prepare(`
+      INSERT INTO homework_assignments (
+        id, session_id, class_id, class_name, title, description, due_date, total_points,
+        created_by, teacher_id, teacher_name, campus_id, skill_type, assigned_date,
+        deadline_date, deadline_time, max_score, star_reward_on_time, status,
+        source_quiz_id, source_google_doc_file_id, source_docx_file_id, source_content_revision
+      ) VALUES (?, ?, '', 'Chưa chọn lớp', ?, ?, ?, ?, ?, ?, ?, 'loc_codung', 'reading', ?, ?, '18:00', ?, 50, 'draft', ?, ?, ?, ?)
+      ON CONFLICT(id) DO UPDATE SET
+        title = excluded.title,
+        description = excluded.description,
+        total_points = excluded.total_points,
+        max_score = excluded.max_score,
+        source_google_doc_file_id = excluded.source_google_doc_file_id,
+        source_docx_file_id = excluded.source_docx_file_id,
+        source_content_revision = excluded.source_content_revision
+    `).bind(
+      hwId, `quiz:${quiz.id}`, quiz.title, description, today, maxScore,
+      quiz.created_by, quiz.created_by, quiz.creator_name || 'Giáo viên', today, today,
+      maxScore, quiz.id, googleDoc.id, printable.id, revision
+    );
+
+    const bundleStmt = db.prepare(`
+      INSERT INTO quiz_bundles (
+        quiz_id, google_doc_file_id, printable_docx_file_id, homework_assignment_id,
+        homework_draft_json, revision, quiz_checksum, google_doc_modified_time,
+        sync_status, last_synced_at, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now'), strftime('%Y-%m-%dT%H:%M:%fZ','now'), strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+      ON CONFLICT(quiz_id) DO UPDATE SET
+        google_doc_file_id = excluded.google_doc_file_id,
+        printable_docx_file_id = excluded.printable_docx_file_id,
+        homework_assignment_id = excluded.homework_assignment_id,
+        homework_draft_json = excluded.homework_draft_json,
+        revision = excluded.revision,
+        quiz_checksum = excluded.quiz_checksum,
+        google_doc_modified_time = excluded.google_doc_modified_time,
+        sync_status = excluded.sync_status,
+        last_synced_at = excluded.last_synced_at,
+        updated_at = excluded.updated_at
+    `).bind(
+      quizId, googleDoc.id, printable.id, hwId,
+      JSON.stringify(data.homework_draft), revision, checksum, modified, 'synced'
+    );
+
+    await db.batch([hwStmt, bundleStmt]);
+  } catch (pipelineErr) {
+    await compensateDrivePipeline(platform, db, {
+      quizId,
+      newDocId,
+      newPrintableFileId,
+      docUpdated,
+      previous,
+      actor,
+      direction: 'publish_quiz_to_docs',
+      resolution
+    });
+    throw pipelineErr;
   }
 
   if (previous?.printable_docx_file_id && previous.printable_docx_file_id !== printable.id) {
@@ -1243,56 +1357,56 @@ export async function publishQuizBundle(platform, db, quizId, { expectedRevision
   return data;
 }
 
-export async function importGoogleDocToQuizBundle(platform, db, quizId, { expectedRevision, resolution = null, actor = 'teacher', force = false } = {}) {
+export async function importGoogleDocToQuizBundle(platform, db, quizId, { expectedRevision, resolution = null, actor = 'teacher' } = {}) {
   const bundle = await db.prepare(`SELECT * FROM quiz_bundles WHERE quiz_id = ? LIMIT 1`).bind(quizId).first();
   if (!bundle?.google_doc_file_id) throw new QuizDriveError('Quiz chưa có Google Doc liên kết', 404, 'BundleNotFound');
 
   if (expectedRevision === undefined || expectedRevision === null) {
-    if (!force) throw new QuizDriveError('Thiếu expected_revision cho bundle đã tồn tại', 409, 'MissingExpectedRevision');
+    throw new QuizDriveError('Thiếu expected_revision cho bundle đã tồn tại', 409, 'MissingExpectedRevision');
   } else if (Number(expectedRevision) !== Number(bundle.revision)) {
     throw new QuizDriveError('Bundle revision conflict', 409, 'BundleRevisionConflict');
   }
 
   const health = await inspectBundleHealth(platform, db, quizId);
-  if (!health.drive_healthy && !force) {
+  if (!health.drive_healthy) {
     throw new QuizDriveError(`Google Drive không khả dụng: ${health.drive_error || 'drive_unavailable'}`, 503, 'DriveUnavailable');
   }
 
-  if (health.quiz_changed && resolution !== 'keep_docs' && !force) {
-    await logBundleSyncEvent(db, {
-      quizId, eventType: 'conflict', actor, direction: 'import_docs_to_quiz', resolution,
-      fromRevision: bundle.revision, errorCode: 'BundleSyncConflict',
-      errorMessage: 'Quiz đã bị sửa đổi sau lần đồng bộ gần nhất; hãy chọn rõ chiều đồng bộ'
-    });
+  if (health.quiz_changed && resolution !== 'keep_docs') {
     await db.prepare(`UPDATE quiz_bundles SET sync_status = 'conflict', updated_at = strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE quiz_id = ?`).bind(quizId).run();
     throw new QuizDriveError('Quiz đã bị sửa đổi sau lần đồng bộ gần nhất; hãy chọn rõ chiều đồng bộ', 409, 'BundleSyncConflict');
   }
 
-  const metadata = await getDriveFileMetadata(platform, bundle.google_doc_file_id);
-  const text = await exportGoogleDoc(platform, bundle.google_doc_file_id);
-  const questions = generateDraftQuestions(text);
-  if (!questions.length) throw new QuizDriveError('Không tách được câu hỏi từ Google Doc', 422, 'QuestionParseFailed');
-
-  const { quiz } = await loadQuizBundleInput(db, quizId);
-  const folder = await ensureQuizUploadsFolder(platform);
-  const docxMime = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-  const docxBytes = await exportGoogleDocBytes(platform, bundle.google_doc_file_id, docxMime);
-  const printable = await uploadBytes(platform, {
-    name: `${safeDocTitle(quiz.title)} - Bản in giáo viên.docx`, mimeType: docxMime, bytes: docxBytes, folderId: folder.id
-  });
-  const newPrintableFileId = printable?.id;
-
+  let newPrintableFileId = null;
+  let printable = null;
+  let data = null;
+  let questions = [];
   const revision = Number(bundle.revision || 0) + 1;
-  const checksum = await bundleChecksum(quiz, questions);
-  const data = {
-    quiz_id: quizId, google_doc_file_id: bundle.google_doc_file_id, printable_docx_file_id: printable.id,
-    homework_assignment_id: bundle.homework_assignment_id || `hw_quiz_${quizId}`,
-    homework_draft: homeworkDraft(quiz, questions), revision,
-    quiz_checksum: checksum,
-    google_doc_modified_time: metadata.modifiedTime || null, sync_status: 'synced'
-  };
 
   try {
+    const metadata = await getDriveFileMetadata(platform, bundle.google_doc_file_id);
+    const text = await exportGoogleDoc(platform, bundle.google_doc_file_id);
+    questions = generateDraftQuestions(text);
+    if (!questions.length) throw new QuizDriveError('Không tách được câu hỏi từ Google Doc', 422, 'QuestionParseFailed');
+
+    const { quiz } = await loadQuizBundleInput(db, quizId);
+    const folder = await ensureQuizUploadsFolder(platform);
+    const docxMime = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    const docxBytes = await exportGoogleDocBytes(platform, bundle.google_doc_file_id, docxMime);
+    printable = await uploadBytes(platform, {
+      name: `${safeDocTitle(quiz.title)} - Bản in giáo viên.docx`, mimeType: docxMime, bytes: docxBytes, folderId: folder.id
+    });
+    newPrintableFileId = printable?.id;
+
+    const checksum = await bundleChecksum(quiz, questions);
+    data = {
+      quiz_id: quizId, google_doc_file_id: bundle.google_doc_file_id, printable_docx_file_id: printable.id,
+      homework_assignment_id: bundle.homework_assignment_id || `hw_quiz_${quizId}`,
+      homework_draft: homeworkDraft(quiz, questions), revision,
+      quiz_checksum: checksum,
+      google_doc_modified_time: metadata.modifiedTime || null, sync_status: 'synced'
+    };
+
     const statements = [db.prepare(`DELETE FROM quiz_questions WHERE quiz_id = ?`).bind(quizId)];
     for (const q of questions) {
       statements.push(db.prepare(`
@@ -1354,15 +1468,16 @@ export async function importGoogleDocToQuizBundle(platform, db, quizId, { expect
     ));
 
     await db.batch(statements);
-  } catch (batchErr) {
-    if (newPrintableFileId) {
-      try { await removeDriveFile(platform, newPrintableFileId); } catch {}
-    }
-    await logBundleSyncEvent(db, {
-      quizId, eventType: 'failed', actor, direction: 'import_docs_to_quiz', resolution,
-      fromRevision: bundle.revision, errorCode: 'D1BatchFailed', errorMessage: batchErr.message
+  } catch (pipelineErr) {
+    await compensateDrivePipeline(platform, db, {
+      quizId,
+      newPrintableFileId,
+      previous: bundle,
+      actor,
+      direction: 'import_docs_to_quiz',
+      resolution
     });
-    throw batchErr;
+    throw pipelineErr;
   }
 
   if (bundle.printable_docx_file_id && bundle.printable_docx_file_id !== printable.id) {
@@ -1399,16 +1514,33 @@ export async function getQuizBundle(db, quizId) {
   };
 }
 
-export async function publishBundleHomework(db, quizId, user, input) {
+export async function publishBundleHomework(platformOrDb, dbOrQuizId, quizIdOrUser, userOrInput, maybeInput) {
+  let platform, db, quizId, user, input;
+  if (maybeInput !== undefined) {
+    platform = platformOrDb; db = dbOrQuizId; quizId = quizIdOrUser; user = userOrInput; input = maybeInput;
+  } else {
+    platform = null; db = platformOrDb; quizId = dbOrQuizId; user = quizIdOrUser; input = userOrInput;
+  }
+
   const bundle = await db.prepare(`SELECT * FROM quiz_bundles WHERE quiz_id = ? LIMIT 1`).bind(quizId).first();
   if (!bundle?.homework_assignment_id) throw new QuizDriveError('Bundle chưa có bài tập nháp', 404, 'HomeworkDraftNotFound');
 
-  if (input.expected_revision !== undefined && input.expected_revision !== null && Number(input.expected_revision) !== Number(bundle.revision)) {
+  if (input.expected_revision === undefined || input.expected_revision === null) {
+    throw new QuizDriveError('Thiếu expected_revision khi giao bài', 409, 'MissingExpectedRevision');
+  }
+  if (Number(input.expected_revision) !== Number(bundle.revision)) {
     throw new QuizDriveError('Bundle revision conflict', 409, 'BundleRevisionConflict');
   }
 
   if (bundle.sync_status === 'conflict' || bundle.sync_status === 'error') {
     throw new QuizDriveError('Không thể giao bài khi bundle đang ở trạng thái xung đột hoặc lỗi', 409, 'BundleNotReady');
+  }
+
+  if (platform) {
+    const health = await inspectBundleHealth(platform, db, quizId);
+    if (health.status !== 'clean' || !health.drive_healthy) {
+      throw new QuizDriveError('Bundle chưa sẵn sàng hoặc có thay đổi chưa đồng bộ', 409, 'BundleNotReady');
+    }
   }
 
   const sessionId = String(input.session_id || '').trim();
@@ -1422,7 +1554,11 @@ export async function publishBundleHomework(db, quizId, user, input) {
   const assignment = await db.prepare(`SELECT * FROM homework_assignments WHERE id = ? LIMIT 1`).bind(bundle.homework_assignment_id).first();
   if (!assignment) throw new QuizDriveError('Không tìm thấy bài tập nháp trong D1', 404, 'HomeworkDraftNotFound');
 
-  if (assignment.status === 'published' && assignment.source_content_revision === bundle.revision && assignment.class_id === classId && assignment.session_id === sessionId) {
+  if (Number(assignment.source_content_revision) !== Number(bundle.revision)) {
+    throw new QuizDriveError('Bài tập nháp không khớp revision với bundle hiện tại', 409, 'BundleNotReady');
+  }
+
+  if (assignment.status === 'published' && assignment.source_content_revision === bundle.revision && assignment.class_id === classId && assignment.session_id === sessionId && assignment.deadline_date === deadlineDate && assignment.deadline_time === deadlineTime) {
     return assignment;
   }
 

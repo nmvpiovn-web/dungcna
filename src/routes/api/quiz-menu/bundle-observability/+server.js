@@ -1,5 +1,6 @@
 import { json } from '@sveltejs/kit';
 import { isStaffUser, verifyServerAuth } from '../../../../lib/server/auth.js';
+import { inspectBundleHealth } from '../../../../lib/server/quizDrive.js';
 
 export const prerender = false;
 
@@ -13,10 +14,27 @@ export async function GET({ request, platform, url }) {
   const role = String(auth.user.role || '').toLowerCase();
   const isManager = ['superadmin', 'admin', 'leader'].includes(role);
 
-  const statusFilter = url.searchParams.get('status')?.trim() || '';
-  const search = url.searchParams.get('search')?.trim() || '';
-  const limit = Math.min(Math.max(Number(url.searchParams.get('limit')) || 20, 1), 100);
-  const offset = Math.max(Number(url.searchParams.get('offset')) || 0, 0);
+  const searchRaw = url.searchParams.get('search')?.trim() || '';
+  if (searchRaw.length > 100) {
+    return json({ success: false, error: 'InvalidSearchQuery', message: 'Độ dài tìm kiếm tối đa 100 ký tự' }, { status: 400 });
+  }
+
+  const rawStatus = url.searchParams.get('status')?.trim().toLowerCase() || '';
+  const ALLOWED_STATUSES = new Set(['', 'all', 'synced', 'conflict', 'error', 'stale', 'draft']);
+  if (!ALLOWED_STATUSES.has(rawStatus)) {
+    return json({ success: false, error: 'InvalidStatusFilter', message: 'Bộ lọc trạng thái không hợp lệ' }, { status: 400 });
+  }
+  const statusFilter = (rawStatus === 'all') ? '' : rawStatus;
+
+  const rawLimit = Number(url.searchParams.get('limit'));
+  const rawOffset = Number(url.searchParams.get('offset'));
+  let limit = Number.isInteger(rawLimit) && rawLimit > 0 ? Math.min(rawLimit, 100) : 20;
+  const offset = Number.isInteger(rawOffset) && rawOffset >= 0 ? rawOffset : 0;
+
+  const isRefresh = url.searchParams.get('refresh') === '1' || url.searchParams.get('refresh') === 'true';
+  if (isRefresh) {
+    limit = Math.min(limit, 10);
+  }
 
   const conditions = [];
   const params = [];
@@ -31,9 +49,9 @@ export async function GET({ request, platform, url }) {
     params.push(statusFilter);
   }
 
-  if (search) {
+  if (searchRaw) {
     conditions.push('q.title LIKE ?');
-    params.push(`%${search}%`);
+    params.push(`%${searchRaw}%`);
   }
 
   const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
@@ -67,18 +85,69 @@ export async function GET({ request, platform, url }) {
   `;
   const listRows = await db.prepare(listQuery).bind(...params, limit, offset).all();
 
-  const bundles = (listRows.results || []).map((row) => ({
-    quiz_id: row.quiz_id,
-    quiz_title: row.quiz_title,
-    created_by: row.created_by,
-    creator_name: row.creator_name || 'Giáo viên',
-    revision: Number(row.revision || 0),
-    sync_status: row.sync_status || 'unknown',
-    last_synced_at: row.last_synced_at,
-    created_at: row.created_at,
-    updated_at: row.updated_at,
-    google_doc_url: row.google_doc_file_id ? `https://docs.google.com/document/d/${row.google_doc_file_id}/edit` : null,
-    quiz_url: `/quiz-menu?quiz=${encodeURIComponent(row.quiz_id)}`
+  const bundles = await Promise.all((listRows.results || []).map(async (row) => {
+    const base = {
+      quiz_id: row.quiz_id,
+      quiz_title: row.quiz_title,
+      created_by: row.created_by,
+      creator_name: row.creator_name || 'Giáo viên',
+      revision: Number(row.revision || 0),
+      sync_status: row.sync_status || 'unknown',
+      last_synced_at: row.last_synced_at,
+      created_at: row.created_at,
+      updated_at: row.updated_at,
+      google_doc_url: row.google_doc_file_id ? `https://docs.google.com/document/d/${row.google_doc_file_id}/edit` : null,
+      quiz_url: `/quiz-menu?quiz=${encodeURIComponent(row.quiz_id)}`
+    };
+
+    if (isRefresh) {
+      try {
+        const health = await inspectBundleHealth(platform, db, row.quiz_id);
+        return {
+          ...base,
+          health_mode: 'live',
+          health_status: health.status,
+          quiz_changed: health.quiz_changed,
+          docs_changed: health.docs_changed,
+          drive_healthy: health.drive_healthy
+        };
+      } catch {
+        return {
+          ...base,
+          health_mode: 'live',
+          health_status: 'drive_unavailable',
+          quiz_changed: false,
+          docs_changed: false,
+          drive_healthy: false
+        };
+      }
+    }
+
+    const isStale = row.sync_status === 'stale' || (row.last_synced_at ? (Date.now() - new Date(row.last_synced_at).getTime() > 3600000) : false);
+    let latestEvent = null;
+    try {
+      const eventRow = await db.prepare(`
+        SELECT event_type, created_at, error_code
+        FROM quiz_bundle_sync_events
+        WHERE quiz_id = ?
+        ORDER BY created_at DESC, rowid DESC
+        LIMIT 1
+      `).bind(row.quiz_id).first();
+      if (eventRow) {
+        latestEvent = {
+          event_type: eventRow.event_type,
+          created_at: eventRow.created_at,
+          error_code: eventRow.error_code || null
+        };
+      }
+    } catch {}
+
+    return {
+      ...base,
+      health_mode: 'stored',
+      stale: isStale,
+      latest_event: latestEvent
+    };
   }));
 
   return json({
@@ -86,6 +155,7 @@ export async function GET({ request, platform, url }) {
     bundles,
     total,
     limit,
-    offset
+    offset,
+    refresh: isRefresh
   });
 }
