@@ -205,8 +205,13 @@ self.addEventListener('notificationclick', (event) => {
   );
 });
 
-// Message Listener for Leader in-app push simulation (SHOW_LEADER_NOTIFICATION)
+// Message Listener for SW control and notifications
 self.addEventListener('message', (event) => {
+  if (event.data === 'SKIP_WAITING' || event.data?.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+    return;
+  }
+
   if (event.data && event.data.type === 'SHOW_LEADER_NOTIFICATION') {
     const payload = event.data.payload || {};
     const title = payload.title || 'Báo Cáo Leader';

@@ -22,6 +22,7 @@
  import AuthModal from '$lib/components/AuthModal.svelte';
  import ProfileEditModal from '$lib/components/ProfileEditModal.svelte';
  import ApkOtaUpdater from '$lib/components/ApkOtaUpdater.svelte';
+ import { appUpdateState, checkForUpdate } from '$lib/stores/appUpdate.js';
  import LeaderNotificationDrawer from '$lib/components/LeaderNotificationDrawer.svelte';
  import NotificationCenterModal from '$lib/components/NotificationCenterModal.svelte';
  import OnboardingTourModal from '$lib/components/OnboardingTourModal.svelte';
@@ -772,7 +773,7 @@
  <!-- CTA Hoc thu mien phi — luon visible (sticky header) -->
  <a
  href="/exam#placement"
- class="hidden md:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-accent-500 hover:brightness-105 text-white text-xs font-extrabold shadow-sm transition-all"
+ class="hidden 2xl:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-accent-500 hover:brightness-105 text-white text-xs font-extrabold shadow-sm transition-all"
  >
  🎁 Học thử miễn phí
  </a>
@@ -942,6 +943,7 @@
 
  <!-- Mobile Menu Toggle Button -->
  <button
+ type="button"
  id="mobile-menu-btn"
  data-testid="mobile-menu-btn"
  onclick={() => mobileMenuOpen = !mobileMenuOpen}
@@ -1174,6 +1176,57 @@
  </div>
  </div>
  {/if}
+
+ <!-- Section 5: Ứng Dụng & Cập Nhật Mạng (OTA) -->
+ <div class="pt-3 border-t border-line space-y-2">
+ <div class="text-xs font-semibold uppercase tracking-wider text-ink-500 px-1 flex items-center justify-between">
+ <span class="flex items-center gap-1">
+ <span>📶</span> <span>Ứng Dụng &amp; Cập Nhật Mạng</span>
+ </span>
+ <span class="text-[10px] font-mono text-ink-400">v{$appUpdateState.currentVersion}</span>
+ </div>
+
+ <button
+ id="mobile-update-btn"
+ data-testid="mobile-update-btn"
+ onclick={() => { mobileMenuOpen = false; checkForUpdate(true); }}
+ class="w-full min-h-[44px] flex items-center justify-between p-3 rounded-lg bg-surface-1 hover:bg-surface-2 border border-line text-ink-900 text-xs font-semibold shadow-xs transition-colors"
+ >
+ <div class="flex items-center gap-2">
+ {#if $appUpdateState.status === 'checking'}
+ <span class="animate-spin text-emerald-600">⏳</span>
+ <span>Đang kiểm tra cập nhật...</span>
+ {:else if $appUpdateState.status === 'latest'}
+ <span class="text-emerald-600">✅</span>
+ <span>Đã ở phiên bản mới nhất</span>
+ {:else if $appUpdateState.status === 'available'}
+ <span class="text-emerald-600">⚡</span>
+ <span class="font-bold text-emerald-800">Có bản cập nhật mới!</span>
+ {:else if $appUpdateState.status === 'offline'}
+ <span class="text-rose-600">⚠️</span>
+ <span>Ngoại tuyến (chạm để thử lại)</span>
+ {:else if $appUpdateState.status === 'updating'}
+ <span class="animate-spin text-emerald-600">🔄</span>
+ <span>Đang cập nhật hệ thống...</span>
+ {:else if $appUpdateState.status === 'restart_needed'}
+ <span class="text-emerald-600">🔄</span>
+ <span class="font-bold text-emerald-800">Cần mở lại ứng dụng</span>
+ {:else}
+ <span>📶</span>
+ <span>Kiểm tra cập nhật qua mạng</span>
+ {/if}
+ </div>
+
+ <div class="flex items-center gap-1.5">
+ {#if $appUpdateState.status === 'available'}
+ <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">Mới</span>
+ {:else if $appUpdateState.status === 'restart_needed'}
+ <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">Mở lại</span>
+ {/if}
+ <span class="text-ink-400">➔</span>
+ </div>
+ </button>
+ </div>
  </div>
  {/if}
  </div>
@@ -1220,7 +1273,7 @@
  <PersonalThemeModal bind:isOpen={showPersonalThemeModal} />
 
  <!-- Footer -->
- <footer class="bg-surface-0 border-t border-line py-8 mt-auto text-xs text-ink-500 transition-colors duration-200">
+ <footer class="bg-surface-0 border-t border-line pt-8 pb-24 lg:pb-8 mt-auto text-xs text-ink-500 transition-colors duration-200">
  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
  <div class="flex items-center gap-3">
  <div class="w-8 h-8 rounded-md bg-brand-700 flex items-center justify-center text-white font-semibold text-sm">
@@ -1233,7 +1286,7 @@
  </div>
  </div>
  </div>
- <div class="flex flex-wrap items-center justify-center md:justify-end gap-x-3 gap-y-1.5 text-[11px]">
+ <div class="flex flex-wrap items-center justify-center md:justify-end gap-x-3 gap-y-1.5 text-[11px] lg:pr-28">
  <span class="text-emerald-700 flex items-center gap-1 font-semibold">
  <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
  Hệ thống hoạt động ổn định
@@ -1252,11 +1305,14 @@
  </button>
  <span class="text-stone-300">•</span>
  <button
- onclick={() => apkUpdaterRef?.checkForUpdate(true)}
- class="hover:text-brand-600 flex items-center gap-1 font-semibold text-brand-700"
- title="Kiểm tra bản cập nhật APK mới qua Wi-Fi"
+ id="footer-update-btn"
+ data-testid="footer-update-btn"
+ type="button"
+ onclick={() => checkForUpdate(true)}
+ class="hover:text-brand-600 flex items-center gap-1 font-semibold text-brand-700 min-h-[44px]"
+ title="Kiểm tra bản cập nhật ứng dụng qua mạng"
  >
- <span>📶</span> <span>Cập Nhật APK (Wi-Fi)</span>
+ <span>📶</span> <span>Cập Nhật Ứng Dụng (Mạng)</span>
  </button>
  </div>
  </div>
