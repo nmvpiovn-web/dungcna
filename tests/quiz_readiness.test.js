@@ -270,3 +270,54 @@ test('READINESS-9: GET /api/quiz-menu on unmigrated DB with quizzes does not fab
   assert.equal(data.readiness.schema_ready, false, 'Must not fabricate schema_ready=true');
   assert.equal(data.readiness.ready, false);
 });
+
+test('READINESS-10: Teacher staff masking - pending, rejected, trial, or forced-password-change teachers are safely masked', async () => {
+  const platform = createMockPlatform({ hasTables: true, hasColumns: true, hasMigrations: false, publishedCount: 3 });
+
+  // 1. Pending approval teacher
+  const pendingTeacher = { id: 'usr_t_pending', username: 'teach_pend', role: 'teacher', approval_status: 'pending', status: 'active' };
+  const resPending = await checkQuizReadiness(platform, pendingTeacher, { bypassCache: true });
+  assert.equal(resPending.is_staff, false, 'Pending teacher must not be treated as staff');
+  assert.equal(resPending.status, 'maintenance');
+  assert.equal(resPending.remediation_code, undefined, 'Pending teacher must not see wrangler remediation code');
+  assert.equal(resPending.missing_migrations, undefined, 'Pending teacher must not see migration names');
+
+  // 2. Rejected approval teacher
+  const rejectedTeacher = { id: 'usr_t_rej', username: 'teach_rej', role: 'teacher', approval_status: 'rejected', status: 'active' };
+  const resRejected = await checkQuizReadiness(platform, rejectedTeacher, { bypassCache: true });
+  assert.equal(resRejected.is_staff, false, 'Rejected teacher must not be treated as staff');
+  assert.equal(resRejected.remediation_code, undefined);
+
+  // 3. Trial status teacher
+  const trialTeacher = { id: 'usr_t_trial', username: 'teach_trial', role: 'teacher', approval_status: 'approved', status: 'trial' };
+  const resTrial = await checkQuizReadiness(platform, trialTeacher, { bypassCache: true });
+  assert.equal(resTrial.is_staff, false, 'Trial status teacher must not be treated as staff');
+  assert.equal(resTrial.remediation_code, undefined);
+
+  // 4. Must change password teacher
+  const forcedChangeTeacher = {
+    id: 'usr_t_change',
+    username: 'teach_change',
+    role: 'teacher',
+    approval_status: 'approved',
+    status: 'active',
+    metadata: JSON.stringify({ must_change_password: true })
+  };
+  const resForcedChange = await checkQuizReadiness(platform, forcedChangeTeacher, { bypassCache: true });
+  assert.equal(resForcedChange.is_staff, false, 'Forced-change teacher must not see staff diagnostic');
+  assert.equal(resForcedChange.remediation_code, undefined);
+
+  // 5. Approved/official active teacher without forced password change
+  const officialTeacher = {
+    id: 'usr_t_ok',
+    username: 'teach_ok',
+    role: 'teacher',
+    approval_status: 'approved',
+    status: 'active',
+    metadata: '{}'
+  };
+  const resOfficial = await checkQuizReadiness(platform, officialTeacher, { bypassCache: true });
+  assert.equal(resOfficial.is_staff, true, 'Official approved teacher is recognized as staff');
+  assert.equal(resOfficial.remediation_code, REMEDIATION_CODE_REMOTE);
+  assert.ok(resOfficial.missing_migrations.length > 0);
+});

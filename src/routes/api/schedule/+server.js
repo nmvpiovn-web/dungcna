@@ -58,6 +58,76 @@ export const _BASE_SCHEDULE_COLUMNS = [
 ];
 const BASE_SCHEDULE_COLUMNS = _BASE_SCHEDULE_COLUMNS;
 
+export function _buildConflictFilter({ cols, schemaCheck, body, activeTeacherId, activeAssistantId, activeSubstituteId, roomVal, newStudentIds }) {
+  const teacherIds = [
+    activeTeacherId,
+    activeAssistantId,
+    activeSubstituteId
+  ].filter(Boolean);
+
+  const orConditions = [];
+  const orParams = [];
+
+  if (teacherIds.length > 0) {
+    const placeholders = teacherIds.map(() => '?').join(', ');
+    const teacherClauses = [`teacher_id IN (${placeholders})`];
+    orParams.push(...teacherIds);
+    if (cols.has('assistant_teacher_id')) {
+      teacherClauses.push(`assistant_teacher_id IN (${placeholders})`);
+      orParams.push(...teacherIds);
+    }
+    if (cols.has('substitute_teacher_id')) {
+      teacherClauses.push(`substitute_teacher_id IN (${placeholders})`);
+      orParams.push(...teacherIds);
+    }
+    orConditions.push(`(${teacherClauses.join(' OR ')})`);
+  }
+
+  if (roomVal) {
+    const roomExpr = schemaCheck.hasRoomNotes && schemaCheck.hasRoom
+      ? "COALESCE(room_notes, room, '')"
+      : schemaCheck.hasRoomNotes
+      ? "room_notes"
+      : "room";
+    orConditions.push(`(LOWER(TRIM(${roomExpr})) = LOWER(TRIM(?)) AND TRIM(${roomExpr}) != '')`);
+    orParams.push(roomVal);
+  }
+
+  if (cols.has('student_ids') && newStudentIds && newStudentIds.length > 0) {
+    const sPlaceholders = newStudentIds.map(() => '?').join(', ');
+    orConditions.push(`EXISTS (
+      SELECT 1 FROM json_each(CASE WHEN json_valid(student_ids) THEN student_ids ELSE '[]' END)
+      WHERE value IN (${sPlaceholders})
+    )`);
+    orParams.push(...newStudentIds);
+  }
+
+  const baseClause = `session_date = ? AND id != ? AND start_time < ? AND end_time > ? AND (status IS NULL OR status != 'cancelled')`;
+  const baseParams = [
+    body.session_date,
+    body.id || '',
+    body.end_time,
+    body.start_time
+  ];
+
+  if (orConditions.length === 0) {
+    return {
+      hasConflictCheck: false,
+      whereSql: baseClause,
+      whereParams: baseParams,
+      teacherIds
+    };
+  }
+
+  return {
+    hasConflictCheck: true,
+    whereSql: `${baseClause} AND (${orConditions.join(' OR ')})`,
+    whereParams: [...baseParams, ...orParams],
+    teacherIds
+  };
+}
+const buildConflictFilter = _buildConflictFilter;
+
 export function _clearClassSessionsColumnsCache() {
   // Kept as no-op for backward compatibility with tests
 }
@@ -481,6 +551,8 @@ export async function POST({ request, platform }) {
     const topicVal = String(body.subject_topic ?? body.topic ?? '').trim() || 'Chuyên đề Ngữ pháp & Giao tiếp';
     const newStudentIds = Array.isArray(body.student_ids) ? body.student_ids : [];
 
+    let conflictFilter = null;
+
     if (db) {
       const cols = await getClassSessionsColumns(db);
       const schemaCheck = resolveScheduleSchema(cols);
@@ -497,38 +569,59 @@ export async function POST({ request, platform }) {
         ? "room_notes"
         : "room AS room_notes";
 
-      const conflicts = await db.prepare(`
-        SELECT id, class_name, teacher_id ${asstCol} ${subCol} ${studentCol}, ${roomColExpr}, start_time, end_time
-        FROM class_sessions
-        WHERE session_date = ?
-          AND id != ?
-          AND start_time < ?
-          AND end_time > ?
-          AND (status IS NULL OR status != 'cancelled')
-        LIMIT 50
-      `).bind(
-        body.session_date,
-        body.id || '',
-        body.end_time,
-        body.start_time
-      ).all();
-      const rows = conflicts?.results || [];
-      const teacherIds = [
+      conflictFilter = buildConflictFilter({
+        cols,
+        schemaCheck,
+        body,
         activeTeacherId,
         activeAssistantId,
-        activeSubstituteId
-      ].filter(Boolean);
+        activeSubstituteId,
+        roomVal,
+        newStudentIds
+      });
 
-      for (const r of rows) {
-        let rStudentIds = [];
-        try { rStudentIds = typeof r.student_ids === 'string' ? JSON.parse(r.student_ids || '[]') : (r.student_ids || []); } catch {}
-        const rTeachers = [r.teacher_id, r.assistant_teacher_id, r.substitute_teacher_id].filter(Boolean);
-        const teacherOverlap = teacherIds.some(t => rTeachers.includes(t));
-        const studentOverlap = newStudentIds.some(s => rStudentIds.includes(s));
-        const existingRoom = r.room_notes ?? r.room ?? '';
-        const roomOverlap = roomVal && existingRoom && String(roomVal).toLowerCase() === String(existingRoom).trim().toLowerCase();
-        if (teacherOverlap || studentOverlap || roomOverlap) {
-          const reason = teacherOverlap ? 'giáo viên' : studentOverlap ? 'học sinh' : 'phòng học';
+      if (conflictFilter.hasConflictCheck) {
+        let offset = 0;
+        const chunkSize = 100;
+        let conflictFound = null;
+
+        while (true) {
+          const scanSql = `
+            SELECT id, class_name, teacher_id ${asstCol} ${subCol} ${studentCol}, ${roomColExpr}, start_time, end_time
+            FROM class_sessions
+            WHERE ${conflictFilter.whereSql}
+            ORDER BY id ASC
+            LIMIT ? OFFSET ?
+          `;
+          const scanParams = [...conflictFilter.whereParams, chunkSize, offset];
+          const chunkRes = await db.prepare(scanSql).bind(...scanParams).all();
+          const chunkRows = chunkRes?.results || [];
+          if (chunkRows.length === 0) break;
+
+          for (const r of chunkRows) {
+            let rStudentIds = [];
+            try { rStudentIds = typeof r.student_ids === 'string' ? JSON.parse(r.student_ids || '[]') : (r.student_ids || []); } catch {}
+            const rTeachers = [r.teacher_id, r.assistant_teacher_id, r.substitute_teacher_id].filter(Boolean);
+            const teacherOverlap = conflictFilter.teacherIds.some(t => rTeachers.includes(t));
+            const studentOverlap = newStudentIds.some(s => rStudentIds.includes(s));
+            const existingRoom = r.room_notes ?? r.room ?? '';
+            const roomOverlap = roomVal && existingRoom && String(roomVal).toLowerCase() === String(existingRoom).trim().toLowerCase();
+            if (teacherOverlap || studentOverlap || roomOverlap) {
+              conflictFound = {
+                row: r,
+                reason: teacherOverlap ? 'giáo viên' : studentOverlap ? 'học sinh' : 'phòng học'
+              };
+              break;
+            }
+          }
+
+          if (conflictFound) break;
+          if (chunkRows.length < chunkSize) break;
+          offset += chunkSize;
+        }
+
+        if (conflictFound) {
+          const { row: r, reason } = conflictFound;
           return json({
             success: false,
             error: `Trùng lịch ${reason} với ca "${r.class_name}" (${r.start_time}–${r.end_time} ngày ${body.session_date})`
@@ -624,10 +717,33 @@ export async function POST({ request, platform }) {
         if (cols.has('status')) { insertCols.push('status'); insertVals.push('scheduled'); }
         if (cols.has('updated_at')) { insertCols.push('updated_at'); insertVals.push(new Date().toISOString()); }
 
-        const placeholders = insertCols.map(() => '?').join(', ');
-        await platform.env.DB.prepare(`
-          INSERT INTO class_sessions (${insertCols.join(', ')}) VALUES (${placeholders})
-        `).bind(...insertVals).run();
+        if (conflictFilter && conflictFilter.hasConflictCheck) {
+          const selectPlaceholders = insertCols.map(() => '?').join(', ');
+          const atomicInsertSql = `
+            INSERT INTO class_sessions (${insertCols.join(', ')})
+            SELECT ${selectPlaceholders}
+            WHERE NOT EXISTS (
+              SELECT 1 FROM class_sessions WHERE ${conflictFilter.whereSql}
+            )
+          `;
+          const atomicInsertParams = [...insertVals, ...conflictFilter.whereParams];
+          const insertRes = await platform.env.DB.prepare(atomicInsertSql).bind(...atomicInsertParams).run();
+          const changes = insertRes?.meta?.changes ?? insertRes?.changes;
+          if (changes !== undefined && changes === 0) {
+            const raceConflict = await platform.env.DB.prepare(`
+              SELECT class_name, start_time, end_time FROM class_sessions WHERE ${conflictFilter.whereSql} LIMIT 1
+            `).bind(...conflictFilter.whereParams).first();
+            const raceMsg = raceConflict
+              ? `Trùng lịch với ca "${raceConflict.class_name}" (${raceConflict.start_time}–${raceConflict.end_time} ngày ${body.session_date})`
+              : 'Xung đột lịch học đồng thời: Buổi học bị trùng với một yêu cầu khác vừa được tạo';
+            return json({ success: false, error: raceMsg }, { status: 409 });
+          }
+        } else {
+          const placeholders = insertCols.map(() => '?').join(', ');
+          await platform.env.DB.prepare(`
+            INSERT INTO class_sessions (${insertCols.join(', ')}) VALUES (${placeholders})
+          `).bind(...insertVals).run();
+        }
         savedSession.status = 'scheduled';
       } else {
         // UPDATE: only touch columns the form submits.
@@ -674,14 +790,41 @@ export async function POST({ request, platform }) {
         if (cols.has('teacher_role')) { updateSets.push('teacher_role = ?'); updateVals.push(body.teacher_role || 'lead'); }
         if (cols.has('updated_at')) { updateSets.push('updated_at = CURRENT_TIMESTAMP'); }
 
-        updateVals.push(id);
-        const updateRes = await platform.env.DB.prepare(`
-          UPDATE class_sessions SET ${updateSets.join(', ')} WHERE id = ?
-        `).bind(...updateVals).run();
+        if (conflictFilter && conflictFilter.hasConflictCheck) {
+          const atomicUpdateSql = `
+            UPDATE class_sessions
+            SET ${updateSets.join(', ')}
+            WHERE id = ?
+              AND NOT EXISTS (
+                SELECT 1 FROM class_sessions WHERE ${conflictFilter.whereSql}
+              )
+          `;
+          const atomicUpdateParams = [...updateVals, id, ...conflictFilter.whereParams];
+          const updateRes = await platform.env.DB.prepare(atomicUpdateSql).bind(...atomicUpdateParams).run();
+          const changes = updateRes?.meta?.changes ?? updateRes?.changes;
+          if (changes !== undefined && changes === 0) {
+            const exists = await platform.env.DB.prepare('SELECT 1 FROM class_sessions WHERE id = ? LIMIT 1').bind(id).first();
+            if (!exists) {
+              return json({ success: false, error: 'Không tìm thấy buổi học để cập nhật' }, { status: 404 });
+            }
+            const raceConflict = await platform.env.DB.prepare(`
+              SELECT class_name, start_time, end_time FROM class_sessions WHERE ${conflictFilter.whereSql} LIMIT 1
+            `).bind(...conflictFilter.whereParams).first();
+            const raceMsg = raceConflict
+              ? `Trùng lịch với ca "${raceConflict.class_name}" (${raceConflict.start_time}–${raceConflict.end_time} ngày ${body.session_date})`
+              : 'Xung đột lịch học đồng thời: Cập nhật bị từ chối do trùng với ca học khác';
+            return json({ success: false, error: raceMsg }, { status: 409 });
+          }
+        } else {
+          updateVals.push(id);
+          const updateRes = await platform.env.DB.prepare(`
+            UPDATE class_sessions SET ${updateSets.join(', ')} WHERE id = ?
+          `).bind(...updateVals).run();
 
-        const changes = updateRes?.meta?.changes ?? updateRes?.changes;
-        if (changes !== undefined && changes === 0) {
-          return json({ success: false, error: 'Không tìm thấy buổi học để cập nhật' }, { status: 404 });
+          const changes = updateRes?.meta?.changes ?? updateRes?.changes;
+          if (changes !== undefined && changes === 0) {
+            return json({ success: false, error: 'Không tìm thấy buổi học để cập nhật' }, { status: 404 });
+          }
         }
 
         // Keep the existing status from DB (don't reset)

@@ -106,15 +106,19 @@ function makeMockPlatform(schemaType = 'prod', initialRows = []) {
             throw new Error('no such column: room');
           }
           if (sql.includes('class_sessions') && sql.includes('session_date = ?')) {
-            // params: session_date, id, end_time, start_time
             const [sDate, excludeId, endTime, startTime] = params;
-            const matches = rows.filter(r =>
+            let matches = rows.filter(r =>
               r.session_date === sDate &&
               r.id !== excludeId &&
               r.start_time < endTime &&
               r.end_time > startTime &&
               r.status !== 'cancelled'
             );
+            if (sql.includes('LIMIT ? OFFSET ?')) {
+              const offset = Number(params[params.length - 1]);
+              const limit = Number(params[params.length - 2]);
+              matches = matches.slice(offset, offset + limit);
+            }
             return {
               results: matches.map(m => ({
                 id: m.id,
@@ -134,6 +138,9 @@ function makeMockPlatform(schemaType = 'prod', initialRows = []) {
         },
         async run() {
           if (sql.includes('INSERT INTO class_sessions')) {
+            if (sql.includes('WHERE NOT EXISTS') && DB.simulateRaceConflict) {
+              return { success: true, meta: { changes: 0 } };
+            }
             // Extract column names from insert
             const match = sql.match(/INSERT INTO class_sessions \((.*?)\)/);
             if (match) {
@@ -148,9 +155,12 @@ function makeMockPlatform(schemaType = 'prod', initialRows = []) {
               usedCols.forEach((c, idx) => { rowObj[c] = params[idx]; });
               rows.push(rowObj);
             }
-            return { success: true };
+            return { success: true, meta: { changes: 1 } };
           }
           if (sql.includes('UPDATE class_sessions SET')) {
+            if (sql.includes('WHERE NOT EXISTS') && DB.simulateRaceConflict) {
+              return { success: true, meta: { changes: 0 } };
+            }
             if (sql.includes('student_ids = ?') && !colNames.has('student_ids')) {
               throw new Error('no such column: student_ids');
             }
@@ -904,4 +914,103 @@ test('GREEN-14: Ownership permissions: self-lead check, assistant/substitute edi
   });
   const resMgrReassign = await POST({ request: reqMgrReassign, platform });
   assert.equal(resMgrReassign.status, 200);
+});
+
+test('GREEN-15: Conflict scan across >50 records correctly detects conflict at row 55+ and returns 409', async () => {
+  // Create 60 dummy sessions on 2026-10-25 with different teachers/rooms that don't conflict
+  const initialRows = [];
+  for (let i = 1; i <= 60; i++) {
+    initialRows.push({
+      id: `sess_dummy_${String(i).padStart(3, '0')}`,
+      class_name: `Lớp Dummy ${i}`,
+      session_date: '2026-10-25',
+      day_of_week: 0,
+      day_name: 'Chủ Nhật',
+      start_time: '18:00',
+      end_time: '19:30',
+      teacher_id: `usr_dummy_teach_${i}`,
+      room_notes: `Phòng ${i}`,
+      status: 'scheduled'
+    });
+  }
+
+  // Row 55 has teacher 'usr_teach_overlap'
+  initialRows[54].teacher_id = 'usr_teach_overlap';
+  initialRows[54].class_name = 'Lớp Cao Cấp 55';
+
+  const platform = makeMockPlatform('prod', initialRows);
+  const token = await createSignedToken({ id: 'usr_teach_overlap', role: 'teacher', approval_status: 'approved' }, secret);
+
+  const req = new Request('https://timbk.io.vn/api/schedule', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({
+      action: 'save_session',
+      class_name: 'Lớp Mới Cần Thêm',
+      teacher_id: 'usr_teach_overlap',
+      session_date: '2026-10-25',
+      day_of_week: 0,
+      day_name: 'Chủ Nhật',
+      start_time: '18:15',
+      end_time: '19:00',
+      room_notes: 'Phòng Mới 99'
+    })
+  });
+
+  const res = await POST({ request: req, platform });
+  assert.equal(res.status, 409, 'Conflict at index 55 must be detected despite >50 records');
+  const data = await res.json();
+  assert.equal(data.success, false);
+  assert.match(data.error, /Trùng lịch giáo viên với ca "Lớp Cao Cấp 55"/);
+});
+
+test('GREEN-16: Concurrent competing requests with race condition protection rejects duplicate booking with 409', async () => {
+  const platform = makeMockPlatform('prod', []);
+  const token = await createSignedToken({ id: 'usr_teach_race', role: 'teacher', approval_status: 'approved' }, secret);
+
+  const req1 = new Request('https://timbk.io.vn/api/schedule', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({
+      action: 'save_session',
+      class_name: 'Ca Học Trực Tuyến A',
+      teacher_id: 'usr_teach_race',
+      session_date: '2026-10-28',
+      day_of_week: 3,
+      day_name: 'Thứ Tư',
+      start_time: '18:00',
+      end_time: '19:30',
+      room_notes: 'Phòng VIP 1'
+    })
+  });
+
+  // Request 1 succeeds
+  const res1 = await POST({ request: req1, platform });
+  assert.equal(res1.status, 200);
+
+  // Request 2 tries to insert overlapping session concurrently
+  // Simulate race condition where D1 atomic WHERE NOT EXISTS rejects second insert (changes: 0)
+  platform.env.DB.simulateRaceConflict = true;
+
+  const req2 = new Request('https://timbk.io.vn/api/schedule', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({
+      action: 'save_session',
+      class_name: 'Ca Học Trực Tuyến B',
+      teacher_id: 'usr_teach_race',
+      session_date: '2026-10-28',
+      day_of_week: 3,
+      day_name: 'Thứ Tư',
+      start_time: '18:30',
+      end_time: '20:00',
+      room_notes: 'Phòng VIP 2'
+    })
+  });
+
+  const res2 = await POST({ request: req2, platform });
+  assert.equal(res2.status, 409, 'Atomic CAS write must reject concurrent race insert with 409');
+  const data2 = await res2.json();
+  assert.equal(data2.success, false);
+  assert.match(data2.error, /Trùng lịch/);
 });

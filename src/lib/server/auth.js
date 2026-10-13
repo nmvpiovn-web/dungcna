@@ -256,6 +256,10 @@ export function isStaffUser(user) {
     if (approval !== 'approved' && approval !== 'official') {
       return false;
     }
+    const status = String(user.status || '').trim().toLowerCase();
+    if (status === 'trial' || status === 'pending' || status === 'suspended' || status === 'rejected') {
+      return false;
+    }
   }
 
   return true;

@@ -205,11 +205,38 @@
     id: null, title: '', description: '', time_limit_minutes: 20, questions: []
   });
 
-  let isStaff = $derived(['teacher', 'leader', 'admin', 'superadmin'].includes((currentUser?.role || '').toLowerCase()));
+  let isStaff = $derived.by(() => {
+    if (!currentUser) return false;
+    const role = String(currentUser.role || '').toLowerCase();
+    if (!['teacher', 'leader', 'admin', 'superadmin'].includes(role)) return false;
+
+    let meta = currentUser.metadata;
+    if (typeof meta === 'string') {
+      try { meta = JSON.parse(meta); } catch { meta = {}; }
+    }
+    if (meta && meta.must_change_password === true) return false;
+
+    if (role === 'teacher') {
+      const approval = String(currentUser.approval_status || '').trim().toLowerCase();
+      if (approval !== 'approved' && approval !== 'official') {
+        return false;
+      }
+      const status = String(currentUser.status || '').trim().toLowerCase();
+      if (status === 'trial' || status === 'pending' || status === 'suspended' || status === 'rejected') {
+        return false;
+      }
+    }
+
+    if (quizReadiness && typeof quizReadiness.is_staff === 'boolean') {
+      return quizReadiness.is_staff;
+    }
+
+    return true;
+  });
   // Role-aware tabs: staff thấy Tạo/Quản lý/Làm; parent thấy Làm + Kết quả con; student/guest chỉ Làm
   let userRole = $derived((currentUser?.role || '').toLowerCase());
   let visibleTabs = $derived(
-    ['teacher', 'leader', 'admin', 'superadmin'].includes(userRole) ? ['create', 'mine', 'take']
+    isStaff ? ['create', 'mine', 'take']
     : userRole === 'parent' ? ['take', 'results']
     : ['take']
   );
@@ -1363,7 +1390,7 @@
             <span class="draft-count">{draft.questions.length} câu đã có</span>
           </div>
 
-          {#if quizReadiness && quizReadiness.schema_ready === false}
+          {#if isStaff && quizReadiness && quizReadiness.schema_ready === false}
             <div class="readiness-banner" data-testid="staff-readiness-warning" role="alert">
               <span class="warning-icon">⚠️</span>
               <div class="banner-body">
@@ -2239,7 +2266,7 @@
         </div>
       {:else}
         {#if quizReadiness && quizReadiness.schema_ready === false}
-          {#if isStaff}
+          {#if isStaff && quizReadiness?.is_staff !== false}
             <div class="readiness-alert-card" data-testid="quiz-readiness-unready" role="alert">
               <div class="alert-icon">⚠️</div>
               <div class="alert-body">
