@@ -170,3 +170,35 @@ Theo kết quả audit độc lập từ Codex maintainer/auditor, Round 2 khắ
    - Giải quyết xung đột mang tính phá hủy yêu cầu xác nhận rõ ràng qua modal (không kích hoạt trực tiếp từ inline box).
    - Tự động làm mới dữ liệu bundle khi nhận mã lỗi 409 revision/xung đột.
    - Bổ sung vùng `aria-live` và nút thử lại khi Drive không khả dụng hoặc hệ thống bận.
+
+## Vòng 3 (Round 3) Remediation & Hardening
+
+1. **P1 RED-3R3.1 — Lock Lease Heartbeat Suốt Pipeline:**
+   - Bổ sung `renewBundleLock(db, quizId, lockToken, ttlMs = 300000)` với UPDATE có điều kiện (`WHERE lock_token = ? AND expires_at > ?`).
+   - Nếu `changes === 0`, ném lỗi 409 `BundleSyncLockLost` và kích hoạt `compensateDrivePipeline` để dọn dẹp artifact Drive mồ côi.
+   - Truyền `lockToken` xuống `publishQuizBundle` và `importGoogleDocToQuizBundle`; gia hạn lock trước và sau mỗi lời gọi Drive external.
+
+2. **P1 RED-3R3.2 — Bắt Buộc Platform & Live Health trong `publishBundleHomework`:**
+   - Xóa bỏ hoàn toàn overload không có `platform`. Chữ ký duy nhất: `publishBundleHomework(platform, db, quizId, user, input)`.
+   - Ném lỗi 500 `PlatformRequired` nếu thiếu `platform` hoặc `platform.env`.
+   - Bắt buộc kiểm tra `inspectBundleHealth` live, ném 409 `BundleNotReady` nếu trạng thái không phải `clean` hoặc Drive không khả dụng.
+
+3. **P1 RED-3R3.3 — Observability Bộ Lọc Chuẩn Schema & Live Conflict Detection:**
+   - Loại bỏ giá trị `draft` khỏi `ALLOWED_STATUSES` (trả 400 `InvalidStatusFilter` nếu gửi `draft`).
+   - Định nghĩa `stale` là bộ lọc suy dẫn (derived filter): `WHERE last_synced_at IS NULL OR datetime(last_synced_at) < datetime('now', '-1 hour')`.
+   - Với chế độ `refresh=1`: quét các bundle từ DB và kiểm tra live health, phát hiện xung đột trực tiếp (`docs_changed`) ngay cả khi trạng thái D1 chưa cập nhật; trả về thống nhất `scanned_count`, `returned_count`, và `total`.
+
+4. **P1 RED-3R3.4 — Audit Event Response & Tính Bền Vững (Durability):**
+   - Loại bỏ hoàn toàn trường thô `details_json` trong kết quả trả về của `getBundleSyncEvents`.
+   - Sự kiện `started` có tính bền vững bắt buộc (`throwOnError: true`): nếu bảng kiểm toán chưa sẵn sàng, trả về 503 `BundleSyncAuditUnavailable` ngay lập tức trước khi thực hiện bất kỳ thao tác Drive nào.
+   - Chuẩn hóa ký tự điều khiển trong `error_message` và ẩn các ID file Drive thô khỏi chi tiết sự kiện cho phía client.
+
+5. **P1 RED-3R3.5 — Lũy Đẳng Thông Báo Giao Bài Theo Revision:**
+   - Mã thông báo bao gồm revision: `notif_hw_${assignment.id}_r${bundle.revision}_s_${student.user_id}` và `_p_` tương ứng cho phụ huynh.
+   - Thử lại trên cùng một revision hoàn toàn không tạo thông báo trùng lặp.
+   - Giao lại bài với revision mới sinh ra đúng một thông báo mới, với tiêu đề ghi rõ bản cập nhật (`📝 Cập nhật BTVN (rev ${revision}): ...`).
+
+6. **P2 RED-3R3.6 — Kiểm Thử & Xác Thực Nghiêm Ngặt Artifact Drive & Revision:**
+   - Xác thực kết quả tạo/cập nhật Doc và tải lên DOCX; nếu thiếu `id`, ném 502 `DriveInvalidResponse` và bù trừ dọn dẹp các tệp đã tạo.
+   - Hàm phân tích `parseStrictExpectedRevision`: từ chối mọi chuỗi khoảng trắng, số thực, `NaN`, đối tượng với mã lỗi 400 `InvalidExpectedRevision`.
+   - Lỗi giải phóng lock trong khối `finally` được ghi nhận dưới dạng cảnh báo `cleanup_warning` mà không làm che mất kết quả thành công của request.

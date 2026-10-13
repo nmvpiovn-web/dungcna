@@ -6,6 +6,7 @@ import {
   importGoogleDocToQuizBundle,
   inspectBundleHealth,
   logBundleSyncEvent,
+  parseStrictExpectedRevision,
   publishBundleHomework,
   publishQuizBundle,
   releaseBundleLock,
@@ -35,6 +36,20 @@ export async function POST({ params, request, platform }) {
     return json({ success: false, error: 'InvalidSyncDirection' }, { status: 400 });
   }
   const syncDirection = direction || 'publish_quiz_to_docs';
+
+  let parsedExpectedRevision = null;
+  if (body.expected_revision !== undefined && body.expected_revision !== null) {
+    try {
+      parsedExpectedRevision = parseStrictExpectedRevision(body.expected_revision);
+    } catch (revErr) {
+      const status = revErr instanceof QuizDriveError ? revErr.status : 400;
+      return json({
+        success: false,
+        error: revErr.code || 'InvalidExpectedRevision',
+        message: revErr.message || 'expected_revision không hợp lệ'
+      }, { status });
+    }
+  }
 
   const resolution = body.resolution !== undefined && body.resolution !== null ? String(body.resolution).trim() : null;
   const validResolutions = ['keep_quiz', 'keep_docs'];
@@ -84,42 +99,55 @@ export async function POST({ params, request, platform }) {
   }
 
   try {
-    await logBundleSyncEvent(db, {
-      quizId: params.id,
-      eventType: 'started',
-      actor: auth.user.id,
-      direction: syncDirection,
-      resolution,
-      fromRevision: body.expected_revision ?? null
-    });
+    try {
+      await logBundleSyncEvent(db, {
+        quizId: params.id,
+        eventType: 'started',
+        actor: auth.user.id,
+        direction: syncDirection,
+        resolution,
+        fromRevision: parsedExpectedRevision
+      }, { throwOnError: true });
+    } catch (auditErr) {
+      return json({
+        success: false,
+        error: auditErr.code || 'BundleSyncAuditUnavailable',
+        message: auditErr.message || 'Hệ thống kiểm toán không khả dụng'
+      }, { status: 503 });
+    }
 
     let bundle;
     if (syncDirection === 'import_docs_to_quiz') {
       bundle = await importGoogleDocToQuizBundle(platform, db, params.id, {
-        expectedRevision: body.expected_revision,
+        expectedRevision: parsedExpectedRevision,
         resolution,
-        actor: auth.user.id
+        actor: auth.user.id,
+        lockToken: lock.lockToken
       });
     } else if (syncDirection === 'publish_homework') {
-      bundle = await publishBundleHomework(platform, db, params.id, auth.user, body);
+      bundle = await publishBundleHomework(platform, db, params.id, auth.user, {
+        ...body,
+        expected_revision: parsedExpectedRevision
+      });
     } else {
       bundle = await publishQuizBundle(platform, db, params.id, {
-        expectedRevision: body.expected_revision,
+        expectedRevision: parsedExpectedRevision,
         resolution,
-        actor: auth.user.id
+        actor: auth.user.id,
+        lockToken: lock.lockToken
       });
     }
 
     return json({ success: true, direction: syncDirection, bundle });
   } catch (error) {
-    const isConflict = error.code === 'BundleSyncConflict' || error.code === 'BundleRevisionConflict' || error.code === 'MissingExpectedRevision';
+    const isConflict = error.code === 'BundleSyncConflict' || error.code === 'BundleRevisionConflict' || error.code === 'MissingExpectedRevision' || error.code === 'BundleSyncLockLost';
     await logBundleSyncEvent(db, {
       quizId: params.id,
       eventType: isConflict ? 'conflict' : 'failed',
       actor: auth.user.id,
       direction: syncDirection,
       resolution,
-      fromRevision: body.expected_revision ?? null,
+      fromRevision: parsedExpectedRevision ?? body.expected_revision ?? null,
       errorCode: error.code || 'BundleSyncFailed',
       errorMessage: error.message
     });
@@ -127,7 +155,20 @@ export async function POST({ params, request, platform }) {
     return json({ success: false, error: error.code || 'BundleSyncFailed', message: error.message }, { status });
   } finally {
     if (lock?.lockToken) {
-      await releaseBundleLock(db, params.id, lock.lockToken);
+      try {
+        await releaseBundleLock(db, params.id, lock.lockToken);
+      } catch (relErr) {
+        await logBundleSyncEvent(db, {
+          quizId: params.id,
+          eventType: 'cleanup_warning',
+          actor: auth.user.id,
+          direction: syncDirection,
+          resolution,
+          fromRevision: parsedExpectedRevision ?? body.expected_revision ?? null,
+          errorCode: 'ReleaseLockFailed',
+          errorMessage: relErr?.message || 'Failed to release lock'
+        });
+      }
     }
   }
 }
