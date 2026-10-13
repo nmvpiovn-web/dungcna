@@ -215,3 +215,58 @@ test('READINESS-6: Cache isolation - DB A ready cannot make unmigrated DB B read
   assert.equal(resB.status, 'schema_unmigrated');
   assert.ok(resB.missing_tables.length > 0);
 });
+
+test('READINESS-7: Catalog has quiz but schema is unmigrated - returns schema_ready=false and does not auto-fabricate readiness', async () => {
+  const platform = createMockPlatform({ hasTables: true, hasColumns: true, hasMigrations: false, publishedCount: 5 });
+  const staffUser = { id: 'usr_staff', username: 'admin', role: 'superadmin' };
+  const guestUser = null;
+
+  // Staff check: schema_ready=false, catalog_empty=false, staff diagnostic present
+  const resStaff = await checkQuizReadiness(platform, staffUser, { bypassCache: true });
+  assert.equal(resStaff.ready, false);
+  assert.equal(resStaff.schema_ready, false);
+  assert.equal(resStaff.catalog_empty, false);
+  assert.equal(resStaff.status, 'schema_unmigrated');
+  assert.equal(resStaff.is_staff, true);
+  assert.ok(resStaff.missing_migrations.length > 0);
+  assert.equal(resStaff.remediation_code, REMEDIATION_CODE_REMOTE);
+
+  // Guest check: safe masking hides schema internals
+  const resGuest = await checkQuizReadiness(platform, guestUser, { bypassCache: true });
+  assert.equal(resGuest.ready, false);
+  assert.equal(resGuest.schema_ready, false);
+  assert.equal(resGuest.status, 'maintenance');
+  assert.equal(resGuest.is_staff, false);
+  assert.equal(resGuest.missing_migrations, undefined, 'Guest must not see missing migrations');
+  assert.equal(resGuest.remediation_code, undefined, 'Guest must not see remediation code');
+});
+
+test('READINESS-8: Ready DB with published quizzes returns schema_ready=true, catalog_empty=false, ready=true', async () => {
+  const platform = createMockPlatform({ hasTables: true, hasColumns: true, hasMigrations: true, publishedCount: 7 });
+  const staffUser = { id: 'usr_staff', username: 'admin', role: 'superadmin' };
+
+  const res = await checkQuizReadiness(platform, staffUser, { bypassCache: true });
+  assert.equal(res.ready, true);
+  assert.equal(res.schema_ready, true);
+  assert.equal(res.catalog_empty, false);
+  assert.equal(res.status, 'ready');
+  assert.equal(res.published_count, 7);
+});
+
+test('READINESS-9: GET /api/quiz-menu on unmigrated DB with quizzes does not fabricate schema_ready=true', async () => {
+  const platform = createMockPlatform({ hasTables: true, hasColumns: true, hasMigrations: false, publishedCount: 3 });
+  const staffUser = { id: 'usr_staff', username: 'admin', role: 'superadmin' };
+  const token = await createSignedToken(staffUser, secret, 60_000, 'test-session');
+
+  const req = new Request('https://timbk.io.vn/api/quiz-menu', {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  const res = await getQuizCatalog({ request: req, platform, url: new URL(req.url) });
+  const data = await res.json();
+  assert.equal(res.status, 200);
+  assert.equal(data.success, true);
+  assert.ok(data.quizzes.length > 0);
+  assert.ok(data.readiness, 'Staff GET must include true readiness');
+  assert.equal(data.readiness.schema_ready, false, 'Must not fabricate schema_ready=true');
+  assert.equal(data.readiness.ready, false);
+});

@@ -55,7 +55,10 @@ function makeMockPlatform(schemaType = 'prod', initialRows = []) {
         async first() {
           if (sql.includes('FROM users')) {
             const id = params[0];
-            const role = id === 'usr_teach_1' ? 'teacher' : 'superadmin';
+            let role = 'superadmin';
+            if (id.includes('teach')) role = 'teacher';
+            else if (id.includes('student')) role = 'student';
+            else if (id.includes('parent')) role = 'parent';
             return {
               id,
               username: id,
@@ -73,7 +76,7 @@ function makeMockPlatform(schemaType = 'prod', initialRows = []) {
             const found = rows.find(r => r.id === params[0]);
             return found ? { status: found.status } : null;
           }
-          if (sql.includes('SELECT teacher_id, assistant_teacher_id, substitute_teacher_id FROM class_sessions WHERE id = ?')) {
+          if (sql.includes('FROM class_sessions WHERE id = ?')) {
             const found = rows.find(r => r.id === params[0]);
             return found || null;
           }
@@ -83,7 +86,22 @@ function makeMockPlatform(schemaType = 'prod', initialRows = []) {
           if (sql.includes('PRAGMA table_info(class_sessions)')) {
             return { results: columns };
           }
+          if (sql.includes('FROM class_enrollments')) {
+            return { results: [{ class_id: 'cls_ket_7' }] };
+          }
+          if (sql.includes('parent_student_links')) {
+            return { results: [{ class_id: 'cls_ket_7' }] };
+          }
           // Enforce column existence check on SQL:
+          if (sql.includes('cs.assistant_teacher_id') && !colNames.has('assistant_teacher_id')) {
+            throw new Error('no such column: cs.assistant_teacher_id');
+          }
+          if (sql.includes('cs.substitute_teacher_id') && !colNames.has('substitute_teacher_id')) {
+            throw new Error('no such column: cs.substitute_teacher_id');
+          }
+          if (sql.includes('cs.student_ids') && !colNames.has('student_ids')) {
+            throw new Error('no such column: cs.student_ids');
+          }
           if (sql.includes('SELECT') && /\broom\b/i.test(sql) && !colNames.has('room') && !sql.includes('COALESCE(room_notes')) {
             throw new Error('no such column: room');
           }
@@ -133,8 +151,14 @@ function makeMockPlatform(schemaType = 'prod', initialRows = []) {
             return { success: true };
           }
           if (sql.includes('UPDATE class_sessions SET')) {
+            if (sql.includes('student_ids = ?') && !colNames.has('student_ids')) {
+              throw new Error('no such column: student_ids');
+            }
             const targetId = params[params.length - 1];
-            const found = rows.some(r => r.id === targetId);
+            const found = rows.find(r => r.id === targetId);
+            if (found && sql.includes('student_ids = ?')) {
+              found.student_ids = params[0];
+            }
             return { success: true, meta: { changes: found ? 1 : 0 } };
           }
           return { success: true };
@@ -549,4 +573,335 @@ test('GREEN-10: GET normalizes legacy 0001 schema row (topic, room) into subject
   assert.equal(session.topic, 'Unit 1 Vocab & Grammar Review');
   assert.equal(session.room, 'Phòng Lab 102');
   assert.deepEqual(session.student_ids, []);
+});
+
+test('GREEN-11: Dual schema GET against fresh 0001 schema (no assistant_teacher_id, no student_ids)', async () => {
+  const sampleRow = {
+    id: 'sess_fresh_001',
+    class_id: 'cls_ket_7',
+    class_name: 'Lớp 7 - Fresh Schema',
+    teacher_id: 'usr_teach_1',
+    substitute_teacher_id: 'usr_teach_2',
+    session_date: '2026-10-15',
+    start_time: '18:00',
+    end_time: '19:30',
+    room: 'Phòng 101',
+    topic: 'Unit 1 Grammar',
+    status: 'scheduled'
+  };
+
+  const platform = makeMockPlatform('fresh', [sampleRow]);
+
+  // 1. Manager: sees sessions, no column error
+  const mgrToken = await createSignedToken({ id: 'usr_super_1', username: 'admin', role: 'superadmin' }, secret, 60_000, 'test-session');
+  const reqMgr = new Request('https://timbk.io.vn/api/schedule', { headers: { Authorization: `Bearer ${mgrToken}` } });
+  const resMgr = await GET({ request: reqMgr, platform, url: new URL(reqMgr.url) });
+  assert.equal(resMgr.status, 200);
+  const dataMgr = await resMgr.json();
+  assert.equal(dataMgr.success, true);
+  assert.equal(dataMgr.total, 1);
+
+  // 2. Teacher: query builds only with teacher_id and substitute_teacher_id (no assistant_teacher_id)
+  const teacherToken = await createSignedToken({ id: 'usr_teach_1', username: 'teacher1', role: 'teacher' }, secret, 60_000, 'test-session');
+  const reqTeacher = new Request('https://timbk.io.vn/api/schedule', { headers: { Authorization: `Bearer ${teacherToken}` } });
+  const resTeacher = await GET({ request: reqTeacher, platform, url: new URL(reqTeacher.url) });
+  assert.equal(resTeacher.status, 200);
+  const dataTeacher = await resTeacher.json();
+  assert.equal(dataTeacher.success, true);
+  assert.equal(dataTeacher.total, 1);
+
+  // 3. Student: query builds only with class_enrollments (no student_ids)
+  const studentToken = await createSignedToken({ id: 'usr_student_1', username: 'student1', role: 'student' }, secret, 60_000, 'test-session');
+  const reqStudent = new Request('https://timbk.io.vn/api/schedule', { headers: { Authorization: `Bearer ${studentToken}` } });
+  const resStudent = await GET({ request: reqStudent, platform, url: new URL(reqStudent.url) });
+  assert.equal(resStudent.status, 200);
+  const dataStudent = await resStudent.json();
+  assert.equal(dataStudent.success, true);
+
+  // 4. Parent: query builds only with class_enrollments + parent_student_links (no student_ids)
+  const parentToken = await createSignedToken({ id: 'usr_parent_1', username: 'parent1', role: 'parent' }, secret, 60_000, 'test-session');
+  const reqParent = new Request('https://timbk.io.vn/api/schedule', { headers: { Authorization: `Bearer ${parentToken}` } });
+  const resParent = await GET({ request: reqParent, platform, url: new URL(reqParent.url) });
+  assert.equal(resParent.status, 200);
+  const dataParent = await resParent.json();
+  assert.equal(dataParent.success, true);
+
+  // 5. Query param teacher_id: query builds only with existing columns
+  const reqTeacherFilter = new Request('https://timbk.io.vn/api/schedule?teacher_id=usr_teach_1', { headers: { Authorization: `Bearer ${mgrToken}` } });
+  const resTeacherFilter = await GET({ request: reqTeacherFilter, platform, url: new URL(reqTeacherFilter.url) });
+  assert.equal(resTeacherFilter.status, 200);
+});
+
+test('GREEN-12: Dual schema GET against production schema (with assistant_teacher_id and student_ids)', async () => {
+  const prodRow = {
+    id: 'sess_prod_001',
+    class_id: 'cls_ket_7',
+    class_name: 'Lớp 7 - Production Schema',
+    teacher_id: 'usr_teach_1',
+    assistant_teacher_id: 'usr_teach_2',
+    substitute_teacher_id: 'usr_teach_3',
+    student_ids: JSON.stringify(['usr_student_1']),
+    session_date: '2026-10-15',
+    start_time: '18:00',
+    end_time: '19:30',
+    room_notes: 'Phòng VIP 201',
+    subject_topic: 'Unit 1 Grammar Mastery',
+    status: 'scheduled'
+  };
+
+  const platform = makeMockPlatform('prod', [prodRow]);
+
+  // 1. Manager
+  const mgrToken = await createSignedToken({ id: 'usr_super_1', username: 'admin', role: 'superadmin' }, secret, 60_000, 'test-session');
+  const reqMgr = new Request('https://timbk.io.vn/api/schedule', { headers: { Authorization: `Bearer ${mgrToken}` } });
+  const resMgr = await GET({ request: reqMgr, platform, url: new URL(reqMgr.url) });
+  assert.equal(resMgr.status, 200);
+  const dataMgr = await resMgr.json();
+  assert.equal(dataMgr.total, 1);
+  assert.equal(dataMgr.sessions[0].room_notes, 'Phòng VIP 201');
+  assert.equal(dataMgr.sessions[0].subject_topic, 'Unit 1 Grammar Mastery');
+  assert.deepEqual(dataMgr.sessions[0].student_ids, ['usr_student_1']);
+
+  // 2. Teacher (assistant role should also match)
+  const asstToken = await createSignedToken({ id: 'usr_teach_2', username: 'assistant', role: 'teacher' }, secret, 60_000, 'test-session');
+  const reqAsst = new Request('https://timbk.io.vn/api/schedule', { headers: { Authorization: `Bearer ${asstToken}` } });
+  const resAsst = await GET({ request: reqAsst, platform, url: new URL(reqAsst.url) });
+  assert.equal(resAsst.status, 200);
+
+  // 3. Student (via student_ids json)
+  const studentToken = await createSignedToken({ id: 'usr_student_1', username: 'student1', role: 'student' }, secret, 60_000, 'test-session');
+  const reqStudent = new Request('https://timbk.io.vn/api/schedule', { headers: { Authorization: `Bearer ${studentToken}` } });
+  const resStudent = await GET({ request: reqStudent, platform, url: new URL(reqStudent.url) });
+  assert.equal(resStudent.status, 200);
+
+  // 4. Parent (via student_ids json link)
+  const parentToken = await createSignedToken({ id: 'usr_parent_1', username: 'parent1', role: 'parent' }, secret, 60_000, 'test-session');
+  const reqParent = new Request('https://timbk.io.vn/api/schedule', { headers: { Authorization: `Bearer ${parentToken}` } });
+  const resParent = await GET({ request: reqParent, platform, url: new URL(reqParent.url) });
+  assert.equal(resParent.status, 200);
+});
+
+test('GREEN-13: assign_students fails-closed with 400 on fresh schema lacking student_ids; succeeds on prod schema', async () => {
+  const initialRow = {
+    id: 'sess_assign_001',
+    class_id: 'cls_ket_7',
+    class_name: 'Lớp 7 - Gán Học Sinh',
+    teacher_id: 'usr_teach_1',
+    session_date: '2026-10-15',
+    start_time: '18:00',
+    end_time: '19:30',
+    room: 'Phòng 101',
+    topic: 'Unit 1 Grammar',
+    status: 'scheduled'
+  };
+
+  const mgrToken = await createSignedToken({ id: 'usr_super_1', username: 'admin', role: 'superadmin' }, secret, 60_000, 'test-session');
+
+  // Case A: Fresh schema lacks student_ids -> must return 400, not SQL 500
+  const freshPlatform = makeMockPlatform('fresh', [initialRow]);
+  const reqFresh = new Request('https://timbk.io.vn/api/schedule', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${mgrToken}` },
+    body: JSON.stringify({
+      action: 'assign_students',
+      session_id: 'sess_assign_001',
+      student_ids: ['std_1', 'std_2']
+    })
+  });
+  const resFresh = await POST({ request: reqFresh, platform: freshPlatform });
+  const dataFresh = await resFresh.json();
+  assert.equal(resFresh.status, 400);
+  assert.equal(dataFresh.success, false);
+  assert.match(dataFresh.error, /thiếu cột student_ids/);
+
+  // Case B: Production schema has student_ids -> succeeds with 200
+  const prodPlatform = makeMockPlatform('prod', [{ ...initialRow, room_notes: 'Phòng 101', subject_topic: 'Unit 1 Grammar', student_ids: '[]' }]);
+  const reqProd = new Request('https://timbk.io.vn/api/schedule', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${mgrToken}` },
+    body: JSON.stringify({
+      action: 'assign_students',
+      session_id: 'sess_assign_001',
+      student_ids: ['std_1', 'std_2']
+    })
+  });
+  const resProd = await POST({ request: reqProd, platform: prodPlatform });
+  const dataProd = await resProd.json();
+  assert.equal(resProd.status, 200);
+  assert.equal(dataProd.success, true);
+  assert.deepEqual(dataProd.student_ids, ['std_1', 'std_2']);
+});
+
+test('GREEN-14: Ownership permissions: self-lead check, assistant/substitute edit, and takeover prevention', async () => {
+  const existing = {
+    id: 'sess_owner_001',
+    class_id: 'cls_ket_7',
+    class_name: 'Lớp 7 - Ownership Test',
+    teacher_id: 'usr_teach_1',
+    teacher_name: 'Lead Teacher',
+    assistant_teacher_id: 'usr_teach_2',
+    assistant_teacher_name: 'Assistant Teacher',
+    substitute_teacher_id: 'usr_teach_3',
+    substitute_teacher_name: 'Substitute Teacher',
+    session_date: '2026-10-15',
+    start_time: '18:00',
+    end_time: '19:30',
+    room_notes: 'Phòng VIP 201',
+    subject_topic: 'Chuyên đề Ngữ Pháp',
+    status: 'scheduled'
+  };
+
+  const platform = makeMockPlatform('prod', [existing]);
+
+  const leadToken = await createSignedToken({ id: 'usr_teach_1', username: 'lead', role: 'teacher' }, secret, 60_000, 'test-session');
+  const asstToken = await createSignedToken({ id: 'usr_teach_2', username: 'asst', role: 'teacher' }, secret, 60_000, 'test-session');
+  const subToken = await createSignedToken({ id: 'usr_teach_3', username: 'sub', role: 'teacher' }, secret, 60_000, 'test-session');
+  const otherTeacherToken = await createSignedToken({ id: 'usr_teach_99', username: 'other', role: 'teacher' }, secret, 60_000, 'test-session');
+  const mgrToken = await createSignedToken({ id: 'usr_super_1', username: 'admin', role: 'superadmin' }, secret, 60_000, 'test-session');
+
+  // 14a. Create self-lead check: teacher cannot create session assigning someone else as lead
+  const reqCreateForbidden = new Request('https://timbk.io.vn/api/schedule', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${leadToken}` },
+    body: JSON.stringify({
+      action: 'save_session',
+      class_name: 'Lớp Tạo Hộ',
+      teacher_id: 'usr_teach_2', // trying to assign usr_teach_2 as lead
+      session_date: '2026-10-16',
+      start_time: '18:00',
+      end_time: '19:30',
+      room_notes: 'Phòng 101',
+      subject_topic: 'Chuyên đề 1'
+    })
+  });
+  const resCreateForbidden = await POST({ request: reqCreateForbidden, platform });
+  assert.equal(resCreateForbidden.status, 403);
+  const dataCreateForbidden = await resCreateForbidden.json();
+  assert.match(dataCreateForbidden.error, /chỉ được tạo lịch cho chính mình/);
+
+  // 14b. Create for self succeeds for teacher
+  const reqCreateSelf = new Request('https://timbk.io.vn/api/schedule', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${leadToken}` },
+    body: JSON.stringify({
+      action: 'save_session',
+      class_name: 'Lớp Tự Tạo',
+      teacher_id: 'usr_teach_1',
+      session_date: '2026-10-16',
+      start_time: '18:00',
+      end_time: '19:30',
+      room_notes: 'Phòng 101',
+      subject_topic: 'Chuyên đề 1'
+    })
+  });
+  const resCreateSelf = await POST({ request: reqCreateSelf, platform });
+  assert.equal(resCreateSelf.status, 200);
+
+  // 14c. Lead teacher can update existing session
+  const reqLeadUpdate = new Request('https://timbk.io.vn/api/schedule', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${leadToken}` },
+    body: JSON.stringify({
+      action: 'save_session',
+      id: 'sess_owner_001',
+      class_name: 'Lớp 7 - Ownership Test Updated by Lead',
+      session_date: '2026-10-15',
+      start_time: '18:00',
+      end_time: '19:30',
+      room_notes: 'Phòng VIP 202'
+    })
+  });
+  const resLeadUpdate = await POST({ request: reqLeadUpdate, platform });
+  assert.equal(resLeadUpdate.status, 200);
+
+  // 14d. Assistant teacher can update existing session
+  const reqAsstUpdate = new Request('https://timbk.io.vn/api/schedule', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${asstToken}` },
+    body: JSON.stringify({
+      action: 'save_session',
+      id: 'sess_owner_001',
+      class_name: 'Lớp 7 - Ownership Test Updated by Asst',
+      session_date: '2026-10-15',
+      start_time: '18:00',
+      end_time: '19:30',
+      room_notes: 'Phòng VIP 203'
+    })
+  });
+  const resAsstUpdate = await POST({ request: reqAsstUpdate, platform });
+  assert.equal(resAsstUpdate.status, 200);
+
+  // 14e. Substitute teacher can update existing session
+  const reqSubUpdate = new Request('https://timbk.io.vn/api/schedule', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${subToken}` },
+    body: JSON.stringify({
+      action: 'save_session',
+      id: 'sess_owner_001',
+      class_name: 'Lớp 7 - Ownership Test Updated by Sub',
+      session_date: '2026-10-15',
+      start_time: '18:00',
+      end_time: '19:30',
+      room_notes: 'Phòng VIP 204'
+    })
+  });
+  const resSubUpdate = await POST({ request: reqSubUpdate, platform });
+  assert.equal(resSubUpdate.status, 200);
+
+  // 14f. Takeover prevention: Assistant tries to change teacher_id -> 403
+  const reqTakeover = new Request('https://timbk.io.vn/api/schedule', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${asstToken}` },
+    body: JSON.stringify({
+      action: 'save_session',
+      id: 'sess_owner_001',
+      class_name: 'Lớp 7 - Hijacked',
+      teacher_id: 'usr_teach_2', // Takeover!
+      session_date: '2026-10-15',
+      start_time: '18:00',
+      end_time: '19:30',
+      room_notes: 'Phòng VIP 205'
+    })
+  });
+  const resTakeover = await POST({ request: reqTakeover, platform });
+  assert.equal(resTakeover.status, 403);
+  const dataTakeover = await resTakeover.json();
+  assert.match(dataTakeover.error, /Chỉ quản lý mới có quyền thay đổi giáo viên/);
+
+  // 14g. Unrelated teacher tries to update -> 403
+  const reqOther = new Request('https://timbk.io.vn/api/schedule', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${otherTeacherToken}` },
+    body: JSON.stringify({
+      action: 'save_session',
+      id: 'sess_owner_001',
+      class_name: 'Lớp 7 - Intruding',
+      session_date: '2026-10-15',
+      start_time: '18:00',
+      end_time: '19:30',
+      room_notes: 'Phòng VIP 206'
+    })
+  });
+  const resOther = await POST({ request: reqOther, platform });
+  assert.equal(resOther.status, 403);
+  const dataOther = await resOther.json();
+  assert.match(dataOther.error, /chỉ được sửa lịch mình phụ trách/);
+
+  // 14h. Manager can reassign lead teacher
+  const reqMgrReassign = new Request('https://timbk.io.vn/api/schedule', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${mgrToken}` },
+    body: JSON.stringify({
+      action: 'save_session',
+      id: 'sess_owner_001',
+      class_name: 'Lớp 7 - Manager Reassigned',
+      teacher_id: 'usr_teach_2',
+      session_date: '2026-10-15',
+      start_time: '18:00',
+      end_time: '19:30',
+      room_notes: 'Phòng VIP 207'
+    })
+  });
+  const resMgrReassign = await POST({ request: reqMgrReassign, platform });
+  assert.equal(resMgrReassign.status, 200);
 });

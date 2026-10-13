@@ -160,6 +160,11 @@ export async function GET({ url, request, platform }) {
     const teacherId = url.searchParams.get('teacher_id');
 
     if (platform?.env?.DB) {
+      const cols = await getClassSessionsColumns(platform.env.DB);
+      const hasAssistant = cols.has('assistant_teacher_id');
+      const hasSubstitute = cols.has('substitute_teacher_id');
+      const hasStudentIds = cols.has('student_ids');
+
       let query = 'SELECT cs.* FROM class_sessions cs WHERE 1=1';
       const params = [];
       const role = String(auth.user.role || '').toLowerCase();
@@ -168,38 +173,67 @@ export async function GET({ url, request, platform }) {
       // result set, but never widen the sessions visible to the signed-in user.
       if (!isManager(auth.user)) {
         if (role === 'teacher') {
-          query += ' AND (cs.teacher_id = ? OR cs.assistant_teacher_id = ? OR cs.substitute_teacher_id = ?)';
-          params.push(auth.user.id, auth.user.id, auth.user.id);
+          const teacherPredicates = ['cs.teacher_id = ?'];
+          params.push(auth.user.id);
+          if (hasAssistant) {
+            teacherPredicates.push('cs.assistant_teacher_id = ?');
+            params.push(auth.user.id);
+          }
+          if (hasSubstitute) {
+            teacherPredicates.push('cs.substitute_teacher_id = ?');
+            params.push(auth.user.id);
+          }
+          query += ' AND (' + teacherPredicates.join(' OR ') + ')';
         } else if (role === 'student') {
-          query += ` AND (
-            cs.class_id IN (
+          if (hasStudentIds) {
+            query += ` AND (
+              cs.class_id IN (
+                SELECT class_id FROM class_enrollments
+                WHERE user_id = ? AND status = 'active'
+              )
+              OR EXISTS (
+                SELECT 1 FROM json_each(CASE WHEN json_valid(cs.student_ids) THEN cs.student_ids ELSE '[]' END)
+                WHERE value = ?
+              )
+            )`;
+            params.push(auth.user.id, auth.user.id);
+          } else {
+            query += ` AND cs.class_id IN (
               SELECT class_id FROM class_enrollments
               WHERE user_id = ? AND status = 'active'
-            )
-            OR EXISTS (
-              SELECT 1 FROM json_each(CASE WHEN json_valid(cs.student_ids) THEN cs.student_ids ELSE '[]' END)
-              WHERE value = ?
-            )
-          )`;
-          params.push(auth.user.id, auth.user.id);
+            )`;
+            params.push(auth.user.id);
+          }
         } else if (role === 'parent') {
-          query += ` AND (
-            cs.class_id IN (
+          if (hasStudentIds) {
+            query += ` AND (
+              cs.class_id IN (
+                SELECT ce.class_id
+                FROM class_enrollments ce
+                JOIN parent_student_links psl ON psl.student_user_id = ce.user_id
+                WHERE psl.parent_user_id = ?
+                  AND psl.verification_status = 'verified'
+                  AND ce.status = 'active'
+              )
+              OR EXISTS (
+                SELECT 1
+                FROM json_each(CASE WHEN json_valid(cs.student_ids) THEN cs.student_ids ELSE '[]' END) ids
+                JOIN parent_student_links psl ON psl.student_user_id = ids.value
+                WHERE psl.parent_user_id = ? AND psl.verification_status = 'verified'
+              )
+            )`;
+            params.push(auth.user.id, auth.user.id);
+          } else {
+            query += ` AND cs.class_id IN (
               SELECT ce.class_id
               FROM class_enrollments ce
               JOIN parent_student_links psl ON psl.student_user_id = ce.user_id
               WHERE psl.parent_user_id = ?
                 AND psl.verification_status = 'verified'
                 AND ce.status = 'active'
-            )
-            OR EXISTS (
-              SELECT 1
-              FROM json_each(CASE WHEN json_valid(cs.student_ids) THEN cs.student_ids ELSE '[]' END) ids
-              JOIN parent_student_links psl ON psl.student_user_id = ids.value
-              WHERE psl.parent_user_id = ? AND psl.verification_status = 'verified'
-            )
-          )`;
-          params.push(auth.user.id, auth.user.id);
+            )`;
+            params.push(auth.user.id);
+          }
         } else {
           return json({ success: false, error: 'Forbidden: Vai trò này không có quyền xem thời khóa biểu' }, { status: 403 });
         }
@@ -209,8 +243,17 @@ export async function GET({ url, request, platform }) {
         params.push(classId);
       }
       if (teacherId) {
-        query += ' AND (cs.teacher_id = ? OR cs.assistant_teacher_id = ? OR cs.substitute_teacher_id = ?)';
-        params.push(teacherId, teacherId, teacherId);
+        const tFilterPredicates = ['cs.teacher_id = ?'];
+        params.push(teacherId);
+        if (hasAssistant) {
+          tFilterPredicates.push('cs.assistant_teacher_id = ?');
+          params.push(teacherId);
+        }
+        if (hasSubstitute) {
+          tFilterPredicates.push('cs.substitute_teacher_id = ?');
+          params.push(teacherId);
+        }
+        query += ' AND (' + tFilterPredicates.join(' OR ') + ')';
       }
       query += ' ORDER BY cs.session_date DESC, cs.start_time ASC';
 
@@ -277,32 +320,33 @@ export async function POST({ request, platform }) {
     const isMgr = isManager(auth.user);
     const db = platform?.env?.DB;
 
-    // Ownership helper: non-managers may only touch sessions they are in charge of
-    // (main / assistant / substitute teacher).
-    async function assertOwnSession(sessionId) {
-      if (isMgr || !db || !sessionId) return;
-      const cols = await getClassSessionsColumns(db);
-      const selCols = ['teacher_id'];
-      if (cols.has('assistant_teacher_id')) selCols.push('assistant_teacher_id');
-      if (cols.has('substitute_teacher_id')) selCols.push('substitute_teacher_id');
-      const existing = await db.prepare(
-        `SELECT ${selCols.join(', ')} FROM class_sessions WHERE id = ? LIMIT 1`
-      ).bind(sessionId).first();
-      if (existing) {
-        const mine = [existing.teacher_id, existing.assistant_teacher_id, existing.substitute_teacher_id].filter(Boolean).includes(auth.user.id);
-        if (!mine) {
-          throw { status: 403, message: 'Forbidden: Bạn chỉ được sửa lịch mình phụ trách' };
-        }
-      }
-    }
-
     if (action === 'assign_students') {
-      await assertOwnSession(body.session_id);
       if (db) {
         const cols = await getClassSessionsColumns(db);
+        if (!cols.has('student_ids')) {
+          return json({
+            success: false,
+            error: 'Lược đồ cơ sở dữ liệu hiện tại không hỗ trợ gán học sinh trực tiếp (thiếu cột student_ids)'
+          }, { status: 400 });
+        }
         const schemaCheck = validateCanonicalColumns(cols);
         if (!schemaCheck.valid) {
           return json({ success: false, error: schemaCheck.error }, { status: 500 });
+        }
+        if (!isMgr) {
+          const selCols = ['id', 'teacher_id'];
+          if (cols.has('assistant_teacher_id')) selCols.push('assistant_teacher_id');
+          if (cols.has('substitute_teacher_id')) selCols.push('substitute_teacher_id');
+          const existing = await db.prepare(
+            `SELECT ${selCols.join(', ')} FROM class_sessions WHERE id = ? LIMIT 1`
+          ).bind(body.session_id).first();
+          if (!existing) {
+            return json({ success: false, error: 'Không tìm thấy buổi học để gán học sinh' }, { status: 404 });
+          }
+          const mine = [existing.teacher_id, existing.assistant_teacher_id, existing.substitute_teacher_id].filter(Boolean).includes(auth.user.id);
+          if (!mine) {
+            return json({ success: false, error: 'Forbidden: Bạn chỉ được sửa lịch mình phụ trách' }, { status: 403 });
+          }
         }
         const updateRes = await db.prepare(`
           UPDATE class_sessions SET student_ids = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
@@ -357,11 +401,81 @@ export async function POST({ request, platform }) {
       return json({ success: false, error: timeVal.error }, { status: 400 });
     }
 
-    await assertOwnSession(body.id);
-    // Non-managers cannot create sessions assigned to other teachers
-    if (!isMgr && body.teacher_id && body.teacher_id !== auth.user.id) {
-      return json({ success: false, error: 'Forbidden: Bạn chỉ được tạo lịch cho chính mình' }, { status: 403 });
+    const isNew = !body.id;
+    let existingSession = null;
+
+    if (isNew) {
+      // Create self-lead check: Non-managers cannot create sessions assigned to other lead teachers
+      if (!isMgr && body.teacher_id && body.teacher_id !== auth.user.id) {
+        return json({ success: false, error: 'Forbidden: Bạn chỉ được tạo lịch cho chính mình' }, { status: 403 });
+      }
+      if (!isMgr && !body.teacher_id) {
+        body.teacher_id = auth.user.id;
+      }
+    } else {
+      // Update: use existing session ownership; forbid non-manager changing teacher ownership fields
+      if (db) {
+        const cols = await getClassSessionsColumns(db);
+        const selCols = ['id', 'teacher_id'];
+        if (cols.has('teacher_name')) selCols.push('teacher_name');
+        if (cols.has('assistant_teacher_id')) selCols.push('assistant_teacher_id');
+        if (cols.has('assistant_teacher_name')) selCols.push('assistant_teacher_name');
+        if (cols.has('substitute_teacher_id')) selCols.push('substitute_teacher_id');
+        if (cols.has('substitute_teacher_name')) selCols.push('substitute_teacher_name');
+        existingSession = await db.prepare(
+          `SELECT ${selCols.join(', ')} FROM class_sessions WHERE id = ? LIMIT 1`
+        ).bind(body.id).first();
+      } else {
+        existingSession = getAllClassSessions().find(s => s.id === body.id) || null;
+      }
+
+      if (!existingSession) {
+        return json({ success: false, error: 'Không tìm thấy buổi học để cập nhật' }, { status: 404 });
+      }
+
+      if (!isMgr) {
+        // Ownership check: must be lead teacher, assistant, or substitute
+        const activeTeachers = [
+          existingSession.teacher_id,
+          existingSession.assistant_teacher_id,
+          existingSession.substitute_teacher_id
+        ].filter(Boolean);
+
+        if (!activeTeachers.includes(auth.user.id)) {
+          return json({ success: false, error: 'Forbidden: Bạn chỉ được sửa lịch mình phụ trách' }, { status: 403 });
+        }
+
+        // Cấm non-manager đổi teacher ownership fields (chống takeover / reassign)
+        if (body.teacher_id && body.teacher_id !== existingSession.teacher_id) {
+          return json({ success: false, error: 'Forbidden: Chỉ quản lý mới có quyền thay đổi giáo viên phụ trách' }, { status: 403 });
+        }
+        if (body.assistant_teacher_id !== undefined && (body.assistant_teacher_id || null) !== (existingSession.assistant_teacher_id || null)) {
+          return json({ success: false, error: 'Forbidden: Chỉ quản lý mới có quyền thay đổi trợ giảng' }, { status: 403 });
+        }
+        if (body.substitute_teacher_id !== undefined && (body.substitute_teacher_id || null) !== (existingSession.substitute_teacher_id || null)) {
+          return json({ success: false, error: 'Forbidden: Chỉ quản lý mới có quyền thay đổi giáo viên dạy thay' }, { status: 403 });
+        }
+      }
     }
+
+    const activeTeacherId = isNew
+      ? (body.teacher_id || auth.user.id)
+      : (isMgr ? (body.teacher_id || existingSession.teacher_id) : existingSession.teacher_id);
+    const activeTeacherName = isNew
+      ? (body.teacher_name || auth.user.name || '')
+      : (isMgr ? (body.teacher_name || existingSession.teacher_name || '') : (existingSession.teacher_name || auth.user.name || ''));
+    const activeAssistantId = isNew
+      ? (body.assistant_teacher_id || null)
+      : (isMgr ? (body.assistant_teacher_id !== undefined ? (body.assistant_teacher_id || null) : (existingSession.assistant_teacher_id || null)) : (existingSession.assistant_teacher_id || null));
+    const activeAssistantName = isNew
+      ? (body.assistant_teacher_name || '')
+      : (isMgr ? (body.assistant_teacher_name !== undefined ? (body.assistant_teacher_name || '') : (existingSession.assistant_teacher_name || '')) : (existingSession.assistant_teacher_name || ''));
+    const activeSubstituteId = isNew
+      ? (body.substitute_teacher_id || null)
+      : (isMgr ? (body.substitute_teacher_id !== undefined ? (body.substitute_teacher_id || null) : (existingSession.substitute_teacher_id || null)) : (existingSession.substitute_teacher_id || null));
+    const activeSubstituteName = isNew
+      ? (body.substitute_teacher_name || '')
+      : (isMgr ? (body.substitute_teacher_name !== undefined ? (body.substitute_teacher_name || '') : (existingSession.substitute_teacher_name || '')) : (existingSession.substitute_teacher_name || ''));
 
     const roomVal = String(body.room ?? body.room_notes ?? '').trim();
     const topicVal = String(body.subject_topic ?? body.topic ?? '').trim() || 'Chuyên đề Ngữ pháp & Giao tiếp';
@@ -400,9 +514,9 @@ export async function POST({ request, platform }) {
       ).all();
       const rows = conflicts?.results || [];
       const teacherIds = [
-        body.teacher_id || auth.user.id,
-        body.assistant_teacher_id,
-        body.substitute_teacher_id
+        activeTeacherId,
+        activeAssistantId,
+        activeSubstituteId
       ].filter(Boolean);
 
       for (const r of rows) {
@@ -435,13 +549,13 @@ export async function POST({ request, platform }) {
       grade_level: body.grade_level || 'Lớp 7',
       subject_topic: topicVal,
       topic: topicVal,
-      teacher_id: body.teacher_id || auth.user.id,
-      teacher_name: body.teacher_name || auth.user.name || '',
+      teacher_id: activeTeacherId,
+      teacher_name: activeTeacherName,
       teacher_role: body.teacher_role || 'lead',
-      assistant_teacher_id: body.assistant_teacher_id || null,
-      assistant_teacher_name: body.assistant_teacher_name || '',
-      substitute_teacher_id: body.substitute_teacher_id || null,
-      substitute_teacher_name: body.substitute_teacher_name || '',
+      assistant_teacher_id: activeAssistantId,
+      assistant_teacher_name: activeAssistantName,
+      substitute_teacher_id: activeSubstituteId,
+      substitute_teacher_name: activeSubstituteName,
       substitute_notes: body.substitute_notes || '',
       location: body.location || 'Tại nhà Cô Dung (123 Phố Vọng, Hai Bà Trưng, Hà Nội)',
       day_of_week: dayOfWeek,
@@ -478,7 +592,7 @@ export async function POST({ request, platform }) {
           id,
           body.class_id || '',
           body.class_name.trim(),
-          body.teacher_id || auth.user.id,
+          activeTeacherId,
           body.session_date,
           body.start_time,
           body.end_time
@@ -486,7 +600,7 @@ export async function POST({ request, platform }) {
 
         if (cols.has('teacher_name')) {
           insertCols.push('teacher_name');
-          insertVals.push(body.teacher_name || auth.user.name || '');
+          insertVals.push(activeTeacherName);
         }
 
         // Dual schema support: dynamically write exact existing pair
@@ -499,10 +613,10 @@ export async function POST({ request, platform }) {
         if (cols.has('day_of_week')) { insertCols.push('day_of_week'); insertVals.push(dayOfWeek); }
         if (cols.has('day_name')) { insertCols.push('day_name'); insertVals.push(dayName); }
         if (cols.has('student_ids')) { insertCols.push('student_ids'); insertVals.push(studentIdsStr); }
-        if (cols.has('assistant_teacher_id')) { insertCols.push('assistant_teacher_id'); insertVals.push(body.assistant_teacher_id || null); }
-        if (cols.has('assistant_teacher_name')) { insertCols.push('assistant_teacher_name'); insertVals.push(body.assistant_teacher_name || ''); }
-        if (cols.has('substitute_teacher_id')) { insertCols.push('substitute_teacher_id'); insertVals.push(body.substitute_teacher_id || null); }
-        if (cols.has('substitute_teacher_name')) { insertCols.push('substitute_teacher_name'); insertVals.push(body.substitute_teacher_name || ''); }
+        if (cols.has('assistant_teacher_id')) { insertCols.push('assistant_teacher_id'); insertVals.push(activeAssistantId); }
+        if (cols.has('assistant_teacher_name')) { insertCols.push('assistant_teacher_name'); insertVals.push(activeAssistantName); }
+        if (cols.has('substitute_teacher_id')) { insertCols.push('substitute_teacher_id'); insertVals.push(activeSubstituteId); }
+        if (cols.has('substitute_teacher_name')) { insertCols.push('substitute_teacher_name'); insertVals.push(activeSubstituteName); }
         if (cols.has('substitute_notes')) { insertCols.push('substitute_notes'); insertVals.push(body.substitute_notes || ''); }
         if (cols.has('location')) { insertCols.push('location'); insertVals.push(body.location || 'Tại nhà Cô Dung (123 Phố Vọng, Hai Bà Trưng, Hà Nội)'); }
         if (cols.has('notify_minutes_before')) { insertCols.push('notify_minutes_before'); insertVals.push(Number(body.notify_minutes_before ?? 10)); }
@@ -529,7 +643,7 @@ export async function POST({ request, platform }) {
         const updateVals = [
           body.class_id || '',
           body.class_name.trim(),
-          body.teacher_id || auth.user.id,
+          activeTeacherId,
           body.session_date,
           body.start_time,
           body.end_time
@@ -537,7 +651,7 @@ export async function POST({ request, platform }) {
 
         if (cols.has('teacher_name')) {
           updateSets.push('teacher_name = ?');
-          updateVals.push(body.teacher_name || auth.user.name || '');
+          updateVals.push(activeTeacherName);
         }
 
         // Dual schema support: dynamically update exact existing pair
@@ -550,10 +664,10 @@ export async function POST({ request, platform }) {
         if (cols.has('day_of_week')) { updateSets.push('day_of_week = ?'); updateVals.push(dayOfWeek); }
         if (cols.has('day_name')) { updateSets.push('day_name = ?'); updateVals.push(dayName); }
         if (cols.has('student_ids')) { updateSets.push('student_ids = ?'); updateVals.push(studentIdsStr); }
-        if (cols.has('assistant_teacher_id')) { updateSets.push('assistant_teacher_id = ?'); updateVals.push(body.assistant_teacher_id || null); }
-        if (cols.has('assistant_teacher_name')) { updateSets.push('assistant_teacher_name = ?'); updateVals.push(body.assistant_teacher_name || ''); }
-        if (cols.has('substitute_teacher_id')) { updateSets.push('substitute_teacher_id = ?'); updateVals.push(body.substitute_teacher_id || null); }
-        if (cols.has('substitute_teacher_name')) { updateSets.push('substitute_teacher_name = ?'); updateVals.push(body.substitute_teacher_name || ''); }
+        if (cols.has('assistant_teacher_id')) { updateSets.push('assistant_teacher_id = ?'); updateVals.push(activeAssistantId); }
+        if (cols.has('assistant_teacher_name')) { updateSets.push('assistant_teacher_name = ?'); updateVals.push(activeAssistantName); }
+        if (cols.has('substitute_teacher_id')) { updateSets.push('substitute_teacher_id = ?'); updateVals.push(activeSubstituteId); }
+        if (cols.has('substitute_teacher_name')) { updateSets.push('substitute_teacher_name = ?'); updateVals.push(activeSubstituteName); }
         if (cols.has('substitute_notes')) { updateSets.push('substitute_notes = ?'); updateVals.push(body.substitute_notes || ''); }
         if (cols.has('location')) { updateSets.push('location = ?'); updateVals.push(body.location || 'Tại nhà Cô Dung (123 Phố Vọng, Hai Bà Trưng, Hà Nội)'); }
         if (cols.has('notify_minutes_before')) { updateSets.push('notify_minutes_before = ?'); updateVals.push(Number(body.notify_minutes_before ?? 10)); }

@@ -13,6 +13,7 @@
  let currentUser = $state(null);
  let allStudents = $state([]);
  let allTeachers = $state([]);
+ let isManager = $derived(['admin', 'superadmin', 'leader'].includes(String(currentUser?.role || '').toLowerCase()));
 
  let form = $state({
  id: '',
@@ -20,11 +21,11 @@
  class_name: 'Lớp 7 - Global Success & KET A2',
  grade_level: 'Lớp 7',
  subject_topic: '',
- teacher_id: 'usr_super_2',
- teacher_name: 'Ms. Dung',
+ teacher_id: '',
+ teacher_name: '',
  teacher_role: 'lead',
- assistant_teacher_id: 'usr_teach_1',
- assistant_teacher_name: 'Mr. Johnathan Miller',
+ assistant_teacher_id: '',
+ assistant_teacher_name: '',
  location: 'Tại nhà Cô Dung (123 Phố Vọng, Hai Bà Trưng, Hà Nội)',
  day_of_week: 1,
  day_name: 'Thứ Hai',
@@ -88,7 +89,7 @@
  errorMessage = '';
  currentUser = getCurrentUser();
  const users = getAllUsers();
- allTeachers = users.filter(u => u.role === 'teacher' || u.role === 'superadmin');
+ allTeachers = users.filter(u => ['teacher', 'superadmin', 'admin', 'leader'].includes(String(u.role || '').toLowerCase()));
  // Bước 4: picker học sinh từ API, không dùng local
  allStudents = users.filter(u => u.role === 'student');
  const token = typeof window !== 'undefined' ? localStorage.getItem('tienganh_token') : null;
@@ -109,17 +110,24 @@
  student_ids: session.student_ids ? [...session.student_ids] : []
  };
  } else {
+ const defaultTeacherId = preset?.teacher_id || (currentUser ? currentUser.id : (allTeachers[0]?.id || ''));
+ const defaultTeacher = allTeachers.find(t => t.id === defaultTeacherId);
+ const defaultTeacherName = preset?.teacher_name || defaultTeacher?.name || currentUser?.name || currentUser?.username || '';
+ const defaultAssistantId = preset?.assistant_teacher_id || '';
+ const defaultAssistant = allTeachers.find(t => t.id === defaultAssistantId);
+ const defaultAssistantName = preset?.assistant_teacher_name || defaultAssistant?.name || '';
+
  form = {
  id: '',
  class_id: '',
  class_name: 'Lớp 7 - Global Success & KET A2',
  grade_level: 'Lớp 7',
  subject_topic: 'Chuyên đề Ngữ pháp & Giao tiếp phản xạ',
- teacher_id: 'usr_super_2',
- teacher_name: 'Ms. Dung',
+ teacher_id: defaultTeacherId,
+ teacher_name: defaultTeacherName,
  teacher_role: 'lead',
- assistant_teacher_id: 'usr_teach_1',
- assistant_teacher_name: 'Mr. Johnathan Miller',
+ assistant_teacher_id: defaultAssistantId,
+ assistant_teacher_name: defaultAssistantName,
  location: 'Tại nhà Cô Dung (123 Phố Vọng, Hai Bà Trưng, Hà Nội)',
  day_of_week: 1,
  day_name: 'Thứ Hai',
@@ -230,7 +238,12 @@
 </script>
 
 {#if isOpen}
- <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in duration-200">
+ <div
+ role="dialog"
+ aria-modal="true"
+ aria-labelledby="session-modal-title"
+ class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in duration-200"
+ >
  <div class="w-full max-w-2xl rounded-3xl bg-white border border-slate-200 shadow-2xl p-6 md:p-8 space-y-5 max-h-[90vh] overflow-y-auto">
 
  <!-- Header -->
@@ -239,12 +252,13 @@
  <span class="text-xs font-bold text-indigo-600 uppercase tracking-wider">
  {form.id ? 'CẬP NHẬT THỜI KHÓA BIỂU' : 'THÊM BUỔI HỌC MỚI'}
  </span>
- <h2 class="text-xl font-black text-slate-900 mt-0.5">
+ <h2 id="session-modal-title" class="text-xl font-black text-slate-900 mt-0.5">
  Thiết Lập Lịch Học &amp; Danh Sách Học Sinh
  </h2>
  </div>
  <button
  onclick={() => isOpen = false}
+ aria-label="Đóng"
  class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:text-slate-900 flex items-center justify-center font-bold"
  >
  ✕
@@ -260,8 +274,9 @@
  <!-- Form Grid -->
  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
  <div>
- <label class="block font-bold text-slate-700 mb-1">Tên Khóa / Lớp Học *</label>
+ <label for="session-class-name" class="block font-bold text-slate-700 mb-1">Tên Khóa / Lớp Học *</label>
  <input
+ id="session-class-name"
  type="text"
  bind:value={form.class_name}
  placeholder="Ví dụ: Lớp 7 - Global Success & KET A2"
@@ -270,8 +285,9 @@
  </div>
 
  <div>
- <label class="block font-bold text-slate-700 mb-1">Khối Lớp (Role Học Sinh)</label>
+ <label for="session-grade-level" class="block font-bold text-slate-700 mb-1">Khối Lớp (Role Học Sinh)</label>
  <select
+ id="session-grade-level"
  bind:value={form.grade_level}
  class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:border-indigo-500"
  >
@@ -291,8 +307,9 @@
  </div>
 
  <div class="sm:col-span-2">
- <label class="block font-bold text-slate-700 mb-1">Chủ Đề / Nội Dung Bài Học</label>
+ <label for="session-subject-topic" class="block font-bold text-slate-700 mb-1">Chủ Đề / Nội Dung Bài Học</label>
  <input
+ id="session-subject-topic"
  type="text"
  bind:value={form.subject_topic}
  placeholder="Ví dụ: Unit 7: Traffic & Phonics /θ/ - /ð/ - Ngữ pháp Used to"
@@ -301,32 +318,40 @@
  </div>
 
  <div>
- <label class="block font-bold text-slate-700 mb-1">Giáo Viên Phụ Trách Chính</label>
+ <label for="session-teacher-id" class="block font-bold text-slate-700 mb-1">Giáo Viên Phụ Trách Chính</label>
  <select
+ id="session-teacher-id"
  bind:value={form.teacher_id}
- class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:border-indigo-500 font-semibold"
+ disabled={!isManager}
+ class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:border-indigo-500 font-semibold disabled:opacity-75 disabled:cursor-not-allowed"
  >
  {#each allTeachers as t}
  <option value={t.id}>{t.name} ({t.role === 'superadmin' ? 'Leader' : 'Giáo viên'})</option>
  {/each}
  </select>
+ {#if !isManager && form.id}
+ <p class="text-[10px] text-slate-500 mt-0.5">Chỉ quản lý mới có quyền thay đổi giáo viên phụ trách chính.</p>
+ {/if}
  </div>
 
  <div>
- <label class="block font-bold text-slate-700 mb-1">Giáo Viên Hỗ Trợ / Bản Ngữ / Trợ Giảng</label>
+ <label for="session-assistant-id" class="block font-bold text-slate-700 mb-1">Giáo Viên Hỗ Trợ / Bản Ngữ / Trợ Giảng</label>
  <select
+ id="session-assistant-id"
  bind:value={form.assistant_teacher_id}
  class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:border-indigo-500"
  >
- {#each allTeachers as t}
- <option value={t.id}>{t.name}</option>
+ <option value="">-- Không có trợ giảng --</option>
+ {#each allTeachers.filter(t => t.id !== form.teacher_id) as t}
+ <option value={t.id}>{t.name} ({t.role === 'superadmin' ? 'Leader' : 'Giáo viên'})</option>
  {/each}
  </select>
  </div>
 
  <div class="sm:col-span-2">
- <label class="block font-bold text-slate-700 mb-1">Địa Điểm Học *</label>
+ <label for="session-location" class="block font-bold text-slate-700 mb-1">Địa Điểm Học *</label>
  <input
+ id="session-location"
  type="text"
  bind:value={form.location}
  placeholder="Ví dụ: Tại nhà Cô Dung (123 Phố Vọng, Hai Bà Trưng, Hà Nội) hoặc Online Zoom VIP"
@@ -336,8 +361,9 @@
 
  <div class="grid grid-cols-2 gap-2">
  <div>
- <label class="block font-bold text-slate-700 mb-1">Thứ Trong Tuần</label>
+ <label for="session-day-of-week" class="block font-bold text-slate-700 mb-1">Thứ Trong Tuần</label>
  <select
+ id="session-day-of-week"
  bind:value={form.day_of_week}
  onchange={syncDateFromDay}
  class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:border-indigo-500 font-semibold"
@@ -348,8 +374,9 @@
  </select>
  </div>
  <div>
- <label class="block font-bold text-slate-700 mb-1">Ngày Học *</label>
+ <label for="session-date" class="block font-bold text-slate-700 mb-1">Ngày Học *</label>
  <input
+ id="session-date"
  type="date"
  bind:value={form.session_date}
  onchange={syncDayFromDate}
@@ -361,16 +388,18 @@
 
  <div class="grid grid-cols-2 gap-2">
  <div>
- <label class="block font-bold text-slate-700 mb-1">Bắt Đầu</label>
+ <label for="session-start-time" class="block font-bold text-slate-700 mb-1">Bắt Đầu</label>
  <input
+ id="session-start-time"
  type="time"
  bind:value={form.start_time}
  class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-mono text-slate-900 focus:outline-none focus:border-indigo-500"
  />
  </div>
  <div>
- <label class="block font-bold text-slate-700 mb-1">Kết Thúc</label>
+ <label for="session-end-time" class="block font-bold text-slate-700 mb-1">Kết Thúc</label>
  <input
+ id="session-end-time"
  type="time"
  bind:value={form.end_time}
  class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-mono text-slate-900 focus:outline-none focus:border-indigo-500"
@@ -379,10 +408,11 @@
  </div>
 
  <div>
- <label class="block font-bold text-slate-700 mb-1">
+ <label for="session-notify" class="block font-bold text-slate-700 mb-1">
  ⏰ Thông Báo Cho Phụ Huynh Trước:
  </label>
  <select
+ id="session-notify"
  bind:value={form.notify_minutes_before}
  class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:border-indigo-500 font-semibold"
  >
@@ -395,8 +425,9 @@
  </div>
 
  <div>
- <label class="block font-bold text-slate-700 mb-1">Ghi Chú Phòng Học</label>
+ <label for="session-room-notes" class="block font-bold text-slate-700 mb-1">Ghi Chú Phòng Học</label>
  <input
+ id="session-room-notes"
  type="text"
  bind:value={form.room_notes}
  placeholder="Ví dụ: Phòng VIP 201 - Có máy chiếu & loa kiểm âm"

@@ -240,6 +240,15 @@
     return body;
   }
 
+  async function checkDedicatedReadiness() {
+    try {
+      const rRes = await api('/api/quiz-menu/readiness');
+      if (rRes && rRes.readiness) {
+        quizReadiness = rRes.readiness;
+      }
+    } catch {}
+  }
+
   async function loadQuizzes() {
     loading = true;
     error = '';
@@ -264,13 +273,8 @@
       assignedMode = !!publicData.assigned;
       if (publicData.readiness) {
         quizReadiness = publicData.readiness;
-      } else if (publicQuizzes.length === 0) {
-        try {
-          const rRes = await api('/api/quiz-menu/readiness');
-          if (rRes.readiness) quizReadiness = rRes.readiness;
-        } catch {}
-      } else {
-        quizReadiness = { ready: true, schema_ready: true, catalog_empty: false };
+      } else if (isStaff || activeTab === 'create' || publicQuizzes.length === 0) {
+        await checkDedicatedReadiness();
       }
       cacheQuizData('catalog', publicData).catch(() => {});
       // Chỉ gọi ?mine=1 khi role có tab mine
@@ -327,7 +331,10 @@
     message = '';
     error = '';
     if (tab === 'mine' || tab === 'take') loadQuizzes();
-    if (tab === 'create') loadBuilderDefaults();
+    if (tab === 'create') {
+      loadBuilderDefaults();
+      checkDedicatedReadiness();
+    }
   }
 
   function switchBuilderMode(mode) {

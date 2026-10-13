@@ -4,7 +4,7 @@ import fs from 'fs';
 import path from 'path';
 
 const PORT = 5174;
-const BASE_URL = `http://localhost:${PORT}`;
+let BASE_URL = `http://localhost:${PORT}`;
 const SCREENSHOT_DIR = path.resolve('C:/Users/admin/.gemini/antigravity/scratch/phase4_e2e_screenshots');
 
 if (!fs.existsSync(SCREENSHOT_DIR)) {
@@ -31,12 +31,24 @@ async function runTests() {
   const validToken = `${fakePayload}.${fakeSig}`;
 
   try {
-    console.log(`Starting Vite dev server in-process on port ${PORT}...`);
+    console.log(`Starting Vite dev server in-process on port ${PORT} (strictPort: true)...`);
     server = await createServer({
-      server: { port: PORT }
+      server: {
+        port: PORT,
+        strictPort: true
+      }
     });
-    await server.listen();
-    console.log(`Vite dev server is ready at ${BASE_URL}`);
+
+    try {
+      await server.listen();
+    } catch (listenErr) {
+      console.error(`Port collision on port ${PORT}:`, listenErr.message);
+      throw new Error(`Port collision on port ${PORT}. Ensure no other process is listening on ${PORT}: ${listenErr.message}`);
+    }
+
+    const resolvedLocalUrl = server.resolvedUrls?.local?.[0] || `http://localhost:${server.httpServer.address().port}/`;
+    BASE_URL = resolvedLocalUrl.replace(/\/$/, '');
+    console.log(`Vite dev server is ready at resolved URL: ${BASE_URL}`);
     console.log('Launching browser (channel: msedge)...');
     browser = await chromium.launch({ channel: 'msedge', headless: true });
 
@@ -458,7 +470,7 @@ async function runTests() {
     }
 
     console.log(`\n========================================`);
-    console.log(`ALL REAL PLAYWRIGHT E2E BROWSER TESTS PASSED!`);
+    console.log(`ALL REAL PLAYWRIGHT BROWSER UI CONTRACT TESTS PASSED (MOCKED API)!`);
     console.log(`Total checks: ${testResults.length}`);
     console.log(`Screenshots saved (${capturedScreenshots.length}):`);
     capturedScreenshots.forEach(s => console.log('  -', s));
@@ -475,9 +487,9 @@ async function runTests() {
 }
 
 runTests().then(res => {
-  console.log('E2E execution completed successfully.');
+  console.log('Playwright browser UI contract execution completed successfully.');
   process.exit(0);
 }).catch(err => {
-  console.error('E2E execution failed:', err);
+  console.error('Playwright browser UI contract execution failed:', err);
   process.exit(1);
 });

@@ -1,6 +1,6 @@
 # Quiz & Schedule Phase 4: Production Audit & Safe Release Runbook
 
-> **Scope:** Phase 4 UI & Schema Hardening (`agy/quiz-schedule-ui-e2e-phase4`)  
+> **Scope:** Phase 4 UI & Schema Hardening (`agy/quiz-schedule-ui-e2e-phase4`)
 > **Security & Compliance:** Zero credentials/tokens/secrets included. Read-only verification and release instructions for maintainers/DevOps.
 
 ---

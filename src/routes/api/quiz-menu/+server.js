@@ -20,7 +20,7 @@ export async function GET({ url, request, platform }) {
   const explicitReadiness = url.searchParams.get('readiness') === '1' || url.searchParams.get('include_readiness') === '1';
 
   async function resolveReadinessIfNeeded(quizzesList) {
-    if (explicitReadiness || (!quizzesList || quizzesList.length === 0)) {
+    if (explicitReadiness || isStaffUser(auth?.user) || (!quizzesList || quizzesList.length === 0)) {
       try {
         return await checkQuizReadiness(platform, auth?.user || null);
       } catch {}
