@@ -1,6 +1,7 @@
 import { json } from '@sveltejs/kit';
 import { verifyServerAuth, isStaffUser } from '../../../lib/server/auth.js';
 import { makeId } from '../../../lib/server/quizMenu.js';
+import { checkQuizReadiness } from '../../../lib/server/quizReadiness.js';
 
 export const prerender = false;
 
@@ -11,8 +12,22 @@ async function optionalAuth(request, platform) {
 }
 
 export async function GET({ url, request, platform }) {
-  if (!platform?.env?.DB) return json({ success: false, error: 'DatabaseUnavailable' }, { status: 500 });
+  if (!platform?.env?.DB) {
+    return json({ success: false, error: 'DatabaseUnavailable' }, { status: 503 });
+  }
+
   const auth = await optionalAuth(request, platform);
+  const explicitReadiness = url.searchParams.get('readiness') === '1' || url.searchParams.get('include_readiness') === '1';
+
+  async function resolveReadinessIfNeeded(quizzesList) {
+    if (explicitReadiness || (!quizzesList || quizzesList.length === 0)) {
+      try {
+        return await checkQuizReadiness(platform, auth?.user || null);
+      } catch {}
+    }
+    return null;
+  }
+
   const mine = url.searchParams.get('mine') === '1';
   const assigned = url.searchParams.get('assigned') === '1';
   if (mine && (!auth || !isStaffUser(auth.user))) return json({ success: false, error: 'Unauthorized' }, { status: 401 });
@@ -36,7 +51,11 @@ export async function GET({ url, request, platform }) {
         ORDER BY ha.due_date ASC, ha.created_at DESC
         LIMIT ?
       `).bind(auth.user.id, limit).all();
-      return json({ success: true, quizzes: rows.results || [], assigned: true });
+      const quizzesList = rows.results || [];
+      const readiness = await resolveReadinessIfNeeded(quizzesList);
+      const resPayload = { success: true, quizzes: quizzesList, assigned: true };
+      if (readiness) resPayload.readiness = readiness;
+      return json(resPayload);
     }
     const query = mine
       ? `SELECT id, title, description, creator_name, time_limit_minutes, status, created_at, updated_at FROM quizzes WHERE created_by = ? ORDER BY updated_at DESC LIMIT ?`
@@ -56,14 +75,26 @@ export async function GET({ url, request, platform }) {
         ORDER BY ha.due_date ASC, ha.created_at DESC
         LIMIT ?
       `).bind(auth.user.id, limit).all();
-      return json({ success: true, quizzes: rows.results || [], assigned: true });
+      const quizzesList = rows.results || [];
+      const readiness = await resolveReadinessIfNeeded(quizzesList);
+      const resPayload = { success: true, quizzes: quizzesList, assigned: true };
+      if (readiness) resPayload.readiness = readiness;
+      return json(resPayload);
     }
     const rows = mine
       ? await platform.env.DB.prepare(query).bind(auth.user.id, limit).all()
       : await platform.env.DB.prepare(query).bind(limit).all();
-    return json({ success: true, quizzes: rows.results || [] });
+    const quizzesList = rows.results || [];
+    const readiness = await resolveReadinessIfNeeded(quizzesList);
+    const resPayload = { success: true, quizzes: quizzesList };
+    if (readiness) resPayload.readiness = readiness;
+    return json(resPayload);
   } catch (err) {
-    return json({ success: false, error: err.message }, { status: 500 });
+    let fallbackReadiness = null;
+    try {
+      fallbackReadiness = await checkQuizReadiness(platform, auth?.user || null);
+    } catch {}
+    return json({ success: false, error: err.message, readiness: fallbackReadiness }, { status: 500 });
   }
 }
 

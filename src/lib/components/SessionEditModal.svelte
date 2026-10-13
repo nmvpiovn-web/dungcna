@@ -4,7 +4,8 @@
  getAllUsers,
  getCurrentUser,
  isTeacherOrAdmin,
- saveClassSession
+ saveClassSession,
+ upsertClassSessionInStore
  } from '$lib/unifiedStore';
 
  let { isOpen = $bindable(false), session = null, preset = null, onSaved = () => {} } = $props();
@@ -205,8 +206,16 @@
  return;
  }
  if (data.session) {
- savedData = data.session;
+   savedData = data.session;
  }
+ try {
+   upsertClassSessionInStore(savedData);
+ } catch (cacheErr) {
+   console.warn('Local cache update ignored on successful save:', cacheErr);
+ }
+ onSaved(savedData);
+ isOpen = false;
+ return;
  }
 
  const saved = saveClassSession(savedData, currentUser);
@@ -243,7 +252,7 @@
  </div>
 
  {#if errorMessage}
- <div class="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-600 text-xs font-semibold">
+ <div data-testid="session-modal-error" role="alert" class="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-600 text-xs font-semibold">
  ⚠️ {errorMessage}
  </div>
  {/if}
@@ -454,6 +463,7 @@
  </button>
  <button
  type="button"
+ data-testid="session-modal-save-btn"
  onclick={handleSave}
  disabled={saving}
  class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-cx-600 hover:from-indigo-500 hover:to-cx-500 text-white font-bold text-xs shadow-md shadow-indigo-600/30 transition-all hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 w-full sm:w-auto"

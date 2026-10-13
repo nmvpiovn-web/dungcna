@@ -125,6 +125,20 @@
   let currentUser = $state(null);
   let publicQuizzes = $state([]);
   let myQuizzes = $state([]);
+  let quizReadiness = $state(null);
+  let copiedCode = $state(false);
+  let copyTimeout;
+
+  function copyRemediation(code) {
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(code).then(() => {
+        copiedCode = true;
+        clearTimeout(copyTimeout);
+        copyTimeout = setTimeout(() => { copiedCode = false; }, 3000);
+      }).catch(() => {});
+    }
+  }
+
   let loading = $state(true);
   let message = $state('');
   let error = $state('');
@@ -248,6 +262,16 @@
       }
       publicQuizzes = publicData.quizzes || [];
       assignedMode = !!publicData.assigned;
+      if (publicData.readiness) {
+        quizReadiness = publicData.readiness;
+      } else if (publicQuizzes.length === 0) {
+        try {
+          const rRes = await api('/api/quiz-menu/readiness');
+          if (rRes.readiness) quizReadiness = rRes.readiness;
+        } catch {}
+      } else {
+        quizReadiness = { ready: true, schema_ready: true, catalog_empty: false };
+      }
       cacheQuizData('catalog', publicData).catch(() => {});
       // Chỉ gọi ?mine=1 khi role có tab mine
       if (visibleTabs.includes('mine')) {
@@ -292,6 +316,7 @@
   onDestroy(() => {
     clearInterval(timer);
     clearTimeout(abandonTimer);
+    clearTimeout(copyTimeout);
     unlockPage();
     removeOnlineSync();
   });
@@ -1331,6 +1356,19 @@
             <span class="draft-count">{draft.questions.length} câu đã có</span>
           </div>
 
+          {#if quizReadiness && quizReadiness.schema_ready === false}
+            <div class="readiness-banner" data-testid="staff-readiness-warning" role="alert">
+              <span class="warning-icon">⚠️</span>
+              <div class="banner-body">
+                <strong>Lưu ý: Cơ sở dữ liệu D1 chưa áp dụng migrations ({quizReadiness.missing_migrations?.join(', ') || '0018-0022'}).</strong>
+                <p>Cần áp dụng migrations để kích hoạt lưu cấu hình tự động và khóa đồng bộ Docs: <code>{quizReadiness.remediation_code || 'npx wrangler d1 migrations apply tienganh-pro-db --remote'}</code></p>
+              </div>
+              <button type="button" class="btn-copy-small" on:click={() => copyRemediation(quizReadiness.remediation_code || 'npx wrangler d1 migrations apply tienganh-pro-db --remote')}>
+                {copiedCode ? '✓ Đã chép' : 'Chép lệnh'}
+              </button>
+            </div>
+          {/if}
+
           <!-- Nguồn tài liệu -->
           <div class="source-picker-section">
             <span class="section-label">1. Chọn nguồn tài liệu:</span>
@@ -2193,7 +2231,60 @@
           {/each}
         </div>
       {:else}
-        <div class="empty-state"><span>☁</span><h3>{assignedMode ? 'Chưa có quiz nào được giao' : 'Chưa có quiz đang mở'}</h3><p>{assignedMode ? 'Giáo viên sẽ giao quiz cho lớp của bạn tại đây.' : 'Hãy quay lại sau khi giáo viên xuất bản bài mới.'}</p></div>
+        {#if quizReadiness && quizReadiness.schema_ready === false}
+          {#if isStaff}
+            <div class="readiness-alert-card" data-testid="quiz-readiness-unready" role="alert">
+              <div class="alert-icon">⚠️</div>
+              <div class="alert-body">
+                <h3>Cơ sở dữ liệu Quiz chưa hoàn tất Migrations</h3>
+                <p class="alert-desc">{quizReadiness.message}</p>
+                {#if quizReadiness.missing_migrations && quizReadiness.missing_migrations.length}
+                  <div class="alert-detail">
+                    <strong>Migrations chưa áp dụng ({quizReadiness.missing_migrations.length}):</strong>
+                    <code>{quizReadiness.missing_migrations.join(', ')}</code>
+                  </div>
+                {/if}
+                {#if quizReadiness.missing_tables && quizReadiness.missing_tables.length}
+                  <div class="alert-detail">
+                    <strong>Bảng chưa khởi tạo:</strong>
+                    <code>{quizReadiness.missing_tables.join(', ')}</code>
+                  </div>
+                {/if}
+                {#if quizReadiness.remediation_code}
+                  <div class="remediation-box">
+                    <span class="remediation-title">Lệnh áp dụng migrations (Terminal / CI):</span>
+                    <div class="code-copy-row">
+                      <code>{quizReadiness.remediation_code}</code>
+                      <button type="button" class="btn-copy" on:click={() => copyRemediation(quizReadiness.remediation_code)}>
+                        {copiedCode ? '✓ Đã sao chép' : 'Sao chép lệnh'}
+                      </button>
+                    </div>
+                  </div>
+                {/if}
+                <div class="alert-actions">
+                  <button type="button" class="btn-main compact" on:click={loadQuizzes}>Kiểm tra lại trạng thái</button>
+                  <button type="button" class="btn-outline compact" on:click={() => selectTab('create')}>Đi tới Tạo Quiz</button>
+                </div>
+              </div>
+            </div>
+          {:else}
+            <div class="readiness-guest-card" data-testid="quiz-readiness-maintenance" role="status">
+              <div class="maintenance-icon">⏳</div>
+              <h3>Đang cập nhật kho bài tập trắc nghiệm</h3>
+              <p>{quizReadiness.message || 'Hệ thống Quiz đang trong quá trình đồng bộ dữ liệu. Bạn vui lòng quay lại sau ít phút nhé!'}</p>
+              <button type="button" class="btn-outline compact" on:click={loadQuizzes}>Tải lại trang</button>
+            </div>
+          {/if}
+        {:else}
+          <div class="empty-state" data-testid="quiz-catalog-empty">
+            <span>☁</span>
+            <h3>{assignedMode ? 'Chưa có quiz nào được giao' : 'Chưa có bài quiz nào được xuất bản'}</h3>
+            <p>{assignedMode ? 'Giáo viên sẽ giao quiz cho lớp của bạn tại đây.' : 'Hiện tại chưa có bài quiz nào trong danh mục công khai. Giáo viên có thể tạo và xuất bản quiz mới.'}</p>
+            {#if isStaff}
+              <button type="button" class="btn-main compact mt-3" on:click={() => selectTab('create')}>+ Tạo bài Quiz đầu tiên</button>
+            {/if}
+          </div>
+        {/if}
       {/if}
     </section>
   {/if}
@@ -2819,7 +2910,34 @@
   .review-text-answer{padding:10px 14px;background:#fafaf9;border:1px solid #e7e5e4;border-radius:8px;box-sizing:border-box}
   .review-correct-value{font-size:.95rem;color:#065f46}
   .review-explanation{padding:10px 12px;background:#fffbeb;border:1.5px solid #fde68a;border-radius:6px;font-size:.82rem;color:#92400e;display:flex;gap:8px;box-sizing:border-box}
-  .review-expl-label{font-weight:700;flex-shrink:0}
+  .readiness-alert-card{display:flex;gap:18px;padding:24px;background:#fff1f2;border:1.5px solid #fecdd3;border-radius:12px;margin:20px 0;box-shadow:0 4px 16px rgba(225,29,72,.06)}
+  .readiness-alert-card .alert-icon{font-size:2.2rem;line-height:1;flex-shrink:0}
+  .readiness-alert-card .alert-body{flex:1;min-width:0}
+  .readiness-alert-card h3{font-size:1.15rem;font-weight:700;color:#9f1239;margin:0 0 6px}
+  .readiness-alert-card .alert-desc{font-size:.88rem;color:#881337;margin-bottom:12px;line-height:1.5}
+  .readiness-alert-card .alert-detail{font-size:.82rem;color:#4c0519;margin:6px 0}
+  .readiness-alert-card .alert-detail code{background:#ffe4e6;padding:2px 6px;border-radius:4px;font-family:monospace;font-size:.8rem}
+  .remediation-box{margin:14px 0;padding:12px 14px;background:#fffdfa;border:1px solid #fecdd3;border-radius:8px}
+  .remediation-title{display:block;font-size:.78rem;font-weight:700;color:#be123c;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em}
+  .code-copy-row{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#fafaf9;border:1px solid #e7e5e4;padding:8px 12px;border-radius:6px}
+  .code-copy-row code{color:#be123c;font-family:monospace;font-size:.82rem;word-break:break-all;font-weight:600}
+  .btn-copy{background:#059669;color:#ffffff;border:0;border-radius:5px;padding:6px 12px;font-size:.75rem;font-weight:600;cursor:pointer;flex-shrink:0;transition:background .15s}
+  .btn-copy:hover{background:#047857}
+  .alert-actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+
+  .readiness-guest-card{text-align:center;padding:48px 24px;background:#fffdfa;border:1.5px dashed #fed7aa;border-radius:12px;margin:20px 0}
+  .readiness-guest-card .maintenance-icon{font-size:2.5rem;margin-bottom:10px}
+  .readiness-guest-card h3{font-size:1.2rem;font-weight:700;color:#9a3412;margin-bottom:8px}
+  .readiness-guest-card p{color:#78716c;font-size:.9rem;max-width:480px;margin:0 auto 16px;line-height:1.5}
+
+  .readiness-banner{display:flex;align-items:flex-start;gap:12px;padding:12px 16px;background:#fffdfa;border:1px solid #fed7aa;border-radius:8px;margin-bottom:20px}
+  .readiness-banner .warning-icon{font-size:1.25rem;flex-shrink:0;line-height:1.2}
+  .readiness-banner .banner-body{flex:1;min-width:0}
+  .readiness-banner strong{font-size:.85rem;color:#9a3412;display:block}
+  .readiness-banner p{font-size:.8rem;color:#c2410c;margin:2px 0 0}
+  .readiness-banner code{background:#ffedd5;padding:1px 5px;border-radius:3px;font-family:monospace;font-size:.78rem;color:#9a3412}
+  .btn-copy-small{background:#ecfdf5;border:1px solid #a7f3d0;color:#047857;padding:4px 8px;border-radius:5px;font-size:.75rem;font-weight:600;cursor:pointer;flex-shrink:0}
+  .btn-copy-small:hover{background:#d1fae5}
 
   @media(max-width:800px){.quiz-page{padding:16px 12px 90px}.quiz-hero{padding:26px 22px;min-height:160px}.hero-mark{width:70px;height:70px;flex-basis:70px;font-size:2rem}.workspace{padding:18px}.source-grid,.type-grid,.quiz-grid,.loading-grid{grid-template-columns:1fr 1fr}.bank-filters{grid-template-columns:1fr 1fr}.source-panel{grid-template-columns:1fr}.bundle-grid,.homework-fields{grid-template-columns:1fr 1fr}.builder-mode-switcher{grid-template-columns:1fr}.type-mix-grid{grid-template-columns:1fr 1fr}.merge-options-group{grid-template-columns:1fr}.exam-content{grid-template-columns:1fr;padding:18px 12px 70px}.exam-content aside{position:static}.question-map{grid-template-columns:repeat(8,1fr)}.exam-topbar{grid-template-columns:1fr auto}.abandon{grid-column:1/-1;width:100%;margin-top:6px}.progress-track{top:124px}.exam-question{scroll-margin-top:135px}}
   @media(max-width:560px){.quiz-hero{align-items:flex-end}.hero-mark{position:absolute;right:18px;top:18px;opacity:.38}.quiz-hero p{padding-right:20px}.tabs{gap:3px}.tabs button{font-size:.75rem;padding:5px}.tabs button span{display:block;margin:0;font-size:1rem}.source-grid,.type-grid,.quiz-grid,.loading-grid,.form-grid,.bundle-grid,.homework-fields,.bank-filters,.conflict-modal-options{grid-template-columns:1fr}.conflict-choices{flex-direction:column}.type-mix-grid{grid-template-columns:1fr}.image-labels-grid{grid-template-columns:1fr}.auto-action-bar{flex-direction:column;align-items:stretch}.auto-action-bar button{width:100%}.form-grid .wide{grid-column:1}.source-card{min-height:78px}.type-grid button{min-height:58px}.editor-card{padding:13px}.editor-card header{flex-wrap:wrap}.editor-card header select{order:3;width:100%;max-width:none}.editor-actions{margin-left:auto}.editor-bottom{grid-template-columns:90px 1fr}.save-bar{flex-wrap:wrap;bottom:8px}.save-bar>div{width:100%}.save-bar button{flex:1}.section-heading{align-items:flex-start}.question-map{grid-template-columns:repeat(6,1fr)}.exam-topbar{padding:8px 10px}.exam-title>span{display:none}.exam-title strong{display:block;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.countdown{padding:4px 10px}.exam-question{padding:17px}.question-head{align-items:flex-start}.question-head>div{flex-direction:column-reverse;align-items:flex-end}.matching-answer label{grid-template-columns:1fr}.matching-answer label>span{transform:rotate(90deg)}.submit-panel{align-items:stretch;flex-direction:column}.submit-actions{flex-direction:column}.start-dialog,.result-dialog,.bundle-dialog,.conflict-dialog{padding:25px 18px}.modal-backdrop{padding:10px}.rules{grid-template-columns:1fr 1fr}.bank-action-bar{flex-direction:column;align-items:stretch}.bank-buttons{flex-direction:column}.bank-buttons button{width:100%}.quick-import-wrap{width:100%;justify-content:space-between;margin-left:0}.config-summary-bar{flex-direction:column;align-items:stretch}.btn-toggle-advanced{width:100%;justify-content:center}.preview-mode-header{flex-direction:column;align-items:stretch}.btn-toggle-view{width:100%;justify-content:center}.review-card{padding:14px}.review-option-item{flex-wrap:wrap}.review-tf-options{flex-direction:column}}
