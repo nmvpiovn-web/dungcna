@@ -126,7 +126,10 @@ export async function POST({ params, request, platform }) {
       });
     } else if (syncDirection === 'publish_homework') {
       bundle = await publishBundleHomework(platform, db, params.id, auth.user, {
-        ...body,
+        session_id: body.session_id,
+        class_id: body.class_id,
+        deadline_date: body.deadline_date,
+        deadline_time: body.deadline_time,
         lockToken: lock.lockToken,
         expected_revision: parsedExpectedRevision
       });

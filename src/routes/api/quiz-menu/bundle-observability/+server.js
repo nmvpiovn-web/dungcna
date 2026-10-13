@@ -260,6 +260,12 @@ export async function GET({ request, platform, url }) {
   const nextScanOffset = scanComplete ? null : scanOffset + scanned_count;
   const nextCursor = scanComplete ? null : String(scanOffset + scanned_count);
 
+  const exactTotalAvailable = !hasLiveFilter || (scanOffset === 0 && scanComplete);
+  const total = exactTotalAvailable
+    ? (hasLiveFilter ? matched.length : dbTotal)
+    : null;
+  const totalIsLowerBound = !exactTotalAvailable;
+
   return json({
     success: true,
     bundles: matched,
@@ -272,8 +278,9 @@ export async function GET({ request, platform, url }) {
     scanned_count,
     matched_count: matched.length,
     returned_count: matched.length,
-    total: scanComplete ? (hasLiveFilter ? matched.length : dbTotal) : null,
-    total_is_lower_bound: !scanComplete && hasLiveFilter,
+    total,
+    total_is_lower_bound: totalIsLowerBound,
+    exact_total_available: exactTotalAvailable,
     limit,
     offset: scanOffset,
     refresh: true

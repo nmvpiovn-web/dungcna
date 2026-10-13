@@ -49,7 +49,16 @@ export async function POST({ params, request, platform }) {
   const dueDate = String(body.due_date || '').trim();
   const title = String(body.title || quiz.title || '').trim().slice(0, 150);
   if (!classId) return json({ success: false, error: 'Thiếu class_id', message: 'Hãy chọn lớp để giao quiz.' }, { status: 400 });
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(dueDate)) return json({ success: false, error: 'Hạn nộp không hợp lệ', message: 'Hạn nộp phải có dạng YYYY-MM-DD.' }, { status: 400 });
+  if (!dueDate) return json({ success: false, error: 'Thiếu due_date', message: 'Hãy chọn hạn nộp.' }, { status: 400 });
+  try {
+    validateStrictDeadline(dueDate, '23:59');
+  } catch (deadlineErr) {
+    return json({
+      success: false,
+      error: deadlineErr.code || 'InvalidDeadline',
+      message: deadlineErr.message || 'Hạn nộp không hợp lệ'
+    }, { status: 400 });
+  }
 
   // Validate lớp tồn tại (lấy class_name thật từ class_sessions)
   const cls = await db.prepare(`SELECT class_id, class_name FROM class_sessions WHERE class_id = ? LIMIT 1`).bind(classId).first();
@@ -57,7 +66,7 @@ export async function POST({ params, request, platform }) {
 
   // Teacher thường chỉ được giao cho lớp mình dạy
   if (!isManager(auth.user)) {
-    const own = await db.prepare(`SELECT 1 FROM class_sessions WHERE class_id = ? AND (teacher_id = ? OR substitute_teacher_id = ?) LIMIT 1`).bind(classId, auth.user.id, auth.user.id).first();
+    const own = await db.prepare(`SELECT 1 FROM class_sessions WHERE class_id = ? AND (teacher_id = ? OR assistant_teacher_id = ? OR substitute_teacher_id = ?) LIMIT 1`).bind(classId, auth.user.id, auth.user.id, auth.user.id).first();
     if (!own) return json({ success: false, error: 'Forbidden: Bạn chỉ được giao quiz cho lớp mình dạy' }, { status: 403 });
   }
 

@@ -7,7 +7,7 @@ import { POST as syncBundleEndpoint } from '../src/routes/api/quiz-menu/[id]/syn
 import { GET as getBundleEndpoint } from '../src/routes/api/quiz-menu/[id]/bundle/+server.js';
 import { GET as observabilityEndpoint } from '../src/routes/api/quiz-menu/bundle-observability/+server.js';
 import { GET as sessionsEndpoint } from '../src/routes/api/quiz-menu/[id]/sessions/+server.js';
-import { GET as assignEndpoint } from '../src/routes/api/quiz-menu/[id]/assign/+server.js';
+import { GET as assignEndpoint, POST as assignPostEndpoint } from '../src/routes/api/quiz-menu/[id]/assign/+server.js';
 import {
   acquireBundleLock,
   renewBundleLock,
@@ -1722,3 +1722,333 @@ test('RED-3R4.7: Audit events response does not expose arbitrary details or Driv
   }
 });
 
+test('RED-3R5.1: Client-controlled clock bypass: HTTP sync-bundle and direct publish reject past deadline regardless of payload clock', async () => {
+  const { platform, db, teacherToken, sqlite } = await fixture();
+  const quizId = 'quiz-sync-1';
+  const mockDrive = createDriveMock();
+
+  try {
+    await publishQuizBundle(platform, db, quizId);
+
+    // 1. Direct publishBundleHomework ignores input.now and fails closed against server Date.now()
+    await assert.rejects(async () => {
+      await publishBundleHomework(platform, db, quizId, { id: 'teacher-1', role: 'teacher' }, {
+        expected_revision: 1,
+        session_id: 'sess-1',
+        class_id: 'class-7a',
+        deadline_date: '2020-01-01',
+        deadline_time: '18:00',
+        now: '2019-01-01T00:00:00Z'
+      });
+    }, (err) => err.code === 'InvalidDeadline' && err.status === 400);
+
+    // 2. HTTP endpoint ignores fake 'now' in JSON body and returns 400 InvalidDeadline
+    const notifsBefore = sqlite.prepare(`SELECT COUNT(*) as c FROM system_notifications`).get().c;
+    const httpRes = await syncBundleEndpoint({
+      params: { id: quizId },
+      request: jsonRequest(`/api/quiz-menu/${quizId}/sync-bundle`, teacherToken, {
+        direction: 'publish_homework',
+        expected_revision: 1,
+        session_id: 'sess-1',
+        class_id: 'class-7a',
+        deadline_date: '2020-01-01',
+        deadline_time: '18:00',
+        now: 2000
+      }),
+      platform
+    });
+
+    assert.equal(httpRes.status, 400);
+    const data = await httpRes.json();
+    assert.equal(data.error, 'InvalidDeadline');
+
+    // 3. Database is untouched: assignment remains draft, zero notifications created
+    const hwRow = sqlite.prepare(`SELECT status FROM homework_assignments WHERE id = ?`).get('hw_quiz_' + quizId);
+    assert.equal(hwRow.status, 'draft', 'Homework status remains draft');
+    const notifsAfter = sqlite.prepare(`SELECT COUNT(*) as c FROM system_notifications`).get().c;
+    assert.equal(notifsAfter, notifsBefore, 'No notifications created on clock bypass attempt');
+  } finally {
+    mockDrive.restore();
+  }
+});
+
+test('RED-3R5.2: Observability cursor pagination with live filter does not claim final batch match count as exact total', async () => {
+  const { platform, adminToken, sqlite } = await fixture();
+  const mockDrive = createDriveMock();
+
+  try {
+    // Seed 4 quizzes and bundles
+    const quizzes = [
+      { id: 'quiz-c1', doc: 'doc-c1', time: '2026-10-13T10:00:04.000Z' },
+      { id: 'quiz-c2', doc: 'doc-c2', time: '2026-10-13T10:00:03.000Z' },
+      { id: 'quiz-c3', doc: 'doc-c3', time: '2026-10-13T10:00:02.000Z' },
+      { id: 'quiz-c4', doc: 'doc-c4', time: '2026-10-13T10:00:01.000Z' }
+    ];
+    for (const q of quizzes) {
+      sqlite.prepare(`INSERT INTO quizzes (id, title, status, created_by) VALUES (?, ?, 'published', 'teacher-1')`).run(q.id, q.id);
+      const quizRow = sqlite.prepare(`SELECT * FROM quizzes WHERE id = ?`).get(q.id);
+      const cs = await bundleChecksum(quizRow, []);
+      sqlite.prepare(`
+        INSERT INTO quiz_bundles (quiz_id, google_doc_file_id, printable_docx_file_id, revision, quiz_checksum, sync_status, last_synced_at, google_doc_modified_time, homework_draft_json, updated_at)
+        VALUES (?, ?, 'docx-fake', 1, ?, 'synced', '2026-10-13T10:00:00.000Z', '2026-10-13T10:00:00.000Z', '{}', ?)
+      `).run(q.id, q.doc, cs, q.time);
+    }
+
+    // doc-c1: CONFLICT (live modifiedTime mismatch)
+    mockDrive.files.set('doc-c1', { id: 'doc-c1', name: 'Doc C1', mimeType: 'application/vnd.google-apps.document', modifiedTime: '2026-10-13T12:00:00.000Z', trashed: false });
+    // doc-c2: CLEAN
+    mockDrive.files.set('doc-c2', { id: 'doc-c2', name: 'Doc C2', mimeType: 'application/vnd.google-apps.document', modifiedTime: '2026-10-13T10:00:00.000Z', trashed: false });
+    // doc-c3: CLEAN
+    mockDrive.files.set('doc-c3', { id: 'doc-c3', name: 'Doc C3', mimeType: 'application/vnd.google-apps.document', modifiedTime: '2026-10-13T10:00:00.000Z', trashed: false });
+    // doc-c4: CONFLICT (live modifiedTime mismatch)
+    mockDrive.files.set('doc-c4', { id: 'doc-c4', name: 'Doc C4', mimeType: 'application/vnd.google-apps.document', modifiedTime: '2026-10-13T12:00:00.000Z', trashed: false });
+
+    // Batch 1: scan_limit=2, scan_offset=0, status=conflict
+    const b1Res = await observabilityEndpoint({
+      request: jsonRequest('/api/quiz-menu/bundle-observability', adminToken, null, 'GET'),
+      platform,
+      url: new URL('https://timbk.io.vn/api/quiz-menu/bundle-observability?refresh=1&scan_limit=2&scan_offset=0&status=conflict')
+    });
+    const b1 = await b1Res.json();
+    assert.equal(b1.scanned_count, 2);
+    assert.equal(b1.matched_count, 1, 'Batch 1 has 1 match (quiz-c1)');
+    assert.equal(b1.scan_complete, false);
+    assert.equal(b1.total, null, 'Total is null for incomplete scan');
+    assert.equal(b1.total_is_lower_bound, true);
+    assert.equal(b1.exact_total_available, false);
+    assert.equal(b1.next_cursor, '2');
+
+    // Batch 2: scan_limit=2, scan_offset=2, status=conflict
+    const b2Res = await observabilityEndpoint({
+      request: jsonRequest('/api/quiz-menu/bundle-observability', adminToken, null, 'GET'),
+      platform,
+      url: new URL(`https://timbk.io.vn/api/quiz-menu/bundle-observability?refresh=1&scan_limit=2&scan_offset=2&status=conflict`)
+    });
+    const b2 = await b2Res.json();
+    assert.equal(b2.scanned_count, 2);
+    assert.equal(b2.matched_count, 1, 'Batch 2 has 1 match (quiz-c4)');
+    assert.equal(b2.scan_complete, true, 'Batch 2 finishes the candidate range');
+    assert.equal(b2.scan_offset, 2);
+    // CRITICAL: Batch 2 must NOT declare total=1 exact!
+    assert.equal(b2.total, null, 'Batch 2 with scan_offset > 0 must not claim its batch match count as exact total');
+    assert.equal(b2.total_is_lower_bound, true, 'total_is_lower_bound must be true when scan_offset > 0 with live filter');
+    assert.equal(b2.exact_total_available, false, 'exact_total_available is false for offset > 0');
+
+    // Full scan: scan_limit=4, scan_offset=0, status=conflict
+    const fullRes = await observabilityEndpoint({
+      request: jsonRequest('/api/quiz-menu/bundle-observability', adminToken, null, 'GET'),
+      platform,
+      url: new URL('https://timbk.io.vn/api/quiz-menu/bundle-observability?refresh=1&scan_limit=4&scan_offset=0&status=conflict')
+    });
+    const full = await fullRes.json();
+    assert.equal(full.scanned_count, 4);
+    assert.equal(full.matched_count, 2, 'Full scan matches 2 conflicts');
+    assert.equal(full.scan_complete, true);
+    assert.equal(full.total, 2, 'Exact total is 2 when scanned completely from offset 0');
+    assert.equal(full.total_is_lower_bound, false);
+    assert.equal(full.exact_total_available, true);
+  } finally {
+    mockDrive.restore();
+  }
+});
+
+test('RED-3R5.3: Initial publish at revision > 1 uses BTVN mới title, subsequent publish at rev 3 uses Cập nhật', async () => {
+  const { platform, db, sqlite } = await fixture();
+  const quizId = 'quiz-sync-1';
+  const mockDrive = createDriveMock();
+
+  try {
+    // 1. Publish bundle rev 1
+    const b1 = await publishQuizBundle(platform, db, quizId);
+    assert.equal(b1.revision, 1);
+
+    // 2. Publish bundle rev 2 WITHOUT publishing homework yet
+    const b2 = await publishQuizBundle(platform, db, quizId, { expectedRevision: 1 });
+    assert.equal(b2.revision, 2);
+
+    const hwBeforePublish = sqlite.prepare(`SELECT * FROM homework_assignments WHERE id = ?`).get('hw_quiz_' + quizId);
+    assert.equal(hwBeforePublish.status, 'draft', 'Homework status is draft before first publish');
+    assert.equal(hwBeforePublish.source_content_revision, 2);
+
+    // Enroll initial student
+    sqlite.prepare(`INSERT INTO class_enrollments VALUES ('ce-s1', 'student-1', 'class-7a', 'active')`).run();
+
+    // 3. First publish of homework at rev 2
+    await publishBundleHomework(platform, db, quizId, { id: 'teacher-1', role: 'teacher' }, {
+      expected_revision: 2,
+      class_id: 'class-7a',
+      session_id: 'sess-1',
+      deadline_date: '2028-10-20',
+      deadline_time: '18:00'
+    });
+
+    const notifsRev2 = sqlite.prepare(`SELECT * FROM system_notifications WHERE reference_id = ?`).all('hw_quiz_' + quizId);
+    assert.equal(notifsRev2.length, 1);
+    assert.ok(notifsRev2[0].id.includes('_r2_'), 'Notification ID contains _r2_');
+    assert.ok(notifsRev2[0].title.startsWith('📚 BTVN mới:'), `First homework publish must use BTVN mới title even at rev 2, got: ${notifsRev2[0].title}`);
+
+    // 4. Enroll late recipient and retry publish at rev 2
+    sqlite.prepare(`INSERT INTO class_enrollments VALUES ('ce-late', 'student-late', 'class-7a', 'active')`).run();
+    await publishBundleHomework(platform, db, quizId, { id: 'teacher-1', role: 'teacher' }, {
+      expected_revision: 2,
+      class_id: 'class-7a',
+      session_id: 'sess-1',
+      deadline_date: '2028-10-20',
+      deadline_time: '18:00'
+    });
+
+    const notifsAfterRetry = sqlite.prepare(`SELECT * FROM system_notifications WHERE reference_id = ? ORDER BY id`).all('hw_quiz_' + quizId);
+    assert.equal(notifsAfterRetry.length, 2, 'Only late student got a new notification; student-1 is idempotent');
+    const lateNotif = notifsAfterRetry.find(n => n.target_user_id === 'student-late');
+    assert.ok(lateNotif, 'Late student received notification');
+    assert.ok(lateNotif.title.startsWith('📚 BTVN mới:'), 'Late student at rev 2 also gets BTVN mới title');
+
+    // 5. Publish bundle rev 3
+    const b3 = await publishQuizBundle(platform, db, quizId, { expectedRevision: 2 });
+    assert.equal(b3.revision, 3);
+
+    // 6. Republish homework at rev 3 -> MUST be labeled 'Cập nhật'
+    await publishBundleHomework(platform, db, quizId, { id: 'teacher-1', role: 'teacher' }, {
+      expected_revision: 3,
+      class_id: 'class-7a',
+      session_id: 'sess-1',
+      deadline_date: '2028-10-25',
+      deadline_time: '18:00'
+    });
+
+    const notifsRev3 = sqlite.prepare(`SELECT * FROM system_notifications WHERE reference_id = ? AND id LIKE '%_r3_%'`).all('hw_quiz_' + quizId);
+    assert.equal(notifsRev3.length, 2, 'Both students receive rev 3 update notifications');
+    for (const n of notifsRev3) {
+      assert.ok(n.title.includes('Cập nhật BTVN (rev 3)'), `Republish notification must use Cập nhật BTVN (rev 3), got: ${n.title}`);
+    }
+  } finally {
+    mockDrive.restore();
+  }
+});
+
+test('RED-3R5.4: Cancelled teaching session is rejected with 409 SessionUnavailable and DB is unchanged', async () => {
+  const { platform, db, teacherToken, sqlite } = await fixture();
+  const quizId = 'quiz-sync-1';
+  const mockDrive = createDriveMock();
+
+  try {
+    await publishQuizBundle(platform, db, quizId);
+
+    // Insert a cancelled teaching session
+    sqlite.prepare(`
+      INSERT INTO class_sessions (id, class_id, class_name, teacher_id, session_date, start_time, end_time, status)
+      VALUES ('sess-cancelled', 'class-7a', 'Lớp 7A', 'teacher-1', '2028-10-20', '08:00', '09:30', 'cancelled')
+    `).run();
+
+    // 1. Direct call to publishBundleHomework rejects with 409 SessionUnavailable
+    await assert.rejects(async () => {
+      await publishBundleHomework(platform, db, quizId, { id: 'teacher-1', role: 'teacher' }, {
+        expected_revision: 1,
+        session_id: 'sess-cancelled',
+        class_id: 'class-7a',
+        deadline_date: '2028-10-20',
+        deadline_time: '18:00'
+      });
+    }, (err) => err.code === 'SessionUnavailable' && err.status === 409);
+
+    // 2. HTTP endpoint rejects with 409 SessionUnavailable
+    const notifsBefore = sqlite.prepare(`SELECT COUNT(*) as c FROM system_notifications`).get().c;
+    const httpRes = await syncBundleEndpoint({
+      params: { id: quizId },
+      request: jsonRequest(`/api/quiz-menu/${quizId}/sync-bundle`, teacherToken, {
+        direction: 'publish_homework',
+        expected_revision: 1,
+        session_id: 'sess-cancelled',
+        class_id: 'class-7a',
+        deadline_date: '2028-10-20',
+        deadline_time: '18:00'
+      }),
+      platform
+    });
+
+    assert.equal(httpRes.status, 409);
+    const data = await httpRes.json();
+    assert.equal(data.error, 'SessionUnavailable');
+
+    // 3. Database is completely unchanged
+    const hwRow = sqlite.prepare(`SELECT status FROM homework_assignments WHERE id = ?`).get('hw_quiz_' + quizId);
+    assert.equal(hwRow.status, 'draft', 'Homework status remains draft');
+    const notifsAfter = sqlite.prepare(`SELECT COUNT(*) as c FROM system_notifications`).get().c;
+    assert.equal(notifsAfter, notifsBefore, 'No notifications created for cancelled session');
+  } finally {
+    mockDrive.restore();
+  }
+});
+
+test('RED-3R5.5: Legacy assign POST supports assistant_teacher_id and validates Gregorian due_date with validateStrictDeadline', async () => {
+  const { platform, sqlite } = await fixture();
+  const quizId = 'quiz-sync-1';
+
+  // Make quiz published and owned by assistant-1
+  sqlite.prepare(`UPDATE quizzes SET status = 'published', created_by = 'assistant-1' WHERE id = ?`).run(quizId);
+
+  // Setup session where assistant-1 is the assistant teacher
+  sqlite.prepare(`
+    INSERT INTO class_sessions (id, class_id, class_name, teacher_id, assistant_teacher_id, session_date, start_time, end_time, status)
+    VALUES ('sess-asst', 'class-7a', 'Lớp 7A', 'teacher-1', 'assistant-1', '2028-10-20', '08:00', '09:30', 'scheduled')
+  `).run();
+
+  sqlite.prepare(`
+    INSERT INTO users (id, username, name, role, status, metadata)
+    VALUES ('assistant-1', 'assistant1', 'Trợ Giảng 1', 'teacher', 'active', '{}')
+  `).run();
+  sqlite.prepare(`INSERT INTO auth_sessions VALUES ('session-asst', NULL, '2099-01-01T00:00:00.000Z')`).run();
+
+  const assistantToken = await createSignedToken({ id: 'assistant-1', username: 'assistant1', role: 'teacher' }, platform.env.AUTH_SECRET, 60_000, 'session-asst');
+  const otherTeacherToken = await createSignedToken({ id: 'teacher-2', username: 'teacher2', role: 'teacher' }, platform.env.AUTH_SECRET, 60_000, 'session-t2');
+
+  // 1. Invalid Gregorian date (2026-02-29 is not a leap year) -> 400 InvalidDeadline
+  const leapRes = await assignPostEndpoint({
+    params: { id: quizId },
+    request: jsonRequest(`/api/quiz-menu/${quizId}/assign`, assistantToken, {
+      class_id: 'class-7a',
+      due_date: '2026-02-29'
+    }),
+    platform
+  });
+  assert.equal(leapRes.status, 400);
+  assert.equal((await leapRes.json()).error, 'InvalidDeadline');
+
+  // 2. Past date -> 400 InvalidDeadline
+  const pastRes = await assignPostEndpoint({
+    params: { id: quizId },
+    request: jsonRequest(`/api/quiz-menu/${quizId}/assign`, assistantToken, {
+      class_id: 'class-7a',
+      due_date: '2020-01-01'
+    }),
+    platform
+  });
+  assert.equal(pastRes.status, 400);
+  assert.equal((await pastRes.json()).error, 'InvalidDeadline');
+
+  // 3. Teacher-2 owns their quiz but is neither head, assistant nor substitute for class-7a -> 403 Forbidden
+  sqlite.prepare(`INSERT INTO quizzes (id, title, status, created_by) VALUES ('quiz-t2', 'T2 Quiz', 'published', 'teacher-2')`).run();
+  const forbiddenRes = await assignPostEndpoint({
+    params: { id: 'quiz-t2' },
+    request: jsonRequest(`/api/quiz-menu/quiz-t2/assign`, otherTeacherToken, {
+      class_id: 'class-7a',
+      due_date: '2028-10-25'
+    }),
+    platform
+  });
+  assert.equal(forbiddenRes.status, 403);
+
+  // 4. Assistant teacher can assign homework for their class -> 201 Created
+  const okRes = await assignPostEndpoint({
+    params: { id: quizId },
+    request: jsonRequest(`/api/quiz-menu/${quizId}/assign`, assistantToken, {
+      class_id: 'class-7a',
+      due_date: '2028-10-25'
+    }),
+    platform
+  });
+  assert.equal(okRes.status, 201);
+  const okData = await okRes.json();
+  assert.equal(okData.success, true);
+  assert.equal(okData.assignment.class_id, 'class-7a');
+});

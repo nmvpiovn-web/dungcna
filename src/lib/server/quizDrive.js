@@ -1708,7 +1708,7 @@ export async function getQuizBundle(db, quizId) {
   };
 }
 
-export async function publishBundleHomework(platform, db, quizId, user, input) {
+export async function publishBundleHomework(platform, db, quizId, user, input, options = {}) {
   if (!platform?.env) {
     throw new QuizDriveError('Platform và môi trường là bắt buộc để kiểm tra live health trước khi giao bài', 500, 'PlatformRequired');
   }
@@ -1761,15 +1761,21 @@ export async function publishBundleHomework(platform, db, quizId, user, input) {
   }
 
   // Validate strict Gregorian deadline & timezone (Asia/Bangkok)
-  validateStrictDeadline(deadlineDate, deadlineTime, { now: input.now });
+  // Production path strictly uses server Date.now(). options.now is internal helper / test dependency only.
+  const serverNow = options?.now !== undefined ? options.now : Date.now();
+  validateStrictDeadline(deadlineDate, deadlineTime, { now: serverNow });
 
   // Query class_sessions from DB
   const session = await db.prepare(
-    `SELECT id, class_id, class_name, teacher_id, assistant_teacher_id, substitute_teacher_id FROM class_sessions WHERE id = ? LIMIT 1`
+    `SELECT id, class_id, class_name, teacher_id, assistant_teacher_id, substitute_teacher_id, status FROM class_sessions WHERE id = ? LIMIT 1`
   ).bind(sessionId).first();
 
   if (!session) {
     throw new QuizDriveError('Buổi học không tồn tại', 404, 'SessionNotFound');
+  }
+
+  if (session.status === 'cancelled') {
+    throw new QuizDriveError('Buổi học đã bị hủy, không thể giao bài', 409, 'SessionUnavailable');
   }
 
   if (classId && classId !== session.class_id) {
@@ -1804,7 +1810,28 @@ export async function publishBundleHomework(platform, db, quizId, user, input) {
     throw new QuizDriveError('Bài tập nháp không khớp revision với bundle hiện tại', 409, 'BundleNotReady');
   }
 
-  const isRepublish = Number(bundle.revision) > 1;
+  let isRepublish = false;
+  if (assignment.status === 'published') {
+    const prevNotif = await db.prepare(`
+      SELECT id FROM system_notifications
+      WHERE reference_id = ? AND id NOT LIKE ?
+      LIMIT 1
+    `).bind(assignment.id, `%_r${bundle.revision}_%`).first();
+
+    if (prevNotif) {
+      isRepublish = true;
+    } else {
+      const priorPublishEvent = await db.prepare(`
+        SELECT id FROM quiz_bundle_sync_events
+        WHERE quiz_id = ? AND direction = 'publish_homework' AND event_type = 'succeeded' AND to_revision < ?
+        LIMIT 1
+      `).bind(quizId, bundle.revision).first().catch(() => null);
+      if (priorPublishEvent) {
+        isRepublish = true;
+      }
+    }
+  }
+
   const studentTitle = isRepublish
     ? `📝 Cập nhật BTVN (rev ${bundle.revision}): ${assignment.title}`
     : `📚 BTVN mới: ${assignment.title}`;
