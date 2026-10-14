@@ -1,5 +1,5 @@
 <script>
- import { onMount } from 'svelte';
+ import { onMount, onDestroy } from 'svelte';
  import {
  getAllUsers,
  getCurrentUser,
@@ -7,6 +7,7 @@
  saveClassSession,
  upsertClassSessionInStore
  } from '$lib/unifiedStore';
+ import { registerBusyState, unregisterBusyState } from '$lib/stores/appUpdate.js';
 
  let { isOpen = $bindable(false), session = null, preset = null, onSaved = () => {} } = $props();
 
@@ -170,6 +171,21 @@
 
  let errorMessage = $state('');
  let saving = $state(false);
+
+ $effect(() => {
+   if (isOpen || saving) {
+     registerBusyState('schedule-session-edit-modal');
+   } else {
+     unregisterBusyState('schedule-session-edit-modal');
+   }
+   return () => {
+     unregisterBusyState('schedule-session-edit-modal');
+   };
+ });
+
+ onDestroy(() => {
+   unregisterBusyState('schedule-session-edit-modal');
+ });
 
  async function handleSave() {
  errorMessage = '';

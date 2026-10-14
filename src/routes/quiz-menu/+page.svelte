@@ -1,6 +1,7 @@
 <script>
   import { onMount, onDestroy } from 'svelte';
   import { getCurrentUser } from '$lib/unifiedStore';
+  import { registerBusyState, unregisterBusyState } from '$lib/stores/appUpdate.js';
   import QuizReviewPanel from '$lib/components/QuizReviewPanel.svelte';
   import QuizCameraCapture from '$lib/components/QuizCameraCapture.svelte';
   import QuizChildResults from '$lib/components/QuizChildResults.svelte';
@@ -111,6 +112,7 @@
 
   onDestroy(() => {
     clearImagePreviews();
+    unregisterBusyState('quiz-menu-dirty');
   });
 
   // Kho tri thức (Knowledge Vault)
@@ -203,6 +205,35 @@
 
   let draft = $state({
     id: null, title: '', description: '', time_limit_minutes: 20, questions: []
+  });
+
+  let isQuizPageDirtyOrBusy = $derived(
+    Boolean(
+      examOpen ||
+      starting ||
+      submitting ||
+      autoGenerating ||
+      sourceBusy ||
+      importBusy ||
+      defaultsSaving ||
+      bundleBusy ||
+      assignBusy ||
+      assignQuiz !== null ||
+      conflictModalOpen ||
+      (draft && (String(draft.title || '').trim() !== '' || String(draft.description || '').trim() !== '' || (Array.isArray(draft.questions) && draft.questions.length > 0))) ||
+      (Array.isArray(uploadFiles) && uploadFiles.length > 0)
+    )
+  );
+
+  $effect(() => {
+    if (isQuizPageDirtyOrBusy) {
+      registerBusyState('quiz-menu-dirty');
+    } else {
+      unregisterBusyState('quiz-menu-dirty');
+    }
+    return () => {
+      unregisterBusyState('quiz-menu-dirty');
+    };
   });
 
   let isStaff = $derived.by(() => {

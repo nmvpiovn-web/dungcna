@@ -1,5 +1,5 @@
 <script>
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy, tick } from 'svelte';
   import { playAudioFeedback } from '$lib/speech.js';
   import {
     appUpdateState,
@@ -8,20 +8,176 @@
     applyPwaUpdate,
     closeUpdateModal
   } from '$lib/stores/appUpdate.js';
-  import { isValidSha256, isValidApkDownloadUrl } from '$lib/versionContract.js';
+  import {
+    isValidSha256,
+    isValidApkDownloadUrl,
+    downloadAndVerifyApk
+  } from '$lib/versionContract.js';
 
   let showPwaBanner = $state(false);
   let showIosInstructions = $state(false);
   let deferredPrompt = $state(null);
   let isStandalone = $state(false);
   let isIos = $state(false);
+  let currentOrigin = $state('');
+
+  // Modal A11y state (focus management, focus trap, Escape, background inert)
+  let modalDialogEl = $state(null);
+  let primaryActionBtnEl = $state(null);
+  let previousFocusedElement = null;
+  let wasModalOpen = false;
+
+  // Verified APK Download state
+  let apkDownloadStatus = $state('idle'); // 'idle' | 'downloading' | 'verifying' | 'verified' | 'error'
+  let apkDownloadPercent = $state(0);
+  let apkDownloadError = $state('');
+  let activeRevokeFn = null;
 
   const DISMISS_KEY = 'tienganh_pwa_dismissed_v22';
+
+  function setBackgroundInert(isInert) {
+    if (typeof document === 'undefined') return;
+    const bgTargets = document.querySelectorAll('header, main, footer');
+    for (const el of bgTargets) {
+      if (isInert) {
+        el.setAttribute('inert', '');
+        el.setAttribute('aria-hidden', 'true');
+      } else {
+        el.removeAttribute('inert');
+        el.removeAttribute('aria-hidden');
+      }
+    }
+  }
+
+  function handleCloseModal() {
+    if ($appUpdateState.status === 'updating' || apkDownloadStatus === 'downloading') {
+      return;
+    }
+    closeUpdateModal();
+  }
+
+  function handleModalKeydown(e) {
+    if (!$appUpdateState.showModal) return;
+
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      handleCloseModal();
+      return;
+    }
+
+    if (e.key === 'Tab' && modalDialogEl) {
+      const focusables = Array.from(
+        modalDialogEl.querySelectorAll(
+          'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        )
+      );
+      if (focusables.length === 0) {
+        e.preventDefault();
+        return;
+      }
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      if (e.shiftKey) {
+        if (document.activeElement === first || !modalDialogEl.contains(document.activeElement)) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (document.activeElement === last || !modalDialogEl.contains(document.activeElement)) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    }
+  }
+
+  $effect(() => {
+    const isOpen = Boolean($appUpdateState.showModal && $appUpdateState.serverVersion);
+    if (isOpen && !wasModalOpen) {
+      wasModalOpen = true;
+      apkDownloadStatus = 'idle';
+      apkDownloadPercent = 0;
+      apkDownloadError = '';
+      if (typeof document !== 'undefined') {
+        previousFocusedElement = document.activeElement;
+      }
+      setBackgroundInert(true);
+      tick().then(() => {
+        if (primaryActionBtnEl && typeof primaryActionBtnEl.focus === 'function') {
+          primaryActionBtnEl.focus();
+        } else if (modalDialogEl && typeof modalDialogEl.focus === 'function') {
+          modalDialogEl.focus();
+        }
+      });
+    } else if (!isOpen && wasModalOpen) {
+      wasModalOpen = false;
+      setBackgroundInert(false);
+      if (previousFocusedElement && typeof previousFocusedElement.focus === 'function') {
+        try {
+          previousFocusedElement.focus();
+        } catch {}
+      }
+      previousFocusedElement = null;
+    }
+  });
+
+  async function handleVerifiedApkDownload() {
+    const sv = $appUpdateState.serverVersion;
+    if (!sv || apkDownloadStatus === 'downloading' || apkDownloadStatus === 'verifying') return;
+
+    apkDownloadStatus = 'downloading';
+    apkDownloadPercent = 10;
+    apkDownloadError = '';
+
+    if (activeRevokeFn) {
+      activeRevokeFn();
+      activeRevokeFn = null;
+    }
+
+    const origin = typeof window !== 'undefined' && window.location?.origin ? window.location.origin : currentOrigin;
+    const res = await downloadAndVerifyApk({
+      downloadUrl: sv.download_url,
+      expectedSha256: sv.sha256,
+      expectedBytes: typeof sv.file_size_bytes === 'number' ? sv.file_size_bytes : null,
+      currentOrigin: origin,
+      onProgress: ({ phase, percent }) => {
+        apkDownloadStatus = phase;
+        apkDownloadPercent = percent;
+      }
+    });
+
+    if (!res.success) {
+      apkDownloadStatus = 'error';
+      apkDownloadError = res.error || 'Xác minh SHA-256 tệp APK thất bại.';
+      return;
+    }
+
+    apkDownloadStatus = 'verified';
+    apkDownloadPercent = 100;
+    activeRevokeFn = res.revoke;
+
+    if (typeof document !== 'undefined' && res.objectUrl) {
+      const a = document.createElement('a');
+      a.href = res.objectUrl;
+      a.download = sv.filename || 'tienganhcodung-latest.apk';
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => {
+        if (activeRevokeFn) {
+          activeRevokeFn();
+          activeRevokeFn = null;
+        }
+      }, 5000);
+    }
+  }
 
   onMount(() => {
     initAppUpdate();
 
     if (typeof window !== 'undefined') {
+      currentOrigin = window.location.origin || '';
       isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
       isIos = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
 
@@ -43,6 +199,14 @@
           showPwaBanner = true;
         }, 3000);
       }
+    }
+  });
+
+  onDestroy(() => {
+    setBackgroundInert(false);
+    if (activeRevokeFn) {
+      activeRevokeFn();
+      activeRevokeFn = null;
     }
   });
 
@@ -77,6 +241,8 @@
     return checkForUpdate(manual);
   }
 </script>
+
+<svelte:window onkeydown={handleModalKeydown} />
 
 <!-- Floating PWA Install Notification (Positioned safely above BottomNav on mobile) -->
 {#if showPwaBanner && !isStandalone}
@@ -198,9 +364,12 @@
   </div>
 {/if}
 
-<!-- Detailed Update Modal (Dialog a11y & Focus Management) -->
+<!-- Detailed Update Modal (Dialog a11y, Focus Trap, Escape & Verified Download) -->
 {#if $appUpdateState.showModal && $appUpdateState.serverVersion}
   <div
+    bind:this={modalDialogEl}
+    onkeydown={handleModalKeydown}
+    tabindex="-1"
     class="fixed inset-0 z-50 bg-stone-950/70 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150 overflow-y-auto"
     role="dialog"
     aria-modal="true"
@@ -220,7 +389,8 @@
           </div>
         </div>
         <button
-          onclick={closeUpdateModal}
+          id="update-modal-close-x"
+          onclick={handleCloseModal}
           class="text-ink-400 hover:text-ink-900 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg transition-colors"
           aria-label="Đóng"
         >
@@ -239,19 +409,29 @@
       {/if}
 
       <div class="space-y-3 text-xs">
-        <div class="p-3.5 rounded-2xl bg-surface-1 border border-line flex items-center justify-between">
+        <div class="p-3.5 rounded-2xl bg-surface-1 border border-line flex items-center justify-between gap-2">
           <div>
-            <div class="text-[10px] text-ink-500 uppercase font-bold">Phiên bản hiện tại</div>
+            <div class="text-[10px] text-ink-500 uppercase font-bold">Bản PWA Đang Chạy</div>
             <div class="font-mono text-ink-900 font-bold text-sm">v{$appUpdateState.currentVersion}</div>
+            {#if $appUpdateState.currentBuildIdentity}
+              <div class="text-[10px] font-mono text-ink-500 truncate max-w-[140px]" title={$appUpdateState.currentBuildIdentity}>
+                {$appUpdateState.currentBuildIdentity}
+              </div>
+            {/if}
           </div>
           <div class="text-right">
-            <div class="text-[10px] text-emerald-700 uppercase font-bold">Phiên bản trên mạng</div>
+            <div class="text-[10px] text-emerald-700 uppercase font-bold">Phiên bản trên máy chủ</div>
             <div class="font-mono text-emerald-700 font-black text-sm">
               v{$appUpdateState.serverVersion.version_name || $appUpdateState.serverVersion.version}
               {#if $appUpdateState.serverVersion.version_code}
-                (Build {$appUpdateState.serverVersion.version_code})
+                (APK #{$appUpdateState.serverVersion.version_code})
               {/if}
             </div>
+            {#if $appUpdateState.serverVersion.pwa_build_identity}
+              <div class="text-[10px] font-mono text-emerald-700/80 truncate max-w-[140px] ml-auto" title={$appUpdateState.serverVersion.pwa_build_identity}>
+                {$appUpdateState.serverVersion.pwa_build_identity}
+              </div>
+            {/if}
           </div>
         </div>
 
@@ -261,11 +441,13 @@
             <span>⚡</span> Cập Nhật Ngay Trong Trình Duyệt / PWA (In-place)
           </div>
           <p class="text-[11px] text-emerald-800 leading-relaxed">
-            Hệ thống sẽ tải ngầm tài nguyên mới và khởi động lại phiên làm việc an toàn mà không làm mất tài khoản đã đăng nhập.
+            Hệ thống chỉ kích hoạt Service Worker mới sau khi bạn bấm xác nhận và kiểm tra không có bài thi/biểu mẫu đang dang dở.
           </p>
           <div class="pt-1">
             <button
-              onclick={applyPwaUpdate}
+              id="pwa-apply-update-btn"
+              bind:this={primaryActionBtnEl}
+              onclick={() => applyPwaUpdate()}
               class="w-full min-h-[44px] py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-xs transition-colors flex items-center justify-center gap-2"
             >
               <span>🚀</span>
@@ -274,8 +456,8 @@
           </div>
         </div>
 
-        <!-- Section 2: APK Download for Android tablets -->
-        {#if $appUpdateState.serverVersion.download_url && isValidSha256($appUpdateState.serverVersion.sha256) && isValidApkDownloadUrl($appUpdateState.serverVersion.download_url)}
+        <!-- Section 2: Verified APK Download for Android tablets -->
+        {#if $appUpdateState.serverVersion.download_url && isValidSha256($appUpdateState.serverVersion.sha256) && isValidApkDownloadUrl($appUpdateState.serverVersion.download_url, currentOrigin || (typeof window !== 'undefined' ? window.location.origin : ''))}
           <div class="p-3.5 rounded-2xl bg-surface-1 border border-line space-y-2">
             <div class="font-bold text-ink-900 flex items-center justify-between">
               <span class="flex items-center gap-1.5"><span>📦</span> Tệp Tin Cài Đặt Android APK</span>
@@ -284,20 +466,48 @@
               {/if}
             </div>
             <p class="text-[11px] text-ink-500 leading-relaxed">
-              Dành riêng cho máy tính bảng Android (DOOGEE R10) hoặc thiết bị cài APK độc lập. Sau khi tải xong, Android Package Installer sẽ hỏi bạn xác nhận cài đặt đè.
+              Dành cho máy tính bảng Android (DOOGEE R10). Hệ thống sẽ tải tệp, tự động đối chiếu mã kiểm tra SHA-256 trước khi lưu xuống máy để đảm bảo an toàn tuyệt đối.
             </p>
             <div class="text-[10px] font-mono text-ink-500 truncate" title={$appUpdateState.serverVersion.sha256}>
               SHA-256: {$appUpdateState.serverVersion.sha256.slice(0, 16)}...{$appUpdateState.serverVersion.sha256.slice(-16)}
             </div>
+
+            {#if apkDownloadStatus === 'error' && apkDownloadError}
+              <div class="p-2.5 rounded-xl bg-rose-50 border border-rose-300 text-rose-900 text-[11px] flex items-center justify-between gap-2" role="alert">
+                <span>⚠️ {apkDownloadError}</span>
+                <button
+                  type="button"
+                  onclick={handleVerifiedApkDownload}
+                  class="px-2.5 py-1 min-h-[44px] shrink-0 rounded-lg bg-surface-0 border border-rose-300 font-bold text-rose-800 hover:bg-rose-100"
+                >
+                  Thử tải lại
+                </button>
+              </div>
+            {:else if apkDownloadStatus === 'verified'}
+              <div class="p-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-semibold">
+                ✅ Đã xác minh khớp 100% mã SHA-256 và bắt đầu lưu tệp APK!
+              </div>
+            {/if}
+
             <div class="pt-1">
-              <a
-                href={$appUpdateState.serverVersion.download_url}
-                download="tienganhcodung-latest.apk"
-                class="w-full min-h-[44px] py-2.5 px-4 rounded-xl bg-surface-0 border border-line hover:bg-surface-2 text-ink-900 font-bold text-xs shadow-xs transition-colors flex items-center justify-center gap-2"
+              <button
+                id="apk-verified-download-btn"
+                type="button"
+                onclick={handleVerifiedApkDownload}
+                disabled={apkDownloadStatus === 'downloading' || apkDownloadStatus === 'verifying'}
+                class="w-full min-h-[44px] py-2.5 px-4 rounded-xl bg-surface-0 border border-line hover:bg-surface-2 disabled:opacity-60 text-ink-900 font-bold text-xs shadow-xs transition-colors flex items-center justify-center gap-2"
               >
-                <span>📥</span>
-                <span>Tải Tệp APK Về Máy (Cần Xác Nhận Cài Đặt)</span>
-              </a>
+                {#if apkDownloadStatus === 'downloading'}
+                  <span class="animate-spin">⏳</span>
+                  <span>Đang tải gói APK ({apkDownloadPercent}%)...</span>
+                {:else if apkDownloadStatus === 'verifying'}
+                  <span class="animate-spin">🔐</span>
+                  <span>Đang kiểm tra chữ ký SHA-256...</span>
+                {:else}
+                  <span>📥</span>
+                  <span>Tải &amp; Xác Minh SHA-256 Tệp APK</span>
+                {/if}
+              </button>
             </div>
           </div>
         {/if}
@@ -319,7 +529,8 @@
 
       <div class="flex items-center justify-end gap-2 pt-3 border-t border-line">
         <button
-          onclick={closeUpdateModal}
+          id="update-modal-close-btn"
+          onclick={handleCloseModal}
           class="min-h-[44px] px-4 py-2 rounded-xl bg-surface-1 hover:bg-surface-2 text-ink-700 font-bold text-xs transition-colors"
         >
           Đóng

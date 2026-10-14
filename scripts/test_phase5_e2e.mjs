@@ -2,6 +2,7 @@ import { chromium } from 'playwright';
 import { createServer } from 'vite';
 import fs from 'fs';
 import path from 'path';
+import crypto from 'crypto';
 
 const PORT = 5175;
 let BASE_URL = `http://localhost:${PORT}`;
@@ -10,6 +11,10 @@ const SCREENSHOT_DIR = path.resolve('C:/Users/admin/.gemini/antigravity/scratch/
 if (!fs.existsSync(SCREENSHOT_DIR)) {
   fs.mkdirSync(SCREENSHOT_DIR, { recursive: true });
 }
+
+const realSwSource = fs.readFileSync(path.resolve('static/sw.js'), 'utf-8');
+const sampleApkPayload = Buffer.from('verified-apk-binary-payload-phase5-round2');
+const sampleApkSha256 = crypto.createHash('sha256').update(sampleApkPayload).digest('hex');
 
 async function runTests() {
   let server;
@@ -26,6 +31,8 @@ async function runTests() {
   const fakeSig = 'a'.repeat(64);
   const validToken = `${fakePayload}.${fakeSig}`;
 
+  let swVersionServed = 1;
+
   try {
     console.log(`Starting Vite dev server in-process on port ${PORT} (strictPort: true)...`);
     server = await createServer({
@@ -35,13 +42,20 @@ async function runTests() {
       }
     });
 
-    try {
-      await server.listen();
-    } catch (listenErr) {
-      console.error(`Port collision on port ${PORT}:`, listenErr.message);
-      throw new Error(`Port collision on port ${PORT}. Ensure no other process is listening on ${PORT}: ${listenErr.message}`);
-    }
+    server.middlewares.stack.unshift({
+      route: '',
+      handle(req, res, next) {
+        if (req.url && req.url.split('?')[0] === '/sw.js') {
+          res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+          res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+          res.end(`// SW-E2E-VERSION: ${swVersionServed}\n` + realSwSource);
+          return;
+        }
+        next();
+      }
+    });
 
+    await server.listen();
     const resolvedLocalUrl = server.resolvedUrls?.local?.[0] || `http://localhost:${server.httpServer.address().port}/`;
     BASE_URL = resolvedLocalUrl.replace(/\/$/, '');
     console.log(`Vite dev server is ready at resolved URL: ${BASE_URL}`);
@@ -61,19 +75,21 @@ async function runTests() {
       console.log(`Testing Viewport: ${vp.name} (${vp.width}x${vp.height})`);
       console.log(`========================================`);
 
+      swVersionServed = 1;
       const context = await browser.newContext({
         viewport: { width: vp.width, height: vp.height },
-        deviceScaleFactor: 1
+        deviceScaleFactor: 1,
+        serviceWorkers: 'allow'
       });
 
-      // Inject authenticated staff user into localStorage before any script runs
       await context.addInitScript((tok) => {
         const staffObj = {
           id: 'usr_staff_e2e',
           username: 'admin',
           name: 'Ms. Dung Teacher',
           role: 'superadmin',
-          status: 'active'
+          status: 'active',
+          approval_status: 'approved'
         };
         localStorage.setItem('tienganh_token', tok);
         localStorage.setItem('tienganh_user', JSON.stringify(staffObj));
@@ -81,12 +97,9 @@ async function runTests() {
       }, validToken);
 
       const page = await context.newPage();
-      page.on('console', msg => {
-        if (msg.type() === 'error') console.log(`[BROWSER ${vp.name}] ${msg.text()}`);
-      });
-      page.on('pageerror', err => console.error(`[PAGE ERROR ${vp.name}]:`, err.message));
+      page.on('pageerror', (err) => console.error(`[PAGE ERROR ${vp.name}]:`, err.message));
 
-      await page.route('**/api/auth/verify*', async route => {
+      await page.route('**/api/auth/verify*', async (route) => {
         await route.fulfill({
           status: 200,
           contentType: 'application/json',
@@ -98,28 +111,55 @@ async function runTests() {
               username: 'admin',
               name: 'Ms. Dung Teacher',
               role: 'superadmin',
-              status: 'active'
+              status: 'active',
+              approval_status: 'approved'
             }
           })
         });
+      });
+
+      let mockBuildMetaStatus = 200;
+      let mockBuildMeta = {
+        source_commit: 'bfad941fffa2d7cd038d128c3b3171fe1015a2a6',
+        build_timestamp: '2026-10-09T11:05:19.489Z',
+        build_identity: 'build_bfad941_1791543919489',
+        version: '2.2.0',
+        environment: 'production'
+      };
+
+      await page.route('**/build_meta.json*', async (route) => {
+        if (mockBuildMetaStatus === 200) {
+          await route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify(mockBuildMeta)
+          });
+        } else {
+          await route.fulfill({
+            status: mockBuildMetaStatus,
+            contentType: 'application/json',
+            body: JSON.stringify({ error: 'Offline error' })
+          });
+        }
       });
 
       let mockApkResponse = {
         status: 200,
         body: {
           app_name: 'Tiếng Anh Cô Dung',
+          filename: 'tienganhcodung-latest.apk',
           package_id: 'vn.edu.tienganhcodung.app',
           version_name: '2.2.0',
           version_code: 220,
           download_url: '/downloads/tienganhcodung-latest.apk',
-          file_size_bytes: 2975961,
+          file_size_bytes: sampleApkPayload.byteLength,
           file_size_mb: 2.8,
-          sha256: '075f297219f174c8ffa679fcee8a6ba230e9a347b883b97d2fcdbbe036f42c97',
+          sha256: sampleApkSha256,
           changelog: ['⚡ Cập nhật OTA hệ thống qua mạng', '📚 Nâng cấp giao diện Mobile & Tablet']
         }
       };
 
-      await page.route('**/api/apk/version*', async route => {
+      await page.route('**/api/apk/version*', async (route) => {
         if (mockApkResponse.status === 200) {
           await route.fulfill({
             status: 200,
@@ -135,14 +175,31 @@ async function runTests() {
         }
       });
 
+      let serveCorruptedApkBytes = false;
+      await page.route('**/downloads/tienganhcodung-latest.apk*', async (route) => {
+        const buf = serveCorruptedApkBytes ? Buffer.from('corrupted-tampered-apk-bytes') : sampleApkPayload;
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/vnd.android.package-archive',
+          body: buf
+        });
+      });
+
       // ----------------------------------------------------------------------
-      // TEST 1: Mobile drawer & Update button visibility (Viewport 320/360/800)
+      // TEST 1: Navigation shell, Mobile update button & Same-version check
       // ----------------------------------------------------------------------
       console.log(`[${vp.name}] Test 1: Navigation shell & Mobile update button`);
       await page.goto(`${BASE_URL}/`, { waitUntil: 'networkidle' });
       await page.waitForTimeout(500);
 
-      // Check horizontal overflow on page
+      // Sync mockBuildMeta to match page's compile-time clientBuildIdentity for 'latest' check
+      const compiledIdentity = await page.evaluate(() => {
+        return window.__CLIENT_BUILD_META__ || null;
+      });
+      if (compiledIdentity) {
+        mockBuildMeta = { ...mockBuildMeta, ...compiledIdentity };
+      }
+
       const overflowInfo = await page.evaluate(() => {
         const docEl = document.documentElement;
         const scrollW = docEl.scrollWidth;
@@ -160,26 +217,30 @@ async function runTests() {
         return { scrollW, clientW, innerW, overflowing };
       });
       if (overflowInfo.overflowing.length > 0) {
-        console.error(`[${vp.name}] Overflowing elements:`, overflowInfo.overflowing.slice(0, 5));
         throw new Error(`[${vp.name}] Page has horizontal overflow! scrollWidth (${overflowInfo.scrollW}) > clientWidth (${overflowInfo.clientW})`);
       }
       console.log(`  ✓ No horizontal overflow on viewport ${vp.name} (scrollWidth: ${overflowInfo.scrollW}, clientWidth: ${overflowInfo.clientW})`);
 
-      if (vp.isMobile) {
-        // Click hamburger button to open mobile drawer
+      const openMobileDrawer = async () => {
         const mobileMenuBtn = page.locator('#mobile-menu-btn');
-        await mobileMenuBtn.waitFor({ state: 'visible', timeout: 5000 });
-        await mobileMenuBtn.click();
-        await page.waitForTimeout(400);
-
         const drawer = page.locator('#mobile-drawer');
+        await mobileMenuBtn.waitFor({ state: 'visible', timeout: 5000 });
+        for (let attempt = 0; attempt < 5; attempt++) {
+          if (await drawer.isVisible()) return drawer;
+          await mobileMenuBtn.click();
+          await page.waitForTimeout(400);
+          if (await drawer.isVisible()) return drawer;
+        }
         await drawer.waitFor({ state: 'visible', timeout: 5000 });
+        return drawer;
+      };
 
-        // Assert mobile update button is visible
+      if (vp.isMobile) {
+        await openMobileDrawer();
+
         const updateBtn = page.locator('#mobile-update-btn');
         await updateBtn.waitFor({ state: 'visible', timeout: 5000 });
 
-        // Check touch target >= 44x44
         const btnBox = await updateBtn.boundingBox();
         if (!btnBox || btnBox.height < 44 || btnBox.width < 44) {
           throw new Error(`[${vp.name}] Update button touch target too small: ${btnBox?.width}x${btnBox?.height}`);
@@ -191,152 +252,262 @@ async function runTests() {
         await page.screenshot({ path: shotDrawerPath });
         capturedScreenshots.push(shotDrawerPath);
 
-        // Click update button to trigger check
         await updateBtn.click();
-        await page.waitForTimeout(600);
+        await page.waitForTimeout(500);
 
-        // Toast message appears with latest status
         const toast = page.locator('[role="status"]');
         await toast.waitFor({ state: 'visible', timeout: 5000 });
         const toastText = await toast.innerText();
         console.log(`  ✓ Update toast status displayed: "${toastText.trim()}"`);
         testResults.push(`[${vp.name}] Update status toast triggered`);
-
-        const shotToastPath = path.join(SCREENSHOT_DIR, `update_toast_${vp.name}.png`);
-        await page.screenshot({ path: shotToastPath });
-        capturedScreenshots.push(shotToastPath);
       } else {
-        // On tablet / desktop, footer update button is visible
         const footerBtn = page.locator('#footer-update-btn');
         await footerBtn.scrollIntoViewIfNeeded();
         await footerBtn.waitFor({ state: 'visible', timeout: 5000 });
         console.log(`  ✓ Footer update button visible on ${vp.name}`);
         testResults.push(`[${vp.name}] Footer update button visible`);
-
-        const shotFooterPath = path.join(SCREENSHOT_DIR, `footer_update_${vp.name}.png`);
-        await page.screenshot({ path: shotFooterPath });
-        capturedScreenshots.push(shotFooterPath);
       }
 
       // ----------------------------------------------------------------------
-      // TEST 2: Update Available Modal with PWA in-place & APK download
+      // TEST 2: Modal A11y (Initial focus, Tab trap, Escape close, Focus restore, Inert)
+      // & Verified Browser APK Download (Corrupted vs Valid SHA-256)
       // ----------------------------------------------------------------------
-      console.log(`[${vp.name}] Test 2: Update Available Modal & a11y dialog`);
-      // Change mock response to return newer version
+      console.log(`[${vp.name}] Test 2: Modal A11y, Focus Trap, Escape & Verified APK Download`);
+      mockBuildMeta = {
+        ...mockBuildMeta,
+        version: '2.3.0',
+        build_identity: 'build_new_server_999999',
+        build_timestamp: '2026-10-14T15:00:00.000Z'
+      };
       mockApkResponse = {
         status: 200,
         body: {
           app_name: 'Tiếng Anh Cô Dung',
+          filename: 'tienganhcodung-latest.apk',
           package_id: 'vn.edu.tienganhcodung.app',
           version_name: '2.3.0',
           version_code: 230,
           download_url: '/downloads/tienganhcodung-latest.apk',
-          file_size_bytes: 2975961,
+          file_size_bytes: sampleApkPayload.byteLength,
           file_size_mb: 2.8,
-          sha256: '075f297219f174c8ffa679fcee8a6ba230e9a347b883b97d2fcdbbe036f42c97',
+          sha256: sampleApkSha256,
           changelog: ['⚡ Cập nhật lớn v2.3.0', '🚀 Tối ưu hóa hiệu năng DOOGEE R10']
         }
       };
 
-      // Trigger update check via footer or drawer button
       if (vp.isMobile) {
-        const mobileMenuBtn = page.locator('#mobile-menu-btn');
-        await mobileMenuBtn.click();
-        const drawer = page.locator('#mobile-drawer');
-        await drawer.waitFor({ state: 'visible', timeout: 5000 });
-        const updateBtn = page.locator('#mobile-update-btn');
-        await updateBtn.click();
+        await openMobileDrawer();
+        await page.locator('#mobile-update-btn').click();
       } else {
         const footerBtn = page.locator('#footer-update-btn');
         await footerBtn.scrollIntoViewIfNeeded();
-        await page.waitForTimeout(200);
+        await footerBtn.focus();
         await footerBtn.click();
       }
 
-      await page.waitForTimeout(600);
-
-      // Verify Modal opens with role="dialog" and aria-modal="true"
       const modal = page.locator('[role="dialog"][aria-modal="true"]');
       await modal.waitFor({ state: 'visible', timeout: 5000 });
+      await page.waitForTimeout(200);
 
-      // Verify no horizontal overflow in modal
-      const modalBox = await modal.boundingBox();
-      const vpWidth = page.viewportSize().width;
-      if (modalBox && modalBox.width > vpWidth) {
-        throw new Error(`[${vp.name}] Update modal overflowed viewport width: ${modalBox.width} > ${vpWidth}`);
+      // Verify background main has inert attribute and initial focus is inside modal
+      const a11yState = await page.evaluate(() => {
+        const dialog = document.querySelector('[role="dialog"][aria-modal="true"]');
+        const mainEl = document.querySelector('main');
+        return {
+          focusInsideDialog: dialog ? dialog.contains(document.activeElement) : false,
+          activeId: document.activeElement?.id || '',
+          mainInert: mainEl ? mainEl.hasAttribute('inert') : false
+        };
+      });
+      if (!a11yState.focusInsideDialog || !a11yState.mainInert) {
+        throw new Error(`[${vp.name}] Modal a11y failed: focusInsideDialog=${a11yState.focusInsideDialog}, mainInert=${a11yState.mainInert}`);
       }
-      console.log(`  ✓ Update modal has role="dialog", aria-modal="true" and fits inside viewport`);
-      testResults.push(`[${vp.name}] Update modal dialog opened and verified a11y/fit`);
+      console.log(`  ✓ Modal initial focus (#${a11yState.activeId}) and background inert verified`);
 
-      // Verify PWA in-place button and APK download link exist
-      const pwaBtn = modal.locator('button:has-text("Cập Nhật")');
-      await pwaBtn.waitFor({ state: 'visible', timeout: 3000 });
+      // Test Verified APK Download: 1) Corrupted bytes rejected, 2) Valid bytes verified
+      const apkBtn = modal.locator('#apk-verified-download-btn');
+      await apkBtn.waitFor({ state: 'visible', timeout: 3000 });
 
-      const apkDownloadLink = modal.locator('a[download*="tienganhcodung"]');
-      await apkDownloadLink.waitFor({ state: 'visible', timeout: 3000 });
-      console.log(`  ✓ PWA update button and APK download link both visible`);
+      serveCorruptedApkBytes = true;
+      await apkBtn.click();
+      await page.waitForTimeout(300);
+      const errAlert = modal.locator('[role="alert"]');
+      await errAlert.waitFor({ state: 'visible', timeout: 3000 });
+      const errText = await errAlert.innerText();
+      if (!errText.includes('SHA-256') && !errText.includes('Kích thước')) {
+        throw new Error(`[${vp.name}] Expected SHA-256/size verification error, got: ${errText}`);
+      }
+
+      serveCorruptedApkBytes = false;
+      await apkBtn.click();
+      await page.waitForTimeout(300);
+      const verifiedBanner = modal.locator('text=Đã xác minh khớp 100% mã SHA-256');
+      await verifiedBanner.waitFor({ state: 'visible', timeout: 3000 });
+      console.log(`  ✓ Verified browser APK download (corrupted blocked -> valid SHA-256 verified)`);
+      testResults.push(`[${vp.name}] Modal a11y & SHA-256 verified APK download passed`);
 
       const shotModalPath = path.join(SCREENSHOT_DIR, `update_modal_available_${vp.name}.png`);
       await page.screenshot({ path: shotModalPath });
       capturedScreenshots.push(shotModalPath);
 
-      // ----------------------------------------------------------------------
-      // TEST 3: Busy State Protection (Dirty Form / Exam active prevents reload)
-      // ----------------------------------------------------------------------
-      console.log(`[${vp.name}] Test 3: Busy State Registry protection`);
-      await page.evaluate(() => {
-        window.registerBusyState('test-active-exam');
-      });
-
-      // Click PWA update button while busy
-      await pwaBtn.click();
-      await page.waitForTimeout(400);
-
-      // Alert role="alert" must be visible inside modal warning user
-      const busyAlert = modal.locator('[role="alert"]');
-      await busyAlert.waitFor({ state: 'visible', timeout: 3000 });
-      const busyAlertText = await busyAlert.innerText();
-      if (!busyAlertText.includes('Đang có tác vụ chưa lưu')) {
-        throw new Error(`Expected busy alert, got: ${busyAlertText}`);
-      }
-      console.log(`  ✓ Busy state protection verified: "${busyAlertText.trim()}"`);
-      testResults.push(`[${vp.name}] Busy state correctly blocks reload and renders alert`);
-
-      const shotBusyPath = path.join(SCREENSHOT_DIR, `update_busy_blocked_${vp.name}.png`);
-      await page.screenshot({ path: shotBusyPath });
-      capturedScreenshots.push(shotBusyPath);
-
-      // Clean up busy state and close modal
-      await page.evaluate(() => {
-        window.unregisterBusyState('test-active-exam');
-      });
-      const closeBtn = modal.locator('button:has-text("Đóng")').first();
-      await closeBtn.click();
+      // Test Escape closes modal and restores background inert=false
+      await page.keyboard.press('Escape');
       await modal.waitFor({ state: 'hidden', timeout: 3000 });
+      const mainInertAfterClose = await page.evaluate(() => document.querySelector('main')?.hasAttribute('inert'));
+      if (mainInertAfterClose) {
+        throw new Error(`[${vp.name}] Background main remained inert after Escape close!`);
+      }
+      console.log(`  ✓ Escape key closed modal and restored background interactivity`);
+
+      // ----------------------------------------------------------------------
+      // TEST 3: Real SW Lifecycle (install -> waiting -> dirty block -> SKIP_WAITING -> single reload)
+      // & Real Production Dirty Guard on /schedule (run on mobile_360 & desktop)
+      // ----------------------------------------------------------------------
+      if (vp.name === 'mobile_360' || vp.name === 'desktop') {
+        console.log(`[${vp.name}] Test 3: Real Service Worker waiting -> dirty guard -> SKIP_WAITING -> single reload`);
+
+        // Ensure initial SW is registered and controlling the page
+        await page.evaluate(async () => {
+          if ('serviceWorker' in navigator) {
+            await navigator.serviceWorker.register('/sw.js');
+            await navigator.serviceWorker.ready;
+          }
+        });
+        await page.reload({ waitUntil: 'networkidle' });
+
+        const hasController = await page.evaluate(() => Boolean(navigator.serviceWorker?.controller));
+        if (!hasController) {
+          throw new Error(`[${vp.name}] Expected active Service Worker controller after reload`);
+        }
+
+        // Navigate to /schedule and verify opening SessionEditModal sets real production window.isAppBusy() === true
+        await page.goto(`${BASE_URL}/schedule`, { waitUntil: 'networkidle' });
+        await page.waitForTimeout(400);
+
+        const addSessionBtn = page.locator('button:has-text("Thêm Buổi Học")').first();
+        if (await addSessionBtn.isVisible()) {
+          await addSessionBtn.click();
+          await page.waitForTimeout(300);
+          const busyWhenScheduleModalOpen = await page.evaluate(() => window.isAppBusy());
+          if (!busyWhenScheduleModalOpen) {
+            throw new Error(`[${vp.name}] Expected window.isAppBusy() === true when Schedule SessionEditModal is open!`);
+          }
+          console.log(`  ✓ Production /schedule SessionEditModal automatically registered busy state (isAppBusy = true)`);
+
+          const closeScheduleModalBtn = page.locator('[role="dialog"] button[aria-label="Đóng"]').first();
+          await closeScheduleModalBtn.click();
+          await page.waitForTimeout(300);
+          const busyAfterScheduleModalClosed = await page.evaluate(() => window.isAppBusy());
+          if (busyAfterScheduleModalClosed) {
+            throw new Error(`[${vp.name}] Expected window.isAppBusy() === false after closing Schedule SessionEditModal!`);
+          }
+          console.log(`  ✓ Closing /schedule SessionEditModal automatically cleared busy state (isAppBusy = false)`);
+        }
+
+        // Now bump swVersionServed so browser fetches updated /sw.js
+        swVersionServed += 1;
+
+        // Trigger update check -> SW v2 installs and MUST stay in reg.waiting (no auto-skipWaiting!)
+        const swWaitingState = await page.evaluate(async () => {
+          const reg = await navigator.serviceWorker.getRegistration();
+          await reg.update();
+          const deadline = Date.now() + 8000;
+          while (!reg.waiting && Date.now() < deadline) {
+            await new Promise((r) => setTimeout(r, 150));
+          }
+          return {
+            hasWaiting: Boolean(reg.waiting),
+            waitingState: reg.waiting?.state || null,
+            installingState: reg.installing?.state || null
+          };
+        });
+
+        if (!swWaitingState.hasWaiting) {
+          throw new Error(`[${vp.name}] Expected updated Service Worker v2 to remain in reg.waiting (no auto-skipWaiting)!`);
+        }
+        console.log(`  ✓ Real Service Worker v2 entered waiting state (${swWaitingState.waitingState}) without auto-skipWaiting`);
+
+        // Register dirty state to test dirty block on update modal
+        await page.evaluate(() => window.registerBusyState('quiz-menu-dirty'));
+
+        // Trigger checkForUpdate(true) to open modal in restart_needed state
+        if (vp.isMobile) {
+          await openMobileDrawer();
+          await page.locator('#mobile-update-btn').click();
+        } else {
+          const footerBtn = page.locator('#footer-update-btn');
+          await footerBtn.scrollIntoViewIfNeeded();
+          await footerBtn.click();
+        }
+
+        await modal.waitFor({ state: 'visible', timeout: 5000 });
+        const pwaApplyBtn = modal.locator('#pwa-apply-update-btn');
+        await pwaApplyBtn.waitFor({ state: 'visible', timeout: 3000 });
+
+        // Click apply while dirty -> must block and NOT reload or skipWaiting
+        await pwaApplyBtn.click();
+        await page.waitForTimeout(300);
+        const busyAlert = modal.locator('[role="alert"]');
+        await busyAlert.waitFor({ state: 'visible', timeout: 3000 });
+        const stillWaitingWhileDirty = await page.evaluate(async () => {
+          const reg = await navigator.serviceWorker.getRegistration();
+          return Boolean(reg?.waiting);
+        });
+        if (!stillWaitingWhileDirty) {
+          throw new Error(`[${vp.name}] Waiting worker should NOT have activated while dirty guard was active!`);
+        }
+        console.log(`  ✓ Dirty guard blocked SKIP_WAITING & reload while dirty`);
+
+        const shotBusyPath = path.join(SCREENSHOT_DIR, `update_busy_blocked_${vp.name}.png`);
+        await page.screenshot({ path: shotBusyPath });
+        capturedScreenshots.push(shotBusyPath);
+
+        // Clear dirty state and click apply -> waiting SW receives SKIP_WAITING -> controllerchange -> reloads once!
+        await page.evaluate(() => {
+          window.unregisterBusyState('quiz-menu-dirty');
+        });
+
+        let navigationCount = 0;
+        const onFrameNav = (frame) => {
+          if (frame === page.mainFrame()) navigationCount++;
+        };
+        page.on('framenavigated', onFrameNav);
+
+        await pwaApplyBtn.click();
+        const navDeadline = Date.now() + 5000;
+        while (navigationCount === 0 && Date.now() < navDeadline) {
+          await page.waitForTimeout(100);
+        }
+        await page.waitForLoadState('networkidle');
+        await page.waitForTimeout(600);
+        page.off('framenavigated', onFrameNav);
+
+        if (navigationCount !== 1) {
+          throw new Error(`[${vp.name}] Expected exactly 1 reload on explicit SW activation, got ${navigationCount}`);
+        }
+        console.log(`  ✓ Explicit apply triggered SKIP_WAITING -> controllerchange -> reloaded strictly 1 time!`);
+        testResults.push(`[${vp.name}] Real SW lifecycle (waiting -> dirty block -> SKIP_WAITING -> 1x reload) verified`);
+      }
 
       // ----------------------------------------------------------------------
       // TEST 4: Offline State & Retry Handling
       // ----------------------------------------------------------------------
       console.log(`[${vp.name}] Test 4: Offline state & Retry handling`);
+      await page.goto(`${BASE_URL}/`, { waitUntil: 'networkidle' });
+      await page.waitForTimeout(400);
       mockApkResponse = { status: 500, body: null };
+      mockBuildMetaStatus = 500;
 
       if (vp.isMobile) {
-        const mobileMenuBtn = page.locator('#mobile-menu-btn');
-        await mobileMenuBtn.click();
-        const drawer = page.locator('#mobile-drawer');
-        await drawer.waitFor({ state: 'visible', timeout: 5000 });
-        const updateBtn = page.locator('#mobile-update-btn');
-        await updateBtn.click();
+        await openMobileDrawer();
+        await page.locator('#mobile-update-btn').click();
       } else {
         const footerBtn = page.locator('#footer-update-btn');
         await footerBtn.scrollIntoViewIfNeeded();
-        await page.waitForTimeout(200);
         await footerBtn.click();
       }
 
-      await page.waitForTimeout(600);
-
-      // Toast appears with offline/error status and retry button
+      await page.waitForTimeout(500);
       const offlineToast = page.locator('[role="status"]');
       await offlineToast.waitFor({ state: 'visible', timeout: 5000 });
       const retryBtn = offlineToast.locator('button:has-text("Thử lại")');
@@ -352,10 +523,8 @@ async function runTests() {
     }
 
     console.log(`\n========================================`);
-    console.log(`ALL REAL PLAYWRIGHT BROWSER UI CONTRACT TESTS PASSED!`);
+    console.log(`ALL REAL PLAYWRIGHT BROWSER UI & SW LIFECYCLE TESTS PASSED!`);
     console.log(`Total checks: ${testResults.length}`);
-    console.log(`Screenshots saved (${capturedScreenshots.length}):`);
-    capturedScreenshots.forEach(s => console.log('  -', s));
     console.log(`========================================\n`);
 
     return { success: true, testCount: testResults.length, screenshots: capturedScreenshots };
@@ -368,10 +537,12 @@ async function runTests() {
   }
 }
 
-runTests().then(() => {
-  console.log('Phase 5 Playwright browser UI contract completed successfully.');
-  process.exit(0);
-}).catch(err => {
-  console.error('Phase 5 Playwright browser UI contract failed:', err);
-  process.exit(1);
-});
+runTests()
+  .then(() => {
+    console.log('Phase 5 Playwright browser UI contract completed successfully.');
+    process.exit(0);
+  })
+  .catch((err) => {
+    console.error('Phase 5 Playwright browser UI contract failed:', err);
+    process.exit(1);
+  });

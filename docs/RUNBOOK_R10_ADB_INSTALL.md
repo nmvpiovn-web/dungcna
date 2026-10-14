@@ -7,15 +7,14 @@
 
 ---
 
-## 1. Hiện Trạng Hệ Thống & Kiểm Tra Môi Trường
+## 1. Hiện Trạng Hệ Thống & Phụ Thuộc Máy Chủ (Host Dependencies)
 
-### 1.1 Khảo sát môi trường máy chủ
-* **Phiên bản ADB:** `Android Debug Bridge version 1.0.41 (Version 37.0.1-15733141)`.
-* **Trạng thái kết nối máy chủ audit (Codex Host Audit Findings):**
-  - Lệnh `adb devices`: Danh sách thiết bị thường rỗng khi chạy trong môi trường container/cloud audit độc lập.
-  - Lệnh `adb mdns services`: Rỗng (không có dịch vụ mDNS tự động công bố).
-  - Địa chỉ IP nội bộ `192.168.1.40`: Các cổng ADB không dây tiêu chuẩn (`5555`, `37099`, `37100`) đều đóng hoặc không thể kết nối từ xa.
-  - **Kết luận:** Mọi quy trình CI/CD và PR **tuyệt đối không được tuyên bố (claim) rằng ứng dụng đã được cài đặt thành công lên máy tính bảng thực tế** trong môi trường audit tự động. Chỉ chạy chế độ `-DryRun` hoặc xác nhận môi trường thực tế khi kỹ thuật viên kết nối trực tiếp.
+### 1.1 Các công cụ bắt buộc trên máy chủ (Fail-Closed Preflight Dependencies)
+Để chạy `scripts/install_r10.ps1`, máy chủ bắt buộc phải có đầy đủ các công cụ sau trước khi bất kỳ lệnh `adb install` nào được phép thực thi:
+* **ADB (`adb.exe`):** `Android Debug Bridge version 1.0.41 (Version 37.0.1-15733141)` (từ Android Platform-Tools).
+* **Trình kiểm tra gói APK (`aapt2.exe` / `aapt.exe` / `apkanalyzer.bat`):** Thuộc gói Android SDK Build-Tools (ví dụ `build-tools/34.0.0/aapt2.exe`). Dùng để đọc trực tiếp `AndroidManifest.xml` nhị phân trong APK và đối chiếu `package_id` (`vn.edu.tienganhcodung.app`), `versionCode` (`220`), `versionName` (`2.2.0`).
+* **Trình xác thực chữ ký số (`apksigner.bat` + Java 17+):** Thuộc gói Android SDK Build-Tools (`build-tools/34.0.0/apksigner.bat`). Dùng lệnh `apksigner verify --print-certs` để trích xuất mã băm SHA-256 của chứng chỉ X.509 ký APK (`d384b7e822118b1e239b6652de8d619e3fb29f01098aee157d3c94c922b88adb`) và so khớp với manifest gốc.
+* **Mỏ neo bảo mật bất biến (`src/lib/apkIntegrityManifest.json`):** Chứa `package_id`, `version_code`, `version_name`, `bytes` (`2975961`), `sha256` (`075f297219f174c8ffa679fcee8a6ba230e9a347b883b97d2fcdbbe036f42c97`) và `signing_cert_sha256`. Tham số `-ExpectedSha256` từ người gọi **không được phép** ghi đè mỏ neo này (chỉ được phép trùng khớp).
 
 ---
 
@@ -24,36 +23,26 @@
 ### 2.1 Cú pháp lệnh tiêu chuẩn
 
 ```powershell
-# 1. Chạy thử nghiệm mô phỏng toàn bộ bước xác thực (Khuyên dùng trong CI/Audit)
+# 1. Chạy thử nghiệm mô phỏng toàn bộ bước xác thực preflight & thiết bị (Khuyên dùng trước khi cài thật)
 pwsh ./scripts/install_r10.ps1 -DryRun
 
 # 2. Cài đặt trực tiếp lên thiết bị DOOGEE R10 kết nối qua USB
 pwsh ./scripts/install_r10.ps1
 
-# 3. Cài đặt lên thiết bị cụ thể qua mã Serial hoặc IP:Port
+# 3. Cài đặt lên thiết bị cụ thể qua mã Serial
 pwsh ./scripts/install_r10.ps1 -Device "D2304029AZ00036#M101TBR200-TC67D"
-
-# 4. Chỉ định đường dẫn tệp tin APK và mã SHA-256 tùy biến
-pwsh ./scripts/install_r10.ps1 -ApkPath "./static/downloads/tienganhcodung-latest.apk" -ExpectedSha256 "075f297219f174c8ffa679fcee8a6ba230e9a347b883b97d2fcdbbe036f42c97"
 ```
 
-### 2.2 Các chốt chặn an toàn (Fail-Closed Gates)
+### 2.2 Các chốt chặn an toàn (Fail-Closed Preflight & Postflight Gates)
 
-Script được thiết kế với cơ chế tự vệ fail-closed nghiêm ngặt:
-1. **Kiểm tra công cụ ADB:** Tự động tìm kiếm `adb` trong biến môi trường `$env:PATH` và thư mục chuẩn của Windows Winget Platform-Tools (`$env:LOCALAPPDATA\Microsoft\WinGet\Packages\Google.PlatformTools_...`). Nếu không tìm thấy, dừng lại ngay và trả mã lỗi `1`.
-2. **Kiểm tra trạng thái thiết bị ủy quyền:**
-   - Chỉ chấp nhận thiết bị có trạng thái `device`. Bỏ qua các thiết bị `unauthorized` (chưa bấm đồng ý RSA key) hoặc `offline`.
-   - Nếu không tìm thấy thiết bị nào: Xuất hướng dẫn hành động kết nối (xem mục 3) và thoát với mã lỗi `1`.
-   - Nếu có nhiều hơn 1 thiết bị kết nối: Yêu cầu người dùng truyền tham số `-Device <Serial>` cụ thể để tránh cài nhầm thiết bị khác.
-3. **Xác thực nhà sản xuất & dòng máy (Model Validation):**
-   - Đọc thuộc tính `ro.product.manufacturer` (phải là `DOOGEE`) và `ro.product.model` (phải là `R10`).
-   - Nếu phát hiện thiết bị khác (ví dụ điện thoại Samsung, Xiaomi,...): Dừng ngay lập tức với cảnh báo nguy hiểm. Chỉ cho phép vượt qua khi người dùng truyền tường minh cờ `-AllowModelOverride`.
-4. **Xác thực toàn vẹn mã băm SHA-256:**
-   - Tính toán mã băm SHA-256 của tệp APK bằng lệnh `Get-FileHash`.
-   - Bắt buộc phải khớp chính xác 100% với mã băm kỳ vọng (`075f297219f174c8ffa679fcee8a6ba230e9a347b883b97d2fcdbbe036f42c97`). Nếu tệp bị hỏng, bị sửa đổi hoặc tải thiếu, script lập tức hủy thao tác.
-5. **Cài đặt không phá hủy dữ liệu (No-Destruction Installation):**
-   - Sử dụng lệnh `adb -s <Device> install -r <ApkPath>` (cờ `-r` cho phép cài đè bản cập nhật).
-   - **Tuyệt đối không** gọi `adb uninstall` và **không** gọi `pm clear`, đảm bảo toàn bộ tiến trình học tập, tài khoản đã đăng nhập và dữ liệu IndexedDB của học sinh được giữ nguyên vẹn.
+Script thực thi tuần tự các cổng kiểm tra nghiêm ngặt **trước khi** chạm tới thiết bị:
+1. **Đối chiếu mỏ neo `src/lib/apkIntegrityManifest.json` & kích thước/SHA-256 tệp APK:** Kiểm tra đúng `2975961` bytes và mã băm SHA-256 `075f297219f174c8ffa679fcee8a6ba230e9a347b883b97d2fcdbbe036f42c97`. Từ chối ngay nếu caller truyền `-ExpectedSha256` khác với manifest.
+2. **Kiểm tra công cụ & Preflight Package (`aapt2 dump badging`):** Bắt buộc xác minh `package: name='vn.edu.tienganhcodung.app' versionCode='220' versionName='2.2.0'`. Nếu thiếu công cụ hoặc sai package/version, dừng ngay lập tức (không gọi `adb install`).
+3. **Preflight Chữ ký số (`apksigner verify --print-certs`):** Bắt buộc xác minh `Signer #1 certificate SHA-256 digest` khớp với `d384b7e822118b1e239b6652de8d619e3fb29f01098aee157d3c94c922b88adb`. Nếu sai người ký hoặc chữ ký hỏng, dừng ngay lập tức.
+4. **Kiểm tra trạng thái thiết bị ADB & Dòng máy (`DOOGEE R10`):** Chỉ chấp nhận thiết bị ở trạng thái `device` và có `ro.product.manufacturer = DOOGEE`, `ro.product.model = R10` (trừ khi truyền `-AllowModelOverride`).
+5. **Cài đặt không phá hủy dữ liệu & Postflight Verification:**
+   - Thực thi `adb -s <Device> install -r <ApkPath>` (không bao giờ gọi `uninstall` hay `pm clear`).
+   - Sau khi cài xong, chạy hậu kiểm (postflight) bằng `adb shell pm path vn.edu.tienganhcodung.app` và `adb shell dumpsys package vn.edu.tienganhcodung.app` để xác nhận gói đã hiện diện với đúng `versionName=2.2.0` và `versionCode=220`.
 
 ---
 

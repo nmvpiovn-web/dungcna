@@ -1,0 +1,20 @@
+{
+  "app_name": "Tiếng Anh Cô Dung",
+  "filename": "tienganhcodung-latest.apk",
+  "download_url": "/downloads/tienganhcodung-latest.apk",
+  "bytes": 2975961,
+  "file_size_bytes": 2975961,
+  "file_size_mb": 2.8,
+  "sha256": "075f297219f174c8ffa679fcee8a6ba230e9a347b883b97d2fcdbbe036f42c97",
+  "package_id": "vn.edu.tienganhcodung.app",
+  "version": "2.2.0",
+  "version_name": "2.2.0",
+  "version_code": 220,
+  "min_sdk": 24,
+  "min_os_version": "Android 8.0 (API 26)",
+  "target_sdk": 34,
+  "compile_sdk": 34,
+  "signing_cert_sha256": "d384b7e822118b1e239b6652de8d619e3fb29f01098aee157d3c94c922b88adb",
+  "signing_cert_subject": "C=US, O=Android, CN=Android Debug",
+  "release_date": "2026-09-25T15:30:00Z"
+}

@@ -1,5 +1,5 @@
 <script>
- import { onMount } from 'svelte';
+ import { onMount, onDestroy } from 'svelte';
  import {
  getCurrentUser,
  verifySessionWithServer,
@@ -13,6 +13,7 @@
  getAllUsers,
  getAllTeacherProfiles
  } from '$lib/unifiedStore';
+ import { registerBusyState, unregisterBusyState } from '$lib/stores/appUpdate.js';
  import SessionRollCallModal from '$lib/components/SessionRollCallModal.svelte';
  import SessionEditModal from '$lib/components/SessionEditModal.svelte';
  import TeacherStaffModal from '$lib/components/TeacherStaffModal.svelte';
@@ -33,6 +34,25 @@
  let showAdvanceModal = $state(false);
  let selectedSession = $state(null);
  let selectedTeacherId = $state(null);
+
+ let isScheduleBusy = $derived(
+   Boolean(showRollCallModal || showEditModal || showStaffModal || showLeaveModal || showAdvanceModal)
+ );
+
+ $effect(() => {
+   if (isScheduleBusy) {
+     registerBusyState('schedule-modal-open');
+   } else {
+     unregisterBusyState('schedule-modal-open');
+   }
+   return () => {
+     unregisterBusyState('schedule-modal-open');
+   };
+ });
+
+ onDestroy(() => {
+   unregisterBusyState('schedule-modal-open');
+ });
 
  // Teacher Workflows
  let mySubstituteRequests = $state([]);

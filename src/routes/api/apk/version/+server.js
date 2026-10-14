@@ -1,70 +1,53 @@
 import { json } from '@sveltejs/kit';
+import apkManifest from '../../../../lib/apkIntegrityManifest.json' with { type: 'json' };
 
-async function getApkIntegrity(url, downloadPath) {
-  // Compute real sha256 + size from served static asset or static disk fallback.
-  try {
-    const res = await fetch(new URL(downloadPath, url));
-    if (res.ok) {
-      const buf = await res.arrayBuffer();
-      const digest = await crypto.subtle.digest('SHA-256', buf);
-      const sha256 = [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('');
-      return {
-        sha256,
-        file_size_bytes: buf.byteLength,
-        file_size_mb: Math.round((buf.byteLength / 1048576) * 10) / 10
-      };
-    }
-  } catch {}
+const MANIFEST_ETAG = `"apk-${apkManifest.version_code}-${apkManifest.sha256.slice(0, 16)}"`;
 
-  // Local static file fallback
-  try {
-    const fs = await import('fs');
-    const path = await import('path');
-    const localPath = path.resolve('static', downloadPath.replace(/^\//, ''));
-    if (fs.existsSync(localPath)) {
-      const buf = fs.readFileSync(localPath);
-      const digest = await crypto.subtle.digest('SHA-256', buf);
-      const sha256 = [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('');
-      return {
-        sha256,
-        file_size_bytes: buf.byteLength,
-        file_size_mb: Math.round((buf.byteLength / 1048576) * 10) / 10
-      };
-    }
-  } catch {}
+const VERSION_PAYLOAD = Object.freeze({
+  app_name: apkManifest.app_name || 'Tiếng Anh Cô Dung',
+  filename: apkManifest.filename || 'tienganhcodung-latest.apk',
+  package_id: apkManifest.package_id || 'vn.edu.tienganhcodung.app',
+  version: apkManifest.version || apkManifest.version_name || '2.2.0',
+  version_name: apkManifest.version_name || '2.2.0',
+  version_code: apkManifest.version_code || 220,
+  release_date: apkManifest.release_date || '2026-09-25T15:30:00Z',
+  min_sdk: apkManifest.min_sdk || 24,
+  min_os_version: apkManifest.min_os_version || 'Android 8.0 (API 26)',
+  target_sdk: apkManifest.target_sdk || 34,
+  download_url: apkManifest.download_url || '/downloads/tienganhcodung-latest.apk',
+  bytes: apkManifest.bytes,
+  file_size_bytes: apkManifest.file_size_bytes,
+  file_size_mb: apkManifest.file_size_mb,
+  sha256: apkManifest.sha256,
+  signing_cert_sha256: apkManifest.signing_cert_sha256,
+  signing_cert_subject: apkManifest.signing_cert_subject,
+  wifi_only: true,
+  force_update: false,
+  changelog: [
+    '⚡ Đồng bộ toàn diện PWA & APK với cơ chế tự động cập nhật qua mạng nội bộ / Internet (HTTP OTA)',
+    '🎮 Bổ sung 4 trò chơi tiếng Anh mới: Xây dựng câu (Sentence Builder), Bậc thầy thì (Grammar Tense Master), Lật thẻ trí nhớ 3D (Memory Flip) và Đấu thẻ bài Flashcards',
+    '👨‍🏫 Tích hợp Cổng Kiểm Soát Trò Chơi (Teacher Gatekeeper): Mặc định khóa với học sinh, chỉ mở khi Giáo viên/Cô Dung bật công tắc',
+    '📚 Phân tầng hiển thị khóa học chính khóa (Lớp 7 cho Bảo Khiêm), khóa 18 lớp còn lại chống xao nhãng',
+    '⭐ Tối ưu hóa hệ thống tích lũy sao thưởng và khấu trừ học phí'
+  ]
+});
 
-  return { sha256: null, file_size_bytes: null, file_size_mb: null };
-}
+export async function GET({ request } = {}) {
+  const ifNoneMatch = request?.headers?.get?.('if-none-match');
+  if (ifNoneMatch && ifNoneMatch.trim() === MANIFEST_ETAG) {
+    return new Response(null, {
+      status: 304,
+      headers: {
+        ETag: MANIFEST_ETAG,
+        'Cache-Control': 'public, max-age=60, must-revalidate'
+      }
+    });
+  }
 
-export async function GET({ url }) {
-  const downloadUrl = '/downloads/tienganhcodung-latest.apk';
-  const { sha256, file_size_bytes, file_size_mb } = await getApkIntegrity(url, downloadUrl);
-  const versionInfo = {
-    app_name: 'Tiếng Anh Cô Dung',
-    package_id: 'vn.edu.tienganhcodung.app',
-    version_name: '2.2.0',
-    version_code: 220,
-    release_date: '2026-09-25T15:30:00Z',
-    min_os_version: 'Android 8.0 (API 26)',
-    target_sdk: 34,
-    download_url: downloadUrl,
-    file_size_bytes: file_size_bytes,
-    file_size_mb: file_size_mb,
-    sha256: sha256,
-    wifi_only: true,
-    force_update: false,
-    changelog: [
-      '⚡ Đồng bộ toàn diện PWA & APK với cơ chế tự động cập nhật qua mạng nội bộ / Internet (HTTP OTA)',
-      '🎮 Bổ sung 4 trò chơi tiếng Anh mới: Xây dựng câu (Sentence Builder), Bậc thầy thì (Grammar Tense Master), Lật thẻ trí nhớ 3D (Memory Flip) và Đấu thẻ bài Flashcards',
-      '👨‍🏫 Tích hợp Cổng Kiểm Soát Trò Chơi (Teacher Gatekeeper): Mặc định khóa với học sinh, chỉ mở khi Giáo viên/Cô Dung bật công tắc',
-      '📚 Phân tầng hiển thị khóa học chính khóa (Lớp 7 cho Bảo Khiêm), khóa 18 lớp còn lại chống xao nhãng',
-      '⭐ Tối ưu hóa hệ thống tích lũy sao thưởng và khấu trừ học phí'
-    ]
-  };
-
-  return json(versionInfo, {
+  return json(VERSION_PAYLOAD, {
     headers: {
-      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      ETag: MANIFEST_ETAG,
+      'Cache-Control': 'public, max-age=60, must-revalidate',
       'Content-Type': 'application/json'
     }
   });
