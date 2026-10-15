@@ -187,16 +187,21 @@
  { key: 'pedagogy', label: 'Sư Phạm & Giáo Án 5512', sub: 'Phương Pháp Bản Ngữ & Co-Teaching', icon: '👨‍🏫' }
  ];
 
- let filteredCurricula = $derived(
- data.curricula.filter(c => activeCurriculumTab === 'all' || c.category === activeCurriculumTab)
- );
-
  let targetStudentUser = $derived(
  currentUser?.role === 'parent' ? (linkedChild || getLinkedStudentForParent(currentUser)) : (currentUser?.role === 'student' ? currentUser : null)
  );
 
  let enrolledGrades = $derived(
  targetStudentUser ? getUserEnrolledGrades(targetStudentUser) : (currentUser?.role === 'student' ? getUserEnrolledGrades(currentUser) : [])
+ );
+
+ let filteredCurricula = $derived(
+ data.curricula.filter(c => {
+ if (currentUser?.role === 'student' && enrolledGrades.length > 0) {
+ return isCurriculumEnrolled(currentUser, c);
+ }
+ return activeCurriculumTab === 'all' || c.category === activeCurriculumTab;
+ })
  );
 
  let studentEnrolledCurricula = $derived.by(() => {
@@ -207,7 +212,7 @@
 
  let studentLockedCurricula = $derived.by(() => {
  const student = targetStudentUser || (currentUser?.role === 'student' ? currentUser : null);
- if (!student) return [];
+ if (!student || student.role === 'student') return [];
  return data.curricula.filter(c => !isCurriculumEnrolled(student, c));
  });
 
@@ -245,11 +250,19 @@
  );
 
  // ===== Phase 1 content (Academic Warmth) =====
- const heroIntents = [
+ let heroIntents = $derived(
+ currentUser
+ ? [
+ { key: 'student', emoji: '🎒', title: `Lớp học ${userGrade || 'của em'}`, desc: 'Làm đề kiểm tra đúng khối lớp đã đăng ký, chơi game học từ vựng và tích Sao.', cta: '📝 Vào phòng thi của em', href: '/exam' },
+ { key: 'schedule', emoji: '📅', title: 'Thời khóa biểu lớp em', desc: 'Xem lịch học trực tiếp tại nhà Cô Dung và trạng thái điểm danh.', cta: '📅 Xem lịch học', href: '/schedule' },
+ { key: 'tools', emoji: '🔤', title: 'Kho từ vựng & Công cụ', desc: 'Flashcards SRS và tra cứu ngữ pháp theo chương trình.', cta: '🚀 Học từ vựng', href: '/tools' }
+ ]
+ : [
  { key: 'student', emoji: '🎒', title: 'Em là học sinh', desc: 'Chơi game học từ vựng, luyện đề, tích sao đổi học phí.', cta: '🎮 Chơi & học ngay', href: '/games' },
  { key: 'parent', emoji: '👨‍👩‍👧', title: 'Tôi là phụ huynh', desc: 'Test xếp lớp miễn phí cho con, nhận báo cáo tiến bộ qua Zalo.', cta: '📝 Test xếp lớp 3 phút', href: '/exam#placement' },
  { key: 'teacher', emoji: '👩‍🏫', title: 'Tôi là giáo viên', desc: 'Quản lý lớp, chấm bài, gửi báo cáo phụ huynh.', cta: '🛠️ Mở bảng điều khiển', href: '/cpanel' }
- ];
+ ]
+ );
 
  const proofStats = [
  { value: data.stats?.totalQuestions ?? 1375, suffix: '', label: 'Câu hỏi ngân hàng đề', icon: '📝' },
@@ -401,7 +414,9 @@
  <SectionHeading eyebrow="Lộ trình rõ ràng" title="5 bước từ nền tảng đến chứng chỉ quốc tế" />
  <RoadmapPath nodes={roadmapNodes} />
  <div class="mt-3 flex flex-wrap gap-2 sm:gap-3">
+ {#if !currentUser}
  <UiButton href="/exam#placement" size="sm">📝 Test xem con đang ở đâu</UiButton>
+ {/if}
  <UiButton href="/courses" variant="ghost" size="sm">Xem chương trình →</UiButton>
  </div>
  </section>
@@ -432,7 +447,9 @@
  </div>
  </div>
  <div class="mt-4 flex flex-wrap gap-2 sm:gap-3">
+ {#if !currentUser}
  <UiButton href="/exam#placement" size="sm">📝 Test thử miễn phí</UiButton>
+ {/if}
  <UiButton href="/courses" variant="ghost" size="sm">Xem chương trình →</UiButton>
  </div>
  </section>
@@ -462,7 +479,12 @@
 
  <!-- ===== 7. Curriculum explorer (giữ logic enrollment/unlock) ===== -->
  <section id="curriculum-section" class="scroll-mt-24">
- <SectionHeading eyebrow="Chương trình học" title="Lộ trình K12 & chứng chỉ quốc tế" sub="Chọn đúng cấp học của con — tài khoản đã đăng ký lớp sẽ thấy nút vào học." />
+ <SectionHeading
+  eyebrow="Chương trình học"
+  title={currentUser?.role === 'student' && enrolledGrades.length > 0 ? `Chương trình học ${userGrade || 'của em'}` : 'Lộ trình K12 & chứng chỉ quốc tế'}
+  sub={currentUser?.role === 'student' && enrolledGrades.length > 0 ? 'Hiển thị chương trình thuộc đúng khối lớp em đã đăng ký.' : 'Chọn đúng cấp học của con — tài khoản đã đăng ký lớp sẽ thấy nút vào học.'}
+ />
+ {#if !(currentUser?.role === 'student' && enrolledGrades.length > 0)}
  <div class="flex flex-wrap gap-2 mb-5">
  {#each categoryLabels as cat}
  <button
@@ -474,6 +496,7 @@
  </button>
  {/each}
  </div>
+ {/if}
 
  {#if unlockNotice}
  <div class="mb-4 p-3 rounded-2xl bg-success-600/10 border border-success-600/30 text-sm font-bold text-ink-900">{unlockNotice}</div>

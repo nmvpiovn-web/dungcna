@@ -647,6 +647,7 @@
   }
 
   function blankQuestion(type = 'multiple_choice') {
+    const isMatch = type === 'matching' || type === 'memory_match';
     return {
       id: `draft_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
       type, prompt: '', prompt_image_url: '', points: 1,
@@ -654,12 +655,12 @@
         : type === 'true_false' ? ['Đúng', 'Sai']
         : type === 'ordering' ? ['Từ 1', 'Từ 2', 'Từ 3']
         : [],
-      left: type === 'matching' ? ['Từ 1', 'Từ 2'] : [],
-      right: type === 'matching' ? ['Nghĩa 1', 'Nghĩa 2'] : [],
-      correct_answer: type === 'matching' ? {}
+      left: isMatch ? ['Từ 1', 'Từ 2'] : [],
+      right: isMatch ? ['Nghĩa 1', 'Nghĩa 2'] : [],
+      correct_answer: isMatch ? { 'Từ 1': 'Nghĩa 1', 'Từ 2': 'Nghĩa 2' }
+        : type === 'multiple_choice' ? 'Lựa chọn A'
         : type === 'true_false' ? 'Đúng'
         : type === 'ordering' ? ['Từ 1', 'Từ 2', 'Từ 3']
-        : type === 'memory_match' ? {}
         : '',
       explanation: ''
     };
@@ -688,8 +689,12 @@
   }
 
   function updateOption(question, index, value) {
+    const prev = question.options[index];
     question.options[index] = value;
     question.options = [...question.options];
+    if (question.type === 'multiple_choice' && (question.correct_answer === prev || !question.correct_answer)) {
+      question.correct_answer = value;
+    }
     draft.questions = [...draft.questions];
   }
 
@@ -703,13 +708,16 @@
     if (question.options.length <= 2) return;
     const removed = question.options[index];
     question.options = question.options.filter((_, i) => i !== index);
-    if (question.correct_answer === removed) question.correct_answer = '';
+    if (question.correct_answer === removed || !question.options.includes(question.correct_answer)) {
+      question.correct_answer = question.options[0] || '';
+    }
     draft.questions = [...draft.questions];
   }
 
   function addPair(question) {
     question.left = [...question.left, `Từ ${question.left.length + 1}`];
     question.right = [...question.right, `Nghĩa ${question.right.length + 1}`];
+    question.correct_answer = Object.fromEntries(question.left.map((left, i) => [left, question.right[i] || '']));
     draft.questions = [...draft.questions];
   }
 
@@ -720,18 +728,42 @@
     draft.questions = [...draft.questions];
   }
 
+  function resolveMcqCorrectAnswer(optionsList, rawCorrect) {
+    const opts = Array.isArray(optionsList) ? optionsList.map((o) => String(o ?? '').trim()).filter(Boolean) : [];
+    const safeOpts = opts.length >= 2 ? opts : ['Lựa chọn A', 'Lựa chọn B'];
+    const raw = String(rawCorrect ?? '').trim();
+    if (!raw) return safeOpts[0];
+    if (safeOpts.includes(raw)) return raw;
+    if (/^[A-Ha-h]$/.test(raw)) {
+      const upper = raw.toUpperCase();
+      const byPrefix = safeOpts.find((o) => o.toUpperCase().startsWith(`${upper}.`) || o.toUpperCase().startsWith(`${upper})`));
+      if (byPrefix) return byPrefix;
+      const idx = upper.charCodeAt(0) - 65;
+      if (safeOpts[idx]) return safeOpts[idx];
+    }
+    return safeOpts[0];
+  }
+
   function payloadQuestions() {
     return draft.questions.map((q, index) => {
       let optionsJson = q.options;
       let correctAnswer = q.correct_answer;
-      if (q.type === 'matching') {
+      if (q.type === 'multiple_choice') {
+        const cleanOpts = Array.isArray(optionsJson) ? optionsJson.map((o) => String(o ?? '').trim()).filter(Boolean) : [];
+        optionsJson = cleanOpts.length >= 2 ? cleanOpts : ['Lựa chọn A', 'Lựa chọn B'];
+        correctAnswer = resolveMcqCorrectAnswer(optionsJson, correctAnswer);
+      } else if (q.type === 'true_false') {
+        if (!correctAnswer || !String(correctAnswer).trim()) {
+          correctAnswer = 'Đúng';
+        }
+      } else if (q.type === 'matching') {
         optionsJson = { left: q.left, right: q.right };
-        if (typeof correctAnswer !== 'object' || Array.isArray(correctAnswer)) {
+        if (!correctAnswer || typeof correctAnswer !== 'object' || Array.isArray(correctAnswer) || Object.keys(correctAnswer).length === 0) {
           correctAnswer = Object.fromEntries(q.left.map((left, i) => [left, q.right[i] || '']));
         }
       } else if (q.type === 'memory_match') {
         optionsJson = q.pairs && q.pairs.length ? { pairs: q.pairs } : { left: q.left, right: q.right };
-        if (typeof correctAnswer !== 'object' || Array.isArray(correctAnswer)) {
+        if (!correctAnswer || typeof correctAnswer !== 'object' || Array.isArray(correctAnswer) || Object.keys(correctAnswer).length === 0) {
           if (q.pairs && q.pairs.length) {
             correctAnswer = Object.fromEntries(q.pairs.map((p) => [p.a, p.b]));
           } else {
@@ -771,6 +803,9 @@
     let correctAnswer = question.correct_answer;
     if (typeof correctAnswer === 'string' && (question.type === 'matching' || question.type === 'memory_match' || question.type === 'ordering')) {
       try { correctAnswer = JSON.parse(correctAnswer); } catch {}
+    }
+    if (question.type === 'multiple_choice' && items.length > 0) {
+      correctAnswer = resolveMcqCorrectAnswer(items, correctAnswer);
     }
     return {
       id: question.id,
@@ -997,7 +1032,13 @@
           merge_strategy: 'replace'
         })
       });
-      if (!bundle) bundle = (await api(`/api/quiz-menu/${id}/sync-bundle`, { method: 'POST', body: JSON.stringify({ direction: 'publish_quiz_to_docs' }) })).bundle;
+      if (!bundle) {
+        try {
+          bundle = (await api(`/api/quiz-menu/${id}/sync-bundle`, { method: 'POST', body: JSON.stringify({ direction: 'publish_quiz_to_docs' }) })).bundle;
+        } catch (bundleErr) {
+          console.warn('[quiz-menu] Drive bundle sync skipped:', bundleErr?.message || bundleErr);
+        }
+      }
       message = publish ? 'Đã xuất bản quiz.' : 'Đã lưu bản nháp.';
       draft = { id: null, title: '', description: '', time_limit_minutes: 20, questions: [] };
       bundle = null; sourceFile = null; selectedDriveFileId = ''; driveUrl = '';
@@ -1007,7 +1048,7 @@
       await loadQuizzes();
       activeTab = 'mine';
     } catch (err) {
-      error = err.message;
+      error = friendlyError(err.message);
     }
   }
 

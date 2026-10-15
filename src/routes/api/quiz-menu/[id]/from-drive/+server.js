@@ -104,7 +104,14 @@ export async function POST({ params, request, platform }) {
       sourceType: 'drive',
       sourceId: driveSourceId
     });
-    const bundle = questions.length ? await publishQuizBundle(platform, db, params.id) : null;
+    let bundle = null;
+    if (questions.length) {
+      try {
+        bundle = await publishQuizBundle(platform, db, params.id);
+      } catch (e) {
+        console.warn('[quiz-from-drive] Bundle creation skipped:', e.message);
+      }
+    }
     return json({
       success: true,
       source: metadata,

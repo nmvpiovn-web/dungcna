@@ -8,6 +8,7 @@
  getAllClassSessions,
  deleteClassSession,
  getSessionsForUser,
+ getUserEnrolledGrades,
  triggerScheduleNotification,
  getAllAttendanceRecords,
  getAllUsers,
@@ -225,7 +226,17 @@
  let filteredSessions = $derived.by(() => {
  let list = sessions;
 
- if (activeTabFilter === 'my_schedule' && currentUser) {
+ if (currentUser && String(currentUser.role || '').toLowerCase() === 'student') {
+ const uid = currentUser.id;
+ const enrolledGrades = getUserEnrolledGrades(currentUser);
+ list = list.filter(s =>
+ (Array.isArray(s.student_ids) && s.student_ids.includes(uid)) ||
+ (enrolledGrades.length > 0 && enrolledGrades.some(g =>
+ s.grade_level === g ||
+ String(s.class_name || '').toLowerCase().includes(String(g).toLowerCase())
+ ))
+ );
+ } else if (activeTabFilter === 'my_schedule' && currentUser) {
  // Bước 3: "Lịch của tôi" lọc trên mảng sessions đã scope từ API (server đã lọc theo role).
  // Không dùng getSessionsForUser vì nó trả về mọi ca khi phụ huynh chưa liên kết con.
  const uid = currentUser.id;
@@ -268,7 +279,8 @@
  // Distinct classes / teachers for the filter dropdowns
  let classOptions = $derived.by(() => {
  const map = new Map();
- for (const s of sessions) {
+ const source = currentUser?.role === 'student' ? filteredSessions : sessions;
+ for (const s of source) {
  const id = s.class_id || s.class_name;
  if (!id) continue;
  if (!map.has(id)) map.set(id, { id, label: s.class_name || s.class_id });
@@ -597,6 +609,14 @@
  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
  <!-- Tabs by Audience / Grade -->
  <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs font-bold">
+ {#if currentUser?.role === 'student'}
+ <button
+ onclick={() => activeTabFilter = 'my_schedule'}
+ class="px-3.5 py-1.5 rounded-md transition-all whitespace-nowrap bg-indigo-600 text-white shadow-sm"
+ >
+ 👤 Lịch Học Của Tôi ({currentUser.grade || 'Đã Đăng Ký'})
+ </button>
+ {:else}
  <button
  onclick={() => activeTabFilter = 'all'}
  class="px-3.5 py-1.5 rounded-md transition-all whitespace-nowrap {activeTabFilter === 'all' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:text-white'}"
@@ -629,6 +649,7 @@
  >
  🎓 THPT &amp; IELTS (Lớp 10 - 12)
  </button>
+ {/if}
  </div>
 
  <!-- Day Filter Pills -->

@@ -1,5 +1,6 @@
 import { json } from '@sveltejs/kit';
 import {
+  getExams,
   getAllExamAttempts,
   saveExamAttempt
 } from '../../../lib/unifiedStore.js';
@@ -53,12 +54,22 @@ async function loadQuestionsFromD1(db) {
 }
 
 async function getExamsD1(db) {
+  let d1List = [];
   if (db) {
-    try { return await loadExamsFromD1(db); } catch (e) {
+    try { d1List = await loadExamsFromD1(db); } catch (e) {
       console.error('[exams] D1 loadExams error:', e.message);
     }
   }
-  return [];
+  const fallbackList = getExams() || [];
+  const seenIds = new Set(d1List.map(e => e.id));
+  const merged = [...d1List];
+  for (const ex of fallbackList) {
+    if (ex && ex.id && !seenIds.has(ex.id)) {
+      seenIds.add(ex.id);
+      merged.push(ex);
+    }
+  }
+  return merged;
 }
 
 async function getQuestionsD1(db) {

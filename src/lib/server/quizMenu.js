@@ -94,11 +94,14 @@ export function validateQuestion(input, index = 0) {
     }
     if (!options.items) options = { items };
   } else if (type === 'memory_match') {
-    const pairs = Array.isArray(options?.pairs) ? options.pairs : (Array.isArray(options) ? options : null);
+    let pairs = Array.isArray(options?.pairs) ? options.pairs : (Array.isArray(options) ? options : null);
+    if (!pairs && Array.isArray(options?.left) && Array.isArray(options?.right)) {
+      pairs = options.left.map((a, i) => ({ a: String(a ?? ''), b: String(options.right[i] ?? '') })).filter((p) => p.a || p.b);
+    }
     if (!pairs || pairs.length < 1) {
       return { error: `Câu ghép trí nhớ cần ít nhất 1 cặp thẻ tại vị trí ${index + 1}` };
     }
-    if (!options.pairs) options = { pairs };
+    if (!options?.pairs) options = { pairs };
   }
 
   return {

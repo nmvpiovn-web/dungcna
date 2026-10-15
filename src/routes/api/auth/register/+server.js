@@ -148,6 +148,7 @@ export async function POST({ request, platform }) {
       approval_status: 'trial',
       metadata: JSON.stringify({
         grade: (grade && typeof grade === 'string' && grade.trim()) ? grade.trim() : null,
+        enrolled_grades: gradeSelections.length ? gradeSelections : (typeof grade === 'string' && grade.trim() ? [grade.trim()] : []),
         selected_grades: gradeSelections.length ? gradeSelections : (typeof grade === 'string' && grade.trim() ? [grade.trim()] : []),
         target: target || 'Chương trình GDPT 2026',
         phone: phone || null,

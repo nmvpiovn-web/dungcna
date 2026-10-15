@@ -493,12 +493,15 @@ export function getUserEnrolledGrades(user) {
     list.push(String(rawBase));
   }
 
-  if (Array.isArray(meta.enrolled_grades)) {
-    for (const g of meta.enrolled_grades) {
-      if (g !== undefined && g !== null && g !== '') {
-        const str = String(g);
-        if (!list.includes(str)) {
-          list.push(str);
+  const metaArrays = [meta.enrolled_grades, meta.selected_grades];
+  for (const arr of metaArrays) {
+    if (Array.isArray(arr)) {
+      for (const g of arr) {
+        if (g !== undefined && g !== null && g !== '') {
+          const str = String(g);
+          if (!list.includes(str)) {
+            list.push(str);
+          }
         }
       }
     }

@@ -770,13 +770,15 @@
  {/if}
  </button>
 
- <!-- CTA Hoc thu mien phi — luon visible (sticky header) -->
+ <!-- CTA Hoc thu mien phi — chi danh cho Guest -->
+ {#if !currentUser}
  <a
  href="/exam#placement"
  class="hidden 2xl:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-accent-500 hover:brightness-105 text-white text-xs font-extrabold shadow-sm transition-all"
  >
  🎁 Học thử miễn phí
  </a>
+ {/if}
 
  <!-- Universal Notification Bell (Cho mọi Role: Parent, Student, Teacher, Leader) -->
  {#if currentUser}
@@ -1252,7 +1254,7 @@
  </div>
  <div class="flex items-center gap-2 flex-shrink-0">
  <a
- href="https://zalo.me/0901234567"
+ href="https://zalo.me/0905960437"
  target="_blank"
  rel="noopener noreferrer"
  class="px-3.5 py-1.5 rounded-md bg-amber-700 hover:bg-amber-600 text-white font-semibold text-xs shadow-xs transition-all flex items-center gap-1.5"

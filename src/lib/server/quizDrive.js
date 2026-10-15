@@ -1228,6 +1228,12 @@ export async function inspectBundleHealth(platform, db, quizId) {
   if (!bundle.google_doc_file_id) {
     drive_healthy = false;
     drive_error = 'Google Doc file ID is missing';
+  } else if (String(bundle.google_doc_file_id).startsWith('local_doc_')) {
+    docMeta = {
+      id: bundle.google_doc_file_id,
+      modifiedTime: bundle.google_doc_modified_time || bundle.last_synced_at || null,
+      trashed: false
+    };
   } else {
     try {
       docMeta = await getDriveFileMetadata(platform, bundle.google_doc_file_id);
@@ -1283,14 +1289,18 @@ export async function inspectBundleHealth(platform, db, quizId) {
       ...safeBundle,
       canonical_source: 'docx',
       homework_draft: (() => { try { return JSON.parse(bundle.homework_draft_json || '{}'); } catch { return {}; } })(),
-      google_doc_url: bundle.google_doc_file_id ? `https://docs.google.com/document/d/${bundle.google_doc_file_id}/edit` : null,
+      google_doc_url: bundle.google_doc_file_id && !String(bundle.google_doc_file_id).startsWith('local_doc_')
+        ? `https://docs.google.com/document/d/${bundle.google_doc_file_id}/edit`
+        : null,
       quiz_url: `/quiz-menu?quiz=${encodeURIComponent(quizId)}`
     }
   };
 }
 
 export async function inspectBundleConflict(platform, bundle) {
-  if (!bundle?.google_doc_file_id || !bundle.google_doc_modified_time) return { conflict: false, metadata: null };
+  if (!bundle?.google_doc_file_id || !bundle.google_doc_modified_time || String(bundle.google_doc_file_id).startsWith('local_doc_')) {
+    return { conflict: false, metadata: null };
+  }
   try {
     const metadata = await getDriveFileMetadata(platform, bundle.google_doc_file_id);
     return { conflict: Boolean(metadata.modifiedTime && metadata.modifiedTime !== bundle.google_doc_modified_time), metadata };
@@ -1397,44 +1407,66 @@ export async function publishQuizBundle(platform, db, quizId, { expectedRevision
   const revision = Number(previous?.revision || 0) + 1;
 
   try {
-    if (lockToken) await renewBundleLock(db, quizId, lockToken);
-    const folder = await ensureQuizUploadsFolder(platform);
-    if (lockToken) await renewBundleLock(db, quizId, lockToken);
-    const documentText = renderTeacherDocument(quiz, questions);
-    if (previous?.google_doc_file_id) {
-      googleDoc = await updateGoogleDoc(platform, previous.google_doc_file_id, documentText);
-      docUpdated = true;
-    } else {
-      googleDoc = await createGoogleDoc(platform, folder.id, `${safeDocTitle(quiz.title)} - Bản giáo viên`, documentText);
-      newDocId = googleDoc?.id;
+    let modified = null;
+    try {
+      if (lockToken) await renewBundleLock(db, quizId, lockToken);
+      const folder = await ensureQuizUploadsFolder(platform);
+      if (lockToken) await renewBundleLock(db, quizId, lockToken);
+      const documentText = renderTeacherDocument(quiz, questions);
+      if (previous?.google_doc_file_id && !String(previous.google_doc_file_id).startsWith('local_doc_')) {
+        googleDoc = await updateGoogleDoc(platform, previous.google_doc_file_id, documentText);
+        docUpdated = true;
+      } else {
+        googleDoc = await createGoogleDoc(platform, folder.id, `${safeDocTitle(quiz.title)} - Bản giáo viên`, documentText);
+        newDocId = googleDoc?.id;
+      }
+
+      if (!googleDoc?.id || typeof googleDoc.id !== 'string' || !googleDoc.id.trim()) {
+        throw new QuizDriveError('Google Drive phản hồi không hợp lệ khi tạo/cập nhật tài liệu', 502, 'DriveInvalidResponse');
+      }
+
+      if (lockToken) await renewBundleLock(db, quizId, lockToken);
+
+      const docxMime = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+      const docxBytes = await exportGoogleDocBytes(platform, googleDoc.id, docxMime);
+
+      if (lockToken) await renewBundleLock(db, quizId, lockToken);
+
+      printable = await uploadBytes(platform, {
+        name: `${safeDocTitle(quiz.title)} - Bản in giáo viên.docx`, mimeType: docxMime,
+        bytes: docxBytes, folderId: folder.id
+      });
+      newPrintableFileId = printable?.id;
+
+      if (!printable?.id || typeof printable.id !== 'string' || !printable.id.trim()) {
+        throw new QuizDriveError('Google Drive phản hồi không hợp lệ khi upload bản in DOCX', 502, 'DriveInvalidResponse');
+      }
+
+      if (lockToken) await renewBundleLock(db, quizId, lockToken);
+
+      const docMeta = await getDriveFileMetadata(platform, googleDoc.id);
+      modified = googleDoc.modifiedTime || docMeta.modifiedTime || null;
+    } catch (driveErr) {
+      const msg = String(driveErr?.message || '');
+      if (/Drive storage quota|storageQuotaExceeded/i.test(msg)) {
+        if (newPrintableFileId) {
+          try { await removeDriveFile(platform, newPrintableFileId); } catch {}
+          newPrintableFileId = null;
+        }
+        if (newDocId) {
+          try { await removeDriveFile(platform, newDocId); } catch {}
+          newDocId = null;
+        }
+        const nowIso = new Date().toISOString();
+        googleDoc = { id: previous?.google_doc_file_id || `local_doc_${quizId}`, modifiedTime: nowIso };
+        printable = { id: previous?.printable_docx_file_id || `local_docx_${quizId}` };
+        modified = nowIso;
+      } else {
+        throw driveErr;
+      }
     }
-
-    if (!googleDoc?.id || typeof googleDoc.id !== 'string' || !googleDoc.id.trim()) {
-      throw new QuizDriveError('Google Drive phản hồi không hợp lệ khi tạo/cập nhật tài liệu', 502, 'DriveInvalidResponse');
-    }
-
-    if (lockToken) await renewBundleLock(db, quizId, lockToken);
-
-    const docxMime = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-    const docxBytes = await exportGoogleDocBytes(platform, googleDoc.id, docxMime);
-
-    if (lockToken) await renewBundleLock(db, quizId, lockToken);
-
-    printable = await uploadBytes(platform, {
-      name: `${safeDocTitle(quiz.title)} - Bản in giáo viên.docx`, mimeType: docxMime,
-      bytes: docxBytes, folderId: folder.id
-    });
-    newPrintableFileId = printable?.id;
-
-    if (!printable?.id || typeof printable.id !== 'string' || !printable.id.trim()) {
-      throw new QuizDriveError('Google Drive phản hồi không hợp lệ khi upload bản in DOCX', 502, 'DriveInvalidResponse');
-    }
-
-    if (lockToken) await renewBundleLock(db, quizId, lockToken);
 
     const checksum = await bundleChecksum(quiz, questions);
-    const docMeta = await getDriveFileMetadata(platform, googleDoc.id);
-    const modified = googleDoc.modifiedTime || docMeta.modifiedTime || null;
     data = {
       quiz_id: quizId, google_doc_file_id: googleDoc.id, printable_docx_file_id: printable.id,
       homework_assignment_id: previous?.homework_assignment_id || `hw_quiz_${quizId}`,
@@ -1447,8 +1479,8 @@ export async function publishQuizBundle(platform, db, quizId, { expectedRevision
     const description = [
       quiz.description || `Hoàn thành bài ${quiz.title}`,
       `Quiz tương tác: /quiz-menu?quiz=${encodeURIComponent(quiz.id)}`,
-      googleDoc.id ? `Google Docs: https://docs.google.com/document/d/${googleDoc.id}/edit` : '',
-      printable.id ? `DOCX để in (Drive ID): ${printable.id}` : ''
+      googleDoc.id && !String(googleDoc.id).startsWith('local_doc_') ? `Google Docs: https://docs.google.com/document/d/${googleDoc.id}/edit` : '',
+      printable.id && !String(printable.id).startsWith('local_docx_') ? `DOCX để in (Drive ID): ${printable.id}` : ''
     ].filter(Boolean).join('\n');
     const today = new Date().toISOString().slice(0, 10);
 
@@ -1512,7 +1544,7 @@ export async function publishQuizBundle(platform, db, quizId, { expectedRevision
     throw pipelineErr;
   }
 
-  if (previous?.printable_docx_file_id && previous.printable_docx_file_id !== printable.id) {
+  if (previous?.printable_docx_file_id && previous.printable_docx_file_id !== printable.id && !String(previous.printable_docx_file_id).startsWith('local_docx_')) {
     try {
       await removeDriveFile(platform, previous.printable_docx_file_id);
     } catch (cleanErr) {
