@@ -14,8 +14,8 @@
   let draft = $state(null); // {name, c, hof} dang xem truoc
   let openSnapshot = $state(null); // personal theme luc mo modal (de revert)
   let custom = $state({
-    p600: '#0891b2', p700: '#0e7490', p50: '#ecfeff', p200: '#a5f3fc',
-    hof: ['#a5f3fc', '#67e8f9', '#22d3ee', '#06b6d4']
+    p600: '#059669', p700: '#047857', p50: '#ecfdf5', p200: '#a7f3d0',
+    hof: ['#a7f3d0', '#6ee7b7', '#34d399', '#059669']
   });
 
   async function fetchGlobalTheme(){
