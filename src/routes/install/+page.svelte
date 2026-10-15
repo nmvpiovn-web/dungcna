@@ -157,6 +157,17 @@
       </button>
     </div>
 
+    <div class="pt-1">
+      <a
+        href="/app"
+        data-testid="install-open-mobile-app-btn"
+        class="w-full min-h-[50px] px-5 py-3 rounded-2xl bg-sky-700 hover:bg-sky-800 text-white font-black text-xs sm:text-sm shadow-sm transition-all flex items-center justify-center gap-2"
+      >
+        <span class="text-lg">📱</span>
+        <span>Mở Trực Tiếp Giao Diện App Mobile (LingoNest • R10)</span>
+      </a>
+    </div>
+
     {#if verifyState === 'verified'}
       <div class="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-300 text-emerald-900 text-xs font-bold flex items-center gap-2">
         <span>✅</span>

@@ -449,6 +449,26 @@ export async function verifyServerAuth(request, platform) {
               error: 'Unauthorized: Phiên đăng nhập đã hết hạn.'
             };
           }
+          // Non-blocking activity touch so active devices (e.g. DOOGEE R10 APK) are tracked in real-time
+          try {
+            const ua = (request.headers.get('user-agent') || '').slice(0, 500);
+            const ip = request.headers.get('cf-connecting-ip')
+              || (request.headers.get('x-forwarded-for') || '').split(',')[0].trim()
+              || '';
+            const devModel = /R10|DOOGEE/i.test(ua)
+              ? 'DOOGEE R10 Tablet'
+              : (/TiengAnhCoDungApp/i.test(ua) ? 'Android APK' : (/Android/i.test(ua) ? 'Android Device' : ''));
+            const appMode = /TiengAnhCoDungApp/i.test(ua) ? 'android_apk' : (/R10|DOOGEE/i.test(ua) ? 'r10_browser' : '');
+            await platform.env.DB.prepare(`
+              UPDATE auth_sessions
+              SET last_active_at = CURRENT_TIMESTAMP,
+                  user_agent = CASE WHEN ? != '' THEN ? ELSE user_agent END,
+                  ip_address = CASE WHEN ? != '' THEN ? ELSE ip_address END,
+                  device_model = CASE WHEN ? != '' THEN ? ELSE device_model END,
+                  app_mode = CASE WHEN ? != '' THEN ? ELSE app_mode END
+              WHERE id = ?
+            `).bind(ua, ua, ip, ip, devModel, devModel, appMode, appMode, sid).run();
+          } catch {}
         } catch (sessErr) {
           console.error('Session verification query error (Fail-Closed):', sessErr);
           return {

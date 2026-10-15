@@ -136,10 +136,23 @@ export async function POST({ request, platform, cookies }) {
     if (platform?.env?.DB) {
       try {
         const expiresAt = new Date(Date.now() + 7 * 86400 * 1000).toISOString();
-        await platform.env.DB.prepare(`
-          INSERT INTO auth_sessions (id, user_id, created_at, expires_at, revoked_at)
-          VALUES (?, ?, CURRENT_TIMESTAMP, ?, NULL)
-        `).bind(sid, user.id, expiresAt).run();
+        const ua = (request.headers.get('user-agent') || '').slice(0, 500);
+        const ip = getClientIp(request);
+        const devModel = /R10|DOOGEE/i.test(ua)
+          ? 'DOOGEE R10 Tablet'
+          : (/TiengAnhCoDungApp/i.test(ua) ? 'Android APK' : (/Android/i.test(ua) ? 'Android Device' : 'Web Browser'));
+        const appMode = /TiengAnhCoDungApp/i.test(ua) ? 'android_apk' : (/R10|DOOGEE/i.test(ua) ? 'r10_browser' : 'web');
+        try {
+          await platform.env.DB.prepare(`
+            INSERT INTO auth_sessions (id, user_id, created_at, last_active_at, expires_at, revoked_at, user_agent, ip_address, device_model, app_mode)
+            VALUES (?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, ?, NULL, ?, ?, ?, ?)
+          `).bind(sid, user.id, expiresAt, ua, ip, devModel, appMode).run();
+        } catch {
+          await platform.env.DB.prepare(`
+            INSERT INTO auth_sessions (id, user_id, created_at, expires_at, revoked_at)
+            VALUES (?, ?, CURRENT_TIMESTAMP, ?, NULL)
+          `).bind(sid, user.id, expiresAt).run();
+        }
       } catch (sessErr) {
         console.error('Could not record auth session in D1 (Fail-Closed):', sessErr);
         return json({

@@ -54,6 +54,7 @@
  let unlockNotice = $state('');
  let isRequestingUnlock = $state(false);
  let showLockedCurricula = $state(false);
+ let showMobileAppWorkspace = $state(false);
 
  let recordsError = $state('');
  let recordsRequest = 0;
@@ -106,6 +107,19 @@
  }
 
  onMount(() => {
+ try {
+ const params = new URLSearchParams(window.location.search);
+ const forceWeb = params.get('web') === '1';
+ const forceApp = params.get('app') === '1';
+ const ua = navigator.userAgent || '';
+ const isApkOrR10 = Boolean(
+ (window.AndroidApp && typeof window.AndroidApp.isAndroidApp === 'function' && window.AndroidApp.isAndroidApp()) ||
+ /TiengAnhCoDungApp|R10|DOOGEE/i.test(ua)
+ );
+ if (!forceWeb && (forceApp || isApkOrR10)) {
+ showMobileAppWorkspace = true;
+ }
+ } catch {}
  currentUser = getCurrentUser();
  if (currentUser) {
  if (currentUser.role === 'parent') {
@@ -350,7 +364,16 @@
  {@html `<script type="application/ld+json">${JSON.stringify(faqJsonLd)}</script>`}
 </svelte:head>
 
-
+{#if showMobileAppWorkspace}
+  <div class="fixed inset-0 z-50 bg-[#eaf3f8] flex flex-col">
+    <iframe
+      src="/mobile-app/index.html"
+      title="Tiếng Anh Cô Dung Mobile App"
+      class="w-full h-full border-0 flex-1"
+      allow="microphone; geolocation; autoplay"
+    ></iframe>
+  </div>
+{/if}
 
 <div class="max-w-7xl mx-auto px-3 sm:px-4 pb-24 lg:pb-10 space-y-10 sm:space-y-14">
 
@@ -399,12 +422,20 @@
           <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-extrabold">APK v2.2.0 • 2.84 MB</span>
         </div>
         <p class="text-xs text-ink-500 mt-0.5 leading-relaxed">
-          Tải trực tiếp bộ cài APK chuẩn chữ ký SHA-256 để học toàn màn hình, làm Quiz 7 dạng tương tác và nhận thông báo trên R10.
+          Mở ngay giao diện App Mobile chuyên biệt (LingoNest · Điểm danh, Quỹ Sao, Podcast, Lịch đưa đón) hoặc tải bộ cài APK chuẩn chữ ký SHA-256 cho R10.
         </p>
       </div>
     </div>
 
     <div class="flex flex-wrap items-center gap-2 shrink-0">
+      <a
+        href="/app"
+        data-testid="home-open-mobile-app-btn"
+        class="flex-1 sm:flex-initial min-h-[44px] px-4 py-2.5 rounded-xl bg-sky-700 hover:bg-sky-800 text-white font-extrabold text-xs shadow-xs transition-all flex items-center justify-center gap-1.5"
+      >
+        <span>📱</span>
+        <span>Mở Giao Diện App Mobile (R10)</span>
+      </a>
       <a
         href="/downloads/tienganhcodung-latest.apk"
         download="tienganhcodung-latest.apk"

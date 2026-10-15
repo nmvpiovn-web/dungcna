@@ -178,13 +178,17 @@
 
     if (typeof window !== 'undefined') {
       currentOrigin = window.location.origin || '';
-      isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+      const isAndroidApk = Boolean(
+        (window.AndroidApp && typeof window.AndroidApp.isAndroidApp === 'function' && window.AndroidApp.isAndroidApp()) ||
+        /TiengAnhCoDungApp/i.test(navigator.userAgent || '')
+      );
+      isStandalone = isAndroidApk || window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
       isIos = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
 
       const dismissedTime = localStorage.getItem(DISMISS_KEY);
       const isDismissed = dismissedTime && (Date.now() - parseInt(dismissedTime, 10)) < 7 * 24 * 60 * 60 * 1000;
 
-      // Listen for PWA Install Prompt on Chromium / Android
+      // Listen for PWA Install Prompt on Chromium / Android (skip inside native APK)
       window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
         deferredPrompt = e;

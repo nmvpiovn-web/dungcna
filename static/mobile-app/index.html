@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Tiếng Anh Cô Dung · LingoNest Mobile App (R10 / Android)</title>
+  <meta name="description" content="Ứng dụng học tập Tiếng Anh Cô Dung trên DOOGEE R10 & Thiết bị di động">
+  <link rel="stylesheet" href="/mobile-app/style.css">
+  <link rel="stylesheet" href="/mobile-app/dashboard.css">
+  <style>
+    /* Full-screen tablet & mobile app mode for DOOGEE R10 (800px portrait / 1200px landscape) & APK */
+    body.r10-app-mode {
+      background: #eaf3f8;
+      margin: 0;
+    }
+    body.r10-app-mode .preview {
+      display: block;
+      padding: 0;
+      max-width: 100%;
+    }
+    body.r10-app-mode .intro,
+    body.r10-app-mode .notes {
+      display: none !important;
+    }
+    body.r10-app-mode .device {
+      border: 0;
+      border-radius: 0;
+      max-width: 780px;
+      margin: 0 auto;
+      min-height: 100dvh;
+      box-shadow: 0 0 40px rgba(15, 45, 70, 0.08);
+    }
+    body.r10-app-mode .bottom {
+      position: fixed;
+      max-width: 780px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding-bottom: max(12px, env(safe-area-inset-bottom));
+      z-index: 35;
+    }
+    body.r10-app-mode .appheader {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+    }
+    body.r10-app-mode #view {
+      min-height: calc(100dvh - 120px);
+      padding-bottom: 115px;
+    }
+    .demobar {
+      background: #0d2b42;
+      color: #e2f1f8;
+      padding: 6px 12px;
+      font-size: 11px;
+    }
+    .live-topbar-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .live-chip-apk {
+      font-weight: 700;
+      color: #67e8f9;
+      font-size: 11px;
+    }
+    .live-user-tag {
+      font-size: 11px;
+      color: #d1fae5;
+    }
+    .live-login-cta {
+      background: #10b981;
+      color: #fff;
+      font-weight: 700;
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 12px;
+      min-height: 26px;
+    }
+    .live-topbar-links {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .live-mini-btn {
+      background: rgba(255, 255, 255, 0.14);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 4px 8px;
+      border-radius: 10px;
+      min-height: 24px;
+      display: inline-flex;
+      align-items: center;
+    }
+  </style>
+</head>
+<body class="r10-app-mode">
+  <div class="preview">
+    <aside class="intro">
+      <a class="brand new-brand" href="/" aria-label="LingoNest">
+        <span class="nest-logo tesol-mark">
+          <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M24 6 38 11v11c0 9-5.8 15.6-14 20-8.2-4.4-14-11-14-20V11z"/><path d="M17 17h14M24 17v14M19 31h10"/><circle cx="24" cy="35" r="2"/></svg>
+          <b>TESOL</b>
+        </span>
+      </a>
+      <div class="introbody">
+        <span class="overline">MOBILE EXPERIENCE / 01</span>
+        <h1>Một bàn học.<br>Mọi kết nối.</h1>
+        <p>Học theo lớp, luyện từ vựng và đồng hành cùng gia đình — trong một giao diện dành cho điện thoại và máy tính bảng R10.</p>
+      </div>
+    </aside>
+
+    <div class="device">
+      <div class="demobar">
+        📱 Ứng dụng Tiếng Anh Cô Dung · Đồng bộ Cloudflare D1 <button onclick="openRealLoginSheet()" aria-label="Tài khoản">🔑</button>
+      </div>
+      <header class="appheader">
+        <a class="brand new-brand" href="#home" onclick="go(state.role==='parent'?'parent':state.role==='teacher'?'teacher':'home');return false;" aria-label="Trang chủ LingoNest">
+          <span class="nest-logo tesol-mark">
+            <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M24 6 38 11v11c0 9-5.8 15.6-14 20-8.2-4.4-14-11-14-20V11z"/><path d="M17 17h14M24 17v14M19 31h10"/><circle cx="24" cy="35" r="2"/></svg>
+            <b>TESOL</b>
+          </span>
+        </a>
+        <div class="live-info">
+          <button id="weather-pill" onclick="requestWeather()" title="Dùng vị trí để xem thời tiết"><span>⌖</span><b>Thời tiết</b></button>
+          <a class="fuel-ticker" href="https://travinh.dms.gov.vn/vi/web/guest/tin-chi-tiet/-/chi-tiet/xang-dau-dieu-chinh-tang-tu-15-gio-ngay-249-101183-77895760.html" target="_blank" rel="noreferrer" title="E10 RON95-III · nguồn Bộ Công Thương">
+            <span>⛽</span>
+            <span class="fuel-copy">
+              <span class="fuel-main"><small>E10 RON95</small><b>27.087đ</b><del>25.636</del></span>
+              <em>▲ 1.451đ</em>
+            </span>
+          </a>
+        </div>
+        <div class="headeractions">
+          <button class="iconbutton" onclick="go('notifications')" aria-label="Thông báo">
+            <svg class="bell-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9a6 6 0 0 1 12 0v4l2 3H4l2-3V9Z"/><path d="M9.5 19h5"/></svg>
+            <i></i>
+          </button>
+          <button class="profile" onclick="roleSheet()" aria-label="Đổi vai trò">HS</button>
+        </div>
+      </header>
+      <main id="view"></main>
+      <nav class="bottom" aria-label="Điều hướng chính"></nav>
+    </div>
+  </div>
+  <dialog id="sheet"></dialog>
+  <div id="toast" role="status"></div>
+  <script src="/mobile-app/data.js"></script>
+  <script src="/mobile-app/app.js"></script>
+  <script src="/mobile-app/live-bridge.js"></script>
+</body>
+</html>

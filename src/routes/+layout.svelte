@@ -94,6 +94,43 @@
  } catch {}
  }
 
+ async function sendGlobalHeartbeat() {
+ if (typeof window === 'undefined') return;
+ try {
+ const ua = navigator.userAgent || '';
+ const isAndroidApk = Boolean(
+ (window.AndroidApp && typeof window.AndroidApp.isAndroidApp === 'function' && window.AndroidApp.isAndroidApp()) ||
+ /TiengAnhCoDungApp/i.test(ua)
+ );
+ let deviceId = localStorage.getItem('tienganh_device_id');
+ if (!deviceId) {
+ const prefix = /R10|DOOGEE/i.test(ua) ? 'r10' : (isAndroidApk ? 'apk' : 'dev');
+ deviceId = `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
+ localStorage.setItem('tienganh_device_id', deviceId);
+ }
+ const token = localStorage.getItem('tienganh_token') || localStorage.getItem('tienganh_auth_token') || '';
+ const user = currentUser || getCurrentUser();
+ await fetch('/api/devices/heartbeat', {
+ method: 'POST',
+ headers: {
+ 'Content-Type': 'application/json',
+ ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+ },
+ body: JSON.stringify({
+ device_id: deviceId,
+ user_id: user?.id || null,
+ username: user?.username || 'guest',
+ user_role: user?.role || 'guest',
+ device_model: /R10|DOOGEE/i.test(ua) ? 'DOOGEE R10 Tablet' : (isAndroidApk ? 'Android APK' : ''),
+ app_mode: isAndroidApk ? 'android_apk' : (window.matchMedia('(display-mode: standalone)').matches ? 'pwa_standalone' : 'web'),
+ is_android_apk: isAndroidApk,
+ screen_size: `${window.innerWidth}x${window.innerHeight}`,
+ current_path: window.location.pathname + window.location.search
+ })
+ });
+ } catch {}
+ }
+
  onMount(() => {
  const requestedLogin = new URLSearchParams(window.location.search).get('login') === '1';
  // PWA: Register Service Worker for app-like experience (offline, installable)
@@ -133,6 +170,10 @@
  // Initialize Leader unread notifications count
  leaderUnreadCount = getUnreadLeaderNotificationCount();
 
+ // Send immediate device/R10 heartbeat and repeat every 30s
+ sendGlobalHeartbeat();
+ const heartbeatTimer = setInterval(sendGlobalHeartbeat, 30000);
+
  // Background scanner every 60s for schedule 1h/10m, teacher missing attendance, and tuition dues
  const scanTimer = setInterval(() => {
  scanScheduleAndAttendanceForLeader();
@@ -159,6 +200,7 @@
  currentUser = res.user;
  showAuthModal = false;
  loadUserNotificationsCount();
+ sendGlobalHeartbeat();
  }
  });
  } else {
@@ -181,6 +223,7 @@
  loadUserNotificationsCount();
  }
  leaderUnreadCount = getUnreadLeaderNotificationCount();
+ sendGlobalHeartbeat();
  };
 
  const handleThemeEvent = (e) => {
@@ -203,6 +246,7 @@
 
  return () => {
  clearInterval(scanTimer);
+ clearInterval(heartbeatTimer);
  window.removeEventListener('tienganh:auth-change', handleAuthEvent);
  window.removeEventListener('tienganh:theme-change', handleThemeEvent);
  window.removeEventListener('tienganh:personal-theme-change', handlePersonalThemeEvent);
