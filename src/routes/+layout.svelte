@@ -1228,6 +1228,24 @@
  <span class="text-ink-400">➔</span>
  </div>
  </button>
+
+ <div class="grid grid-cols-2 gap-2 pt-1">
+ <a
+ href="/downloads/tienganhcodung-latest.apk"
+ download="tienganhcodung-latest.apk"
+ onclick={() => mobileMenuOpen = false}
+ class="min-h-[44px] flex items-center justify-center gap-1.5 p-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold shadow-xs"
+ >
+ <span>⬇️</span> <span>Tải APK v2.2.0 (R10)</span>
+ </a>
+ <a
+ href="/install"
+ onclick={() => mobileMenuOpen = false}
+ class="min-h-[44px] flex items-center justify-center gap-1.5 p-2.5 rounded-lg bg-surface-1 hover:bg-surface-2 border border-line text-ink-900 text-xs font-bold"
+ >
+ <span>🔐</span> <span>Trang Cài Đặt R10</span>
+ </a>
+ </div>
  </div>
  </div>
  {/if}
@@ -1293,6 +1311,12 @@
  <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
  Hệ thống hoạt động ổn định
  </span>
+ <span class="text-stone-300">•</span>
+ <a href="/downloads/tienganhcodung-latest.apk" download="tienganhcodung-latest.apk" class="hover:text-emerald-700 font-bold text-emerald-700 flex items-center gap-1">
+ <span>⬇️</span> <span>Tải APK Android (R10)</span>
+ </a>
+ <span class="text-stone-300">•</span>
+ <a href="/install" class="hover:text-brand-600 font-semibold text-brand-700">Cài đặt R10</a>
  <span class="text-stone-300">•</span>
  <a href="/evaluations" class="hover:text-brand-600">Đánh giá học sinh</a>
  <span class="text-stone-300">•</span>

@@ -376,15 +376,55 @@
  </section>
  {/if}
 
- <!-- ===== 1. Intent Hero ===== -->
- <IntentHero
- eyebrow="TIẾNG ANH CÔ DUNG • NĂM HỌC 2026"
- headline="Con bạn đang học lớp mấy?"
- subline="Chọn đúng vai trò — chúng tôi đưa bạn đến đúng nơi trong 1 chạm: test xếp lớp miễn phí, game học từ vựng, ngân hàng đề thi và báo cáo Zalo cho phụ huynh."
- intents={heroIntents}
- />
+  <!-- ===== 1. Intent Hero ===== -->
+  <IntentHero
+    eyebrow="TIẾNG ANH CÔ DUNG • NĂM HỌC 2026"
+    headline="Con bạn đang học lớp mấy?"
+    subline="Chọn đúng vai trò — chúng tôi đưa bạn đến đúng nơi trong 1 chạm: test xếp lớp miễn phí, game học từ vựng, ngân hàng đề thi và báo cáo Zalo cho phụ huynh."
+    intents={heroIntents}
+  />
 
- <!-- ===== 2. Proof bar (số liệu thật) ===== -->
+  <!-- ===== 1B. Tải Ứng Dụng Android APK (DOOGEE R10 & Điện thoại) ===== -->
+  <section
+    data-testid="home-apk-download-card"
+    class="rounded-3xl bg-surface-0 border border-emerald-500/40 p-4 sm:p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3.5"
+  >
+    <div class="flex items-start sm:items-center gap-3.5 min-w-0">
+      <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center text-2xl shrink-0 shadow-xs">
+        📱
+      </div>
+      <div class="min-w-0">
+        <div class="flex flex-wrap items-center gap-1.5">
+          <span class="text-xs sm:text-sm font-black text-ink-900">Ứng Dụng Android &amp; Máy Tính Bảng DOOGEE R10</span>
+          <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-extrabold">APK v2.2.0 • 2.84 MB</span>
+        </div>
+        <p class="text-xs text-ink-500 mt-0.5 leading-relaxed">
+          Tải trực tiếp bộ cài APK chuẩn chữ ký SHA-256 để học toàn màn hình, làm Quiz 7 dạng tương tác và nhận thông báo trên R10.
+        </p>
+      </div>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-2 shrink-0">
+      <a
+        href="/downloads/tienganhcodung-latest.apk"
+        download="tienganhcodung-latest.apk"
+        data-testid="home-direct-apk-btn"
+        class="flex-1 sm:flex-initial min-h-[44px] px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-xs transition-all flex items-center justify-center gap-1.5"
+      >
+        <span>⬇️</span>
+        <span>Tải Ngay APK (R10)</span>
+      </a>
+      <a
+        href="/install"
+        class="min-h-[44px] px-3.5 py-2.5 rounded-xl bg-surface-1 hover:bg-surface-2 border border-line text-ink-900 font-bold text-xs transition-all flex items-center justify-center gap-1"
+      >
+        <span>🔐</span>
+        <span>Trang Cài Đặt &amp; SHA-256</span>
+      </a>
+    </div>
+  </section>
+
+  <!-- ===== 2. Proof bar (số liệu thật) ===== -->
  <section>
  <SectionHeading eyebrow="Con số biết nói" title="Học liệu thật, đo được" center />
  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">

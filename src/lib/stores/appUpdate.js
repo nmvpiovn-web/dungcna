@@ -354,7 +354,7 @@ export async function checkForUpdate(manualTrigger = true, options = {}) {
         serverVersion: mergedServerVersion,
         pwaUpdateAvailable: false,
         apkUpdateAvailable: false,
-        showModal: false,
+        showModal: Boolean(manualTrigger),
         lastCheckedAt: Date.now(),
         message: `Ứng dụng đã ở phiên bản mới nhất (v${clientMeta.version}).`
       }));
