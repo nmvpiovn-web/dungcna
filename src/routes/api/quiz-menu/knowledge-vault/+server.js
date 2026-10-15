@@ -48,7 +48,7 @@ export async function GET({ url, request, platform }) {
       const countRes = await db.prepare(
         `SELECT COUNT(DISTINCT kv.id) AS total
          FROM knowledge_vault kv
-         WHERE (kv.status = 'active' OR kv.status IS NULL)
+         WHERE (kv.status IN ('active', 'published') OR kv.status IS NULL)
            ${category ? 'AND kv.category = ?' : ''}
            AND (
              kv.id IN (SELECT id FROM knowledge_fts WHERE knowledge_fts MATCH ?)
@@ -64,7 +64,7 @@ export async function GET({ url, request, platform }) {
                 SUBSTR(kv.content_markdown, 1, 300) AS preview,
                 LENGTH(kv.content_markdown) AS content_length
          FROM knowledge_vault kv
-         WHERE (kv.status = 'active' OR kv.status IS NULL)
+         WHERE (kv.status IN ('active', 'published') OR kv.status IS NULL)
            ${category ? 'AND kv.category = ?' : ''}
            AND (
              kv.id IN (SELECT id FROM knowledge_fts WHERE knowledge_fts MATCH ?)
@@ -80,7 +80,7 @@ export async function GET({ url, request, platform }) {
       // Direct LIKE query when FTS is unavailable
       const countRes = await db.prepare(
         `SELECT COUNT(*) AS total FROM knowledge_vault kv
-         WHERE (kv.status = 'active' OR kv.status IS NULL)
+         WHERE (kv.status IN ('active', 'published') OR kv.status IS NULL)
            AND (kv.title LIKE ? OR kv.content_markdown LIKE ?)
            ${category ? 'AND kv.category = ?' : ''}`
       ).bind(...(category ? [likePattern, likePattern, category] : [likePattern, likePattern])).first();
@@ -92,7 +92,7 @@ export async function GET({ url, request, platform }) {
                 SUBSTR(kv.content_markdown, 1, 300) AS preview,
                 LENGTH(kv.content_markdown) AS content_length
          FROM knowledge_vault kv
-         WHERE (kv.status = 'active' OR kv.status IS NULL)
+         WHERE (kv.status IN ('active', 'published') OR kv.status IS NULL)
            AND (kv.title LIKE ? OR kv.content_markdown LIKE ?)
            ${category ? 'AND kv.category = ?' : ''}
          ORDER BY kv.id ASC
@@ -105,7 +105,7 @@ export async function GET({ url, request, platform }) {
     // Non-search browse
     const countRes = await db.prepare(
       `SELECT COUNT(*) AS total FROM knowledge_vault kv
-       WHERE (kv.status = 'active' OR kv.status IS NULL)
+       WHERE (kv.status IN ('active', 'published') OR kv.status IS NULL)
        ${category ? 'AND kv.category = ?' : ''}`
     ).bind(...(category ? [category] : [])).first();
 
@@ -116,7 +116,7 @@ export async function GET({ url, request, platform }) {
               SUBSTR(kv.content_markdown, 1, 300) AS preview,
               LENGTH(kv.content_markdown) AS content_length
        FROM knowledge_vault kv
-       WHERE (kv.status = 'active' OR kv.status IS NULL)
+       WHERE (kv.status IN ('active', 'published') OR kv.status IS NULL)
        ${category ? 'AND kv.category = ?' : ''}
        ORDER BY kv.updated_at DESC, kv.id ASC
        LIMIT ? OFFSET ?`

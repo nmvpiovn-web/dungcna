@@ -1,0 +1,762 @@
+{
+  "base": "http://127.0.0.1:4173",
+  "generatedAt": "2026-09-30T17:13:11.367Z",
+  "results": [
+    {
+      "route": "/",
+      "viewport": "mobile",
+      "screenshot": "artifacts/master-plan-7/candidate/home-mobile.png",
+      "errors": [],
+      "title": "Tiếng Anh Cô Dung - Hệ Thống Đào Tạo K12 & Lộ Trình Quốc Tế",
+      "width": 390,
+      "viewportWidth": 390,
+      "height": 7360,
+      "overflowX": 0,
+      "headings": 22,
+      "cards": 71,
+      "links": 35,
+      "buttons": 12,
+      "interactive": 42,
+      "tinyTargets": 25,
+      "fixed": [
+        {
+          "tag": "HEADER",
+          "text": "👩‍🏫 Tiếng Anh Cô Dung Học tiếng Anh theo lộ trình rõ ràng 📚Học🗂️Luyện tập✍️K",
+          "top": 0,
+          "bottom": 65
+        },
+        {
+          "tag": "NAV",
+          "text": "📚Học🗂️Luyện tập✍️Kiểm tra📈Tiến độ ☰Thêm",
+          "top": 775,
+          "bottom": 844
+        }
+      ],
+      "mobileMenuButton": 1,
+      "mobileDrawerVisible": true,
+      "mobileDrawerLinks": 6
+    },
+    {
+      "route": "/flashcards",
+      "viewport": "mobile",
+      "screenshot": "artifacts/master-plan-7/candidate/flashcards-mobile.png",
+      "errors": [],
+      "title": "Tiếng Anh Cô Dung - Hệ Thống Đào Tạo K12 & Lộ Trình Quốc Tế",
+      "width": 390,
+      "viewportWidth": 390,
+      "height": 2115,
+      "overflowX": 0,
+      "headings": 3,
+      "cards": 15,
+      "links": 11,
+      "buttons": 15,
+      "interactive": 21,
+      "tinyTargets": 5,
+      "fixed": [
+        {
+          "tag": "HEADER",
+          "text": "👩‍🏫 Tiếng Anh Cô Dung Học tiếng Anh theo lộ trình rõ ràng 📚Học🗂️Luyện tập✍️K",
+          "top": 0,
+          "bottom": 65
+        },
+        {
+          "tag": "NAV",
+          "text": "📚Học🗂️Luyện tập✍️Kiểm tra📈Tiến độ ☰Thêm",
+          "top": 775,
+          "bottom": 844
+        }
+      ],
+      "mobileMenuButton": 1,
+      "mobileDrawerVisible": true,
+      "mobileDrawerLinks": 6
+    },
+    {
+      "route": "/dictionary",
+      "viewport": "mobile",
+      "screenshot": "artifacts/master-plan-7/candidate/dictionary-mobile.png",
+      "errors": [],
+      "title": "Ngân Hàng Từ Vựng Sư Phạm & Stealth Pronunciation Engine • Tiếng Anh Cô Dung",
+      "width": 390,
+      "viewportWidth": 390,
+      "height": 17040,
+      "overflowX": 0,
+      "headings": 53,
+      "cards": 52,
+      "links": 11,
+      "buttons": 166,
+      "interactive": 176,
+      "tinyTargets": 170,
+      "fixed": [
+        {
+          "tag": "HEADER",
+          "text": "👩‍🏫 Tiếng Anh Cô Dung Học tiếng Anh theo lộ trình rõ ràng 📚Học🗂️Luyện tập✍️K",
+          "top": 0,
+          "bottom": 65
+        },
+        {
+          "tag": "NAV",
+          "text": "📚Học🗂️Luyện tập✍️Kiểm tra📈Tiến độ ☰Thêm",
+          "top": 775,
+          "bottom": 844
+        },
+        {
+          "tag": "HEADER",
+          "text": "Ngân Hàng Từ Vựng Sư Phạm • Stealth Vocabulary & Pronunciation Engine Từ Điển Ch",
+          "top": 89,
+          "bottom": 506.5
+        }
+      ],
+      "mobileMenuButton": 1,
+      "mobileDrawerVisible": true,
+      "mobileDrawerLinks": 6
+    },
+    {
+      "route": "/grammar",
+      "viewport": "mobile",
+      "screenshot": "artifacts/master-plan-7/candidate/grammar-mobile.png",
+      "errors": [],
+      "title": "Chuyên Đề Ngữ Pháp Toàn Diện K12 & HSG — Tiếng Anh Cô Dung",
+      "width": 390,
+      "viewportWidth": 390,
+      "height": 11447,
+      "overflowX": 0,
+      "headings": 36,
+      "cards": 88,
+      "links": 11,
+      "buttons": 56,
+      "interactive": 63,
+      "tinyTargets": 21,
+      "fixed": [
+        {
+          "tag": "HEADER",
+          "text": "👩‍🏫 Tiếng Anh Cô Dung Học tiếng Anh theo lộ trình rõ ràng 📚Học🗂️Luyện tập✍️K",
+          "top": 0,
+          "bottom": 65
+        },
+        {
+          "tag": "NAV",
+          "text": "📚Học🗂️Luyện tập✍️Kiểm tra📈Tiến độ ☰Thêm",
+          "top": 775,
+          "bottom": 844
+        }
+      ],
+      "mobileMenuButton": 1,
+      "mobileDrawerVisible": true,
+      "mobileDrawerLinks": 6
+    },
+    {
+      "route": "/exam",
+      "viewport": "mobile",
+      "screenshot": "artifacts/master-plan-7/candidate/exam-mobile.png",
+      "errors": [],
+      "title": "Tiếng Anh Cô Dung - Hệ Thống Đào Tạo K12 & Lộ Trình Quốc Tế",
+      "width": 390,
+      "viewportWidth": 390,
+      "height": 7195,
+      "overflowX": 0,
+      "headings": 3,
+      "cards": 101,
+      "links": 11,
+      "buttons": 100,
+      "interactive": 106,
+      "tinyTargets": 12,
+      "fixed": [
+        {
+          "tag": "HEADER",
+          "text": "👩‍🏫 Tiếng Anh Cô Dung Học tiếng Anh theo lộ trình rõ ràng 📚Học🗂️Luyện tập✍️K",
+          "top": 0,
+          "bottom": 65
+        },
+        {
+          "tag": "NAV",
+          "text": "📚Học🗂️Luyện tập✍️Kiểm tra📈Tiến độ ☰Thêm",
+          "top": 775,
+          "bottom": 844
+        }
+      ],
+      "mobileMenuButton": 1,
+      "mobileDrawerVisible": true,
+      "mobileDrawerLinks": 6
+    },
+    {
+      "route": "/games",
+      "viewport": "mobile",
+      "screenshot": "artifacts/master-plan-7/candidate/games-mobile.png",
+      "errors": [],
+      "title": "Tiếng Anh Cô Dung - Hệ Thống Đào Tạo K12 & Lộ Trình Quốc Tế",
+      "width": 390,
+      "viewportWidth": 390,
+      "height": 1013,
+      "overflowX": 0,
+      "headings": 1,
+      "cards": 3,
+      "links": 13,
+      "buttons": 5,
+      "interactive": 13,
+      "tinyTargets": 7,
+      "fixed": [
+        {
+          "tag": "HEADER",
+          "text": "👩‍🏫 Tiếng Anh Cô Dung Học tiếng Anh theo lộ trình rõ ràng 📚Học🗂️Luyện tập✍️K",
+          "top": 0,
+          "bottom": 65
+        },
+        {
+          "tag": "NAV",
+          "text": "📚Học🗂️Luyện tập✍️Kiểm tra📈Tiến độ ☰Thêm",
+          "top": 775,
+          "bottom": 844
+        }
+      ],
+      "mobileMenuButton": 1,
+      "mobileDrawerVisible": true,
+      "mobileDrawerLinks": 6
+    },
+    {
+      "route": "/evaluations",
+      "viewport": "mobile",
+      "screenshot": "artifacts/master-plan-7/candidate/evaluations-mobile.png",
+      "errors": [],
+      "title": "Tiếng Anh Cô Dung - Hệ Thống Đào Tạo K12 & Lộ Trình Quốc Tế",
+      "width": 390,
+      "viewportWidth": 390,
+      "height": 962,
+      "overflowX": 0,
+      "headings": 2,
+      "cards": 1,
+      "links": 12,
+      "buttons": 5,
+      "interactive": 12,
+      "tinyTargets": 5,
+      "fixed": [
+        {
+          "tag": "HEADER",
+          "text": "👩‍🏫 Tiếng Anh Cô Dung Học tiếng Anh theo lộ trình rõ ràng 📚Học🗂️Luyện tập✍️K",
+          "top": 0,
+          "bottom": 65
+        },
+        {
+          "tag": "NAV",
+          "text": "📚Học🗂️Luyện tập✍️Kiểm tra📈Tiến độ ☰Thêm",
+          "top": 775,
+          "bottom": 844
+        }
+      ],
+      "mobileMenuButton": 1,
+      "mobileDrawerVisible": true,
+      "mobileDrawerLinks": 6
+    },
+    {
+      "route": "/courses",
+      "viewport": "mobile",
+      "screenshot": "artifacts/master-plan-7/candidate/courses-mobile.png",
+      "errors": [],
+      "title": "Khóa Học Tiếng Anh - Tiếng Anh Cô Dung (timbk.io.vn)",
+      "width": 390,
+      "viewportWidth": 390,
+      "height": 3760,
+      "overflowX": 0,
+      "headings": 6,
+      "cards": 16,
+      "links": 19,
+      "buttons": 5,
+      "interactive": 19,
+      "tinyTargets": 13,
+      "fixed": [
+        {
+          "tag": "HEADER",
+          "text": "👩‍🏫 Tiếng Anh Cô Dung Học tiếng Anh theo lộ trình rõ ràng 📚Học🗂️Luyện tập✍️K",
+          "top": 0,
+          "bottom": 65
+        },
+        {
+          "tag": "NAV",
+          "text": "📚Học🗂️Luyện tập✍️Kiểm tra📈Tiến độ ☰Thêm",
+          "top": 775,
+          "bottom": 844
+        },
+        {
+          "tag": "HEADER",
+          "text": "Hệ Thống Đào Tạo K12 Chuẩn Bộ GD&ĐT Chương Trình Khóa Học & Lộ Trình Phát Triển ",
+          "top": 121,
+          "bottom": 352
+        }
+      ],
+      "mobileMenuButton": 1,
+      "mobileDrawerVisible": true,
+      "mobileDrawerLinks": 6
+    },
+    {
+      "route": "/",
+      "viewport": "tablet",
+      "screenshot": "artifacts/master-plan-7/candidate/home-tablet.png",
+      "errors": [],
+      "title": "Tiếng Anh Cô Dung - Hệ Thống Đào Tạo K12 & Lộ Trình Quốc Tế",
+      "width": 768,
+      "viewportWidth": 768,
+      "height": 4533,
+      "overflowX": 0,
+      "headings": 22,
+      "cards": 71,
+      "links": 35,
+      "buttons": 12,
+      "interactive": 42,
+      "tinyTargets": 25,
+      "fixed": [
+        {
+          "tag": "HEADER",
+          "text": "👩‍🏫 Tiếng Anh Cô Dung Học tiếng Anh theo lộ trình rõ ràng 📚Học🗂️Luyện tập✍️K",
+          "top": 0,
+          "bottom": 65
+        },
+        {
+          "tag": "NAV",
+          "text": "📚Học🗂️Luyện tập✍️Kiểm tra📈Tiến độ ☰Thêm",
+          "top": 955,
+          "bottom": 1024
+        }
+      ]
+    },
+    {
+      "route": "/flashcards",
+      "viewport": "tablet",
+      "screenshot": "artifacts/master-plan-7/candidate/flashcards-tablet.png",
+      "errors": [],
+      "title": "Tiếng Anh Cô Dung - Hệ Thống Đào Tạo K12 & Lộ Trình Quốc Tế",
+      "width": 768,
+      "viewportWidth": 768,
+      "height": 1451,
+      "overflowX": 0,
+      "headings": 3,
+      "cards": 15,
+      "links": 11,
+      "buttons": 15,
+      "interactive": 21,
+      "tinyTargets": 5,
+      "fixed": [
+        {
+          "tag": "HEADER",
+          "text": "👩‍🏫 Tiếng Anh Cô Dung Học tiếng Anh theo lộ trình rõ ràng 📚Học🗂️Luyện tập✍️K",
+          "top": 0,
+          "bottom": 65
+        },
+        {
+          "tag": "NAV",
+          "text": "📚Học🗂️Luyện tập✍️Kiểm tra📈Tiến độ ☰Thêm",
+          "top": 955,
+          "bottom": 1024
+        }
+      ]
+    },
+    {
+      "route": "/dictionary",
+      "viewport": "tablet",
+      "screenshot": "artifacts/master-plan-7/candidate/dictionary-tablet.png",
+      "errors": [],
+      "title": "Ngân Hàng Từ Vựng Sư Phạm & Stealth Pronunciation Engine • Tiếng Anh Cô Dung",
+      "width": 768,
+      "viewportWidth": 768,
+      "height": 8942,
+      "overflowX": 0,
+      "headings": 53,
+      "cards": 52,
+      "links": 11,
+      "buttons": 166,
+      "interactive": 176,
+      "tinyTargets": 170,
+      "fixed": [
+        {
+          "tag": "HEADER",
+          "text": "👩‍🏫 Tiếng Anh Cô Dung Học tiếng Anh theo lộ trình rõ ràng 📚Học🗂️Luyện tập✍️K",
+          "top": 0,
+          "bottom": 65
+        },
+        {
+          "tag": "NAV",
+          "text": "📚Học🗂️Luyện tập✍️Kiểm tra📈Tiến độ ☰Thêm",
+          "top": 955,
+          "bottom": 1024
+        },
+        {
+          "tag": "HEADER",
+          "text": "Ngân Hàng Từ Vựng Sư Phạm • Stealth Vocabulary & Pronunciation Engine Từ Điển Ch",
+          "top": 89,
+          "bottom": 319.25
+        }
+      ]
+    },
+    {
+      "route": "/grammar",
+      "viewport": "tablet",
+      "screenshot": "artifacts/master-plan-7/candidate/grammar-tablet.png",
+      "errors": [],
+      "title": "Chuyên Đề Ngữ Pháp Toàn Diện K12 & HSG — Tiếng Anh Cô Dung",
+      "width": 768,
+      "viewportWidth": 768,
+      "height": 7964,
+      "overflowX": 0,
+      "headings": 36,
+      "cards": 88,
+      "links": 11,
+      "buttons": 56,
+      "interactive": 63,
+      "tinyTargets": 21,
+      "fixed": [
+        {
+          "tag": "HEADER",
+          "text": "👩‍🏫 Tiếng Anh Cô Dung Học tiếng Anh theo lộ trình rõ ràng 📚Học🗂️Luyện tập✍️K",
+          "top": 0,
+          "bottom": 65
+        },
+        {
+          "tag": "NAV",
+          "text": "📚Học🗂️Luyện tập✍️Kiểm tra📈Tiến độ ☰Thêm",
+          "top": 955,
+          "bottom": 1024
+        }
+      ]
+    },
+    {
+      "route": "/exam",
+      "viewport": "tablet",
+      "screenshot": "artifacts/master-plan-7/candidate/exam-tablet.png",
+      "errors": [],
+      "title": "Tiếng Anh Cô Dung - Hệ Thống Đào Tạo K12 & Lộ Trình Quốc Tế",
+      "width": 768,
+      "viewportWidth": 768,
+      "height": 4891,
+      "overflowX": 0,
+      "headings": 3,
+      "cards": 101,
+      "links": 11,
+      "buttons": 100,
+      "interactive": 106,
+      "tinyTargets": 11,
+      "fixed": [
+        {
+          "tag": "HEADER",
+          "text": "👩‍🏫 Tiếng Anh Cô Dung Học tiếng Anh theo lộ trình rõ ràng 📚Học🗂️Luyện tập✍️K",
+          "top": 0,
+          "bottom": 65
+        },
+        {
+          "tag": "NAV",
+          "text": "📚Học🗂️Luyện tập✍️Kiểm tra📈Tiến độ ☰Thêm",
+          "top": 955,
+          "bottom": 1024
+        }
+      ]
+    },
+    {
+      "route": "/games",
+      "viewport": "tablet",
+      "screenshot": "artifacts/master-plan-7/candidate/games-tablet.png",
+      "errors": [],
+      "title": "Tiếng Anh Cô Dung - Hệ Thống Đào Tạo K12 & Lộ Trình Quốc Tế",
+      "width": 768,
+      "viewportWidth": 768,
+      "height": 1024,
+      "overflowX": 0,
+      "headings": 1,
+      "cards": 3,
+      "links": 13,
+      "buttons": 5,
+      "interactive": 13,
+      "tinyTargets": 7,
+      "fixed": [
+        {
+          "tag": "HEADER",
+          "text": "👩‍🏫 Tiếng Anh Cô Dung Học tiếng Anh theo lộ trình rõ ràng 📚Học🗂️Luyện tập✍️K",
+          "top": 0,
+          "bottom": 65
+        },
+        {
+          "tag": "NAV",
+          "text": "📚Học🗂️Luyện tập✍️Kiểm tra📈Tiến độ ☰Thêm",
+          "top": 955,
+          "bottom": 1024
+        }
+      ]
+    },
+    {
+      "route": "/evaluations",
+      "viewport": "tablet",
+      "screenshot": "artifacts/master-plan-7/candidate/evaluations-tablet.png",
+      "errors": [],
+      "title": "Tiếng Anh Cô Dung - Hệ Thống Đào Tạo K12 & Lộ Trình Quốc Tế",
+      "width": 768,
+      "viewportWidth": 768,
+      "height": 1024,
+      "overflowX": 0,
+      "headings": 2,
+      "cards": 1,
+      "links": 12,
+      "buttons": 5,
+      "interactive": 12,
+      "tinyTargets": 5,
+      "fixed": [
+        {
+          "tag": "HEADER",
+          "text": "👩‍🏫 Tiếng Anh Cô Dung Học tiếng Anh theo lộ trình rõ ràng 📚Học🗂️Luyện tập✍️K",
+          "top": 0,
+          "bottom": 65
+        },
+        {
+          "tag": "NAV",
+          "text": "📚Học🗂️Luyện tập✍️Kiểm tra📈Tiến độ ☰Thêm",
+          "top": 955,
+          "bottom": 1024
+        }
+      ]
+    },
+    {
+      "route": "/courses",
+      "viewport": "tablet",
+      "screenshot": "artifacts/master-plan-7/candidate/courses-tablet.png",
+      "errors": [],
+      "title": "Khóa Học Tiếng Anh - Tiếng Anh Cô Dung (timbk.io.vn)",
+      "width": 768,
+      "viewportWidth": 768,
+      "height": 2184,
+      "overflowX": 0,
+      "headings": 6,
+      "cards": 16,
+      "links": 19,
+      "buttons": 5,
+      "interactive": 19,
+      "tinyTargets": 13,
+      "fixed": [
+        {
+          "tag": "HEADER",
+          "text": "👩‍🏫 Tiếng Anh Cô Dung Học tiếng Anh theo lộ trình rõ ràng 📚Học🗂️Luyện tập✍️K",
+          "top": 0,
+          "bottom": 65
+        },
+        {
+          "tag": "NAV",
+          "text": "📚Học🗂️Luyện tập✍️Kiểm tra📈Tiến độ ☰Thêm",
+          "top": 955,
+          "bottom": 1024
+        },
+        {
+          "tag": "HEADER",
+          "text": "Hệ Thống Đào Tạo K12 Chuẩn Bộ GD&ĐT Chương Trình Khóa Học & Lộ Trình Phát Triển ",
+          "top": 121,
+          "bottom": 300
+        }
+      ]
+    },
+    {
+      "route": "/",
+      "viewport": "desktop",
+      "screenshot": "artifacts/master-plan-7/candidate/home-desktop.png",
+      "errors": [],
+      "title": "Tiếng Anh Cô Dung - Hệ Thống Đào Tạo K12 & Lộ Trình Quốc Tế",
+      "width": 1440,
+      "viewportWidth": 1440,
+      "height": 3233,
+      "overflowX": 0,
+      "headings": 22,
+      "cards": 71,
+      "links": 35,
+      "buttons": 12,
+      "interactive": 42,
+      "tinyTargets": 25,
+      "fixed": [
+        {
+          "tag": "HEADER",
+          "text": "👩‍🏫 Tiếng Anh Cô Dung Học tiếng Anh theo lộ trình rõ ràng 📚Học🗂️Luyện tập✍️K",
+          "top": 0,
+          "bottom": 65
+        }
+      ]
+    },
+    {
+      "route": "/flashcards",
+      "viewport": "desktop",
+      "screenshot": "artifacts/master-plan-7/candidate/flashcards-desktop.png",
+      "errors": [],
+      "title": "Tiếng Anh Cô Dung - Hệ Thống Đào Tạo K12 & Lộ Trình Quốc Tế",
+      "width": 1440,
+      "viewportWidth": 1440,
+      "height": 1267,
+      "overflowX": 0,
+      "headings": 3,
+      "cards": 15,
+      "links": 11,
+      "buttons": 15,
+      "interactive": 21,
+      "tinyTargets": 5,
+      "fixed": [
+        {
+          "tag": "HEADER",
+          "text": "👩‍🏫 Tiếng Anh Cô Dung Học tiếng Anh theo lộ trình rõ ràng 📚Học🗂️Luyện tập✍️K",
+          "top": 0,
+          "bottom": 65
+        }
+      ]
+    },
+    {
+      "route": "/dictionary",
+      "viewport": "desktop",
+      "screenshot": "artifacts/master-plan-7/candidate/dictionary-desktop.png",
+      "errors": [],
+      "title": "Ngân Hàng Từ Vựng Sư Phạm & Stealth Pronunciation Engine • Tiếng Anh Cô Dung",
+      "width": 1440,
+      "viewportWidth": 1440,
+      "height": 6099,
+      "overflowX": 0,
+      "headings": 53,
+      "cards": 52,
+      "links": 11,
+      "buttons": 166,
+      "interactive": 176,
+      "tinyTargets": 170,
+      "fixed": [
+        {
+          "tag": "HEADER",
+          "text": "👩‍🏫 Tiếng Anh Cô Dung Học tiếng Anh theo lộ trình rõ ràng 📚Học🗂️Luyện tập✍️K",
+          "top": 0,
+          "bottom": 65
+        },
+        {
+          "tag": "HEADER",
+          "text": "Ngân Hàng Từ Vựng Sư Phạm • Stealth Vocabulary & Pronunciation Engine Từ Điển Ch",
+          "top": 89,
+          "bottom": 248.5
+        }
+      ]
+    },
+    {
+      "route": "/grammar",
+      "viewport": "desktop",
+      "screenshot": "artifacts/master-plan-7/candidate/grammar-desktop.png",
+      "errors": [],
+      "title": "Chuyên Đề Ngữ Pháp Toàn Diện K12 & HSG — Tiếng Anh Cô Dung",
+      "width": 1440,
+      "viewportWidth": 1440,
+      "height": 5856,
+      "overflowX": 0,
+      "headings": 36,
+      "cards": 88,
+      "links": 11,
+      "buttons": 56,
+      "interactive": 63,
+      "tinyTargets": 21,
+      "fixed": [
+        {
+          "tag": "HEADER",
+          "text": "👩‍🏫 Tiếng Anh Cô Dung Học tiếng Anh theo lộ trình rõ ràng 📚Học🗂️Luyện tập✍️K",
+          "top": 0,
+          "bottom": 65
+        }
+      ]
+    },
+    {
+      "route": "/exam",
+      "viewport": "desktop",
+      "screenshot": "artifacts/master-plan-7/candidate/exam-desktop.png",
+      "errors": [],
+      "title": "Tiếng Anh Cô Dung - Hệ Thống Đào Tạo K12 & Lộ Trình Quốc Tế",
+      "width": 1440,
+      "viewportWidth": 1440,
+      "height": 3217,
+      "overflowX": 0,
+      "headings": 3,
+      "cards": 101,
+      "links": 11,
+      "buttons": 100,
+      "interactive": 106,
+      "tinyTargets": 12,
+      "fixed": [
+        {
+          "tag": "HEADER",
+          "text": "👩‍🏫 Tiếng Anh Cô Dung Học tiếng Anh theo lộ trình rõ ràng 📚Học🗂️Luyện tập✍️K",
+          "top": 0,
+          "bottom": 65
+        }
+      ]
+    },
+    {
+      "route": "/games",
+      "viewport": "desktop",
+      "screenshot": "artifacts/master-plan-7/candidate/games-desktop.png",
+      "errors": [],
+      "title": "Tiếng Anh Cô Dung - Hệ Thống Đào Tạo K12 & Lộ Trình Quốc Tế",
+      "width": 1440,
+      "viewportWidth": 1440,
+      "height": 1000,
+      "overflowX": 0,
+      "headings": 1,
+      "cards": 3,
+      "links": 13,
+      "buttons": 5,
+      "interactive": 13,
+      "tinyTargets": 7,
+      "fixed": [
+        {
+          "tag": "HEADER",
+          "text": "👩‍🏫 Tiếng Anh Cô Dung Học tiếng Anh theo lộ trình rõ ràng 📚Học🗂️Luyện tập✍️K",
+          "top": 0,
+          "bottom": 65
+        }
+      ]
+    },
+    {
+      "route": "/evaluations",
+      "viewport": "desktop",
+      "screenshot": "artifacts/master-plan-7/candidate/evaluations-desktop.png",
+      "errors": [],
+      "title": "Tiếng Anh Cô Dung - Hệ Thống Đào Tạo K12 & Lộ Trình Quốc Tế",
+      "width": 1440,
+      "viewportWidth": 1440,
+      "height": 1000,
+      "overflowX": 0,
+      "headings": 2,
+      "cards": 1,
+      "links": 12,
+      "buttons": 5,
+      "interactive": 12,
+      "tinyTargets": 5,
+      "fixed": [
+        {
+          "tag": "HEADER",
+          "text": "👩‍🏫 Tiếng Anh Cô Dung Học tiếng Anh theo lộ trình rõ ràng 📚Học🗂️Luyện tập✍️K",
+          "top": 0,
+          "bottom": 65
+        }
+      ]
+    },
+    {
+      "route": "/courses",
+      "viewport": "desktop",
+      "screenshot": "artifacts/master-plan-7/candidate/courses-desktop.png",
+      "errors": [],
+      "title": "Khóa Học Tiếng Anh - Tiếng Anh Cô Dung (timbk.io.vn)",
+      "width": 1440,
+      "viewportWidth": 1440,
+      "height": 1767,
+      "overflowX": 0,
+      "headings": 6,
+      "cards": 16,
+      "links": 19,
+      "buttons": 5,
+      "interactive": 19,
+      "tinyTargets": 13,
+      "fixed": [
+        {
+          "tag": "HEADER",
+          "text": "👩‍🏫 Tiếng Anh Cô Dung Học tiếng Anh theo lộ trình rõ ràng 📚Học🗂️Luyện tập✍️K",
+          "top": 0,
+          "bottom": 65
+        },
+        {
+          "tag": "HEADER",
+          "text": "Hệ Thống Đào Tạo K12 Chuẩn Bộ GD&ĐT Chương Trình Khóa Học & Lộ Trình Phát Triển ",
+          "top": 121,
+          "bottom": 260
+        }
+      ]
+    }
+  ]
+}

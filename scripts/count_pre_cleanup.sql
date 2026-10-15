@@ -1,0 +1,12 @@
+SELECT 'users' as tbl, count(*) as cnt FROM users WHERE id = 'user_0e9f81f5-9156-49b0-bc55-846d73af1548' OR username = 'gv_mv24qlsx_ad720ebc';
+SELECT 'teacher_profiles' as tbl, count(*) as cnt FROM teacher_profiles WHERE user_id = 'user_0e9f81f5-9156-49b0-bc55-846d73af1548' OR teacher_id = 'user_0e9f81f5-9156-49b0-bc55-846d73af1548';
+SELECT 'teacher_recruitment' as tbl, count(*) as cnt FROM teacher_recruitment WHERE id = 'rec_1791618285933_u9t1';
+SELECT 'auth_sessions' as tbl, count(*) as cnt FROM auth_sessions WHERE user_id = 'user_0e9f81f5-9156-49b0-bc55-846d73af1548';
+SELECT 'audit_logs' as tbl, count(*) as cnt FROM audit_logs WHERE details LIKE '%user_0e9f81f5-9156-49b0-bc55-846d73af1548%' OR details LIKE '%rec_1791618285933_u9t1%' OR details LIKE '%gv_mv24qlsx_ad720ebc%';
+SELECT 'system_notifications' as tbl, count(*) as cnt FROM system_notifications WHERE user_id = 'user_0e9f81f5-9156-49b0-bc55-846d73af1548';
+SELECT 'system_notification_reads' as tbl, count(*) as cnt FROM system_notification_reads WHERE user_id = 'user_0e9f81f5-9156-49b0-bc55-846d73af1548';
+SELECT 'role_switch_sessions' as tbl, count(*) as cnt FROM role_switch_sessions WHERE user_id = 'user_0e9f81f5-9156-49b0-bc55-846d73af1548';
+SELECT 'class_sessions' as tbl, count(*) as cnt FROM class_sessions WHERE teacher_id = 'user_0e9f81f5-9156-49b0-bc55-846d73af1548';
+SELECT 'teacher_payrolls' as tbl, count(*) as cnt FROM teacher_payrolls WHERE teacher_id = 'user_0e9f81f5-9156-49b0-bc55-846d73af1548';
+SELECT 'teacher_leave_requests' as tbl, count(*) as cnt FROM teacher_leave_requests WHERE teacher_id = 'user_0e9f81f5-9156-49b0-bc55-846d73af1548';
+SELECT 'teacher_salary_advances' as tbl, count(*) as cnt FROM teacher_salary_advances WHERE teacher_id = 'user_0e9f81f5-9156-49b0-bc55-846d73af1548';

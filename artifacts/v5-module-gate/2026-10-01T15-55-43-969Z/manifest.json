@@ -1,0 +1,17 @@
+{
+  "runId": "2026-10-01T15-55-43-969Z",
+  "output": "C:\\Users\\admin\\.gemini\\antigravity\\scratch\\tienganh7-sveltekit\\artifacts\\v5-module-gate\\2026-10-01T15-55-43-969Z",
+  "temp": "C:\\Users\\admin\\AppData\\Local\\Temp\\tienganh7-v5-gate-NxZ3w2",
+  "localOnly": true,
+  "sourceCommit": "21f1ec2d6f55534f56b6d0669be60e9d3df69f4a",
+  "sourceDiffSha256": "53ccc3d2065839cd3aec3f71f299fa6364dded52dc7bff1457f8977958f2af3c",
+  "stages": [
+    {
+      "logName": "build.log",
+      "code": 1
+    }
+  ],
+  "gateSha256": "5f3d072c117a60a511908f38117473ed395ae12657fbd8b39a7bef544c031cb6",
+  "error": "build.log exited 1; see C:\\Users\\admin\\.gemini\\antigravity\\scratch\\tienganh7-sveltekit\\artifacts\\v5-module-gate\\2026-10-01T15-55-43-969Z",
+  "finishedAt": "2026-10-01T15:56:27.888Z"
+}

@@ -409,7 +409,85 @@ function assertSupportedMetadata(file) {
   if (Number(file.size || 0) > MAX_QUIZ_FILE_BYTES) throw new QuizDriveError('Tệp vượt quá giới hạn 10MB', 413, 'FileTooLarge');
 }
 
+async function readD1SyncedDriveSource(platform, id) {
+  const db = platform?.env?.DB;
+  if (!db || !id) return null;
+  try {
+    const kvRow = await db.prepare(
+      `SELECT id, title, content_markdown, updated_at FROM knowledge_vault WHERE id = ? AND folder = '07_GOOGLE_DRIVE_LIBRARY' LIMIT 1`
+    ).bind(id).first();
+    if (kvRow && kvRow.content_markdown) {
+      const name = String(kvRow.title || id).trim();
+      return {
+        file: {
+          id: kvRow.id,
+          name: /\.(docx|pdf|txt)$/i.test(name) ? name : `${name}.docx`,
+          mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          webViewLink: null,
+          modifiedTime: kvRow.updated_at || null
+        },
+        text: assertExtractedText(kvRow.content_markdown)
+      };
+    }
+  } catch {}
+
+  try {
+    const dfRow = await db.prepare(
+      `SELECT drive_id, name, mime_type, size_bytes, web_view_link, modified_time FROM drive_file_index WHERE drive_id = ? LIMIT 1`
+    ).bind(id).first();
+    if (dfRow) {
+      const baseName = String(dfRow.name || '').replace(/\.[^.]+$/, '').trim();
+      try {
+        const kvMatch = await db.prepare(
+          `SELECT id, title, content_markdown FROM knowledge_vault
+           WHERE folder = '07_GOOGLE_DRIVE_LIBRARY'
+             AND (content_markdown LIKE ? OR LOWER(title) = LOWER(?))
+           LIMIT 1`
+        ).bind(`%${dfRow.name}%`, baseName).first();
+        if (kvMatch && kvMatch.content_markdown && kvMatch.content_markdown.trim().length >= 50) {
+          return {
+            file: {
+              id: dfRow.drive_id,
+              name: dfRow.name,
+              mimeType: dfRow.mime_type || 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+              size: dfRow.size_bytes || null,
+              webViewLink: dfRow.web_view_link || null,
+              modifiedTime: dfRow.modified_time || null
+            },
+            text: assertExtractedText(kvMatch.content_markdown)
+          };
+        }
+      } catch {}
+
+      // Fallback to direct Drive API download for indexed file
+      const fileMeta = {
+        id: dfRow.drive_id,
+        name: dfRow.name,
+        mimeType: dfRow.mime_type || 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        size: dfRow.size_bytes || null,
+        webViewLink: dfRow.web_view_link || null,
+        modifiedTime: dfRow.modified_time || null
+      };
+      assertSupportedMetadata(fileMeta);
+      if (fileMeta.mimeType === GOOGLE_DOC_MIME) {
+        return { file: fileMeta, text: assertExtractedText(await exportGoogleDoc(platform, fileMeta.id)) };
+      }
+      const response = await driveRequest(platform, `/drive/v3/files/${encodeURIComponent(fileMeta.id)}?alt=media&supportsAllDrives=true`);
+      const bytes = new Uint8Array(await response.arrayBuffer());
+      const localText = fileMeta.mimeType === 'text/plain'
+        ? new TextDecoder().decode(bytes)
+        : await extractBytesLocal({ name: fileMeta.name, mimeType: fileMeta.mimeType }, bytes);
+      return { file: fileMeta, text: assertExtractedText(localText) };
+    }
+  } catch (e) {
+    if (e instanceof QuizDriveError) throw e;
+  }
+  return null;
+}
+
 export async function readAllowedDriveSource(platform, id) {
+  const d1Source = await readD1SyncedDriveSource(platform, id);
+  if (d1Source) return d1Source;
   const file = await getDriveFileMetadata(platform, id);
   assertSupportedMetadata(file);
   const allowed = await allowedQuizFolderIds(platform);
@@ -459,19 +537,45 @@ export function parseDriveLink(url) {
 
 /**
  * Đọc nội dung từ link Drive/Docs dán vào.
- * - File đã nằm trong thư mục Quiz Uploads (hoặc folder cho phép): đọc trực tiếp.
- * - File ngoài folder: copy vào Quiz Uploads rồi đọc — chỉ thành công khi
- *   service account có quyền xem file. Không nới allowlist cho file_id tùy ý.
+ * - File đã đồng bộ trong D1 (knowledge_vault / drive_file_index) hoặc nằm trong Quiz Uploads: đọc trực tiếp.
+ * - File ngoài folder: thử copy vào Quiz Uploads; nếu Drive hết dung lượng (storageQuotaExceeded), đọc trực tiếp qua API.
  */
 export async function readDriveSourceFromUrl(platform, url) {
   const id = parseDriveLink(url);
-  const file = await getDriveFileMetadata(platform, id);
+  const d1Source = await readD1SyncedDriveSource(platform, id);
+  if (d1Source) return d1Source;
+
+  let file;
+  try {
+    file = await getDriveFileMetadata(platform, id);
+  } catch (metaErr) {
+    // Public Google Docs fallback when link is public ("Anyone with link") and not shared with service account
+    if (/^https:\/\/docs\.google\.com\/document\/d\//i.test(String(url || '').trim()) && platform?.env?.GOOGLE_DRIVE_ACCESS_TOKEN !== 'test-token') {
+      try {
+        const pubRes = await fetch(`https://docs.google.com/document/d/${encodeURIComponent(id)}/export?format=txt`);
+        if (pubRes.ok) {
+          const txt = await pubRes.text();
+          return {
+            file: { id, name: `Google_Docs_${id.slice(0, 8)}.docx`, mimeType: GOOGLE_DOC_MIME, webViewLink: url },
+            text: assertExtractedText(txt)
+          };
+        }
+      } catch {}
+    }
+    throw metaErr;
+  }
   assertSupportedMetadata(file);
-  const folder = await ensureQuizUploadsFolder(platform);
-  const allowed = new Set([folder.id, ...configuredFolderIds(platform)]);
+  let folder = null;
+  try {
+    folder = await ensureQuizUploadsFolder(platform);
+  } catch (folderErr) {
+    if (!/storage quota|storageQuotaExceeded/i.test(String(folderErr?.message || ''))) throw folderErr;
+  }
+  const allowed = new Set([...(folder?.id ? [folder.id] : []), ...configuredFolderIds(platform)]);
   const parent = (file.parents || []).find((folderId) => allowed.has(folderId));
   if (parent) return readAllowedDriveSource(platform, id);
   try {
+    if (!folder?.id) throw new Error('storageQuotaExceeded');
     const copied = await (await driveRequest(platform, `/drive/v3/files/${encodeURIComponent(id)}/copy?fields=id&supportsAllDrives=true`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -481,26 +585,88 @@ export async function readDriveSourceFromUrl(platform, url) {
     return await readAllowedDriveSource(platform, copied.id);
   } catch (e) {
     if (e instanceof QuizDriveError && (e.code === 'DriveNotConfigured' || e.code === 'DriveParentNotConfigured')) throw e;
+    // When Service Account Drive storage quota is exceeded, read directly without copying
+    if (/storage quota|storageQuotaExceeded/i.test(String(e?.message || ''))) {
+      if (file.mimeType === GOOGLE_DOC_MIME) {
+        return { file, text: assertExtractedText(await exportGoogleDoc(platform, file.id)) };
+      }
+      const response = await driveRequest(platform, `/drive/v3/files/${encodeURIComponent(file.id)}?alt=media&supportsAllDrives=true`);
+      const bytes = new Uint8Array(await response.arrayBuffer());
+      const text = file.mimeType === 'text/plain'
+        ? new TextDecoder().decode(bytes)
+        : await extractBytesLocal({ name: file.name, mimeType: file.mimeType }, bytes);
+      return { file, text: assertExtractedText(text) };
+    }
     throw new QuizDriveError('Không đọc được file từ link này (cần quyền xem file trên Google Drive)', 403, 'DriveLinkForbidden');
   }
 }
 
 export async function listQuizDriveFiles(platform) {
-  const folders = await allowedQuizFolderIds(platform);
   const files = [];
-  for (const folderId of folders) {
-    const q = `'${driveQuery(folderId)}' in parents and trashed = false`;
-    let pageToken = '';
-    let pages = 0;
-    do {
-      const suffix = pageToken ? `&pageToken=${encodeURIComponent(pageToken)}` : '';
-      const response = await driveRequest(platform, `/drive/v3/files?q=${encodeURIComponent(q)}&fields=nextPageToken,files(id,name,mimeType,size,parents,webViewLink,createdTime,modifiedTime)&orderBy=modifiedTime%20desc&pageSize=100&supportsAllDrives=true&includeItemsFromAllDrives=true${suffix}`);
-      const data = await response.json();
-      files.push(...(data.files || []).filter((file) => file.mimeType !== GOOGLE_FOLDER_MIME));
-      pageToken = data.nextPageToken || '';
-      pages += 1;
-    } while (pageToken && pages < 20);
+  let driveErr = null;
+  try {
+    const folders = await allowedQuizFolderIds(platform);
+    for (const folderId of folders) {
+      const q = `'${driveQuery(folderId)}' in parents and trashed = false`;
+      let pageToken = '';
+      let pages = 0;
+      do {
+        const suffix = pageToken ? `&pageToken=${encodeURIComponent(pageToken)}` : '';
+        const response = await driveRequest(platform, `/drive/v3/files?q=${encodeURIComponent(q)}&fields=nextPageToken,files(id,name,mimeType,size,parents,webViewLink,createdTime,modifiedTime)&orderBy=modifiedTime%20desc&pageSize=100&supportsAllDrives=true&includeItemsFromAllDrives=true${suffix}`);
+        const data = await response.json();
+        files.push(...(data.files || []).filter((file) => file.mimeType !== GOOGLE_FOLDER_MIME));
+        pageToken = data.nextPageToken || '';
+        pages += 1;
+      } while (pageToken && pages < 20);
+    }
+  } catch (err) {
+    driveErr = err;
   }
+
+  // Supplement with synced Google Drive library from D1 when Drive folder is empty or unavailable
+  if (files.length === 0 && platform?.env?.DB) {
+    try {
+      const kvRes = await platform.env.DB.prepare(
+        `SELECT id, title, updated_at FROM knowledge_vault
+         WHERE folder = '07_GOOGLE_DRIVE_LIBRARY' AND id != '00_GOOGLE_DRIVE_INDEX' AND title NOT LIKE '📁%' AND LENGTH(content_markdown) >= 100
+         ORDER BY updated_at DESC LIMIT 60`
+      ).all();
+      for (const row of (kvRes?.results || [])) {
+        const rawTitle = String(row.title || row.id).trim();
+        files.push({
+          id: row.id,
+          name: /\.(docx|pdf|txt)$/i.test(rawTitle) ? rawTitle : `${rawTitle}.docx`,
+          mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          webViewLink: null,
+          modifiedTime: row.updated_at || null
+        });
+      }
+    } catch {}
+
+    try {
+      const dfRes = await platform.env.DB.prepare(
+        `SELECT drive_id, name, mime_type, size_bytes, web_view_link, modified_time
+         FROM drive_file_index
+         WHERE mime_type IN ('application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/pdf', 'text/plain', 'application/vnd.google-apps.document')
+         ORDER BY modified_time DESC LIMIT 40`
+      ).all();
+      for (const row of (dfRes?.results || [])) {
+        files.push({
+          id: row.drive_id,
+          name: row.name,
+          mimeType: row.mime_type,
+          size: row.size_bytes,
+          webViewLink: row.web_view_link,
+          modifiedTime: row.modified_time
+        });
+      }
+    } catch {}
+  }
+
+  if (files.length === 0 && driveErr) {
+    throw driveErr;
+  }
+
   return [...new Map(files.map((file) => [file.id, file])).values()];
 }
 

@@ -38,7 +38,7 @@ export async function POST({ params, request, platform }) {
   const gradeLevel = gradeValidation.gradeLevel;
 
   const article = await db.prepare(
-    `SELECT id, title, content_markdown FROM knowledge_vault WHERE id = ? AND (status = 'active' OR status IS NULL) LIMIT 1`
+    `SELECT id, title, content_markdown FROM knowledge_vault WHERE id = ? AND (status IN ('active', 'published') OR status IS NULL) LIMIT 1`
   ).bind(vaultId).first();
 
   if (!article) {

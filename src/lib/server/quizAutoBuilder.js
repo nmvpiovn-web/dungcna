@@ -217,16 +217,26 @@ export function allocateTypeMix(totalCount, requestedMix = {}) {
   return result;
 }
 
+const IGNORED_META_KEYS = new Set([
+  'id', 'title', 'folder', 'category', 'tags', 'updated_at', 'created_at',
+  'source_file', 'source_path', 'source_hash', 'sha256', 'status', 'nguồn', 'source'
+]);
+
 /**
  * Parses sentences, vocabulary items, and Q&A blocks from grounded source text.
  */
 function parseSourceContent(text) {
-  const clean = String(text || '').replace(/\r/g, '').trim();
+  let clean = String(text || '').replace(/\r/g, '').trim();
+  // Strip YAML frontmatter at top of Markdown / Knowledge Vault files
+  clean = clean.replace(/^---\n[\s\S]*?\n---\n?/, '').trim();
+
   const lines = clean.split('\n').map((l) => l.trim()).filter(Boolean);
 
   const vocabulary = [];
   const mcqBlocks = [];
   const sentences = [];
+  const secondarySentences = [];
+  const tableVocab = [];
 
   let currentMcq = null;
 
@@ -240,14 +250,56 @@ function parseSourceContent(text) {
     currentMcq = null;
   }
 
-  for (const line of lines) {
-    // Page boundary markers
-    if (/^---\s*Trang\s*\d+\/\d+\s*---$/i.test(line)) continue;
+  for (const rawLine of lines) {
+    // Page boundary markers & markdown images/links/headers boilerplate
+    if (/^---\s*Trang\s*\d+\/\d+\s*---$/i.test(rawLine)) continue;
+    if (/^!\[.*?\]\(.*?\)$/.test(rawLine)) continue;
+    if (/^\[\[.*?\]\]$/.test(rawLine)) continue;
+    if (/^(?:Nguồn|Nội dung trích xuất từ tài liệu gốc|Giaoandethitienganh\.info)/i.test(rawLine)) continue;
+    if (/^#+\s+/.test(rawLine)) continue;
 
-    // MCQ options: A. ... B. ...
+    // Markdown table separator row: |---|---|
+    if (/^\|[\s\-:|]+\|$/.test(rawLine)) continue;
+
+    // Check for inline / DOCX-table MCQ options when inside an MCQ block:
+    // e.g. "A. opt1 | | | B. opt2" or "| | C. opt3 | D. opt4"
+    if (currentMcq) {
+      const cleanedCells = rawLine.replace(/\|+/g, '   ').trim();
+      const inlineOpts = [...cleanedCells.matchAll(/(?:^|\s{2,})([A-Da-d])[.)]\s*(.+?)(?=\s{2,}[A-Da-d][.)]\s+|$)/g)];
+      if (inlineOpts.length >= 1 && /^[A-Da-d][.)]/.test(cleanedCells)) {
+        for (const m of inlineOpts) {
+          const letter = m[1].toUpperCase();
+          const optText = m[2].replace(/\|/g, '').trim();
+          if (optText) currentMcq.options.push(`${letter}. ${optText}`);
+        }
+        continue;
+      }
+    }
+
+    // Markdown data table row: | **Pre-A1** | Tiền Bậc 1 | Pre A1 Starters | ... |
+    if (rawLine.startsWith('|') && rawLine.endsWith('|') && rawLine.split('|').length >= 4) {
+      const cells = rawLine
+        .split('|')
+        .slice(1, -1)
+        .map((c) => c.replace(/\*\*/g, '').trim())
+        .filter(Boolean);
+      if (cells.length >= 2 && !/^(?:CEFR|STT|No\.?|Cột|Từ vựng|Term)$/i.test(cells[0])) {
+        const term = cells[0];
+        const desc = cells.slice(1).join(' — ');
+        if (term.length >= 2 && term.length <= 40 && desc.length >= 4) {
+          tableVocab.push({ word: term, definition: desc });
+          secondarySentences.push(`${term} tương ứng với ${desc}.`);
+        }
+      }
+      continue;
+    }
+
+    const line = rawLine.replace(/\*\*/g, '').replace(/^®\s*/, '').trim();
+
+    // Single MCQ option: A. ... B. ...
     const optMatch = line.match(/^([A-Da-d])[.)]\s*(.+)$/);
     if (optMatch && currentMcq) {
-      currentMcq.options.push(line);
+      currentMcq.options.push(`${optMatch[1].toUpperCase()}. ${optMatch[2].replace(/\|/g, '').trim()}`);
       continue;
     }
 
@@ -261,17 +313,30 @@ function parseSourceContent(text) {
     // Vocab definition: "word: definition" or "- word: definition"
     const vocabMatch = line.match(/^[-*•]?\s*([a-zA-Z\s]{2,25})\s*[:=–—]\s*(.+)$/);
     if (vocabMatch) {
-      flushCurrentMcq();
       const word = vocabMatch[1].trim();
       const def = vocabMatch[2].trim();
-      if (word.length >= 2 && def.length >= 4) {
+      if (!IGNORED_META_KEYS.has(word.toLowerCase()) && word.length >= 2 && def.length >= 4) {
+        flushCurrentMcq();
         vocabulary.push({ word, definition: def });
         continue;
       }
     }
 
-    // MCQ question start: "1. What is..." or "Question 1: ..."
-    const qStartMatch = line.match(/^(?:(?:Question|Câu)\s*\d+[:.]|\d+[.)])\s*(.+)$/i);
+    // Extended bullet key-value (supports Vietnamese/English terms with parens)
+    const bulletKvMatch = line.match(/^[-*•]\s*([^:=–—]{3,45})\s*[:=–—]\s*(.+)$/);
+    if (bulletKvMatch) {
+      const term = bulletKvMatch[1].trim();
+      const def = bulletKvMatch[2].trim();
+      if (!IGNORED_META_KEYS.has(term.toLowerCase()) && def.length >= 6) {
+        flushCurrentMcq();
+        tableVocab.push({ word: term, definition: def });
+        secondarySentences.push(`${term}: ${def.replace(/[.?!]+$/, '')}.`);
+        continue;
+      }
+    }
+
+    // MCQ question start: "1. What is..." or "Question 1: ..." or "Question 1. ..."
+    const qStartMatch = line.match(/^(?:(?:Question|Câu)\s*\d+[:.)]|\d+[.)])\s*(.+)$/i);
     if (qStartMatch) {
       flushCurrentMcq();
       currentMcq = { prompt: qStartMatch[1].trim(), options: [], answer: null };
@@ -283,10 +348,65 @@ function parseSourceContent(text) {
     // Regular informative sentence for True/False, Blank, Ordering
     if (line.length >= 15 && /[.?!]$/.test(line) && !line.includes(':')) {
       sentences.push(line);
+    } else {
+      const cleanBullet = line.replace(/^[-*•]\s*/, '').trim();
+      if (cleanBullet.length >= 20 && !IGNORED_META_KEYS.has(cleanBullet.split(':')[0]?.trim().toLowerCase())) {
+        secondarySentences.push(/[.?!]$/.test(cleanBullet) ? cleanBullet : `${cleanBullet}.`);
+      }
     }
   }
 
   flushCurrentMcq();
+
+  // Enrich vocabulary with table/bullet terms only when primary vocabulary is sparse
+  if (vocabulary.length < 4 && tableVocab.length > 0) {
+    const seenWords = new Set(vocabulary.map((v) => v.word.toLowerCase()));
+    for (const tv of tableVocab) {
+      if (!seenWords.has(tv.word.toLowerCase())) {
+        vocabulary.push(tv);
+        seenWords.add(tv.word.toLowerCase());
+      }
+    }
+  }
+
+  // Enrich sentences from secondary sentences and MCQ blocks when primary sentences are sparse
+  if (sentences.length < 6) {
+    for (const s of secondarySentences) {
+      if (!sentences.includes(s)) sentences.push(s);
+    }
+  }
+  if (sentences.length < 6 && mcqBlocks.length > 0) {
+    for (const blk of mcqBlocks) {
+      let ansOpt = blk.options[0] || '';
+      if (blk.answer) {
+        const idx = blk.answer.charCodeAt(0) - 65;
+        if (blk.options[idx]) ansOpt = blk.options[idx];
+      }
+      const cleanAns = ansOpt.replace(/^[A-Da-d][.)]\s*/, '').trim();
+      const filled = /_{2,}/.test(blk.prompt) && cleanAns
+        ? blk.prompt.replace(/_{2,}/, cleanAns)
+        : `${blk.prompt.replace(/[?:.]+$/, '')} is ${cleanAns}.`;
+      if (filled.length >= 15 && !sentences.includes(filled)) {
+        sentences.push(/[.?!]$/.test(filled) ? filled : `${filled}.`);
+      }
+    }
+  }
+
+  // Enrich vocabulary from MCQ blocks if still < 4 items (e.g. pure MCQ Drive file)
+  if (vocabulary.length < 4 && mcqBlocks.length > 0) {
+    for (const blk of mcqBlocks) {
+      let ansOpt = blk.options[0] || '';
+      if (blk.answer) {
+        const idx = blk.answer.charCodeAt(0) - 65;
+        if (blk.options[idx]) ansOpt = blk.options[idx];
+      }
+      const cleanAns = ansOpt.replace(/^[A-Da-d][.)]\s*/, '').trim();
+      if (cleanAns.length >= 2 && cleanAns.length <= 35 && blk.prompt.length >= 10) {
+        vocabulary.push({ word: cleanAns, definition: blk.prompt });
+      }
+      if (vocabulary.length >= 8) break;
+    }
+  }
 
   return { vocabulary, mcqBlocks, sentences, rawText: clean };
 }
@@ -508,12 +628,20 @@ export function generateDeterministicQuiz(text, options = {}) {
   let ordAdded = 0;
   for (const s of parsed.sentences) {
     if (ordAdded >= targetOrd) break;
-    const tokens = s.replace(/[.?!]$/, '').split(/\s+/).filter(Boolean);
+    let tokens = s.replace(/[.?!]$/, '').split(/\s+/).filter(Boolean);
+    if (tokens.length > 10) {
+      const clause = s.split(/[,;–—]/)[0]?.trim() || '';
+      const clauseTokens = clause.replace(/[.?!]$/, '').split(/\s+/).filter(Boolean);
+      tokens = clauseTokens.length >= 4 && clauseTokens.length <= 10 ? clauseTokens : tokens.slice(0, 8);
+    }
     if (tokens.length >= 3 && tokens.length <= 10) {
       const scrambled = deterministicShuffle(tokens, s);
+      const ordPrompt = ordAdded === 0
+        ? 'Sắp xếp các từ sau thành câu hoàn chỉnh:'
+        : `Sắp xếp các từ sau thành câu hoàn chỉnh [${ordAdded + 1}]:`;
       const added = addQuestionSafely({
         type: 'ordering',
-        prompt: 'Sắp xếp các từ sau thành câu hoàn chỉnh:',
+        prompt: ordPrompt,
         options_json: { items: scrambled },
         correct_answer: tokens,
         points: 1
@@ -526,34 +654,49 @@ export function generateDeterministicQuiz(text, options = {}) {
   const targetMatch = allocation.matching || 0;
   let matchAdded = 0;
   if (targetMatch > 0 && parsed.vocabulary.length >= 2) {
-    const pairs = parsed.vocabulary.slice(0, 4);
-    const left = pairs.map((p) => p.word);
-    const right = pairs.map((p) => p.definition).sort();
-    const correctMap = Object.fromEntries(pairs.map((p) => [p.word, p.definition]));
-    const added = addQuestionSafely({
-      type: 'matching',
-      prompt: 'Nối các từ tiếng Anh với nghĩa tương ứng:',
-      options_json: { left, right },
-      correct_answer: correctMap,
-      points: 2
-    });
-    if (added) matchAdded++;
+    for (let mIdx = 0; mIdx < targetMatch; mIdx++) {
+      const offset = (mIdx * 3) % Math.max(1, parsed.vocabulary.length - 1);
+      let pairs = parsed.vocabulary.slice(offset, offset + 4);
+      if (pairs.length < 2) pairs = parsed.vocabulary.slice(0, 4);
+      const left = pairs.map((p) => p.word);
+      const right = pairs.map((p) => p.definition).sort();
+      const correctMap = Object.fromEntries(pairs.map((p) => [p.word, p.definition]));
+      const matchPrompt = matchAdded === 0
+        ? 'Nối các từ tiếng Anh với nghĩa tương ứng:'
+        : `Nối các từ tiếng Anh với nghĩa tương ứng [${matchAdded + 1}]:`;
+      const added = addQuestionSafely({
+        type: 'matching',
+        prompt: matchPrompt,
+        options_json: { left, right },
+        correct_answer: correctMap,
+        points: 2
+      });
+      if (added) matchAdded++;
+    }
   }
 
   // 7. Generate Memory Match
   const targetMm = allocation.memory_match || 0;
   let mmAdded = 0;
   if (targetMm > 0 && parsed.vocabulary.length >= 2) {
-    const pairList = parsed.vocabulary.slice(0, 4).map((p) => ({ a: p.word, b: p.definition }));
-    const correctMap = Object.fromEntries(pairList.map((p) => [p.a, p.b]));
-    const added = addQuestionSafely({
-      type: 'memory_match',
-      prompt: 'Ghép đôi các thẻ từ vựng tương ứng:',
-      options_json: { pairs: pairList },
-      correct_answer: correctMap,
-      points: 2
-    });
-    if (added) mmAdded++;
+    for (let mIdx = 0; mIdx < targetMm; mIdx++) {
+      const offset = (mIdx * 3) % Math.max(1, parsed.vocabulary.length - 1);
+      let slice = parsed.vocabulary.slice(offset, offset + 4);
+      if (slice.length < 2) slice = parsed.vocabulary.slice(0, 4);
+      const pairList = slice.map((p) => ({ a: p.word, b: p.definition }));
+      const correctMap = Object.fromEntries(pairList.map((p) => [p.a, p.b]));
+      const mmPrompt = mmAdded === 0
+        ? 'Ghép đôi các thẻ từ vựng tương ứng:'
+        : `Ghép đôi các thẻ từ vựng tương ứng [${mmAdded + 1}]:`;
+      const added = addQuestionSafely({
+        type: 'memory_match',
+        prompt: mmPrompt,
+        options_json: { pairs: pairList },
+        correct_answer: correctMap,
+        points: 2
+      });
+      if (added) mmAdded++;
+    }
   }
 
   // 8. Generate Rewrite
@@ -574,7 +717,13 @@ export function generateDeterministicQuiz(text, options = {}) {
   const targetPara = (allocation.paragraph || 0) + (allocation.essay || 0);
   let paraAdded = 0;
   if (targetPara > 0 && parsed.rawText.length >= 50) {
-    const paragraphs = parsed.rawText.split(/\n{2,}/).map((p) => p.trim()).filter((p) => p.length >= 40);
+    let paragraphs = parsed.rawText.split(/\n{2,}/).map((p) => p.trim()).filter((p) => p.length >= 40);
+    if (paragraphs.length < targetPara) {
+      const extra = parsed.rawText.split(/\n+/).map((p) => p.trim()).filter((p) => p.length >= 50);
+      for (const ep of extra) {
+        if (!paragraphs.includes(ep)) paragraphs.push(ep);
+      }
+    }
     for (const p of paragraphs) {
       if (paraAdded >= targetPara) break;
       const added = addQuestionSafely({

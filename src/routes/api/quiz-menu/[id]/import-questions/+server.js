@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
 import { verifyServerAuth, isStaffUser } from '../../../../../lib/server/auth.js';
 import { canManageQuiz } from '../../../../../lib/server/quizMenu.js';
-import { mapBankQuestionToQuizQuestion } from '../../../../../lib/server/quizBankBridge.js';
+import { mapBankQuestionToQuizQuestion, convertBankRowsToTypeMix } from '../../../../../lib/server/quizBankBridge.js';
 
 export const prerender = false;
 
@@ -34,6 +34,7 @@ export async function POST({ params, request, platform }) {
   const count = Math.min(Math.max(Number.isFinite(countParam) ? countParam : 10, 1), 50);
   const filters = body.filters && typeof body.filters === 'object' ? body.filters : {};
   const mergeStrategy = body.merge_strategy === 'replace' ? 'replace' : 'append';
+  const typeMix = body.type_mix && typeof body.type_mix === 'object' ? body.type_mix : null;
 
   // Fetch candidate bank rows
   let bankRows = [];
@@ -165,19 +166,19 @@ export async function POST({ params, request, platform }) {
     ? Math.max(...existingQuestions.map((q) => Number(q.q_order || 0))) + 1
     : 0;
 
-  const toInsert = [];
+  const deduplicatedRows = [];
   for (const row of bankRows) {
-    const candidate = mapBankQuestionToQuizQuestion(row, params.id, nextOrder);
-    // Extra guard against duplication
-    if (!isReplace && (existingIds.has(candidate.id) || existingSourceIds.has(row.id) || existingPrompts.has(candidate.prompt.trim()))) {
+    const baseCandidate = mapBankQuestionToQuizQuestion(row, params.id, nextOrder);
+    if (!isReplace && (existingIds.has(baseCandidate.id) || existingSourceIds.has(row.id) || existingPrompts.has(baseCandidate.prompt.trim()))) {
       continue;
     }
-    toInsert.push(candidate);
-    existingIds.add(candidate.id);
+    deduplicatedRows.push(row);
+    existingIds.add(baseCandidate.id);
     existingSourceIds.add(row.id);
-    existingPrompts.add(candidate.prompt.trim());
-    nextOrder++;
+    existingPrompts.add(baseCandidate.prompt.trim());
   }
+
+  const toInsert = convertBankRowsToTypeMix(deduplicatedRows, params.id, nextOrder, typeMix);
 
   if (!toInsert.length) {
     return json({

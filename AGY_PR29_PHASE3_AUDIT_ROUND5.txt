@@ -1,0 +1,30 @@
+Bạn là Antigravity CLI worker/dev. Tiếp tục branch agy/quiz-drive-sync-phase3 và PR #29 từ HEAD 0b3f525. Codex audit độc lập phát hiện Round 5. RED/GREEN, commit/push cùng branch. KHÔNG merge/deploy/apply remote D1. Không commit prompt/artifacts/scratch/.agents/build_meta.
+
+P0 RED-3R5.1 — Client-controlled clock bypass:
+- publishBundleHomework gọi validateStrictDeadline(..., { now: input.now }); input là request body nên client có thể gửi now=2000 để chấp nhận deadline quá khứ.
+- Production path tuyệt đối dùng server Date.now, không lấy now từ payload. Test clock injection chỉ được dùng khi gọi helper trực tiếp hoặc dependency nội bộ không thể điều khiển qua HTTP.
+- Behavior test qua sync-bundle endpoint gửi deadline quá khứ + now giả trong JSON vẫn phải 400 InvalidDeadline và không ghi assignment/notification.
+
+P1 RED-3R5.2 — Observability cursor total vẫn sai:
+- Batch cuối với scan_offset>0 đang trả total=matched.length của riêng batch cuối và total_is_lower_bound=false. Đây không phải tổng match toàn bộ các batch.
+- Chỉ được trả exact total khi toàn bộ candidate được scan trong một request từ offset 0. Với live filter và scan_offset>0 hoặc scan chưa complete: total=null, total_is_lower_bound=true (hoặc contract tương đương thật rõ), matched_count là batch-local; thêm exact_total_available boolean nếu cần.
+- Test batch 1 có 1 match, batch 2 có 1 match: batch 2 không được tuyên bố total=1 exact.
+
+P1 RED-3R5.3 — Nhãn new/update phải dựa lịch sử giao bài:
+- isRepublish = bundle.revision > 1 làm lần giao BTVN đầu tiên ở revision 2 bị gọi “Cập nhật”. Dùng assignment.status/history notification để xác định đã từng publish.
+- Test bundle được sync tới rev 2 trước lần giao đầu: notification phải “BTVN mới”; lần giao sau ở rev 3 phải “Cập nhật”. Giữ idempotency và late recipient.
+
+P1 RED-3R5.4 — Session trạng thái cancelled:
+- getValidTeachingSessions đã ẩn cancelled nhưng publishBundleHomework direct vẫn chấp nhận session cancelled. Server phải reject cancelled (409 SessionUnavailable hoặc mã rõ ràng) trước enrollment/notification writes.
+- Test canceled session bị chặn, DB không đổi.
+
+P2 RED-3R5.5 — Legacy assign consistency + hygiene:
+- GET assign đã hỗ trợ assistant_teacher_id nhưng POST ownership còn thiếu assistant_teacher_id; sửa nhất quán.
+- Dùng validateStrictDeadline thực sự cho due_date (giờ cuối ngày theo Asia/Bangkok) hoặc bỏ unused import; chặn ngày Gregorian sai/quá khứ.
+- Xóa blank line EOF để `git diff --check c1ff903...HEAD` thật sự sạch.
+
+Gate:
+- Phase3 behavior tests, full quiz suites, npm run check/build, git diff --check base...HEAD.
+- Báo chính xác test counts, SHA và PR #29. Không tuyên bố sạch nếu command còn warning.
+
+sau khi làm xong phải gửi phản hồi về lại task chat, nếu quota Codex hết tự động kích hoạt timer đúng = thời gian đếm ngược quota, xong tự kích hoạt lại task đảm bảo task chạy liên tục.

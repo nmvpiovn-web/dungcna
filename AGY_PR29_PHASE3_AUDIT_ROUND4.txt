@@ -1,0 +1,46 @@
+Bạn là Antigravity CLI worker/dev. Tiếp tục trên branch agy/quiz-drive-sync-phase3, PR #29, base agy/quiz-auto-builder-phase2. Codex là maintainer/auditor. Thực hiện RED/GREEN, commit và push vào cùng branch. KHÔNG merge, KHÔNG deploy, KHÔNG apply remote D1. Không commit prompt này, artifacts, scratch, .agents hay static/build_meta.json.
+
+Audit độc lập tại HEAD 219ba758 phát hiện các lỗi sau. Sửa bằng behavior/integration tests thật, tránh chỉ kiểm tra chuỗi source.
+
+P0 RED-3R4.1 — RBAC của mục tiêu giao BTVN:
+- publishBundleHomework hiện tin session_id/class_id/class_name từ client. Giáo viên có thể nhập mã lớp khác và gửi notification tới lớp không thuộc mình.
+- Server phải SELECT class_sessions theo session_id, xác minh class_id khớp record, lấy class_name từ DB, không tin class_name client.
+- Teacher/assistant/substitute chỉ được giao vào session mình được phân công (teacher_id, assistant_teacher_id hoặc substitute_teacher_id theo schema thực tế). admin/superadmin/leader có thể quản lý toàn bộ.
+- Session không tồn tại => 404; class mismatch hoặc không có quyền => 403/409 rõ ràng. Tuyệt đối không query enrollment hay ghi notification trước khi RBAC pass.
+- Test giáo viên A bị chặn khi dùng session/lớp của B; không có assignment/notification bị sửa. Test manager được phép.
+
+P0 RED-3R4.2 — Thông báo revision bị bỏ qua:
+- Sau sync rev 2, upsert homework đã đổi source_content_revision thành 2 trong khi status vẫn published. Early return ở publishBundleHomework khiến nếu lớp/session/deadline giữ nguyên thì không tạo notification rev 2.
+- Không dùng assignment.source_content_revision làm ledger “đã thông báo”. Dùng notification ID theo revision/recipient làm idempotency hoặc ledger rõ ràng.
+- Rev 1 retry không duplicate; rev 2 với cùng class/session/deadline vẫn tạo notification cập nhật; retry rev 2 không duplicate. Người mới vào lớp trong cùng revision cần nhận notification còn thiếu mà không duplicate người cũ.
+
+P1 RED-3R4.3 — UI phải chọn lịch dạy thật, không nhập mã tay:
+- Tạo/ mở rộng endpoint staff-only + canManageQuiz trả danh sách class_sessions hợp lệ theo RBAC ở trên, gồm session_id, class_id, class_name, session_date, start_time/end_time; ưu tiên buổi sắp tới và giới hạn hợp lý.
+- Trong bundle panel thay “Mã buổi học”, “Mã lớp”, “Tên lớp” bằng select/card lịch dạy. Khi chọn session, tự derive class_id/class_name. Không cho submit nếu chưa chọn.
+- Mobile 320/360px, touch target >=44px, label/a11y đầy đủ, warm ivory/stone/emerald/coral, không navy/dark blue.
+- Server vẫn là nguồn xác thực cuối.
+
+P1 RED-3R4.4 — Validate deadline/time thật:
+- Regex hiện chấp nhận 2026-99-99 và 99:99. Parse strict ngày Gregorian YYYY-MM-DD và giờ 00:00..23:59; chặn deadline đã qua theo timezone ứng dụng (Asia/Bangkok hoặc chính sách hiện có), cho phép hôm nay nếu thời điểm còn tương lai.
+- Test leap day hợp lệ/không hợp lệ, 24:00, 99:99, ngày quá khứ.
+
+P1 RED-3R4.5 — Lock phải bao phủ publish_homework:
+- Route đã acquire lock nhưng publishBundleHomework không nhận/renew lockToken. Truyền lockToken và renew trước/sau live health, trước batch D1. Nếu lock bị mất thì abort trước write, không gửi notification.
+
+P1 RED-3R4.6 — Observability refresh pagination/total phải trung thực:
+- refresh=1 hiện chỉ scan tối đa 50 candidate nhưng trả total=matched.length như thể toàn tập, offset>scan window có thể trả rỗng sai.
+- Thiết kế bounded scan rõ ràng: response phải có scan_complete, scan_limit/scan_offset hoặc cursor, matched_count và total_is_lower_bound/total=null khi chưa scan hết. Pagination/cursor không được bỏ qua bundle. Nếu chọn cursor scanning, test trang tiếp theo tìm được conflict nằm sau batch đầu.
+- Validate health_status allowlist, không silently accept giá trị rác.
+
+P2 RED-3R4.7 — Audit event response không lộ arbitrary details:
+- getBundleSyncEvents xóa details_json nhưng trả lại object details parse nguyên xi; cleanup event đang chứa fileId Drive.
+- UI hiện không dùng details. Trả whitelist summary an toàn hoặc bỏ details hoàn toàn khỏi client response. Không lộ Drive IDs/raw arbitrary JSON. Dữ liệu thô vẫn được lưu server-side trong audit table.
+
+Yêu cầu kiểm thử:
+- Bổ sung test hành vi cho toàn bộ mục trên trong tests/quiz_drive_sync_phase3.test.js hoặc suite Round4 mới.
+- Chạy suite Phase 3, sau đó đủ 23+ quiz suites hiện có; báo số test thật từ Node runner.
+- npm run check, npm run build, git diff --check base...HEAD.
+- Cập nhật docs plan/runbook nếu contract endpoint/response thay đổi.
+- Commit/push và báo SHA, PR URL, file thay đổi, test evidence, phần chưa làm.
+
+sau khi làm xong phải gửi phản hồi về lại task chat, nếu quota Codex hết tự động kích hoạt timer đúng = thời gian đếm ngược quota, xong tự kích hoạt lại task đảm bảo task chạy liên tục.

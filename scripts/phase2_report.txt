@@ -1,0 +1,77 @@
+[Báo Cáo Hoàn Thành Phase 2 - Auto Builder & Expanded Question Types (PR #28) từ Antigravity CLI tới Codex Maintainer/Auditor]
+
+1. Tóm tắt & Trạng thái Git:
+- Base Branch / Commit: agy/quiz-library-sync-phase1 @ commit 87001c9 (PR #27)
+- Feature Branch: agy/quiz-auto-builder-phase2
+- Commit SHA: f88478a ("feat(quiz): auto builder phase 2 - multi-image, D1 defaults, dynamic type mix, and expanded question types")
+- Draft Pull Request: https://github.com/nmvpiovn-web/dungcna/pull/28 (Base: agy/quiz-library-sync-phase1, Draft: true, Stacked PR)
+- Cam kết kỷ luật: KHÔNG merge, KHÔNG deploy, KHÔNG apply remote D1 migrations (0018, 0019, 0020, 0021). Không commit artifacts/scratch/.agents/build_meta.
+
+2. Nghiệm thu chi tiết 8 mục tiêu sản phẩm Phase 2:
+- Mục tiêu 1 (Tách 2 chế độ tạo Quiz):
+  * "Tự động (Auto)" là chế độ mặc định khi vào tab Tạo Quiz: chọn nguồn tài liệu + cấu hình thông số; hệ thống tự phân tích và sinh trọn bộ câu hỏi. Không bắt buộc nhập câu thủ công khi ở Auto.
+  * "Nhập thủ công": chế độ soạn chi tiết từng câu (thêm/sửa/xóa/đổi thứ tự/chọn đáp án đúng).
+  * Chuyển đổi qua lại giữa Auto và Thủ công có banner cảnh báo và xác nhận nếu đang có câu hỏi dở dang (Draft Preservation Guard), tuyệt đối không âm thầm xóa draft.
+
+- Mục tiêu 2 (Cấu hình Auto lưu theo tài khoản D1):
+  * Migration 0021 (migrations/0021_quiz_auto_builder_defaults.sql) tạo bảng quiz_builder_defaults (user_id PK, question_count 1-200, time_limit_minutes 1-180, grade_level 0-12, difficulty, source_mode, dynamic_type_mix JSON, auto_publish, updated_at).
+  * API REST GET/PUT /api/quiz-menu/builder-defaults: xác thực fail-closed, staff-only RBAC, user isolation tuyệt đối, bound validation chặt chẽ.
+  * Khi vào Tạo Quiz, tự động tải defaults từ D1 server-side; hỗ trợ nút "Lưu cấu hình mặc định" một chạm.
+
+- Mục tiêu 3 (Nguồn ảnh chụp đề nhiều trang 1..6 ảnh):
+  * Component QuizCameraCapture hỗ trợ chọn tệp hoặc chụp trực tiếp 1 đến 6 ảnh (JPEG/PNG/WebP).
+  * Hiển thị badge N/6 trực quan, danh sách ảnh thu nhỏ, hỗ trợ đổi thứ tự trang (Lên/Xuống) và xóa từng ảnh.
+  * Client và Server đồng bộ từ chối ảnh thứ 7 với mã lỗi HTTP 400 MaxSixImagesAllowed.
+  * Giới hạn kích thước nghiêm ngặt: <=10MB/ảnh và <=20MB tổng payload.
+  * Nối văn bản các trang kèm phân định ranh giới: "--- Trang X/Y ---".
+  * Tuyệt đối không lưu base64 ảnh vào D1. Khi xử lý lỗi, rollback nguyên tử.
+
+- Mục tiêu 4 (Đầy đủ các nguồn Auto):
+  * Tải tài liệu (DOCX, PDF, TXT, ảnh 1..6).
+  * Google Drive / Google Docs (đọc theo allowlist, ghi nhận source_type="drive" và source_id).
+  * Kho câu hỏi D1 (lấy từ question_bank hiện hữu).
+  * Sẵn sàng tích hợp Knowledge Vault.
+
+- Mục tiêu 5 (Mở rộng 10 dạng câu hỏi & Dynamic Type Mix):
+  * Hỗ trợ đầy đủ 10 dạng: multiple_choice, true_false, fill_blank, matching, word_guess, ordering, memory_match, picture_guess, rewrite, paragraph/essay.
+  * Bộ điều khiển Dynamic Mix với thẻ bật/tắt và nút tăng/giảm (+/-) số lượng câu cho từng dạng.
+  * Tổng số câu trong Dynamic Mix khớp chính xác với question_count cấu hình (hiển thị pill tiến độ Đã phân bổ: X / Total câu).
+  * Cơ chế Graceful Degradation: nếu nguồn tài liệu thiếu ảnh/cặp từ để sinh các dạng đặc thù, tự động fallback sang trắc nghiệm/điền từ/đoạn văn mà không làm hỏng tiến trình tạo quiz.
+  * Hỗ trợ end-to-end từ editor, server validator, student player, grading engine đến exam review.
+
+- Mục tiêu 6 (Quy tắc sinh & Bảo mật đáp án):
+  * Trình sinh xác định (deterministic generator) hoạt động offline hoàn toàn dựa trên nội dung nguồn.
+  * Deduplication bằng fingerprint prompt, chặn sinh trùng lặp.
+  * Giới hạn an toàn tối đa 200 câu hỏi/quiz.
+  * Bảo mật tuyệt đối đáp án: public / guest / student APIs không bao giờ trả về correct_answer, explanation, source_type, source_id trước khi nộp bài.
+
+- Mục tiêu 7 (Giao diện, Theme warm ivory & A11y):
+  * Nền ấm ivory (#fdfbf7), chữ stone gần đen (#1c1917), ngọc bích (#059669), cam san hô (#ea580c), lavender (#8b5cf6).
+  * Sạch 100% không còn bất kỳ token cấm navy/dark blue/slate nào trong toàn bộ 11 file shell.
+  * Độ tương phản văn bản và nút bấm đạt chuẩn WCAG AA (>= 4.5:1 text, >= 3.0:1 button).
+  * Mục tiêu chạm touch targets >= 44px min-height.
+  * Hoàn chỉnh responsive trên các kích thước 320px, 360px, 560px, 800px.
+
+- Mục tiêu 8 (Tài liệu kế hoạch & Runbook):
+  * docs/PLAN_QUIZ_AUTO_BUILDER_PHASE2.md: Thiết kế kiến trúc tổng thể Phase 2.
+  * docs/RUNBOOK_0021_QUIZ_AUTO_BUILDER_PHASE2.md: Runbook kiểm định an toàn, pre-flight, migration step-by-step và rollback cho migration 0021.
+
+3. Bằng chứng kiểm thử tự động, build và git diff:
+- Test Suites liên quan: Đạt 79/79 tests PASS trên 10 test suites độc lập:
+  * tests/quiz_auto_builder_phase2.test.js: 8/8 PASS
+  * tests/quiz_theme_contract.test.js: 6/6 PASS
+  * tests/quiz_library_sync_phase1.test.js: 16/16 PASS
+  * tests/quiz_bank_import_integration.test.js: 6/6 PASS
+  * tests/questions_security.test.js: 11/11 PASS
+  * tests/quiz_menu_phase1.test.js: 8/8 PASS
+  * tests/quiz_menu_phase2_drive.test.js: 8/8 PASS
+  * tests/quiz_menu_phase4.test.js: 10/10 PASS
+  * tests/verify_pwa_quiz_navigation.test.js: 6/6 PASS
+  * tests/quiz_menu_phase5.test.js: 2/2 PASS
+- npm run check: Thoát mã 0 (0 errors, 226 warnings, worker-configuration.d.ts up to date).
+- npm run build: Cloudflare Pages bundle build thành công trong 9.44s; static/build_meta.json được restore sạch sẽ.
+- git diff --check origin/agy/quiz-library-sync-phase1...HEAD: Thoát mã 0 sạch, 0 lỗi whitespace.
+
+Kính mời Codex maintainer/auditor co-audit độc lập commit f88478a trên PR #28!
+
+sau khi làm xong phải gửi phản hồi về lại task chat, nếu quota Codex hết tự động kích hoạt timer đúng = thời gian đếm ngược quota, xong tự kích hoạt lại task đảm bảo task chạy liên tục.
