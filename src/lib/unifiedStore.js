@@ -493,12 +493,15 @@ export function getUserEnrolledGrades(user) {
     list.push(String(rawBase));
   }
 
-  if (Array.isArray(meta.enrolled_grades)) {
-    for (const g of meta.enrolled_grades) {
-      if (g !== undefined && g !== null && g !== '') {
-        const str = String(g);
-        if (!list.includes(str)) {
-          list.push(str);
+  const metaArrays = [meta.enrolled_grades, meta.selected_grades];
+  for (const arr of metaArrays) {
+    if (Array.isArray(arr)) {
+      for (const g of arr) {
+        if (g !== undefined && g !== null && g !== '') {
+          const str = String(g);
+          if (!list.includes(str)) {
+            list.push(str);
+          }
         }
       }
     }
@@ -2034,6 +2037,22 @@ export function getStudentsForTeacher(teacherId, roleFilter = 'all') {
 // =========================================================================
 // 12. Lịch Học & Thời Khóa Biểu (Class Sessions & Timetable)
 // =========================================================================
+function parseSafeStudentIds(val) {
+  if (Array.isArray(val)) return val;
+  if (typeof val === 'string') {
+    const trimmed = val.trim();
+    if (!trimmed) return [];
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) return parsed;
+      if (parsed) return [parsed];
+    } catch {
+      return trimmed.split(',').map(s => s.trim()).filter(Boolean);
+    }
+  }
+  return [];
+}
+
 export function getAllClassSessions() {
   if (typeof window === 'undefined') return [...classSessionsData];
   try {
@@ -2045,7 +2064,9 @@ export function getAllClassSessions() {
 
 export function saveAllClassSessions(sessions) {
   if (typeof window !== 'undefined') {
-    localStorage.setItem(STORAGE_KEY_SESSIONS, JSON.stringify(sessions));
+    try {
+      localStorage.setItem(STORAGE_KEY_SESSIONS, JSON.stringify(sessions));
+    } catch {}
   }
 }
 
@@ -2057,21 +2078,27 @@ export function saveClassSession(session, user = null) {
     class_id: session.class_id || 'L7_GLOBAL_SUCCESS_A1',
     class_name: session.class_name || 'Lớp Tiếng Anh Cô Dung',
     grade_level: session.grade_level || '',
-    subject_topic: session.subject_topic || 'Chuyên đề Ngữ pháp & Giao tiếp',
+    subject_topic: session.subject_topic || session.topic || 'Chuyên đề Ngữ pháp & Giao tiếp',
+    topic: session.topic || session.subject_topic || 'Chuyên đề Ngữ pháp & Giao tiếp',
     teacher_id: session.teacher_id || 'usr_super_2',
     teacher_name: session.teacher_name || 'Ms. Dung',
     teacher_role: session.teacher_role || 'lead',
     assistant_teacher_id: session.assistant_teacher_id || 'usr_teach_1',
     assistant_teacher_name: session.assistant_teacher_name || 'Mr. Johnathan Miller',
+    substitute_teacher_id: session.substitute_teacher_id || null,
+    substitute_teacher_name: session.substitute_teacher_name || '',
+    substitute_notes: session.substitute_notes || '',
     location: session.location || 'Tại nhà Cô Dung (123 Phố Vọng, Hai Bà Trưng, Hà Nội)',
-    day_of_week: Number(session.day_of_week) ?? 1,
+    day_of_week: session.day_of_week !== undefined && session.day_of_week !== null ? Number(session.day_of_week) : 1,
     day_name: session.day_name || 'Thứ Hai',
+    session_date: session.session_date || '',
     start_time: session.start_time || '18:00',
     end_time: session.end_time || '19:30',
     notify_minutes_before: Number(session.notify_minutes_before) || 10,
-    room_notes: session.room_notes || 'Phòng học chuẩn bị sẵn sàng',
+    room_notes: session.room_notes || session.room || 'Phòng học chuẩn bị sẵn sàng',
+    room: session.room || session.room_notes || 'Phòng học chuẩn bị sẵn sàng',
     status: session.status || 'active',
-    student_ids: session.student_ids || [],
+    student_ids: parseSafeStudentIds(session.student_ids),
     created_at: session.created_at || new Date().toISOString(),
     updated_at: new Date().toISOString()
   };
@@ -2084,6 +2111,39 @@ export function saveClassSession(session, user = null) {
   saveAllClassSessions(sessions);
   logSnapshot(idx >= 0 ? 'UPDATE_CLASS_SESSION' : 'CREATE_CLASS_SESSION', 'class_session', newSession.id, before, newSession);
   return newSession;
+}
+
+/**
+ * Safely update the local store directly from canonical server session response.
+ * Client-only: ignores execution in SSR, prevents local storage errors from failing UI.
+ */
+export function upsertClassSessionInStore(session) {
+  if (typeof window === 'undefined' || !session || !session.id) return null;
+  try {
+    const sessions = getAllClassSessions();
+    const idx = sessions.findIndex(s => s.id === session.id);
+    const normalized = {
+      ...session,
+      day_of_week: session.day_of_week !== undefined && session.day_of_week !== null ? Number(session.day_of_week) : 1,
+      notify_minutes_before: Number(session.notify_minutes_before) || 10,
+      student_ids: parseSafeStudentIds(session.student_ids),
+      room_notes: session.room_notes ?? session.room ?? '',
+      room: session.room ?? session.room_notes ?? '',
+      subject_topic: session.subject_topic ?? session.topic ?? '',
+      topic: session.topic ?? session.subject_topic ?? '',
+      updated_at: session.updated_at || new Date().toISOString()
+    };
+    if (idx >= 0) {
+      sessions[idx] = { ...sessions[idx], ...normalized };
+    } else {
+      sessions.push(normalized);
+    }
+    saveAllClassSessions(sessions);
+    return idx >= 0 ? sessions[idx] : normalized;
+  } catch (err) {
+    console.warn('upsertClassSessionInStore failed:', err);
+    return session;
+  }
 }
 
 export function deleteClassSession(id, user = null) {

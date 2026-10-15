@@ -9,20 +9,32 @@ function platformFor(user) {
   const seen = [];
   const DB = {
     prepare(sql) {
-      return {
-        bind(...params) {
-          return {
-            async first() {
-              if (sql.includes('FROM users')) return { ...user, status: 'active', metadata: '{}' };
-              if (sql.includes('FROM auth_sessions')) return { id: 'test-session', revoked_at: null, expires_at: '2099-01-01T00:00:00.000Z' };
-              return null;
-            },
-            async all() {
-              seen.push({ sql, params });
-              return { results: [] };
-            }
-          };
+      const handler = (params = []) => ({
+        async first() {
+          if (sql.includes('FROM users')) return { ...user, status: 'active', metadata: '{}' };
+          if (sql.includes('FROM auth_sessions')) return { id: 'test-session', revoked_at: null, expires_at: '2099-01-01T00:00:00.000Z' };
+          return null;
+        },
+        async all() {
+          if (sql.includes('PRAGMA table_info')) {
+            return {
+              results: [
+                { name: 'id' }, { name: 'class_id' }, { name: 'class_name' },
+                { name: 'teacher_id' }, { name: 'assistant_teacher_id' },
+                { name: 'substitute_teacher_id' }, { name: 'student_ids' },
+                { name: 'room_notes' }, { name: 'subject_topic' },
+                { name: 'session_date' }, { name: 'start_time' }, { name: 'end_time' }
+              ]
+            };
+          }
+          seen.push({ sql, params });
+          return { results: [] };
         }
+      });
+      return {
+        bind(...params) { return handler(params); },
+        first() { return handler().first(); },
+        all() { return handler().all(); }
       };
     }
   };

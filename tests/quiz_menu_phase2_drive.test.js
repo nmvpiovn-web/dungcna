@@ -196,7 +196,7 @@ test('from-drive export Google Doc trong allowlist và thay draft cũ atomically
     throw new Error(`unexpected ${url}`);
   });
   try {
-    const response = await importDrive({ params: { id: ctx.quizId }, request: jsonRequest(`/api/quiz-menu/${ctx.quizId}/from-drive`, ctx.teacherToken, { file_id: 'google-doc' }), platform: ctx.platform });
+    const response = await importDrive({ params: { id: ctx.quizId }, request: jsonRequest(`/api/quiz-menu/${ctx.quizId}/from-drive`, ctx.teacherToken, { file_id: 'google-doc', merge_strategy: 'replace' }), platform: ctx.platform });
     assert.equal(response.status, 200);
     const body = await response.json();
     assert.equal(body.questions[0].type, 'paragraph');

@@ -17,10 +17,11 @@ const PRECACHE_URLS = [
 ];
 
 self.addEventListener('install', (event) => {
+  // Updated Service Workers must remain in 'waiting' state until the user
+  // explicitly triggers 'SKIP_WAITING' when no exam/form is dirty.
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => Promise.all(PRECACHE_URLS.map((u) => cache.add(u).catch(() => null))))
-      .then(() => self.skipWaiting())
   );
 });
 
@@ -68,8 +69,13 @@ self.addEventListener('fetch', (event) => {
   }
 
   // 1. STRICT PRIVACY & FAIL-CLOSED:
-  // NEVER intercept or persist any API endpoints, auth tokens, or private user requests in CacheStorage
-  if (url.pathname.startsWith('/api/') || event.request.headers.has('Authorization')) {
+  // NEVER intercept or persist any API endpoints, SW script, build metadata, auth tokens, or private user requests in CacheStorage
+  if (
+    url.pathname.startsWith('/api/') ||
+    url.pathname === '/sw.js' ||
+    url.pathname === '/build_meta.json' ||
+    event.request.headers.has('Authorization')
+  ) {
     // Direct network only
     return;
   }
@@ -205,8 +211,13 @@ self.addEventListener('notificationclick', (event) => {
   );
 });
 
-// Message Listener for Leader in-app push simulation (SHOW_LEADER_NOTIFICATION)
+// Message Listener for SW control and notifications
 self.addEventListener('message', (event) => {
+  if (event.data === 'SKIP_WAITING' || event.data?.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+    return;
+  }
+
   if (event.data && event.data.type === 'SHOW_LEADER_NOTIFICATION') {
     const payload = event.data.payload || {};
     const title = payload.title || 'Báo Cáo Leader';

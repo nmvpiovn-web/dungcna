@@ -69,8 +69,19 @@
  }
 
  function normalizeGrade(value) {
+ const raw = String(value || '').trim().toLowerCase();
+ if (raw === 'ielts' || raw === 'toeic') return raw;
  const match = String(value || '').trim().match(/^(?:lop_|Lớp\s*)?(1[0-2]|[1-9])$/i);
  return match ? `lop_${match[1]}` : '';
+ }
+
+ function getAllowedCurricula(gradeKey) {
+ if (gradeKey === 'ielts') return ['ielts_academic'];
+ if (gradeKey === 'toeic') return ['toeic_lr'];
+ if (gradeKey === 'lop_7') return ['global_success', 'friends_plus', 'smart_world'];
+ if (gradeKey === 'lop_12') return ['thpt_qg', 'ielts_academic'];
+ if (/^lop_(?:1[0-1]|[1-689])$/.test(gradeKey)) return ['global_success'];
+ return [];
  }
 
  // Re-read context on every opening; never restore another user's grade over the profile.
@@ -91,14 +102,19 @@
  }
  untrack(() => {
  const user = getCurrentUser();
+ if (user) {
+ isOpen = false;
+ onClose();
+ return;
+ }
  let storedGrade = '';
  let storedCurriculum = '';
  try {
  storedGrade = localStorage.getItem('guest_selected_grade') || localStorage.getItem('preferred_grade') || '';
  storedCurriculum = localStorage.getItem('guest_selected_curriculum') || '';
  } catch {}
- selectedGrade = normalizeGrade(initialGrade) || normalizeGrade(user?.grade) || (!user ? normalizeGrade(storedGrade) : '');
- const allowed = selectedGrade === 'lop_7' ? ['global_success', 'friends_plus', 'smart_world'] : selectedGrade === 'lop_12' ? ['thpt_qg', 'ielts_academic'] : [];
+ selectedGrade = normalizeGrade(initialGrade) || normalizeGrade(storedGrade);
+ const allowed = getAllowedCurricula(selectedGrade);
  selectedCurriculum = allowed.includes(storedCurriculum) ? storedCurriculum : (allowed[0] || '');
  selectedDuration = '5m';
  errorMsg = '';
@@ -140,17 +156,10 @@
  localStorage.setItem('preferred_grade', newGrade);
  } catch {}
 
- // Auto set appropriate default curriculum if none selected
- if (newGrade === 'lop_7') {
- if (!selectedCurriculum || !['global_success', 'friends_plus', 'smart_world'].includes(selectedCurriculum)) {
- selectedCurriculum = 'global_success';
- try { localStorage.setItem('guest_selected_curriculum', 'global_success'); } catch {}
- }
- } else if (newGrade === 'lop_12') {
- if (!selectedCurriculum || !['thpt_qg', 'ielts_academic'].includes(selectedCurriculum)) {
- selectedCurriculum = 'thpt_qg';
- try { localStorage.setItem('guest_selected_curriculum', 'thpt_qg'); } catch {}
- }
+ const allowed = getAllowedCurricula(newGrade);
+ if (!selectedCurriculum || !allowed.includes(selectedCurriculum)) {
+ selectedCurriculum = allowed[0] || 'global_success';
+ try { localStorage.setItem('guest_selected_curriculum', selectedCurriculum); } catch {}
  }
  }
 
@@ -169,16 +178,19 @@
 
  if (!selectedGrade) {
  isStarting = false;
- errorMsg = 'Vui lòng chọn khối lớp / trình độ trước khi bắt đầu bài thi thử.';
+ errorMsg = 'Vui lòng chọn khối lớp / chứng chỉ trước khi bắt đầu bài thi.';
  return;
  }
 
- // Check supported grades - STRICT FIDELITY (Never mutate to lop_7)
- const supportedGrades = ['lop_7', 'lop_12'];
+ const supportedGrades = [
+ 'ielts', 'toeic',
+ 'lop_1', 'lop_2', 'lop_3', 'lop_4', 'lop_5', 'lop_6',
+ 'lop_7', 'lop_8', 'lop_9', 'lop_10', 'lop_11', 'lop_12'
+ ];
  if (!supportedGrades.includes(selectedGrade)) {
  isStarting = false;
  const gradeLabel = selectedGrade.replace('lop_', 'Lớp ');
- errorMsg = `Ngân hàng đề thi thử cho ${gradeLabel} đang được biên soạn và thẩm định theo chuẩn GDPT 2026. Lựa chọn khối lớp của bạn được giữ nguyên.`;
+ errorMsg = `Ngân hàng đề thi thử cho ${gradeLabel} đang được biên soạn. Lựa chọn khối lớp của bạn được giữ nguyên.`;
  return;
  }
 
@@ -412,32 +424,34 @@
 
  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
  <div>
- <label for="cand-grade-select" class="block font-medium text-slate-700 mb-1 text-xs">Khối lớp / Trình độ (*):</label>
+ <label for="cand-grade-select" class="block font-medium text-slate-700 mb-1 text-xs">Khối lớp / Chứng chỉ (*):</label>
  <select 
  id="cand-grade-select"
  bind:value={selectedGrade}
  onchange={(e) => handleGradeChange(e.currentTarget.value)}
  class="w-full p-2.5 rounded-md bg-white border border-slate-300 text-slate-900 text-xs font-medium focus:ring-2 focus:ring-cx-500"
  >
- <option value="" disabled>-- Vui lòng chọn khối lớp --</option>
- <optgroup label="Khối Lớp Đã Có Đề Thi Chuẩn">
- <option value="lop_7">Lớp 7 (Nền Tảng THCS • Đã có sẵn đề)</option>
- <option value="lop_12">Lớp 12 &amp; Ôn Thi Tốt Nghiệp THPTQG / IELTS</option>
+ <option value="" disabled>-- Vui lòng chọn khối lớp / chứng chỉ --</option>
+ <optgroup label="🎯 Xếp Lớp Chứng Chỉ Quốc Tế (TOEIC / IELTS)">
+ <option value="ielts">IELTS Academic • Thi xếp lớp Foundation → 6.5+</option>
+ <option value="toeic">TOEIC 4 Kỹ Năng • Thi xếp lớp 350+ → 750+</option>
  </optgroup>
- <optgroup label="Khối Lớp Khác (Đang hoàn thiện đề thi)">
- <option value="lop_1">Lớp 1 (Chương trình mới • Sắp mở)</option>
- <option value="lop_2">Lớp 2 (Chương trình mới • Sắp mở)</option>
- <option value="lop_3">Lớp 3 (Chương trình mới • Sắp mở)</option>
- <option value="lop_4">Lớp 4 (Chương trình mới • Sắp mở)</option>
- <option value="lop_5">Lớp 5 (Chương trình mới • Sắp mở)</option>
- <option value="lop_6">Lớp 6 (Chương trình mới • Sắp mở)</option>
- <option value="lop_8">Lớp 8 (Chương trình mới • Sắp mở)</option>
- <option value="lop_9">Lớp 9 (Chương trình mới • Sắp mở)</option>
- <option value="lop_10">Lớp 10 (Chương trình mới • Sắp mở)</option>
- <option value="lop_11">Lớp 11 (Chương trình mới • Sắp mở)</option>
+ <optgroup label="📊 Test Trình Độ GDPT (Lớp 1 - Lớp 12)">
+ <option value="lop_1">Lớp 1 (Test trình độ chuẩn GDPT)</option>
+ <option value="lop_2">Lớp 2 (Test trình độ chuẩn GDPT)</option>
+ <option value="lop_3">Lớp 3 (Test trình độ chuẩn GDPT)</option>
+ <option value="lop_4">Lớp 4 (Test trình độ chuẩn GDPT)</option>
+ <option value="lop_5">Lớp 5 (Test trình độ chuẩn GDPT)</option>
+ <option value="lop_6">Lớp 6 (Test trình độ chuẩn GDPT)</option>
+ <option value="lop_7">Lớp 7 (Test trình độ chuẩn GDPT • 3 bộ sách)</option>
+ <option value="lop_8">Lớp 8 (Test trình độ chuẩn GDPT)</option>
+ <option value="lop_9">Lớp 9 (Test trình độ chuẩn GDPT)</option>
+ <option value="lop_10">Lớp 10 (Test trình độ chuẩn GDPT)</option>
+ <option value="lop_11">Lớp 11 (Test trình độ chuẩn GDPT)</option>
+ <option value="lop_12">Lớp 12 &amp; Ôn Thi Tốt Nghiệp THPTQG</option>
  </optgroup>
  </select>
- <p class="text-[11px] text-slate-500 mt-1">Lựa chọn của bạn sẽ được ghi nhớ tự động cho các lần làm bài sau.</p>
+ <p class="text-[11px] text-slate-500 mt-1">Chứng chỉ (TOEIC/IELTS) có xếp lớp đầu vào; Khối GDPT chỉ đánh giá trình độ theo lớp.</p>
  </div>
 
  {#if selectedGrade === 'lop_7'}
@@ -469,16 +483,42 @@
  </select>
  <p class="text-[11px] text-slate-500 mt-1">Đề thi cấu trúc chuẩn ma trận đề Bộ GD&amp;ĐT và CEFR.</p>
  </div>
+ {:else if selectedGrade === 'ielts'}
+ <div>
+ <label for="cand-curr-select-ielts" class="block font-medium text-slate-700 mb-1 text-xs">Hệ chứng chỉ (*):</label>
+ <select 
+ id="cand-curr-select-ielts"
+ bind:value={selectedCurriculum}
+ onchange={(e) => handleCurriculumChange(e.currentTarget.value)}
+ class="w-full p-2.5 rounded-md bg-white border border-slate-300 text-slate-900 text-xs font-medium focus:ring-2 focus:ring-cx-500"
+ >
+ <option value="ielts_academic">IELTS Academic Placement (4.0 - 6.5+)</option>
+ </select>
+ <p class="text-[11px] text-slate-500 mt-1">Xếp lớp tự động theo Band IELTS mục tiêu.</p>
+ </div>
+ {:else if selectedGrade === 'toeic'}
+ <div>
+ <label for="cand-curr-select-toeic" class="block font-medium text-slate-700 mb-1 text-xs">Hệ chứng chỉ (*):</label>
+ <select 
+ id="cand-curr-select-toeic"
+ bind:value={selectedCurriculum}
+ onchange={(e) => handleCurriculumChange(e.currentTarget.value)}
+ class="w-full p-2.5 rounded-md bg-white border border-slate-300 text-slate-900 text-xs font-medium focus:ring-2 focus:ring-cx-500"
+ >
+ <option value="toeic_lr">TOEIC Listening &amp; Reading Placement</option>
+ </select>
+ <p class="text-[11px] text-slate-500 mt-1">Xếp lớp tự động theo chuẩn ETS TOEIC.</p>
+ </div>
  {:else}
  <div>
  <label for="cand-curr-placeholder" class="block font-medium text-slate-700 mb-1 text-xs">Bộ sách / Chương trình:</label>
  <input 
  id="cand-curr-placeholder"
  disabled 
- value="-- Theo chương trình GDPT 2026 --"
- class="w-full p-2.5 rounded-md bg-slate-100 text-slate-400 border border-slate-200 text-xs italic"
+ value="Kết nối tri thức (Global Success) • GDPT 2018"
+ class="w-full p-2.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200 text-xs font-medium"
  />
- <p class="text-[11px] text-slate-500 mt-1">Tự động kích hoạt khi chọn Lớp 7 hoặc Lớp 12.</p>
+ <p class="text-[11px] text-slate-500 mt-1">Đánh giá năng lực chuẩn chương trình GDPT theo khối lớp đã chọn.</p>
  </div>
  {/if}
  </div>
@@ -525,9 +565,9 @@
  <div>
  <span class="text-xs text-cx-400 font-semibold">{candidateName}</span>
  <span class="text-slate-400 text-xs">
- • Khối: {selectedGrade.replace('lop_', 'Lớp ')}
+ • {selectedGrade === 'ielts' ? 'IELTS Placement' : selectedGrade === 'toeic' ? 'TOEIC Placement' : `Khối: ${selectedGrade.replace('lop_', 'Lớp ')}`}
  {#if selectedCurriculum}
- • {selectedCurriculum === 'global_success' ? 'Global Success' : selectedCurriculum === 'friends_plus' ? 'Friends Plus' : selectedCurriculum === 'smart_world' ? 'Smart World' : selectedCurriculum === 'ielts_academic' ? 'IELTS Foundation' : 'THPT QG'}
+ • {selectedCurriculum === 'global_success' ? 'Global Success' : selectedCurriculum === 'friends_plus' ? 'Friends Plus' : selectedCurriculum === 'smart_world' ? 'Smart World' : selectedCurriculum === 'ielts_academic' ? 'IELTS Academic' : selectedCurriculum === 'toeic_lr' ? 'TOEIC L&R' : 'THPT QG'}
  {/if}
  </span>
  </div>
@@ -651,18 +691,18 @@
  <div class="text-center p-5 rounded-xl bg-gradient-to-b from-cx-50 to-white border border-cx-100 space-y-2">
  <span class="text-3xl">🎉</span>
  <h3 class="text-lg font-semibold text-slate-900">
- Kết Quả Khảo Sát: {candidateName}
+  {examResult.test_mode === 'placement' ? `Kết Quả Xếp Lớp Chứng Chỉ: ${candidateName}` : `Kết Quả Đánh Giá Trình Độ GDPT: ${candidateName}`}
  </h3>
  <div class="flex items-center justify-center flex-wrap gap-2 text-xs font-medium pt-1">
  <span class="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 font-bold">
  Điểm Số: {examResult.score_10 ?? examResult.score} / 10 ({examResult.correct_count}/{examResult.total_questions} câu đúng)
  </span>
  <span class="px-3 py-1 rounded-full bg-cx-100 text-cx-800 font-bold">
- Trình Độ: {examResult.cefr_level || 'A2'} • {examResult.rank_title || 'Nền Tảng'}
+  {examResult.test_mode === 'placement' && examResult.placement_class ? `Xếp Lớp: ${examResult.placement_class} (${examResult.cefr_level})` : `Trình Độ: ${examResult.cefr_level || 'A2'} • ${examResult.rank_title || 'Nền Tảng'}`}
  </span>
  {#if examResult.curriculum}
  <span class="px-2.5 py-1 rounded-full bg-slate-200 text-slate-700 text-[11px]">
- Bộ sách: {examResult.curriculum === 'global_success' ? 'Global Success' : examResult.curriculum === 'friends_plus' ? 'Friends Plus' : examResult.curriculum === 'smart_world' ? 'Smart World' : examResult.curriculum === 'ielts_academic' ? 'IELTS Academic' : 'THPT QG'}
+ Bộ sách: {examResult.curriculum === 'global_success' ? 'Global Success' : examResult.curriculum === 'friends_plus' ? 'Friends Plus' : examResult.curriculum === 'smart_world' ? 'Smart World' : examResult.curriculum === 'ielts_academic' ? 'IELTS Academic' : examResult.curriculum === 'toeic_lr' ? 'TOEIC L&R' : 'THPT QG'}
  </span>
  {/if}
  </div>

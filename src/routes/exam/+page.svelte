@@ -217,9 +217,22 @@
  currentUser = getCurrentUser();
  refreshEligibleStudents();
  if (currentUser?.role === 'student') {
- activeExamCategory = 'my_grade';
+ activeExamGroup = 'my_grade';
+ activeExamCategory = 'all';
  studentName = currentUser?.name || 'Học viên';
  selectedStudentId = currentUser?.id || '';
+ const enrolled = getUserEnrolledGrades(currentUser);
+ for (const g of enrolled) {
+ const m = String(g || '').match(/(\d{1,2})/);
+ if (m) {
+ randomGrade = Number(m[1]);
+ break;
+ }
+ if (/ielts|toeic|toefl/i.test(String(g || ''))) {
+ randomGrade = 0;
+ break;
+ }
+ }
  const match = data.exams.find(e => isExamEnrolledForUser(currentUser, e));
  if (match) {
  selectedExamId = match.id;
@@ -504,12 +517,20 @@
  let activeExamGroup = $state('k12'); // 'k12' | 'intl' | 'periodic' | 'random_builder' | 'my_grade'
  let activeExamCategory = $state('all'); // Sub-category filter within group
 
- const examGroups = [
+ let examGroups = $derived(
+ currentUser?.role === 'student'
+ ? [
+ { id: 'my_grade', label: `🎯 Đề Thi ${currentUser.grade || 'Khối Của Em'}`, desc: 'Chỉ hiển thị đề thi thuộc khối lớp em đã đăng ký', icon: '🎯' },
+ { id: 'periodic', label: '⏱️ Đề Thi Theo Thời Gian', desc: '5 Phút Khởi Động • 15 Phút • 45 Phút 1 Tiết', icon: '⏱️' },
+ { id: 'random_builder', label: '🎲 Tạo Đề Random Theo Nhóm', desc: 'Sinh Đề Ngẫu Nhiên D1 Chuẩn Ma Trận', icon: '🎲' }
+ ]
+ : [
  { id: 'k12', label: '🎒 Khung K12 Phổ Thông', desc: 'Tiểu học (L1-5) • THCS (L6-9) • THPT (L10-12)', icon: '🎒' },
  { id: 'intl', label: '🌍 Chứng Chỉ Quốc Tế', desc: 'IELTS Academic • TOEIC L&R • TOEFL iBT', icon: '🌍' },
  { id: 'periodic', label: '⏱️ Đề Thi Theo Thời Gian', desc: '5 Phút Khởi Động • 15 Phút • 45 Phút 1 Tiết', icon: '⏱️' },
  { id: 'random_builder', label: '🎲 Tạo Đề Random Theo Nhóm', desc: 'Sinh Đề Ngẫu Nhiên D1 Chuẩn Ma Trận', icon: '🎲' }
- ];
+ ]
+ );
 
  // Random Test Generator State
  let randomDuration = $state(15); // 5 | 15 | 45 | 50
@@ -653,6 +674,9 @@
  let filteredExams = $derived(
  data.exams.filter(e => {
  if (activeExamGroup === 'random_builder') return false;
+ if (currentUser?.role === 'student' && getUserEnrolledGrades(currentUser).length > 0) {
+ if (!isExamEnrolledForUser(currentUser, e)) return false;
+ }
  if (activeExamGroup === 'my_grade') return isExamEnrolledForUser(currentUser, e);
  if (activeExamGroup === 'k12') {
  const hasGrade = (t, g) => new RegExp(`Lớp ${g}(?!\\d)`).test(t || '');
@@ -983,10 +1007,12 @@
 
 
 <div class="space-y-6 min-w-0 max-w-full overflow-x-hidden">
+ {#if !currentUser}
  <!-- Academic Warmth Phase 3: Test xep lop 3 phut (khach, khong can login) -->
  <section id="placement" class="scroll-mt-24">
  <PlacementTest />
  </section>
+ {/if}
 
  {#if currentUser?.role === 'teacher' || currentUser?.role === 'superadmin' || isSuperAdmin(currentUser)}
  <!-- Teacher & Leader Attendance-Linked Exam Panel -->
@@ -1170,12 +1196,13 @@
  <span>PHÂN HỆ PHÒNG THI &amp; ĐÁNH GIÁ NĂNG LỰC CHUẨN 2026:</span>
  </div>
  <h2 class="text-xl sm:text-2xl font-heading font-semibold text-ink-900 mt-0.5">
- Danh Mục Đề Thi Theo Cây Phân Cấp (Group-Tree)
+  {currentUser?.role === 'student' ? `Phòng Thi Trực Tuyến — ${currentUser.grade || 'Khối Lớp Của Em'}` : 'Danh Mục Đề Thi Theo Cây Phân Cấp (Group-Tree)'}
  </h2>
  </div>
 
  <!-- Quick Action Utilities -->
  <div class="flex items-center gap-2 flex-wrap">
+ {#if !currentUser}
  <button
  id="guest-exam-btn"
  data-testid="guest-exam-btn"
@@ -1186,6 +1213,7 @@
  <span>🎓 Thi Thử Cho Khách</span>
  <span class="px-1.5 py-0.5 rounded-full bg-white/20 text-[10px]">Tự Do</span>
  </button>
+ {/if}
 
  {#if currentUser?.role === 'student'}
  <button
@@ -1395,8 +1423,12 @@
  <select
  id="rand-grade"
  bind:value={randomGrade}
- class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-white font-bold focus:outline-none focus:border-amber-400"
+ disabled={currentUser?.role === 'student' && randomGrade !== null}
+ class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-white font-bold focus:outline-none focus:border-amber-400 disabled:opacity-90"
  >
+ {#if currentUser?.role === 'student' && randomGrade !== null}
+ <option value={randomGrade}>{randomGrade === 0 ? 'IELTS Academic & Cambridge KET/PET' : `Lớp ${randomGrade} (Khối Đã Đăng Ký)`}</option>
+ {:else}
  <option value={null} disabled>-- Chọn khối lớp / hệ học --</option>
  <optgroup label="🌱 Cấp 2 (THCS)">
  <option value={7}>Lớp 7 (Global Success &amp; KET A2)</option>
@@ -1419,6 +1451,7 @@
  <optgroup label="🌍 Chứng Chỉ Quốc Tế">
  <option value={0}>IELTS Academic &amp; Cambridge KET/PET</option>
  </optgroup>
+ {/if}
  </select>
  </div>
 

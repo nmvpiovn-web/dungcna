@@ -149,7 +149,9 @@ const SUPPORTED_GRADES = {
   lop_9: 'Lớp 9 (Ôn thi vào 10)',
   lop_10: 'Lớp 10 (THPT)',
   lop_11: 'Lớp 11 (THPT)',
-  lop_12: 'Lớp 12 (Thi THPT QG / IELTS)'
+  lop_12: 'Lớp 12 (Thi THPT QG / IELTS)',
+  ielts: 'Chứng chỉ Quốc tế IELTS (Xếp lớp)',
+  toeic: 'Chứng chỉ Quốc tế TOEIC (Xếp lớp)'
 };
 
 const SUPPORTED_CURRICULA = {
@@ -171,6 +173,12 @@ const SUPPORTED_CURRICULA = {
   lop_12: {
     thpt_qg: 'Chương trình GDPT Chuẩn & Ôn thi THPT Quốc Gia',
     ielts_academic: 'Định hướng Học thuật & IELTS Foundation'
+  },
+  ielts: {
+    ielts_academic: 'Xếp Lớp Chứng Chỉ IELTS Academic (Band 4.0 - 7.5+)'
+  },
+  toeic: {
+    toeic_lr: 'Xếp Lớp Chứng Chỉ TOEIC Listening & Reading (450 - 850+)'
   }
 };
 
@@ -193,6 +201,12 @@ const SUPPORTED_CONFIGS = {
   lop_12: {
     thpt_qg: { '5m': 5 },
     ielts_academic: { '5m': 5 }
+  },
+  ielts: {
+    ielts_academic: { '5m': 5, '15m': 10 }
+  },
+  toeic: {
+    toeic_lr: { '5m': 5, '15m': 10 }
   }
 };
 
@@ -707,6 +721,30 @@ lop_11: { thpt_foundation: [
 { id: 'gst_lop11_q8', type: 'mcq', skill: 'grammar', question_text: "Scarcely had he arrived ___ it started to rain.", options: [{ id: 'A', text: "when" }, { id: 'B', text: "than" }, { id: 'C', text: "then" }, { id: 'D', text: "that" }], correct_option_id: 'A', explanation: "Cấu trúc: Scarcely... when... (vừa mới... thì...)." },
 { id: 'gst_lop11_q9', type: 'mcq', skill: 'vocabulary', question_text: "The new law will come into ___ next month.", options: [{ id: 'A', text: "effect" }, { id: 'B', text: "affect" }, { id: 'C', text: "force" }, { id: 'D', text: "power" }], correct_option_id: 'A', explanation: "Cụm cố định: 'come into effect' = có hiệu lực." },
 { id: 'gst_lop11_q10', type: 'mcq', skill: 'grammar', question_text: "She suggested ___ to the beach this weekend.", options: [{ id: 'A', text: "to go" }, { id: 'B', text: "going" }, { id: 'C', text: "go" }, { id: 'D', text: "went" }], correct_option_id: 'B', explanation: "'Suggest + V-ing': đề nghị làm gì." }
+] },
+ielts: { ielts_academic: [
+{ id: 'gst_ielts_p1', type: 'mcq', skill: 'vocabulary', question_text: "The diagram illustrates a substantial ___ in global renewable energy investment over the past decade.", options: [{ id: 'A', text: "surge" }, { id: 'B', text: "soared" }, { id: 'C', text: "escalate" }, { id: 'D', text: "rises" }], correct_id: 'A', explanation: "Sau tính từ 'substantial' cần danh từ đếm được số ít: surge (sự tăng vọt)." },
+{ id: 'gst_ielts_p2', type: 'open_cloze', skill: 'reading_cloze', passage: "(1)_____, adopting green infrastructure strengthens long-term urban resilience.", question_text: "Tự luận điền từ: Nhập liên từ học thuật đồng nghĩa với 'Furthermore' bắt đầu bằng chữ 'M':", correct_text: 'moreover', acceptable_answers: ['moreover'], explanation: "Liên từ học thuật 'Moreover' (Hơn nữa)." },
+{ id: 'gst_ielts_p3', type: 'mcq', skill: 'grammar', question_text: "Under no circumstances ___ candidates allowed to bring smartwatches into the examination hall.", options: [{ id: 'A', text: "are" }, { id: 'B', text: "were" }, { id: 'C', text: "will" }, { id: 'D', text: "have" }], correct_id: 'A', explanation: "Đảo ngữ với cụm phủ định đầu câu: Under no circumstances + are + S + V3." },
+{ id: 'gst_ielts_p4', type: 'listening', skill: 'listening', question_text: "Nghe phát âm và xác định từ có trọng âm rơi vào âm tiết thứ ba:", audio_term: 'academic', options: [{ id: 'A', text: "academic (/ˌækəˈdemɪk/)" }, { id: 'B', text: "convenient (/kənˈviːniənt/)" }, { id: 'C', text: "photography (/fəˈtɒɡrəfi/)" }, { id: 'D', text: "development (/dɪˈveləpmənt/)" }], correct_id: 'A', explanation: "'Academic' có trọng âm chính rơi vào âm tiết thứ ba." },
+{ id: 'gst_ielts_p5', type: 'open_cloze', skill: 'grammar', passage: "In (2)_____ of considerable budgetary constraints, the research team completed the clinical trial on schedule.", question_text: "Tự luận điền từ: Nhập danh từ thích hợp trong cụm 'In ... of' chỉ sự nhượng bộ:", correct_text: 'spite', acceptable_answers: ['spite'], explanation: "Cụm giới từ nhượng bộ: In spite of." },
+{ id: 'gst_ielts_p6', type: 'mcq', skill: 'vocabulary', question_text: "Rapid urbanization has ___ severe pressure on municipal water supplies.", options: [{ id: 'A', text: "exerted" }, { id: 'B', text: "made" }, { id: 'C', text: "done" }, { id: 'D', text: "taken" }], correct_id: 'A', explanation: "Collocation học thuật IELTS: exert pressure on (gây áp lực lên)." },
+{ id: 'gst_ielts_p7', type: 'mcq', skill: 'grammar', question_text: "Not until the twentieth century ___ widely accessible to the general public.", options: [{ id: 'A', text: "did higher education become" }, { id: 'B', text: "higher education became" }, { id: 'C', text: "became higher education" }, { id: 'D', text: "has higher education become" }], correct_id: 'A', explanation: "Đảo ngữ với Not until ở mệnh đề chính: did + S + V nguyên mẫu." },
+{ id: 'gst_ielts_p8', type: 'mcq', skill: 'reading_cloze', question_text: "Proponents of remote work argue that it enhances productivity, ___ critics point to the erosion of team cohesion.", options: [{ id: 'A', text: "whereas" }, { id: 'B', text: "despite" }, { id: 'C', text: "moreover" }, { id: 'D', text: "consequently" }], correct_id: 'A', explanation: "'Whereas' dùng để đối chiếu 2 mệnh đề tương phản trong IELTS Writing Task 2." },
+{ id: 'gst_ielts_p9', type: 'mcq', skill: 'vocabulary', question_text: "The government introduced stringent regulations to ___ carbon emissions from heavy industry.", options: [{ id: 'A', text: "curb" }, { id: 'B', text: "boost" }, { id: 'C', text: "trigger" }, { id: 'D', text: "foster" }], correct_id: 'A', explanation: "'Curb emissions' = kiềm chế, cắt giảm khí thải." },
+{ id: 'gst_ielts_p10', type: 'mcq', skill: 'grammar', question_text: "The data ___ collected from over five hundred households across three metropolitan areas.", options: [{ id: 'A', text: "were" }, { id: 'B', text: "is" }, { id: 'C', text: "has" }, { id: 'D', text: "having" }], correct_id: 'A', explanation: "Câu bị động quá khứ đơn: were collected." }
+] },
+toeic: { toeic_lr: [
+{ id: 'gst_toeic_p1', type: 'mcq', skill: 'grammar', question_text: "All reimbursement requests must be ___ to the accounting department by Friday afternoon.", options: [{ id: 'A', text: "submitted" }, { id: 'B', text: "submitting" }, { id: 'C', text: "submission" }, { id: 'D', text: "submits" }], correct_id: 'A', explanation: "Cấu trúc bị động với động từ khuyết thiếu: must be + V3/ed (submitted)." },
+{ id: 'gst_toeic_p2', type: 'mcq', skill: 'vocabulary', question_text: "Ms. Lan will ___ the regional sales conference in Da Nang next month.", options: [{ id: 'A', text: "attend" }, { id: 'B', text: "assist" }, { id: 'C', text: "arrive" }, { id: 'D', text: "appear" }], correct_id: 'A', explanation: "'Attend a conference' = tham dự hội nghị." },
+{ id: 'gst_toeic_p3', type: 'open_cloze', skill: 'reading_cloze', passage: "Please review the attached contract carefully (1)_____ signing and returning it to Human Resources.", question_text: "Tự luận điền từ: Nhập giới từ chỉ thời gian nghĩa là 'trước khi' vào chỗ trống (1):", correct_text: 'before', acceptable_answers: ['before'], explanation: "Before + V-ing (trước khi ký)." },
+{ id: 'gst_toeic_p4', type: 'listening', skill: 'listening', question_text: "Nghe phát âm và chọn từ đúng trong ngữ cảnh thương mại TOEIC:", audio_term: 'schedule', options: [{ id: 'A', text: "schedule (lịch trình)" }, { id: 'B', text: "station (nhà ga)" }, { id: 'C', text: "strategy (chiến lược)" }, { id: 'D', text: "signature (chữ ký)" }], correct_id: 'A', explanation: "Từ khóa nghe được là 'schedule' (lịch trình)." },
+{ id: 'gst_toeic_p5', type: 'mcq', skill: 'grammar', question_text: "The new software update makes inventory tracking much ___ than the previous version.", options: [{ id: 'A', text: "easier" }, { id: 'B', text: "easily" }, { id: 'C', text: "easiest" }, { id: 'D', text: "ease" }], correct_id: 'A', explanation: "So sánh hơn với 'than' sau cấu trúc make + O + adj: easier." },
+{ id: 'gst_toeic_p6', type: 'mcq', skill: 'vocabulary', question_text: "Customers who purchase a laptop this week will receive a complimentaryone-year ___.", options: [{ id: 'A', text: "warranty" }, { id: 'B', text: "receipt" }, { id: 'C', text: "agenda" }, { id: 'D', text: "vacancy" }], correct_id: 'A', explanation: "'One-year warranty' = bảo hành 1 năm." },
+{ id: 'gst_toeic_p7', type: 'mcq', skill: 'grammar', question_text: "___ the shipment arrives before noon, we will be able to fulfill all pending orders today.", options: [{ id: 'A', text: "Provided that" }, { id: 'B', text: "In spite of" }, { id: 'C', text: "Due to" }, { id: 'D', text: "Prior to" }], correct_id: 'A', explanation: "'Provided that' + mệnh đề = miễn là, với điều kiện là." },
+{ id: 'gst_toeic_p8', type: 'open_cloze', skill: 'grammar', passage: "We apologize for any inconvenience caused (2)_____ the temporary closure of our main lobby.", question_text: "Tự luận điền từ: Nhập giới từ thích hợp sau 'caused' (bởi):", correct_text: 'by', acceptable_answers: ['by'], explanation: "Cụm bị động rút gọn: caused by (gây ra bởi)." },
+{ id: 'gst_toeic_p9', type: 'mcq', skill: 'vocabulary', question_text: "The board of directors unanimously ___ the proposal to expand into Southeast Asian markets.", options: [{ id: 'A', text: "approved" }, { id: 'B', text: "consisted" }, { id: 'C', text: "depended" }, { id: 'D', text: "belonged" }], correct_id: 'A', explanation: "'Approve a proposal' = phê duyệt đề xuất." },
+{ id: 'gst_toeic_p10', type: 'mcq', skill: 'grammar', question_text: "Mr. Park requested that the quarterly financial report ___ revised before the shareholders' meeting.", options: [{ id: 'A', text: "be" }, { id: 'B', text: "is" }, { id: 'C', text: "was" }, { id: 'D', text: "been" }], correct_id: 'A', explanation: "Thức giả định (Subjunctive): requested that + S + (should) be + V3/ed." }
 ] }
 };
 
@@ -805,10 +843,14 @@ export async function POST({ request, platform }) {
     }
     const selectedQuestions = shuffledPool.slice(0, targetQuestionCount);
 
+    const isCertTrack = grade === 'ielts' || grade === 'toeic' || curriculum === 'ielts_academic' || curriculum === 'toeic_lr';
+    const testMode = isCertTrack ? 'placement' : 'proficiency';
+
     const blueprint = {
       grade,
       curriculum,
       curriculum_label: gradeCurricula[curriculum],
+      test_mode: testMode,
       duration_minutes: durationMinutes,
       total_questions: selectedQuestions.length,
       skills_distribution: {
@@ -872,6 +914,7 @@ export async function POST({ request, platform }) {
       guest_token: guestToken,
       grade,
       curriculum,
+      test_mode: testMode,
       blueprint,
       candidate_name,
       duration_minutes: durationMinutes,
@@ -1004,23 +1047,57 @@ export async function POST({ request, platform }) {
     const totalQuestions = session.questions.length;
     const score10 = Number(((correctCount / totalQuestions) * 10).toFixed(1));
 
-    // Determine CEFR Band & Commentary
+    const isCertTrack = session.grade === 'ielts' || session.grade === 'toeic' || session.curriculum === 'ielts_academic' || session.curriculum === 'toeic_lr';
+    const testMode = isCertTrack ? 'placement' : 'proficiency';
+
+    // Determine CEFR Band, Placement Class (for IELTS/TOEIC) or GDPT Proficiency Level (for lop_1..lop_12)
     let cefrLevel = 'A1';
     let rankTitle = 'Khởi Động Nền Tảng (A1)';
-    let recommendation = 'Nên củng cố phát âm chuẩn IPA và các thì cơ bản (Hiện tại đơn, Quá khứ đơn) tại lớp nền tảng Cô Dung.';
+    let placementClass = null;
+    let recommendation = 'Nên củng cố phát âm chuẩn IPA và các thì cơ bản (Hiện tại đơn, Quá khứ đơn) theo đúng khối lớp GDPT tại lớp Cô Dung.';
 
-    if (score10 >= 8.5) {
-      cefrLevel = session.grade === 'lop_12' ? 'C1' : 'B2';
-      rankTitle = `Xuất Sắc (${cefrLevel})`;
-      recommendation = 'Năng lực ngữ pháp & từ vựng rất vững. Đủ điều kiện tham gia lớp Chuyên Sâu Học Sinh Giỏi / Luyện Thi THPT Điểm 9+.';
-    } else if (score10 >= 7.0) {
-      cefrLevel = session.grade === 'lop_12' ? 'B2' : 'B1';
-      rankTitle = `Khá Giỏi (${cefrLevel})`;
-      recommendation = 'Kỹ năng làm bài tốt, cần rèn thêm bài tập điền từ đoạn văn (Open Cloze) và collocations nâng cao.';
-    } else if (score10 >= 5.0) {
-      cefrLevel = session.grade === 'lop_12' ? 'B1' : 'A2';
-      rankTitle = `Trung Bình Khá (${cefrLevel})`;
-      recommendation = 'Cần luyện tập thêm phản xạ nghe và phân biệt các cặp từ dễ nhầm lẫn.';
+    if (isCertTrack) {
+      const isToeic = session.grade === 'toeic' || session.curriculum === 'toeic_lr';
+      if (score10 >= 8.5) {
+        cefrLevel = 'C1';
+        placementClass = isToeic ? 'Lớp TOEIC Master 750 - 900+' : 'Lớp IELTS Intensive 6.5 - 7.5+';
+        rankTitle = `Xếp Lớp: ${placementClass} (${cefrLevel})`;
+        recommendation = `Đủ điều kiện xếp thẳng vào ${placementClass}. Tập trung luyện đề thực chiến và chiến thuật xử lý bẫy học thuật.`;
+      } else if (score10 >= 7.0) {
+        cefrLevel = 'B2';
+        placementClass = isToeic ? 'Lớp TOEIC Intermediate 550 - 750' : 'Lớp IELTS Pre-Senior 5.5 - 6.5';
+        rankTitle = `Xếp Lớp: ${placementClass} (${cefrLevel})`;
+        recommendation = `Phù hợp xếp vào ${placementClass}. Cần nâng cấp từ vựng học thuật/thương mại và kỹ năng Reading & Listening tốc độ cao.`;
+      } else if (score10 >= 5.0) {
+        cefrLevel = 'B1';
+        placementClass = isToeic ? 'Lớp TOEIC Pre-Intermediate 450 - 550' : 'Lớp IELTS Foundation 4.5 - 5.5';
+        rankTitle = `Xếp Lớp: ${placementClass} (${cefrLevel})`;
+        recommendation = `Được xếp vào ${placementClass}. Củng cố ngữ pháp trọng tâm và phản xạ nghe hiểu theo chuẩn đề thi quốc tế.`;
+      } else {
+        cefrLevel = 'A2';
+        placementClass = isToeic ? 'Lớp TOEIC Starter 300 - 450' : 'Lớp Pre-IELTS Nền Tảng 3.5 - 4.5';
+        rankTitle = `Xếp Lớp: ${placementClass} (${cefrLevel})`;
+        recommendation = `Được xếp vào ${placementClass} để xây dựng gốc ngữ pháp, phát âm IPA và từ vựng cốt lõi trước khi luyện đề.`;
+      }
+    } else {
+      const gradeLabel = SUPPORTED_GRADES[session.grade] || session.grade;
+      if (score10 >= 8.5) {
+        cefrLevel = session.grade === 'lop_12' ? 'C1' : 'B2';
+        rankTitle = `Đánh Giá Trình Độ ${gradeLabel}: Xuất Sắc (${cefrLevel})`;
+        recommendation = `Nắm vững kiến thức chương trình GDPT ${gradeLabel}. Có thể luyện tập chuyên sâu các dạng bài nâng cao đúng khối lớp đang học.`;
+      } else if (score10 >= 7.0) {
+        cefrLevel = session.grade === 'lop_12' ? 'B2' : 'B1';
+        rankTitle = `Đánh Giá Trình Độ ${gradeLabel}: Khá Giỏi (${cefrLevel})`;
+        recommendation = `Đạt chuẩn trình độ chương trình GDPT ${gradeLabel}, cần rèn thêm bài tập điền từ đoạn văn (Open Cloze) và từ vựng trong SGK.`;
+      } else if (score10 >= 5.0) {
+        cefrLevel = session.grade === 'lop_12' ? 'B1' : 'A2';
+        rankTitle = `Đánh Giá Trình Độ ${gradeLabel}: Đạt Chuẩn Cơ Bản (${cefrLevel})`;
+        recommendation = `Cần ôn tập kỹ hơn các chủ điểm ngữ pháp trọng tâm của ${gradeLabel} và luyện phản xạ nghe theo bài học trên lớp.`;
+      } else {
+        cefrLevel = 'A1';
+        rankTitle = `Đánh Giá Trình Độ ${gradeLabel}: Cần Củng Cố Gốc (${cefrLevel})`;
+        recommendation = `Cần bám sát lộ trình lấy lại gốc từ vựng & ngữ pháp cơ bản đúng chương trình ${gradeLabel} cùng Cô Dung.`;
+      }
     }
 
     const result = {
@@ -1029,6 +1106,8 @@ export async function POST({ request, platform }) {
       total_questions: totalQuestions,
       grade: session.grade,
       curriculum: session.curriculum,
+      test_mode: testMode,
+      placement_class: placementClass,
       blueprint: session.blueprint,
       cefr_level: cefrLevel,
       rank_title: rankTitle,

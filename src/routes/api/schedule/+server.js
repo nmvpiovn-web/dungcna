@@ -4,7 +4,193 @@ import { getAllClassSessions, saveClassSession, deleteClassSession, assignStuden
 
 export const prerender = false;
 
-function formatSessionRow(row) {
+export function _validateStrictGregorianDate(dateStr) {
+  const str = String(dateStr || '').trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+    return { valid: false, error: 'Định dạng ngày học không hợp lệ (YYYY-MM-DD)' };
+  }
+  const [year, month, day] = str.split('-').map(Number);
+  if (month < 1 || month > 12) {
+    return { valid: false, error: 'Tháng không hợp lệ (01 - 12)' };
+  }
+  const isLeap = (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
+  const daysInMonth = [0, 31, isLeap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  if (day < 1 || day > daysInMonth[month]) {
+    return { valid: false, error: 'Ngày không hợp lệ trên lịch Gregorian' };
+  }
+  // Gregorian day of week: Sunday = 0, Monday = 1, ..., Saturday = 6
+  const date = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
+  const dayOfWeek = date.getUTCDay();
+  const dayNames = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
+  return {
+    valid: true,
+    year,
+    month,
+    day,
+    dayOfWeek,
+    dayName: dayNames[dayOfWeek]
+  };
+}
+const validateStrictGregorianDate = _validateStrictGregorianDate;
+
+export function _validateStrictTimeRange(startTime, endTime) {
+  const start = String(startTime || '').trim();
+  const end = String(endTime || '').trim();
+  if (!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(start)) {
+    return { valid: false, error: 'Giờ bắt đầu không hợp lệ (định dạng HH:mm từ 00:00 đến 23:59)' };
+  }
+  if (!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(end)) {
+    return { valid: false, error: 'Giờ kết thúc không hợp lệ (định dạng HH:mm từ 00:00 đến 23:59)' };
+  }
+  if (start >= end) {
+    return { valid: false, error: 'Giờ kết thúc phải sau giờ bắt đầu' };
+  }
+  return { valid: true, start, end };
+}
+const validateStrictTimeRange = _validateStrictTimeRange;
+
+export const _BASE_SCHEDULE_COLUMNS = [
+  'id',
+  'class_name',
+  'session_date',
+  'start_time',
+  'end_time'
+];
+const BASE_SCHEDULE_COLUMNS = _BASE_SCHEDULE_COLUMNS;
+
+export function _buildConflictFilter({ cols, schemaCheck, body, activeTeacherId, activeAssistantId, activeSubstituteId, roomVal, newStudentIds }) {
+  const teacherIds = [
+    activeTeacherId,
+    activeAssistantId,
+    activeSubstituteId
+  ].filter(Boolean);
+
+  const orConditions = [];
+  const orParams = [];
+
+  if (teacherIds.length > 0) {
+    const placeholders = teacherIds.map(() => '?').join(', ');
+    const teacherClauses = [`teacher_id IN (${placeholders})`];
+    orParams.push(...teacherIds);
+    if (cols.has('assistant_teacher_id')) {
+      teacherClauses.push(`assistant_teacher_id IN (${placeholders})`);
+      orParams.push(...teacherIds);
+    }
+    if (cols.has('substitute_teacher_id')) {
+      teacherClauses.push(`substitute_teacher_id IN (${placeholders})`);
+      orParams.push(...teacherIds);
+    }
+    orConditions.push(`(${teacherClauses.join(' OR ')})`);
+  }
+
+  if (roomVal) {
+    const roomExpr = schemaCheck.hasRoomNotes && schemaCheck.hasRoom
+      ? "COALESCE(room_notes, room, '')"
+      : schemaCheck.hasRoomNotes
+      ? "room_notes"
+      : "room";
+    orConditions.push(`(LOWER(TRIM(${roomExpr})) = LOWER(TRIM(?)) AND TRIM(${roomExpr}) != '')`);
+    orParams.push(roomVal);
+  }
+
+  if (cols.has('student_ids') && newStudentIds && newStudentIds.length > 0) {
+    const sPlaceholders = newStudentIds.map(() => '?').join(', ');
+    orConditions.push(`EXISTS (
+      SELECT 1 FROM json_each(CASE WHEN json_valid(student_ids) THEN student_ids ELSE '[]' END)
+      WHERE value IN (${sPlaceholders})
+    )`);
+    orParams.push(...newStudentIds);
+  }
+
+  const baseClause = `session_date = ? AND id != ? AND start_time < ? AND end_time > ? AND (status IS NULL OR status != 'cancelled')`;
+  const baseParams = [
+    body.session_date,
+    body.id || '',
+    body.end_time,
+    body.start_time
+  ];
+
+  if (orConditions.length === 0) {
+    return {
+      hasConflictCheck: false,
+      whereSql: baseClause,
+      whereParams: baseParams,
+      teacherIds
+    };
+  }
+
+  return {
+    hasConflictCheck: true,
+    whereSql: `${baseClause} AND (${orConditions.join(' OR ')})`,
+    whereParams: [...baseParams, ...orParams],
+    teacherIds
+  };
+}
+const buildConflictFilter = _buildConflictFilter;
+
+export function _clearClassSessionsColumnsCache() {
+  // Kept as no-op for backward compatibility with tests
+}
+const clearClassSessionsColumnsCache = _clearClassSessionsColumnsCache;
+
+export async function _getClassSessionsColumns(db) {
+  if (!db) return new Set();
+  try {
+    const stmt = db.prepare('PRAGMA table_info(class_sessions)');
+    const info = typeof stmt.all === 'function'
+      ? await stmt.all()
+      : (typeof stmt.bind === 'function' ? await stmt.bind().all() : null);
+    return new Set((info?.results || []).map(r => r.name));
+  } catch (err) {
+    console.warn('Failed to inspect PRAGMA table_info(class_sessions):', err);
+    return new Set();
+  }
+}
+const getClassSessionsColumns = _getClassSessionsColumns;
+
+/**
+ * Dual schedule schema support:
+ * Repo migrations/0001 create room/topic, production uses room_notes/subject_topic.
+ * Requires base columns plus (room_notes OR room) and (subject_topic OR topic).
+ * Fails closed only when neither pair/member or PRAGMA fails.
+ */
+export function _resolveScheduleSchema(cols) {
+  if (!cols || cols.size === 0) {
+    return { valid: false, error: 'Không thể kiểm tra cấu trúc bảng class_sessions qua PRAGMA' };
+  }
+  const missingBase = _BASE_SCHEDULE_COLUMNS.filter(c => !cols.has(c));
+  if (missingBase.length > 0) {
+    return { valid: false, error: `Bảng class_sessions thiếu cột cơ bản bắt buộc (${missingBase.join(', ')})` };
+  }
+
+  const hasRoomNotes = cols.has('room_notes');
+  const hasRoom = cols.has('room');
+  if (!hasRoomNotes && !hasRoom) {
+    return { valid: false, error: 'Bảng class_sessions thiếu cột phòng học (yêu cầu room_notes hoặc room)' };
+  }
+
+  const hasSubjectTopic = cols.has('subject_topic');
+  const hasTopic = cols.has('topic');
+  if (!hasSubjectTopic && !hasTopic) {
+    return { valid: false, error: 'Bảng class_sessions thiếu cột chuyên đề (yêu cầu subject_topic hoặc topic)' };
+  }
+
+  return {
+    valid: true,
+    hasRoomNotes,
+    hasRoom,
+    hasSubjectTopic,
+    hasTopic
+  };
+}
+const resolveScheduleSchema = _resolveScheduleSchema;
+
+export function _validateCanonicalColumns(cols) {
+  return _resolveScheduleSchema(cols);
+}
+const validateCanonicalColumns = _validateCanonicalColumns;
+
+export function _formatSessionRow(row) {
   if (!row) return null;
   let studentIds = [];
   try {
@@ -12,14 +198,22 @@ function formatSessionRow(row) {
   } catch {
     studentIds = [];
   }
+  const subjectTopic = (row.subject_topic !== undefined && row.subject_topic !== null && String(row.subject_topic).trim() !== '')
+    ? String(row.subject_topic)
+    : (row.topic !== undefined && row.topic !== null ? String(row.topic) : '');
+  const roomNotes = (row.room_notes !== undefined && row.room_notes !== null && String(row.room_notes).trim() !== '')
+    ? String(row.room_notes)
+    : (row.room !== undefined && row.room !== null ? String(row.room) : '');
   return {
     ...row,
     student_ids: studentIds,
-    // Two-way field name compatibility: DB columns <-> form field names
-    subject_topic: row.topic ?? row.subject_topic ?? '',
-    room_notes: row.room ?? row.room_notes ?? ''
+    subject_topic: subjectTopic,
+    room_notes: roomNotes,
+    topic: subjectTopic,
+    room: roomNotes
   };
 }
+const formatSessionRow = _formatSessionRow;
 
 export async function GET({ url, request, platform }) {
   // 1. Strict Server Authentication
@@ -36,6 +230,11 @@ export async function GET({ url, request, platform }) {
     const teacherId = url.searchParams.get('teacher_id');
 
     if (platform?.env?.DB) {
+      const cols = await getClassSessionsColumns(platform.env.DB);
+      const hasAssistant = cols.has('assistant_teacher_id');
+      const hasSubstitute = cols.has('substitute_teacher_id');
+      const hasStudentIds = cols.has('student_ids');
+
       let query = 'SELECT cs.* FROM class_sessions cs WHERE 1=1';
       const params = [];
       const role = String(auth.user.role || '').toLowerCase();
@@ -44,38 +243,67 @@ export async function GET({ url, request, platform }) {
       // result set, but never widen the sessions visible to the signed-in user.
       if (!isManager(auth.user)) {
         if (role === 'teacher') {
-          query += ' AND (cs.teacher_id = ? OR cs.assistant_teacher_id = ? OR cs.substitute_teacher_id = ?)';
-          params.push(auth.user.id, auth.user.id, auth.user.id);
+          const teacherPredicates = ['cs.teacher_id = ?'];
+          params.push(auth.user.id);
+          if (hasAssistant) {
+            teacherPredicates.push('cs.assistant_teacher_id = ?');
+            params.push(auth.user.id);
+          }
+          if (hasSubstitute) {
+            teacherPredicates.push('cs.substitute_teacher_id = ?');
+            params.push(auth.user.id);
+          }
+          query += ' AND (' + teacherPredicates.join(' OR ') + ')';
         } else if (role === 'student') {
-          query += ` AND (
-            cs.class_id IN (
+          if (hasStudentIds) {
+            query += ` AND (
+              cs.class_id IN (
+                SELECT class_id FROM class_enrollments
+                WHERE user_id = ? AND status = 'active'
+              )
+              OR EXISTS (
+                SELECT 1 FROM json_each(CASE WHEN json_valid(cs.student_ids) THEN cs.student_ids ELSE '[]' END)
+                WHERE value = ?
+              )
+            )`;
+            params.push(auth.user.id, auth.user.id);
+          } else {
+            query += ` AND cs.class_id IN (
               SELECT class_id FROM class_enrollments
               WHERE user_id = ? AND status = 'active'
-            )
-            OR EXISTS (
-              SELECT 1 FROM json_each(CASE WHEN json_valid(cs.student_ids) THEN cs.student_ids ELSE '[]' END)
-              WHERE value = ?
-            )
-          )`;
-          params.push(auth.user.id, auth.user.id);
+            )`;
+            params.push(auth.user.id);
+          }
         } else if (role === 'parent') {
-          query += ` AND (
-            cs.class_id IN (
+          if (hasStudentIds) {
+            query += ` AND (
+              cs.class_id IN (
+                SELECT ce.class_id
+                FROM class_enrollments ce
+                JOIN parent_student_links psl ON psl.student_user_id = ce.user_id
+                WHERE psl.parent_user_id = ?
+                  AND psl.verification_status = 'verified'
+                  AND ce.status = 'active'
+              )
+              OR EXISTS (
+                SELECT 1
+                FROM json_each(CASE WHEN json_valid(cs.student_ids) THEN cs.student_ids ELSE '[]' END) ids
+                JOIN parent_student_links psl ON psl.student_user_id = ids.value
+                WHERE psl.parent_user_id = ? AND psl.verification_status = 'verified'
+              )
+            )`;
+            params.push(auth.user.id, auth.user.id);
+          } else {
+            query += ` AND cs.class_id IN (
               SELECT ce.class_id
               FROM class_enrollments ce
               JOIN parent_student_links psl ON psl.student_user_id = ce.user_id
               WHERE psl.parent_user_id = ?
                 AND psl.verification_status = 'verified'
                 AND ce.status = 'active'
-            )
-            OR EXISTS (
-              SELECT 1
-              FROM json_each(CASE WHEN json_valid(cs.student_ids) THEN cs.student_ids ELSE '[]' END) ids
-              JOIN parent_student_links psl ON psl.student_user_id = ids.value
-              WHERE psl.parent_user_id = ? AND psl.verification_status = 'verified'
-            )
-          )`;
-          params.push(auth.user.id, auth.user.id);
+            )`;
+            params.push(auth.user.id);
+          }
         } else {
           return json({ success: false, error: 'Forbidden: Vai trò này không có quyền xem thời khóa biểu' }, { status: 403 });
         }
@@ -85,8 +313,17 @@ export async function GET({ url, request, platform }) {
         params.push(classId);
       }
       if (teacherId) {
-        query += ' AND (cs.teacher_id = ? OR cs.assistant_teacher_id = ? OR cs.substitute_teacher_id = ?)';
-        params.push(teacherId, teacherId, teacherId);
+        const tFilterPredicates = ['cs.teacher_id = ?'];
+        params.push(teacherId);
+        if (hasAssistant) {
+          tFilterPredicates.push('cs.assistant_teacher_id = ?');
+          params.push(teacherId);
+        }
+        if (hasSubstitute) {
+          tFilterPredicates.push('cs.substitute_teacher_id = ?');
+          params.push(teacherId);
+        }
+        query += ' AND (' + tFilterPredicates.join(' OR ') + ')';
       }
       query += ' ORDER BY cs.session_date DESC, cs.start_time ASC';
 
@@ -153,88 +390,238 @@ export async function POST({ request, platform }) {
     const isMgr = isManager(auth.user);
     const db = platform?.env?.DB;
 
-    // Ownership helper: non-managers may only touch sessions they are in charge of
-    // (main / assistant / substitute teacher).
-    async function assertOwnSession(sessionId) {
-      if (isMgr || !db || !sessionId) return;
-      const existing = await db.prepare(
-        `SELECT teacher_id, assistant_teacher_id, substitute_teacher_id FROM class_sessions WHERE id = ? LIMIT 1`
-      ).bind(sessionId).first();
-      if (existing) {
-        const mine = [existing.teacher_id, existing.assistant_teacher_id, existing.substitute_teacher_id].includes(auth.user.id);
-        if (!mine) {
-          throw { status: 403, message: 'Forbidden: Bạn chỉ được sửa lịch mình phụ trách' };
+    if (action === 'assign_students') {
+      if (db) {
+        const cols = await getClassSessionsColumns(db);
+        if (!cols.has('student_ids')) {
+          return json({
+            success: false,
+            error: 'Lược đồ cơ sở dữ liệu hiện tại không hỗ trợ gán học sinh trực tiếp (thiếu cột student_ids)'
+          }, { status: 400 });
+        }
+        const schemaCheck = validateCanonicalColumns(cols);
+        if (!schemaCheck.valid) {
+          return json({ success: false, error: schemaCheck.error }, { status: 500 });
+        }
+        if (!isMgr) {
+          const selCols = ['id', 'teacher_id'];
+          if (cols.has('assistant_teacher_id')) selCols.push('assistant_teacher_id');
+          if (cols.has('substitute_teacher_id')) selCols.push('substitute_teacher_id');
+          const existing = await db.prepare(
+            `SELECT ${selCols.join(', ')} FROM class_sessions WHERE id = ? LIMIT 1`
+          ).bind(body.session_id).first();
+          if (!existing) {
+            return json({ success: false, error: 'Không tìm thấy buổi học để gán học sinh' }, { status: 404 });
+          }
+          const mine = [existing.teacher_id, existing.assistant_teacher_id, existing.substitute_teacher_id].filter(Boolean).includes(auth.user.id);
+          if (!mine) {
+            return json({ success: false, error: 'Forbidden: Bạn chỉ được sửa lịch mình phụ trách' }, { status: 403 });
+          }
+        }
+        const updateRes = await db.prepare(`
+          UPDATE class_sessions SET student_ids = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
+        `).bind(JSON.stringify(body.student_ids || []), body.session_id).run();
+        const changes = updateRes?.meta?.changes ?? updateRes?.changes;
+        if (changes !== undefined && changes === 0) {
+          return json({ success: false, error: 'Không tìm thấy buổi học để gán học sinh' }, { status: 404 });
+        }
+        return json({ success: true, session_id: body.session_id, student_ids: body.student_ids });
+      } else {
+        const res = assignStudentsToClassSession(body.session_id, body.student_ids);
+        return json(res);
+      }
+    }
+
+    if (!body.class_name || !String(body.class_name).trim()) {
+      return json({ success: false, error: 'Thiếu tên lớp học' }, { status: 400 });
+    }
+
+    if (!body.start_time) {
+      return json({ success: false, error: 'Thiếu giờ bắt đầu buổi học' }, { status: 400 });
+    }
+
+    if (!body.end_time) {
+      return json({ success: false, error: 'Thiếu giờ kết thúc buổi học' }, { status: 400 });
+    }
+
+    // Strict Gregorian Date Validation
+    if (!body.session_date) {
+      return json({ success: false, error: 'Thiếu ngày học (session_date). Vui lòng chọn ngày trên lịch.' }, { status: 400 });
+    }
+    const dateVal = validateStrictGregorianDate(body.session_date);
+    if (!dateVal.valid) {
+      return json({ success: false, error: dateVal.error }, { status: 400 });
+    }
+
+    // Consistency check: weekday metadata vs actual Gregorian date
+    const dayNames = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
+    if (body.day_of_week !== undefined && body.day_of_week !== null && String(body.day_of_week).trim() !== '') {
+      const requestedDow = Number(body.day_of_week);
+      if (!Number.isNaN(requestedDow) && requestedDow !== dateVal.dayOfWeek) {
+        return json({
+          success: false,
+          error: `Thứ trong tuần (${dayNames[requestedDow] || requestedDow}) không khớp với ngày học ${body.session_date} (${dateVal.dayName})`
+        }, { status: 400 });
+      }
+    }
+
+    // Strict Time Range Validation
+    const timeVal = validateStrictTimeRange(body.start_time, body.end_time);
+    if (!timeVal.valid) {
+      return json({ success: false, error: timeVal.error }, { status: 400 });
+    }
+
+    const isNew = !body.id;
+    let existingSession = null;
+
+    if (isNew) {
+      // Create self-lead check: Non-managers cannot create sessions assigned to other lead teachers
+      if (!isMgr && body.teacher_id && body.teacher_id !== auth.user.id) {
+        return json({ success: false, error: 'Forbidden: Bạn chỉ được tạo lịch cho chính mình' }, { status: 403 });
+      }
+      if (!isMgr && !body.teacher_id) {
+        body.teacher_id = auth.user.id;
+      }
+    } else {
+      // Update: use existing session ownership; forbid non-manager changing teacher ownership fields
+      if (db) {
+        const cols = await getClassSessionsColumns(db);
+        const selCols = ['id', 'teacher_id'];
+        if (cols.has('teacher_name')) selCols.push('teacher_name');
+        if (cols.has('assistant_teacher_id')) selCols.push('assistant_teacher_id');
+        if (cols.has('assistant_teacher_name')) selCols.push('assistant_teacher_name');
+        if (cols.has('substitute_teacher_id')) selCols.push('substitute_teacher_id');
+        if (cols.has('substitute_teacher_name')) selCols.push('substitute_teacher_name');
+        existingSession = await db.prepare(
+          `SELECT ${selCols.join(', ')} FROM class_sessions WHERE id = ? LIMIT 1`
+        ).bind(body.id).first();
+      } else {
+        existingSession = getAllClassSessions().find(s => s.id === body.id) || null;
+      }
+
+      if (!existingSession) {
+        return json({ success: false, error: 'Không tìm thấy buổi học để cập nhật' }, { status: 404 });
+      }
+
+      if (!isMgr) {
+        // Ownership check: must be lead teacher, assistant, or substitute
+        const activeTeachers = [
+          existingSession.teacher_id,
+          existingSession.assistant_teacher_id,
+          existingSession.substitute_teacher_id
+        ].filter(Boolean);
+
+        if (!activeTeachers.includes(auth.user.id)) {
+          return json({ success: false, error: 'Forbidden: Bạn chỉ được sửa lịch mình phụ trách' }, { status: 403 });
+        }
+
+        // Cấm non-manager đổi teacher ownership fields (chống takeover / reassign)
+        if (body.teacher_id && body.teacher_id !== existingSession.teacher_id) {
+          return json({ success: false, error: 'Forbidden: Chỉ quản lý mới có quyền thay đổi giáo viên phụ trách' }, { status: 403 });
+        }
+        if (body.assistant_teacher_id !== undefined && (body.assistant_teacher_id || null) !== (existingSession.assistant_teacher_id || null)) {
+          return json({ success: false, error: 'Forbidden: Chỉ quản lý mới có quyền thay đổi trợ giảng' }, { status: 403 });
+        }
+        if (body.substitute_teacher_id !== undefined && (body.substitute_teacher_id || null) !== (existingSession.substitute_teacher_id || null)) {
+          return json({ success: false, error: 'Forbidden: Chỉ quản lý mới có quyền thay đổi giáo viên dạy thay' }, { status: 403 });
         }
       }
     }
 
-    if (action === 'assign_students') {
-      await assertOwnSession(body.session_id);
-      const res = assignStudentsToClassSession(body.session_id, body.student_ids);
-      if (db) {
-        await db.prepare(`
-          UPDATE class_sessions SET student_ids = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
-        `).bind(JSON.stringify(body.student_ids || []), body.session_id).run();
-      }
-      return json(res);
-    }
+    const activeTeacherId = isNew
+      ? (body.teacher_id || auth.user.id)
+      : (isMgr ? (body.teacher_id || existingSession.teacher_id) : existingSession.teacher_id);
+    const activeTeacherName = isNew
+      ? (body.teacher_name || auth.user.name || '')
+      : (isMgr ? (body.teacher_name || existingSession.teacher_name || '') : (existingSession.teacher_name || auth.user.name || ''));
+    const activeAssistantId = isNew
+      ? (body.assistant_teacher_id || null)
+      : (isMgr ? (body.assistant_teacher_id !== undefined ? (body.assistant_teacher_id || null) : (existingSession.assistant_teacher_id || null)) : (existingSession.assistant_teacher_id || null));
+    const activeAssistantName = isNew
+      ? (body.assistant_teacher_name || '')
+      : (isMgr ? (body.assistant_teacher_name !== undefined ? (body.assistant_teacher_name || '') : (existingSession.assistant_teacher_name || '')) : (existingSession.assistant_teacher_name || ''));
+    const activeSubstituteId = isNew
+      ? (body.substitute_teacher_id || null)
+      : (isMgr ? (body.substitute_teacher_id !== undefined ? (body.substitute_teacher_id || null) : (existingSession.substitute_teacher_id || null)) : (existingSession.substitute_teacher_id || null));
+    const activeSubstituteName = isNew
+      ? (body.substitute_teacher_name || '')
+      : (isMgr ? (body.substitute_teacher_name !== undefined ? (body.substitute_teacher_name || '') : (existingSession.substitute_teacher_name || '')) : (existingSession.substitute_teacher_name || ''));
 
-    if (!body.class_name || !body.start_time) {
-      return json({ success: false, error: 'Thiếu thông tin tên lớp hoặc thời gian bắt đầu buổi học' }, { status: 400 });
-    }
+    const roomVal = String(body.room ?? body.room_notes ?? '').trim();
+    const topicVal = String(body.subject_topic ?? body.topic ?? '').trim() || 'Chuyên đề Ngữ pháp & Giao tiếp';
+    const newStudentIds = Array.isArray(body.student_ids) ? body.student_ids : [];
 
-    // Bước 2: session_date bắt buộc (ô lịch tuần phải gửi day.iso)
-    if (!body.session_date) {
-      return json({ success: false, error: 'Thiếu ngày học (session_date). Vui lòng chọn ngày trên lịch.' }, { status: 400 });
-    }
+    let conflictFilter = null;
 
-    // Bước 2: end_time phải sau start_time
-    if (body.end_time && body.start_time >= body.end_time) {
-      return json({ success: false, error: 'Giờ kết thúc phải sau giờ bắt đầu' }, { status: 400 });
-    }
-
-    await assertOwnSession(body.id);
-    // Non-managers cannot create sessions assigned to other teachers
-    if (!isMgr && body.teacher_id && body.teacher_id !== auth.user.id) {
-      return json({ success: false, error: 'Forbidden: Bạn chỉ được tạo lịch cho chính mình' }, { status: 403 });
-    }
-
-    // Bước 2: chặn trùng lịch (409) — cùng session_date, giờ overlap,
-    // cho teacher_id, assistant_teacher_id, student_ids, room
-    // BUG-2 fix: bắt buộc end_time, không skip check khi thiếu
-    if (!body.end_time) {
-      return json({ success: false, error: 'Thiếu giờ kết thúc' }, { status: 400 });
-    }
-    // BUG-1 fix: map room từ body.room ?? body.room_notes để check trùng đúng
-    const roomVal = body.room ?? body.room_notes ?? '';
     if (db) {
-      const newStudentIds = Array.isArray(body.student_ids) ? body.student_ids : [];
-      const conflicts = await db.prepare(`
-        SELECT id, class_name, teacher_id, assistant_teacher_id, student_ids, room, start_time, end_time
-        FROM class_sessions
-        WHERE session_date = ?
-          AND id != ?
-          AND start_time < ?
-          AND end_time > ?
-          AND status != 'cancelled'
-        LIMIT 50
-      `).bind(
-        body.session_date,
-        body.id || '',
-        body.end_time,
-        body.start_time
-      ).all();
-      const rows = conflicts?.results || [];
-      const teacherIds = [body.teacher_id || auth.user.id, body.assistant_teacher_id].filter(Boolean);
-      for (const r of rows) {
-        let rStudentIds = [];
-        try { rStudentIds = typeof r.student_ids === 'string' ? JSON.parse(r.student_ids || '[]') : (r.student_ids || []); } catch {}
-        const teacherOverlap = teacherIds.some(t => [r.teacher_id, r.assistant_teacher_id].includes(t));
-        const studentOverlap = newStudentIds.some(s => rStudentIds.includes(s));
-        // BUG-1 fix: dùng roomVal đã map (body.room ?? body.room_notes), không dùng body.room trực tiếp
-        const roomOverlap = roomVal && r.room && String(roomVal).trim() === String(r.room).trim();
-        if (teacherOverlap || studentOverlap || roomOverlap) {
-          const reason = teacherOverlap ? 'giáo viên' : studentOverlap ? 'học sinh' : 'phòng học';
+      const cols = await getClassSessionsColumns(db);
+      const schemaCheck = resolveScheduleSchema(cols);
+      if (!schemaCheck.valid) {
+        return json({ success: false, error: schemaCheck.error }, { status: 500 });
+      }
+
+      const subCol = cols.has('substitute_teacher_id') ? ', substitute_teacher_id' : '';
+      const asstCol = cols.has('assistant_teacher_id') ? ', assistant_teacher_id' : '';
+      const studentCol = cols.has('student_ids') ? ', student_ids' : '';
+      const roomColExpr = schemaCheck.hasRoomNotes && schemaCheck.hasRoom
+        ? "COALESCE(room_notes, room, '') AS room_notes"
+        : schemaCheck.hasRoomNotes
+        ? "room_notes"
+        : "room AS room_notes";
+
+      conflictFilter = buildConflictFilter({
+        cols,
+        schemaCheck,
+        body,
+        activeTeacherId,
+        activeAssistantId,
+        activeSubstituteId,
+        roomVal,
+        newStudentIds
+      });
+
+      if (conflictFilter.hasConflictCheck) {
+        let offset = 0;
+        const chunkSize = 100;
+        let conflictFound = null;
+
+        while (true) {
+          const scanSql = `
+            SELECT id, class_name, teacher_id ${asstCol} ${subCol} ${studentCol}, ${roomColExpr}, start_time, end_time
+            FROM class_sessions
+            WHERE ${conflictFilter.whereSql}
+            ORDER BY id ASC
+            LIMIT ? OFFSET ?
+          `;
+          const scanParams = [...conflictFilter.whereParams, chunkSize, offset];
+          const chunkRes = await db.prepare(scanSql).bind(...scanParams).all();
+          const chunkRows = chunkRes?.results || [];
+          if (chunkRows.length === 0) break;
+
+          for (const r of chunkRows) {
+            let rStudentIds = [];
+            try { rStudentIds = typeof r.student_ids === 'string' ? JSON.parse(r.student_ids || '[]') : (r.student_ids || []); } catch {}
+            const rTeachers = [r.teacher_id, r.assistant_teacher_id, r.substitute_teacher_id].filter(Boolean);
+            const teacherOverlap = conflictFilter.teacherIds.some(t => rTeachers.includes(t));
+            const studentOverlap = newStudentIds.some(s => rStudentIds.includes(s));
+            const existingRoom = r.room_notes ?? r.room ?? '';
+            const roomOverlap = roomVal && existingRoom && String(roomVal).toLowerCase() === String(existingRoom).trim().toLowerCase();
+            if (teacherOverlap || studentOverlap || roomOverlap) {
+              conflictFound = {
+                row: r,
+                reason: teacherOverlap ? 'giáo viên' : studentOverlap ? 'học sinh' : 'phòng học'
+              };
+              break;
+            }
+          }
+
+          if (conflictFound) break;
+          if (chunkRows.length < chunkSize) break;
+          offset += chunkSize;
+        }
+
+        if (conflictFound) {
+          const { row: r, reason } = conflictFound;
           return json({
             success: false,
             error: `Trùng lịch ${reason} với ca "${r.class_name}" (${r.start_time}–${r.end_time} ngày ${body.session_date})`
@@ -244,111 +631,215 @@ export async function POST({ request, platform }) {
     }
 
     const id = body.id || `sess_${crypto.randomUUID()}`;
-    const dayNames = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
-    const dayName = body.day_name || (body.day_of_week !== undefined && dayNames[body.day_of_week] ? dayNames[body.day_of_week] : 'Thứ Năm');
-    const studentIdsStr = Array.isArray(body.student_ids) ? JSON.stringify(body.student_ids) : (body.student_ids || '[]');
-    // Map form field names to DB columns (two-way compatibility)
-    const topicVal = body.topic ?? body.subject_topic ?? '';
-    // roomVal đã định nghĩa ở trên (dùng cho check trùng lịch)
+    const dayName = dateVal.dayName;
+    const dayOfWeek = dateVal.dayOfWeek;
+    const studentIdsStr = JSON.stringify(newStudentIds);
 
     let savedSession = {
-      ...body,
       id,
-      day_name: dayName,
-      topic: topicVal,
+      class_id: body.class_id || '',
+      class_name: body.class_name.trim(),
+      grade_level: body.grade_level || 'Lớp 7',
       subject_topic: topicVal,
+      topic: topicVal,
+      teacher_id: activeTeacherId,
+      teacher_name: activeTeacherName,
+      teacher_role: body.teacher_role || 'lead',
+      assistant_teacher_id: activeAssistantId,
+      assistant_teacher_name: activeAssistantName,
+      substitute_teacher_id: activeSubstituteId,
+      substitute_teacher_name: activeSubstituteName,
+      substitute_notes: body.substitute_notes || '',
+      location: body.location || 'Tại nhà Cô Dung (123 Phố Vọng, Hai Bà Trưng, Hà Nội)',
+      day_of_week: dayOfWeek,
+      day_name: dayName,
+      session_date: body.session_date,
+      start_time: body.start_time,
+      end_time: body.end_time,
+      notify_minutes_before: Number(body.notify_minutes_before ?? 10),
+      room_notes: roomVal,
       room: roomVal,
-      room_notes: roomVal
+      status: body.status || 'scheduled',
+      student_ids: newStudentIds
     };
 
     if (platform?.env?.DB) {
+      const cols = await getClassSessionsColumns(platform.env.DB);
+      const schemaCheck = resolveScheduleSchema(cols);
+      if (!schemaCheck.valid) {
+        return json({ success: false, error: schemaCheck.error }, { status: 500 });
+      }
+
       const isNew = !body.id;
       if (isNew) {
-        await platform.env.DB.prepare(`
-          INSERT INTO class_sessions (
-            id, class_id, class_name, teacher_id, teacher_name,
-            session_date, start_time, end_time, room, topic, status, grade_level,
-            day_of_week, day_name, student_ids, assistant_teacher_id,
-            location, notify_minutes_before, assistant_teacher_name, teacher_role, updated_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-        `).bind(
+        const insertCols = [
+          'id',
+          'class_id',
+          'class_name',
+          'teacher_id',
+          'session_date',
+          'start_time',
+          'end_time'
+        ];
+        const insertVals = [
           id,
           body.class_id || '',
-          body.class_name,
-          body.teacher_id || auth.user.id,
-          body.teacher_name || auth.user.name || '',
-          body.session_date || new Date().toISOString().split('T')[0],
+          body.class_name.trim(),
+          activeTeacherId,
+          body.session_date,
           body.start_time,
-          body.end_time || '',
-          roomVal,
-          topicVal,
-          'scheduled',
-          body.grade_level || '',
-          body.day_of_week !== undefined ? body.day_of_week : null,
-          dayName,
-          studentIdsStr,
-          body.assistant_teacher_id || null,
-          body.location || '',
-          Number(body.notify_minutes_before ?? 10),
-          body.assistant_teacher_name || '',
-          body.teacher_role || 'lead'
-        ).run();
+          body.end_time
+        ];
+
+        if (cols.has('teacher_name')) {
+          insertCols.push('teacher_name');
+          insertVals.push(activeTeacherName);
+        }
+
+        // Dual schema support: dynamically write exact existing pair
+        if (schemaCheck.hasRoomNotes) { insertCols.push('room_notes'); insertVals.push(roomVal); }
+        if (schemaCheck.hasRoom) { insertCols.push('room'); insertVals.push(roomVal); }
+        if (schemaCheck.hasSubjectTopic) { insertCols.push('subject_topic'); insertVals.push(topicVal); }
+        if (schemaCheck.hasTopic) { insertCols.push('topic'); insertVals.push(topicVal); }
+
+        if (cols.has('grade_level')) { insertCols.push('grade_level'); insertVals.push(body.grade_level || 'Lớp 7'); }
+        if (cols.has('day_of_week')) { insertCols.push('day_of_week'); insertVals.push(dayOfWeek); }
+        if (cols.has('day_name')) { insertCols.push('day_name'); insertVals.push(dayName); }
+        if (cols.has('student_ids')) { insertCols.push('student_ids'); insertVals.push(studentIdsStr); }
+        if (cols.has('assistant_teacher_id')) { insertCols.push('assistant_teacher_id'); insertVals.push(activeAssistantId); }
+        if (cols.has('assistant_teacher_name')) { insertCols.push('assistant_teacher_name'); insertVals.push(activeAssistantName); }
+        if (cols.has('substitute_teacher_id')) { insertCols.push('substitute_teacher_id'); insertVals.push(activeSubstituteId); }
+        if (cols.has('substitute_teacher_name')) { insertCols.push('substitute_teacher_name'); insertVals.push(activeSubstituteName); }
+        if (cols.has('substitute_notes')) { insertCols.push('substitute_notes'); insertVals.push(body.substitute_notes || ''); }
+        if (cols.has('location')) { insertCols.push('location'); insertVals.push(body.location || 'Tại nhà Cô Dung (123 Phố Vọng, Hai Bà Trưng, Hà Nội)'); }
+        if (cols.has('notify_minutes_before')) { insertCols.push('notify_minutes_before'); insertVals.push(Number(body.notify_minutes_before ?? 10)); }
+        if (cols.has('teacher_role')) { insertCols.push('teacher_role'); insertVals.push(body.teacher_role || 'lead'); }
+        if (cols.has('status')) { insertCols.push('status'); insertVals.push('scheduled'); }
+        if (cols.has('updated_at')) { insertCols.push('updated_at'); insertVals.push(new Date().toISOString()); }
+
+        if (conflictFilter && conflictFilter.hasConflictCheck) {
+          const selectPlaceholders = insertCols.map(() => '?').join(', ');
+          const atomicInsertSql = `
+            INSERT INTO class_sessions (${insertCols.join(', ')})
+            SELECT ${selectPlaceholders}
+            WHERE NOT EXISTS (
+              SELECT 1 FROM class_sessions WHERE ${conflictFilter.whereSql}
+            )
+          `;
+          const atomicInsertParams = [...insertVals, ...conflictFilter.whereParams];
+          const insertRes = await platform.env.DB.prepare(atomicInsertSql).bind(...atomicInsertParams).run();
+          const changes = insertRes?.meta?.changes ?? insertRes?.changes;
+          if (changes !== undefined && changes === 0) {
+            const raceConflict = await platform.env.DB.prepare(`
+              SELECT class_name, start_time, end_time FROM class_sessions WHERE ${conflictFilter.whereSql} LIMIT 1
+            `).bind(...conflictFilter.whereParams).first();
+            const raceMsg = raceConflict
+              ? `Trùng lịch với ca "${raceConflict.class_name}" (${raceConflict.start_time}–${raceConflict.end_time} ngày ${body.session_date})`
+              : 'Xung đột lịch học đồng thời: Buổi học bị trùng với một yêu cầu khác vừa được tạo';
+            return json({ success: false, error: raceMsg }, { status: 409 });
+          }
+        } else {
+          const placeholders = insertCols.map(() => '?').join(', ');
+          await platform.env.DB.prepare(`
+            INSERT INTO class_sessions (${insertCols.join(', ')}) VALUES (${placeholders})
+          `).bind(...insertVals).run();
+        }
         savedSession.status = 'scheduled';
       } else {
         // UPDATE: only touch columns the form submits.
-        // Never touch substitute_* / attendance_taken / payroll_* and never reset status.
-        await platform.env.DB.prepare(`
-          UPDATE class_sessions SET
-            class_id = ?,
-            class_name = ?,
-            teacher_id = ?,
-            teacher_name = ?,
-            session_date = ?,
-            start_time = ?,
-            end_time = ?,
-            room = ?,
-            topic = ?,
-            grade_level = ?,
-            day_of_week = ?,
-            day_name = ?,
-            student_ids = ?,
-            assistant_teacher_id = ?,
-            location = ?,
-            notify_minutes_before = ?,
-            assistant_teacher_name = ?,
-            teacher_role = ?,
-            updated_at = CURRENT_TIMESTAMP
-          WHERE id = ?
-        `).bind(
+        // Never touch substitute_* / attendance_taken / payroll_* unless explicitly submitted, and never reset status.
+        const updateSets = [
+          'class_id = ?',
+          'class_name = ?',
+          'teacher_id = ?',
+          'session_date = ?',
+          'start_time = ?',
+          'end_time = ?'
+        ];
+        const updateVals = [
           body.class_id || '',
-          body.class_name,
-          body.teacher_id || auth.user.id,
-          body.teacher_name || auth.user.name || '',
-          body.session_date || new Date().toISOString().split('T')[0],
+          body.class_name.trim(),
+          activeTeacherId,
+          body.session_date,
           body.start_time,
-          body.end_time || '',
-          roomVal,
-          topicVal,
-          body.grade_level || '',
-          body.day_of_week !== undefined ? body.day_of_week : null,
-          dayName,
-          studentIdsStr,
-          body.assistant_teacher_id || null,
-          body.location || '',
-          Number(body.notify_minutes_before ?? 10),
-          body.assistant_teacher_name || '',
-          body.teacher_role || 'lead',
-          id
-        ).run();
+          body.end_time
+        ];
+
+        if (cols.has('teacher_name')) {
+          updateSets.push('teacher_name = ?');
+          updateVals.push(activeTeacherName);
+        }
+
+        // Dual schema support: dynamically update exact existing pair
+        if (schemaCheck.hasRoomNotes) { updateSets.push('room_notes = ?'); updateVals.push(roomVal); }
+        if (schemaCheck.hasRoom) { updateSets.push('room = ?'); updateVals.push(roomVal); }
+        if (schemaCheck.hasSubjectTopic) { updateSets.push('subject_topic = ?'); updateVals.push(topicVal); }
+        if (schemaCheck.hasTopic) { updateSets.push('topic = ?'); updateVals.push(topicVal); }
+
+        if (cols.has('grade_level')) { updateSets.push('grade_level = ?'); updateVals.push(body.grade_level || 'Lớp 7'); }
+        if (cols.has('day_of_week')) { updateSets.push('day_of_week = ?'); updateVals.push(dayOfWeek); }
+        if (cols.has('day_name')) { updateSets.push('day_name = ?'); updateVals.push(dayName); }
+        if (cols.has('student_ids')) { updateSets.push('student_ids = ?'); updateVals.push(studentIdsStr); }
+        if (cols.has('assistant_teacher_id')) { updateSets.push('assistant_teacher_id = ?'); updateVals.push(activeAssistantId); }
+        if (cols.has('assistant_teacher_name')) { updateSets.push('assistant_teacher_name = ?'); updateVals.push(activeAssistantName); }
+        if (cols.has('substitute_teacher_id')) { updateSets.push('substitute_teacher_id = ?'); updateVals.push(activeSubstituteId); }
+        if (cols.has('substitute_teacher_name')) { updateSets.push('substitute_teacher_name = ?'); updateVals.push(activeSubstituteName); }
+        if (cols.has('substitute_notes')) { updateSets.push('substitute_notes = ?'); updateVals.push(body.substitute_notes || ''); }
+        if (cols.has('location')) { updateSets.push('location = ?'); updateVals.push(body.location || 'Tại nhà Cô Dung (123 Phố Vọng, Hai Bà Trưng, Hà Nội)'); }
+        if (cols.has('notify_minutes_before')) { updateSets.push('notify_minutes_before = ?'); updateVals.push(Number(body.notify_minutes_before ?? 10)); }
+        if (cols.has('teacher_role')) { updateSets.push('teacher_role = ?'); updateVals.push(body.teacher_role || 'lead'); }
+        if (cols.has('updated_at')) { updateSets.push('updated_at = CURRENT_TIMESTAMP'); }
+
+        if (conflictFilter && conflictFilter.hasConflictCheck) {
+          const atomicUpdateSql = `
+            UPDATE class_sessions
+            SET ${updateSets.join(', ')}
+            WHERE id = ?
+              AND NOT EXISTS (
+                SELECT 1 FROM class_sessions WHERE ${conflictFilter.whereSql}
+              )
+          `;
+          const atomicUpdateParams = [...updateVals, id, ...conflictFilter.whereParams];
+          const updateRes = await platform.env.DB.prepare(atomicUpdateSql).bind(...atomicUpdateParams).run();
+          const changes = updateRes?.meta?.changes ?? updateRes?.changes;
+          if (changes !== undefined && changes === 0) {
+            const exists = await platform.env.DB.prepare('SELECT 1 FROM class_sessions WHERE id = ? LIMIT 1').bind(id).first();
+            if (!exists) {
+              return json({ success: false, error: 'Không tìm thấy buổi học để cập nhật' }, { status: 404 });
+            }
+            const raceConflict = await platform.env.DB.prepare(`
+              SELECT class_name, start_time, end_time FROM class_sessions WHERE ${conflictFilter.whereSql} LIMIT 1
+            `).bind(...conflictFilter.whereParams).first();
+            const raceMsg = raceConflict
+              ? `Trùng lịch với ca "${raceConflict.class_name}" (${raceConflict.start_time}–${raceConflict.end_time} ngày ${body.session_date})`
+              : 'Xung đột lịch học đồng thời: Cập nhật bị từ chối do trùng với ca học khác';
+            return json({ success: false, error: raceMsg }, { status: 409 });
+          }
+        } else {
+          updateVals.push(id);
+          const updateRes = await platform.env.DB.prepare(`
+            UPDATE class_sessions SET ${updateSets.join(', ')} WHERE id = ?
+          `).bind(...updateVals).run();
+
+          const changes = updateRes?.meta?.changes ?? updateRes?.changes;
+          if (changes !== undefined && changes === 0) {
+            return json({ success: false, error: 'Không tìm thấy buổi học để cập nhật' }, { status: 404 });
+          }
+        }
+
         // Keep the existing status from DB (don't reset)
         const kept = await platform.env.DB.prepare('SELECT status FROM class_sessions WHERE id = ? LIMIT 1').bind(id).first();
-        if (kept) savedSession.status = kept.status;
+        if (!kept) {
+          return json({ success: false, error: 'Không tìm thấy buổi học để cập nhật' }, { status: 404 });
+        }
+        if (kept?.status) savedSession.status = kept.status;
       }
+    } else {
+      // no-DB fallback only
+      try {
+        saveClassSession(savedSession);
+      } catch {}
     }
-
-    try {
-      saveClassSession(savedSession);
-    } catch {}
 
     return json({
       success: true,
@@ -387,11 +878,15 @@ export async function DELETE({ url, request, platform }) {
 
     // Non-managers can only delete sessions they are in charge of
     if (!isManager(auth.user) && platform?.env?.DB) {
+      const cols = await getClassSessionsColumns(platform.env.DB);
+      const selCols = ['teacher_id'];
+      if (cols.has('assistant_teacher_id')) selCols.push('assistant_teacher_id');
+      if (cols.has('substitute_teacher_id')) selCols.push('substitute_teacher_id');
       const existing = await platform.env.DB.prepare(
-        `SELECT teacher_id, assistant_teacher_id, substitute_teacher_id FROM class_sessions WHERE id = ? LIMIT 1`
+        `SELECT ${selCols.join(', ')} FROM class_sessions WHERE id = ? LIMIT 1`
       ).bind(id).first();
       if (existing) {
-        const mine = [existing.teacher_id, existing.assistant_teacher_id, existing.substitute_teacher_id].includes(auth.user.id);
+        const mine = [existing.teacher_id, existing.assistant_teacher_id, existing.substitute_teacher_id].filter(Boolean).includes(auth.user.id);
         if (!mine) {
           return json({ success: false, error: 'Forbidden: Bạn chỉ được xóa lịch mình phụ trách' }, { status: 403 });
         }
@@ -399,9 +894,19 @@ export async function DELETE({ url, request, platform }) {
     }
 
     if (platform?.env?.DB) {
-      await platform.env.DB.prepare('DELETE FROM class_sessions WHERE id = ?').bind(id).run();
+      const cols = await getClassSessionsColumns(platform.env.DB);
+      const schemaCheck = validateCanonicalColumns(cols);
+      if (!schemaCheck.valid) {
+        return json({ success: false, error: schemaCheck.error }, { status: 500 });
+      }
+      const delRes = await platform.env.DB.prepare('DELETE FROM class_sessions WHERE id = ?').bind(id).run();
+      const changes = delRes?.meta?.changes ?? delRes?.changes;
+      if (changes !== undefined && changes === 0) {
+        return json({ success: false, error: 'Không tìm thấy buổi học để xóa' }, { status: 404 });
+      }
+    } else {
+      deleteClassSession(id);
     }
-    const ok = deleteClassSession(id);
     return json({ success: true, message: 'Đã xóa buổi học khỏi thời khóa biểu' });
   } catch (err) {
     console.error('DELETE /api/schedule error:', err);

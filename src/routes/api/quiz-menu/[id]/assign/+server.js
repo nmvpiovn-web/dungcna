@@ -1,6 +1,7 @@
 import { json } from '@sveltejs/kit';
 import { verifyServerAuth, isStaffUser, isManager } from '../../../../../lib/server/auth.js';
 import { canManageQuiz, makeId } from '../../../../../lib/server/quizMenu.js';
+import { getValidTeachingSessions, validateStrictDeadline } from '../../../../../lib/server/quizDrive.js';
 
 export const prerender = false;
 
@@ -11,14 +12,19 @@ export async function GET({ params, request, platform }) {
   if (!isStaffUser(auth.user)) return json({ success: false, error: 'Forbidden' }, { status: 403 });
   const db = platform?.env?.DB;
   if (!db) return json({ success: false, error: 'DatabaseUnavailable' }, { status: 500 });
+
+  const quiz = await db.prepare(`SELECT id, created_by FROM quizzes WHERE id = ? LIMIT 1`).bind(params.id).first();
+  if (!quiz) return json({ success: false, error: 'QuizNotFound' }, { status: 404 });
+  if (!canManageQuiz(auth.user, quiz)) {
+    return json({ success: false, error: 'Forbidden: Bạn chỉ được thao tác trên quiz do mình tạo' }, { status: 403 });
+  }
+
   try {
-    // Lớp học = distinct class_id/class_name từ class_sessions (nguồn thật duy nhất của lớp)
-    // Manager thấy mọi lớp; teacher chỉ thấy lớp mình dạy (hoặc dạy thay)
-    const role = String(auth.user.role || '').toLowerCase();
     const rows = isManager(auth.user)
       ? await db.prepare(`SELECT DISTINCT class_id, class_name FROM class_sessions ORDER BY class_name`).all()
-      : await db.prepare(`SELECT DISTINCT class_id, class_name FROM class_sessions WHERE teacher_id = ? OR substitute_teacher_id = ? ORDER BY class_name`).bind(auth.user.id, auth.user.id).all();
-    return json({ success: true, classes: rows.results || [] });
+      : await db.prepare(`SELECT DISTINCT class_id, class_name FROM class_sessions WHERE teacher_id = ? OR assistant_teacher_id = ? OR substitute_teacher_id = ? ORDER BY class_name`).bind(auth.user.id, auth.user.id, auth.user.id).all();
+    const sessions = await getValidTeachingSessions(db, auth.user, 50);
+    return json({ success: true, classes: rows.results || [], sessions });
   } catch (err) {
     return json({ success: false, error: err.message }, { status: 500 });
   }
@@ -43,7 +49,16 @@ export async function POST({ params, request, platform }) {
   const dueDate = String(body.due_date || '').trim();
   const title = String(body.title || quiz.title || '').trim().slice(0, 150);
   if (!classId) return json({ success: false, error: 'Thiếu class_id', message: 'Hãy chọn lớp để giao quiz.' }, { status: 400 });
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(dueDate)) return json({ success: false, error: 'Hạn nộp không hợp lệ', message: 'Hạn nộp phải có dạng YYYY-MM-DD.' }, { status: 400 });
+  if (!dueDate) return json({ success: false, error: 'Thiếu due_date', message: 'Hãy chọn hạn nộp.' }, { status: 400 });
+  try {
+    validateStrictDeadline(dueDate, '23:59');
+  } catch (deadlineErr) {
+    return json({
+      success: false,
+      error: deadlineErr.code || 'InvalidDeadline',
+      message: deadlineErr.message || 'Hạn nộp không hợp lệ'
+    }, { status: 400 });
+  }
 
   // Validate lớp tồn tại (lấy class_name thật từ class_sessions)
   const cls = await db.prepare(`SELECT class_id, class_name FROM class_sessions WHERE class_id = ? LIMIT 1`).bind(classId).first();
@@ -51,7 +66,7 @@ export async function POST({ params, request, platform }) {
 
   // Teacher thường chỉ được giao cho lớp mình dạy
   if (!isManager(auth.user)) {
-    const own = await db.prepare(`SELECT 1 FROM class_sessions WHERE class_id = ? AND (teacher_id = ? OR substitute_teacher_id = ?) LIMIT 1`).bind(classId, auth.user.id, auth.user.id).first();
+    const own = await db.prepare(`SELECT 1 FROM class_sessions WHERE class_id = ? AND (teacher_id = ? OR assistant_teacher_id = ? OR substitute_teacher_id = ?) LIMIT 1`).bind(classId, auth.user.id, auth.user.id, auth.user.id).first();
     if (!own) return json({ success: false, error: 'Forbidden: Bạn chỉ được giao quiz cho lớp mình dạy' }, { status: 403 });
   }
 

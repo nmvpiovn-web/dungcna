@@ -1,17 +1,20 @@
 <script>
- import { onMount } from 'svelte';
+ import { onMount, onDestroy } from 'svelte';
  import {
  getAllUsers,
  getCurrentUser,
  isTeacherOrAdmin,
- saveClassSession
+ saveClassSession,
+ upsertClassSessionInStore
  } from '$lib/unifiedStore';
+ import { registerBusyState, unregisterBusyState } from '$lib/stores/appUpdate.js';
 
  let { isOpen = $bindable(false), session = null, preset = null, onSaved = () => {} } = $props();
 
  let currentUser = $state(null);
  let allStudents = $state([]);
  let allTeachers = $state([]);
+ let isManager = $derived(['admin', 'superadmin', 'leader'].includes(String(currentUser?.role || '').toLowerCase()));
 
  let form = $state({
  id: '',
@@ -19,11 +22,13 @@
  class_name: 'Lớp 7 - Global Success & KET A2',
  grade_level: 'Lớp 7',
  subject_topic: '',
- teacher_id: 'usr_super_2',
- teacher_name: 'Ms. Dung',
+ teacher_id: '',
+ teacher_name: '',
  teacher_role: 'lead',
- assistant_teacher_id: 'usr_teach_1',
- assistant_teacher_name: 'Mr. Johnathan Miller',
+ assistant_teacher_id: '',
+ assistant_teacher_name: '',
+    substitute_teacher_id: '',
+    substitute_teacher_name: '',
  location: 'Tại nhà Cô Dung (123 Phố Vọng, Hai Bà Trưng, Hà Nội)',
  day_of_week: 1,
  day_name: 'Thứ Hai',
@@ -87,7 +92,7 @@
  errorMessage = '';
  currentUser = getCurrentUser();
  const users = getAllUsers();
- allTeachers = users.filter(u => u.role === 'teacher' || u.role === 'superadmin');
+ allTeachers = users.filter(u => ['teacher', 'superadmin', 'admin', 'leader'].includes(String(u.role || '').toLowerCase()));
  // Bước 4: picker học sinh từ API, không dùng local
  allStudents = users.filter(u => u.role === 'student');
  const token = typeof window !== 'undefined' ? localStorage.getItem('tienganh_token') : null;
@@ -108,17 +113,29 @@
  student_ids: session.student_ids ? [...session.student_ids] : []
  };
  } else {
+ const defaultTeacherId = preset?.teacher_id || (currentUser ? currentUser.id : (allTeachers[0]?.id || ''));
+ const defaultTeacher = allTeachers.find(t => t.id === defaultTeacherId);
+ const defaultTeacherName = preset?.teacher_name || defaultTeacher?.name || currentUser?.name || currentUser?.username || '';
+ const defaultAssistantId = preset?.assistant_teacher_id || '';
+ const defaultAssistant = allTeachers.find(t => t.id === defaultAssistantId);
+ const defaultAssistantName = preset?.assistant_teacher_name || defaultAssistant?.name || '';
+        const defaultSubstituteId = preset?.substitute_teacher_id || '';
+        const defaultSubstitute = allTeachers.find(t => t.id === defaultSubstituteId);
+        const defaultSubstituteName = preset?.substitute_teacher_name || defaultSubstitute?.name || '';
+
  form = {
  id: '',
  class_id: '',
  class_name: 'Lớp 7 - Global Success & KET A2',
  grade_level: 'Lớp 7',
  subject_topic: 'Chuyên đề Ngữ pháp & Giao tiếp phản xạ',
- teacher_id: 'usr_super_2',
- teacher_name: 'Ms. Dung',
+ teacher_id: defaultTeacherId,
+ teacher_name: defaultTeacherName,
  teacher_role: 'lead',
- assistant_teacher_id: 'usr_teach_1',
- assistant_teacher_name: 'Mr. Johnathan Miller',
+ assistant_teacher_id: defaultAssistantId,
+ assistant_teacher_name: defaultAssistantName,
+          substitute_teacher_id: defaultSubstituteId,
+          substitute_teacher_name: defaultSubstituteName,
  location: 'Tại nhà Cô Dung (123 Phố Vọng, Hai Bà Trưng, Hà Nội)',
  day_of_week: 1,
  day_name: 'Thứ Hai',
@@ -155,6 +172,21 @@
  let errorMessage = $state('');
  let saving = $state(false);
 
+ $effect(() => {
+   if (isOpen || saving) {
+     registerBusyState('schedule-session-edit-modal');
+   } else {
+     unregisterBusyState('schedule-session-edit-modal');
+   }
+   return () => {
+     unregisterBusyState('schedule-session-edit-modal');
+   };
+ });
+
+ onDestroy(() => {
+   unregisterBusyState('schedule-session-edit-modal');
+ });
+
  async function handleSave() {
  errorMessage = '';
  if (saving) return;
@@ -181,6 +213,11 @@
 
  const aObj = allTeachers.find(t => t.id === form.assistant_teacher_id);
  if (aObj) form.assistant_teacher_name = aObj.name;
+    else if (!form.assistant_teacher_id) form.assistant_teacher_name = '';
+
+    const sObj = allTeachers.find(t => t.id === form.substitute_teacher_id);
+    if (sObj) form.substitute_teacher_name = sObj.name;
+    else if (!form.substitute_teacher_id) form.substitute_teacher_name = '';
 
  const token = typeof window !== 'undefined' ? localStorage.getItem('tienganh_token') : null;
  let savedData = { ...form };
@@ -205,8 +242,16 @@
  return;
  }
  if (data.session) {
- savedData = data.session;
+   savedData = data.session;
  }
+ try {
+   upsertClassSessionInStore(savedData);
+ } catch (cacheErr) {
+   console.warn('Local cache update ignored on successful save:', cacheErr);
+ }
+ onSaved(savedData);
+ isOpen = false;
+ return;
  }
 
  const saved = saveClassSession(savedData, currentUser);
@@ -221,29 +266,35 @@
 </script>
 
 {#if isOpen}
- <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in duration-200">
- <div class="w-full max-w-2xl rounded-3xl bg-white border border-slate-200 shadow-2xl p-6 md:p-8 space-y-5 max-h-[90vh] overflow-y-auto">
+ <div
+ role="dialog"
+ aria-modal="true"
+ aria-labelledby="session-modal-title"
+ class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-sm animate-in fade-in duration-200"
+ >
+ <div class="w-full max-w-2xl rounded-3xl bg-[#fdfbf7] border border-stone-200 shadow-2xl p-6 md:p-8 space-y-5 max-h-[90vh] overflow-y-auto">
 
  <!-- Header -->
- <div class="flex items-start justify-between border-b border-slate-100 pb-3">
+ <div class="flex items-start justify-between border-b border-stone-200/70 pb-3">
  <div>
- <span class="text-xs font-bold text-indigo-600 uppercase tracking-wider">
+ <span class="text-xs font-bold text-emerald-700 uppercase tracking-wider">
  {form.id ? 'CẬP NHẬT THỜI KHÓA BIỂU' : 'THÊM BUỔI HỌC MỚI'}
  </span>
- <h2 class="text-xl font-black text-slate-900 mt-0.5">
+ <h2 id="session-modal-title" class="text-xl font-black text-stone-900 mt-0.5">
  Thiết Lập Lịch Học &amp; Danh Sách Học Sinh
  </h2>
  </div>
  <button
  onclick={() => isOpen = false}
- class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:text-slate-900 flex items-center justify-center font-bold"
+ aria-label="Đóng"
+ class="min-w-[44px] min-h-[44px] w-11 h-11 rounded-full bg-stone-100 text-stone-600 hover:bg-stone-200 hover:text-stone-900 flex items-center justify-center font-bold transition-colors"
  >
  ✕
  </button>
  </div>
 
  {#if errorMessage}
- <div class="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-600 text-xs font-semibold">
+ <div data-testid="session-modal-error" role="alert" class="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold">
  ⚠️ {errorMessage}
  </div>
  {/if}
@@ -251,20 +302,22 @@
  <!-- Form Grid -->
  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
  <div>
- <label class="block font-bold text-slate-700 mb-1">Tên Khóa / Lớp Học *</label>
+ <label for="session-class-name" class="block font-bold text-stone-700 mb-1">Tên Khóa / Lớp Học *</label>
  <input
+ id="session-class-name"
  type="text"
  bind:value={form.class_name}
  placeholder="Ví dụ: Lớp 7 - Global Success & KET A2"
- class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:border-indigo-500"
+ class="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-stone-900 focus:outline-none focus:border-emerald-600"
  />
  </div>
 
  <div>
- <label class="block font-bold text-slate-700 mb-1">Khối Lớp (Role Học Sinh)</label>
+ <label for="session-grade-level" class="block font-bold text-stone-700 mb-1">Khối Lớp (Role Học Sinh)</label>
  <select
+ id="session-grade-level"
  bind:value={form.grade_level}
- class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:border-indigo-500"
+ class="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-stone-900 focus:outline-none focus:border-emerald-600"
  >
  <option value="Lớp 1">Lớp 1 (Tiểu Học / Phonics)</option>
  <option value="Lớp 2">Lớp 2 (Tiểu Học)</option>
@@ -282,56 +335,88 @@
  </div>
 
  <div class="sm:col-span-2">
- <label class="block font-bold text-slate-700 mb-1">Chủ Đề / Nội Dung Bài Học</label>
+ <label for="session-subject-topic" class="block font-bold text-stone-700 mb-1">Chủ Đề / Nội Dung Bài Học</label>
  <input
+ id="session-subject-topic"
  type="text"
  bind:value={form.subject_topic}
  placeholder="Ví dụ: Unit 7: Traffic & Phonics /θ/ - /ð/ - Ngữ pháp Used to"
- class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:border-indigo-500"
+ class="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-stone-900 focus:outline-none focus:border-emerald-600"
  />
  </div>
 
  <div>
- <label class="block font-bold text-slate-700 mb-1">Giáo Viên Phụ Trách Chính</label>
+ <label for="session-teacher-id" class="block font-bold text-stone-700 mb-1">Giáo Viên Phụ Trách Chính</label>
  <select
+ id="session-teacher-id"
  bind:value={form.teacher_id}
- class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:border-indigo-500 font-semibold"
+ disabled={!isManager}
+ class="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-stone-900 focus:outline-none focus:border-emerald-600 font-semibold disabled:opacity-75 disabled:cursor-not-allowed"
  >
  {#each allTeachers as t}
  <option value={t.id}>{t.name} ({t.role === 'superadmin' ? 'Leader' : 'Giáo viên'})</option>
  {/each}
  </select>
+ {#if !isManager && form.id}
+ <p class="text-[10px] text-stone-500 mt-0.5">Chỉ quản lý mới có quyền thay đổi giáo viên phụ trách chính.</p>
+ {/if}
  </div>
 
- <div>
- <label class="block font-bold text-slate-700 mb-1">Giáo Viên Hỗ Trợ / Bản Ngữ / Trợ Giảng</label>
- <select
- bind:value={form.assistant_teacher_id}
- class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:border-indigo-500"
- >
- {#each allTeachers as t}
- <option value={t.id}>{t.name}</option>
- {/each}
- </select>
- </div>
+      <div>
+        <label for="session-assistant-id" class="block font-bold text-stone-700 mb-1">Giáo Viên Hỗ Trợ / Bản Ngữ / Trợ Giảng</label>
+        <select
+          id="session-assistant-id"
+          bind:value={form.assistant_teacher_id}
+          disabled={!isManager && Boolean(form.id)}
+          class="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-stone-900 focus:outline-none focus:border-emerald-600 disabled:opacity-75 disabled:cursor-not-allowed"
+        >
+          <option value="">-- Không có trợ giảng --</option>
+          {#each allTeachers.filter(t => t.id !== form.teacher_id) as t}
+            <option value={t.id}>{t.name} ({t.role === 'superadmin' ? 'Leader' : 'Giáo viên'})</option>
+          {/each}
+        </select>
+        {#if !isManager && form.id}
+          <p class="text-[10px] text-stone-500 mt-0.5">Chỉ quản lý mới có quyền thay đổi trợ giảng của buổi học đã tạo.</p>
+        {/if}
+      </div>
+
+      <div class="sm:col-span-2">
+        <label for="session-substitute-id" class="block font-bold text-stone-700 mb-1">Giáo Viên Dạy Thay (Nếu có)</label>
+        <select
+          id="session-substitute-id"
+          bind:value={form.substitute_teacher_id}
+          disabled={!isManager && Boolean(form.id)}
+          class="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-stone-900 focus:outline-none focus:border-emerald-600 disabled:opacity-75 disabled:cursor-not-allowed"
+        >
+          <option value="">-- Không có giáo viên dạy thay --</option>
+          {#each allTeachers.filter(t => t.id !== form.teacher_id) as t}
+            <option value={t.id}>{t.name} ({t.role === 'superadmin' ? 'Leader' : 'Giáo viên'})</option>
+          {/each}
+        </select>
+        {#if !isManager && form.id}
+          <p class="text-[10px] text-stone-500 mt-0.5">Chỉ quản lý mới có quyền phân công giáo viên dạy thay của buổi học đã tạo.</p>
+        {/if}
+      </div>
 
  <div class="sm:col-span-2">
- <label class="block font-bold text-slate-700 mb-1">Địa Điểm Học *</label>
+ <label for="session-location" class="block font-bold text-stone-700 mb-1">Địa Điểm Học *</label>
  <input
+ id="session-location"
  type="text"
  bind:value={form.location}
  placeholder="Ví dụ: Tại nhà Cô Dung (123 Phố Vọng, Hai Bà Trưng, Hà Nội) hoặc Online Zoom VIP"
- class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:border-indigo-500 font-medium"
+ class="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-stone-900 focus:outline-none focus:border-emerald-600 font-medium"
  />
  </div>
 
  <div class="grid grid-cols-2 gap-2">
  <div>
- <label class="block font-bold text-slate-700 mb-1">Thứ Trong Tuần</label>
+ <label for="session-day-of-week" class="block font-bold text-stone-700 mb-1">Thứ Trong Tuần</label>
  <select
+ id="session-day-of-week"
  bind:value={form.day_of_week}
  onchange={syncDateFromDay}
- class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:border-indigo-500 font-semibold"
+ class="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-stone-900 focus:outline-none focus:border-emerald-600 font-semibold"
  >
  {#each DAY_OPTIONS as opt}
  <option value={opt.value}>{opt.label}</option>
@@ -339,43 +424,47 @@
  </select>
  </div>
  <div>
- <label class="block font-bold text-slate-700 mb-1">Ngày Học *</label>
+ <label for="session-date" class="block font-bold text-stone-700 mb-1">Ngày Học *</label>
  <input
+ id="session-date"
  type="date"
  bind:value={form.session_date}
  onchange={syncDayFromDate}
  required
- class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:border-indigo-500 font-semibold"
+ class="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-stone-900 focus:outline-none focus:border-emerald-600 font-semibold"
  />
  </div>
  </div>
 
  <div class="grid grid-cols-2 gap-2">
  <div>
- <label class="block font-bold text-slate-700 mb-1">Bắt Đầu</label>
+ <label for="session-start-time" class="block font-bold text-stone-700 mb-1">Bắt Đầu</label>
  <input
+ id="session-start-time"
  type="time"
  bind:value={form.start_time}
- class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-mono text-slate-900 focus:outline-none focus:border-indigo-500"
+ class="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 font-mono text-stone-900 focus:outline-none focus:border-emerald-600"
  />
  </div>
  <div>
- <label class="block font-bold text-slate-700 mb-1">Kết Thúc</label>
+ <label for="session-end-time" class="block font-bold text-stone-700 mb-1">Kết Thúc</label>
  <input
+ id="session-end-time"
  type="time"
  bind:value={form.end_time}
- class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-mono text-slate-900 focus:outline-none focus:border-indigo-500"
+ class="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 font-mono text-stone-900 focus:outline-none focus:border-emerald-600"
  />
  </div>
  </div>
 
  <div>
- <label class="block font-bold text-slate-700 mb-1">
+ <label for="session-notify" class="block font-bold text-stone-700 mb-1">
  ⏰ Thông Báo Cho Phụ Huynh Trước:
  </label>
  <select
+ id="session-notify"
  bind:value={form.notify_minutes_before}
- class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:border-indigo-500 font-semibold"
+ class="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-stone-900 focus:outline-none focus:border-emerald-600 font-semibold"
  >
  <option value={5}>5 phút trước giờ học</option>
  <option value={10}>10 phút trước giờ học (Chuẩn đưa đón)</option>
@@ -386,81 +475,83 @@
  </div>
 
  <div>
- <label class="block font-bold text-slate-700 mb-1">Ghi Chú Phòng Học</label>
+ <label for="session-room-notes" class="block font-bold text-stone-700 mb-1">Ghi Chú Phòng Học</label>
  <input
+ id="session-room-notes"
  type="text"
  bind:value={form.room_notes}
  placeholder="Ví dụ: Phòng VIP 201 - Có máy chiếu & loa kiểm âm"
- class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:border-indigo-500"
+ class="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-stone-900 focus:outline-none focus:border-emerald-600"
  />
  </div>
  </div>
 
  <!-- Thêm / Bớt Học Sinh Vào Lớp Học Này -->
- <div class="space-y-2 pt-2 border-t border-slate-100">
- <div class="flex items-center justify-between">
- <label class="font-bold text-xs text-slate-800">
- 👥 Danh Sách Học Sinh Gán Vào Ca Học Này ({form.student_ids.length} học sinh):
- </label>
- <div class="flex items-center gap-2 text-[11px]">
- <button
- type="button"
- onclick={() => form.student_ids = allStudents.map(s => s.id)}
- class="text-indigo-600 font-bold hover:underline"
- >
- Chọn tất cả
- </button>
- <span>•</span>
- <button
- type="button"
- onclick={() => form.student_ids = []}
- class="text-rose-500 hover:underline"
- >
- Bỏ chọn
- </button>
- </div>
- </div>
+    <fieldset class="space-y-2 pt-2 border-t border-stone-200/70 border-0 p-0 m-0">
+      <div class="flex items-center justify-between">
+        <legend class="font-bold text-xs text-stone-800">
+          👥 Danh Sách Học Sinh Gán Vào Ca Học Này ({form.student_ids.length} học sinh):
+        </legend>
+        <div class="flex items-center gap-2 text-[11px]">
+          <button
+            type="button"
+            onclick={() => form.student_ids = allStudents.map(s => s.id)}
+            class="text-emerald-700 font-bold hover:underline min-h-[44px] px-2 py-1 flex items-center"
+          >
+            Chọn tất cả
+          </button>
+          <span>•</span>
+          <button
+            type="button"
+            onclick={() => form.student_ids = []}
+            class="text-rose-600 font-bold hover:underline min-h-[44px] px-2 py-1 flex items-center"
+          >
+            Bỏ chọn
+          </button>
+        </div>
+      </div>
 
- <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto p-2 bg-slate-50 rounded-2xl border border-slate-200">
- {#each allStudents as student}
- {@const isSelected = form.student_ids.includes(student.id)}
- <button
- type="button"
- onclick={() => toggleStudent(student.id)}
- class="p-2 rounded-xl border text-left flex items-center justify-between gap-2 transition-all {isSelected ? 'bg-indigo-600 border-indigo-500 text-white shadow-sm' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100'}"
- >
- <div class="flex items-center gap-2 min-w-0">
- <img src={student.avatar} alt="" class="w-6 h-6 rounded-full object-cover" />
- <div class="truncate">
- <div class="font-bold text-xs truncate">{student.name}</div>
- <div class="text-[10px] opacity-75">{student.username}</div>
- </div>
- </div>
- <span class="text-xs font-bold">{isSelected ? '✓' : '+'}</span>
- </button>
- {/each}
- </div>
- </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto p-2 bg-stone-50 rounded-2xl border border-stone-200">
+        {#each allStudents as student}
+          {@const isSelected = form.student_ids.includes(student.id)}
+          <button
+            type="button"
+            onclick={() => toggleStudent(student.id)}
+            class="min-h-[44px] p-2 rounded-xl border text-left flex items-center justify-between gap-2 transition-all {isSelected ? 'bg-emerald-600 border-emerald-600 text-white shadow-sm' : 'bg-white border-stone-200 text-stone-700 hover:bg-stone-100'}"
+          >
+            <div class="flex items-center gap-2 min-w-0">
+              <img src={student.avatar} alt="" class="w-6 h-6 rounded-full object-cover" />
+              <div class="truncate">
+                <div class="font-bold text-xs truncate">{student.name}</div>
+                <div class="text-[10px] opacity-75">{student.username}</div>
+              </div>
+            </div>
+            <span class="text-xs font-bold">{isSelected ? '✓' : '+'}</span>
+          </button>
+        {/each}
+      </div>
+    </fieldset>
 
  <!-- Action Buttons -->
- <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 pt-3 border-t border-slate-100 bg-white -mx-6 md:-mx-8 px-6 md:px-8 pb-1">
- <button
- type="button"
- onclick={() => isOpen = false}
- disabled={saving}
- class="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold text-xs hover:bg-slate-100 disabled:opacity-50"
- >
- Hủy
- </button>
- <button
- type="button"
- onclick={handleSave}
- disabled={saving}
- class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-cx-600 hover:from-indigo-500 hover:to-cx-500 text-white font-bold text-xs shadow-md shadow-indigo-600/30 transition-all hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 w-full sm:w-auto"
- >
- {saving ? '⏳ Đang lưu...' : '💾 Lưu Buổi Học & Thời Khóa Biểu'}
- </button>
- </div>
+    <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 pt-3 border-t border-stone-200/70 bg-[#fdfbf7] -mx-6 md:-mx-8 px-6 md:px-8 pb-1">
+      <button
+        type="button"
+        onclick={() => isOpen = false}
+        disabled={saving}
+        class="min-h-[44px] px-5 py-2.5 rounded-xl border border-stone-300 text-stone-700 font-bold text-xs hover:bg-stone-100 disabled:opacity-50 transition-colors"
+      >
+        Hủy
+      </button>
+      <button
+        type="button"
+        data-testid="session-modal-save-btn"
+        onclick={handleSave}
+        disabled={saving}
+        class="min-h-[44px] px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-700/20 transition-all hover:scale-[1.02] disabled:opacity-50 disabled:hover:scale-100 w-full sm:w-auto"
+      >
+        {saving ? '⏳ Đang lưu...' : '💾 Lưu Buổi Học & Thời Khóa Biểu'}
+      </button>
+    </div>
  </div>
  </div>
 {/if}

@@ -16,7 +16,7 @@
   let comments = $state({});
 
   let selected = $derived(attempts.find((attempt) => attempt.id === selectedId) || null);
-  let subjective = $derived(questions.filter((question) => question.type === 'paragraph' || question.type === 'rewrite'));
+  let subjective = $derived(questions.filter((question) => question.type === 'paragraph' || question.type === 'rewrite' || question.type === 'essay'));
 
   function timeLabel(value) {
     return value ? new Date(value).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' }) : 'Chưa nộp';

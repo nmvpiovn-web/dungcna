@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="vi">
+<html lang="vi" class="overflow-x-hidden">
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -89,16 +89,16 @@
 			})();
 		</script>
 		
-		<!-- Global Busy / Dirty Registry & Safe PWA Controller Update -->
+		<!-- Global Busy / Dirty Registry & Safe PWA Registration -->
 		<script>
 			window.__appBusyRegistry = window.__appBusyRegistry || new Set();
 			window.registerBusyState = function(id) {
-				window.__appBusyRegistry.add(id);
+				if (id) window.__appBusyRegistry.add(id);
 				return function() { window.__appBusyRegistry.delete(id); };
 			};
 			window.unregisterBusyState = function(id) { window.__appBusyRegistry.delete(id); };
 			window.isAppBusy = function() {
-				if (window.__appBusyRegistry.size > 0) return true;
+				if (window.__appBusyRegistry && window.__appBusyRegistry.size > 0) return true;
 				if (window.__isExamActive) return true;
 				if (window.location.pathname.startsWith('/exam') && !window.__isExamSubmitted) return true;
 				if (window.__isRecordingActive) return true;
@@ -106,41 +106,6 @@
 				if (document.querySelector('form.dirty, input.dirty, textarea.dirty')) return true;
 				return false;
 			};
-
-			if ('serviceWorker' in navigator) {
-				let hadPreviousController = Boolean(navigator.serviceWorker.controller);
-				navigator.serviceWorker.addEventListener('controllerchange', () => {
-					if (!hadPreviousController) {
-						hadPreviousController = true;
-						return; // First install / claim: do not reload fresh page
-					}
-					// Protect active exams, recordings, and unsaved form input from abrupt reloads
-					if (window.isAppBusy()) {
-						// Dispatch non-disruptive update notification without destroying user state
-						window.dispatchEvent(new CustomEvent('sw-update-available'));
-						let banner = document.getElementById('sw-update-banner');
-						if (!banner) {
-							banner = document.createElement('div');
-							banner.id = 'sw-update-banner';
-							banner.className = 'fixed bottom-4 right-4 z-[9999] p-3 bg-slate-900/95 text-white border border-cx-500 rounded-lg shadow-2xl text-xs flex items-center gap-3 backdrop-blur-md animate-in fade-in';
-							banner.innerHTML = '<span>⚡ Có bản cập nhật hệ thống mới. Dữ liệu đã được bảo toàn tự động.</span> <button onclick="this.parentElement.remove()" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-cx-400 rounded font-semibold border border-slate-700 shadow-xs">Đã Rõ</button>';
-							document.body.appendChild(banner);
-						}
-						return;
-					}
-
-					// Safe to reload idle page
-					if (!window.__swReloading) {
-						window.__swReloading = true;
-						window.location.reload();
-					}
-				});
-				window.addEventListener('load', () => {
-					navigator.serviceWorker.register('/sw.js').then((reg) => {
-						reg.update();
-					}).catch(() => {});
-				});
-			}
 		</script>
 		%sveltekit.head%
 	</head>

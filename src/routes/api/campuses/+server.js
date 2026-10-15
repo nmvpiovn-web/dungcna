@@ -10,7 +10,7 @@ const FALLBACK_CAMPUSES = [
     name: 'Nhà Cô Dung (Trụ Sở Chính - Linh Xuân)',
     short_code: 'CODUNG',
     address: 'Khu phố 3, Phường Linh Xuân, TP. Thủ Đức, TP. Hồ Chí Minh',
-    hotline: '0912345678',
+    hotline: '0905960437',
     manager_user_id: 'user_msdung',
     latitude: 10.8735,
     longitude: 106.7710,
@@ -34,7 +34,7 @@ const FALLBACK_CAMPUSES = [
     name: 'Trung Tâm Học Liệu & Luyện Thi Thầy Vũ',
     short_code: 'THAYVU',
     address: 'Đường Kha Vạn Cân, Linh Chiểu, TP. Thủ Đức, TP. Hồ Chí Minh',
-    hotline: '0901234567',
+    hotline: '0905960437',
     manager_user_id: 'user_thayvu',
     latitude: 10.8690,
     longitude: 106.7680,
@@ -89,9 +89,9 @@ async function ensureTables(db) {
       `),
       db.prepare(`
         INSERT OR IGNORE INTO campuses (id, name, short_code, address, hotline, manager_user_id) VALUES
-          ('loc_codung', 'Nhà Cô Dung (Trụ Sở Chính)', 'CODUNG', 'Số 18, Ngõ 42, Phố Triều Khúc, Thanh Xuân, Hà Nội', '0912345678', 'user_msdung'),
+          ('loc_codung', 'Nhà Cô Dung (Trụ Sở Chính)', 'CODUNG', 'Số 18, Ngõ 42, Phố Triều Khúc, Thanh Xuân, Hà Nội', '0905960437', 'user_msdung'),
           ('loc_sunshine', 'Trung Tâm Tiếng Anh Sunshine Academy', 'SUNSHINE', 'Tòa Sunshine Riverside, Phú Thượng, Tây Hồ, Hà Nội', '0987654321', 'user_teacher_quynh'),
-          ('loc_thayvu', 'Trung Tâm Học Liệu & Luyện Thi Thầy Vũ', 'THAYVU', 'Số 105, Đường Cầu Giấy, Quan Hoa, Cầu Giấy, Hà Nội', '0901234567', 'user_thayvu');
+          ('loc_thayvu', 'Trung Tâm Học Liệu & Luyện Thi Thầy Vũ', 'THAYVU', 'Số 105, Đường Cầu Giấy, Quan Hoa, Cầu Giấy, Hà Nội', '0905960437', 'user_thayvu');
       `)
     ]);
   } catch (e) {

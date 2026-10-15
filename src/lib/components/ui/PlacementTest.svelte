@@ -7,41 +7,64 @@
  import UiButton from './UiButton.svelte';
  import { SITE_CONTACT } from '$lib/site.js';
  import { speakWord } from '$lib/speech.js';
+ import { getCurrentUser } from '$lib/unifiedStore.js';
 
- const GRADES = [
+ const CERT_TRACKS = [
+ {
+ key: 'ielts',
+ label: '🎯 Xếp Lớp IELTS',
+ mode: 'placement',
+ curricula: [{ key: 'ielts_academic', label: 'IELTS Academic (Band 4.0 - 7.5+)' }]
+ },
+ {
+ key: 'toeic',
+ label: '🎯 Xếp Lớp TOEIC',
+ mode: 'placement',
+ curricula: [{ key: 'toeic_lr', label: 'TOEIC Listening & Reading (450 - 850+)' }]
+ }
+ ];
+
+ const GDPT_GRADES = [
  {
  key: 'lop_1',
  label: 'Lớp 1',
+ mode: 'proficiency',
  curricula: [{ key: 'primary_english', label: 'Tiếng Anh Tiểu học' }]
  },
  {
  key: 'lop_2',
  label: 'Lớp 2',
+ mode: 'proficiency',
  curricula: [{ key: 'primary_english', label: 'Tiếng Anh Tiểu học' }]
  },
  {
  key: 'lop_3',
  label: 'Lớp 3',
+ mode: 'proficiency',
  curricula: [{ key: 'primary_english', label: 'Tiếng Anh Tiểu học' }]
  },
  {
  key: 'lop_4',
  label: 'Lớp 4',
+ mode: 'proficiency',
  curricula: [{ key: 'primary_english', label: 'Tiếng Anh Tiểu học' }]
  },
  {
  key: 'lop_5',
  label: 'Lớp 5',
+ mode: 'proficiency',
  curricula: [{ key: 'primary_english', label: 'Tiếng Anh Tiểu học' }]
  },
  {
  key: 'lop_6',
  label: 'Lớp 6',
+ mode: 'proficiency',
  curricula: [{ key: 'global_success', label: 'Global Success' }]
  },
  {
  key: 'lop_7',
  label: 'Lớp 7 (THCS)',
+ mode: 'proficiency',
  curricula: [
  { key: 'global_success', label: 'Global Success' },
  { key: 'friends_plus', label: 'Friends Plus' },
@@ -51,33 +74,42 @@
  {
  key: 'lop_8',
  label: 'Lớp 8',
+ mode: 'proficiency',
  curricula: [{ key: 'global_success', label: 'Global Success' }]
  },
  {
  key: 'lop_9',
  label: 'Lớp 9',
+ mode: 'proficiency',
  curricula: [{ key: 'global_success', label: 'Ôn thi vào 10' }]
  },
  {
  key: 'lop_10',
  label: 'Lớp 10',
+ mode: 'proficiency',
  curricula: [{ key: 'thpt_foundation', label: 'Nền tảng THPT' }]
  },
  {
  key: 'lop_11',
  label: 'Lớp 11',
+ mode: 'proficiency',
  curricula: [{ key: 'thpt_foundation', label: 'Nền tảng THPT' }]
  },
  {
  key: 'lop_12',
  label: 'Lớp 12 (THPT)',
+ mode: 'proficiency',
  curricula: [{ key: 'thpt_qg', label: 'Ôn thi THPT Quốc Gia' }]
  }
  ];
 
+ const GRADES = [...CERT_TRACKS, ...GDPT_GRADES];
+
  const SKILL_LABELS = { grammar: 'Ngữ pháp', vocabulary: 'Từ vựng', listening: 'Nghe', reading_cloze: 'Đọc hiểu' };
  const TEST_SECONDS = 180; // 3 phut
 
+ let currentUser = $state(null);
+ let assessmentCategory = $state('cert'); // 'cert' (Xếp lớp IELTS/TOEIC) | 'gdpt' (Test trình độ Lớp 1-12)
  let step = $state('pick'); // pick | doing | result
  // Không preselect khối lớp (user 2026-10-06: bắt user chọn, cấm hardcode lớp mặc định)
  let grade = $state('');
@@ -95,10 +127,19 @@
  const curricula = $derived(GRADES.find((g) => g.key === grade)?.curricula || []);
  const questions = $derived(session?.questions || []);
  const currentQ = $derived(questions[currentIdx]);
+ const isPlacementMode = $derived(grade === 'ielts' || grade === 'toeic' || result?.test_mode === 'placement');
+
+ function switchCategory(cat) {
+ assessmentCategory = cat;
+ grade = '';
+ curriculum = '';
+ error = '';
+ }
 
  function selectGrade(g) {
  grade = g;
  curriculum = GRADES.find((x) => x.key === g)?.curricula[0]?.key || '';
+ error = '';
  }
 
  async function start() {
@@ -106,7 +147,9 @@
  error = '';
  if (!grade) {
   loading = false;
-  error = 'Vui lòng chọn khối lớp của bạn trước khi bắt đầu.';
+  error = assessmentCategory === 'cert'
+   ? 'Vui lòng chọn chứng chỉ (IELTS hoặc TOEIC) để thi xếp lớp.'
+   : 'Vui lòng chọn khối lớp GDPT để kiểm tra trình độ.';
   return;
  }
  if (!curriculum) {
@@ -118,7 +161,7 @@
  const res = await fetch('/api/exams/guest', {
  method: 'POST',
  headers: { 'Content-Type': 'application/json' },
- body: JSON.stringify({ action: 'start', grade, curriculum, duration_type: '15m', guest_role: 'student', candidate_name: 'Khách xếp lớp' })
+ body: JSON.stringify({ action: 'start', grade, curriculum, duration_type: '15m', guest_role: 'student', candidate_name: isPlacementMode ? 'Khách xếp lớp chứng chỉ' : 'Khách test trình độ GDPT' })
  });
  const data = await res.json();
  if (!res.ok || !data.success) throw new Error(data.error || 'Không khởi tạo được bài test.');
@@ -193,7 +236,26 @@
  }
  }
 
- onMount(() => () => clearInterval(timer));
+ onMount(() => {
+ currentUser = getCurrentUser();
+ const syncAuth = () => {
+  currentUser = getCurrentUser();
+  if (currentUser && step !== 'pick') {
+   clearInterval(timer);
+   step = 'pick';
+   session = null;
+   result = null;
+   if (typeof document !== 'undefined') document.body.style.overflow = '';
+  }
+ };
+ window.addEventListener('tienganh:auth-change', syncAuth);
+ window.addEventListener('tienganh:store-updated', syncAuth);
+ return () => {
+  clearInterval(timer);
+  window.removeEventListener('tienganh:auth-change', syncAuth);
+  window.removeEventListener('tienganh:store-updated', syncAuth);
+ };
+ });
 
  // Gop diem theo ky nang tu item_feedback
  const skillBars = $derived.by(() => {
@@ -214,14 +276,17 @@
 
  const roadmapHint = $derived.by(() => {
  const lvl = result?.cefr_level || 'A1';
+ if (result?.placement_class) {
+  return { text: `Xếp lớp đề xuất: ${result.placement_class}`, href: '/courses' };
+ }
  // Dùng đúng khối lớp user đã chọn ở bước 1 — cấm hardcode "Lớp 7" (user 2026-10-06).
  const gradeLabel = (GRADES.find((g) => g.key === grade)?.label || 'khối lớp của bạn').replace(/\s*\(.*\)\s*$/, '');
  const map = {
- A1: { text: `Lộ trình 6 tháng: Nền tảng A1 → A2 (${gradeLabel} Chuyên sâu)`, href: '/courses' },
- A2: { text: 'Lộ trình 6 tháng: A2 → B1, sẵn sàng vào 10', href: '/courses' },
- B1: { text: 'Lộ trình: B1 → B2 (Lớp 9 vào 10 / IELTS Foundation)', href: '/courses' },
- B2: { text: 'Lộ trình: B2 → C1 (IELTS 6.0+ / HSG)', href: '/courses' },
- C1: { text: 'Lộ trình: C1 — luyện đề chuyên sâu & IELTS 7.0+', href: '/courses' }
+ A1: { text: `Đánh giá trình độ ${gradeLabel}: Nền tảng A1 → A2`, href: '/courses' },
+ A2: { text: `Đánh giá trình độ ${gradeLabel}: Đạt chuẩn A2 → B1`, href: '/courses' },
+ B1: { text: `Đánh giá trình độ ${gradeLabel}: Khá giỏi B1 → B2`, href: '/courses' },
+ B2: { text: `Đánh giá trình độ ${gradeLabel}: Nâng cao B2 → C1`, href: '/courses' },
+ C1: { text: `Đánh giá trình độ ${gradeLabel}: Xuất sắc C1`, href: '/courses' }
  };
  return map[lvl] || map.A1;
  });
@@ -231,29 +296,68 @@
  const answeredCount = $derived(Object.keys(answers).filter((k) => answers[k] !== '' && answers[k] != null).length);
 </script>
 
+ {#if !currentUser}
  {#if step === 'pick'}
  <div class="rounded-3xl bg-surface-0 border border-line shadow-sm p-5 sm:p-7">
- <div class="text-center max-w-lg mx-auto">
+ <div class="text-center max-w-xl mx-auto">
  <div class="text-4xl mb-2">📝</div>
- <h3 class="font-heading text-xl sm:text-2xl font-extrabold text-ink-900">Test Xếp Lớp 3 Phút</h3>
- <p class="text-sm text-ink-500 mt-1 mb-5">10 câu trắc nghiệm nhanh — biết ngay trình độ CEFR, không cần đăng nhập.</p>
- <div class="flex flex-col gap-3 text-left">
- <label class="text-xs font-extrabold uppercase tracking-widest text-ink-500">1. Chọn khối lớp</label>
- <div class="grid grid-cols-4 sm:grid-cols-6 gap-2">
- {#each GRADES as g}
- <button type="button" onclick={() => selectGrade(g.key)} class={`px-3 py-2.5 rounded-xl text-sm font-bold border transition-all ${grade === g.key ? 'bg-brand-600 border-brand-600 text-white' : 'bg-surface-1 border-line text-ink-900 hover:border-brand-200'}`}>{g.label}</button>
- {/each}
+ <h3 class="font-heading text-xl sm:text-2xl font-extrabold text-ink-900">
+  {assessmentCategory === 'cert' ? 'Thi Xếp Lớp Chứng Chỉ (IELTS / TOEIC)' : 'Kiểm Tra Trình Độ GDPT (Lớp 1 – 12)'}
+ </h3>
+ <p class="text-sm text-ink-500 mt-1 mb-4">
+  {assessmentCategory === 'cert'
+   ? 'Dành riêng cho Khách (Guest): Xếp lớp chính xác theo band IELTS hoặc TOEIC trong 3 phút.'
+   : 'Dành riêng cho Khách (Guest): Chỉ kiểm tra trình độ hiện tại theo đúng khối lớp GDPT (không xếp lớp chéo).'}
+ </p>
+
+ <!-- Chuyển đổi giữa Xếp lớp Chứng chỉ (TOEIC/IELTS) và Test trình độ GDPT -->
+ <div class="inline-flex p-1 rounded-2xl bg-surface-1 border border-line mb-5">
+  <button
+   type="button"
+   onclick={() => switchCategory('cert')}
+   class={`px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-all ${assessmentCategory === 'cert' ? 'bg-brand-600 text-white shadow-sm' : 'text-ink-600 hover:text-ink-900'}`}
+  >
+   🎯 Xếp Lớp TOEIC / IELTS
+  </button>
+  <button
+   type="button"
+   onclick={() => switchCategory('gdpt')}
+   class={`px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-all ${assessmentCategory === 'gdpt' ? 'bg-brand-600 text-white shadow-sm' : 'text-ink-600 hover:text-ink-900'}`}
+  >
+   📊 Test Trình Độ GDPT (Lớp 1–12)
+  </button>
  </div>
+
+ <div class="flex flex-col gap-3 text-left">
+ {#if assessmentCategory === 'cert'}
+  <label class="text-xs font-extrabold uppercase tracking-widest text-ink-500">1. Chọn khối chứng chỉ cần xếp lớp</label>
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+  {#each CERT_TRACKS as g}
+   <button type="button" onclick={() => selectGrade(g.key)} class={`px-4 py-3 rounded-xl text-sm font-bold border transition-all ${grade === g.key ? 'bg-brand-600 border-brand-600 text-white' : 'bg-surface-1 border-line text-ink-900 hover:border-brand-200'}`}>{g.label}</button>
+  {/each}
+  </div>
+ {:else}
+  <label class="text-xs font-extrabold uppercase tracking-widest text-ink-500">1. Chọn khối lớp GDPT cần test trình độ</label>
+  <div class="grid grid-cols-4 sm:grid-cols-6 gap-2">
+  {#each GDPT_GRADES as g}
+   <button type="button" onclick={() => selectGrade(g.key)} class={`px-3 py-2.5 rounded-xl text-sm font-bold border transition-all ${grade === g.key ? 'bg-brand-600 border-brand-600 text-white' : 'bg-surface-1 border-line text-ink-900 hover:border-brand-200'}`}>{g.label}</button>
+  {/each}
+  </div>
+ {/if}
+ {#if curricula.length > 0}
  <label class="text-xs font-extrabold uppercase tracking-widest text-ink-500">2. Chọn chương trình</label>
  <div class="flex flex-wrap gap-2">
  {#each curricula as c}
  <button type="button" onclick={() => (curriculum = c.key)} class={`px-3 py-2 rounded-xl text-sm font-bold border transition-all ${curriculum === c.key ? 'bg-brand-600 border-brand-600 text-white' : 'bg-surface-1 border-line text-ink-900 hover:border-brand-200'}`}>{c.label}</button>
  {/each}
  </div>
+ {/if}
  </div>
  {#if error}<div class="mt-4 text-sm font-bold text-danger-600">{error}</div>{/if}
  <div class="mt-6">
- <UiButton size="lg" variant="accent" onclick={start} disabled={loading || !grade || !curriculum}>{loading ? 'Đang chuẩn bị đề...' : '🚀 Bắt đầu làm bài'}</UiButton>
+ <UiButton size="lg" variant="accent" onclick={start} disabled={loading || !grade || !curriculum}>
+  {loading ? 'Đang chuẩn bị đề...' : (assessmentCategory === 'cert' ? '🎯 Bắt đầu thi xếp lớp' : '📊 Bắt đầu test trình độ')}
+ </UiButton>
  </div>
  </div>
  </div><!-- /pick card -->
@@ -322,9 +426,11 @@
  {:else if step === 'result' && result}
  <div class="max-w-2xl mx-auto text-center">
  <div class="text-4xl mb-2">🎉</div>
- <h3 class="font-heading text-xl sm:text-2xl font-extrabold text-ink-900">Kết quả xếp lớp của bạn</h3>
+ <h3 class="font-heading text-xl sm:text-2xl font-extrabold text-ink-900">
+  {result.test_mode === 'placement' ? 'Kết quả xếp lớp chứng chỉ của bạn' : 'Kết quả đánh giá trình độ GDPT'}
+ </h3>
  <div class="inline-flex items-center gap-2 mt-3 px-5 py-2.5 rounded-2xl bg-brand-600 text-white font-heading font-extrabold text-lg shadow-sm">
- Trình độ {result.cefr_level}
+  {result.test_mode === 'placement' && result.placement_class ? `${result.placement_class} (${result.cefr_level})` : `Trình độ ${result.cefr_level}`}
  </div>
  <div class="text-sm text-ink-500 mt-2">{result.rank_title} • {result.correct_count}/{result.total_questions} câu đúng ({result.score_10}/10)</div>
 
@@ -357,6 +463,7 @@
  </div><!-- /placement-popup-inner -->
  </div><!-- /placement-popup-overlay -->
  {/if}
+{/if}
 
 <style>
  .placement-popup-overlay {
