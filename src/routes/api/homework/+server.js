@@ -4,8 +4,10 @@ import { verifyServerAuth, isStaffUser } from '../../../lib/server/auth.js';
 export const prerender = false;
 
 // Ensure tables exist on D1
+const _ensuredHomeworkDbs = new WeakSet();
+
 async function ensureTables(db) {
-  if (!db) return;
+  if (!db || _ensuredHomeworkDbs.has(db)) return;
   try {
     await db.batch([
       db.prepare(`
@@ -182,9 +184,11 @@ async function ensureTables(db) {
           OR (SELECT COALESCE(debt_after, 0) FROM student_star_ledger l WHERE l.student_id = s.student_id ORDER BY rowid DESC LIMIT 1) = 0
         );
     `).run();
+    _ensuredHomeworkDbs.add(db);
   } catch (e) {
     const msg = (e?.message || '').toLowerCase();
     if (msg.includes('already exists') || msg.includes('duplicate column')) {
+      _ensuredHomeworkDbs.add(db);
       return;
     }
     console.error('Homework tables ensureTables fail-closed error:', e);

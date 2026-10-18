@@ -111,6 +111,7 @@
 
 <div class="max-w-6xl mx-auto px-3 sm:px-4 py-6 sm:py-8 pb-24 lg:pb-10 space-y-8">
   <SectionHeading
+    as="h1"
     eyebrow="Hệ Thống Đào Tạo K12 Chuẩn Bộ GD&ĐT"
     title={currentUser?.role === 'student' && currentUser?.grade ? `Chương trình học ${currentUser.grade} của em` : 'Chương trình khóa học & lộ trình phát triển'}
     sub="Phương pháp giảng dạy hiện đại kết hợp hệ sinh thái học tập số: ngân hàng đề thi, sổ học vụ điện tử và bảng sao tích lũy."

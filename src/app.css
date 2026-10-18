@@ -109,16 +109,17 @@ label, .form-label, .text-label {
 /* ========================================================================= */
 /* TYPOGRAPHY CHUẨN MỰC HỌC THUẬT (Enforce Body 400, Label 500, Heading 600)  */
 /* ========================================================================= */
-h1, h2, h3, h4, h5, h6, .font-heading {
+:where(h1, h2, h3, h4, h5, h6), .font-heading {
   font-family: 'Lexend', system-ui, -apple-system, sans-serif;
   letter-spacing: -0.015em;
   font-weight: 600 !important;
-  color: #1c1917;
+  text-wrap: balance;
 }
 
 /* Enforce body 400, label 500, heading/bold 600 strictly */
 body, p, .text-body {
   font-weight: 400;
+  text-wrap: pretty;
 }
 
 label, .form-label, .text-label {
@@ -137,10 +138,10 @@ label, .form-label, .text-label {
   font-weight: 400 !important;
 }
 
-h1 { font-size: 1.875rem; line-height: 2.25rem; }
-h2 { font-size: 1.5rem; line-height: 2rem; }
-h3 { font-size: 1.25rem; line-height: 1.75rem; }
-h4 { font-size: 1.125rem; line-height: 1.5rem; }
+:where(h1) { font-size: 1.875rem; line-height: 2.25rem; }
+:where(h2) { font-size: 1.5rem; line-height: 2rem; }
+:where(h3) { font-size: 1.25rem; line-height: 1.75rem; }
+:where(h4) { font-size: 1.125rem; line-height: 1.5rem; }
 
 /* ========================================================================= */
 /* CARDS & CONTAINERS: CHUẨN SỔ HỌC VỤ (Bo 6-8px, viền mảnh rõ ràng)       */

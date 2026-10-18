@@ -809,7 +809,7 @@
  <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-black bg-white/20 backdrop-blur-sm tracking-wider">
  <span>🎮 ĐẤU TRƯỜNG TIẾNG ANH TOÀN DIỆN 2026</span>
  </div>
- <h1 class="text-2xl sm:text-4xl font-heading font-black">
+ <h1 class="text-2xl sm:text-4xl font-heading font-black text-white">
  Học Vui &amp; Bứt Phá Điểm Số Cùng Cô Dung 🌟
  </h1>
  <p class="text-xs sm:text-sm text-emerald-100 leading-relaxed">

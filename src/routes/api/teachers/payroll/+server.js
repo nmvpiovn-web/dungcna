@@ -22,8 +22,10 @@ async function sha256Hex(str) {
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
+const _ensuredPayrollDbs = new WeakSet();
+
 async function ensurePayrollSchema(db) {
-  if (!db) return;
+  if (!db || _ensuredPayrollDbs.has(db)) return;
   await db.prepare(`
       CREATE TABLE IF NOT EXISTS teacher_payrolls (
         id TEXT PRIMARY KEY,
@@ -111,6 +113,7 @@ async function ensurePayrollSchema(db) {
   }
 
   await db.prepare(`CREATE UNIQUE INDEX IF NOT EXISTS idx_finance_ledger_payroll_version ON finance_ledger(reference_id, adjustment_version) WHERE voucher_type = 'PAYROLL_ADJUSTMENT' AND adjustment_version IS NOT NULL;`).run();
+  _ensuredPayrollDbs.add(db);
 }
 
 export async function GET({ url, request, platform }) {

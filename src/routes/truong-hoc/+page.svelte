@@ -38,7 +38,7 @@
  <div class="absolute -left-10 -bottom-16 w-56 h-56 rounded-full bg-accent-500/20 blur-3xl pointer-events-none"></div>
  <div class="relative z-10 max-w-2xl">
  <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 border border-white/25 text-xs font-extrabold tracking-widest mb-4">🏫 TRƯỜNG HỌC</div>
- <h1 class="font-heading text-2xl sm:text-4xl font-extrabold leading-tight">Tiếng Anh Cô Dung — nơi con hết sợ tiếng Anh</h1>
+ <h1 class="font-heading text-2xl sm:text-4xl font-extrabold leading-tight text-white">Tiếng Anh Cô Dung — nơi con hết sợ tiếng Anh</h1>
  <p class="text-white/85 text-sm sm:text-base mt-3 leading-relaxed">
  Hệ thống đào tạo tiếng Anh K12 theo chuẩn CEFR: test xếp lớp miễn phí, lộ trình cá nhân,
  lớp nhỏ 1:1/1:3, ngân hàng đề hơn 1.300 câu và báo cáo tiến bộ gửi Zalo phụ huynh mỗi tuần.

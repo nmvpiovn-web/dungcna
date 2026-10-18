@@ -7,6 +7,7 @@
     align = 'center',
     center = false,          // alias: <SectionHeading center /> == align="center"
     dark = false,            // hien thi tren nen dam (vd section bg-brand-600)
+    as = 'h2',               // 'h1' cho tieu de chinh dau trang, 'h2' cho section
     actionLabel = '',
     actionHref = ''
   } = $props();
@@ -28,7 +29,11 @@
       {eyebrow}
     </span>
   {/if}
-  <h2 class={`font-heading text-2xl sm:text-3xl font-extrabold leading-snug ${titleCls}`}>{title}</h2>
+  {#if as === 'h1'}
+    <h1 class={`font-heading text-2xl sm:text-3xl lg:text-4xl font-extrabold leading-snug tracking-tight ${titleCls}`}>{title}</h1>
+  {:else}
+    <h2 class={`font-heading text-2xl sm:text-3xl font-extrabold leading-snug tracking-tight ${titleCls}`}>{title}</h2>
+  {/if}
   {#if sub}
     <p class={`text-sm sm:text-base max-w-2xl leading-relaxed ${subCls}`}>{sub}</p>
   {/if}

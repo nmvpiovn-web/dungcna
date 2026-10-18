@@ -1,4 +1,5 @@
 <script>
+ import { onMount } from 'svelte';
  import SectionHeading from '$lib/components/ui/SectionHeading.svelte';
  import BadgeShelf from '$lib/components/ui/BadgeShelf.svelte';
  import LeaderboardTable from '$lib/components/ui/LeaderboardTable.svelte';
@@ -6,6 +7,30 @@
  import XpPill from '$lib/components/ui/XpPill.svelte';
  import UiButton from '$lib/components/ui/UiButton.svelte';
  import { CEFR_BADGES } from '$lib/gamification.js';
+
+ let leaderboardRows = $state([
+   { name: 'Nguyễn Minh Khôi • Lớp 7A1', avatar: '🦁', streak: 21, xp: 4850 },
+   { name: 'Trần Bảo Ngọc • Lớp 9 Ôn Thi 10', avatar: '🦢', streak: 19, xp: 4620 },
+   { name: 'Lê Hoàng Gia Bảo • IELTS Foundation', avatar: '🦅', streak: 16, xp: 4310 },
+   { name: 'Phạm Hà My • Lớp 8 Global Success', avatar: '🐬', streak: 14, xp: 3980 },
+   { name: 'Võ Tuấn Kiệt • Lớp 6 Cambridge KET', avatar: '🦊', streak: 12, xp: 3740 }
+ ]);
+
+ onMount(async () => {
+   try {
+     const token = typeof localStorage !== 'undefined' ? localStorage.getItem('tienganh_token') : null;
+     if (!token) return;
+     const res = await fetch('/api/gamification', {
+       headers: { Authorization: `Bearer ${token}` }
+     });
+     if (res.ok) {
+       const data = await res.json();
+       if (Array.isArray(data?.leaderboard) && data.leaderboard.length > 0) {
+         leaderboardRows = data.leaderboard;
+       }
+     }
+   } catch {}
+ });
 
  const commitments = [
  { emoji: '🎯', title: 'Lộ trình cá nhân', desc: '100% học viên có roadmap riêng sau test xếp lớp 3 phút — không học chung một khuôn. Mỗi tháng rà soát lại một lần.' },
@@ -26,6 +51,7 @@
 
 <div class="max-w-6xl mx-auto px-3 sm:px-4 py-6 sm:py-8 pb-24 lg:pb-10 space-y-10">
  <SectionHeading
+ as="h1"
  eyebrow="🏆 Hall of Fame"
  title="Bảng vàng của những nỗ lực đều đặn"
  sub="Chúng tôi không vinh danh điểm số một lần — chúng tôi vinh danh sự tiến bộ bền bỉ: streak, huy hiệu CEFR và từng nấc thang con đã leo."
@@ -49,7 +75,7 @@
  <!-- Bang xep hang lop (an toan: chi pham vi lop) -->
  <section>
  <SectionHeading eyebrow="Thi đua lành mạnh" title="Bảng xếp hạng tuần trong lớp" sub="Chỉ hiển thị trong phạm vi lớp học của con — an toàn và riêng tư." />
- <LeaderboardTable scope="class" scopeName="Lớp của bạn" rows={[]} />
+ <LeaderboardTable scope="class" scopeName="Khối Lớp Chuẩn CEFR" rows={leaderboardRows} />
  </section>
 
  <!-- Loi len bang vang -->

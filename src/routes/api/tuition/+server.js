@@ -4,10 +4,13 @@ import { getAllTuitionBills, saveTuitionBill, dispatchBotReport } from '../../..
 
 export const prerender = false;
 
+const _ensuredTuitionColsDbs = new WeakSet();
+const _ensuredStarLedgerDbs = new WeakSet();
+
 async function ensureTuitionBillColumns(db) {
   // Prod D1 drift: migration 0004 ALTERs were never fully applied (e.g. approved_by
   // missing -> 500 on bill create). PRAGMA once, ALTER only missing columns.
-  if (!db) return;
+  if (!db || _ensuredTuitionColsDbs.has(db)) return;
   const cols = [
     ['version', 'INTEGER DEFAULT 1'], ['age', 'INTEGER DEFAULT 13'],
     ['grade_level', "TEXT DEFAULT ''"], ['program_name', "TEXT DEFAULT 'Tiếng Anh K12'"],
@@ -34,10 +37,11 @@ async function ensureTuitionBillColumns(db) {
     try { await db.prepare(`ALTER TABLE tuition_bills ADD COLUMN ${name} ${def}`).run(); }
     catch (e) { if (!/duplicate column name/i.test((e?.message || '') + ' ' + (e?.cause?.message || ''))) throw e; }
   }
+  _ensuredTuitionColsDbs.add(db);
 }
 
 async function ensureStarLedgerTable(db) {
-  if (!db) return;
+  if (!db || _ensuredStarLedgerDbs.has(db)) return;
   await db.prepare(`
     CREATE TABLE IF NOT EXISTS student_stars (
       student_id TEXT PRIMARY KEY,
@@ -96,6 +100,7 @@ async function ensureStarLedgerTable(db) {
       SELECT RAISE(ABORT, 'INSUFFICIENT_STARS: stars_balance cannot be negative');
     END;
   `).run();
+  _ensuredStarLedgerDbs.add(db);
 }
 
 export async function GET({ url, request, platform }) {

@@ -474,15 +474,49 @@
  </div>
  </a>
 
- <div class="pt-1.5 border-t border-line mt-1">
+ <div class="pt-1.5 border-t border-line mt-1 space-y-1">
  <a
  href="/courses"
  onclick={closeAllDropdowns}
- class="flex items-center justify-between p-2 rounded-md bg-brand-50 text-brand-700 text-xs font-bold hover:bg-brand-50 transition-colors"
+ class="flex items-center justify-between p-2 rounded-md bg-brand-50 text-brand-700 text-xs font-bold hover:brightness-95 transition-all"
  >
- <span>Xem Toàn Bộ 19 Khóa Học K12</span>
+ <span>📚 Xem Toàn Bộ 19 Khóa Học K12</span>
  <span>➔</span>
  </a>
+ <div class="grid grid-cols-2 gap-1 pt-0.5">
+ <a
+ href="/truong-hoc"
+ onclick={closeAllDropdowns}
+ class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-surface-1 hover:bg-brand-50 text-ink-900 hover:text-brand-700 text-[11px] font-semibold transition-colors"
+ >
+ <span>🏫</span>
+ <span>Về Trường Học</span>
+ </a>
+ <a
+ href="/hall-of-fame"
+ onclick={closeAllDropdowns}
+ class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-surface-1 hover:bg-brand-50 text-ink-900 hover:text-brand-700 text-[11px] font-semibold transition-colors"
+ >
+ <span>🏆</span>
+ <span>Bảng Vàng CEFR</span>
+ </a>
+ <a
+ href="/recruitment"
+ onclick={closeAllDropdowns}
+ class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-surface-1 hover:bg-brand-50 text-ink-900 hover:text-brand-700 text-[11px] font-semibold transition-colors"
+ >
+ <span>🤝</span>
+ <span>Tuyển Dụng GV</span>
+ </a>
+ <a
+ href="/exam#placement"
+ onclick={closeAllDropdowns}
+ class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-surface-1 hover:bg-brand-50 text-ink-900 hover:text-brand-700 text-[11px] font-semibold transition-colors"
+ >
+ <span>🎯</span>
+ <span>Test Đầu Vào</span>
+ </a>
+ </div>
  </div>
  </div>
  {/if}
@@ -877,7 +911,8 @@
  class="flex items-center gap-1 sm:gap-2 p-1 sm:px-2.5 sm:py-1.5 rounded-md bg-surface-1 border border-line hover:border-brand-600 transition-all text-left text-xs"
  >
  <img
- src={currentUser.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80'}
+ src={currentUser.avatar && !currentUser.avatar.includes('photo-1534528741775-53994a69daeb') ? currentUser.avatar : '/icon.svg'}
+ onerror={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/icon.svg'; }}
  alt="avatar"
  class="w-6 h-6 sm:w-7 sm:h-7 rounded-full object-cover ring-2 {isSuperAdmin(currentUser) ? 'ring-amber-400' : currentUser.role === 'teacher' ? 'ring-emerald-400' : currentUser.role === 'parent' ? 'ring-purple-400' : 'ring-brand-600'}"
  />
@@ -916,7 +951,12 @@
  {#if showUserDropdown && currentUser}
  <div class="absolute right-0 mt-2 w-72 rounded-lg bg-surface-0 border border-line shadow-xl p-3 z-50 animate-in fade-in zoom-in-95 duration-150">
  <div class="flex items-center gap-3 pb-3 border-b border-line">
- <img src={currentUser.avatar} alt="" class="w-11 h-11 rounded-full object-cover ring-2 ring-brand-600 flex-shrink-0" />
+ <img
+ src={currentUser.avatar && !currentUser.avatar.includes('photo-1534528741775-53994a69daeb') ? currentUser.avatar : '/icon.svg'}
+ onerror={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/icon.svg'; }}
+ alt=""
+ class="w-11 h-11 rounded-full object-cover ring-2 ring-brand-600 flex-shrink-0"
+ />
  <div class="flex-1 min-w-0">
  <div class="font-semibold text-sm text-ink-900 truncate flex items-center gap-1">
  {#if isSuperAdmin(currentUser)}👑{/if} {currentUser.name}
@@ -1054,7 +1094,7 @@
  </a>
  </div>
 
- <div class="pt-1">
+ <div class="pt-1 space-y-1.5">
  <a
  href="/courses"
  onclick={() => mobileMenuOpen = false}
@@ -1063,6 +1103,29 @@
  <span>📚 Xem Toàn Bộ 19 Khóa Học K12</span>
  <span>➔</span>
  </a>
+ <div class="grid grid-cols-3 gap-1.5">
+ <a
+ href="/truong-hoc"
+ onclick={() => mobileMenuOpen = false}
+ class="flex items-center justify-center gap-1 p-2 rounded-md bg-surface-1 text-ink-900 text-[11px] font-semibold"
+ >
+ <span>🏫</span> <span>Trường Học</span>
+ </a>
+ <a
+ href="/hall-of-fame"
+ onclick={() => mobileMenuOpen = false}
+ class="flex items-center justify-center gap-1 p-2 rounded-md bg-surface-1 text-ink-900 text-[11px] font-semibold"
+ >
+ <span>🏆</span> <span>Bảng Vàng</span>
+ </a>
+ <a
+ href="/recruitment"
+ onclick={() => mobileMenuOpen = false}
+ class="flex items-center justify-center gap-1 p-2 rounded-md bg-surface-1 text-ink-900 text-[11px] font-semibold"
+ >
+ <span>🤝</span> <span>Tuyển Dụng</span>
+ </a>
+ </div>
  </div>
  {/if}
  </div>
@@ -1355,6 +1418,16 @@
  <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
  Hệ thống hoạt động ổn định
  </span>
+ <span class="text-stone-300">•</span>
+ <a href="/courses" class="hover:text-brand-600 font-semibold text-ink-900">19 Khóa học</a>
+ <span class="text-stone-300">•</span>
+ <a href="/truong-hoc" class="hover:text-brand-600 font-semibold text-ink-900">Về Trường Học</a>
+ <span class="text-stone-300">•</span>
+ <a href="/hall-of-fame" class="hover:text-brand-600 font-semibold text-ink-900">Bảng Vàng CEFR</a>
+ <span class="text-stone-300">•</span>
+ <a href="/bang-gia" class="hover:text-brand-600 font-semibold text-ink-900">Bảng Học Phí</a>
+ <span class="text-stone-300">•</span>
+ <a href="/recruitment" class="hover:text-brand-600 font-semibold text-ink-900">Tuyển Dụng GV</a>
  <span class="text-stone-300">•</span>
  <a href="/downloads/tienganhcodung-latest.apk" download="tienganhcodung-latest.apk" class="hover:text-emerald-700 font-bold text-emerald-700 flex items-center gap-1">
  <span>⬇️</span> <span>Tải APK Android (R10)</span>

@@ -69,6 +69,7 @@
 
 <div class="max-w-6xl mx-auto px-3 sm:px-4 py-6 sm:py-8 pb-24 lg:pb-10 space-y-8">
  <SectionHeading
+ as="h1"
  eyebrow="Học phí minh bạch"
  title="Bảng giá năm học 2026"
  sub="Giá theo tháng đã bao gồm toàn bộ học liệu. Đóng theo kỳ để giữ chỗ ưu tiên cho con."

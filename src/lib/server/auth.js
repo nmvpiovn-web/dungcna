@@ -94,7 +94,7 @@ export async function createSignedToken(user, secret, expiresInMs = 7 * 86400 * 
     id: user.id,
     username: user.username || '',
     role: user.role || 'student',
-    sid: sessionId || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2)),
+    sid: sessionId || user.sid || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2)),
     exp: Date.now() + expiresInMs
   };
   const payloadStr = base64UrlEncode(JSON.stringify(payload));
@@ -449,25 +449,44 @@ export async function verifyServerAuth(request, platform) {
               error: 'Unauthorized: Phiên đăng nhập đã hết hạn.'
             };
           }
-          // Non-blocking activity touch so active devices (e.g. DOOGEE R10 APK) are tracked in real-time
+          // Throttled activity touch (once per 60s per session) to prevent D1 write-lock contention on parallel GETs
           try {
+            if (!globalThis.__authSessionTouchMap) {
+              globalThis.__authSessionTouchMap = new Map();
+            }
+            const touchMap = globalThis.__authSessionTouchMap;
+            const nowMs = Date.now();
             const ua = (request.headers.get('user-agent') || '').slice(0, 500);
-            const ip = request.headers.get('cf-connecting-ip')
-              || (request.headers.get('x-forwarded-for') || '').split(',')[0].trim()
-              || '';
-            const devModel = /R10|DOOGEE/i.test(ua)
-              ? 'DOOGEE R10 Tablet'
-              : (/TiengAnhCoDungApp/i.test(ua) ? 'Android APK' : (/Android/i.test(ua) ? 'Android Device' : ''));
-            const appMode = /TiengAnhCoDungApp/i.test(ua) ? 'android_apk' : (/R10|DOOGEE/i.test(ua) ? 'r10_browser' : '');
-            await platform.env.DB.prepare(`
-              UPDATE auth_sessions
-              SET last_active_at = CURRENT_TIMESTAMP,
-                  user_agent = CASE WHEN ? != '' THEN ? ELSE user_agent END,
-                  ip_address = CASE WHEN ? != '' THEN ? ELSE ip_address END,
-                  device_model = CASE WHEN ? != '' THEN ? ELSE device_model END,
-                  app_mode = CASE WHEN ? != '' THEN ? ELSE app_mode END
-              WHERE id = ?
-            `).bind(ua, ua, ip, ip, devModel, devModel, appMode, appMode, sid).run();
+            const touchKey = `${sid}:${ua.slice(0, 48)}`;
+            const lastTouch = touchMap.get(touchKey) || 0;
+            if (nowMs - lastTouch >= 60000) {
+              touchMap.set(touchKey, nowMs);
+              if (touchMap.size > 2000) {
+                const oldestKey = touchMap.keys().next().value;
+                if (oldestKey) touchMap.delete(oldestKey);
+              }
+              const ip = request.headers.get('cf-connecting-ip')
+                || (request.headers.get('x-forwarded-for') || '').split(',')[0].trim()
+                || '';
+              const devModel = /R10|DOOGEE/i.test(ua)
+                ? 'DOOGEE R10 Tablet'
+                : (/TiengAnhCoDungApp/i.test(ua) ? 'Android APK' : (/Android/i.test(ua) ? 'Android Device' : ''));
+              const appMode = /TiengAnhCoDungApp/i.test(ua) ? 'android_apk' : (/R10|DOOGEE/i.test(ua) ? 'r10_browser' : '');
+              const updatePromise = platform.env.DB.prepare(`
+                UPDATE auth_sessions
+                SET last_active_at = CURRENT_TIMESTAMP,
+                    user_agent = CASE WHEN ? != '' THEN ? ELSE user_agent END,
+                    ip_address = CASE WHEN ? != '' THEN ? ELSE ip_address END,
+                    device_model = CASE WHEN ? != '' THEN ? ELSE device_model END,
+                    app_mode = CASE WHEN ? != '' THEN ? ELSE app_mode END
+                WHERE id = ?
+              `).bind(ua, ua, ip, ip, devModel, devModel, appMode, appMode, sid).run();
+              if (platform?.context?.waitUntil) {
+                platform.context.waitUntil(updatePromise.catch(() => {}));
+              } else {
+                await updatePromise;
+              }
+            }
           } catch {}
         } catch (sessErr) {
           console.error('Session verification query error (Fail-Closed):', sessErr);

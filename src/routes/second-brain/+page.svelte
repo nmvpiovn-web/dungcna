@@ -650,9 +650,9 @@
  </div>
 
  <!-- Note Tags & Metadata -->
- {#if currentNote.tags.length > 0}
+ {#if (currentNote.tags || []).length > 0}
  <div class="flex items-center gap-1.5 flex-wrap mb-4">
- {#each currentNote.tags as tag}
+ {#each (currentNote.tags || []) as tag}
  <span class="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-teal-50 text-teal-700 border border-teal-500/20">
  {tag}
  </span>
@@ -680,14 +680,14 @@
  <!-- Outgoing Links -->
  <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
  <div class="text-[11px] font-bold text-slate-700 flex items-center justify-between">
- <span>🔗 Liên Kết Trỏ Tới ({currentNote.wikilinks.length})</span>
+ <span>🔗 Liên Kết Trỏ Tới ({(currentNote.wikilinks || []).length})</span>
  <span class="text-[9px] text-slate-400">Outgoing</span>
  </div>
- {#if currentNote.wikilinks.length === 0}
+ {#if (currentNote.wikilinks || []).length === 0}
  <div class="text-[11px] text-slate-400 italic">Không có liên kết ngoại vi nào.</div>
  {:else}
  <div class="flex flex-wrap gap-1.5">
- {#each currentNote.wikilinks as wl}
+ {#each (currentNote.wikilinks || []) as wl}
  <button
  type="button"
  onclick={() => selectNote(wl.target)}

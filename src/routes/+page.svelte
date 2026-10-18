@@ -597,7 +597,7 @@
  {/if}
  <div class="flex gap-2 pt-1">
  {#if enrolled}
- <UiButton size="sm" href={`/courses/${curr.slug || curr.id}`}>▶️ Vào học</UiButton>
+ <UiButton size="sm" href={`/courses#${curr.id || ''}`}>▶️ Vào học</UiButton>
  {:else if targetStudentUser}
  <UiButton size="sm" variant="ghost" onclick={() => handleRequestUnlock(curr)} disabled={isRequestingUnlock}>
  {isRequestingUnlock ? 'Đang gửi...' : '🔓 Xin mở lớp'}

@@ -73,7 +73,7 @@
  <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-black bg-cx-500/20 text-cx-200 border border-cx-400/30">
  <span>⚡ TRUNG TÂM TIỆN ÍCH HỌC TẬP THẾ HỆ MỚI</span>
  </div>
- <h1 class="text-3xl sm:text-5xl font-heading font-black tracking-tight leading-tight">
+ <h1 class="text-3xl sm:text-5xl font-heading font-black tracking-tight leading-tight text-white">
  Bộ Công Cụ Học Tập &amp; Lộ Trình Đa Giác Quan
  </h1>
  <p class="text-sm sm:text-base text-slate-200 leading-relaxed font-normal">

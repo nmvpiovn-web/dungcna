@@ -22,6 +22,7 @@
 </svelte:head>
 
 <div class="fixed inset-0 z-50 bg-[#eaf3f8] flex flex-col">
+  <h1 class="sr-only">Tiếng Anh Cô Dung — Ứng Dụng Mobile &amp; R10</h1>
   <iframe
     bind:this={iframeEl}
     src="/mobile-app/index.html"

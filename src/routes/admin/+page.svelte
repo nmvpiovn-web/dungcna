@@ -1048,9 +1048,9 @@
  <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 text-xs font-bold">
  <span>Tài Khoản Học Sinh: <strong>{currentUser.name}</strong></span>
  </div>
- <h2 class="text-xl font-heading font-black text-slate-900">
+ <h1 class="text-xl font-heading font-black text-slate-900">
  Khu Vực Dành Riêng Cho Giáo Viên &amp; Ban Quản Lý
- </h2>
+ </h1>
  <p class="text-xs text-slate-600 leading-relaxed max-w-md mx-auto">
  Trang Admin CP này được bảo mật cho Giáo viên và Leader Cô Dung để quản lý thời khóa biểu, điểm danh và học phí. Học sinh vui lòng làm bài tại Phòng Thi hoặc luyện tập từ vựng nhé!
  </p>
@@ -1081,9 +1081,9 @@
  <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-600 border border-indigo-500/20 text-xs font-bold">
  <span>Tài Khoản Phụ Huynh: <strong>{currentUser.name}</strong></span>
  </div>
- <h2 class="text-xl font-heading font-black text-slate-900">
+ <h1 class="text-xl font-heading font-black text-slate-900">
  Khu Vực Quản Lý Giảng Dạy &amp; Điều Hành
- </h2>
+ </h1>
  <p class="text-xs text-slate-600 leading-relaxed max-w-md mx-auto">
  Trang Admin CP dành riêng cho Đội ngũ Giáo viên và Ban Quản Lý Cô Dung. Quý phụ huynh vui lòng theo dõi thời khóa biểu và phiếu đánh giá năng lực của con tại các mục dành cho Phụ huynh.
  </p>
@@ -1111,9 +1111,9 @@
  🔒
  </div>
  <div class="space-y-2">
- <h2 class="text-xl font-heading font-black text-slate-900">
+ <h1 class="text-xl font-heading font-black text-slate-900">
  Yêu Cầu Đăng Nhập Tài Khoản Giáo Viên / Quản Lý
- </h2>
+ </h1>
  <p class="text-xs text-slate-600 leading-relaxed max-w-md mx-auto">
  Bạn cần đăng nhập bằng tài khoản Giáo viên hoặc Leader Cô Dung để truy cập bảng điều khiển Admin CP.
  </p>
@@ -2263,8 +2263,9 @@
  <td class="p-4">
  <div class="flex items-center gap-3">
  <img
- src={st.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${st.username}`}
+ src={st.avatar && !st.avatar.includes('dicebear.com') ? st.avatar : '/icon.svg'}
  alt={st.name}
+ onerror={(e) => { if (e.currentTarget.src !== window.location.origin + '/icon.svg') e.currentTarget.src = '/icon.svg'; }}
  class="w-10 h-10 rounded-2xl bg-slate-800 object-cover border border-slate-700 shadow-md"
  />
  <div>

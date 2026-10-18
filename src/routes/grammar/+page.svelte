@@ -63,7 +63,7 @@
  <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-xs font-bold tracking-wide uppercase">
  <span>📖</span> Cẩm Nang Ngữ Pháp Toàn Diện &amp; Phonics 2026
  </div>
- <h1 class="text-2xl sm:text-4xl font-extrabold tracking-tight leading-tight">
+ <h1 class="text-2xl sm:text-4xl font-extrabold tracking-tight leading-tight text-white">
  Ngân Hàng Chuyên Đề Ngữ Pháp &amp; Công Thức Toàn Cấp
  </h1>
  <p class="text-emerald-100 text-sm sm:text-base leading-relaxed">

@@ -60,8 +60,14 @@
  });
 
  async function loadCampuses() {
+ if (typeof window === 'undefined') return;
+ const token = getAuthToken() || localStorage.getItem('tienganh_token');
+ if (!token) return;
  try {
- const res = await fetch('/api/campuses');
+ const res = await fetch('/api/campuses?view=summary', {
+ headers: { 'Authorization': `Bearer ${token}` }
+ });
+ if (!res.ok) return;
  const data = await res.json();
  if (data.success) {
  campuses = data.campuses || [];

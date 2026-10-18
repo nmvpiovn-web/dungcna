@@ -1,5 +1,5 @@
 import { json } from '@sveltejs/kit';
-import { verifyServerAuth, isStaffUser } from '$lib/server/auth.js';
+import { verifyServerAuth, isStaffUser } from '../../../lib/server/auth.js';
 
 export const prerender = false;
 
@@ -57,8 +57,10 @@ const FALLBACK_CAMPUSES = [
 
 let inMemoryStreams = [];
 
+const _ensuredCampusDbs = new WeakSet();
+
 async function ensureTables(db) {
-  if (!db) return;
+  if (!db || _ensuredCampusDbs.has(db)) return;
   try {
     await db.batch([
       db.prepare(`
@@ -94,6 +96,7 @@ async function ensureTables(db) {
           ('loc_thayvu', 'Trung Tâm Học Liệu & Luyện Thi Thầy Vũ', 'THAYVU', 'Số 105, Đường Cầu Giấy, Quan Hoa, Cầu Giấy, Hà Nội', '0905960437', 'user_thayvu');
       `)
     ]);
+    _ensuredCampusDbs.add(db);
   } catch (e) {
     throw e;
   }

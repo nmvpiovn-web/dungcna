@@ -1,10 +1,12 @@
 // src/routes/api/drive/+server.js
 // Google Drive API proxy: list files from a Drive folder
-// Ưu tiên Service Account (đọc folder riêng tư), fallback API key (chỉ folder công khai)
+// Ưu tiên Service Account (đọc folder riêng tư), fallback API key (chỉ folder công khai),
+// hoặc fallback Kho Tri Thức D1 (các tệp Drive đã đồng bộ)
 import { json } from '@sveltejs/kit';
-import { verifyServerAuth, isStaffUser } from '$lib/server/auth.js';
-import { getServiceAccountToken, hasServiceAccount } from '$lib/server/googleServiceAccount.js';
-import { DEFAULT_DRIVE_FOLDER } from '$lib/server/driveSync.js';
+import { verifyServerAuth, isStaffUser } from '../../../lib/server/auth.js';
+import { getServiceAccountToken, hasServiceAccount } from '../../../lib/server/googleServiceAccount.js';
+import { DEFAULT_DRIVE_FOLDER } from '../../../lib/server/driveSync.js';
+import { normalizeVietnameseSourceTitle, classifyDriveFileGroup } from '../../../lib/quizSourceNormalizer.js';
 
 export const prerender = false;
 
@@ -20,6 +22,63 @@ function getAllowedFolderIds(platform) {
   ).split(',').map((id) => id.trim()).filter(Boolean);
 }
 
+async function listVaultMirroredDriveFiles(db, query = '') {
+  if (!db) return [];
+  try {
+    const qNorm = String(query || '').trim().toLowerCase();
+    const res = await db
+      .prepare(
+        `SELECT id, title, category, content, tags, source_url, updated_at, created_at
+         FROM knowledge_vault
+         WHERE id LIKE 'drive-%' OR source_url LIKE '%drive.google.com%'
+         ORDER BY updated_at DESC, created_at DESC
+         LIMIT 100`
+      )
+      .bind()
+      .all();
+    const rows = res?.results || [];
+    return rows
+      .map((r) => {
+        const rawName = String(r.title || r.id || '');
+        const displayTitle = normalizeVietnameseSourceTitle(rawName);
+        const groupInfo = classifyDriveFileGroup(rawName);
+        const driveId = String(r.id || '').replace(/^drive-/, '');
+        const webViewLink =
+          r.source_url ||
+          (driveId ? `https://drive.google.com/file/d/${driveId}/view` : '/second-brain');
+        const contentLen = String(r.content || '').length;
+        return {
+          id: r.id,
+          driveId,
+          name: displayTitle || rawName,
+          rawName,
+          groupKey: groupInfo.key,
+          groupLabel: groupInfo.label,
+          mimeType: rawName.toLowerCase().endsWith('.pdf')
+            ? 'application/pdf'
+            : rawName.toLowerCase().endsWith('.docx')
+              ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+              : 'application/vnd.google-apps.document',
+          size: contentLen > 0 ? contentLen * 2 : 24576,
+          modifiedTime: r.updated_at || r.created_at || new Date().toISOString(),
+          webViewLink,
+          thumbnailLink: null,
+          isFolder: false
+        };
+      })
+      .filter((f) => {
+        if (!qNorm) return true;
+        return (
+          f.name.toLowerCase().includes(qNorm) ||
+          f.rawName.toLowerCase().includes(qNorm) ||
+          (f.groupLabel || '').toLowerCase().includes(qNorm)
+        );
+      });
+  } catch {
+    return [];
+  }
+}
+
 export async function GET({ url, request, platform }) {
   const auth = await verifyServerAuth(request, platform);
   if (!auth.authenticated) {
@@ -27,6 +86,18 @@ export async function GET({ url, request, platform }) {
   }
   if (!isStaffUser(auth.user)) {
     return json({ success: false, error: 'Forbidden: Chỉ staff mới truy cập Drive' }, { status: 403 });
+  }
+
+  const rawFolderId = (url.searchParams.get('folder_id') || '').trim();
+  const folderId = !rawFolderId || rawFolderId === 'root' ? DEFAULT_DRIVE_FOLDER : rawFolderId;
+  const query = url.searchParams.get('q') || '';
+
+  // Validate folder_id format (regex) + allowlist (same as /api/drive/sync)
+  if (!FOLDER_ID_RE.test(folderId)) {
+    return json({ success: false, error: 'InvalidFolderId: folder_id không đúng định dạng' }, { status: 400 });
+  }
+  if (!new Set(getAllowedFolderIds(platform)).has(folderId)) {
+    return json({ success: false, error: 'Forbidden: folder_id không nằm trong danh sách cho phép' }, { status: 403 });
   }
 
   // Ưu tiên 1: Service Account (đọc được folder riêng tư đã share cho nó)
@@ -51,22 +122,21 @@ export async function GET({ url, request, platform }) {
   }
 
   if (!bearerToken && !apiKey) {
+    const mirrored = await listVaultMirroredDriveFiles(platform?.env?.DB, query);
+    if (mirrored.length > 0) {
+      return json({
+        success: true,
+        files: mirrored,
+        source: 'knowledge_vault_mirror',
+        auth_method: 'd1_mirror',
+        needs_setup: false
+      });
+    }
     return json({
       success: false,
       error: 'Chưa cấu hình Google Drive. Cần Service Account hoặc API key.',
       needs_setup: true
     }, { status: 503 });
-  }
-
-  const folderId = url.searchParams.get('folder_id') || DEFAULT_DRIVE_FOLDER;
-  const query = url.searchParams.get('q') || '';
-
-  // Validate folder_id format (regex) + allowlist (same as /api/drive/sync)
-  if (!FOLDER_ID_RE.test(folderId)) {
-    return json({ success: false, error: 'InvalidFolderId: folder_id không đúng định dạng' }, { status: 400 });
-  }
-  if (!new Set(getAllowedFolderIds(platform)).has(folderId)) {
-    return json({ success: false, error: 'Forbidden: folder_id không nằm trong danh sách cho phép' }, { status: 403 });
   }
 
   try {
@@ -92,25 +162,51 @@ export async function GET({ url, request, platform }) {
     const data = await res.json();
 
     if (data.error) {
+      const mirrored = await listVaultMirroredDriveFiles(platform?.env?.DB, query);
+      if (mirrored.length > 0) {
+        return json({
+          success: true,
+          files: mirrored,
+          source: 'knowledge_vault_mirror',
+          auth_method: 'd1_mirror'
+        });
+      }
       return json({ success: false, error: 'Drive API: ' + (data.error.message || 'Unknown error') }, { status: 502 });
     }
 
     return json({
       success: true,
-      files: (data.files || []).map(f => ({
-        id: f.id,
-        name: f.name,
-        mimeType: f.mimeType,
-        size: f.size ? parseInt(f.size) : 0,
-        modifiedTime: f.modifiedTime,
-        webViewLink: f.webViewLink,
-        thumbnailLink: f.thumbnailLink,
-        isFolder: f.mimeType === 'application/vnd.google-apps.folder'
-      })),
+      files: (data.files || []).map(f => {
+        const rawName = String(f.name || '');
+        const displayTitle = normalizeVietnameseSourceTitle(rawName);
+        const groupInfo = classifyDriveFileGroup(rawName);
+        return {
+          id: f.id,
+          name: displayTitle || rawName,
+          rawName,
+          groupKey: groupInfo.key,
+          groupLabel: groupInfo.label,
+          mimeType: f.mimeType,
+          size: f.size ? parseInt(f.size) : 0,
+          modifiedTime: f.modifiedTime,
+          webViewLink: f.webViewLink,
+          thumbnailLink: f.thumbnailLink,
+          isFolder: f.mimeType === 'application/vnd.google-apps.folder'
+        };
+      }),
       source: 'google_drive',
       auth_method: authMethod
     });
   } catch (err) {
+    const mirrored = await listVaultMirroredDriveFiles(platform?.env?.DB, query);
+    if (mirrored.length > 0) {
+      return json({
+        success: true,
+        files: mirrored,
+        source: 'knowledge_vault_mirror',
+        auth_method: 'd1_mirror'
+      });
+    }
     return json({ success: false, error: err.message }, { status: 500 });
   }
 }

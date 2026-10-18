@@ -1195,9 +1195,9 @@
  <span>👩‍🏫</span>
  <span>PHÂN HỆ PHÒNG THI &amp; ĐÁNH GIÁ NĂNG LỰC CHUẨN 2026:</span>
  </div>
- <h2 class="text-xl sm:text-2xl font-heading font-semibold text-ink-900 mt-0.5">
+ <h1 class="text-xl sm:text-2xl font-heading font-semibold text-ink-900 mt-0.5">
   {currentUser?.role === 'student' ? `Phòng Thi Trực Tuyến — ${currentUser.grade || 'Khối Lớp Của Em'}` : 'Danh Mục Đề Thi Theo Cây Phân Cấp (Group-Tree)'}
- </h2>
+ </h1>
  </div>
 
  <!-- Quick Action Utilities -->
