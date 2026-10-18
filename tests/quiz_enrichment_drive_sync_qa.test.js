@@ -5,6 +5,16 @@ import path from 'node:path';
 import { convertBankRowsToTypeMix } from '../src/lib/server/quizBankBridge.js';
 import { gradeAnswers } from '../src/lib/server/quizMenu.js';
 import { listQuizDriveFiles, readAllowedDriveSource } from '../src/lib/server/quizDrive.js';
+import {
+  normalizeVietnameseSourceTitle,
+  classifyDriveFileGroup,
+  classifyKnowledgeVaultArticle,
+  formatGradeLevelVi,
+  formatSkillCategoryVi,
+  formatCognitiveLevelVi,
+  formatTopicVi,
+  formatQuestionTypeVi
+} from '../src/lib/quizSourceNormalizer.js';
 
 const MOCK_BANK_ROWS = [
   {
@@ -183,4 +193,50 @@ describe('QUIZ ENRICHMENT, DRIVE D1 SYNC & MULTI-TYPE QA SUITE', () => {
     assert.ok(content.includes('QUIZ_FORMAT_PRESETS'), 'Must define QUIZ_FORMAT_PRESETS');
     assert.ok(content.includes('format-presets-bar'), 'Must render format-presets-bar in Step 2');
   });
+
+  test('ENRICH-04: quizSourceNormalizer normalizes ASCII/English Drive & Knowledge Vault titles and Question Bank facets into full Vietnamese with diacritics', () => {
+    assert.equal(
+      normalizeVietnameseSourceTitle('1000 cau trac nghiem ngu phap hsg', 'drive-1000-cau-trac-nghiem-ngu-phap-hsg'),
+      '1000 Câu Trắc Nghiệm Ngữ Pháp Học Sinh Giỏi'
+    );
+    assert.equal(
+      normalizeVietnameseSourceTitle('g3 ck1 test', 'drive-g3-ck1-test'),
+      'Đề Kiểm Tra Cuối Học Kỳ 1 – Tiếng Anh Lớp 3'
+    );
+    assert.equal(
+      normalizeVietnameseSourceTitle('22000 tu toefl ielts harold levine', 'drive-22000-tu-toefl-ielts-harold-levine'),
+      '22.000 Từ Vựng TOEFL & IELTS – Harold Levine'
+    );
+
+    const gPrimary = classifyDriveFileGroup('g3 ck1 test', 'drive-g3-ck1-test');
+    assert.equal(gPrimary.key, 'tieu_hoc');
+    assert.ok(gPrimary.label.includes('Khối Tiểu học'));
+
+    const kvClassified = classifyKnowledgeVaultArticle({
+      id: 'kv_test_1',
+      title: '1509 bai tap trac nghiem tieng anh',
+      category: 'question'
+    });
+    assert.equal(kvClassified.group_key, 'de_thi_hsg');
+    assert.equal(kvClassified.title_vi, '1509 Bài Tập Trắc Nghiệm Tiếng Anh Tổng Hợp');
+
+    assert.equal(formatGradeLevelVi('lop_7'), 'Lớp 7 (THCS)');
+    assert.equal(formatSkillCategoryVi('grammar'), 'Ngữ pháp & Cấu trúc câu');
+    assert.equal(formatCognitiveLevelVi('van_dung_cao'), 'Vận dụng cao (HSG / Chuyên)');
+    assert.equal(formatTopicVi('conditional'), 'Câu điều kiện (If)');
+    assert.equal(formatQuestionTypeVi('multiple_choice'), 'Trắc nghiệm 4 lựa chọn');
+  });
+
+  test('ENRICH-05: +page.svelte removes up/down ordering buttons and groups Drive/Vault/Catalog with Vietnamese pills', () => {
+    const sveltePath = path.resolve('src/routes/quiz-menu/+page.svelte');
+    const content = fs.readFileSync(sveltePath, 'utf8');
+
+    assert.ok(!content.includes('moveOrderItem('), 'Must not use moveOrderItem up/down buttons');
+    assert.ok(!/\bmoveQuestion\s*\(/.test(content), 'Must not use moveQuestion up/down buttons');
+    assert.ok(content.includes('source-group-pills'), 'Must render grouped Vietnamese source pills');
+    assert.ok(content.includes('catalog-filter-bar'), 'Must render catalog filter bar in Take tab');
+    assert.ok(content.includes('groupedDriveFiles'), 'Must group Drive files by Vietnamese category');
+    assert.ok(content.includes('groupedKvArticles'), 'Must group Knowledge Vault articles by Vietnamese category');
+  });
 });
+

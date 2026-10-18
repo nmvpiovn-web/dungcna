@@ -8,18 +8,28 @@
   import { cacheQuizData, getCachedQuizData, installQuizOnlineSync, queueQuizAttempt } from '$lib/quizOffline.js';
   import { isAllowedImageUrl } from '$lib/quizMedia.js';
   import { resolveDefaultGradeLevel, getCanonicalDefaultTypeMix, resolveDefaultTypeMix } from '$lib/quizDefaults.js';
+  import {
+    normalizeVietnameseSourceTitle,
+    classifyDriveFileGroup,
+    classifyKnowledgeVaultArticle,
+    KNOWLEDGE_VAULT_GROUPS,
+    formatGradeLevelVi,
+    formatSkillCategoryVi,
+    formatCognitiveLevelVi,
+    formatTopicVi,
+    formatQuestionTypeVi
+  } from '$lib/quizSourceNormalizer.js';
 
   const questionTypes = [
-    ['multiple_choice', 'Trắc nghiệm', 'Chọn một đáp án đúng'],
-    ['true_false', 'Đúng / Sai', 'Chọn Đúng hoặc Sai'],
-    ['fill_blank', 'Điền ô trống', 'Nhập từ hoặc cụm từ'],
-    ['matching', 'Nối từ', 'Ghép hai cột tương ứng'],
-    ['word_guess', 'Đoán từ', 'Đoán từ tiếng Anh theo gợi ý'],
-    ['ordering', 'Sắp xếp câu', 'Sắp xếp các từ thành câu hoàn chỉnh'],
-    ['memory_match', 'Ghép cặp trí nhớ', 'Tìm và ghép cặp thẻ tương ứng'],
-    ['picture_guess', 'Nhìn hình đoán chữ', 'Quan sát và nhập đáp án'],
-    ['rewrite', 'Viết lại câu', 'Giáo viên sẽ chấm'],
-    ['paragraph', 'Viết đoạn văn', 'Giáo viên sẽ chấm']
+    ['multiple_choice', 'Trắc nghiệm 4 lựa chọn', 'Chọn một đáp án đúng A, B, C, D'],
+    ['true_false', 'Đúng / Sai', 'Xác định nhận định Đúng hoặc Sai'],
+    ['fill_blank', 'Điền từ vào chỗ trống', 'Nhập từ hoặc cụm từ còn thiếu'],
+    ['matching', 'Nối cột tương ứng', 'Ghép câu hỏi với đáp án đúng'],
+    ['word_guess', 'Đoán từ vựng có gợi ý', 'Đoán từ tiếng Anh theo chữ cái gợi ý'],
+    ['memory_match', 'Ghép cặp khái niệm', 'Ghép đôi các thẻ tương ứng'],
+    ['picture_guess', 'Nhìn hình đoán chữ', 'Quan sát ảnh và nhập từ vựng'],
+    ['rewrite', 'Viết lại câu', 'Giáo viên chấm điểm'],
+    ['paragraph', 'Viết đoạn văn / Tự luận', 'Giáo viên chấm điểm']
   ];
 
   // Phase 2: Chế độ tạo Quiz (Auto là mặc định)
@@ -40,14 +50,13 @@
   });
 
   const ALL_QUESTION_TYPES = [
-    { id: 'multiple_choice', name: 'Trắc nghiệm', desc: 'Chọn 1 trong 4 lựa chọn', icon: '◉', defaultCount: 5 },
+    { id: 'multiple_choice', name: 'Trắc nghiệm', desc: 'Chọn 1 trong 4 lựa chọn A/B/C/D', icon: '◉', defaultCount: 5 },
     { id: 'true_false', name: 'Đúng / Sai', desc: 'Xác định nhận định đúng hay sai', icon: '✓✗', defaultCount: 2 },
     { id: 'fill_blank', name: 'Điền ô trống', desc: 'Điền từ thích hợp vào chỗ trống', icon: '＿', defaultCount: 2 },
-    { id: 'matching', name: 'Nối từ', desc: 'Ghép hai cột tương ứng', icon: '⇄', defaultCount: 1 },
-    { id: 'word_guess', name: 'Đoán từ', desc: 'Đoán từ tiếng Anh theo gợi ý', icon: '🔤', defaultCount: 0 },
-    { id: 'ordering', name: 'Sắp xếp câu', desc: 'Sắp xếp từ thành câu hoàn chỉnh', icon: '🔢', defaultCount: 0 },
-    { id: 'memory_match', name: 'Ghép cặp trí nhớ', desc: 'Tìm các cặp thẻ tương ứng', icon: '🃏', defaultCount: 0 },
-    { id: 'picture_guess', name: 'Nhìn hình đoán chữ', desc: 'Quan sát và nhập đáp án', icon: '🖼️', defaultCount: 0 },
+    { id: 'matching', name: 'Nối cột', desc: 'Ghép hai cột tương ứng', icon: '⇄', defaultCount: 1 },
+    { id: 'word_guess', name: 'Đoán từ vựng', desc: 'Đoán từ tiếng Anh theo gợi ý chữ cái', icon: '🔤', defaultCount: 0 },
+    { id: 'memory_match', name: 'Ghép cặp thẻ', desc: 'Ghép đôi câu hỏi và đáp án', icon: '🃏', defaultCount: 0 },
+    { id: 'picture_guess', name: 'Nhìn hình đoán chữ', desc: 'Quan sát ảnh và nhập đáp án', icon: '🖼️', defaultCount: 0 },
     { id: 'rewrite', name: 'Viết lại câu', desc: 'Viết lại câu giữ nguyên nghĩa', icon: '✍️', defaultCount: 0 },
     { id: 'paragraph', name: 'Đoạn văn / Tự luận', desc: 'Đọc hiểu và trả lời câu hỏi', icon: '📄', defaultCount: 0 }
   ];
@@ -57,7 +66,7 @@
     if (found) return found.name;
     const tuple = questionTypes.find((t) => t[0] === type);
     if (tuple) return tuple[1];
-    return type;
+    return formatQuestionTypeVi(type);
   }
 
   function formatOptionDisplay(option) {
@@ -87,37 +96,30 @@
     {
       id: 'balanced',
       icon: '🎯',
-      label: 'Đa dạng tương tác (Chuẩn 4 dạng)',
-      desc: 'Trắc nghiệm + Đúng/Sai + Điền từ + Nối từ',
+      label: 'Đề chuẩn đa dạng (4 dạng)',
+      desc: 'Trắc nghiệm + Đúng/Sai + Điền từ + Nối cột',
       mix: { multiple_choice: 5, true_false: 2, fill_blank: 2, matching: 1 }
-    },
-    {
-      id: 'comprehensive',
-      icon: '🌟',
-      label: 'Tổng hợp toàn diện (Đủ 8 dạng)',
-      desc: 'Kết hợp 8 kiểu câu hỏi khách quan & tự luận',
-      mix: { multiple_choice: 3, true_false: 2, fill_blank: 1, matching: 1, word_guess: 1, ordering: 1, memory_match: 1, rewrite: 1 }
-    },
-    {
-      id: 'vocab_games',
-      icon: '🎮',
-      label: 'Game từ vựng & Phản xạ',
-      desc: 'Đoán từ + Ghép thẻ nhớ + Nối từ + Sắp xếp câu',
-      mix: { word_guess: 3, memory_match: 2, matching: 2, ordering: 3 }
-    },
-    {
-      id: 'grammar_writing',
-      icon: '✍️',
-      label: 'Ngữ pháp & Tự luận',
-      desc: 'Điền ô trống + Sắp xếp câu + Viết lại câu + Đoạn văn',
-      mix: { fill_blank: 3, ordering: 3, rewrite: 2, paragraph: 2 }
     },
     {
       id: 'mcq_only',
       icon: '◉',
-      label: 'Trắc nghiệm tốc độ (100% MCQ)',
-      desc: '100% câu hỏi trắc nghiệm 4 lựa chọn A/B/C/D',
+      label: 'Trắc nghiệm chuẩn (100% A/B/C/D)',
+      desc: '100% câu hỏi trắc nghiệm 4 lựa chọn khách quan',
       mix: { multiple_choice: 10 }
+    },
+    {
+      id: 'vocab_games',
+      icon: '🔤',
+      label: 'Ôn tập Từ vựng & Ghép cặp',
+      desc: 'Trắc nghiệm + Đoán từ gợi ý + Nối cột + Ghép cặp',
+      mix: { multiple_choice: 4, word_guess: 3, matching: 2, memory_match: 1 }
+    },
+    {
+      id: 'comprehensive',
+      icon: '✍️',
+      label: 'Đề kiểm tra Tổng hợp',
+      desc: 'Trắc nghiệm + Đúng/Sai + Điền từ + Đoán từ + Nối cột + Viết lại câu',
+      mix: { multiple_choice: 4, true_false: 2, fill_blank: 1, word_guess: 1, matching: 1, rewrite: 1 }
     }
   ];
 
@@ -203,18 +205,40 @@
   // Kho tri thức (Knowledge Vault)
   let kvQuery = $state('');
   let kvCategory = $state('');
+  let kvGroupFilter = $state('all');
   let kvArticles = $state([]);
   let kvSelectedArticleId = $state('');
   let kvLoading = $state(false);
   let kvTotal = $state(null);
 
   let activeTab = $state('take');
+  let takeCatalogFilter = $state('all'); // 'all' | 'tieu_hoc' | 'thcs' | 'thpt' | 'ielts'
   let currentUser = $state(null);
   let publicQuizzes = $state([]);
   let myQuizzes = $state([]);
   let quizReadiness = $state(null);
   let copiedCode = $state(false);
   let copyTimeout;
+
+  function classifyPublicQuizLevel(quiz) {
+    const id = String(quiz?.id || '').toLowerCase();
+    const title = String(quiz?.title || '').toLowerCase();
+    if (id.includes('ielts') || title.includes('ielts') || title.includes('toeic')) return 'ielts';
+    const gMatch = id.match(/grade_(\d+)/) || title.match(/lớp\s*(\d+)/);
+    if (gMatch) {
+      const g = Number(gMatch[1]);
+      if (g >= 1 && g <= 5) return 'tieu_hoc';
+      if (g >= 6 && g <= 9) return 'thcs';
+      if (g >= 10 && g <= 12) return 'thpt';
+    }
+    return 'thcs';
+  }
+
+  let filteredPublicQuizzes = $derived(
+    takeCatalogFilter === 'all'
+      ? publicQuizzes
+      : publicQuizzes.filter((q) => classifyPublicQuizLevel(q) === takeCatalogFilter)
+  );
 
   function copyRemediation(code) {
     if (typeof navigator !== 'undefined' && navigator.clipboard) {
@@ -247,8 +271,69 @@
   let sourceBusy = $state(false);
   let sourceFile = $state(null);
   let driveFiles = $state([]);
+  let driveGroupFilter = $state('all');
+  let driveSearchQuery = $state('');
   let selectedDriveFileId = $state('');
   let driveUrl = $state('');
+
+  let normalizedDriveFiles = $derived(
+    driveFiles.map((file) => {
+      const titleVi = file.title_vi || normalizeVietnameseSourceTitle(file.name, file.id);
+      const groupInfo = file.group_key
+        ? { group_key: file.group_key, group_label: file.group_label, group_short: file.group_short }
+        : classifyDriveFileGroup(file.name, file.id);
+      return {
+        ...file,
+        title_vi: titleVi,
+        group_key: groupInfo.group_key,
+        group_label: groupInfo.group_label,
+        group_short: groupInfo.group_short
+      };
+    })
+  );
+
+  let driveGroupsSummary = $derived.by(() => {
+    const map = new Map();
+    for (const f of normalizedDriveFiles) {
+      const cur = map.get(f.group_key) || { key: f.group_key, label: f.group_label, short: f.group_short, count: 0 };
+      cur.count++;
+      map.set(f.group_key, cur);
+    }
+    return Array.from(map.values());
+  });
+
+  let filteredDriveFiles = $derived(
+    normalizedDriveFiles.filter((f) => {
+      if (driveGroupFilter !== 'all' && f.group_key !== driveGroupFilter) return false;
+      if (driveSearchQuery.trim()) {
+        const q = driveSearchQuery.trim().toLowerCase();
+        return f.title_vi.toLowerCase().includes(q) || String(f.name || '').toLowerCase().includes(q);
+      }
+      return true;
+    })
+  );
+
+  let groupedDriveFiles = $derived.by(() => {
+    const groups = new Map();
+    for (const f of filteredDriveFiles) {
+      if (!groups.has(f.group_label)) groups.set(f.group_label, []);
+      groups.get(f.group_label).push(f);
+    }
+    return Array.from(groups.entries()).map(([groupLabel, items]) => ({ groupLabel, items }));
+  });
+
+  let groupedKvArticles = $derived.by(() => {
+    const groups = new Map();
+    for (const art of kvArticles) {
+      const classified = classifyKnowledgeVaultArticle(art);
+      const catLabel = art.category_vi || classified.category_vi;
+      const titleVi = art.title_vi || classified.title_vi;
+      const enriched = { ...art, title_vi: titleVi, category_vi: catLabel, group_key: art.group_key || classified.group_key };
+      if (!groups.has(catLabel)) groups.set(catLabel, []);
+      groups.get(catLabel).push(enriched);
+    }
+    return Array.from(groups.entries()).map(([groupLabel, items]) => ({ groupLabel, items }));
+  });
   let selectedManageQuiz = $state(null);
   let bundle = $state(null);
   let bundleHealth = $state(null);
@@ -772,14 +857,6 @@
     draft.questions = draft.questions.filter((_, i) => i !== index);
   }
 
-  function moveQuestion(index, direction) {
-    const next = index + direction;
-    if (next < 0 || next >= draft.questions.length) return;
-    const copy = [...draft.questions];
-    [copy[index], copy[next]] = [copy[next], copy[index]];
-    draft.questions = copy;
-  }
-
   function changeQuestionType(question, type) {
     const replacement = blankQuestion(type);
     Object.assign(question, replacement, { id: question.id, prompt: question.prompt, points: question.points });
@@ -992,6 +1069,11 @@
     }
   }
 
+  async function selectKvGroup(groupKey) {
+    kvGroupFilter = groupKey;
+    await loadKnowledgeVaultArticles();
+  }
+
   async function loadKnowledgeVaultArticles() {
     kvLoading = true;
     error = '';
@@ -999,7 +1081,8 @@
       const params = new URLSearchParams();
       if (kvQuery.trim()) params.set('q', kvQuery.trim());
       if (kvCategory.trim()) params.set('category', kvCategory.trim());
-      params.set('limit', '20');
+      if (kvGroupFilter && kvGroupFilter !== 'all') params.set('group', kvGroupFilter);
+      params.set('limit', '35');
       const res = await api(`/api/quiz-menu/knowledge-vault?${params.toString()}`);
       if (res.success) {
         kvArticles = res.articles || [];
@@ -1396,14 +1479,19 @@
     answers = { ...answers, [id]: { ...(answers[id] || {}), [left]: value } };
   }
 
-  function moveOrderItem(qid, idx, dir) {
-    const q = selectedQuiz?.questions?.find((item) => item.id === qid);
-    const initial = q?.options?.items || (Array.isArray(q?.options) ? q.options : []);
-    const current = Array.isArray(answers[qid]) ? [...answers[qid]] : [...initial];
-    const target = idx + dir;
-    if (target < 0 || target >= current.length) return;
-    [current[idx], current[target]] = [current[target], current[idx]];
+  function pickOrderWord(qid, word) {
+    const current = Array.isArray(answers[qid]) ? [...answers[qid]] : [];
+    setAnswer(qid, [...current, word]);
+  }
+
+  function removeOrderWordAt(qid, idx) {
+    const current = Array.isArray(answers[qid]) ? [...answers[qid]] : [];
+    current.splice(idx, 1);
     setAnswer(qid, current);
+  }
+
+  function resetOrderWords(qid) {
+    setAnswer(qid, []);
   }
 
   async function submitAttempt(auto = false) {
@@ -1867,47 +1955,137 @@
             </div>
           {:else if sourceMode === 'drive'}
             <div class="source-panel auto-source-box">
-              <span class="box-title">△ Chọn tài liệu Google Drive / Google Docs</span>
-              <div>
-                <label>File trong Google Drive (Quiz Uploads):<select bind:value={selectedDriveFileId}><option value="">Chọn file đã đồng bộ...</option>{#each driveFiles as file}<option value={file.id} disabled={!isSupportedDriveFile(file)}>{file.name}{!isSupportedDriveFile(file) ? ' (Không hỗ trợ)' : ''}</option>{/each}</select></label>
-                <label>Hoặc dán link Google Docs/Drive:<input type="url" bind:value={driveUrl} placeholder="https://docs.google.com/document/d/..." inputmode="url" /></label>
+              <span class="box-title">△ Kho Tài Liệu Google Drive &amp; Google Docs (Đã chuẩn hóa Tiếng Việt)</span>
+
+              {#if normalizedDriveFiles.length > 0}
+                <div class="source-group-pills" role="tablist" aria-label="Nhóm tài liệu Google Drive">
+                  <button
+                    type="button"
+                    class="source-group-pill"
+                    class:active={driveGroupFilter === 'all'}
+                    on:click={() => driveGroupFilter = 'all'}
+                  >
+                    📚 Tất cả ({normalizedDriveFiles.length})
+                  </button>
+                  {#each driveGroupsSummary as grp (grp.key)}
+                    <button
+                      type="button"
+                      class="source-group-pill"
+                      class:active={driveGroupFilter === grp.key}
+                      on:click={() => driveGroupFilter = grp.key}
+                    >
+                      {grp.short} ({grp.count})
+                    </button>
+                  {/each}
+                </div>
+              {/if}
+
+              <div class="drive-controls-grid">
+                <label>
+                  Tìm nhanh tài liệu trong Drive:
+                  <input
+                    type="text"
+                    bind:value={driveSearchQuery}
+                    placeholder="Gõ tên chuyên đề, khối lớp (VD: Lớp 7, Ngữ pháp, HSG, IELTS)..."
+                  />
+                </label>
+                <label>
+                  Chọn nhanh từ danh sách phân nhóm:
+                  <select bind:value={selectedDriveFileId}>
+                    <option value="">-- Chọn tài liệu Google Drive ({filteredDriveFiles.length} tệp) --</option>
+                    {#each groupedDriveFiles as grp (grp.groupLabel)}
+                      <optgroup label={grp.groupLabel}>
+                        {#each grp.items as file (file.id)}
+                          <option value={file.id} disabled={!isSupportedDriveFile(file)}>
+                            {file.title_vi}{!isSupportedDriveFile(file) ? ' (Không hỗ trợ)' : ''}
+                          </option>
+                        {/each}
+                      </optgroup>
+                    {/each}
+                  </select>
+                </label>
               </div>
+
+              {#if groupedDriveFiles.length > 0}
+                <div class="grouped-source-list" aria-label="Danh sách tài liệu Google Drive theo nhóm">
+                  {#each groupedDriveFiles as grp (grp.groupLabel)}
+                    <div class="source-group-block">
+                      <div class="source-group-header">
+                        <strong>{grp.groupLabel}</strong>
+                        <span>{grp.items.length} tài liệu</span>
+                      </div>
+                      <div class="drive-card-grid">
+                        {#each grp.items as file (file.id)}
+                          <label class="drive-doc-card" class:selected={selectedDriveFileId === file.id}>
+                            <input
+                              type="radio"
+                              name="drive_file_choice"
+                              value={file.id}
+                              checked={selectedDriveFileId === file.id}
+                              disabled={!isSupportedDriveFile(file)}
+                              on:change={() => selectedDriveFileId = file.id}
+                            />
+                            <div class="drive-doc-body">
+                              <strong>{file.title_vi}</strong>
+                              <small>{file.group_short} · {file.raw_name || file.name}</small>
+                            </div>
+                          </label>
+                        {/each}
+                      </div>
+                    </div>
+                  {/each}
+                </div>
+              {/if}
+
+              <label class="drive-url-label">
+                Hoặc dán đường dẫn Google Docs / Google Drive trực tiếp:
+                <input type="url" bind:value={driveUrl} placeholder="https://docs.google.com/document/d/..." inputmode="url" />
+              </label>
             </div>
           {:else if sourceMode === 'question_bank'}
             <div class="bank-panel">
               <div class="sr-only" aria-live="polite" aria-atomic="true">{bankAriaLive}</div>
               <div class="bank-filters">
                 <label>
-                  Khối lớp
+                  Khối lớp / Cấp học
                   <select bind:value={bankFilters.grade_level} on:change={() => loadBankQuestions(true)}>
-                    <option value="">Tất cả các khối</option>
+                    <option value="">Tất cả các khối lớp</option>
                     {#each bankFacets.grade_level as g}
-                      <option value={g.grade_level}>{g.grade_level} ({g.count} câu)</option>
+                      <option value={g.grade_level}>{g.label_vi || formatGradeLevelVi(g.grade_level)} ({g.count} câu)</option>
                     {/each}
                   </select>
                 </label>
                 <label>
-                  Kỹ năng
+                  Kỹ năng trọng tâm
                   <select bind:value={bankFilters.skill_category} on:change={() => loadBankQuestions(true)}>
                     <option value="">Tất cả kỹ năng</option>
                     {#each bankFacets.skill_category as s}
-                      <option value={s.skill_category}>{s.skill_category} ({s.count})</option>
+                      <option value={s.skill_category}>{s.label_vi || formatSkillCategoryVi(s.skill_category)} ({s.count} câu)</option>
                     {/each}
                   </select>
                 </label>
                 <label>
-                  Mức nhận thức
+                  Mức độ nhận thức
                   <select bind:value={bankFilters.cognitive_level} on:change={() => loadBankQuestions(true)}>
-                    <option value="">Tất cả mức độ</option>
+                    <option value="">Tất cả mức nhận thức</option>
                     {#each bankFacets.cognitive_level as c}
-                      <option value={c.cognitive_level}>{c.cognitive_level} ({c.count})</option>
+                      <option value={c.cognitive_level}>{c.label_vi || formatCognitiveLevelVi(c.cognitive_level)} ({c.count} câu)</option>
+                    {/each}
+                  </select>
+                </label>
+                <label>
+                  Chuyên đề kiến thức
+                  <select bind:value={bankFilters.topic} on:change={() => loadBankQuestions(true)}>
+                    <option value="">Tất cả chuyên đề</option>
+                    {#each (bankFacets.topic || []) as t}
+                      <option value={t.topic}>{t.label_vi || formatTopicVi(t.topic)} ({t.count})</option>
                     {/each}
                   </select>
                 </label>
                 <label class="bank-search-label">
-                  Tìm kiếm câu hỏi
+                  Tìm kiếm nội dung câu hỏi
                   <div class="search-input-wrap">
-                    <input type="text" placeholder="Tìm theo nội dung..." bind:value={bankFilters.q} on:keydown={(e) => e.key === 'Enter' && loadBankQuestions(true)} />
+                    <input type="text" placeholder="Nhập từ khóa câu hỏi..." bind:value={bankFilters.q} on:keydown={(e) => e.key === 'Enter' && loadBankQuestions(true)} />
                     <button type="button" class="btn-search" on:click={() => loadBankQuestions(true)}>Tìm</button>
                   </div>
                 </label>
@@ -1961,10 +2139,10 @@
                           <span class="q-badge">#{bankOffset + qIdx + 1}</span>
                         </div>
                         <div class="bank-tags">
-                          <span class="tag grade">{q.grade_level}</span>
-                          <span class="tag skill">{q.skill_category}</span>
-                          <span class="tag cognitive">{q.cognitive_level}</span>
-                          {#if q.topic}<span class="tag topic">{q.topic}</span>{/if}
+                          <span class="tag grade">{q.grade_label_vi || formatGradeLevelVi(q.grade_level)}</span>
+                          <span class="tag skill">{q.skill_label_vi || formatSkillCategoryVi(q.skill_category)}</span>
+                          <span class="tag cognitive">{q.cognitive_label_vi || formatCognitiveLevelVi(q.cognitive_level)}</span>
+                          {#if q.topic}<span class="tag topic">{q.topic_label_vi || formatTopicVi(q.topic)}</span>{/if}
                         </div>
                       </div>
                       <div class="bank-q-prompt">
@@ -2013,43 +2191,67 @@
             </div>
           {:else if sourceMode === 'knowledge_vault'}
             <div class="kv-panel auto-source-box">
-              <span class="box-title">📖 Chọn bài học từ Kho tri thức (Knowledge Vault)</span>
+              <span class="box-title">📖 Kho Tri Thức Tiếng Anh (Phân nhóm Chuyên đề Tiếng Việt Chuẩn Hóa)</span>
+
+              <div class="source-group-pills" role="tablist" aria-label="Nhóm chuyên đề Kho tri thức">
+                {#each KNOWLEDGE_VAULT_GROUPS as grp (grp.key)}
+                  <button
+                    type="button"
+                    class="source-group-pill"
+                    class:active={kvGroupFilter === grp.key}
+                    on:click={() => selectKvGroup(grp.key)}
+                  >
+                    <span>{grp.icon}</span> {grp.label}
+                  </button>
+                {/each}
+              </div>
+
               <div class="kv-search-bar">
                 <input
                   type="text"
-                  placeholder="Tìm kiếm bài học theo chủ đề, tiêu đề (VD: Grammar, Unit 7)..."
+                  placeholder="Tìm kiếm bài học theo chủ đề, ngữ pháp, từ vựng (VD: Câu bị động, Mệnh đề quan hệ, Lớp 7)..."
                   bind:value={kvQuery}
                   on:keydown={(e) => e.key === 'Enter' && loadKnowledgeVaultArticles()}
                 />
                 <button type="button" class="btn-search" on:click={() => loadKnowledgeVaultArticles()}>Tìm kiếm</button>
               </div>
               {#if kvLoading}
-                <div class="bank-loading"><div class="spinner"></div> Đang tìm bài học từ Kho tri thức...</div>
+                <div class="bank-loading"><div class="spinner"></div> Đang tải chuyên đề từ Kho tri thức...</div>
               {:else if kvArticles.length === 0}
                 <div class="empty-state">
                   <span>🔍</span>
-                  <p>Chưa tìm thấy bài học nào phù hợp. Bấm "Tất cả bài học" hoặc nhập từ khóa khác.</p>
-                  <button type="button" class="btn-outline compact" on:click={() => { kvQuery = ''; loadKnowledgeVaultArticles(); }}>Tất cả bài học</button>
+                  <p>Chưa tìm thấy bài học nào phù hợp với nhóm hoặc từ khóa hiện tại.</p>
+                  <button type="button" class="btn-outline compact" on:click={() => { kvQuery = ''; kvGroupFilter = 'all'; loadKnowledgeVaultArticles(); }}>Xem tất cả chuyên đề</button>
                 </div>
               {:else}
-                <div class="kv-article-list">
-                  {#each kvArticles as art (art.id)}
-                    <label class="kv-article-card" class:selected={kvSelectedArticleId === art.id}>
-                      <input
-                        type="radio"
-                        name="kv_article_choice"
-                        value={art.id}
-                        checked={kvSelectedArticleId === art.id}
-                        on:change={() => kvSelectedArticleId = art.id}
-                      />
-                      <div class="kv-article-info">
-                        <div class="kv-article-title">
-                          <strong>{art.title}</strong>
-                          {#if art.category}<span class="tag grade">{art.category}</span>{/if}
-                        </div>
-                        {#if art.preview}<p class="kv-article-preview">{art.preview}...</p>{/if}
+                <div class="grouped-source-list">
+                  {#each groupedKvArticles as grp (grp.groupLabel)}
+                    <div class="source-group-block">
+                      <div class="source-group-header">
+                        <strong>📚 {grp.groupLabel}</strong>
+                        <span>{grp.items.length} chuyên đề</span>
                       </div>
-                    </label>
+                      <div class="kv-article-list">
+                        {#each grp.items as art (art.id)}
+                          <label class="kv-article-card" class:selected={kvSelectedArticleId === art.id}>
+                            <input
+                              type="radio"
+                              name="kv_article_choice"
+                              value={art.id}
+                              checked={kvSelectedArticleId === art.id}
+                              on:change={() => kvSelectedArticleId = art.id}
+                            />
+                            <div class="kv-article-info">
+                              <div class="kv-article-title">
+                                <strong>{art.title_vi || art.title}</strong>
+                                <span class="tag grade">{art.category_vi || art.category}</span>
+                              </div>
+                              {#if art.preview}<p class="kv-article-preview">{art.preview}...</p>{/if}
+                            </div>
+                          </label>
+                        {/each}
+                      </div>
+                    </div>
                   {/each}
                 </div>
               {/if}
@@ -2264,8 +2466,6 @@
                           {#each questionTypes as type}<option value={type[0]}>{type[1]}</option>{/each}
                         </select>
                         <div class="editor-actions">
-                          <button aria-label="Đưa câu lên" on:click={() => moveQuestion(index, -1)} disabled={index === 0}>↑</button>
-                          <button aria-label="Đưa câu xuống" on:click={() => moveQuestion(index, 1)} disabled={index === draft.questions.length - 1}>↓</button>
                           <button class="delete" aria-label="Xóa câu" on:click={() => removeQuestion(index)}>×</button>
                         </div>
                       </header>
@@ -2355,8 +2555,6 @@
                     {#each questionTypes as type}<option value={type[0]}>{type[1]}</option>{/each}
                   </select>
                   <div class="editor-actions">
-                    <button aria-label="Đưa câu lên" on:click={() => moveQuestion(index, -1)} disabled={index === 0}>↑</button>
-                    <button aria-label="Đưa câu xuống" on:click={() => moveQuestion(index, 1)} disabled={index === draft.questions.length - 1}>↓</button>
                     <button class="delete" aria-label="Xóa câu" on:click={() => removeQuestion(index)}>×</button>
                   </div>
                 </header>
@@ -2446,11 +2644,20 @@
   {:else}
     <section class="workspace">
       <div class="section-heading"><div><span class="section-kicker">LUYỆN TẬP</span><h2>{assignedMode ? 'Quiz được giao' : 'Chọn một thử thách'}</h2></div><span class="live-dot"><i></i>{publicQuizzes.length} quiz đang mở</span></div>
+      {#if !assignedMode && publicQuizzes.length > 0}
+        <div class="catalog-filter-bar" role="group" aria-label="Lọc danh mục quiz theo khối lớp">
+          <button type="button" class="source-pill" class:active={takeCatalogFilter === 'all'} on:click={() => (takeCatalogFilter = 'all')}>📚 Tất cả ({publicQuizzes.length})</button>
+          <button type="button" class="source-pill" class:active={takeCatalogFilter === 'tieu_hoc'} on:click={() => (takeCatalogFilter = 'tieu_hoc')}>📘 Tiểu học (Lớp 1–5)</button>
+          <button type="button" class="source-pill" class:active={takeCatalogFilter === 'thcs'} on:click={() => (takeCatalogFilter = 'thcs')}>📗 THCS (Lớp 6–9)</button>
+          <button type="button" class="source-pill" class:active={takeCatalogFilter === 'thpt'} on:click={() => (takeCatalogFilter = 'thpt')}>📙 THPT (Lớp 10–12)</button>
+          <button type="button" class="source-pill" class:active={takeCatalogFilter === 'ielts'} on:click={() => (takeCatalogFilter = 'ielts')}>🌍 Chứng chỉ Quốc tế (IELTS)</button>
+        </div>
+      {/if}
       {#if loading}
         <div class="loading-grid"><i></i><i></i><i></i></div>
-      {:else if publicQuizzes.length}
+      {:else if filteredPublicQuizzes.length}
         <div class="quiz-grid take-grid">
-          {#each publicQuizzes as quiz, index}
+          {#each filteredPublicQuizzes as quiz, index}
             <article class="quiz-card take-card">
               <div class="cover cover-{index % 4}"><span>{index % 3 === 0 ? 'ABC' : index % 3 === 1 ? 'Aa' : '✦'}</span></div>
               <div class="quiz-card-body">
@@ -2556,7 +2763,16 @@
       <div class="exam-questions">
         {#each selectedQuiz.questions as question, index}
           <article class:deferred={isDeferred(question.id)} class="exam-question" id={`question-${question.id}`}>
-            <div class="question-head"><span>Câu {index + 1}</span><div><button class="defer-button" on:click={() => toggleDeferred(question.id)}>{isDeferred(question.id) ? '✓ Để làm sau' : 'Không hiểu'}</button><b>{question.points} điểm</b></div></div>
+            <div class="question-head">
+              <div class="question-head-left">
+                <span>Câu {index + 1}</span>
+                <small class="exam-q-type-badge">{questionTypeBadge(question.type)}</small>
+              </div>
+              <div>
+                <button class="defer-button" on:click={() => toggleDeferred(question.id)}>{isDeferred(question.id) ? '✓ Để làm sau' : 'Không hiểu'}</button>
+                <b>{question.points} điểm</b>
+              </div>
+            </div>
             <h2>{question.prompt}</h2>
             {#if question.prompt_image_url}
               {#if isAllowedImageUrl(question.prompt_image_url)}
@@ -2594,16 +2810,28 @@
               </div>
             {:else if question.type === 'ordering'}
               <div class="ordering-answer">
-                <p style="font-size:12px; color:#78716c; margin-bottom:8px;">Sắp xếp theo thứ tự đúng (bấm ▲ / ▼ để đổi vị trí):</p>
-                <div style="display:flex; flex-direction:column; gap:6px;">
-                  {#each (answers[question.id] || question.options?.items || (Array.isArray(question.options) ? question.options : [])) as item, itemIdx}
-                    <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 12px; background:#f5f5f4; border:1px solid #e7e5e4; border-radius:6px;">
-                      <span style="font-weight:600; font-size:13px;">{itemIdx + 1}. {item}</span>
-                      <div style="display:flex; gap:4px;">
-                        <button type="button" class="btn-step" disabled={itemIdx === 0} on:click={() => moveOrderItem(question.id, itemIdx, -1)} aria-label="Lên">▲</button>
-                        <button type="button" class="btn-step" disabled={itemIdx === (answers[question.id] || question.options?.items || question.options || []).length - 1} on:click={() => moveOrderItem(question.id, itemIdx, 1)} aria-label="Xuống">▼</button>
-                      </div>
-                    </div>
+                <div class="ordering-sentence-box">
+                  <span class="ordering-box-label">Câu bạn ghép (bấm vào thẻ từ bên dưới để chọn hoặc bấm từ đã chọn để bỏ ra):</span>
+                  <div class="ordering-picked-row">
+                    {#if Array.isArray(answers[question.id]) && answers[question.id].length > 0}
+                      {#each answers[question.id] as word, wIdx}
+                        <button type="button" class="word-chip picked" on:click={() => removeOrderWordAt(question.id, wIdx)}>{word} <span>×</span></button>
+                      {/each}
+                      <button type="button" class="word-chip-reset" on:click={() => resetOrderWords(question.id)}>Đặt lại</button>
+                    {:else}
+                      <span class="ordering-empty-hint">Chưa chọn từ nào — hãy bấm lần lượt các thẻ từ bên dưới để tạo câu hoàn chỉnh.</span>
+                    {/if}
+                  </div>
+                </div>
+                <div class="ordering-pool-row">
+                  {#each (question.options?.items || (Array.isArray(question.options) ? question.options : [])) as poolWord}
+                    <button
+                      type="button"
+                      class="word-chip"
+                      on:click={() => pickOrderWord(question.id, poolWord)}
+                    >
+                      ＋ {poolWord}
+                    </button>
                   {/each}
                 </div>
               </div>
@@ -3182,8 +3410,51 @@
   .btn-copy-small{background:#ecfdf5;border:1px solid #a7f3d0;color:#047857;padding:4px 8px;border-radius:5px;font-size:.75rem;font-weight:600;cursor:pointer;flex-shrink:0}
   .btn-copy-small:hover{background:#d1fae5}
 
-  @media(max-width:800px){.quiz-page{padding:16px 12px 90px}.quiz-hero{padding:26px 22px;min-height:160px}.hero-mark{width:70px;height:70px;flex-basis:70px;font-size:2rem}.workspace{padding:18px}.source-grid,.type-grid,.quiz-grid,.loading-grid{grid-template-columns:1fr 1fr}.bank-filters{grid-template-columns:1fr 1fr}.source-panel{grid-template-columns:1fr}.bundle-grid,.homework-fields{grid-template-columns:1fr 1fr}.builder-mode-switcher{grid-template-columns:1fr}.type-mix-grid{grid-template-columns:1fr 1fr}.merge-options-group{grid-template-columns:1fr}.exam-content{grid-template-columns:1fr;padding:18px 12px 70px}.exam-content aside{position:static}.question-map{grid-template-columns:repeat(8,1fr)}.exam-topbar{grid-template-columns:1fr auto}.abandon{grid-column:1/-1;width:100%;margin-top:6px}.progress-track{top:124px}.exam-question{scroll-margin-top:135px}}
-  @media(max-width:560px){.quiz-hero{align-items:flex-end}.hero-mark{position:absolute;right:18px;top:18px;opacity:.38}.quiz-hero p{padding-right:20px}.tabs{gap:3px}.tabs button{font-size:.75rem;padding:5px}.tabs button span{display:block;margin:0;font-size:1rem}.source-grid,.type-grid,.quiz-grid,.loading-grid,.form-grid,.bundle-grid,.homework-fields,.bank-filters,.conflict-modal-options{grid-template-columns:1fr}.conflict-choices{flex-direction:column}.type-mix-grid{grid-template-columns:1fr}.image-labels-grid{grid-template-columns:1fr}.auto-action-bar{flex-direction:column;align-items:stretch}.auto-action-bar button{width:100%}.form-grid .wide{grid-column:1}.source-card{min-height:78px}.type-grid button{min-height:58px}.editor-card{padding:13px}.editor-card header{flex-wrap:wrap}.editor-card header select{order:3;width:100%;max-width:none}.editor-actions{margin-left:auto}.editor-bottom{grid-template-columns:90px 1fr}.save-bar{flex-wrap:wrap;bottom:8px}.save-bar>div{width:100%}.save-bar button{flex:1}.section-heading{align-items:flex-start}.question-map{grid-template-columns:repeat(6,1fr)}.exam-topbar{padding:8px 10px}.exam-title>span{display:none}.exam-title strong{display:block;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.countdown{padding:4px 10px}.exam-question{padding:17px}.question-head{align-items:flex-start}.question-head>div{flex-direction:column-reverse;align-items:flex-end}.matching-answer label{grid-template-columns:1fr}.matching-answer label>span{transform:rotate(90deg)}.submit-panel{align-items:stretch;flex-direction:column}.submit-actions{flex-direction:column}.start-dialog,.result-dialog,.bundle-dialog,.conflict-dialog{padding:25px 18px}.modal-backdrop{padding:10px}.rules{grid-template-columns:1fr 1fr}.bank-action-bar{flex-direction:column;align-items:stretch}.bank-buttons{flex-direction:column}.bank-buttons button{width:100%}.quick-import-wrap{width:100%;justify-content:space-between;margin-left:0}.config-summary-bar{flex-direction:column;align-items:stretch}.btn-toggle-advanced{width:100%;justify-content:center}.preview-mode-header{flex-direction:column;align-items:stretch}.btn-toggle-view{width:100%;justify-content:center}.review-card{padding:14px}.review-option-item{flex-wrap:wrap}.review-tf-options{flex-direction:column}}
+  /* Vietnamese Source Grouping & Clean Exam Player Styles */
+  .source-panel.auto-source-box{display:flex;flex-direction:column;align-items:stretch;gap:14px}
+  .source-group-pills,.catalog-filter-bar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px}
+  .source-pill,.source-group-pill{padding:7px 13px;border:1px solid #e7e5e4;background:#fafaf9;color:#44403c;border-radius:999px;font-size:.8rem;font-weight:600;cursor:pointer;transition:all .15s ease;line-height:1.2;display:inline-flex;align-items:center;gap:5px}
+  .source-pill:hover,.source-group-pill:hover{border-color:#34d399;background:#ecfdf5;color:#065f46}
+  .source-pill.active,.source-group-pill.active{border-color:#059669;background:#059669;color:#ffffff;box-shadow:0 2px 6px rgba(5,150,105,.18)}
+  .drive-controls-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .drive-toolbar-row{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap}
+  .drive-search-label{flex:1;min-width:220px}
+  .grouped-source-list{display:flex;flex-direction:column;gap:14px;max-height:460px;overflow-y:auto;padding-right:4px}
+  .source-group-block{background:#fafaf9;border:1px solid #e7e5e4;border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:10px}
+  .source-group-header{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-bottom:6px;border-bottom:1px dashed #d6d3d1}
+  .source-group-header strong{font-size:.86rem;color:#1c1917}
+  .source-group-header span{font-size:.75rem;font-weight:700;padding:2px 8px;background:#ecfdf5;color:#065f46;border-radius:999px;border:1px solid #a7f3d0}
+  .drive-card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:8px}
+  .drive-file-card,.drive-doc-card{display:flex;flex-direction:row;align-items:flex-start;gap:10px;padding:10px 12px;background:#ffffff;border:1.5px solid #e7e5e4;border-radius:8px;text-align:left;cursor:pointer;transition:all .15s ease}
+  .drive-file-card:hover,.drive-doc-card:hover{border-color:#34d399;background:#f0fdf4}
+  .drive-file-card.selected,.drive-doc-card.selected{border-color:#059669;background:#ecfdf5;box-shadow:0 0 0 2px rgba(5,150,105,.14)}
+  .drive-doc-card input[type=radio],.kv-article-card input[type=radio]{width:18px;height:18px;min-height:18px;margin-top:2px;flex-shrink:0;accent-color:#059669;padding:0}
+  .kv-article-card{flex-direction:row;align-items:flex-start}
+  .kv-article-info{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1}
+  .kv-article-title{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+  .kv-article-title strong{font-size:.86rem;color:#1c1917}
+  .kv-article-preview{font-size:.78rem;color:#57534e;margin:0;line-height:1.4}
+  .drive-card-icon{font-size:1.25rem;line-height:1;flex-shrink:0;margin-top:2px}
+  .drive-card-body,.drive-doc-body{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1}
+  .drive-card-body strong,.drive-doc-body strong{font-size:.83rem;color:#1c1917;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .drive-card-body small,.drive-doc-body small{font-size:.72rem;color:#78716c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .drive-selected-banner{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 14px;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;font-size:.84rem;color:#065f46}
+  .kv-group-items{display:flex;flex-direction:column;gap:8px}
+  .question-head-left{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .exam-q-type-badge{padding:3px 9px;background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0;border-radius:999px;font-size:.74rem;font-weight:700}
+  .exam-question h2{white-space:pre-line;line-height:1.55}
+  .ordering-sentence-box{padding:12px 14px;background:#fafaf9;border:1.5px dashed #d6d3d1;border-radius:8px;margin-bottom:10px;display:flex;flex-direction:column;gap:8px}
+  .ordering-box-label{font-size:.78rem;font-weight:600;color:#57534e}
+  .ordering-picked-row,.ordering-pool-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .ordering-empty-hint{font-size:.82rem;color:#78716c;font-style:italic}
+  .word-chip{padding:7px 12px;border:1.5px solid #d6d3d1;background:#ffffff;color:#1c1917;border-radius:8px;font-size:.85rem;font-weight:600;cursor:pointer;transition:all .15s ease}
+  .word-chip:hover{border-color:#059669;background:#ecfdf5;color:#065f46}
+  .word-chip.picked{border-color:#059669;background:#059669;color:#ffffff}
+  .word-chip.picked span{margin-left:4px;opacity:.85}
+  .word-chip-reset{padding:6px 10px;border:1px solid #fecdd3;background:#fff1f2;color:#be123c;border-radius:6px;font-size:.76rem;font-weight:600;cursor:pointer}
+
+  @media(max-width:800px){.quiz-page{padding:16px 12px 90px}.quiz-hero{padding:26px 22px;min-height:160px}.hero-mark{width:70px;height:70px;flex-basis:70px;font-size:2rem}.workspace{padding:18px}.source-grid,.type-grid,.quiz-grid,.loading-grid{grid-template-columns:1fr 1fr}.bank-filters{grid-template-columns:1fr 1fr}.source-panel{grid-template-columns:1fr}.drive-controls-grid{grid-template-columns:1fr}.bundle-grid,.homework-fields{grid-template-columns:1fr 1fr}.builder-mode-switcher{grid-template-columns:1fr}.type-mix-grid{grid-template-columns:1fr 1fr}.merge-options-group{grid-template-columns:1fr}.exam-content{grid-template-columns:1fr;padding:18px 12px 70px}.exam-content aside{position:static}.question-map{grid-template-columns:repeat(8,1fr)}.exam-topbar{grid-template-columns:1fr auto}.abandon{grid-column:1/-1;width:100%;margin-top:6px}.progress-track{top:124px}.exam-question{scroll-margin-top:135px}}
+  @media(max-width:560px){.quiz-hero{align-items:flex-end}.hero-mark{position:absolute;right:18px;top:18px;opacity:.38}.quiz-hero p{padding-right:20px}.tabs{gap:3px}.tabs button{font-size:.75rem;padding:5px}.tabs button span{display:block;margin:0;font-size:1rem}.source-grid,.type-grid,.quiz-grid,.loading-grid,.form-grid,.bundle-grid,.homework-fields,.bank-filters,.conflict-modal-options{grid-template-columns:1fr}.conflict-choices{flex-direction:column}.type-mix-grid{grid-template-columns:1fr}.image-labels-grid{grid-template-columns:1fr}.auto-action-bar{flex-direction:column;align-items:stretch}.auto-action-bar button{width:100%}.form-grid .wide{grid-column:1}.source-card{min-height:78px}.type-grid button{min-height:58px}.editor-card{padding:13px}.editor-card header{flex-wrap:wrap}.editor-card header select{order:3;width:100%;max-width:none}.editor-actions{margin-left:auto}.editor-bottom{grid-template-columns:90px 1fr}.save-bar{flex-wrap:wrap;bottom:8px}.save-bar>div{width:100%}.save-bar button{flex:1}.section-heading{align-items:flex-start}.question-map{grid-template-columns:repeat(6,1fr)}.exam-topbar{padding:8px 10px}.exam-title>span{display:none}.exam-title strong{display:block;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.countdown{padding:4px 10px}.exam-question{padding:17px}.question-head{align-items:flex-start}.question-head>div{flex-direction:column-reverse;align-items:flex-end}.matching-answer label{grid-template-columns:1fr}.matching-answer label>span{transform:rotate(90deg)}.submit-panel{align-items:stretch;flex-direction:column}.submit-actions{flex-direction:column}.start-dialog,.result-dialog,.bundle-dialog,.conflict-dialog{padding:25px 18px}.modal-backdrop{padding:10px}.rules{grid-template-columns:1fr 1fr}.bank-action-bar{flex-direction:column;align-items:stretch}.bank-buttons{flex-direction:column}.bank-buttons button{width:100%}.quick-import-wrap{width:100%;justify-content:space-between;margin-left:0}.config-summary-bar{flex-direction:column;align-items:stretch}.btn-toggle-advanced{width:100%;justify-content:center}.preview-mode-header{flex-direction:column;align-items:stretch}.btn-toggle-view{width:100%;justify-content:center}.review-card{padding:14px}.review-option-item{flex-wrap:wrap}.review-tf-options{flex-direction:column}.drive-card-grid{grid-template-columns:1fr}}
   @media(max-width:1024px){.save-bar{bottom:calc(84px + env(safe-area-inset-bottom))}}
   @media(max-width:640px){.source-grid,.type-grid,.quiz-grid,.loading-grid{grid-template-columns:1fr}.quiz-page{padding-left:12px;padding-right:12px}}
   @media(max-width:390px){.hero-mark{display:none}.modal-backdrop{padding:0}.start-dialog,.result-dialog,.bundle-dialog,.conflict-dialog{width:100%;max-height:100dvh;border-radius:0;padding:22px 14px}.exam-topbar{grid-template-columns:1fr auto}.quiz-page{overflow-x:hidden}.bank-q-options{grid-template-columns:1fr}.image-labels-grid{grid-template-columns:1fr}.types-chip{max-width:200px}.review-meta-left{flex-wrap:wrap}}

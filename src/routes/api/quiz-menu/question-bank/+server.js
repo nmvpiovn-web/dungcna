@@ -1,6 +1,12 @@
 import { json } from '@sveltejs/kit';
 import { verifyServerAuth, isStaffUser } from '../../../../lib/server/auth.js';
 import { safePublicBankQuestion } from '../../../../lib/server/quizBankBridge.js';
+import {
+  formatGradeLevelVi,
+  formatSkillCategoryVi,
+  formatCognitiveLevelVi,
+  formatTopicVi
+} from '../../../../lib/quizSourceNormalizer.js';
 
 export const prerender = false;
 
@@ -102,11 +108,23 @@ export async function GET({ url, request, platform }) {
       limit,
       offset,
       facets: {
-        grade_level: grades.results || [],
-        skill_category: skills.results || [],
-        cognitive_level: cognitives.results || [],
+        grade_level: (grades.results || []).map((g) => ({
+          ...g,
+          label_vi: formatGradeLevelVi(g.grade_level)
+        })),
+        skill_category: (skills.results || []).map((s) => ({
+          ...s,
+          label_vi: formatSkillCategoryVi(s.skill_category)
+        })),
+        cognitive_level: (cognitives.results || []).map((c) => ({
+          ...c,
+          label_vi: formatCognitiveLevelVi(c.cognitive_level)
+        })),
         curriculum_id: curricula.results || [],
-        topic: topics.results || []
+        topic: (topics.results || []).map((t) => ({
+          ...t,
+          label_vi: formatTopicVi(t.topic)
+        }))
       },
       questions: (itemsResult.results || []).map(safePublicBankQuestion)
     });

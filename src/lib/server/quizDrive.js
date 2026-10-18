@@ -1,6 +1,7 @@
 import { getServiceAccountToken, invalidateServiceAccountToken } from './googleServiceAccount.js';
 import { makeId, sha256, validateQuestion } from './quizMenu.js';
 import { isManager } from './auth.js';
+import { normalizeVietnameseSourceTitle, classifyDriveFileGroup } from '../quizSourceNormalizer.js';
 
 export const MAX_QUIZ_FILE_BYTES = 10 * 1024 * 1024;
 export const QUIZ_UPLOAD_FOLDER_NAME = 'Quiz Uploads';
@@ -628,11 +629,18 @@ export async function listQuizDriveFiles(platform) {
     try {
       const kvRes = await platform.env.DB.prepare(
         `SELECT id, title, updated_at FROM knowledge_vault
-         WHERE folder = '07_GOOGLE_DRIVE_LIBRARY' AND id != '00_GOOGLE_DRIVE_INDEX' AND title NOT LIKE '📁%' AND LENGTH(content_markdown) >= 100
+         WHERE folder = '07_GOOGLE_DRIVE_LIBRARY'
+           AND id != '00_GOOGLE_DRIVE_INDEX'
+           AND title NOT LIKE '📁%'
+           AND title NOT LIKE '%.mp3'
+           AND title NOT LIKE '%.rar'
+           AND (category IS NULL OR category NOT IN ('drive_folder', 'listening'))
+           AND LENGTH(content_markdown) >= 100
          ORDER BY updated_at DESC LIMIT 60`
       ).all();
       for (const row of (kvRes?.results || [])) {
         const rawTitle = String(row.title || row.id).trim();
+        if (/\.(mp3|rar|zip)$/i.test(rawTitle)) continue;
         files.push({
           id: row.id,
           name: /\.(docx|pdf|txt)$/i.test(rawTitle) ? rawTitle : `${rawTitle}.docx`,
@@ -651,9 +659,11 @@ export async function listQuizDriveFiles(platform) {
          ORDER BY modified_time DESC LIMIT 40`
       ).all();
       for (const row of (dfRes?.results || [])) {
+        const rawName = String(row.name || '').trim();
+        if (/\.(mp3|rar|zip)$/i.test(rawName)) continue;
         files.push({
           id: row.drive_id,
-          name: row.name,
+          name: rawName,
           mimeType: row.mime_type,
           size: row.size_bytes,
           webViewLink: row.web_view_link,
@@ -667,7 +677,19 @@ export async function listQuizDriveFiles(platform) {
     throw driveErr;
   }
 
-  return [...new Map(files.map((file) => [file.id, file])).values()];
+  const uniqueFiles = [...new Map(files.map((file) => [file.id, file])).values()];
+  return uniqueFiles.map((file) => {
+    const titleVi = normalizeVietnameseSourceTitle(file.name, file.id);
+    const groupInfo = classifyDriveFileGroup(file.name, file.id);
+    return {
+      ...file,
+      raw_name: file.name,
+      title_vi: titleVi,
+      group_key: groupInfo.group_key,
+      group_label: groupInfo.group_label,
+      group_short: groupInfo.group_short
+    };
+  });
 }
 
 function answerKey(text) {

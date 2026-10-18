@@ -1,6 +1,12 @@
 /**
  * Helper utilities for Question Bank <-> Quiz bridging
  */
+import {
+  formatGradeLevelVi,
+  formatSkillCategoryVi,
+  formatCognitiveLevelVi,
+  formatTopicVi
+} from '../quizSourceNormalizer.js';
 
 /**
  * Normalizes options from question_bank into a clean array of string options
@@ -58,7 +64,12 @@ export function determineCorrectAnswer(options, correctOptionId) {
  * @returns {string}
  */
 export function formatQuestionPrompt(questionText, readingPassage) {
-  const text = String(questionText ?? '').trim();
+  const text = String(questionText ?? '')
+    .replace(/<u>(.*?)<\/u>/gi, '[$1]')
+    .replace(/<\/?[a-z][^>]*>/gi, '')
+    .replace(/\s*\(Biến thể\s*\d+\)/gi, '')
+    .replace(/\n\s*A[.)]\s+[^\n]+\n\s*B[.)]\s+[^\n]+\n\s*C[.)]\s+[^\n]+\n\s*D[.)]\s+[^\n]+\s*$/i, '')
+    .trim();
   const passage = String(readingPassage ?? '').trim();
   if (!passage) return text;
   return `[Đoạn văn đọc]\n${passage}\n\n${text}`;
@@ -183,13 +194,19 @@ export function mapBankQuestionToQuizQuestion(bankRow, quizId, orderIndex, targe
  */
 export function safePublicBankQuestion(bankRow) {
   const options = normalizeBankOptions(bankRow.options_json);
+  const skillCategory = bankRow.skill_category || 'grammar';
+  const cognitiveLevel = bankRow.cognitive_level || 'thong_hieu';
   return {
     id: bankRow.id,
     grade_level: bankRow.grade_level,
+    grade_label_vi: formatGradeLevelVi(bankRow.grade_level),
     curriculum_id: bankRow.curriculum_id || null,
     topic: bankRow.topic || null,
-    skill_category: bankRow.skill_category || 'grammar',
-    cognitive_level: bankRow.cognitive_level || 'thong_hieu',
+    topic_label_vi: formatTopicVi(bankRow.topic),
+    skill_category: skillCategory,
+    skill_label_vi: formatSkillCategoryVi(skillCategory),
+    cognitive_level: cognitiveLevel,
+    cognitive_label_vi: formatCognitiveLevelVi(cognitiveLevel),
     question_type: bankRow.question_type || 'multiple_choice',
     prompt: formatQuestionPrompt(bankRow.question_text, bankRow.reading_passage),
     options,
@@ -200,6 +217,19 @@ export function safePublicBankQuestion(bankRow) {
 
 function stripOptionPrefix(opt) {
   return String(opt ?? '').trim().replace(/^[A-Ha-h][.)]\s*/, '').trim();
+}
+
+function cleanStemDisplay(rawText) {
+  return String(rawText || '')
+    .replace(/<u>(.*?)<\/u>/gi, '[$1]')
+    .replace(/<\/?[a-z][^>]*>/gi, '')
+    .replace(/\s*\(Biến thể\s*\d+\)/gi, '')
+    .replace(/\n\s*A[.)]\s+([^\n]+)\n\s*B[.)]\s+([^\n]+)\n\s*C[.)]\s+([^\n]+)\n\s*D[.)]\s+([^\n]+)\s*$/i, ' ($1, $2, $3, $4)')
+    .replace(/^Mark the letter A,\s*B,\s*C,\s*or D to indicate\s+/i, 'Choose ')
+    .replace(/\s*->\s*/g, ' — ')
+    .replace(/_{3,}/g, '______')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
 }
 
 function shuffleTokensDeterministically(tokens, seedText = '') {
@@ -271,12 +301,12 @@ export function convertBankRowsToTypeMix(bankRows, quizId, startOrder = 0, typeM
     const cleanAns = stripOptionPrefix(correctOpt) || 'Answer';
     const wrongOptObj = options.find((o) => o !== correctOpt) || options[1] || ' None';
     const cleanWrong = stripOptionPrefix(wrongOptObj) || 'incorrect';
-    const qText = String(row.question_text || '').trim();
+    const qText = cleanStemDisplay(row.question_text || '');
     const hasBlank = /_{2,}|\.{3,}/.test(qText);
     const fullSentence = hasBlank
       ? qText.replace(/_{2,}|\.{3,}/, cleanAns)
       : `${qText.replace(/[?:.]+$/, '')}: ${cleanAns}`;
-    const shortStem = qText.length > 75 ? `${qText.slice(0, 72)}...` : qText;
+    const shortStem = qText.length > 72 ? `${qText.slice(0, 69)}...` : qText;
     return {
       row,
       options,
@@ -291,6 +321,9 @@ export function convertBankRowsToTypeMix(bankRows, quizId, startOrder = 0, typeM
   });
 
   const results = [];
+  let matchingCounter = 0;
+  let memoryMatchCounter = 0;
+
   for (let i = 0; i < parsedItems.length; i++) {
     const item = parsedItems[i];
     const targetType = typeQueue[i] || 'multiple_choice';
@@ -299,7 +332,9 @@ export function convertBankRowsToTypeMix(bankRows, quizId, startOrder = 0, typeM
     const explanation = item.row.explanation ? String(item.row.explanation).trim() : null;
 
     if (targetType === 'multiple_choice') {
-      results.push(mapBankQuestionToQuizQuestion(item.row, quizId, orderIdx));
+      const mcq = mapBankQuestionToQuizQuestion(item.row, quizId, orderIdx);
+      mcq.prompt = cleanStemDisplay(mcq.prompt);
+      results.push(mcq);
       continue;
     }
 
@@ -307,13 +342,13 @@ export function convertBankRowsToTypeMix(bankRows, quizId, startOrder = 0, typeM
       const isTrue = i % 2 === 0;
       const chosenWord = isTrue ? item.cleanAns : item.cleanWrong;
       const statement = item.hasBlank
-        ? item.qText.replace(/_{2,}|\.{3,}/, `[${chosenWord}]`)
-        : `${item.qText} → Đáp án là "${chosenWord}".`;
+        ? item.qText.replace(/_{2,}|\.{3,}/, chosenWord)
+        : `${item.qText} — Đáp án đúng là: "${chosenWord}"`;
       results.push({
         id: baseId,
         quiz_id: quizId,
         type: 'true_false',
-        prompt: `Xác định nhận định sau là Đúng hay Sai:\n"${statement}"`,
+        prompt: `Xác định câu hoàn chỉnh / nhận định sau là Đúng hay Sai:\n"${statement}"`,
         prompt_image_url: null,
         options_json: JSON.stringify(['Đúng', 'Sai']),
         correct_answer: isTrue ? 'Đúng' : 'Sai',
@@ -329,7 +364,7 @@ export function convertBankRowsToTypeMix(bankRows, quizId, startOrder = 0, typeM
     if (targetType === 'fill_blank') {
       const blankPrompt = item.hasBlank
         ? item.qText
-        : item.fullSentence.replace(item.cleanAns, '______');
+        : `${item.qText.replace(/[?:.]+$/, '')} — Điền đáp án đúng: ______`;
       results.push({
         id: baseId,
         quiz_id: quizId,
@@ -348,15 +383,19 @@ export function convertBankRowsToTypeMix(bankRows, quizId, startOrder = 0, typeM
     }
 
     if (targetType === 'word_guess') {
-      const masked = item.cleanAns
+      const maskedSpaced = item.cleanAns
         .split('')
-        .map((ch, idx) => (ch === ' ' ? ' ' : (idx % 2 === 0 ? ch : '_')))
-        .join('');
+        .map((ch, idx) => (ch === ' ' ? '   ' : (idx % 2 === 0 ? ch : '_')))
+        .join(' ');
+      const letterCount = item.cleanAns.replace(/\s+/g, '').length;
+      const guessStem = item.hasBlank
+        ? item.qText
+        : `${item.qText.replace(/[?:.]+$/, '')} — Từ cần tìm: ______`;
       results.push({
         id: baseId,
         quiz_id: quizId,
         type: 'word_guess',
-        prompt: `Đoán từ/cụm từ tiếng Anh (${masked}) hoàn thành câu sau:\n"${item.qText}"`,
+        prompt: `Đoán từ/cụm từ tiếng Anh hoàn thành câu sau (Gợi ý: ${maskedSpaced} — ${letterCount} chữ cái):\n"${guessStem}"`,
         prompt_image_url: null,
         options_json: JSON.stringify([]),
         correct_answer: item.cleanAns,
@@ -383,7 +422,7 @@ export function convertBankRowsToTypeMix(bankRows, quizId, startOrder = 0, typeM
         id: baseId,
         quiz_id: quizId,
         type: 'ordering',
-        prompt: `Sắp xếp các từ sau thành câu/cụm từ đúng (${item.shortStem}):`,
+        prompt: `Ghép các từ/cụm từ sau theo đúng trật tự ngữ pháp tiếng Anh:`,
         prompt_image_url: null,
         options_json: JSON.stringify({ items: scrambled }),
         correct_answer: JSON.stringify(tokens),
@@ -409,18 +448,20 @@ export function convertBankRowsToTypeMix(bankRows, quizId, startOrder = 0, typeM
       }
       if (pairItems.length < 2) {
         pairItems.push({ left: item.shortStem, right: item.cleanAns });
-        pairItems.push({ left: `Từ trái nghĩa / Phương án nhiễu của "${item.cleanAns}"`, right: item.cleanWrong });
+        pairItems.push({ left: `Phương án gây nhiễu của "${item.cleanAns}"`, right: item.cleanWrong });
       }
       const correctMap = Object.fromEntries(pairItems.map((p) => [p.left, p.right]));
 
       if (targetType === 'matching') {
+        matchingCounter++;
         const left = pairItems.map((p) => p.left);
         const right = shuffleTokensDeterministically(pairItems.map((p) => p.right), item.row.id);
+        const suffix = matchingCounter > 1 ? ` (Phần ${matchingCounter})` : '';
         results.push({
           id: baseId,
           quiz_id: quizId,
           type: 'matching',
-          prompt: `Nối câu hỏi/ngữ cảnh ở cột trái với đáp án đúng ở cột phải [#${i + 1}]:`,
+          prompt: `Nối câu hoặc ngữ cảnh ở cột trái với đáp án đúng ở cột phải${suffix}:`,
           prompt_image_url: null,
           options_json: JSON.stringify({ left, right }),
           correct_answer: JSON.stringify(correctMap),
@@ -431,12 +472,14 @@ export function convertBankRowsToTypeMix(bankRows, quizId, startOrder = 0, typeM
           source_type: 'question_bank'
         });
       } else {
+        memoryMatchCounter++;
         const pairs = pairItems.map((p) => ({ a: p.left, b: p.right }));
+        const suffix = memoryMatchCounter > 1 ? ` (Phần ${memoryMatchCounter})` : '';
         results.push({
           id: baseId,
           quiz_id: quizId,
           type: 'memory_match',
-          prompt: `Ghép đôi thẻ câu hỏi và đáp án tương ứng [#${i + 1}]:`,
+          prompt: `Ghép đôi mỗi câu hỏi với đáp án chính xác tương ứng${suffix}:`,
           prompt_image_url: null,
           options_json: JSON.stringify({ pairs }),
           correct_answer: JSON.stringify(correctMap),
