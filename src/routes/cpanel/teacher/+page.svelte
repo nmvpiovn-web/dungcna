@@ -4,7 +4,7 @@
 
 <script>
  import { onMount } from 'svelte';
- import { getCurrentUser } from '$lib/unifiedStore';
+ import { getCurrentUser, getAuthToken } from '$lib/unifiedStore';
  import { playAudioFeedback } from '$lib/speech';
  import TeacherLeaveModal from '$lib/components/TeacherLeaveModal.svelte';
  import TeacherAdvanceModal from '$lib/components/TeacherAdvanceModal.svelte';
@@ -14,6 +14,7 @@
  let submissions = $state([]);
  let campuses = $state([]);
  let mySessions = $state([]);
+ let allQuizzes = $state([]);
  let myLeaves = $state([]);
  let myAdvances = $state([]);
  let currentPayroll = $state(null);
@@ -47,6 +48,7 @@
  skill_type: 'writing',
  title: '',
  description: '',
+ source_quiz_id: '',
  obsidian_note_id: 'UNIT_10_ENERGY_SOURCES',
  obsidian_note_title: 'Unit 10: Energy Sources & Environmental Impact',
  deadline_date: '',
@@ -56,21 +58,51 @@
  let isAssigning = $state(false);
  let assignToast = $state('');
 
+ function syncAssignFormWithSession(sess) {
+   if (!sess) return;
+   assignForm.session_id = sess.id;
+   const gradeMatch = String(sess.grade_level || sess.class_name || '').match(/(\d{1,2})/);
+   assignForm.class_id = sess.class_id || (gradeMatch ? `cls_g${gradeMatch[1]}` : 'cls_g7');
+   assignForm.class_name = sess.class_name || assignForm.class_id;
+   if (sess.subject_topic && !assignForm.obsidian_note_title) {
+     assignForm.obsidian_note_title = sess.subject_topic;
+   }
+ }
+
+ function handleSelectAssignSession(e) {
+   const sid = e.currentTarget.value;
+   const found = mySessions.find(s => s.id === sid);
+   if (found) syncAssignFormWithSession(found);
+ }
+
+ function handleSelectAssignQuiz(e) {
+   const qid = e.currentTarget.value;
+   assignForm.source_quiz_id = qid;
+   if (qid) {
+     const q = allQuizzes.find(item => item.id === qid);
+     if (q && !assignForm.title.trim()) {
+       assignForm.title = `BTVN & Quiz: ${q.title}`;
+     }
+   }
+ }
+
  async function loadData() {
  loading = true;
  errorMessage = '';
  currentUser = getCurrentUser();
 
  try {
- const token = typeof window !== 'undefined' ? localStorage.getItem('tienganh_token') : '';
+ const token = getAuthToken();
  const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
 
  // P1 (2026-10-01): payroll tach khoi Promise.all chinh — API payroll cham (~5s),
  // khong duoc block cac tab khac. Payroll load lazy khi mo tab salary.
- const [hwRes, campRes, wfRes] = await Promise.all([
- fetch('/api/homework', { headers }),
- fetch('/api/campuses', { headers }),
- fetch('/api/teachers/workflows?type=all', { headers })
+ const [hwRes, campRes, wfRes, schedRes, quizRes] = await Promise.all([
+ fetch('/api/homework', { headers, credentials: 'include' }),
+ fetch('/api/campuses', { headers, credentials: 'include' }),
+ fetch('/api/teachers/workflows?type=all', { headers, credentials: 'include' }),
+ fetch('/api/schedule', { headers, credentials: 'include' }).catch(() => null),
+ fetch('/api/quiz-menu', { headers, credentials: 'include' }).catch(() => null)
  ]);
 
  if (!hwRes.ok && hwRes.status === 401) {
@@ -80,6 +112,8 @@
  const hwData = await hwRes.json();
  const campData = await campRes.json();
  const wfData = await wfRes.json();
+ const schedData = schedRes ? await schedRes.json().catch(() => ({})) : {};
+ const quizData = quizRes ? await quizRes.json().catch(() => ({})) : {};
 
  if (hwData.success) {
  assignments = hwData.assignments || [];
@@ -92,6 +126,33 @@
  mySessions = wfData.sessions || [];
  myLeaves = wfData.leaves || [];
  myAdvances = wfData.advances || [];
+ }
+ if (schedData.success && Array.isArray(schedData.sessions) && schedData.sessions.length > 0) {
+   const byId = new Map(mySessions.map(s => [s.id, s]));
+   for (const s of schedData.sessions) {
+     byId.set(s.id, { ...(byId.get(s.id) || {}), ...s });
+   }
+   mySessions = Array.from(byId.values());
+ }
+ if (quizData.success && Array.isArray(quizData.quizzes)) {
+   allQuizzes = quizData.quizzes;
+ }
+
+ if (typeof window !== 'undefined') {
+   const params = new URLSearchParams(window.location.search);
+   const requestedSessionId = params.get('session_id');
+   if (requestedSessionId) {
+     activeTab = 'assign';
+     const targetSess = mySessions.find(s => s.id === requestedSessionId);
+     if (targetSess) {
+       syncAssignFormWithSession(targetSess);
+     } else {
+       assignForm.session_id = requestedSessionId;
+       if (params.get('class_id')) assignForm.class_id = params.get('class_id');
+     }
+   } else if (mySessions.length > 0 && !mySessions.some(s => s.id === assignForm.session_id)) {
+     syncAssignFormWithSession(mySessions[0]);
+   }
  }
  // Payroll load nen (khong block UI)
  loadPayroll();
@@ -111,11 +172,11 @@
  payrollLoading = true;
  payrollError = '';
  try {
- const token = typeof window !== 'undefined' ? localStorage.getItem('tienganh_token') : '';
+ const token = getAuthToken();
  const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
  const ctrl = new AbortController();
  const t = setTimeout(() => ctrl.abort(), 15000);
- const res = await fetch(`/api/teachers/payroll?billing_cycle=${selectedCycle}`, { headers, signal: ctrl.signal }).catch(() => null);
+ const res = await fetch(`/api/teachers/payroll?billing_cycle=${selectedCycle}`, { headers, credentials: 'include', signal: ctrl.signal }).catch(() => null);
  clearTimeout(t);
  if (res && res.ok) {
  const data = await res.json();
@@ -175,13 +236,14 @@
  gradeToast = '';
 
  try {
- const token = localStorage.getItem('tienganh_token') || '';
+ const token = getAuthToken();
  const res = await fetch('/api/homework', {
  method: 'POST',
  headers: {
  'Content-Type': 'application/json',
- 'Authorization': `Bearer ${token}`
+ ...(token ? { 'Authorization': `Bearer ${token}` } : {})
  },
+ credentials: 'include',
  body: JSON.stringify({
  action: 'grade',
  submission_id: selectedSubmission.id,
@@ -210,20 +272,21 @@
  async function handleAssignHomework(e) {
  e.preventDefault();
  if (!assignForm.title.trim()) {
- alert('Vui lòng nhập tiêu đề bài tập!');
+ assignToast = 'Vui lòng nhập tiêu đề bài tập!';
  return;
  }
  isAssigning = true;
  assignToast = '';
 
  try {
- const token = localStorage.getItem('tienganh_token') || '';
+ const token = getAuthToken();
  const res = await fetch('/api/homework', {
  method: 'POST',
  headers: {
  'Content-Type': 'application/json',
- 'Authorization': `Bearer ${token}`
+ ...(token ? { 'Authorization': `Bearer ${token}` } : {})
  },
+ credentials: 'include',
  body: JSON.stringify({
  action: 'assign',
  ...assignForm
@@ -480,6 +543,44 @@
  </div>
 
  <form onsubmit={handleAssignHomework} class="space-y-4">
+ <!-- Session / Class Selector -->
+ <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+ <div>
+ <label for="assign-session-select" class="block text-xs font-medium text-slate-700 mb-1">Ca học / Lớp nhận BTVN:</label>
+ <select
+ id="assign-session-select"
+ value={assignForm.session_id}
+ onchange={handleSelectAssignSession}
+ class="w-full text-xs font-medium p-2.5 rounded-md bg-white border border-slate-300 text-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cx-500"
+ >
+ {#if mySessions.length === 0}
+ <option value={assignForm.session_id}>{assignForm.class_name} ({assignForm.class_id})</option>
+ {:else}
+ {#each mySessions as sess}
+ <option value={sess.id}>
+ {sess.class_name} • {sess.day_name || sess.session_date || ''} ({sess.start_time || '18:00'})
+ </option>
+ {/each}
+ {/if}
+ </select>
+ </div>
+
+ <div>
+ <label for="assign-quiz-select" class="block text-xs font-medium text-slate-700 mb-1">Đề Quiz Trực Tuyến Đính Kèm (Tùy chọn):</label>
+ <select
+ id="assign-quiz-select"
+ value={assignForm.source_quiz_id}
+ onchange={handleSelectAssignQuiz}
+ class="w-full text-xs font-medium p-2.5 rounded-md bg-white border border-slate-300 text-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cx-500"
+ >
+ <option value="">-- Không đính kèm đề Quiz --</option>
+ {#each allQuizzes as q}
+ <option value={q.id}>🧩 {q.title} ({q.grade_band || 'THCS'} • {q.question_count || 0} câu)</option>
+ {/each}
+ </select>
+ </div>
+ </div>
+
  <!-- Campus & Skill -->
  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
  <div>

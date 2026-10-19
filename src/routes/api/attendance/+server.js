@@ -180,8 +180,8 @@ export async function POST({ request, platform }) {
 
     const body = await request.json();
     const sessionId = body.session_id;
-    const sessionDate = body.session_date || new Date().toISOString().slice(0, 10);
-    const attendanceList = body.students || [];
+    const sessionDate = body.session_date || body.attendance_date || new Date().toISOString().slice(0, 10);
+    const attendanceList = body.students || body.records || [];
 
     if (!sessionId || !Array.isArray(attendanceList) || attendanceList.length === 0) {
       return json({ 
@@ -273,7 +273,7 @@ export async function POST({ request, platform }) {
     // 2. Also execute unifiedStore batch function for reactive events & bot alerts
     let savedRecords = [];
     try {
-      savedRecords = saveSessionAttendanceBatch(sessionId, sessionDate, preparedRecords, teacherUser);
+      savedRecords = saveSessionAttendanceBatch(sessionId, sessionDate, preparedRecords, auth.user);
     } catch (storeErr) {
       console.warn('unifiedStore attendance fallback warning:', storeErr);
       savedRecords = preparedRecords;

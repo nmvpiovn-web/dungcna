@@ -1,508 +1,991 @@
 <svelte:head>
- <title>AdminCP Tổng • Quản Trị Hệ Thống Toàn Quyền • Tiếng Anh Cô Dung</title>
+ <title>AdminCP Tổng • Trung Tâm Điều Hành Đa Nghiệp Vụ D1 • Tiếng Anh Cô Dung</title>
 </svelte:head>
 
 <script>
  import { onMount } from 'svelte';
- import { getCurrentUser, isSuperAdmin, scanScheduleAndAttendanceForLeader, scanTuitionDueAlerts } from '$lib/unifiedStore';
- import { currentLang, toggleLanguage, t } from '$lib/i18n';
- import { playAudioFeedback } from '$lib/speech';
+ import { getAuthToken, getCurrentUser } from '$lib/unifiedStore';
  import ThemeStudioPanel from '$lib/components/ThemeStudioPanel.svelte';
  import AdminUsersPanel from '$lib/components/AdminUsersPanel.svelte';
+ import SessionEditModal from '$lib/components/SessionEditModal.svelte';
+ import SessionRollCallModal from '$lib/components/SessionRollCallModal.svelte';
+ import TeacherStaffModal from '$lib/components/TeacherStaffModal.svelte';
+ import LeaderFinance from '$lib/components/LeaderFinance.svelte';
  import { applyThemeVars, clearLocal } from '$lib/themeStudio.js';
 
  let currentUser = $state(null);
  let campuses = $state([]);
- let streams = $state([]);
- let assignments = $state([]);
- let submissions = $state([]);
+ let events = $state([]);
  let loading = $state(true);
- let activeTab = $state('campuses'); // 'campuses' | 'streams' | 'cross_reminders' | 'storage_audit' | 'theme' | 'quiz_make' | 'users'
- let selectedCampusFilter = $state('all');
- let lang = $state('vi');
+ let activeTab = $state('users'); // 'users' | 'schedule' | 'teachers' | 'tuition' | 'campuses' | 'streams' | 'cross_reminders' | 'storage_audit' | 'theme'
 
- // Theme Studio (tab Giao dien)
- let themeDraft = $state(null); // {name, c, hof} dang xem truoc
- let themeSaved = $state(null); // theme chung dang luu tren web
- let themeMsg = $state('');
- let themeSaving = $state(false);
+ // Self Password Change Modal State
+ let showSelfPwModal = $state(false);
+ let selfOldPassword = $state('');
+ let selfNewPassword = $state('');
+ let selfConfirmPassword = $state('');
+ let selfPwSaving = $state(false);
+ let selfPwMsg = $state('');
+ let selfPwErr = $state(false);
 
- function authHeaders(){
- const token = typeof localStorage !== 'undefined' ? localStorage.getItem('tienganh_token') : null;
- return token ? { 'Authorization': `Bearer ${token}` } : {};
- }
- async function loadSavedTheme(){
- try {
- const res = await fetch('/api/site-theme');
- const data = await res.json();
- if (data.success) themeSaved = data.theme;
- } catch {}
- }
- function previewTheme(c, hof, name){
- applyThemeVars(c, hof);
- themeDraft = { name, c, hof };
- themeMsg = '';
- }
- async function saveThemeGlobal(){
- if (!themeDraft){ themeMsg = 'Chua chon mau nao de luu.'; return; }
- themeSaving = true; themeMsg = '';
- try {
- const res = await fetch('/api/site-theme', {
- method: 'PUT',
- headers: { ...authHeaders(), 'Content-Type': 'application/json' },
- body: JSON.stringify({ theme: themeDraft })
- });
- const data = await res.json();
- if (data.success){
- themeSaved = themeDraft;
- clearLocal(); // de admin thay luon theme chung vua luu
- themeMsg = `✓ Da luu "${themeDraft.name}" — toan bo web se hien mau nay.`;
- playAudioFeedback?.('success');
- } else themeMsg = '✗ ' + (data.error || 'Khong luu duoc.');
- } catch { themeMsg = '✗ Loi ket noi.'; }
- themeSaving = false;
- }
- async function clearGlobalTheme(){
- themeSaving = true; themeMsg = '';
- try {
- const res = await fetch('/api/site-theme', { method: 'DELETE', headers: authHeaders() });
- const data = await res.json();
- if (data.success){
- themeSaved = null; themeDraft = null;
- themeMsg = '✓ Da go theme chung — web ve mau mac dinh. Dang tai lai...';
- setTimeout(()=>location.reload(), 1200);
- } else themeMsg = '✗ ' + (data.error || 'Khong xoa duoc.');
- } catch { themeMsg = '✗ Loi ket noi.'; }
- themeSaving = false;
- }
+ // Schedule & Roll Call State (D1)
+ let scheduleSessions = $state([]);
+ let scheduleLoading = $state(false);
+ let scheduleSearch = $state('');
+ let showSessionModal = $state(false);
+ let editingSession = $state(null);
+ let showRollCallModal = $state(false);
+ let activeRollCallSession = $state(null);
 
- // Cross-reminders toast
- let scanToast = $state('');
- let isScanning = $state(false);
+ // Teachers & HR Workflows State (D1)
+ let teacherProfiles = $state([]);
+ let teacherLeaves = $state([]);
+ let teacherAdvances = $state([]);
+ let teacherRecruitments = $state([]);
+ let teachersLoading = $state(false);
+ let showStaffModal = $state(false);
+ let selectedStaffProfile = $state(null);
 
- // New Campus Form Modal
- let showAddCampusModal = $state(false);
+ // Parent-Student Links State (D1)
+ let parentLinks = $state([]);
+ let parentLinksLoading = $state(false);
+
+ // New Campus Form
  let newCampus = $state({
- id: '',
- name: '',
- short_code: '',
- address: '',
- hotline: '',
- manager_user_id: ''
+  name: '',
+  address: '',
+  contact_phone: '',
+  google_maps_url: '',
+  is_primary: false
  });
+ let isSavingCampus = $state(false);
+ let campusToast = $state('');
 
- currentLang.subscribe(val => {
- lang = val;
+ // Cross-role Reminder Form
+ let reminderForm = $state({
+  target_role: 'all',
+  urgency: 'high',
+  title: '',
+  body: ''
  });
+ let isSendingReminder = $state(false);
+ let reminderToast = $state('');
+
+ function getHeaders() {
+  const token = getAuthToken();
+  return {
+   'Content-Type': 'application/json',
+   ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+  };
+ }
 
  async function loadData() {
- loading = true;
- currentUser = getCurrentUser();
- try {
- const token = typeof window !== 'undefined' ? localStorage.getItem('tienganh_token') : '';
- const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+  loading = true;
+  currentUser = getCurrentUser();
+  try {
+   const headers = getHeaders();
+   const [campRes, notifRes] = await Promise.all([
+    fetch('/api/campuses', { headers }),
+    fetch('/api/notifications?role=superadmin', { headers })
+   ]);
+   const campData = await campRes.json().catch(() => ({}));
+   const notifData = await notifRes.json().catch(() => ({}));
+   if (campData.success) campuses = campData.campuses || [];
+   if (notifData.success) events = notifData.notifications || [];
+  } catch (e) {
+   console.error('Failed to load AdminCP data:', e);
+  } finally {
+   loading = false;
+  }
+ }
 
- const [campRes, hwRes] = await Promise.all([
- fetch('/api/campuses?streams=true', { headers }),
- fetch('/api/homework', { headers })
- ]);
+ async function loadScheduleD1() {
+  scheduleLoading = true;
+  try {
+   const res = await fetch('/api/schedule', { headers: getHeaders() });
+   const data = await res.json().catch(() => ({}));
+   if (data.success && Array.isArray(data.sessions)) {
+    scheduleSessions = data.sessions;
+   }
+  } catch (e) {
+   console.error('Schedule D1 error:', e);
+  } finally {
+   scheduleLoading = false;
+  }
+ }
 
- const campData = await campRes.json();
- const hwData = await hwRes.json();
+ async function handleDeleteSessionD1(sess) {
+  if (!confirm(`Xác nhận xóa buổi học "${sess.class_name}" (${sess.session_date} ${sess.start_time}-${sess.end_time}) khỏi D1?`)) return;
+  try {
+   const res = await fetch(`/api/schedule?id=${encodeURIComponent(sess.id)}`, {
+    method: 'DELETE',
+    headers: getHeaders()
+   });
+   const data = await res.json().catch(() => ({}));
+   if (res.ok && data.success) {
+    await loadScheduleD1();
+   } else {
+    alert(data.error || 'Không thể xóa buổi học');
+   }
+  } catch (e) {
+   alert('Lỗi kết nối: ' + e.message);
+  }
+ }
 
- if (campData.success) {
- campuses = campData.campuses || [];
- streams = campData.streams || [];
+ async function loadTeachersAndWorkflowsD1() {
+  teachersLoading = true;
+  try {
+   const [staffRes, wfRes] = await Promise.all([
+    fetch('/api/teachers/staff', { headers: getHeaders() }),
+    fetch('/api/teachers/workflows?type=all', { headers: getHeaders() })
+   ]);
+   const staffData = await staffRes.json().catch(() => ({}));
+   const wfData = await wfRes.json().catch(() => ({}));
+   if (staffData.success && Array.isArray(staffData.profiles)) {
+    teacherProfiles = staffData.profiles;
+   }
+   if (wfData.success) {
+    teacherLeaves = wfData.leaves || [];
+    teacherAdvances = wfData.advances || [];
+    teacherRecruitments = wfData.recruitments || [];
+   }
+  } catch (e) {
+   console.error('Teachers D1 error:', e);
+  } finally {
+   teachersLoading = false;
+  }
  }
- if (hwData.success) {
- assignments = hwData.assignments || [];
- submissions = hwData.submissions || [];
+
+ async function handleLeaveDecision(leave, decision) {
+  try {
+   const res = await fetch('/api/teachers/workflows', {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({
+     action: 'resolve_leave',
+     leave_id: leave.id,
+     decision,
+     substitute_teacher_id: leave.suggested_substitute_id || '',
+     substitute_teacher_name: leave.suggested_substitute_name || '',
+     leader_notes: decision === 'approve' ? 'Đã duyệt từ AdminCP Tổng' : 'Từ chối từ AdminCP Tổng'
+    })
+   });
+   const data = await res.json().catch(() => ({}));
+   if (data.success) {
+    await loadTeachersAndWorkflowsD1();
+   } else {
+    alert(data.error || 'Lỗi xử lý đơn xin nghỉ');
+   }
+  } catch (e) {
+   alert('Lỗi kết nối: ' + e.message);
+  }
  }
- } catch (e) {
- console.error('Failed to load AdminCP data:', e);
- } finally {
- loading = false;
+
+ async function handleAdvanceDecision(adv, decision) {
+  try {
+   const res = await fetch('/api/teachers/workflows', {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({
+     action: 'resolve_advance',
+     advance_id: adv.id,
+     decision,
+     repayment_plan: adv.repayment_plan || 'Khấu trừ kỳ lương gần nhất'
+    })
+   });
+   const data = await res.json().catch(() => ({}));
+   if (data.success) {
+    await loadTeachersAndWorkflowsD1();
+   } else {
+    alert(data.error || 'Lỗi xử lý đơn ứng lương');
+   }
+  } catch (e) {
+   alert('Lỗi kết nối: ' + e.message);
+  }
  }
+
+ async function loadParentLinksD1() {
+  parentLinksLoading = true;
+  try {
+   const res = await fetch('/api/parents/children?status=all', { headers: getHeaders() });
+   const data = await res.json().catch(() => ({}));
+   if (data.success && Array.isArray(data.links)) {
+    parentLinks = data.links;
+   }
+  } catch (e) {
+   console.error('Parent links D1 error:', e);
+  } finally {
+   parentLinksLoading = false;
+  }
  }
+
+ async function handleVerifyParentLink(linkId, status) {
+  try {
+   const res = await fetch('/api/parents/children', {
+    method: 'PATCH',
+    headers: getHeaders(),
+    body: JSON.stringify({ link_id: linkId, verification_status: status })
+   });
+   const data = await res.json().catch(() => ({}));
+   if (data.success) {
+    await loadParentLinksD1();
+   } else {
+    alert(data.error || 'Lỗi cập nhật liên kết phụ huynh');
+   }
+  } catch (e) {
+   alert('Lỗi mạng: ' + e.message);
+  }
+ }
+
+ async function handleSelfChangePassword(e) {
+  e.preventDefault();
+  selfPwMsg = '';
+  selfPwErr = false;
+  if (!selfOldPassword || !selfNewPassword) {
+   selfPwErr = true;
+   selfPwMsg = 'Vui lòng nhập mật khẩu hiện tại và mật khẩu mới.';
+   return;
+  }
+  if (selfNewPassword.trim().length < 6) {
+   selfPwErr = true;
+   selfPwMsg = 'Mật khẩu mới phải có ít nhất 6 ký tự.';
+   return;
+  }
+  if (selfNewPassword !== selfConfirmPassword) {
+   selfPwErr = true;
+   selfPwMsg = 'Mật khẩu xác nhận không khớp.';
+   return;
+  }
+  selfPwSaving = true;
+  try {
+   const res = await fetch('/api/auth/change-password', {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({
+     old_password: selfOldPassword,
+     new_password: selfNewPassword.trim()
+    })
+   });
+   const data = await res.json().catch(() => ({}));
+   if (res.ok && data.success) {
+    selfPwErr = false;
+    selfPwMsg = '✅ Đã đổi mật khẩu thành công trên Cloudflare D1!';
+    selfOldPassword = '';
+    selfNewPassword = '';
+    selfConfirmPassword = '';
+    setTimeout(() => {
+     showSelfPwModal = false;
+     selfPwMsg = '';
+    }, 1200);
+   } else {
+    selfPwErr = true;
+    selfPwMsg = data.error || 'Đổi mật khẩu thất bại.';
+   }
+  } catch (err) {
+   selfPwErr = true;
+   selfPwMsg = 'Lỗi kết nối: ' + err.message;
+  } finally {
+   selfPwSaving = false;
+  }
+ }
+
+ async function handleCreateCampus(e) {
+  e.preventDefault();
+  if (!newCampus.name.trim() || !newCampus.address.trim()) {
+   alert('Vui lòng điền tên cơ sở và địa chỉ!');
+   return;
+  }
+  isSavingCampus = true;
+  campusToast = '';
+  try {
+   const res = await fetch('/api/campuses', {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({ action: 'create', ...newCampus })
+   });
+   const data = await res.json();
+   if (data.success) {
+    campusToast = '✅ Đã thêm điểm học mới thành công!';
+    newCampus = { name: '', address: '', contact_phone: '', google_maps_url: '', is_primary: false };
+    loadData();
+   }
+  } catch (e) {
+   campusToast = '❌ Lỗi: ' + e.message;
+  } finally {
+   isSavingCampus = false;
+  }
+ }
+
+ async function handleDeleteCampus(id) {
+  if (!confirm('Bạn có chắc chắn muốn xóa điểm học này?')) return;
+  try {
+   const res = await fetch('/api/campuses', {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({ action: 'delete', id })
+   });
+   const data = await res.json();
+   if (data.success) {
+    loadData();
+   } else {
+    alert(data.error);
+   }
+  } catch (e) {
+   alert('Lỗi xóa cơ sở: ' + e.message);
+  }
+ }
+
+ async function handleSendCrossReminder(e) {
+  e.preventDefault();
+  if (!reminderForm.title.trim() || !reminderForm.body.trim()) {
+   alert('Vui lòng nhập tiêu đề và nội dung nhắc nhở!');
+   return;
+  }
+  isSendingReminder = true;
+  reminderToast = '';
+  try {
+   const res = await fetch('/api/notifications', {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({
+     ...reminderForm,
+     category: 'system',
+     sender_id: currentUser?.id || 'user_superadmin_1',
+     sender_name: currentUser?.name || 'SuperAdmin'
+    })
+   });
+   const data = await res.json();
+   if (data.success) {
+    reminderToast = '🚀 Đã phát sóng nhắc nhở chéo tới các đối tượng thành công!';
+    reminderForm.title = '';
+    reminderForm.body = '';
+    loadData();
+   }
+  } catch (e) {
+   reminderToast = '❌ Lỗi gửi nhắc nhở: ' + e.message;
+  } finally {
+   isSendingReminder = false;
+  }
+ }
+
+ function switchTab(tabId) {
+  activeTab = tabId;
+  if (tabId === 'schedule') loadScheduleD1();
+  if (tabId === 'teachers') loadTeachersAndWorkflowsD1();
+  if (tabId === 'tuition') loadParentLinksD1();
+ }
+
+ let filteredSchedule = $derived.by(() => {
+  const q = scheduleSearch.trim().toLowerCase();
+  if (!q) return scheduleSessions;
+  return scheduleSessions.filter(s =>
+   (s.class_name || '').toLowerCase().includes(q) ||
+   (s.teacher_name || '').toLowerCase().includes(q) ||
+   (s.subject_topic || '').toLowerCase().includes(q) ||
+   (s.session_date || '').includes(q)
+  );
+ });
 
  onMount(() => {
- loadData();
- loadSavedTheme();
+  loadData();
+  loadScheduleD1();
+  loadTeachersAndWorkflowsD1();
+  loadParentLinksD1();
  });
-
- let filteredStreams = $derived.by(() => {
- if (selectedCampusFilter === 'all') return streams;
- return streams.filter(s => s.campus_id === selectedCampusFilter);
- });
-
- // Cross Reminders Scanner — honest version (RB-M3 pattern fix, 2026-09-30):
- // runs the REAL scan engines (schedule/attendance + tuition) and reports the
- // actual number of alerts generated. No more sleep(800) fake success.
- async function triggerCrossRemindersScan() {
- isScanning = true;
- scanToast = '';
- try {
- const scheduleNotifs = scanScheduleAndAttendanceForLeader() || [];
- const tuitionNotifs = scanTuitionDueAlerts() || [];
- const total = scheduleNotifs.length + tuitionNotifs.length;
- if (total > 0) {
- scanToast = `✅ Quét xong: phát hiện ${total} cảnh báo (${scheduleNotifs.length} lịch học/chấm bài, ${tuitionNotifs.length} học phí) — đã tạo thông báo trong Trung Tâm Báo Cáo Leader.`;
- } else {
- scanToast = '✅ Quét xong: không phát hiện deadline quá hạn hay giáo viên chậm chấm trong phạm vi dữ liệu hiện tại.';
- }
- playAudioFeedback(true);
- } catch (e) {
- scanToast = 'Lỗi quét: ' + e.message;
- } finally {
- isScanning = false;
- }
- }
 </script>
 
-<div class="min-h-screen bg-slate-50 text-slate-900 font-sans p-4 sm:p-6 lg:p-8 space-y-6 transition-colors duration-150">
- <!-- Top AdminCP Bar -->
- <header class="bg-white border border-slate-200 rounded-lg p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
- <div class="flex items-center gap-3">
- <div class="w-12 h-12 rounded-md bg-slate-800 flex items-center justify-center text-white font-semibold text-2xl shadow-sm">
- ⚡
- </div>
- <div>
- <div class="flex items-center gap-2">
- <span class="text-xs font-bold uppercase tracking-wider text-rose-600">Ms. Dung Master AdminCP</span>
- <span class="text-[10px] px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 font-bold border border-rose-200">SUPERADMIN</span>
- </div>
- <h1 class="text-xl sm:text-2xl font-heading font-semibold text-slate-900">Trung Tâm Điều Hành Tối Cao Toàn Hệ Thống</h1>
- </div>
- </div>
+<div class="min-h-screen bg-[#f8f5ee] text-stone-800 flex flex-col font-sans">
+ <!-- AdminCP Top Command Bar -->
+ <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-stone-200 px-4 py-3 shadow-xs">
+  <div class="max-w-7xl mx-auto flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+   <div class="flex items-center gap-3">
+    <div class="w-10 h-10 rounded-xl bg-emerald-700 flex items-center justify-center text-white font-black text-lg shadow-sm">
+     ⚡
+    </div>
+    <div>
+     <div class="text-[11px] uppercase tracking-widest font-black text-emerald-700">Master Control Panel • Đồng Bộ Cơ Sở Dữ Liệu Cloudflare D1</div>
+     <h1 class="text-base sm:text-lg font-black text-stone-900 flex items-center gap-2">
+      <span>Hệ Thống Quản Trị Tổng Hợp (AdminCP)</span>
+      <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-300 font-mono">
+       D1 LIVE SYNC
+      </span>
+     </h1>
+    </div>
+   </div>
 
- <!-- Quick Switch Links to Cpanels & Language -->
- <div class="flex flex-wrap items-center gap-2">
- <button 
- onclick={toggleLanguage}
- class="px-3 py-1.5 rounded-md bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-800 transition-all border border-slate-200"
- >
- {lang === 'vi' ? '🇻🇳 Tiếng Việt' : '🇬🇧 English'}
- </button>
- <a href="/cpanel/student" class="px-3 py-1.5 rounded-md bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-cx-700 transition-all border border-slate-200">
- 🎒 Học Sinh
- </a>
- <a href="/cpanel/parent" class="px-3 py-1.5 rounded-md bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-emerald-700 transition-all border border-slate-200">
- 👨‍👩‍👧 Phụ Huynh
- </a>
- <a href="/cpanel/teacher" class="px-3 py-1.5 rounded-md bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-amber-700 transition-all border border-slate-200">
- 👩‍🏫 Giáo Viên
- </a>
- <a href="/cpanel/leader" class="px-3 py-1.5 rounded-md bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-indigo-700 transition-all border border-slate-200">
- 👑 Leader &amp; Bài Test
- </a>
- <a href="/" class="px-3 py-1.5 rounded-md bg-rose-600 hover:bg-rose-700 text-xs font-semibold text-white shadow-sm transition-all">
- 🏠 Trang Chủ
- </a>
- </div>
+   <!-- Cross-CP Role Switcher & Self Password Button -->
+   <div class="flex items-center gap-1.5 flex-wrap">
+    <button
+     type="button"
+     data-testid="admincp-self-change-pw-btn"
+     onclick={() => { selfPwMsg = ''; selfPwErr = false; showSelfPwModal = true; }}
+     class="px-3 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 text-xs font-bold border border-amber-300 transition-colors"
+    >
+     🔑 Đổi Mật Khẩu Của Tôi
+    </button>
+    <a href="/admin" class="px-2.5 py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-bold border border-stone-300 transition-colors">
+     🏛️ Admin Học Vụ
+    </a>
+    <a href="/cpanel/leader" class="px-2.5 py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-bold border border-stone-300 transition-colors">
+     📊 CP Leader
+    </a>
+    <a href="/cpanel/teacher" class="px-2.5 py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-bold border border-stone-300 transition-colors">
+     👩‍🏫 CP Giáo Viên
+    </a>
+    <a href="/cpanel/student" class="px-2.5 py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-bold border border-stone-300 transition-colors">
+     🎓 CP Học Sinh
+    </a>
+    <a href="/cpanel/parent" class="px-2.5 py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-bold border border-stone-300 transition-colors">
+     👨‍👩‍👧 CP Phụ Huynh
+    </a>
+    <a href="/quiz-menu?tab=create" class="px-2.5 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold shadow-xs transition-colors">
+     ✨ Tạo Đề Thi
+    </a>
+   </div>
+  </div>
  </header>
 
- <!-- Metrics Grid -->
- <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
- <div class="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
- <div class="text-xs font-bold text-slate-700 uppercase tracking-wider">Cơ Sở Dạy Học</div>
- <div class="text-2xl font-semibold text-rose-600 mt-1">{campuses.length}</div>
- <div class="text-[11px] text-slate-600 font-medium mt-1">Đa điểm liên kết</div>
- </div>
- <div class="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
- <div class="text-xs font-bold text-slate-700 uppercase tracking-wider">Sự Kiện Trực Tiếp</div>
- <div class="text-2xl font-semibold text-amber-600 mt-1">{streams.length}</div>
- <div class="text-[11px] text-slate-600 font-medium mt-1">Ghi nhận đa cơ sở</div>
- </div>
- <div class="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
- <div class="text-xs font-bold text-slate-700 uppercase tracking-wider">Bài Tập Về Nhà</div>
- <div class="text-2xl font-semibold text-cx-600 mt-1">{assignments.length}</div>
- <div class="text-[11px] text-slate-600 font-medium mt-1">Đã phát hành</div>
- </div>
- <div class="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
- <div class="text-xs font-bold text-slate-700 uppercase tracking-wider">Bài Nộp Học Sinh</div>
- <div class="text-2xl font-semibold text-emerald-600 mt-1">{submissions.length}</div>
- <div class="text-[11px] text-slate-600 font-medium mt-1">Viết tay &amp; Ghi âm nói</div>
- </div>
- </div>
+ <!-- Main Body -->
+ <div class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 space-y-6">
+  <!-- Unified Business Workflow Tabs -->
+  <div class="flex items-center gap-2 overflow-x-auto pb-2 border-b border-stone-200">
+   {#each [
+    { id: 'users', label: '👥 User, Role & Mật Khẩu' },
+    { id: 'schedule', label: `📅 Thời Khóa Biểu & Điểm Danh (${scheduleSessions.length})` },
+    { id: 'teachers', label: `👩‍🏫 Giáo Viên, Lương & HR (${teacherProfiles.length})` },
+    { id: 'tuition', label: '💰 Học Phí & Liên Kết Phụ Huynh' },
+    { id: 'campuses', label: `🏢 Cơ Sở Học (${campuses.length})` },
+    { id: 'streams', label: `📡 Luồng Sự Kiện (${events.length})` },
+    { id: 'cross_reminders', label: '⚡ Nhắc Nhở Chéo' },
+    { id: 'storage_audit', label: '🗄️ Kiểm Toán D1 & R2' },
+    { id: 'theme', label: '🎨 Giao Diện (Theme)' }
+   ] as tab}
+    <button
+     type="button"
+     onclick={() => switchTab(tab.id)}
+     class="px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all {activeTab === tab.id ? 'bg-emerald-700 text-white shadow-xs' : 'bg-white text-stone-600 hover:bg-stone-100 border border-stone-200'}"
+    >
+     {tab.label}
+    </button>
+   {/each}
+  </div>
 
- <!-- Navigation Tabs -->
- <div class="flex flex-wrap items-center justify-between gap-3 bg-white p-2 rounded-lg border border-slate-200 shadow-sm">
- <div class="flex items-center gap-1 overflow-x-auto">
- <button 
- onclick={() => activeTab = 'campuses'}
- class="px-4 py-2 rounded-md text-xs font-bold transition-all {activeTab === 'campuses' ? 'bg-rose-600 text-white shadow-sm' : 'text-slate-700 hover:bg-slate-100'}"
- >
- 🏢 Quản Lý Cơ Sở Đa Điểm ({campuses.length})
- </button>
- <button 
- onclick={() => activeTab = 'streams'}
- class="px-4 py-2 rounded-md text-xs font-bold transition-all {activeTab === 'streams' ? 'bg-rose-600 text-white shadow-sm' : 'text-slate-700 hover:bg-slate-100'}"
- >
- 📡 Dòng Hoạt Động Thời Gian Thực ({streams.length})
- </button>
- <button 
- onclick={() => activeTab = 'cross_reminders'}
- class="px-4 py-2 rounded-md text-xs font-bold transition-all {activeTab === 'cross_reminders' ? 'bg-rose-600 text-white shadow-sm' : 'text-slate-700 hover:bg-slate-100'}"
- >
- 🔔 Nhắc Nhở Chéo (Cross-Reminders)
- </button>
- <button 
- onclick={() => activeTab = 'storage_audit'}
- class="px-4 py-2 rounded-md text-xs font-bold transition-all {activeTab === 'storage_audit' ? 'bg-rose-600 text-white shadow-sm' : 'text-slate-700 hover:bg-slate-100'}"
- >
- 📁 Cây Thư Mục &amp; Audit Bài Nộp
- </button>
- <button 
- onclick={() => activeTab = 'theme'}
- class="px-4 py-2 rounded-md text-xs font-bold transition-all {activeTab === 'theme' ? 'bg-rose-600 text-white shadow-sm' : 'text-slate-700 hover:bg-slate-100'}"
- >
- 🎨 Giao Diện &amp; Màu Sắc
- </button>
- <a
- href="/quiz-menu?tab=create"
- class="px-4 py-2 rounded-md text-xs font-bold transition-all text-slate-700 hover:bg-slate-100 flex items-center gap-1"
- >
- 📝 Tạo Quiz
- </a>
- <button 
- onclick={() => activeTab = 'users'}
- class="px-4 py-2 rounded-md text-xs font-bold transition-all {activeTab === 'users' ? 'bg-rose-600 text-white shadow-sm' : 'text-slate-700 hover:bg-slate-100'}"
- >
- 👥 Tài Khoản
- </button>
- </div>
+  <!-- TAB 1: USERS, ROLES & PASSWORDS (D1) -->
+  {#if activeTab === 'users'}
+   <AdminUsersPanel />
 
- <!-- Campus Filter Dropdown -->
- <div class="flex items-center gap-2">
- <span class="text-xs text-slate-700 font-semibold">Lọc cơ sở:</span>
- <select 
- bind:value={selectedCampusFilter}
- class="text-xs font-bold bg-slate-50 text-slate-800 px-3 py-1.5 rounded-md border border-slate-200 focus:outline-none"
- >
- <option value="all">🌐 Toàn bộ cơ sở</option>
- {#each campuses as c}
- <option value={c.id}>{c.name}</option>
- {/each}
- </select>
- </div>
- </div>
+  <!-- TAB 2: SCHEDULE & ROLL CALL (D1) -->
+  {:else if activeTab === 'schedule'}
+   <div class="space-y-4">
+    <div class="p-4 rounded-2xl bg-white border border-stone-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+     <div>
+      <h2 class="text-base font-bold text-stone-900">📅 Quản Lý Thời Khóa Biểu, Phân Công Giáo Viên &amp; Điểm Danh (D1)</h2>
+      <p class="text-xs text-stone-500 mt-0.5">
+       Mọi thay đổi ca học tại đây đồng bộ tức thời sang Sổ Giáo Viên (<code class="font-mono">/cpanel/teacher</code>), Bàn Học Sinh (<code class="font-mono">/cpanel/student</code>) và Sổ Phụ Huynh (<code class="font-mono">/cpanel/parent</code>).
+      </p>
+     </div>
+     <div class="flex items-center gap-2 flex-wrap">
+      <button
+       type="button"
+       data-testid="admincp-add-session-btn"
+       onclick={() => { editingSession = null; showSessionModal = true; }}
+       class="px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-700 hover:bg-emerald-800 text-white shadow-xs"
+      >
+       + Thêm Buổi Học Mới
+      </button>
+      <button
+       type="button"
+       onclick={loadScheduleD1}
+       class="px-3 py-2 rounded-xl text-xs font-bold bg-stone-100 hover:bg-stone-200 text-stone-700 border border-stone-300"
+      >
+       🔄 Tải lại lịch D1
+      </button>
+     </div>
+    </div>
 
- <!-- TAB 1: CAMPUSES MANAGEMENT -->
- {#if activeTab === 'campuses'}
- <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
- {#each campuses as campus}
- <div class="bg-white border border-slate-200 rounded-lg p-5 shadow-sm space-y-3 flex flex-col justify-between">
- <div>
- <div class="flex items-center justify-between">
- <span class="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-700 font-mono font-bold text-xs border border-rose-200">
- {campus.short_code}
- </span>
- <span class="text-xs text-emerald-600 font-bold flex items-center gap-1">
- <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Đang hoạt động
- </span>
- </div>
- <h3 class="text-base font-heading font-semibold text-slate-900 mt-2">{campus.name}</h3>
- <p class="text-xs text-slate-600 font-normal mt-1">📍 {campus.address}</p>
- <div class="text-xs text-slate-600 mt-2 font-medium">
- Hotline: <strong class="text-slate-800">{campus.hotline || 'Chưa cập nhật'}</strong>
- </div>
- </div>
+    <div class="flex gap-2">
+     <input
+      type="search"
+      bind:value={scheduleSearch}
+      placeholder="🔍 Tìm kiếm theo tên lớp, giáo viên phụ trách, chuyên đề hoặc ngày học..."
+      class="w-full px-3.5 py-2 rounded-xl border border-stone-300 bg-white text-xs text-stone-900 focus:outline-none focus:border-emerald-600"
+     />
+    </div>
 
- <div class="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
- <span class="text-slate-600">Quản lý: <strong class="text-cx-700">{campus.manager_user_id || 'Cô Dung'}</strong></span>
- <span class="text-amber-700 font-bold">Mã: {campus.id}</span>
- </div>
- </div>
- {/each}
- </div>
+    {#if scheduleLoading}
+     <div class="p-8 text-center text-xs text-stone-500 bg-white rounded-2xl border border-stone-200">
+      ⏳ Đang tải thời khóa biểu từ Cloudflare D1...
+     </div>
+    {:else if filteredSchedule.length === 0}
+     <div class="p-8 text-center text-xs text-stone-500 bg-white rounded-2xl border border-stone-200">
+      Chưa có buổi học nào khớp tìm kiếm. Nhấn "+ Thêm Buổi Học Mới" để khởi tạo ca học trên D1.
+     </div>
+    {:else}
+     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {#each filteredSchedule as sess (sess.id)}
+       <div class="p-4 rounded-2xl bg-white border border-stone-200 shadow-xs space-y-3 flex flex-col justify-between">
+        <div class="space-y-2">
+         <div class="flex items-center justify-between gap-2">
+          <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+           {sess.day_name || 'Lịch học'} • {sess.session_date || '—'}
+          </span>
+          <span class="font-mono text-xs font-bold text-stone-700 bg-stone-100 px-2.5 py-0.5 rounded-lg">
+           ⏰ {sess.start_time} – {sess.end_time}
+          </span>
+         </div>
+         <h3 class="text-sm font-black text-stone-900">{sess.class_name}</h3>
+         <p class="text-xs text-stone-600">📚 Chuyên đề: <strong>{sess.subject_topic || sess.topic || 'Chuyên đề chuẩn'}</strong></p>
+         <div class="text-xs text-stone-500 space-y-0.5">
+          <div>👩‍🏫 Giáo viên chính: <strong class="text-stone-800">{sess.teacher_name || sess.teacher_id || 'Cô Dung'}</strong></div>
+          {#if sess.assistant_teacher_name}
+           <div>🤝 Trợ giảng: <strong class="text-stone-700">{sess.assistant_teacher_name}</strong></div>
+          {/if}
+          {#if sess.substitute_teacher_name}
+           <div class="text-amber-700">🔄 Dạy thay: <strong>{sess.substitute_teacher_name}</strong></div>
+          {/if}
+          <div>📍 Phòng / Cơ sở: {sess.room_notes || sess.room || sess.location || 'Phòng học trung tâm'}</div>
+          <div>🎓 Sĩ số gán lớp: <strong>{Array.isArray(sess.student_ids) ? sess.student_ids.length : 0} học sinh</strong></div>
+         </div>
+        </div>
 
- <!-- TAB 2: REALTIME ACTIVITY STREAMS -->
- {:else if activeTab === 'streams'}
- <div class="bg-white border border-slate-200 rounded-lg p-6 shadow-sm space-y-4">
- <div class="flex items-center justify-between border-b border-slate-100 pb-3">
- <div>
- <h2 class="text-base font-heading font-semibold text-slate-900 flex items-center gap-2">
- <span>📡 Dòng Sự Kiện Đa Cơ Sở Chồng Chéo</span>
- <span class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span>
- </h2>
- <p class="text-xs text-slate-600 mt-0.5 font-normal">Mọi hành vi giao bài, nộp bài viết tay, điểm danh và dạy thay liên cơ sở được ghi nhận đồng bộ.</p>
- </div>
- </div>
+        <div class="pt-3 border-t border-stone-100 flex items-center justify-end gap-2 flex-wrap">
+         <button
+          type="button"
+          onclick={() => { activeRollCallSession = sess; showRollCallModal = true; }}
+          class="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white"
+         >
+          📋 Điểm Danh
+         </button>
+         <button
+          type="button"
+          onclick={() => { editingSession = sess; showSessionModal = true; }}
+          class="px-3 py-1.5 rounded-lg text-xs font-bold bg-stone-100 hover:bg-stone-200 text-stone-800 border border-stone-300"
+         >
+          ✏️ Sửa Lịch / Gán HS
+         </button>
+         <button
+          type="button"
+          onclick={() => handleDeleteSessionD1(sess)}
+          class="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200"
+         >
+          🗑️ Xóa
+         </button>
+        </div>
+       </div>
+      {/each}
+     </div>
+    {/if}
+   </div>
 
- {#if filteredStreams.length === 0}
- <div class="text-center py-12 text-slate-500 text-xs font-medium">
- Không có sự kiện nào được ghi nhận cho bộ lọc này.
- </div>
- {:else}
- <div class="space-y-3 max-h-[500px] overflow-y-auto pr-2">
- {#each filteredStreams as stm}
- {@const campusObj = campuses.find(c => c.id === stm.campus_id)}
- <div class="p-4 rounded-lg bg-slate-50 border border-slate-200 flex items-start justify-between gap-4">
- <div class="space-y-1">
- <div class="flex items-center gap-2">
- <span class="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-rose-50 text-rose-700 border border-rose-200">
- {campusObj?.short_code || stm.campus_id}
- </span>
- <span class="font-bold text-slate-900 text-sm">{stm.title}</span>
- </div>
- <p class="text-xs text-slate-600 font-normal">{stm.detail}</p>
- <div class="text-[11px] text-slate-600 flex items-center gap-2 mt-1 font-medium">
- <span>Thực hiện: <strong class="text-slate-800">{stm.actor_name}</strong> ({stm.actor_role})</span>
- <span>•</span>
- <span>Mã tham chiếu: <code class="text-cx-700">{stm.reference_id || 'N/A'}</code></span>
- </div>
- </div>
- <span class="text-xs text-slate-500 whitespace-nowrap font-mono">
- {new Date(stm.created_at).toLocaleString('vi-VN')}
- </span>
- </div>
- {/each}
- </div>
- {/if}
- </div>
+  <!-- TAB 3: TEACHERS, PAYROLL RATES & HR WORKFLOWS (D1) -->
+  {:else if activeTab === 'teachers'}
+   <div class="space-y-6">
+    <div class="p-4 rounded-2xl bg-white border border-stone-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+     <div>
+      <h2 class="text-base font-bold text-stone-900">👩‍🏫 Quản Lý Hồ Sơ Giáo Viên, Định Mức Lương &amp; Duyệt Đơn Từ HR (D1)</h2>
+      <p class="text-xs text-stone-500 mt-0.5">
+       Đồng bộ trực tiếp với <code class="font-mono">/api/teachers/staff</code>, <code class="font-mono">/api/teachers/workflows</code> và <code class="font-mono">/api/teachers/payroll</code>.
+      </p>
+     </div>
+     <button
+      type="button"
+      onclick={loadTeachersAndWorkflowsD1}
+      class="px-3 py-2 rounded-xl text-xs font-bold bg-stone-100 hover:bg-stone-200 text-stone-700 border border-stone-300"
+     >
+      🔄 Đồng bộ dữ liệu Giáo viên
+     </button>
+    </div>
 
- <!-- TAB 3: CROSS REMINDERS SYSTEM -->
- {:else if activeTab === 'cross_reminders'}
- <div class="bg-white border border-slate-200 rounded-lg p-6 shadow-sm space-y-6 max-w-4xl mx-auto">
- <div class="border-b border-slate-100 pb-4">
- <h2 class="text-lg font-heading font-semibold text-slate-900">🔔 Cơ Chế Nhắc Nhở Chéo (Cross-Reminders Engine)</h2>
- <p class="text-xs text-slate-600 mt-1 font-normal">Tự động giám sát thời hạn làm bài tập của học sinh và tiến độ chấm bài của giáo viên.</p>
- </div>
+    {#if teachersLoading}
+     <div class="p-8 text-center text-xs text-stone-500 bg-white rounded-2xl border border-stone-200">
+      ⏳ Đang tải hồ sơ giáo viên và quy trình HR từ D1...
+     </div>
+    {:else}
+     <!-- Teacher Profiles Grid -->
+     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {#each teacherProfiles as prof (prof.teacher_id || prof.id)}
+       <div class="p-4 rounded-2xl bg-white border border-stone-200 shadow-xs space-y-3 flex flex-col justify-between">
+        <div>
+         <div class="flex items-center justify-between">
+          <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-teal-50 text-teal-800 border border-teal-200">
+           {prof.role_title || 'Giáo viên'}
+          </span>
+          <span class="text-xs font-bold text-amber-600">⭐ {prof.leader_rating || 5.0}</span>
+         </div>
+         <h3 class="text-sm font-black text-stone-900 mt-2">{prof.teacher_name}</h3>
+         <div class="text-[11px] font-mono text-stone-500">@{prof.username} • ID: {prof.teacher_id}</div>
+         <div class="mt-3 p-2.5 rounded-xl bg-stone-50 border border-stone-200 text-xs space-y-1">
+          <div class="flex justify-between">
+           <span class="text-stone-500">Đơn giá / ca dạy:</span>
+           <strong class="text-emerald-700 tabular-nums">{(Number(prof.rate_per_session_vnd) || 0).toLocaleString('vi-VN')} đ</strong>
+          </div>
+          <div class="flex justify-between">
+           <span class="text-stone-500">Lương cơ bản:</span>
+           <strong class="text-stone-800 tabular-nums">{(Number(prof.base_salary_vnd) || 0).toLocaleString('vi-VN')} đ</strong>
+          </div>
+         </div>
+        </div>
+        <button
+         type="button"
+         onclick={() => { selectedStaffProfile = prof; showStaffModal = true; }}
+         class="w-full py-2 rounded-xl text-xs font-bold bg-emerald-700 hover:bg-emerald-800 text-white transition-colors"
+        >
+         ⚙️ Điều Chỉnh Lương, Thưởng &amp; Đánh Giá
+        </button>
+       </div>
+      {/each}
+     </div>
 
- <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
- <div class="p-4 rounded-lg bg-slate-50 border border-slate-200 space-y-2">
- <div class="font-bold text-amber-700 flex items-center gap-1.5">
- <span>⏰ 1. Nhắc Học Sinh &amp; Phụ Huynh</span>
- </div>
- <p class="text-slate-600 font-normal leading-relaxed">
- Hệ thống tự động phát thông báo trước deadline 12h và 2h. Nếu học sinh chưa nộp bài, gửi thông báo chéo tới Phụ huynh để phụ huynh nhắc nhở con.
- </p>
- </div>
+     <!-- Pending Leave Requests & Salary Advances -->
+     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div class="p-4 rounded-2xl bg-white border border-stone-200 shadow-xs space-y-3">
+       <h3 class="text-sm font-bold text-stone-900">📝 Đơn Xin Nghỉ Phép &amp; Dạy Thay ({teacherLeaves.length})</h3>
+       {#if teacherLeaves.length === 0}
+        <p class="text-xs text-stone-400">Chưa có đơn xin nghỉ phép nào.</p>
+       {:else}
+        <div class="space-y-2 max-h-72 overflow-y-auto">
+         {#each teacherLeaves as lv}
+          <div class="p-3 rounded-xl bg-stone-50 border border-stone-200 text-xs space-y-1.5">
+           <div class="flex items-center justify-between font-bold">
+            <span>{lv.teacher_name} • {lv.class_name || lv.session_id}</span>
+            <span class="px-2 py-0.5 rounded text-[10px] {lv.status === 'approved' ? 'bg-emerald-100 text-emerald-800' : lv.status === 'rejected' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800'}">
+             {lv.status}
+            </span>
+           </div>
+           <div class="text-stone-600">Lý do: {lv.reason}</div>
+           {#if lv.status === 'pending'}
+            <div class="flex gap-2 pt-1">
+             <button type="button" onclick={() => handleLeaveDecision(lv, 'approve')} class="px-2.5 py-1 rounded bg-emerald-600 text-white font-bold text-[11px]">✓ Duyệt</button>
+             <button type="button" onclick={() => handleLeaveDecision(lv, 'reject')} class="px-2.5 py-1 rounded bg-rose-600 text-white font-bold text-[11px]">✕ Từ chối</button>
+            </div>
+           {/if}
+          </div>
+         {/each}
+        </div>
+       {/if}
+      </div>
 
- <div class="p-4 rounded-lg bg-slate-50 border border-slate-200 space-y-2">
- <div class="font-bold text-rose-700 flex items-center gap-1.5">
- <span>👩‍🏫 2. Nhắc Giáo Viên Chậm Chấm Bài</span>
- </div>
- <p class="text-slate-600 font-normal leading-relaxed">
- Khi học sinh đã nộp bài quá 24h mà chưa có điểm, tự động gửi thông báo giục giáo viên buổi học đó và báo cáo lên Leader chuyên môn của cơ sở.
- </p>
- </div>
- </div>
+      <div class="p-4 rounded-2xl bg-white border border-stone-200 shadow-xs space-y-3">
+       <h3 class="text-sm font-bold text-stone-900">💸 Đơn Ứng Lương Giáo Viên ({teacherAdvances.length})</h3>
+       {#if teacherAdvances.length === 0}
+        <p class="text-xs text-stone-400">Chưa có yêu cầu ứng lương nào.</p>
+       {:else}
+        <div class="space-y-2 max-h-72 overflow-y-auto">
+         {#each teacherAdvances as adv}
+          <div class="p-3 rounded-xl bg-stone-50 border border-stone-200 text-xs space-y-1.5">
+           <div class="flex items-center justify-between font-bold">
+            <span>{adv.teacher_name} • {(Number(adv.amount_vnd) || 0).toLocaleString('vi-VN')} đ</span>
+            <span class="px-2 py-0.5 rounded text-[10px] {adv.status === 'approved' || adv.status === 'disbursed' ? 'bg-emerald-100 text-emerald-800' : adv.status === 'rejected' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800'}">
+             {adv.status}
+            </span>
+           </div>
+           <div class="text-stone-600">Lý do: {adv.reason}</div>
+           {#if adv.status === 'pending'}
+            <div class="flex gap-2 pt-1">
+             <button type="button" onclick={() => handleAdvanceDecision(adv, 'approve')} class="px-2.5 py-1 rounded bg-emerald-600 text-white font-bold text-[11px]">✓ Duyệt ứng lương</button>
+             <button type="button" onclick={() => handleAdvanceDecision(adv, 'reject')} class="px-2.5 py-1 rounded bg-rose-600 text-white font-bold text-[11px]">✕ Từ chối</button>
+            </div>
+           {/if}
+          </div>
+         {/each}
+        </div>
+       {/if}
+      </div>
+     </div>
+    {/if}
+   </div>
 
- <div class="p-4 rounded-lg bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
- <div>
- <div class="font-bold text-slate-900 text-xs">Kích hoạt quét toàn bộ BTVN &amp; Bài nộp ngay bây giờ:</div>
- <div class="text-[11px] text-slate-600 font-medium">Quét deadline các lớp Lớp 7 Chuyên, Lớp 9, Lớp 12 trên toàn bộ cơ sở.</div>
- </div>
- <button 
- onclick={triggerCrossRemindersScan}
- disabled={isScanning}
- class="px-5 py-2.5 rounded-md bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-sm disabled:opacity-50 whitespace-nowrap"
- >
- {isScanning ? 'Đang quét hệ thống...' : '⚡ Chạy Quét Nhắc Nhở Chéo'}
- </button>
- </div>
+  <!-- TAB 4: TUITION, PAYROLL & PARENT LINKS (D1) -->
+  {:else if activeTab === 'tuition'}
+   <div class="space-y-6">
+    <!-- Parent-Student Link Verification Box -->
+    <div class="p-5 rounded-2xl bg-white border border-stone-200 shadow-xs space-y-3">
+     <div class="flex items-center justify-between">
+      <div>
+       <h2 class="text-base font-bold text-stone-900">👨‍👩‍👧 Duyệt Liên Kết Phụ Huynh – Học Sinh (D1)</h2>
+       <p class="text-xs text-stone-500">Khi xác minh (verified), phụ huynh tại <code class="font-mono">/cpanel/parent</code> sẽ xem được bài tập, lịch học và hóa đơn học phí của con.</p>
+      </div>
+      <button type="button" onclick={loadParentLinksD1} class="px-3 py-1.5 rounded-lg bg-stone-100 text-stone-700 text-xs font-bold border border-stone-300">
+       🔄 Tải lại
+      </button>
+     </div>
 
- {#if scanToast}
- <div class="p-3 rounded-md text-xs font-bold text-center bg-emerald-50 text-emerald-800 border border-emerald-200">
- {scanToast}
- </div>
- {/if}
- </div>
+     {#if parentLinksLoading}
+      <div class="text-xs text-stone-500 py-4">⏳ Đang tải danh sách liên kết...</div>
+     {:else if parentLinks.length === 0}
+      <div class="text-xs text-stone-400 py-4">Chưa có yêu cầu liên kết phụ huynh - học sinh nào. Bạn có thể gán trực tiếp ở tab "User, Role &amp; Mật Khẩu".</div>
+     {:else}
+      <div class="overflow-x-auto">
+       <table class="min-w-full text-xs">
+        <thead class="bg-stone-100 text-stone-600 uppercase text-[11px]">
+         <tr>
+          <th class="px-3 py-2 text-left">Phụ huynh</th>
+          <th class="px-3 py-2 text-left">Học sinh liên kết</th>
+          <th class="px-3 py-2 text-left">Khối</th>
+          <th class="px-3 py-2 text-left">Trạng thái</th>
+          <th class="px-3 py-2 text-right">Xét duyệt</th>
+         </tr>
+        </thead>
+        <tbody class="divide-y divide-stone-200">
+         {#each parentLinks as lk (lk.link_id)}
+          <tr>
+           <td class="px-3 py-2 font-semibold">{lk.parent_name || lk.parent_user_id} (@{lk.parent_username || ''})</td>
+           <td class="px-3 py-2 font-semibold text-emerald-800">{lk.student_name || lk.student_user_id} (@{lk.student_username || ''})</td>
+           <td class="px-3 py-2">{lk.student_grade || '—'}</td>
+           <td class="px-3 py-2">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold {lk.verification_status === 'verified' ? 'bg-emerald-100 text-emerald-800' : lk.verification_status === 'rejected' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800'}">
+             {lk.verification_status}
+            </span>
+           </td>
+           <td class="px-3 py-2 text-right space-x-1">
+            {#if lk.verification_status !== 'verified'}
+             <button type="button" onclick={() => handleVerifyParentLink(lk.link_id, 'verified')} class="px-2.5 py-1 rounded bg-emerald-600 text-white font-bold text-[11px]">✓ Xác minh</button>
+            {/if}
+            {#if lk.verification_status !== 'rejected'}
+             <button type="button" onclick={() => handleVerifyParentLink(lk.link_id, 'rejected')} class="px-2.5 py-1 rounded bg-rose-600 text-white font-bold text-[11px]">✕ Từ chối</button>
+            {/if}
+           </td>
+          </tr>
+         {/each}
+        </tbody>
+       </table>
+      </div>
+     {/if}
+    </div>
 
- <!-- TAB 4: STORAGE TREE AUDIT -->
- {:else if activeTab === 'storage_audit'}
- <div class="bg-white border border-slate-200 rounded-lg p-6 shadow-sm space-y-4">
- <div class="border-b border-slate-100 pb-3">
- <h2 class="text-base font-heading font-semibold text-slate-900">📁 Cây Thư Mục Lưu Trữ BTVN &amp; Bài Nộp Chuẩn Hóa</h2>
- <p class="text-xs text-slate-600 font-normal mt-0.5">Cấu trúc: <code>storage/homework/&lbrace;campus&rbrace;/&lbrace;class&rbrace;/&lbrace;session&rbrace;/&lbrace;student&rbrace;/&lbrace;assignment&rbrace;/</code></p>
- </div>
+    <!-- Full Tuition & Payroll Ledger Component -->
+    <div class="p-5 rounded-2xl bg-white border border-stone-200 shadow-xs">
+     <LeaderFinance />
+    </div>
+   </div>
 
- <div class="space-y-3 font-mono text-xs">
- {#each submissions as sub}
- {@const assignment = assignments.find(a => a.id === sub.assignment_id)}
- <div class="p-4 rounded-lg bg-slate-50 border border-slate-200 space-y-2">
- <div class="flex items-center justify-between text-cx-700 font-semibold">
- <span>📂 storage/homework/{assignment?.campus_id || 'loc_codung'}/{assignment?.class_id || 'cls_g7'}/{assignment?.session_id || 'sess_01'}/{sub.student_id}/{sub.assignment_id}/</span>
- <span class="text-slate-500 text-[11px] font-sans font-medium">{new Date(sub.submitted_at).toLocaleDateString('vi-VN')}</span>
- </div>
+  <!-- TAB 5: CAMPUSES -->
+  {:else if activeTab === 'campuses'}
+   <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2 space-y-4">
+     <h2 class="text-base font-bold text-stone-900">Danh Sách Điểm Học Hiện Có</h2>
+     {#each campuses as c}
+      <div class="p-5 rounded-2xl bg-white border border-stone-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
+       <div class="space-y-1.5">
+        <div class="flex items-center gap-2">
+         <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold {c.is_primary ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-stone-100 text-stone-600 border border-stone-300'}">
+          {c.is_primary ? '⭐ Cơ Sở Chính' : '📍 Điểm Học Mở Rộng'}
+         </span>
+         <span class="font-mono text-xs text-stone-500">ID: {c.id}</span>
+        </div>
+        <h3 class="text-base font-bold text-stone-900">{c.name}</h3>
+        <p class="text-xs text-stone-600">📌 Địa chỉ: <strong>{c.address}</strong></p>
+        <p class="text-xs text-stone-500">📞 Hotline: {c.contact_phone || 'Chưa cập nhật'}</p>
+       </div>
+       <div class="flex items-center gap-2 shrink-0">
+        {#if !c.is_primary}
+         <button
+          onclick={() => handleDeleteCampus(c.id)}
+          class="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold transition-all"
+         >
+          🗑️ Xóa
+         </button>
+        {/if}
+       </div>
+      </div>
+     {/each}
+    </div>
 
- <div class="pl-4 border-l-2 border-slate-300 space-y-1 text-slate-700 font-sans text-xs">
- <div>Học sinh: <strong class="text-slate-900">{sub.student_name}</strong> • Điểm số: <strong class="text-amber-700">{sub.score !== null ? `${sub.score}/10` : 'Chờ chấm'}</strong></div>
- {#if sub.handwritten_image_url}
- <div class="text-amber-700 flex items-center gap-1 font-mono text-[11px]">
- <span>📄 handwritten_worksheet_p1.jpg</span>
- <a href={sub.handwritten_image_url} target="_blank" class="text-cx-700 underline font-sans ml-2">Xem ảnh</a>
- </div>
- {/if}
- {#if sub.audio_url}
- <div class="text-emerald-700 flex items-center gap-1 font-mono text-[11px]">
- <span>🎙️ speaking_voice_record.webm</span>
- </div>
- {/if}
- {#if sub.content_text}
- <div class="text-slate-600 text-[11px] italic font-normal">"{sub.content_text.slice(0, 100)}..."</div>
- {/if}
- </div>
- </div>
- {/each}
- </div>
- </div>
- <!-- TAB 5: GIAO DIEN & MAU SAC -->
- {:else if activeTab === 'theme'}
- <div class="bg-white border border-slate-200 rounded-lg p-6 shadow-sm">
- <div class="border-b border-slate-100 pb-3 mb-4">
- <h2 class="text-base font-heading font-semibold text-slate-900">🎨 Giao Diện &amp; Màu Sắc Web</h2>
- <p class="text-xs text-slate-600 font-normal mt-0.5">
- Chọn màu bên dưới để <b>xem trước trực tiếp</b> trên trang này.
- Bấm <b>💾 Lưu lên web</b> thì toàn bộ khách truy cập sẽ thấy màu mới.
- </p>
- <div class="mt-2 text-xs font-bold">
- {#if themeSaved}
- <span class="text-emerald-700">● Đang áp dụng chung: {themeSaved.name}</span>
- {:else}
- <span class="text-slate-500">○ Chưa có theme chung — đang dùng màu mặc định (Lavie Aqua).</span>
- {/if}
- {#if themeDraft}
- <span class="text-amber-700"> • Xem trước: {themeDraft.name} (chưa lưu)</span>
- {/if}
- </div>
- </div>
+    <div class="p-6 rounded-2xl bg-white border border-stone-200 space-y-4 h-fit shadow-xs">
+     <h2 class="text-base font-bold text-stone-900">➕ Thêm Điểm Học Mới</h2>
+     {#if campusToast}
+      <div class="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold">
+       {campusToast}
+      </div>
+     {/if}
+     <form onsubmit={handleCreateCampus} class="space-y-3 text-xs">
+      <div>
+       <label for="campus-name" class="block font-bold text-stone-700 mb-1">Tên Điểm Học (*):</label>
+       <input id="campus-name" type="text" bind:value={newCampus.name} required placeholder="VD: Cơ sở 2 - Quận Cầu Giấy" class="w-full bg-stone-50 border border-stone-300 rounded-xl px-3.5 py-2.5 text-stone-900" />
+      </div>
+      <div>
+       <label for="campus-address" class="block font-bold text-stone-700 mb-1">Địa Chỉ Chi Tiết (*):</label>
+       <input id="campus-address" type="text" bind:value={newCampus.address} required placeholder="Số nhà, đường, quận/huyện..." class="w-full bg-stone-50 border border-stone-300 rounded-xl px-3.5 py-2.5 text-stone-900" />
+      </div>
+      <div>
+       <label for="campus-phone" class="block font-bold text-stone-700 mb-1">Số Điện Thoại Liên Hệ:</label>
+       <input id="campus-phone" type="text" bind:value={newCampus.contact_phone} placeholder="090..." class="w-full bg-stone-50 border border-stone-300 rounded-xl px-3.5 py-2.5 text-stone-900" />
+      </div>
+      <button type="submit" disabled={isSavingCampus} class="w-full py-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-black text-xs shadow-sm transition-all">
+       {isSavingCampus ? '⏳ Đang lưu...' : '💾 Lưu Điểm Học Vào D1'}
+      </button>
+     </form>
+    </div>
+   </div>
 
- <div class="max-w-md">
- <ThemeStudioPanel activeName={themeDraft?.name || themeSaved?.name || 'Lavie Aqua'} onApply={(c,hof,name)=>previewTheme(c,hof,name)} />
- </div>
+  <!-- TAB 6: STREAMS -->
+  {:else if activeTab === 'streams'}
+   <div class="p-6 rounded-2xl bg-white border border-stone-200 space-y-4 shadow-xs">
+    <div class="flex items-center justify-between">
+     <h2 class="text-base font-bold text-stone-900">📡 Luồng Sự Kiện Tương Tác Chéo Giữa Các Role (D1 Stream)</h2>
+     <button onclick={loadData} class="px-3 py-1.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-xs font-bold text-stone-700">🔄 Làm mới</button>
+    </div>
+    <div class="space-y-3">
+     {#each events as ev}
+      <div class="p-4 rounded-xl bg-stone-50 border border-stone-200 flex items-start justify-between gap-4">
+       <div class="space-y-1">
+        <div class="flex items-center gap-2">
+         <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-50 text-emerald-700 border border-emerald-200">
+          Target: {ev.target_role}
+         </span>
+         <span class="text-xs font-bold text-stone-900">{ev.title}</span>
+        </div>
+        <p class="text-xs text-stone-600">{ev.body}</p>
+        <div class="text-[11px] text-stone-500">
+         Người gửi: <strong>{ev.sender_name}</strong> • Thời gian: {new Date(ev.created_at).toLocaleString('vi-VN')}
+        </div>
+       </div>
+      </div>
+     {/each}
+    </div>
+   </div>
 
- {#if themeMsg}
- <div class="mt-4 p-3 rounded-md text-xs font-bold text-center {themeMsg.startsWith('✓') ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-amber-50 text-amber-800 border border-amber-200'}">
- {themeMsg}
- </div>
- {/if}
+  <!-- TAB 7: CROSS-ROLE REMINDERS -->
+  {:else if activeTab === 'cross_reminders'}
+   <div class="max-w-2xl mx-auto p-6 rounded-2xl bg-white border border-stone-200 space-y-5 shadow-xs">
+    <div>
+     <h2 class="text-lg font-black text-stone-900">⚡ Phát Sóng Nhắc Nhở Chéo Đa Kênh</h2>
+     <p class="text-xs text-stone-500 mt-1">Gửi lệnh nhắc nhở trực tiếp từ AdminCP xuống Cpanel Giáo Viên, Học Sinh, Phụ Huynh hoặc Leader.</p>
+    </div>
+    {#if reminderToast}
+     <div class="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold">
+      {reminderToast}
+     </div>
+    {/if}
+    <form onsubmit={handleSendCrossReminder} class="space-y-4 text-xs">
+     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div>
+       <label for="reminder-target-role" class="block font-bold text-stone-700 mb-1.5">Nhóm Cpanel Nhận Lệnh:</label>
+       <select id="reminder-target-role" bind:value={reminderForm.target_role} class="w-full bg-stone-50 border border-stone-300 rounded-xl px-3.5 py-2.5 text-stone-900">
+        <option value="all">🌐 Toàn bộ hệ thống (All Roles)</option>
+        <option value="student">🎓 Cpanel Học Sinh</option>
+        <option value="parent">👨‍👩‍👧 Cpanel Phụ Huynh</option>
+        <option value="teacher">👩‍🏫 Cpanel Giáo Viên</option>
+        <option value="leader">📊 Cpanel Quản Lý (Leader)</option>
+       </select>
+      </div>
+      <div>
+       <label for="reminder-urgency" class="block font-bold text-stone-700 mb-1.5">Mức Độ Ưu Tiên:</label>
+       <select id="reminder-urgency" bind:value={reminderForm.urgency} class="w-full bg-stone-50 border border-stone-300 rounded-xl px-3.5 py-2.5 text-stone-900">
+        <option value="normal">🟢 Thông thường</option>
+        <option value="high">🟠 Quan trọng (High)</option>
+        <option value="urgent">🔴 Khẩn cấp (Urgent Alert)</option>
+       </select>
+      </div>
+     </div>
+     <div>
+      <label for="reminder-title" class="block font-bold text-stone-700 mb-1.5">Tiêu Đề Thông Báo (*):</label>
+      <input id="reminder-title" type="text" bind:value={reminderForm.title} required placeholder="VD: Nhắc nhở hoàn thành chấm bài Writing trước 21:00 tối nay" class="w-full bg-stone-50 border border-stone-300 rounded-xl px-3.5 py-2.5 text-stone-900" />
+     </div>
+     <div>
+      <label for="reminder-body" class="block font-bold text-stone-700 mb-1.5">Nội Dung Chi Tiết (*):</label>
+      <textarea id="reminder-body" rows="4" bind:value={reminderForm.body} required placeholder="Nhập nội dung chỉ đạo hoặc nhắc nhở..." class="w-full bg-stone-50 border border-stone-300 rounded-xl p-3.5 text-stone-900"></textarea>
+     </div>
+     <button type="submit" disabled={isSendingReminder} class="w-full py-3.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-black text-sm shadow-sm transition-all">
+      {isSendingReminder ? '⏳ Đang phát sóng...' : '🚀 Phát Sóng Lệnh Nhắc Nhở Ngay'}
+     </button>
+    </form>
+   </div>
 
- <div class="flex flex-wrap gap-3 mt-4">
- <button
- onclick={saveThemeGlobal}
- disabled={themeSaving || !themeDraft}
- class="px-5 py-2.5 rounded-md text-sm font-semibold text-white bg-cx-600 hover:bg-cx-700 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm transition-all"
- >
- {themeSaving ? '⏳ Đang lưu...' : '💾 Lưu lên web'}
- </button>
- {#if themeSaved}
- <button
- onclick={clearGlobalTheme}
- disabled={themeSaving}
- class="px-5 py-2.5 rounded-md text-sm font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 disabled:opacity-40 transition-all"
- >
- ↩️ Về màu mặc định
- </button>
- {/if}
+  <!-- TAB 8: STORAGE AUDIT -->
+  {:else if activeTab === 'storage_audit'}
+   <div class="p-6 rounded-2xl bg-white border border-stone-200 space-y-6 shadow-xs">
+    <h2 class="text-lg font-black text-stone-900">🗄️ Kiểm Toán Phân Tầng Lưu Trữ (Cloudflare Free-Tier Optimization)</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+     <div class="p-5 rounded-xl bg-stone-50 border border-stone-200 space-y-2">
+      <div class="text-emerald-700 font-black uppercase">1. Cloudflare D1 (SQLite)</div>
+      <div class="text-2xl font-black text-stone-900">Chuẩn Hóa</div>
+      <p class="text-stone-600 leading-relaxed">
+       Lưu trữ đồng bộ: <code class="text-emerald-700">users</code>, <code class="text-emerald-700">teacher_profiles</code>, <code class="text-emerald-700">class_sessions</code>, <code class="text-emerald-700">attendance_records</code>, <code class="text-emerald-700">homework_assignments</code>, <code class="text-emerald-700">tuition_bills</code>, <code class="text-emerald-700">parent_student_links</code>.
+      </p>
+     </div>
+     <div class="p-5 rounded-xl bg-stone-50 border border-stone-200 space-y-2">
+      <div class="text-teal-700 font-black uppercase">2. Cloudflare R2 / Google Drive</div>
+      <div class="text-2xl font-black text-stone-900">Media &amp; Audio</div>
+      <p class="text-stone-600 leading-relaxed">
+       Toàn bộ file âm thanh thu âm bài nói (<code class="text-teal-700">.webm/.mp3</code>) và tài liệu PDF/DOCX nặng được đẩy sang kho lưu trữ đám mây.
+      </p>
+     </div>
+     <div class="p-5 rounded-xl bg-stone-50 border border-stone-200 space-y-2">
+      <div class="text-amber-700 font-black uppercase">3. Obsidian Knowledge Vault</div>
+      <div class="text-2xl font-black text-stone-900">Markdown Sync</div>
+      <p class="text-stone-600 leading-relaxed">
+       Nội dung giáo trình lý thuyết và kho câu hỏi được đồng bộ qua Second Brain (<code class="text-amber-700">/api/second-brain</code>).
+      </p>
+     </div>
+    </div>
+   </div>
+
+  <!-- TAB 9: THEME -->
+  {:else if activeTab === 'theme'}
+   <div class="p-6 rounded-2xl bg-white border border-stone-200 shadow-xs">
+    <ThemeStudioPanel
+     onSaved={(vars) => { clearLocal(); applyThemeVars(vars); }}
+    />
+   </div>
+  {/if}
  </div>
- <p class="text-[11px] text-slate-500 mt-3">
- Lưu ý: đổi theme không ảnh hưởng dữ liệu hay tài khoản nào — chỉ đổi màu hiển thị.
- </p>
- </div>
- <!-- TAB 6: QUAN LY TAI KHOAN -->
- {:else if activeTab === 'users'}
- <AdminUsersPanel />
- {/if}
 </div>
+
+<!-- Shared Schedule & Staff Modals -->
+<SessionEditModal
+ bind:isOpen={showSessionModal}
+ session={editingSession}
+ onSaved={() => { showSessionModal = false; loadScheduleD1(); }}
+/>
+
+<SessionRollCallModal
+ bind:isOpen={showRollCallModal}
+ session={activeRollCallSession}
+ onSaved={() => { loadScheduleD1(); }}
+/>
+
+<TeacherStaffModal
+ bind:isOpen={showStaffModal}
+ staffProfile={selectedStaffProfile}
+ teacherId={selectedStaffProfile?.teacher_id}
+ currentUser={currentUser}
+ onSaved={() => { loadTeachersAndWorkflowsD1(); }}
+/>
+
+<!-- Self Password Change Modal for AdminCP -->
+{#if showSelfPwModal}
+ <div class="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/60 backdrop-blur-sm p-4" role="dialog" aria-modal="true">
+  <div class="bg-white rounded-2xl border border-stone-200 shadow-2xl w-full max-w-md p-6 space-y-4">
+   <div class="flex items-center justify-between border-b border-stone-200 pb-3">
+    <h3 class="text-base font-black text-stone-900">🔑 Đổi Mật Khẩu Tài Khoản Đang Đăng Nhập</h3>
+    <button type="button" onclick={() => showSelfPwModal = false} class="w-8 h-8 rounded-full bg-stone-100 text-stone-600 font-bold">✕</button>
+   </div>
+   <form onsubmit={handleSelfChangePassword} class="space-y-3 text-xs">
+    {#if selfPwMsg}
+     <div class="p-3 rounded-xl font-bold {selfPwErr ? 'bg-rose-50 text-rose-700 border border-rose-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'}">
+      {selfPwMsg}
+     </div>
+    {/if}
+    <div>
+     <label for="admcp-self-old" class="block font-bold text-stone-700 mb-1">Mật khẩu hiện tại (*):</label>
+     <input id="admcp-self-old" type="password" required bind:value={selfOldPassword} class="w-full px-3 py-2 rounded-lg border border-stone-300" />
+    </div>
+    <div>
+     <label for="admcp-self-new" class="block font-bold text-stone-700 mb-1">Mật khẩu mới (&ge; 6 ký tự):</label>
+     <input id="admcp-self-new" type="password" required minlength="6" bind:value={selfNewPassword} class="w-full px-3 py-2 rounded-lg border border-stone-300" />
+    </div>
+    <div>
+     <label for="admcp-self-confirm" class="block font-bold text-stone-700 mb-1">Xác nhận mật khẩu mới:</label>
+     <input id="admcp-self-confirm" type="password" required minlength="6" bind:value={selfConfirmPassword} class="w-full px-3 py-2 rounded-lg border border-stone-300" />
+    </div>
+    <div class="flex justify-end gap-2 pt-2">
+     <button type="button" onclick={() => showSelfPwModal = false} class="px-4 py-2 rounded-lg bg-stone-100 text-stone-700 font-bold">Hủy</button>
+     <button type="submit" disabled={selfPwSaving} class="px-5 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-bold disabled:opacity-50">
+      {selfPwSaving ? '⏳ Đang lưu...' : '🔑 Cập Nhật Mật Khẩu'}
+     </button>
+    </div>
+   </form>
+  </div>
+ </div>
+{/if}

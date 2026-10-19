@@ -112,6 +112,62 @@ export async function POST({ params, request, platform }) {
   `).bind(serializedAnswers, score.autoScore, finalScore, score.maxScore, status, duration, attempt.id).run();
   const changed = committed?.meta?.changes ?? committed?.changes;
   if (changed === 0) return json({ success: false, error: 'AttemptAlreadyClosed' }, { status: 409 });
+
+  // Auto-sync into homework_submissions if this quiz is linked to homework assignments for the student
+  let syncedHomeworkCount = 0;
+  if (attempt.user_id) {
+    try {
+      const linkedHwRes = await db.prepare(`
+        SELECT ha.id, ha.title, ha.max_score, ha.teacher_id, ha.teacher_name
+        FROM homework_assignments ha
+        JOIN class_enrollments ce ON ce.class_id = ha.class_id
+        WHERE ha.source_quiz_id = ? AND ha.status = 'published'
+          AND ce.user_id = ? AND ce.status = 'active'
+      `).bind(quiz.id, attempt.user_id).all();
+      const linkedAssignments = linkedHwRes?.results || [];
+      const studentName = auth?.user?.name || auth?.user?.username || 'Học sinh';
+      for (const hw of linkedAssignments) {
+        const hwMax = Number(hw.max_score) || 10;
+        const normalizedScore = score.maxScore > 0
+          ? Number(((Number(score.autoScore || 0) / Number(score.maxScore)) * hwMax).toFixed(2))
+          : 0;
+        const hwStatus = score.needsReview ? 'submitted' : 'graded';
+        const summaryText = `Đã hoàn thành bài Quiz "${quiz.title}" (${score.autoScore}/${score.maxScore} điểm câu hỏi • Quy đổi: ${normalizedScore}/${hwMax})`;
+        const existingSub = await db.prepare(
+          `SELECT id FROM homework_submissions WHERE assignment_id = ? AND student_id = ? LIMIT 1`
+        ).bind(hw.id, attempt.user_id).first();
+        if (existingSub?.id) {
+          await db.prepare(`
+            UPDATE homework_submissions
+            SET content_text = ?, score = ?, status = ?, submitted_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+          `).bind(summaryText, score.needsReview ? null : normalizedScore, hwStatus, existingSub.id).run();
+        } else {
+          const subId = `sub_qz_${hw.id}_${attempt.user_id}`.replace(/[^a-zA-Z0-9_-]/g, '_');
+          await db.prepare(`
+            INSERT INTO homework_submissions (
+              id, assignment_id, student_id, student_name, submission_type, content_text,
+              submitted_at, is_on_time, graded_by_teacher_id, graded_by_teacher_name, graded_at,
+              score, teacher_feedback, status
+            ) VALUES (?, ?, ?, ?, 'text', ?, CURRENT_TIMESTAMP, 1, ?, ?, CURRENT_TIMESTAMP, ?, ?, ?)
+          `).bind(
+            subId,
+            hw.id,
+            attempt.user_id,
+            studentName,
+            summaryText,
+            score.needsReview ? null : (hw.teacher_id || 'system_auto'),
+            score.needsReview ? null : (hw.teacher_name || 'Chấm tự động Quiz'),
+            score.needsReview ? null : normalizedScore,
+            score.needsReview ? 'Đang chờ giáo viên chấm câu tự luận trong Quiz' : 'Hệ thống tự động đồng bộ điểm từ bài Quiz đính kèm.',
+            hwStatus
+          ).run();
+        }
+        syncedHomeworkCount++;
+      }
+    } catch {}
+  }
+
   // Guests only learn correct/wrong per question — never the answer key or
   // explanations (prevents submit-once-to-harvest-answers, then retake).
   const isGuestSubmit = !attempt.user_id;
@@ -127,6 +183,7 @@ export async function POST({ params, request, platform }) {
   return json({
     success: true,
     attempt: { id: attempt.id, status, auto_score: score.autoScore, final_score: finalScore, max_score: score.maxScore, duration_seconds: duration },
+    synced_homework_count: syncedHomeworkCount,
     grading
   });
 }

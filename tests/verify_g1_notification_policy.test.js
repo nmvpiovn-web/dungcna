@@ -90,6 +90,7 @@ function initTestDatabase() {
       role TEXT NOT NULL,
       avatar TEXT,
       status TEXT DEFAULT 'active',
+      approval_status TEXT DEFAULT 'official',
       metadata TEXT,
       password TEXT,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
@@ -97,6 +98,27 @@ function initTestDatabase() {
     );
     CREATE UNIQUE INDEX IF NOT EXISTS idx_users_username_unique ON users(username) WHERE username IS NOT NULL;
     CREATE UNIQUE INDEX IF NOT EXISTS idx_users_phone_unique ON users(phone) WHERE phone IS NOT NULL;
+
+    CREATE TABLE IF NOT EXISTS auth_sessions (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      expires_at TEXT,
+      revoked_at TEXT,
+      last_active_at TEXT,
+      user_agent TEXT,
+      ip_address TEXT,
+      device_model TEXT,
+      app_mode TEXT
+    );
+    INSERT INTO auth_sessions (id, user_id, expires_at) VALUES
+      ('sid_teacher_lan', 'usr_teacher_lan', '2099-12-31T23:59:59Z'),
+      ('sid_parent_p', 'usr_parent_p', '2099-12-31T23:59:59Z'),
+      ('sid_parent_pending', 'usr_parent_pending', '2099-12-31T23:59:59Z'),
+      ('sid_student_s', 'usr_student_s', '2099-12-31T23:59:59Z'),
+      ('sid_legacy_t', 'usr_legacy_t', '2099-12-31T23:59:59Z'),
+      ('sid_legacy_t2', 'usr_legacy_t2', '2099-12-31T23:59:59Z'),
+      ('sid_admin', 'usr_admin', '2099-12-31T23:59:59Z');
 
     CREATE TABLE IF NOT EXISTS parent_student_links (
       id TEXT PRIMARY KEY,
@@ -281,19 +303,19 @@ describe('G1 AUDIT FIXTURE MATRIX - REAL HANDLERS & DB ISOLATION', async () => {
 
   before(async () => {
     teacherToken = await createSignedToken(
-      { id: 'usr_teacher_lan', username: 'lan', role: 'teacher', name: 'Cô Lan', status: 'active' },
+      { id: 'usr_teacher_lan', username: 'lan', role: 'teacher', name: 'Cô Lan', status: 'active', sid: 'sid_teacher_lan' },
       TEST_SECRET
     );
     parentToken = await createSignedToken(
-      { id: 'usr_parent_p', username: 'parent_p', role: 'parent', name: 'Phụ huynh P', status: 'active' },
+      { id: 'usr_parent_p', username: 'parent_p', role: 'parent', name: 'Phụ huynh P', status: 'active', sid: 'sid_parent_p' },
       TEST_SECRET
     );
     studentToken = await createSignedToken(
-      { id: 'usr_student_s', username: 'student_s', role: 'student', name: 'Học sinh S', status: 'active' },
+      { id: 'usr_student_s', username: 'student_s', role: 'student', name: 'Học sinh S', status: 'active', sid: 'sid_student_s' },
       TEST_SECRET
     );
     adminToken = await createSignedToken(
-      { id: 'usr_admin', username: 'admin', role: 'superadmin', name: 'Super Admin', status: 'active' },
+      { id: 'usr_admin', username: 'admin', role: 'superadmin', name: 'Super Admin', status: 'active', sid: 'sid_admin' },
       TEST_SECRET
     );
   });
@@ -427,7 +449,7 @@ describe('G1 AUDIT FIXTURE MATRIX - REAL HANDLERS & DB ISOLATION', async () => {
       `);
 
       const pendingToken = await createSignedToken(
-        { id: 'usr_parent_pending', username: 'parent_pending', role: 'parent', name: 'Phụ huynh Chờ', status: 'active' },
+        { id: 'usr_parent_pending', username: 'parent_pending', role: 'parent', name: 'Phụ huynh Chờ', status: 'active', sid: 'sid_parent_pending' },
         TEST_SECRET
       );
 
@@ -1071,7 +1093,7 @@ describe('G1 AUDIT FIXTURE MATRIX - REAL HANDLERS & DB ISOLATION', async () => {
         VALUES ('sub_legacy_1', 'hw_legacy_1', 'usr_legacy_s', 'Legacy Student', 'text', 'Bài làm', CURRENT_TIMESTAMP, 1, 'submitted');
       `);
 
-      const teacherToken = await createSignedToken({ id: 'usr_legacy_t', role: 'teacher', name: 'Cô Dung', username: 'legacy_teacher' }, TEST_SECRET);
+      const teacherToken = await createSignedToken({ id: 'usr_legacy_t', role: 'teacher', name: 'Cô Dung', username: 'legacy_teacher', sid: 'sid_legacy_t' }, TEST_SECRET);
 
       // Trigger GET or POST homework to run ensureTables and its automated baseline reconciliation migration
       const initReq = new Request('http://localhost/api/homework?class_id=class_7', {
@@ -1148,7 +1170,7 @@ describe('G1 AUDIT FIXTURE MATRIX - REAL HANDLERS & DB ISOLATION', async () => {
         END;
       `);
 
-      const teacherToken = await createSignedToken({ id: 'usr_legacy_t2', role: 'teacher', name: 'Cô Dung', username: 'legacy_teacher2' }, TEST_SECRET);
+      const teacherToken = await createSignedToken({ id: 'usr_legacy_t2', role: 'teacher', name: 'Cô Dung', username: 'legacy_teacher2', sid: 'sid_legacy_t2' }, TEST_SECRET);
 
       // Attempt to grade homework: handler calls ensureTables, which triggers migration_baseline insert -> ABORT!
       const gradeReqFail = new Request('http://localhost/api/homework', {

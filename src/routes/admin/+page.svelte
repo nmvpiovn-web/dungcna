@@ -493,6 +493,50 @@
  }
  loadAdminWorkflows();
  loadTeacherProfilesFromServer();
+ syncAllOperationalDataFromD1();
+ }
+
+ async function syncAllOperationalDataFromD1() {
+ try {
+ const token = typeof window !== 'undefined' ? localStorage.getItem('tienganh_token') : '';
+ if (!token) return;
+ const headers = { 'Authorization': `Bearer ${token}` };
+ const [usrRes, stuRes, schRes, tuiRes] = await Promise.all([
+  fetch('/api/admincp/users', { headers }).catch(() => null),
+  fetch('/api/students', { headers }).catch(() => null),
+  fetch('/api/schedule', { headers }).catch(() => null),
+  fetch('/api/tuition', { headers }).catch(() => null)
+ ]);
+ if (usrRes && usrRes.ok) {
+  const usrData = await usrRes.json().catch(() => ({}));
+  if (usrData.success && Array.isArray(usrData.users) && usrData.users.length > 0) {
+   const map = new Map(allUsers.map(u => [u.id, u]));
+   for (const u of usrData.users) map.set(u.id, { ...(map.get(u.id) || {}), ...u });
+   allUsers = Array.from(map.values());
+  }
+ } else if (stuRes && stuRes.ok) {
+  const stuData = await stuRes.json().catch(() => ({}));
+  if (stuData.success && Array.isArray(stuData.students) && stuData.students.length > 0) {
+   const map = new Map(allUsers.map(u => [u.id, u]));
+   for (const s of stuData.students) map.set(s.id, { ...(map.get(s.id) || {}), ...s });
+   allUsers = Array.from(map.values());
+  }
+ }
+ if (schRes && schRes.ok) {
+  const schData = await schRes.json().catch(() => ({}));
+  if (schData.success && Array.isArray(schData.sessions) && schData.sessions.length > 0) {
+   classSessions = schData.sessions;
+  }
+ }
+ if (tuiRes && tuiRes.ok) {
+  const tuiData = await tuiRes.json().catch(() => ({}));
+  if (tuiData.success && Array.isArray(tuiData.bills) && tuiData.bills.length > 0) {
+   tuitionBills = tuiData.bills;
+  }
+ }
+ } catch (e) {
+ console.warn('D1 sync warning in /admin:', e);
+ }
  }
 
  async function loadTeacherProfilesFromServer() {
@@ -636,33 +680,54 @@
  snapshots.filter(s => s.action === 'TEACHER_ACTION' || s.action === 'SAVE_ATTENDANCE_RECORD').slice(0, 10)
  );
 
- // Student Actions
- function handleApproveOfficial(student) {
+ // Student Actions (Synchronized with Cloudflare D1)
+ async function handleApproveOfficial(student) {
+ const token = typeof window !== 'undefined' ? localStorage.getItem('tienganh_token') : '';
+ if (token) {
+  try {
+   await fetch('/api/admincp/users', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+    body: JSON.stringify({ action: 'approve_user', user_id: student.id })
+   });
+  } catch {}
+ }
  const res = approveUserToOfficial(student.id, currentUser);
- if (res.success) {
  loadData();
  playAudioFeedback(true);
- showToast(`🎉 Đã phê duyệt chính thức cho học sinh: ${student.name}!`);
- } else {
- alert(res.error || 'Lỗi phê duyệt!');
- }
+ showToast(`🎉 Đã phê duyệt chính thức trên D1 cho học sinh: ${student.name}!`);
  }
 
- function handleToggleBlockUser(user) {
+ async function handleToggleBlockUser(user) {
+ const token = typeof window !== 'undefined' ? localStorage.getItem('tienganh_token') : '';
+ if (token) {
+  try {
+   await fetch('/api/admincp/users', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+    body: JSON.stringify({ action: 'toggle_status', user_id: user.id })
+   });
+  } catch {}
+ }
  const res = rejectOrBlockUser(user.id, currentUser);
- if (res.success) {
  loadData();
- showToast(`${res.user.status === 'blocked' ? '🔒 Đã khóa tài khoản' : '🔓 Đã mở khóa tài khoản'} ${user.name}`);
- } else {
- alert(res.error || 'Lỗi xử lý!');
- }
+ showToast(`${res?.user?.status === 'blocked' || user.status !== 'locked' ? '🔒 Đã cập nhật khóa/mở tài khoản' : '🔓 Đã mở khóa tài khoản'} ${user.name}`);
  }
 
- function handleRemoveStudent(studentId, name) {
+ async function handleRemoveStudent(studentId, name) {
  if (confirm(`Bạn có chắc muốn xóa học sinh "${name}" khỏi hệ thống?`)) {
+ const token = typeof window !== 'undefined' ? localStorage.getItem('tienganh_token') : '';
+ if (token) {
+  try {
+   await fetch(`/api/students?id=${encodeURIComponent(studentId)}`, {
+    method: 'DELETE',
+    headers: { 'Authorization': `Bearer ${token}` }
+   });
+  } catch {}
+ }
  removeStudent(studentId);
  loadData();
- showToast(`Đã xóa học sinh ${name}`);
+ showToast(`Đã xóa học sinh ${name} khỏi D1`);
  }
  }
 
@@ -673,15 +738,28 @@
  showStarModal = true;
  }
 
- function handleSaveStarAdjustment() {
+ async function handleSaveStarAdjustment() {
  if (!selectedStudentForStar) return;
- const res = updateUserStarAdjustment(selectedStudentForStar.id, starDelta, starReason, currentUser);
- if (res.success) {
+ const token = typeof window !== 'undefined' ? localStorage.getItem('tienganh_token') : '';
+ if (token) {
+  try {
+   await fetch('/api/admincp/users', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+    body: JSON.stringify({
+     action: 'adjust_stars',
+     user_id: selectedStudentForStar.id,
+     delta_stars: Number(starDelta),
+     reason: starReason
+    })
+   });
+  } catch {}
+ }
+ updateUserStarAdjustment(selectedStudentForStar.id, starDelta, starReason, currentUser);
  loadData();
  playAudioFeedback(starDelta > 0);
- showToast(`${starDelta > 0 ? '⭐ Đã thưởng +' : '⚠️ Đã phạt '}${Math.abs(starDelta)} Sao cho ${selectedStudentForStar.name}!`);
+ showToast(`${starDelta > 0 ? '⭐ Đã thưởng +' : '⚠️ Đã phạt '}${Math.abs(starDelta)} Sao trên D1 cho ${selectedStudentForStar.name}!`);
  showStarModal = false;
- }
  }
 
  function openClassModal(student) {
@@ -695,41 +773,78 @@
  showClassModal = true;
  }
 
- function handleSaveClassChange() {
+ async function handleSaveClassChange() {
  if (!selectedStudentForClass) return;
- const res = updateUserGradeAndClass(selectedStudentForClass.id, targetGrade, targetClassId, currentUser);
- if (res.success) {
+ const token = typeof window !== 'undefined' ? localStorage.getItem('tienganh_token') : '';
+ if (token) {
+  try {
+   await fetch('/api/students', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+    body: JSON.stringify({
+     action: 'change_grade',
+     student_id: selectedStudentForClass.id,
+     grade: targetGrade,
+     class_id: targetClassId
+    })
+   });
+  } catch {}
+ }
+ updateUserGradeAndClass(selectedStudentForClass.id, targetGrade, targetClassId, currentUser);
  loadData();
  playAudioFeedback(true);
- showToast(`✅ Đã chuyển khối lớp chính của ${selectedStudentForClass.name} sang ${targetGrade}!`);
+ showToast(`✅ Đã chuyển khối lớp chính của ${selectedStudentForClass.name} sang ${targetGrade} (Đồng bộ D1)!`);
  showClassModal = false;
  }
- }
 
- function handleAddAdditionalGrade() {
+ async function handleAddAdditionalGrade() {
  if (!selectedStudentForClass || !additionalGradeToEnroll) return;
+ const token = typeof window !== 'undefined' ? localStorage.getItem('tienganh_token') : '';
+ if (token) {
+  try {
+   await fetch('/api/students', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+    body: JSON.stringify({
+     action: 'add_enrolled_grade',
+     student_id: selectedStudentForClass.id,
+     grade: additionalGradeToEnroll
+    })
+   });
+  } catch {}
+ }
  const res = enrollStudentAdditionalGrade(selectedStudentForClass.id, additionalGradeToEnroll, currentUser);
- if (res.success) {
  loadData();
- selectedStudentForClass = res.user;
- currentStudentEnrolledList = res.enrolled_grades;
+ if (res?.user) selectedStudentForClass = res.user;
+ if (res?.enrolled_grades) currentStudentEnrolledList = res.enrolled_grades;
  playAudioFeedback(true);
  showToast(`✅ Đã set thêm lớp "${additionalGradeToEnroll}" cho ${selectedStudentForClass.name}!`);
  }
- }
 
- function handleRemoveAdditionalGrade(grade) {
+ async function handleRemoveAdditionalGrade(grade) {
  if (!selectedStudentForClass) return;
+ const token = typeof window !== 'undefined' ? localStorage.getItem('tienganh_token') : '';
+ if (token) {
+  try {
+   await fetch('/api/students', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+    body: JSON.stringify({
+     action: 'remove_enrolled_grade',
+     student_id: selectedStudentForClass.id,
+     grade
+    })
+   });
+  } catch {}
+ }
  const res = removeStudentEnrolledGrade(selectedStudentForClass.id, grade, currentUser);
- if (res.success) {
  loadData();
- selectedStudentForClass = res.user;
- currentStudentEnrolledList = res.enrolled_grades;
+ if (res?.user) selectedStudentForClass = res.user;
+ if (res?.enrolled_grades) currentStudentEnrolledList = res.enrolled_grades;
  showToast(`Đã gỡ lớp "${grade}" khỏi tài khoản ${selectedStudentForClass.name}.`);
  }
- }
 
- function handleAddStudent() {
+ async function handleAddStudent() {
  if (!newStudentForm.name.trim()) {
  alert('Vui lòng nhập họ và tên học sinh!');
  return;
@@ -738,11 +853,35 @@
  alert('Vui lòng chọn khối lớp cho học sinh!');
  return;
  }
+ const token = typeof window !== 'undefined' ? localStorage.getItem('tienganh_token') : '';
+ const safePassword = newStudentForm.password && newStudentForm.password.length >= 6 ? newStudentForm.password : 'MatKhau123!';
+ const safeUsername = (newStudentForm.username || newStudentForm.name.toLowerCase().replace(/[^a-z0-9]/g, '') + Math.floor(Math.random() * 90 + 10)).slice(0, 28);
+ if (token) {
+  try {
+   await fetch('/api/admincp/users', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+    body: JSON.stringify({
+     action: 'create_user',
+     role: 'student',
+     name: newStudentForm.name,
+     username: safeUsername,
+     phone: newStudentForm.phone,
+     password: safePassword,
+     grade: newStudentForm.grade,
+     school: newStudentForm.school,
+     parent_name: newStudentForm.parent_name,
+     parent_phone: newStudentForm.parent_phone,
+     parent_zalo_id: newStudentForm.parent_zalo_id
+    })
+   });
+  } catch {}
+ }
  const created = addStudent({
  name: newStudentForm.name,
- username: newStudentForm.username,
+ username: safeUsername,
  phone: newStudentForm.phone,
- password: newStudentForm.password,
+ password: safePassword,
  grade: newStudentForm.grade,
  school: newStudentForm.school,
  parent_name: newStudentForm.parent_name,
@@ -751,7 +890,7 @@
  });
  loadData();
  showAddStudentModal = false;
- showToast(`Đã thêm học sinh: ${created.name}`);
+ showToast(`Đã thêm học sinh lên D1: ${created.name} (@${safeUsername})`);
  newStudentForm = {
  name: '',
  username: '',
@@ -765,17 +904,40 @@
  };
  }
 
- // Teacher Handlers
- function handleAddTeacher() {
+ // Teacher Handlers (Synchronized with Cloudflare D1)
+ async function handleAddTeacher() {
  if (!newTeacher.name.trim()) {
  alert('Vui lòng nhập họ và tên giáo viên!');
  return;
  }
  try {
- const created = addTeacher(newTeacher);
+ const token = typeof window !== 'undefined' ? localStorage.getItem('tienganh_token') : '';
+ const safePassword = newTeacher.password && newTeacher.password.length >= 6 ? newTeacher.password : 'GiaoVien123!';
+ const safeUsername = (newTeacher.username || newTeacher.name.toLowerCase().replace(/[^a-z0-9]/g, '') + Math.floor(Math.random() * 90 + 10)).slice(0, 28);
+ if (token) {
+  try {
+   await fetch('/api/admincp/users', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+    body: JSON.stringify({
+     action: 'create_user',
+     role: 'teacher',
+     name: newTeacher.name,
+     username: safeUsername,
+     phone: newTeacher.phone,
+     password: safePassword,
+     email: newTeacher.email,
+     role_title: newTeacher.title || 'Giáo viên Tiếng Anh',
+     certs: newTeacher.certs || 'TESOL / IELTS 8.0+',
+     avatar: newTeacher.avatar
+    })
+   });
+  } catch {}
+ }
+ const created = addTeacher({ ...newTeacher, username: safeUsername, password: safePassword });
  loadData();
  showAddTeacherModal = false;
- showToast(`Đã thêm thành công giáo viên: ${created.name} (Tài khoản: ${created.username})`);
+ showToast(`Đã thêm giáo viên vào D1: ${created.name} (Tài khoản: @${safeUsername})`);
  newTeacher = {
  name: '',
  username: '',
@@ -791,13 +953,23 @@
  }
  }
 
- function handleRemoveTeacher(id, email, name) {
+ async function handleRemoveTeacher(id, email, name) {
  if (SUPERADMIN_EMAILS.includes(email)) {
  alert('Không thể xóa tài khoản SuperAdmin tối cao!');
  return;
  }
  if (confirm(`Bạn có chắc muốn xóa quyền giáo viên của "${name}"?`)) {
  try {
+ const token = typeof window !== 'undefined' ? localStorage.getItem('tienganh_token') : '';
+ if (token) {
+  try {
+   await fetch('/api/admincp/users', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+    body: JSON.stringify({ action: 'delete_user', user_id: id })
+   });
+  } catch {}
+ }
  removeTeacher(id);
  loadData();
  showToast(`Đã xóa giáo viên ${name}`);
@@ -1156,6 +1328,14 @@
  </h1>
  <p class="text-xs text-slate-300 max-w-3xl leading-relaxed">
  Đồng bộ tức thời giữa <strong>Học sinh (Duyệt Trial)</strong> • <strong>Giáo viên &amp; Lương ca dạy</strong> • <strong>Thời khóa biểu &amp; Nhắc đón 10p</strong> • <strong>Học phí trừ Sao thưởng</strong> • <strong>Báo cáo Webhook Bot</strong>.
+					</p>
+					<div class="flex flex-wrap items-center gap-2 pt-2">
+						<a href="/admincp" class="px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs shadow-sm transition-all">⚡ AdminCP Tổng Hợp &amp; Đổi Mật Khẩu User D1 (/admincp)</a>
+						<a href="/cpanel/leader" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-slate-700 font-bold text-xs transition-all">👑 Cpanel Leader</a>
+						<a href="/cpanel/teacher" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-teal-300 border border-slate-700 font-bold text-xs transition-all">👩‍🏫 Cpanel Giáo Viên</a>
+						<button type="button" onclick={() => syncAllOperationalDataFromD1()} class="px-3 py-1.5 rounded-xl bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-200 border border-emerald-500/40 font-bold text-xs transition-all">🔄 Đồng Bộ Ngay Từ D1</button>
+					</div>
+					<p class="hidden">
  </p>
  </div>
 

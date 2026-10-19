@@ -58,6 +58,63 @@ export const _BASE_SCHEDULE_COLUMNS = [
 ];
 const BASE_SCHEDULE_COLUMNS = _BASE_SCHEDULE_COLUMNS;
 
+export function _deriveCanonicalClassId(body = {}, existingSession = null) {
+  const explicit = String(body.class_id || existingSession?.class_id || '').trim();
+  if (explicit) return explicit;
+  const gradeStr = String(body.grade_level || existingSession?.grade_level || body.class_name || existingSession?.class_name || '').trim();
+  const gradeMatch = gradeStr.match(/(?:lớp|lop|grade|g)\s*(\d{1,2})/i) || gradeStr.match(/\b(\d{1,2})\b/);
+  if (gradeMatch) {
+    const g = Number(gradeMatch[1]);
+    if (g >= 1 && g <= 5) return `cls_g${g}`;
+    if (g === 12 && /ielts/i.test(String(body.class_name || ''))) return 'cls_g12_ielts';
+    if (g >= 6 && g <= 12) return `cls_g${g}`;
+  }
+  const slug = String(body.class_name || 'lop_7')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .slice(0, 24);
+  return `cls_${slug || 'g7'}`;
+}
+
+export async function _syncSessionStudentsToEnrollments(db, classId, studentIds) {
+  if (!db || !classId || !Array.isArray(studentIds) || studentIds.length === 0) return;
+  try {
+    await db.prepare(`
+      CREATE TABLE IF NOT EXISTS class_enrollments (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        class_id TEXT NOT NULL,
+        role_in_class TEXT DEFAULT 'student',
+        status TEXT DEFAULT 'active',
+        enrolled_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `).run();
+
+    for (const rawSid of studentIds) {
+      const sid = String(rawSid || '').trim();
+      if (!sid) continue;
+      const existingEnr = await db.prepare(
+        `SELECT id, status FROM class_enrollments WHERE user_id = ? AND class_id = ? LIMIT 1`
+      ).bind(sid, classId).first();
+      if (existingEnr) {
+        if (existingEnr.status !== 'active') {
+          await db.prepare(`UPDATE class_enrollments SET status = 'active' WHERE id = ?`).bind(existingEnr.id).run();
+        }
+      } else {
+        const enrId = `enr_${classId}_${sid}`.replace(/[^a-zA-Z0-9_-]/g, '_');
+        await db.prepare(
+          `INSERT OR IGNORE INTO class_enrollments (id, user_id, class_id, role_in_class, status) VALUES (?, ?, ?, 'student', 'active')`
+        ).bind(enrId, sid, classId).run();
+      }
+    }
+  } catch (err) {
+    // Non-fatal in mock DBs that do not implement class_enrollments
+  }
+}
+
 export function _buildConflictFilter({ cols, schemaCheck, body, activeTeacherId, activeAssistantId, activeSubstituteId, roomVal, newStudentIds }) {
   const teacherIds = [
     activeTeacherId,
@@ -403,13 +460,16 @@ export async function POST({ request, platform }) {
         if (!schemaCheck.valid) {
           return json({ success: false, error: schemaCheck.error }, { status: 500 });
         }
+        const selCols = ['id', 'teacher_id'];
+        if (cols.has('class_id')) selCols.push('class_id');
+        if (cols.has('grade_level')) selCols.push('grade_level');
+        if (cols.has('class_name')) selCols.push('class_name');
+        if (cols.has('assistant_teacher_id')) selCols.push('assistant_teacher_id');
+        if (cols.has('substitute_teacher_id')) selCols.push('substitute_teacher_id');
+        const existing = await db.prepare(
+          `SELECT ${selCols.join(', ')} FROM class_sessions WHERE id = ? LIMIT 1`
+        ).bind(body.session_id).first();
         if (!isMgr) {
-          const selCols = ['id', 'teacher_id'];
-          if (cols.has('assistant_teacher_id')) selCols.push('assistant_teacher_id');
-          if (cols.has('substitute_teacher_id')) selCols.push('substitute_teacher_id');
-          const existing = await db.prepare(
-            `SELECT ${selCols.join(', ')} FROM class_sessions WHERE id = ? LIMIT 1`
-          ).bind(body.session_id).first();
           if (!existing) {
             return json({ success: false, error: 'Không tìm thấy buổi học để gán học sinh' }, { status: 404 });
           }
@@ -425,7 +485,9 @@ export async function POST({ request, platform }) {
         if (changes !== undefined && changes === 0) {
           return json({ success: false, error: 'Không tìm thấy buổi học để gán học sinh' }, { status: 404 });
         }
-        return json({ success: true, session_id: body.session_id, student_ids: body.student_ids });
+        const targetClassId = _deriveCanonicalClassId(existing || {}, existing);
+        await _syncSessionStudentsToEnrollments(db, targetClassId, body.student_ids || []);
+        return json({ success: true, session_id: body.session_id, class_id: targetClassId, student_ids: body.student_ids });
       } else {
         const res = assignStudentsToClassSession(body.session_id, body.student_ids);
         return json(res);
@@ -471,7 +533,7 @@ export async function POST({ request, platform }) {
       return json({ success: false, error: timeVal.error }, { status: 400 });
     }
 
-    const isNew = !body.id;
+    let isNew = !body.id;
     let existingSession = null;
 
     if (isNew) {
@@ -487,6 +549,7 @@ export async function POST({ request, platform }) {
       if (db) {
         const cols = await getClassSessionsColumns(db);
         const selCols = ['id', 'teacher_id'];
+        if (cols.has('class_id')) selCols.push('class_id');
         if (cols.has('teacher_name')) selCols.push('teacher_name');
         if (cols.has('assistant_teacher_id')) selCols.push('assistant_teacher_id');
         if (cols.has('assistant_teacher_name')) selCols.push('assistant_teacher_name');
@@ -500,10 +563,18 @@ export async function POST({ request, platform }) {
       }
 
       if (!existingSession) {
-        return json({ success: false, error: 'Không tìm thấy buổi học để cập nhật' }, { status: 404 });
-      }
-
-      if (!isMgr) {
+        if (body.allow_upsert === true) {
+          isNew = true;
+          if (!isMgr && body.teacher_id && body.teacher_id !== auth.user.id) {
+            return json({ success: false, error: 'Forbidden: Bạn chỉ được tạo lịch cho chính mình' }, { status: 403 });
+          }
+          if (!isMgr && !body.teacher_id) {
+            body.teacher_id = auth.user.id;
+          }
+        } else {
+          return json({ success: false, error: 'Không tìm thấy buổi học để cập nhật' }, { status: 404 });
+        }
+      } else if (!isMgr) {
         // Ownership check: must be lead teacher, assistant, or substitute
         const activeTeachers = [
           existingSession.teacher_id,
@@ -550,6 +621,7 @@ export async function POST({ request, platform }) {
     const roomVal = String(body.room ?? body.room_notes ?? '').trim();
     const topicVal = String(body.subject_topic ?? body.topic ?? '').trim() || 'Chuyên đề Ngữ pháp & Giao tiếp';
     const newStudentIds = Array.isArray(body.student_ids) ? body.student_ids : [];
+    const resolvedClassId = _deriveCanonicalClassId(body, existingSession);
 
     let conflictFilter = null;
 
@@ -637,7 +709,7 @@ export async function POST({ request, platform }) {
 
     let savedSession = {
       id,
-      class_id: body.class_id || '',
+      class_id: resolvedClassId,
       class_name: body.class_name.trim(),
       grade_level: body.grade_level || 'Lớp 7',
       subject_topic: topicVal,
@@ -670,7 +742,6 @@ export async function POST({ request, platform }) {
         return json({ success: false, error: schemaCheck.error }, { status: 500 });
       }
 
-      const isNew = !body.id;
       if (isNew) {
         const insertCols = [
           'id',
@@ -683,7 +754,7 @@ export async function POST({ request, platform }) {
         ];
         const insertVals = [
           id,
-          body.class_id || '',
+          resolvedClassId,
           body.class_name.trim(),
           activeTeacherId,
           body.session_date,
@@ -757,7 +828,7 @@ export async function POST({ request, platform }) {
           'end_time = ?'
         ];
         const updateVals = [
-          body.class_id || '',
+          resolvedClassId,
           body.class_name.trim(),
           activeTeacherId,
           body.session_date,
@@ -834,6 +905,9 @@ export async function POST({ request, platform }) {
         }
         if (kept?.status) savedSession.status = kept.status;
       }
+
+      // Sync assigned students into class_enrollments so homework & quiz assignments work seamlessly
+      await _syncSessionStudentsToEnrollments(platform.env.DB, resolvedClassId, newStudentIds);
     } else {
       // no-DB fallback only
       try {

@@ -146,8 +146,11 @@ export async function GET({ url, request, platform }) {
           return json({ success: true, profile: parseD1Profile(row), source: 'cloudflare_d1' });
         } else {
           const res = await platform.env.DB.prepare('SELECT * FROM teacher_profiles ORDER BY role_type ASC').all();
-          const profiles = (res?.results || []).map(parseD1Profile);
-          return json({ success: true, total: profiles.length, profiles, source: 'cloudflare_d1' });
+          const profiles = (res?.results || []).map(r => {
+            const p = parseD1Profile(r);
+            return { ...p, hourly_rate_vnd: Number(p.rate_per_session_vnd || p.hourly_rate_vnd || 0) };
+          });
+          return json({ success: true, total: profiles.length, profiles, teachers: profiles, source: 'cloudflare_d1' });
         }
       } catch (d1Err) {
         console.error('D1 teacher query error:', d1Err);

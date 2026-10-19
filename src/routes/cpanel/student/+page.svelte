@@ -501,6 +501,14 @@
  </a>
  </div>
  {/if}
+ {#if item.source_quiz_id}
+ <div class="flex items-center justify-between pt-1 border-t border-slate-200">
+ <span>🧩 Đề Quiz đính kèm:</span>
+ <a href="/quiz-menu?quiz={encodeURIComponent(item.source_quiz_id)}" class="text-indigo-600 hover:underline font-bold truncate max-w-[200px]">
+ Mở đề #{item.source_quiz_id} →
+ </a>
+ </div>
+ {/if}
  </div>
 
  <!-- Feedback if Graded -->
@@ -523,7 +531,15 @@
  🎁 Thưởng +{item.star_reward_on_time} sao khi làm tốt đúng hạn
  </span>
 
- <div class="flex items-center gap-1.5">
+ <div class="flex flex-wrap items-center gap-1.5">
+ {#if item.source_quiz_id}
+ <a
+ href="/quiz-menu?quiz={encodeURIComponent(item.source_quiz_id)}"
+ class="px-3 py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-700 transition-all flex items-center gap-1 shadow-sm"
+ >
+ <span>🧩 Làm Bài Quiz Đính Kèm</span>
+ </a>
+ {/if}
  {#if item.skill_type === 'writing'}
  <button 
  onclick={() => openWorksheetPrint(item)}

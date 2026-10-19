@@ -304,6 +304,14 @@
  <div>
  <span class="font-semibold text-slate-700">Yêu cầu buổi học:</span>
  <p class="text-slate-600 mt-1 leading-relaxed break-words">{assignment.description}</p>
+ {#if assignment.source_quiz_id}
+ <div class="mt-2 pt-2 border-t border-slate-200 flex items-center justify-between gap-2">
+ <span class="font-semibold text-indigo-700">🧩 Đề Quiz đính kèm buổi học:</span>
+ <a href="/quiz-menu?quiz={encodeURIComponent(assignment.source_quiz_id)}" class="px-2.5 py-1 rounded bg-indigo-50 text-indigo-700 border border-indigo-200 font-semibold hover:bg-indigo-100">
+ Xem đề Quiz #{assignment.source_quiz_id} →
+ </a>
+ </div>
+ {/if}
  </div>
 
  {#if isSubmitted}

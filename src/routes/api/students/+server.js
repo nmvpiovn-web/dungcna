@@ -19,14 +19,35 @@ export async function GET({ url, request, platform }) {
   const db = platform?.env?.DB;
   if (db) {
     try {
+      let starMap = new Map();
+      try {
+        const starRes = await db.prepare('SELECT student_id, stars_balance, total_earned_stars FROM student_stars').all();
+        for (const sr of starRes.results || []) {
+          starMap.set(sr.student_id, sr);
+        }
+      } catch {
+        // student_stars table optional in minimal test schemas
+      }
+      const enrichStudent = (u) => {
+        const clean = sanitizeUser(u);
+        const meta = parseMetadata(clean.metadata);
+        const starRow = starMap.get(clean.id);
+        return {
+          ...clean,
+          grade: clean.grade || meta.grade || '',
+          class_id: clean.class_id || meta.class_id || '',
+          stars_balance: starRow ? Number(starRow.stars_balance || 0) : Number(meta.stars_balance || 0),
+          total_earned_stars: starRow ? Number(starRow.total_earned_stars || 0) : Number(meta.stars_balance || 0)
+        };
+      };
       if (requestedId) {
         const row = await db.prepare(`SELECT id, username, phone, email, name, role, avatar, status, metadata, COALESCE(profile_version,0) profile_version, created_at, updated_at FROM users WHERE role='student' AND (id=? OR username=?) LIMIT 1`).bind(requestedId, requestedId).first();
         if (!row) return json({ success: false, error: 'Không tìm thấy học sinh.' }, { status: 404 });
-        return json({ success: true, student: sanitizeUser(row), source: 'cloudflare_d1' });
+        return json({ success: true, student: enrichStudent(row), source: 'cloudflare_d1' });
       }
       const result = await db.prepare(`SELECT id, username, phone, email, name, role, avatar, status, metadata, COALESCE(profile_version,0) profile_version, created_at, updated_at FROM users WHERE role='student' ORDER BY created_at DESC`).all();
-      const students = result?.results || [];
-      return json({ success: true, total: students.length, students: sanitizeUserList(students), source: 'cloudflare_d1' });
+      const students = (result?.results || []).map(enrichStudent);
+      return json({ success: true, total: students.length, students, source: 'cloudflare_d1' });
     } catch (error) { console.error('D1 students GET error:', error); return dbError(); }
   }
   if (!localMockEnabled(platform)) return json({ success: false, error: 'DatabaseUnavailable: Thiếu D1 binding.' }, { status: 503 });

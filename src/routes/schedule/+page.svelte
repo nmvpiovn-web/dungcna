@@ -2,6 +2,7 @@
  import { onMount, onDestroy } from 'svelte';
  import {
  getCurrentUser,
+ getAuthToken,
  verifySessionWithServer,
  isTeacherOrAdmin,
  isSuperAdmin,
@@ -12,7 +13,8 @@
  triggerScheduleNotification,
  getAllAttendanceRecords,
  getAllUsers,
- getAllTeacherProfiles
+ getAllTeacherProfiles,
+ upsertClassSessionInStore
  } from '$lib/unifiedStore';
  import { registerBusyState, unregisterBusyState } from '$lib/stores/appUpdate.js';
  import SessionRollCallModal from '$lib/components/SessionRollCallModal.svelte';
@@ -91,9 +93,9 @@
 
  // Shift buckets: Sáng / Chiều / Tối (for the 7-day week grid)
  const SHIFTS = [
-   { id: 'morning', label: '☀️ Sáng', sub: '05:00 – 11:59', defaultStart: '08:00' },
-   { id: 'afternoon', label: '🌤️ Chiều', sub: '12:00 – 17:59', defaultStart: '14:00' },
-   { id: 'evening', label: '🌙 Tối', sub: '18:00 – 23:59', defaultStart: '18:00' }
+   { id: 'morning', label: '☀️ Sáng', sub: '05:00 – 11:59', defaultStart: '08:00', defaultEnd: '09:30' },
+   { id: 'afternoon', label: '🌤️ Chiều', sub: '12:00 – 17:59', defaultStart: '14:00', defaultEnd: '15:30' },
+   { id: 'evening', label: '🌙 Tối', sub: '18:00 – 23:59', defaultStart: '18:00', defaultEnd: '19:30' }
  ];
  function shiftOf(startTime) {
    if (!startTime) return 'evening';
@@ -104,9 +106,13 @@
    return 'evening';
  }
  function sessionsForShiftCell(day, shiftId) {
+   const weekIsos = new Set(calendarWeek.map((d) => d.iso));
    return filteredSessions
      .filter((session) => {
-       const sameDay = session.session_date ? session.session_date === day.iso : Number(session.day_of_week) === day.dayOfWeek;
+       const hasDateInThisWeek = session.session_date && weekIsos.has(session.session_date);
+       const sameDay = hasDateInThisWeek
+         ? session.session_date === day.iso
+         : (!session.session_date || weekOffset === 0) && Number(session.day_of_week) === day.dayOfWeek;
        return sameDay && shiftOf(session.start_time) === shiftId;
      })
      .sort((a, b) => String(a.start_time || '').localeCompare(String(b.start_time || '')));
@@ -117,7 +123,7 @@
      day_of_week: day.dayOfWeek,
      day_name: ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'][day.dayOfWeek],
      start_time: shift.defaultStart,
-     end_time: ''
+     end_time: shift.defaultEnd || '19:30'
    };
    handleOpenEdit(null);
  }
@@ -142,7 +148,7 @@
 
  async function loadData() {
  currentUser = getCurrentUser();
- const token = typeof window !== 'undefined' ? localStorage.getItem('tienganh_token') : null;
+ const token = getAuthToken();
  if (!currentUser && token) {
    await verifySessionWithServer();
    currentUser = getCurrentUser();
@@ -155,26 +161,45 @@
  activeTabFilter = 'my_schedule';
  }
 
- if (token) {
+ const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
  fetch('/api/schedule', {
- headers: { 'Authorization': `Bearer ${token}` }
+ headers,
+ credentials: 'include'
  }).then(r => r.json()).then(data => {
  if (data.success && Array.isArray(data.sessions)) {
  sessions = data.sessions;
  }
  }).catch(err => console.error('Failed to load schedule from server:', err));
- }
 
  loadTeacherWorkflows();
  }
 
+ async function handleSessionSaved(savedSession) {
+   if (savedSession?.id) {
+     try { upsertClassSessionInStore(savedSession); } catch {}
+     const idx = sessions.findIndex(s => s.id === savedSession.id);
+     if (idx >= 0) {
+       const copy = [...sessions];
+       copy[idx] = { ...copy[idx], ...savedSession };
+       sessions = copy;
+     } else {
+       sessions = [savedSession, ...sessions];
+     }
+     showToast(`✅ Đã lưu buổi học "${savedSession.class_name}" (${savedSession.day_name || ''} ${savedSession.start_time}–${savedSession.end_time}) vào Cơ Sở Dữ Liệu!`);
+   } else {
+     showToast('✅ Đã lưu thời khóa biểu thành công!');
+   }
+   await loadData();
+ }
+
  async function loadTeacherWorkflows() {
  if (typeof window === 'undefined') return;
- const token = localStorage.getItem('tienganh_token');
- if (!token || !currentUser || !isTeacherOrAdmin(currentUser)) return;
+ const token = getAuthToken();
+ if (!currentUser || !isTeacherOrAdmin(currentUser)) return;
  try {
  const res = await fetch('/api/teachers/workflows', {
- headers: { 'Authorization': `Bearer ${token}` }
+ headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+ credentials: 'include'
  });
  const data = await res.json();
  if (data.success) {
@@ -190,15 +215,15 @@
  }
 
  async function handleRespondSubstitute(leaveId, decision) {
- const token = localStorage.getItem('tienganh_token');
- if (!token) return;
+ const token = getAuthToken();
  try {
  const res = await fetch('/api/teachers/workflows', {
  method: 'POST',
  headers: {
  'Content-Type': 'application/json',
- 'Authorization': `Bearer ${token}`
+ ...(token ? { 'Authorization': `Bearer ${token}` } : {})
  },
+ credentials: 'include',
  body: JSON.stringify({
  action: 'respond_substitute',
  leave_id: leaveId,
@@ -219,7 +244,7 @@
 
  function showToast(msg) {
  toastMsg = msg;
- setTimeout(() => toastMsg = '', 4000);
+ setTimeout(() => toastMsg = '', 5000);
  }
 
  // Filtered Sessions
@@ -326,12 +351,13 @@
 
  async function handleDelete(id, name) {
  if (confirm(`Bạn có chắc muốn xóa ca học "${name}" khỏi thời khóa biểu?`)) {
- const token = typeof window !== 'undefined' ? localStorage.getItem('tienganh_token') : null;
- if (token) {
+ const token = getAuthToken();
+ if (token || currentUser) {
  try {
  const res = await fetch(`/api/schedule?id=${encodeURIComponent(id)}`, {
  method: 'DELETE',
- headers: { 'Authorization': `Bearer ${token}` }
+ headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+ credentials: 'include'
  });
  const data = await res.json().catch(() => ({}));
  if (!res.ok || !data.success) {
@@ -833,7 +859,7 @@
  </div>
 
  <!-- Action Buttons -->
- <div class="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
+ <div class="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
  {#if currentUser && isTeacherOrAdmin(currentUser)}
  <button
  type="button"
@@ -842,6 +868,14 @@
  >
  <span>📋 Điểm Danh</span>
  </button>
+
+ <a
+ href="/cpanel/teacher?session_id={encodeURIComponent(s.id)}&amp;class_id={encodeURIComponent(s.class_id || '')}"
+ class="py-2 px-2.5 rounded-md bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 font-bold text-xs transition-all"
+ title="Giao Bài Tập Về Nhà & Đề Quiz cho buổi học này"
+ >
+ 📚 Giao BTVN
+ </a>
 
  <button
  type="button"
@@ -883,7 +917,8 @@
  bind:isOpen={showEditModal}
  session={selectedSession}
  preset={sessionPreset}
- onSaved={loadData}
+ existingSessions={sessions}
+ onSaved={handleSessionSaved}
 />
 
 <!-- Teacher Staff & Leader Appraisal Modal -->

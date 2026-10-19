@@ -250,17 +250,20 @@ export async function POST({ request, platform }) {
   try {
     const rawBody = await request.json();
     const body = (rawBody && rawBody.bill) ? { ...rawBody.bill, ...rawBody } : rawBody;
-    if (!body.student_name || body.base_tuition_vnd === undefined || body.base_tuition_vnd === null) {
-      return json({ success: false, error: 'Thiếu thông tin học sinh hoặc mức học phí gốc' }, { status: 400 });
-    }
-
-    // Strict validation: student_id MUST be explicitly provided, non-empty string.
-    // NEVER fall back to 'student_1' in financial transactions!
     const rawStudentId = body.student_id;
     if (!rawStudentId || typeof rawStudentId !== 'string' || !rawStudentId.trim()) {
       return json({ success: false, error: 'Thiếu student_id của học sinh' }, { status: 400 });
     }
     studentId = rawStudentId.trim();
+    if (!body.student_name && platform?.env?.DB) {
+      try {
+        const stuRow = await platform.env.DB.prepare('SELECT name, username FROM users WHERE id = ? LIMIT 1').bind(studentId).first();
+        if (stuRow) body.student_name = stuRow.name || stuRow.username;
+      } catch {}
+    }
+    if (!body.student_name || body.base_tuition_vnd === undefined || body.base_tuition_vnd === null) {
+      return json({ success: false, error: 'Thiếu thông tin học sinh hoặc mức học phí gốc' }, { status: 400 });
+    }
 
     // 1. Strict Validation of stars_deducted: must be non-negative integer & finite
     const rawStarsDeducted = body.stars_deducted !== undefined ? body.stars_deducted : 0;

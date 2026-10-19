@@ -1,7 +1,8 @@
-<script>
+ <script>
  import { onMount } from 'svelte';
  import { 
  getAllUsers, 
+ getAuthToken,
  getCurrentUser, 
  getAttendanceForSession, 
  saveSessionAttendanceBatch 
@@ -18,28 +19,50 @@
  $effect(() => {
  if (isOpen && session) {
  currentUser = getCurrentUser();
+ if (session.session_date) sessionDate = session.session_date;
  loadSessionStudents();
  }
  });
 
- function loadSessionStudents() {
+ async function loadSessionStudents() {
  if (!session) return;
- const allUsers = getAllUsers();
- const existingRecords = getAttendanceForSession(session.id, sessionDate);
+ let allStudents = getAllUsers().filter(u => u.role === 'student');
+ let existingRecords = getAttendanceForSession(session.id, sessionDate);
+
+ const token = typeof window !== 'undefined' ? getAuthToken() : null;
+ if (token) {
+  try {
+   const [stuRes, attRes] = await Promise.all([
+    fetch('/api/students', { headers: { 'Authorization': `Bearer ${token}` } }),
+    fetch(`/api/attendance?session_id=${encodeURIComponent(session.id)}&date=${encodeURIComponent(sessionDate)}`, {
+     headers: { 'Authorization': `Bearer ${token}` }
+    })
+   ]);
+   const stuData = await stuRes.json().catch(() => ({}));
+   const attData = await attRes.json().catch(() => ({}));
+   if (stuData.success && Array.isArray(stuData.students) && stuData.students.length > 0) {
+    allStudents = stuData.students;
+   }
+   if (attData.success && Array.isArray(attData.records)) {
+    existingRecords = attData.records;
+   }
+  } catch {}
+ }
 
  // Get students in this session or of this class
  let enrolledStudents = [];
  if (session.student_ids && session.student_ids.length > 0) {
- enrolledStudents = allUsers.filter(u => session.student_ids.includes(u.id));
- } else {
- enrolledStudents = allUsers.filter(u => u.role === 'student');
+ enrolledStudents = allStudents.filter(u => session.student_ids.includes(u.id));
+ }
+ if (enrolledStudents.length === 0) {
+ enrolledStudents = allStudents;
  }
 
  studentAttendanceList = enrolledStudents.map(student => {
  const rec = existingRecords.find(r => r.student_id === student.id);
  return {
  student_id: student.id,
- student_name: student.name,
+ student_name: student.name || student.username,
  avatar: student.avatar,
  class_id: session.class_id,
  status: rec?.status || 'present',
@@ -50,11 +73,30 @@
  });
  }
 
- function handleSaveRollCall() {
+ async function handleSaveRollCall() {
  isSaving = true;
  try {
+ const token = typeof window !== 'undefined' ? getAuthToken() : null;
+ if (token) {
+  const res = await fetch('/api/attendance', {
+   method: 'POST',
+   headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`
+   },
+   body: JSON.stringify({
+    session_id: session.id,
+    session_date: sessionDate,
+    students: studentAttendanceList
+   })
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || !data.success) {
+   throw new Error(data.error || 'Lỗi lưu điểm danh D1');
+  }
+ }
  saveSessionAttendanceBatch(session.id, sessionDate, studentAttendanceList, currentUser);
- successMsg = `Đã lưu điểm danh & sổ đầu bài cho ${studentAttendanceList.length} học sinh thành công!`;
+ successMsg = `Đã lưu điểm danh & sổ đầu bài lên Cloudflare D1 cho ${studentAttendanceList.length} học sinh thành công!`;
  onSaved();
  setTimeout(() => {
  successMsg = '';

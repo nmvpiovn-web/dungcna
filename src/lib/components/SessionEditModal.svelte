@@ -3,13 +3,21 @@
  import {
  getAllUsers,
  getCurrentUser,
+ getAuthToken,
+ getAllClassSessions,
  isTeacherOrAdmin,
  saveClassSession,
  upsertClassSessionInStore
  } from '$lib/unifiedStore';
  import { registerBusyState, unregisterBusyState } from '$lib/stores/appUpdate.js';
 
- let { isOpen = $bindable(false), session = null, preset = null, onSaved = () => {} } = $props();
+ let {
+   isOpen = $bindable(false),
+   session = null,
+   preset = null,
+   existingSessions = [],
+   onSaved = () => {}
+ } = $props();
 
  let currentUser = $state(null);
  let allStudents = $state([]);
@@ -27,8 +35,8 @@
  teacher_role: 'lead',
  assistant_teacher_id: '',
  assistant_teacher_name: '',
-    substitute_teacher_id: '',
-    substitute_teacher_name: '',
+ substitute_teacher_id: '',
+ substitute_teacher_name: '',
  location: 'Tại nhà Cô Dung (123 Phố Vọng, Hai Bà Trưng, Hà Nội)',
  day_of_week: 1,
  day_name: 'Thứ Hai',
@@ -61,16 +69,40 @@
  function parseLocalDate(value) {
  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value || ''));
  if (!match) return null;
- const date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+ const date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]), 12, 0, 0);
  return Number.isNaN(date.getTime()) ? null : date;
+ }
+
+ function defaultEndForStart(startTime) {
+   const m = /^(\d{1,2}):(\d{2})$/.exec(String(startTime || '18:00').trim());
+   if (!m) return '19:30';
+   const totalMin = Math.min(23 * 60 + 50, Number(m[1]) * 60 + Number(m[2]) + 90);
+   const hh = String(Math.floor(totalMin / 60)).padStart(2, '0');
+   const mm = String(totalMin % 60).padStart(2, '0');
+   return `${hh}:${mm}`;
+ }
+
+ function deriveClassId(gradeLevel, className, currentClassId) {
+   if (currentClassId && String(currentClassId).trim()) return String(currentClassId).trim();
+   const m = String(gradeLevel || className || '').match(/(\d{1,2})/);
+   if (m) {
+     const g = Number(m[1]);
+     if (g === 12 && /ielts/i.test(String(className || ''))) return 'cls_g12_ielts';
+     if (g >= 1 && g <= 12) return `cls_g${g}`;
+   }
+   return 'cls_g7';
  }
 
  function syncDateFromDay() {
  const dayOfWeek = Number(form.day_of_week);
  if (Number.isNaN(dayOfWeek)) return;
- const date = parseLocalDate(form.session_date) || new Date();
- date.setDate(date.getDate() + ((dayOfWeek - date.getDay() + 7) % 7));
- form.session_date = formatLocalDate(date);
+ const base = parseLocalDate(form.session_date) || new Date();
+ base.setHours(12, 0, 0, 0);
+ const mondayDistance = (base.getDay() + 6) % 7;
+ base.setDate(base.getDate() - mondayDistance);
+ const offsetFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+ base.setDate(base.getDate() + offsetFromMonday);
+ form.session_date = formatLocalDate(base);
  const day = DAY_OPTIONS.find(option => option.value === dayOfWeek);
  if (day) form.day_name = day.label;
  }
@@ -83,6 +115,51 @@
  if (day) form.day_name = day.label;
  }
 
+ function hasSlotConflict(candidateDate, candidateStart, candidateEnd, candidateRoom, candidateTeacherId, ignoreId = '') {
+   const pool = (Array.isArray(existingSessions) && existingSessions.length > 0)
+     ? existingSessions
+     : getAllClassSessions();
+   for (const s of pool) {
+     if (!s || (ignoreId && s.id === ignoreId)) continue;
+     if (s.status === 'cancelled') continue;
+     if (s.session_date !== candidateDate) continue;
+     const sStart = String(s.start_time || '00:00');
+     const sEnd = String(s.end_time || '23:59');
+     if (!(sStart < candidateEnd && sEnd > candidateStart)) continue;
+     const sameTeacher = candidateTeacherId && [s.teacher_id, s.assistant_teacher_id, s.substitute_teacher_id].includes(candidateTeacherId);
+     const sRoom = String(s.room_notes || s.room || '').trim().toLowerCase();
+     const cRoom = String(candidateRoom || '').trim().toLowerCase();
+     const sameRoom = cRoom && sRoom && cRoom === sRoom;
+     if (sameTeacher || sameRoom) return true;
+   }
+   return false;
+ }
+
+ function pickNonConflictingSlot() {
+   const candidateSlots = [
+     ['18:00', '19:30', 'Phòng VIP 201'],
+     ['19:35', '21:05', 'Phòng VIP 202'],
+     ['16:00', '17:30', 'Phòng VIP 203'],
+     ['14:00', '15:30', 'Phòng VIP 204'],
+     ['08:00', '09:30', 'Phòng VIP 205'],
+     ['09:45', '11:15', 'Phòng VIP 206'],
+     ['21:10', '22:30', 'Phòng Online Zoom VIP']
+   ];
+   const dateStr = form.session_date;
+   if (!dateStr) return;
+   if (!hasSlotConflict(dateStr, form.start_time, form.end_time, form.room_notes, form.teacher_id, form.id)) {
+     return;
+   }
+   for (const [st, et, rm] of candidateSlots) {
+     if (!hasSlotConflict(dateStr, st, et, rm, form.teacher_id, form.id)) {
+       form.start_time = st;
+       form.end_time = et;
+       form.room_notes = rm;
+       return;
+     }
+   }
+ }
+
  let wasOpen = false;
 
  $effect(() => {
@@ -93,11 +170,10 @@
  currentUser = getCurrentUser();
  const users = getAllUsers();
  allTeachers = users.filter(u => ['teacher', 'superadmin', 'admin', 'leader'].includes(String(u.role || '').toLowerCase()));
- // Bước 4: picker học sinh từ API, không dùng local
  allStudents = users.filter(u => u.role === 'student');
- const token = typeof window !== 'undefined' ? localStorage.getItem('tienganh_token') : null;
- if (token) {
- fetch('/api/students', { headers: { 'Authorization': `Bearer ${token}` } })
+ const token = getAuthToken();
+ const authHeaders = token ? { 'Authorization': `Bearer ${token}` } : {};
+ fetch('/api/students', { headers: authHeaders, credentials: 'include' })
  .then(r => r.json())
  .then(data => {
  if (data.success && Array.isArray(data.students)) {
@@ -105,13 +181,47 @@
  }
  })
  .catch(() => {});
+
+ fetch('/api/teachers/staff', { headers: authHeaders, credentials: 'include' })
+ .then(r => r.json())
+ .then(data => {
+ if (data.success && Array.isArray(data.profiles) && data.profiles.length > 0) {
+  const map = new Map(allTeachers.map(t => [t.id, t]));
+  for (const p of data.profiles) {
+   const tid = p.teacher_id || p.user_id || p.id;
+   if (tid) {
+    map.set(tid, {
+     ...(map.get(tid) || {}),
+     id: tid,
+     name: p.teacher_name || p.username,
+     username: p.username,
+     role: 'teacher',
+     role_title: p.role_title
+    });
+   }
+  }
+  allTeachers = Array.from(map.values());
  }
+ })
+ .catch(() => {});
 
  if (session) {
+ const startT = session.start_time || '18:00';
+ const endT = session.end_time || defaultEndForStart(startT);
  form = {
  ...session,
- student_ids: session.student_ids ? [...session.student_ids] : []
+ class_id: deriveClassId(session.grade_level, session.class_name, session.class_id),
+ start_time: startT,
+ end_time: endT,
+ room_notes: session.room_notes || session.room || 'Phòng VIP 201',
+ subject_topic: session.subject_topic || session.topic || 'Chuyên đề Ngữ pháp & Giao tiếp',
+ student_ids: Array.isArray(session.student_ids) ? [...session.student_ids] : []
  };
+ if (!form.session_date) {
+   syncDateFromDay();
+ } else {
+   syncDayFromDate();
+ }
  } else {
  const defaultTeacherId = preset?.teacher_id || (currentUser ? currentUser.id : (allTeachers[0]?.id || ''));
  const defaultTeacher = allTeachers.find(t => t.id === defaultTeacherId);
@@ -119,13 +229,15 @@
  const defaultAssistantId = preset?.assistant_teacher_id || '';
  const defaultAssistant = allTeachers.find(t => t.id === defaultAssistantId);
  const defaultAssistantName = preset?.assistant_teacher_name || defaultAssistant?.name || '';
-        const defaultSubstituteId = preset?.substitute_teacher_id || '';
-        const defaultSubstitute = allTeachers.find(t => t.id === defaultSubstituteId);
-        const defaultSubstituteName = preset?.substitute_teacher_name || defaultSubstitute?.name || '';
+ const defaultSubstituteId = preset?.substitute_teacher_id || '';
+ const defaultSubstitute = allTeachers.find(t => t.id === defaultSubstituteId);
+ const defaultSubstituteName = preset?.substitute_teacher_name || defaultSubstitute?.name || '';
+ const presetStart = preset?.start_time || '18:00';
+ const presetEnd = preset?.end_time || defaultEndForStart(presetStart);
 
  form = {
  id: '',
- class_id: '',
+ class_id: 'cls_g7',
  class_name: 'Lớp 7 - Global Success & KET A2',
  grade_level: 'Lớp 7',
  subject_topic: 'Chuyên đề Ngữ pháp & Giao tiếp phản xạ',
@@ -134,26 +246,28 @@
  teacher_role: 'lead',
  assistant_teacher_id: defaultAssistantId,
  assistant_teacher_name: defaultAssistantName,
-          substitute_teacher_id: defaultSubstituteId,
-          substitute_teacher_name: defaultSubstituteName,
+ substitute_teacher_id: defaultSubstituteId,
+ substitute_teacher_name: defaultSubstituteName,
  location: 'Tại nhà Cô Dung (123 Phố Vọng, Hai Bà Trưng, Hà Nội)',
  day_of_week: 1,
  day_name: 'Thứ Hai',
  session_date: '',
- start_time: '18:00',
- end_time: '19:30',
+ start_time: presetStart,
+ end_time: presetEnd,
  notify_minutes_before: 10,
  room_notes: 'Phòng VIP 201',
  status: 'scheduled',
  student_ids: [],
- ...(preset || {})
+ ...(preset || {}),
+ start_time: presetStart,
+ end_time: presetEnd
  };
- // Buổi mới không có preset ngày -> tự điền ngày gần nhất khớp thứ đã chọn
  if (!form.session_date) {
  syncDateFromDay();
  } else {
  syncDayFromDate();
  }
+ pickNonConflictingSlot();
  }
  }
  } else {
@@ -187,52 +301,64 @@
    unregisterBusyState('schedule-session-edit-modal');
  });
 
+ async function resolveConflictAndSave() {
+   pickNonConflictingSlot();
+   await handleSave();
+ }
+
  async function handleSave() {
  errorMessage = '';
  if (saving) return;
- if (!form.class_name.trim() || !form.start_time) {
- alert('Vui lòng điền đầy đủ tên lớp và giờ học!');
+ if (!form.class_name || !form.class_name.trim()) {
+ errorMessage = 'Vui lòng nhập tên khóa / lớp học.';
  return;
  }
- if (form.end_time && form.start_time >= form.end_time) {
+ if (!form.start_time) {
+ form.start_time = '18:00';
+ }
+ if (!form.end_time) {
+ form.end_time = defaultEndForStart(form.start_time);
+ }
+ if (form.start_time >= form.end_time) {
  errorMessage = 'Giờ kết thúc phải sau giờ bắt đầu.';
  return;
  }
 
- // Tự điền session_date cho buổi mới: lấy ngày gần nhất khớp thứ đã chọn
- // (nút "Thêm Buổi Học Mới" không truyền preset nên thiếu field này -> API 400)
  if (!form.session_date) {
  syncDateFromDay();
  } else {
- // Ngày cụ thể là nguồn chuẩn; tránh lưu ngày Thứ Ba nhưng metadata lại là Thứ Hai.
  syncDayFromDate();
  }
+
+ form.class_id = deriveClassId(form.grade_level, form.class_name, form.class_id);
 
  const tObj = allTeachers.find(t => t.id === form.teacher_id);
  if (tObj) form.teacher_name = tObj.name;
 
  const aObj = allTeachers.find(t => t.id === form.assistant_teacher_id);
  if (aObj) form.assistant_teacher_name = aObj.name;
-    else if (!form.assistant_teacher_id) form.assistant_teacher_name = '';
+ else if (!form.assistant_teacher_id) form.assistant_teacher_name = '';
 
-    const sObj = allTeachers.find(t => t.id === form.substitute_teacher_id);
-    if (sObj) form.substitute_teacher_name = sObj.name;
-    else if (!form.substitute_teacher_id) form.substitute_teacher_name = '';
+ const sObj = allTeachers.find(t => t.id === form.substitute_teacher_id);
+ if (sObj) form.substitute_teacher_name = sObj.name;
+ else if (!form.substitute_teacher_id) form.substitute_teacher_name = '';
 
- const token = typeof window !== 'undefined' ? localStorage.getItem('tienganh_token') : null;
+ const token = getAuthToken();
  let savedData = { ...form };
 
  saving = true;
  try {
- if (token) {
+ if (token || currentUser) {
  const res = await fetch('/api/schedule', {
  method: 'POST',
  headers: {
  'Content-Type': 'application/json',
- 'Authorization': `Bearer ${token}`
+ ...(token ? { 'Authorization': `Bearer ${token}` } : {})
  },
+ credentials: 'include',
  body: JSON.stringify({
  action: 'save_session',
+ allow_upsert: true,
  ...form
  })
  });
@@ -294,8 +420,17 @@
  </div>
 
  {#if errorMessage}
- <div data-testid="session-modal-error" role="alert" class="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold">
- ⚠️ {errorMessage}
+ <div data-testid="session-modal-error" role="alert" class="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold space-y-2">
+ <div>⚠️ {errorMessage}</div>
+ {#if errorMessage.includes('Trùng lịch') || errorMessage.includes('Xung đột')}
+ <button
+   type="button"
+   onclick={resolveConflictAndSave}
+   class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] shadow-sm transition-all"
+ >
+   ⚡ Tự động xếp sang khung giờ/phòng trống kế tiếp &amp; Lưu ngay
+ </button>
+ {/if}
  </div>
  {/if}
 
@@ -533,6 +668,20 @@
     </fieldset>
 
  <!-- Action Buttons -->
+    {#if errorMessage}
+      <div role="alert" class="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <span>⚠️ {errorMessage}</span>
+        {#if errorMessage.includes('Trùng lịch') || errorMessage.includes('Xung đột')}
+          <button
+            type="button"
+            onclick={resolveConflictAndSave}
+            class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] shadow-sm transition-all whitespace-nowrap"
+          >
+            ⚡ Tự động đổi giờ/phòng trống &amp; Lưu ngay
+          </button>
+        {/if}
+      </div>
+    {/if}
     <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 pt-3 border-t border-stone-200/70 bg-[#fdfbf7] -mx-6 md:-mx-8 px-6 md:px-8 pb-1">
       <button
         type="button"

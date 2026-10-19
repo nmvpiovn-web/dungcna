@@ -33,6 +33,68 @@
  let isSendingTransfer = $state(false);
  let isAdminOrTeacher = $derived(currentUser ? isTeacherOrAdmin(currentUser) : false);
 
+ // Password change state
+ let showPasswordSection = $state(false);
+ let oldPassword = $state('');
+ let newPassword = $state('');
+ let confirmNewPassword = $state('');
+ let isChangingPassword = $state(false);
+ let passwordStatusMsg = $state('');
+ let passwordStatusError = $state(false);
+
+ async function handleChangeOwnPassword(e) {
+  e?.preventDefault?.();
+  passwordStatusMsg = '';
+  passwordStatusError = false;
+  if (!oldPassword || !newPassword) {
+   passwordStatusError = true;
+   passwordStatusMsg = '⚠️ Vui lòng nhập mật khẩu hiện tại và mật khẩu mới.';
+   return;
+  }
+  if (newPassword.trim().length < 6) {
+   passwordStatusError = true;
+   passwordStatusMsg = '⚠️ Mật khẩu mới phải có ít nhất 6 ký tự.';
+   return;
+  }
+  if (newPassword !== confirmNewPassword) {
+   passwordStatusError = true;
+   passwordStatusMsg = '⚠️ Mật khẩu xác nhận không khớp.';
+   return;
+  }
+  isChangingPassword = true;
+  try {
+   const token = getAuthToken();
+   const res = await fetch('/api/auth/change-password', {
+    method: 'POST',
+    headers: {
+     'Content-Type': 'application/json',
+     ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+    },
+    body: JSON.stringify({
+     old_password: oldPassword,
+     new_password: newPassword.trim()
+    })
+   });
+   const data = await res.json().catch(() => ({}));
+   if (res.ok && data.success) {
+    passwordStatusError = false;
+    passwordStatusMsg = '✅ Đã đổi mật khẩu thành công trên hệ thống Cloudflare D1!';
+    oldPassword = '';
+    newPassword = '';
+    confirmNewPassword = '';
+    playAudioFeedback(true);
+   } else {
+    passwordStatusError = true;
+    passwordStatusMsg = '❌ ' + (data.error || 'Không thể đổi mật khẩu.');
+   }
+  } catch (err) {
+   passwordStatusError = true;
+   passwordStatusMsg = '❌ Lỗi kết nối máy chủ: ' + (err.message || '');
+  } finally {
+   isChangingPassword = false;
+  }
+ }
+
  const presetAvatars = [
  { label: '👦 Bé trai', url: 'https://api.dicebear.com/7.x/bottts/svg?seed=Felix' },
  { label: '👧 Bé gái', url: 'https://api.dicebear.com/7.x/bottts/svg?seed=Mia' },
@@ -720,6 +782,78 @@
  </button>
  {/if}
  </form>
+
+ <!-- 🔑 Self-Service Password Change Section (Cloudflare D1) -->
+ <div class="mt-5 pt-4 border-t border-slate-200">
+  <div class="flex items-center justify-between">
+   <div class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+    <span>🔑</span>
+    <span>Bảo Mật Tài Khoản &amp; Đổi Mật Khẩu</span>
+   </div>
+   <button
+    type="button"
+    data-testid="toggle-profile-password-btn"
+    onclick={() => { showPasswordSection = !showPasswordSection; passwordStatusMsg = ''; }}
+    class="px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 transition-colors"
+   >
+    {showPasswordSection ? 'Đóng form đổi mật khẩu' : '🔑 Đổi mật khẩu ngay'}
+   </button>
+  </div>
+
+  {#if showPasswordSection}
+   <form onsubmit={handleChangeOwnPassword} class="mt-3 p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-3 text-xs">
+    {#if passwordStatusMsg}
+     <div class="p-2.5 rounded-lg font-semibold {passwordStatusError ? 'bg-rose-50 text-rose-700 border border-rose-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'}">
+      {passwordStatusMsg}
+     </div>
+    {/if}
+    <div>
+     <label for="prof-old-pw" class="block font-semibold text-slate-700 mb-1">Mật khẩu hiện tại (*):</label>
+     <input
+      id="prof-old-pw"
+      type="password"
+      bind:value={oldPassword}
+      required
+      placeholder="Nhập mật khẩu đang dùng..."
+      class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:border-emerald-500"
+     />
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+     <div>
+      <label for="prof-new-pw" class="block font-semibold text-slate-700 mb-1">Mật khẩu mới (&ge; 6 ký tự):</label>
+      <input
+       id="prof-new-pw"
+       type="password"
+       bind:value={newPassword}
+       required
+       minlength="6"
+       placeholder="Mật khẩu mới..."
+       class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:border-emerald-500"
+      />
+     </div>
+     <div>
+      <label for="prof-confirm-pw" class="block font-semibold text-slate-700 mb-1">Xác nhận mật khẩu mới:</label>
+      <input
+       id="prof-confirm-pw"
+       type="password"
+       bind:value={confirmNewPassword}
+       required
+       minlength="6"
+       placeholder="Nhập lại mật khẩu mới..."
+       class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:border-emerald-500"
+      />
+     </div>
+    </div>
+    <button
+     type="submit"
+     disabled={isChangingPassword}
+     class="w-full py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition-colors disabled:opacity-50"
+    >
+     {isChangingPassword ? '⏳ Đang cập nhật mật khẩu lên D1...' : '🔐 Xác Nhận Đổi Mật Khẩu'}
+    </button>
+   </form>
+  {/if}
+ </div>
  </div>
  </div>
 {/if}

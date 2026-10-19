@@ -1,6 +1,6 @@
 <script>
   import { onMount, onDestroy } from 'svelte';
-  import { getCurrentUser } from '$lib/unifiedStore';
+  import { getCurrentUser, getAuthToken } from '$lib/unifiedStore';
   import { registerBusyState, unregisterBusyState } from '$lib/stores/appUpdate.js';
   import QuizReviewPanel from '$lib/components/QuizReviewPanel.svelte';
   import QuizCameraCapture from '$lib/components/QuizCameraCapture.svelte';
@@ -448,6 +448,8 @@
   let progress = $derived(selectedQuiz?.questions?.length ? Math.round(answeredCount / selectedQuiz.questions.length * 100) : 0);
 
   function token() {
+    const storeToken = getAuthToken();
+    if (storeToken) return storeToken;
     if (typeof localStorage === 'undefined') return '';
     return localStorage.getItem('tienganh_token') || localStorage.getItem('tienganh_auth_token') || '';
   }
@@ -462,7 +464,7 @@
 
   async function api(url, options = {}) {
     const withJson = !!options.body && !(options.body instanceof FormData);
-    const response = await fetch(url, { ...options, headers: { ...headers(withJson), ...(options.headers || {}) } });
+    const response = await fetch(url, { credentials: 'include', ...options, headers: { ...headers(withJson), ...(options.headers || {}) } });
     const body = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(body.message || body.error || 'Không thể kết nối máy chủ');
     return body;

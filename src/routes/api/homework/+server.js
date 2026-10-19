@@ -29,6 +29,9 @@ async function ensureTables(db) {
           deadline_time TEXT NOT NULL,
           max_score REAL DEFAULT 10.0,
           star_reward_on_time INTEGER DEFAULT 50,
+          source_quiz_id TEXT,
+          due_date TEXT,
+          created_by TEXT,
           status TEXT DEFAULT 'published',
           created_at TEXT DEFAULT CURRENT_TIMESTAMP
         );
@@ -127,6 +130,9 @@ async function ensureTables(db) {
 
     // Backward-compatible schema migrations
     const migrations = [
+      'ALTER TABLE homework_assignments ADD COLUMN source_quiz_id TEXT;',
+      'ALTER TABLE homework_assignments ADD COLUMN due_date TEXT;',
+      'ALTER TABLE homework_assignments ADD COLUMN created_by TEXT;',
       'ALTER TABLE homework_submissions ADD COLUMN version INTEGER DEFAULT 1;',
       'ALTER TABLE homework_submissions ADD COLUMN grading_token TEXT;',
       'ALTER TABLE student_stars ADD COLUMN star_debt INTEGER DEFAULT 0;',
@@ -502,6 +508,7 @@ export async function POST({ request, platform }) {
       description,
       obsidian_note_id,
       obsidian_note_title,
+      source_quiz_id,
       campus_id = 'loc_codung',
       deadline_date: inputDeadlineDate,
       deadline_time: inputDeadlineTime = '18:00',
@@ -540,6 +547,7 @@ export async function POST({ request, platform }) {
       description: description ? description.trim() : '',
       obsidian_note_id: obsidian_note_id || null,
       obsidian_note_title: obsidian_note_title || null,
+      source_quiz_id: source_quiz_id || null,
       assigned_date: new Date().toISOString().split('T')[0],
       deadline_date: finalDeadlineDate,
       deadline_time: finalDeadlineTime,
@@ -552,6 +560,32 @@ export async function POST({ request, platform }) {
     if (db) {
       try {
         await ensureTables(db);
+
+        // Backfill missing class_enrollments from class_sessions.student_ids (without overriding existing inactive rows)
+        try {
+          const sessRow = await db.prepare(
+            `SELECT student_ids FROM class_sessions WHERE id = ? LIMIT 1`
+          ).bind(session_id).first();
+          let sessStudents = [];
+          if (sessRow?.student_ids) {
+            sessStudents = typeof sessRow.student_ids === 'string'
+              ? JSON.parse(sessRow.student_ids || '[]')
+              : (Array.isArray(sessRow.student_ids) ? sessRow.student_ids : []);
+          }
+          for (const rawSid of sessStudents) {
+            const sid = String(rawSid || '').trim();
+            if (!sid) continue;
+            const existingEnr = await db.prepare(
+              `SELECT id FROM class_enrollments WHERE user_id = ? AND class_id = ? LIMIT 1`
+            ).bind(sid, class_id).first();
+            if (!existingEnr) {
+              const enrId = `enr_${class_id}_${sid}`.replace(/[^a-zA-Z0-9_-]/g, '_');
+              await db.prepare(
+                `INSERT OR IGNORE INTO class_enrollments (id, user_id, class_id, status) VALUES (?, ?, ?, 'active')`
+              ).bind(enrId, sid, class_id).run();
+            }
+          }
+        } catch {}
 
         // Fetch verified parents of students actively enrolled in this class
         const linksRes = await db.prepare(`
@@ -580,15 +614,15 @@ export async function POST({ request, platform }) {
           db.prepare(`
             INSERT INTO homework_assignments (
               id, session_id, class_id, class_name, teacher_id, teacher_name, campus_id,
-              skill_type, title, description, obsidian_note_id, obsidian_note_title,
+              skill_type, title, description, obsidian_note_id, obsidian_note_title, source_quiz_id,
               assigned_date, deadline_date, deadline_time, max_score, star_reward_on_time, status, created_at,
               due_date, created_by
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
           `).bind(
             newAssignment.id, newAssignment.session_id, newAssignment.class_id, newAssignment.class_name,
             newAssignment.teacher_id, newAssignment.teacher_name, newAssignment.campus_id,
             newAssignment.skill_type, newAssignment.title, newAssignment.description,
-            newAssignment.obsidian_note_id, newAssignment.obsidian_note_title,
+            newAssignment.obsidian_note_id, newAssignment.obsidian_note_title, newAssignment.source_quiz_id,
             newAssignment.assigned_date, newAssignment.deadline_date, newAssignment.deadline_time,
             newAssignment.max_score, newAssignment.star_reward_on_time, newAssignment.status, newAssignment.created_at,
             newAssignment.deadline_date, user.id

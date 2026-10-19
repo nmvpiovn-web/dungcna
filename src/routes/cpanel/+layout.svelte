@@ -148,13 +148,24 @@
 
  let navItems = $derived(roleNavItems[currentRoleKey] || roleNavItems.student);
 
- let showChangePasswordModal = $derived(shouldForcePasswordChange(currentUser));
+ let forcePasswordChange = $derived(shouldForcePasswordChange(currentUser));
+ let manualPasswordModalOpen = $state(false);
+ let showChangePasswordModal = $derived(forcePasswordChange || manualPasswordModalOpen);
  let cpOldPassword = $state('');
  let cpNewPassword = $state('');
  let cpConfirmPassword = $state('');
  let cpError = $state('');
  let cpSuccess = $state('');
  let isChangingPassword = $state(false);
+
+ function openVoluntaryPasswordModal() {
+   cpError = '';
+   cpSuccess = '';
+   cpOldPassword = '';
+   cpNewPassword = '';
+   cpConfirmPassword = '';
+   manualPasswordModalOpen = true;
+ }
 
  async function handleChangePassword() {
    cpError = '';
@@ -180,10 +191,18 @@
      });
      const data = await res.json();
      if (data.success) {
-       cpSuccess = 'Đổi mật khẩu thành công. Vui lòng tải lại trang.';
+       cpSuccess = '✅ Đổi mật khẩu thành công trên hệ thống Cloudflare D1!';
+       cpOldPassword = '';
+       cpNewPassword = '';
+       cpConfirmPassword = '';
        setTimeout(() => {
-         window.location.reload();
-       }, 1500);
+         if (forcePasswordChange) {
+           window.location.reload();
+         } else {
+           manualPasswordModalOpen = false;
+           cpSuccess = '';
+         }
+       }, 1200);
      } else {
        cpError = data.error || 'Đổi mật khẩu thất bại.';
      }
@@ -270,7 +289,7 @@
  {/if}
  </a>
 
- <!-- User Chip & Role Switch for Superadmin -->
+ <!-- User Chip, Password Change & Role Switch for Superadmin -->
  <div class="flex items-center gap-1.5 sm:gap-2 pl-1.5 sm:pl-2 border-l border-slate-200">
  <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-md bg-slate-700 text-white flex items-center justify-center font-semibold text-xs shadow-xs shrink-0">
  {currentUser?.name?.[0] || currentUser?.username?.[0] || 'U'}
@@ -279,6 +298,18 @@
  <div class="font-semibold text-slate-800 line-clamp-1">{currentUser?.name || currentUser?.username || 'Khách'}</div>
  <div class="text-[11px] text-slate-500 capitalize">{currentUser?.role || 'User'}</div>
  </div>
+ {#if currentUser}
+ <button
+  type="button"
+  data-testid="cpanel-change-password-btn"
+  onclick={openVoluntaryPasswordModal}
+  class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 text-xs font-semibold transition-colors shrink-0"
+  title="Đổi mật khẩu tài khoản"
+ >
+  <span>🔑</span>
+  <span class="hidden md:inline">Đổi mật khẩu</span>
+ </button>
+ {/if}
  </div>
 
  {#if isSuperAdmin(currentUser)}
@@ -321,12 +352,26 @@
     aria-labelledby="change-password-modal-title"
   >
     <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden flex flex-col my-auto max-h-[90vh]">
-      <div class="px-4 py-3 sm:px-5 sm:py-4 border-b border-slate-100 flex justify-between items-center bg-rose-50">
-        <h3 id="change-password-modal-title" class="font-bold text-rose-800 text-sm sm:text-base">Bắt Buộc Đổi Mật Khẩu Lần Đầu</h3>
+      <div class="px-4 py-3 sm:px-5 sm:py-4 border-b border-slate-100 flex justify-between items-center {forcePasswordChange ? 'bg-rose-50' : 'bg-emerald-50'}">
+        <h3 id="change-password-modal-title" class="font-bold {forcePasswordChange ? 'text-rose-800' : 'text-emerald-900'} text-sm sm:text-base">
+          {forcePasswordChange ? 'Bắt Buộc Đổi Mật Khẩu Lần Đầu' : '🔑 Đổi Mật Khẩu Bảo Mật (Cloudflare D1)'}
+        </h3>
+        {#if !forcePasswordChange}
+          <button
+            type="button"
+            onclick={() => { manualPasswordModalOpen = false; }}
+            class="w-7 h-7 rounded-full bg-white text-slate-500 hover:text-slate-800 flex items-center justify-center text-xs font-bold border border-slate-200"
+            aria-label="Đóng"
+          >✕</button>
+        {/if}
       </div>
       <div class="p-4 sm:p-5 space-y-3 sm:space-y-4 overflow-y-auto">
         <p class="text-xs sm:text-sm text-slate-600 font-medium">
-          Chào mừng bạn đến với hệ thống Tiếng Anh Cô Dung. Vì lý do bảo mật, bạn bắt buộc phải đổi mật khẩu ngay trong lần đăng nhập đầu tiên.
+          {#if forcePasswordChange}
+            Chào mừng bạn đến với hệ thống Tiếng Anh Cô Dung. Vì lý do bảo mật, bạn bắt buộc phải đổi mật khẩu ngay trong lần đăng nhập đầu tiên.
+          {:else}
+            Nhập mật khẩu hiện tại và mật khẩu mới (&ge; 6 ký tự) để cập nhật trực tiếp lên cơ sở dữ liệu Cloudflare D1.
+          {/if}
         </p>
         {#if cpError}
           <div class="p-2.5 rounded bg-rose-50 text-rose-700 text-xs font-semibold border border-rose-200" role="alert">{cpError}</div>
@@ -336,18 +381,18 @@
         {:else}
           <form onsubmit={(e) => { e.preventDefault(); handleChangePassword(); }} class="space-y-3">
             <div>
-              <label for="cp-old-password" class="block text-xs font-bold text-slate-700 mb-1">Mật khẩu tạm thời (cũ)</label>
+              <label for="cp-old-password" class="block text-xs font-bold text-slate-700 mb-1">Mật khẩu hiện tại (cũ)</label>
               <input
                 id="cp-old-password"
                 type="password"
                 autocomplete="current-password"
                 required
                 bind:value={cpOldPassword}
-                class="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500 text-sm"
+                class="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-sm"
               />
             </div>
             <div>
-              <label for="cp-new-password" class="block text-xs font-bold text-slate-700 mb-1">Mật khẩu mới</label>
+              <label for="cp-new-password" class="block text-xs font-bold text-slate-700 mb-1">Mật khẩu mới (&ge; 6 ký tự)</label>
               <input
                 id="cp-new-password"
                 type="password"
@@ -355,7 +400,7 @@
                 required
                 minlength="6"
                 bind:value={cpNewPassword}
-                class="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500 text-sm"
+                class="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-sm"
               />
             </div>
             <div>
@@ -367,16 +412,25 @@
                 required
                 minlength="6"
                 bind:value={cpConfirmPassword}
-                class="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500 text-sm"
+                class="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-sm"
               />
             </div>
-            <div class="pt-2 flex justify-end">
+            <div class="pt-2 flex justify-end gap-2">
+              {#if !forcePasswordChange}
+                <button
+                  type="button"
+                  onclick={() => { manualPasswordModalOpen = false; }}
+                  class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold rounded-md transition-colors"
+                >
+                  Hủy
+                </button>
+              {/if}
               <button
                 type="submit"
                 disabled={isChangingPassword}
-                class="w-full sm:w-auto px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold rounded-md shadow-sm transition-colors disabled:opacity-50"
+                class="w-full sm:w-auto px-5 py-2 {forcePasswordChange ? 'bg-rose-600 hover:bg-rose-700' : 'bg-emerald-600 hover:bg-emerald-700'} text-white text-sm font-semibold rounded-md shadow-sm transition-colors disabled:opacity-50"
               >
-                {isChangingPassword ? 'Đang xử lý...' : 'Đổi Mật Khẩu'}
+                {isChangingPassword ? 'Đang xử lý...' : '🔑 Đổi Mật Khẩu'}
               </button>
             </div>
           </form>
