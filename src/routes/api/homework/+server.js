@@ -588,16 +588,18 @@ export async function POST({ request, platform }) {
         } catch {}
 
         // Fetch verified parents of students actively enrolled in this class
-        const linksRes = await db.prepare(`
-          SELECT DISTINCT psl.parent_user_id
-          FROM parent_student_links psl
-          JOIN class_enrollments ce ON ce.user_id = psl.student_user_id
-          WHERE psl.verification_status = 'verified'
-            AND psl.parent_user_id IS NOT NULL
-            AND ce.class_id = ? AND ce.status = 'active';
-        `).bind(class_id).all();
-
-        const uniqueParents = [...new Set((linksRes.results || []).map(r => r.parent_user_id).filter(Boolean))];
+        let uniqueParents = [];
+        try {
+          const linksRes = await db.prepare(`
+            SELECT DISTINCT psl.parent_user_id
+            FROM parent_student_links psl
+            JOIN class_enrollments ce ON ce.user_id = psl.student_user_id
+            WHERE psl.verification_status = 'verified'
+              AND psl.parent_user_id IS NOT NULL
+              AND ce.class_id = ? AND ce.status = 'active';
+          `).bind(class_id).all();
+          uniqueParents = [...new Set((linksRes.results || []).map(r => r.parent_user_id).filter(Boolean))];
+        } catch {}
 
         // Fetch students actively enrolled in this class
         const studentRes = await db.prepare(`

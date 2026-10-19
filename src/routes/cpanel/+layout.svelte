@@ -38,11 +38,13 @@
  { path: '/cpanel/teacher', label: t('teacherWorkplace', lang), icon: '👩‍🏫' },
  { path: '/cpanel/teacher#grading', label: t('gradingTab', lang), icon: '✍️' },
  { path: '/cpanel/teacher#assign', label: t('assignTab', lang), icon: '➕' },
+ { path: '/session-audit', label: 'Đối Soát Ca Dạy', icon: '📊' },
  { path: '/quiz-menu', label: t('quizMenuTab', lang), icon: '🧩' },
  { path: '/second-brain', label: t('secondBrainTab', lang), icon: '🧠' }
  ],
  leader: [
  { path: '/cpanel/leader', label: t('academicTesting', lang), icon: '👑' },
+ { path: '/session-audit', label: 'Đối Soát Ca Dạy', icon: '📊' },
  { path: '/cpanel/leader#quality', label: t('homeworkTab', lang), icon: '📈' },
  { path: '/cpanel/leader#curriculum', label: t('secondBrainTab', lang), icon: '🗺️' },
  { path: '/quiz-menu', label: t('quizMenuTab', lang), icon: '🧩' },
@@ -50,6 +52,7 @@
  ],
  superadmin: [
  { path: '/admin?tab=hiring', label: 'Duyệt giáo viên', icon: '✅' },
+ { path: '/session-audit', label: 'Đối Soát Ca Dạy', icon: '📊' },
  { path: '/cpanel/student', label: t('studentDesk', lang), icon: '🎒' },
  { path: '/cpanel/parent', label: t('parentPortal', lang), icon: '👨‍👩‍👧' },
  { path: '/cpanel/teacher', label: t('teacherWorkplace', lang), icon: '👩‍🏫' },

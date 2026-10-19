@@ -66,6 +66,8 @@
  let dayFilter = $state('all'); // 'all' | 1 | 2 | 3 | 4 | 5 | 6 | 0
  let classFilter = $state('all'); // 'all' | class_id
  let teacherFilter = $state('all'); // 'all' | teacher_id
+ let attendanceFilter = $state('all'); // 'all' | 'complete' | 'incomplete' | 'unmarked' | 'has_late' | 'has_absent'
+ let sessionAuditById = $state({});
  let weekOffset = $state(0);
  let selectedWeekDay = $state(null);
  let toastMsg = $state('');
@@ -170,6 +172,30 @@
  sessions = data.sessions;
  }
  }).catch(err => console.error('Failed to load schedule from server:', err));
+
+ if (currentUser && isTeacherOrAdmin(currentUser)) {
+   fetch('/api/attendance', { headers, credentials: 'include' })
+     .then(r => r.json())
+     .then(data => {
+       if (data.success && Array.isArray(data.records)) {
+         attendanceRecords = data.records;
+       }
+     })
+     .catch(() => {});
+
+   fetch('/api/session-audit?include_catalog=0', { headers, credentials: 'include' })
+     .then(r => r.json())
+     .then(data => {
+       if (data.success && Array.isArray(data.sessions)) {
+         const map = {};
+         for (const item of data.sessions) {
+           if (item?.session?.id) map[item.session.id] = item;
+         }
+         sessionAuditById = map;
+       }
+     })
+     .catch(() => {});
+ }
 
  loadTeacherWorkflows();
  }
@@ -292,6 +318,18 @@
  list = list.filter(s => [s.teacher_id, s.assistant_teacher_id, s.substitute_teacher_id].includes(teacherFilter));
  }
 
+ if (attendanceFilter !== 'all') {
+ list = list.filter(s => {
+   const att = getSessionAttendanceDetails(s);
+   if (attendanceFilter === 'complete') return att.rollCallStatus === 'complete';
+   if (attendanceFilter === 'incomplete') return att.rollCallStatus === 'incomplete';
+   if (attendanceFilter === 'unmarked') return att.rollCallStatus === 'unmarked';
+   if (attendanceFilter === 'has_late') return att.lateCount > 0;
+   if (attendanceFilter === 'has_absent') return att.absentCount > 0;
+   return true;
+ });
+ }
+
  // Sort by day of week then time
  return [...list].sort((a, b) => {
  const dayA = a.day_of_week === 0 ? 7 : a.day_of_week;
@@ -381,13 +419,49 @@
  showStaffModal = true;
  }
 
- // Count attendance status for today
+ // Detailed attendance & roll-call completion status per session
+ function getSessionAttendanceDetails(session) {
+   if (!session) {
+     return { enrolledCount: 0, markedCount: 0, presentCount: 0, lateCount: 0, absentCount: 0, rollCallStatus: 'unmarked' };
+   }
+   const auditItem = sessionAuditById[session.id];
+   if (auditItem?.metrics) {
+     const m = auditItem.metrics;
+     return {
+       enrolledCount: m.enrolled_count || (session.student_ids?.length || 0),
+       markedCount: m.marked_count || 0,
+       presentCount: m.present_count || 0,
+       lateCount: m.late_count || 0,
+       absentCount: m.total_absent_count || 0,
+       rollCallStatus: m.roll_call_status || 'unmarked'
+     };
+   }
+   const enrolledCount = session.student_ids?.length || 0;
+   const sessRecords = attendanceRecords.filter(r => r.session_id === session.id);
+   const targetDate = session.session_date || (sessRecords[0]?.session_date ?? new Date().toISOString().slice(0, 10));
+   const scoped = sessRecords.filter(r => r.session_date === targetDate);
+   const activeList = scoped.length > 0 ? scoped : sessRecords;
+   const uniqueMap = new Map();
+   for (const rec of activeList) {
+     if (!uniqueMap.has(rec.student_id)) uniqueMap.set(rec.student_id, rec);
+   }
+   const list = Array.from(uniqueMap.values());
+   const markedCount = list.length;
+   const presentCount = list.filter(r => r.status === 'present').length;
+   const lateCount = list.filter(r => r.status === 'late').length;
+   const absentCount = list.filter(r => r.status === 'absent_excused' || r.status === 'absent_unexcused' || r.status === 'absent').length;
+   let rollCallStatus = 'unmarked';
+   if (markedCount > 0) {
+     rollCallStatus = (enrolledCount > 0 && markedCount < enrolledCount) ? 'incomplete' : 'complete';
+   }
+   return { enrolledCount, markedCount, presentCount, lateCount, absentCount, rollCallStatus };
+ }
+
  function getTodayAttendanceSummary(sessionId) {
- const today = new Date().toISOString().slice(0, 10);
- const records = attendanceRecords.filter(r => r.session_id === sessionId && r.session_date === today);
- if (records.length === 0) return null;
- const present = records.filter(r => r.status === 'present').length;
- return `${present}/${records.length} có mặt`;
+ const sess = sessions.find(x => x.id === sessionId);
+ const details = getSessionAttendanceDetails(sess);
+ if (details.markedCount === 0) return null;
+ return `${details.presentCount}/${details.markedCount} đúng giờ`;
  }
 </script>
 
@@ -461,6 +535,14 @@
  <!-- Quick Action Buttons -->
  <div class="flex flex-wrap items-center gap-2.5">
  {#if currentUser && isTeacherOrAdmin(currentUser)}
+ <a
+ href="/session-audit"
+ class="px-3.5 py-2.5 rounded-md bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-md transition-all flex items-center gap-1.5"
+ title="Đối soát tài liệu Kho Tri Thức, Drive, Tỷ lệ đáp ứng BTVN & Quiz theo từng ca học"
+ >
+ <span>📊</span> <span>Đối Soát Chất Lượng Ca Dạy</span>
+ </a>
+
  <button
  type="button"
  onclick={() => showLeaveModal = true}
@@ -730,7 +812,7 @@
  </button>
  </div>
 
- <!-- Class & Teacher Filters -->
+ <!-- Class, Teacher & Attendance Status Filters -->
  <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 text-xs">
  <label class="flex items-center gap-2 flex-1">
  <span class="font-bold text-slate-600 whitespace-nowrap">🏫 Lớp:</span>
@@ -756,10 +838,27 @@
  {/each}
  </select>
  </label>
- {#if classFilter !== 'all' || teacherFilter !== 'all'}
+ {#if currentUser && isTeacherOrAdmin(currentUser)}
+ <label class="flex items-center gap-2 flex-1">
+ <span class="font-bold text-slate-600 whitespace-nowrap">📋 Điểm danh:</span>
+ <select
+ id="schedule-attendance-filter"
+ bind:value={attendanceFilter}
+ class="flex-1 bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-slate-800 font-semibold focus:outline-none focus:border-emerald-500"
+ >
+ <option value="all">Tất cả trạng thái điểm danh</option>
+ <option value="complete">✅ Đã điểm danh ĐỦ sĩ số</option>
+ <option value="incomplete">⚠️ Điểm danh CHƯA ĐỦ sĩ số</option>
+ <option value="unmarked">⏳ Chưa điểm danh</option>
+ <option value="has_late">⏱️ Có học sinh Đi muộn</option>
+ <option value="has_absent">❌ Có học sinh Vắng mặt</option>
+ </select>
+ </label>
+ {/if}
+ {#if classFilter !== 'all' || teacherFilter !== 'all' || attendanceFilter !== 'all'}
  <button
  type="button"
- onclick={() => { classFilter = 'all'; teacherFilter = 'all'; }}
+ onclick={() => { classFilter = 'all'; teacherFilter = 'all'; attendanceFilter = 'all'; }}
  class="px-3 py-1.5 rounded-lg border border-rose-300 text-rose-700 font-bold hover:bg-rose-50 whitespace-nowrap"
  >
  ✕ Xóa lọc
@@ -772,7 +871,8 @@
  <!-- Sessions Grid -->
  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
  {#each filteredSessions as s}
- {@const todayAtt = getTodayAttendanceSummary(s.id)}
+ {@const attDetails = getSessionAttendanceDetails(s)}
+ {@const auditInfo = sessionAuditById[s.id]}
  {@const [startH, startM] = String(s.start_time || '00:00').split(':').map(Number)}
  {@const notifyMin = s.notify_minutes_before || 10}
  {@const notifyTotalMin = Math.max(0, startH * 60 + startM - notifyMin)}
@@ -785,9 +885,16 @@
  <!-- Header of Card -->
  <div class="space-y-2">
  <div class="flex items-center justify-between gap-2">
+ <div class="flex items-center gap-1.5 flex-wrap">
  <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
  {s.grade_level}
  </span>
+ {#if auditInfo?.metrics?.overall_suitability_pct !== undefined}
+ <span class="px-2 py-0.5 rounded-full text-[10px] font-bold {auditInfo.metrics.overall_suitability_pct >= 80 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : auditInfo.metrics.overall_suitability_pct >= 65 ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-rose-50 text-rose-700 border border-rose-200'}">
+ 🎯 {auditInfo.metrics.overall_suitability_pct}% phù hợp
+ </span>
+ {/if}
+ </div>
  <div class="flex items-center gap-1.5 font-mono text-xs font-bold text-slate-700">
  <span>{s.day_name}</span>
  <span>•</span>
@@ -803,6 +910,17 @@
  📖 <strong>Chủ đề:</strong> {s.subject_topic}
  </p>
 
+ {#if auditInfo?.materials && (auditInfo.materials.vault_article_title || auditInfo.materials.drive_file_name)}
+ <div class="p-2 rounded-md bg-indigo-50/60 border border-indigo-100 text-[11px] text-indigo-950 space-y-0.5">
+ {#if auditInfo.materials.vault_article_title}
+ <div class="truncate">🧠 <strong>Kho Tri Thức:</strong> {auditInfo.materials.vault_article_title}</div>
+ {/if}
+ {#if auditInfo.materials.drive_file_name}
+ <div class="truncate">📁 <strong>Drive:</strong> {auditInfo.materials.drive_file_name}</div>
+ {/if}
+ </div>
+ {/if}
+
  <div class="text-[11px] text-slate-500 flex items-center gap-1.5">
  <span>📍</span>
  <span class="truncate">{s.location}</span>
@@ -814,7 +932,7 @@
  </div>
  </div>
 
- <!-- Notification Banner & Students Roster -->
+ <!-- Notification Banner & Detailed Attendance Roster -->
  <div class="space-y-2 pt-2 border-t border-slate-100 text-xs">
  <!-- Notification Pill -->
  <div class="p-2.5 rounded-md bg-slate-50 border border-slate-200 flex items-center justify-between gap-2">
@@ -840,31 +958,51 @@
  </div>
 
  <!-- Attendance indicator & Student Count -->
+ <div class="space-y-1.5">
  <div class="flex items-center justify-between text-[11px] text-slate-500">
- <span class="flex items-center gap-1">
+ <span class="flex items-center gap-1 font-medium text-slate-700">
  <span>👥</span>
- <span>{s.student_ids?.length || 0} học sinh trong lớp</span>
+ <span>Sĩ số: <strong>{attDetails.enrolledCount}</strong> HS</span>
  </span>
 
- {#if todayAtt}
- <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px]">
- ✓ Hôm nay: {todayAtt}
+ {#if attDetails.rollCallStatus === 'complete'}
+ <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px] border border-emerald-300">
+ ✅ Điểm danh ĐỦ ({attDetails.markedCount}/{attDetails.enrolledCount || attDetails.markedCount})
+ </span>
+ {:else if attDetails.rollCallStatus === 'incomplete'}
+ <span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-bold text-[10px] border border-amber-300">
+ ⚠️ Điểm danh THIẾU ({attDetails.markedCount}/{attDetails.enrolledCount})
  </span>
  {:else}
- <span class="text-[10px] text-slate-400">
- Hôm nay: Chưa điểm danh
+ <span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 font-bold text-[10px] border border-slate-200">
+ ⏳ Chưa điểm danh
  </span>
+ {/if}
+ </div>
+
+ {#if attDetails.markedCount > 0}
+ <div class="flex items-center gap-1.5 flex-wrap text-[10px] font-bold">
+ <span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+ ✓ Đúng giờ: {attDetails.presentCount}
+ </span>
+ <span class="px-2 py-0.5 rounded {attDetails.lateCount > 0 ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-slate-50 text-slate-500 border border-slate-200'}">
+ ⏱️ Đi muộn: {attDetails.lateCount}
+ </span>
+ <span class="px-2 py-0.5 rounded {attDetails.absentCount > 0 ? 'bg-rose-100 text-rose-800 border border-rose-300' : 'bg-slate-50 text-slate-500 border border-slate-200'}">
+ ✕ Vắng: {attDetails.absentCount}
+ </span>
+ </div>
  {/if}
  </div>
  </div>
 
  <!-- Action Buttons -->
- <div class="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
+ <div class="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-1.5">
  {#if currentUser && isTeacherOrAdmin(currentUser)}
  <button
  type="button"
  onclick={() => handleOpenRollCall(s)}
- class="flex-1 py-2 px-3 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-sm transition-all flex items-center justify-center gap-1"
+ class="flex-1 py-2 px-2.5 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-sm transition-all flex items-center justify-center gap-1"
  >
  <span>📋 Điểm Danh</span>
  </button>
@@ -877,10 +1015,18 @@
  📚 Giao BTVN
  </a>
 
+ <a
+ href="/session-audit?session_id={encodeURIComponent(s.id)}"
+ class="py-2 px-2.5 rounded-md bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 font-bold text-xs transition-all"
+ title="Đối soát tài liệu, tỷ lệ đáp ứng BTVN/Quiz & xuất báo cáo ca học"
+ >
+ 📊 Đối Soát
+ </a>
+
  <button
  type="button"
  onclick={() => handleOpenEdit(s)}
- class="py-2 px-3 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-all"
+ class="py-2 px-2.5 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-all"
  title="Điều chỉnh ca học & gán học sinh"
  >
  ✏️ Sửa
@@ -890,7 +1036,7 @@
  <button
  type="button"
  onclick={() => handleDelete(s.id, s.class_name)}
- class="py-2 px-2.5 rounded-md bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold text-xs transition-all"
+ class="py-2 px-2 rounded-md bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold text-xs transition-all"
  title="Xóa buổi học"
  >
  🗑️
