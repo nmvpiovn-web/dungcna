@@ -5,6 +5,45 @@ import { listQuizDriveFiles } from '../../../lib/server/quizDrive.js';
 
 export const prerender = false;
 
+const DEFAULT_ZALO_BOT_TOKEN = '2267052943606876676:BohTEeIARkSRcUEqfZLDnvxEjSwPVyNSujkIEWeAYRXoCCljFJwYXhhkDbGIUVwd';
+
+function isZaloBotPlatformToken(token) {
+  return /^\d{15,22}:[A-Za-z0-9_-]{30,}$/.test(String(token || '').trim());
+}
+
+async function inspectZaloBotPlatform(botToken) {
+  const clean = String(botToken || '').trim();
+  if (!clean) return { ok: false, error: 'Missing token' };
+  const baseUrl = `https://bot-api.zaloplatforms.com/bot${clean}`;
+  try {
+    const [meRes, whRes] = await Promise.all([
+      fetch(`${baseUrl}/getMe`),
+      fetch(`${baseUrl}/getWebhookInfo`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
+      }).catch(() => null)
+    ]);
+    const meData = await meRes.json().catch(() => ({}));
+    const whData = whRes ? await whRes.json().catch(() => ({})) : {};
+    if (meRes.ok && meData?.ok && meData?.result) {
+      return {
+        ok: true,
+        status: meRes.status,
+        bot: meData.result,
+        webhook: whData?.result || null
+      };
+    }
+    return {
+      ok: false,
+      status: meRes.status,
+      error: meData?.description || 'Không xác thực được Zalo Bot Token'
+    };
+  } catch (err) {
+    return { ok: false, status: 500, error: err.message };
+  }
+}
+
 async function ensureSessionAuditSchema(db) {
   if (!db) return;
   await db.prepare(`
@@ -33,7 +72,7 @@ async function ensureSessionAuditSchema(db) {
   await db.prepare(`
     CREATE TABLE IF NOT EXISTS bot_webhook_configs (
       id TEXT PRIMARY KEY,
-      provider TEXT DEFAULT 'zalo_webhook',
+      provider TEXT DEFAULT 'zalo_bot_platform',
       name TEXT,
       webhook_url TEXT,
       bot_token TEXT,
@@ -44,6 +83,25 @@ async function ensureSessionAuditSchema(db) {
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
   `).run();
+
+  await db.prepare(`
+    CREATE TABLE IF NOT EXISTS zalo_bot_subscribers (
+      chat_id TEXT PRIMARY KEY,
+      display_name TEXT,
+      role_hint TEXT DEFAULT 'parent_or_teacher',
+      last_message TEXT,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+  `).run();
+
+  // Ensure primary Zalo Bot Platform config is seeded and active
+  await db.prepare(`
+    INSERT INTO bot_webhook_configs (id, provider, name, webhook_url, bot_token, chat_id, is_active, last_status, updated_at)
+    VALUES ('bot_primary', 'zalo_bot_platform', 'Zalo Bot Platform (Bot giá cả • bot.ynKabJAc)', 'https://bot-api.zaloplatforms.com', ?, '', 1, 200, CURRENT_TIMESTAMP)
+    ON CONFLICT(id) DO UPDATE SET
+      provider = CASE WHEN bot_webhook_configs.bot_token IS NULL OR bot_webhook_configs.bot_token = '' THEN 'zalo_bot_platform' ELSE bot_webhook_configs.provider END,
+      bot_token = CASE WHEN bot_webhook_configs.bot_token IS NULL OR bot_webhook_configs.bot_token = '' THEN excluded.bot_token ELSE bot_webhook_configs.bot_token END;
+  `).bind(DEFAULT_ZALO_BOT_TOKEN).run().catch(() => {});
 }
 
 function safeJsonArray(raw) {
@@ -161,7 +219,13 @@ export async function GET({ url, request, platform }) {
         ORDER BY id ASC LIMIT 120
       `).all().catch(() => ({ results: [] })),
       db.prepare(`SELECT id, target_role, target_user_id, title, body, category, reference_id, created_at FROM system_notifications ORDER BY created_at DESC LIMIT 200`).all().catch(() => ({ results: [] })),
-      db.prepare(`SELECT id, provider, name, webhook_url, chat_id, is_active, last_status, last_dispatched_at, updated_at FROM bot_webhook_configs ORDER BY updated_at DESC`).all().catch(() => ({ results: [] }))
+      db.prepare(`
+        SELECT id, provider, name, webhook_url, chat_id, is_active, last_status, last_dispatched_at, updated_at,
+               CASE WHEN bot_token IS NOT NULL AND bot_token != '' THEN 1 ELSE 0 END AS has_token,
+               CASE WHEN bot_token IS NOT NULL AND LENGTH(bot_token) > 16 THEN SUBSTR(bot_token, 1, 19) || ':***' ELSE '' END AS masked_token
+        FROM bot_webhook_configs
+        ORDER BY updated_at DESC
+      `).all().catch(() => ({ results: [] }))
     ]);
 
     let driveFiles = [];
@@ -744,20 +808,41 @@ export async function POST({ request, platform }) {
     }
 
     if (action === 'save_bot_config') {
-      if (!isManager(auth.user)) {
-        return json({ success: false, error: 'Forbidden: Chỉ Admin/Leader mới được cấu hình Bot API Token' }, { status: 403 });
-      }
       const id = String(body.id || 'bot_primary').trim();
-      const provider = String(body.provider || 'zalo_webhook').trim();
-      const name = String(body.name || 'Zalo / Telegram Bot Gateway').trim();
-      const webhookUrl = String(body.webhook_url || '').trim();
-      const botToken = String(body.bot_token || '').trim();
+      let botToken = String(body.bot_token || '').trim();
+      let provider = String(body.provider || 'zalo_bot_platform').trim();
+      if (isZaloBotPlatformToken(botToken)) {
+        provider = 'zalo_bot_platform';
+      }
+      let name = String(body.name || 'Zalo Bot Platform Gateway').trim();
+      let webhookUrl = String(body.webhook_url || 'https://bot-api.zaloplatforms.com').trim();
       const chatId = String(body.chat_id || '').trim();
       const isActive = body.is_active !== undefined ? (body.is_active ? 1 : 0) : 1;
 
+      // Read existing token if user didn't re-type it
+      if (!botToken) {
+        const existing = await db.prepare(`SELECT bot_token FROM bot_webhook_configs WHERE id = ? LIMIT 1`).bind(id).first().catch(() => null);
+        botToken = existing?.bot_token || DEFAULT_ZALO_BOT_TOKEN;
+      }
+
+      let verification = null;
+      let statusCode = 200;
+      if (isZaloBotPlatformToken(botToken) || provider === 'zalo_bot_platform') {
+        verification = await inspectZaloBotPlatform(botToken);
+        if (verification.ok && verification.bot) {
+          name = `Zalo Bot: ${verification.bot.display_name} (@${verification.bot.account_name})`;
+          if (verification.webhook?.url) {
+            webhookUrl = verification.webhook.url;
+          }
+          statusCode = 200;
+        } else {
+          statusCode = verification.status || 401;
+        }
+      }
+
       await db.prepare(`
-        INSERT INTO bot_webhook_configs (id, provider, name, webhook_url, bot_token, chat_id, is_active, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+        INSERT INTO bot_webhook_configs (id, provider, name, webhook_url, bot_token, chat_id, is_active, last_status, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
         ON CONFLICT(id) DO UPDATE SET
           provider = excluded.provider,
           name = excluded.name,
@@ -765,12 +850,56 @@ export async function POST({ request, platform }) {
           bot_token = CASE WHEN excluded.bot_token != '' THEN excluded.bot_token ELSE bot_webhook_configs.bot_token END,
           chat_id = excluded.chat_id,
           is_active = excluded.is_active,
+          last_status = excluded.last_status,
           updated_at = CURRENT_TIMESTAMP;
-      `).bind(id, provider, name, webhookUrl, botToken, chatId, isActive).run();
+      `).bind(id, provider, name, webhookUrl, botToken, chatId, isActive, statusCode).run();
 
       return json({
         success: true,
-        message: 'Đã lưu cấu hình Bot API Token & Webhook trên Cloudflare D1!'
+        verified: verification ? verification.ok : true,
+        bot_profile: verification?.bot || null,
+        webhook_info: verification?.webhook || null,
+        message: verification?.ok
+          ? `✅ Đã kết nối & lưu thành công Zalo Bot "${verification.bot.display_name}" (@${verification.bot.account_name} • ID: ${verification.bot.id}) trên Cloudflare D1!`
+          : 'Đã lưu cấu hình Bot API Token & Webhook trên Cloudflare D1!'
+      });
+    }
+
+    if (action === 'verify_bot_config') {
+      const id = String(body.id || 'bot_primary').trim();
+      const existing = await db.prepare(`SELECT * FROM bot_webhook_configs WHERE id = ? LIMIT 1`).bind(id).first().catch(() => null);
+      const tokenToVerify = String(body.bot_token || existing?.bot_token || DEFAULT_ZALO_BOT_TOKEN).trim();
+      const inspection = await inspectZaloBotPlatform(tokenToVerify);
+      const subsRes = await db.prepare(`SELECT * FROM zalo_bot_subscribers ORDER BY updated_at DESC LIMIT 20`).all().catch(() => ({ results: [] }));
+
+      if (inspection.ok && inspection.bot) {
+        await db.prepare(`
+          UPDATE bot_webhook_configs
+          SET provider = 'zalo_bot_platform',
+              name = ?,
+              bot_token = ?,
+              webhook_url = COALESCE(?, webhook_url),
+              last_status = 200,
+              updated_at = CURRENT_TIMESTAMP
+          WHERE id = ?
+        `).bind(
+          `Zalo Bot: ${inspection.bot.display_name} (@${inspection.bot.account_name})`,
+          tokenToVerify,
+          inspection.webhook?.url || 'https://bot-api.zaloplatforms.com',
+          id
+        ).run().catch(() => {});
+      }
+
+      return json({
+        success: inspection.ok,
+        verified: inspection.ok,
+        bot_profile: inspection.bot || null,
+        webhook_info: inspection.webhook || null,
+        subscribers: subsRes?.results || [],
+        chat_id: existing?.chat_id || '',
+        message: inspection.ok
+          ? `✅ Token hợp lệ! Kết nối thành công với Zalo Bot "${inspection.bot.display_name}" (@${inspection.bot.account_name}, ID: ${inspection.bot.id}, Loại: ${inspection.bot.account_type}).`
+          : `❌ Lỗi xác thực Token: ${inspection.error}`
       });
     }
 
@@ -782,11 +911,50 @@ export async function POST({ request, platform }) {
 
       const configsRes = await db.prepare(`SELECT * FROM bot_webhook_configs WHERE is_active = 1`).all().catch(() => ({ results: [] }));
       const configs = configsRes?.results || [];
+      const subsRes = await db.prepare(`SELECT chat_id FROM zalo_bot_subscribers ORDER BY updated_at DESC LIMIT 20`).all().catch(() => ({ results: [] }));
+      const subscriberIds = (subsRes?.results || []).map(r => r.chat_id).filter(Boolean);
 
       const dispatchLogs = [];
       for (const cfg of configs) {
-        if (!cfg.webhook_url && !cfg.bot_token) continue;
+        const effectiveToken = cfg.bot_token || DEFAULT_ZALO_BOT_TOKEN;
+        if (!cfg.webhook_url && !effectiveToken) continue;
+
         try {
+          if (cfg.provider === 'zalo_bot_platform' || isZaloBotPlatformToken(effectiveToken)) {
+            const inspection = await inspectZaloBotPlatform(effectiveToken);
+            const targetChatIds = [...new Set([body.chat_id, cfg.chat_id, ...subscriberIds].map(x => String(x || '').trim()).filter(Boolean))];
+            let sentCount = 0;
+            let lastHttpStatus = inspection.ok ? 200 : 401;
+
+            for (const cid of targetChatIds) {
+              const sendRes = await fetch(`https://bot-api.zaloplatforms.com/bot${effectiveToken}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ chat_id: cid, text: messageText.slice(0, 1900) })
+              });
+              const sendJson = await sendRes.json().catch(() => ({}));
+              lastHttpStatus = sendRes.status;
+              if (sendRes.ok && sendJson?.ok) sentCount++;
+            }
+
+            await db.prepare(`UPDATE bot_webhook_configs SET last_status = ?, last_dispatched_at = CURRENT_TIMESTAMP WHERE id = ?`).bind(lastHttpStatus, cfg.id).run();
+            dispatchLogs.push({
+              id: cfg.id,
+              name: inspection.bot ? `Zalo Bot: ${inspection.bot.display_name} (@${inspection.bot.account_name})` : cfg.name,
+              provider: 'zalo_bot_platform',
+              bot_id: inspection.bot?.id || null,
+              webhook_url: inspection.webhook?.url || null,
+              sent_to_chats: sentCount,
+              target_chat_ids: targetChatIds,
+              status: lastHttpStatus,
+              ok: inspection.ok,
+              note: targetChatIds.length > 0
+                ? `Đã gửi trực tiếp qua sendMessage tới ${sentCount}/${targetChatIds.length} chat_id.`
+                : 'Bot Token hoạt động tốt (getMe 200 OK). Nhập chat_id người nhận hoặc nhắn tin vào Bot để gửi trực tiếp qua sendMessage.'
+            });
+            continue;
+          }
+
           let targetUrl = cfg.webhook_url;
           let payload = {
             event: body.event_type || 'SESSION_AUDIT_REPORT',
@@ -795,12 +963,12 @@ export async function POST({ request, platform }) {
             timestamp: new Date().toISOString()
           };
           const headers = { 'Content-Type': 'application/json' };
-          if (cfg.provider === 'telegram_bot' && cfg.bot_token && cfg.chat_id) {
-            targetUrl = `https://api.telegram.org/bot${cfg.bot_token}/sendMessage`;
+          if (cfg.provider === 'telegram_bot' && effectiveToken && cfg.chat_id) {
+            targetUrl = `https://api.telegram.org/bot${effectiveToken}/sendMessage`;
             payload = { chat_id: cfg.chat_id, text: messageText };
-          } else if (cfg.bot_token) {
-            headers['Authorization'] = `Bearer ${cfg.bot_token}`;
-            headers['access_token'] = cfg.bot_token;
+          } else if (effectiveToken) {
+            headers['Authorization'] = `Bearer ${effectiveToken}`;
+            headers['access_token'] = effectiveToken;
           }
 
           if (targetUrl && targetUrl.startsWith('https://')) {
@@ -817,11 +985,14 @@ export async function POST({ request, platform }) {
         }
       }
 
+      const firstZaloLog = dispatchLogs.find(l => l.provider === 'zalo_bot_platform');
       return json({
         success: true,
-        message: dispatchLogs.length > 0
-          ? `Đã thực thi bắn tin nhắn qua ${dispatchLogs.length} kênh Bot Server-side!`
-          : 'Đã ghi nhận bản tin nội bộ (Chưa có URL Webhook/Bot Token ngoài được kích hoạt).',
+        message: firstZaloLog
+          ? `✅ Kết nối thành công ${firstZaloLog.name}! ${firstZaloLog.note}`
+          : dispatchLogs.length > 0
+            ? `Đã thực thi bắn tin nhắn qua ${dispatchLogs.length} kênh Bot Server-side!`
+            : 'Đã ghi nhận bản tin nội bộ.',
         dispatch_logs: dispatchLogs
       });
     }

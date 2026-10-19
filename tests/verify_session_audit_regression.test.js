@@ -437,4 +437,42 @@ describe('Session Quality Audit & Curriculum Reconciliation Regression Suite', (
     assert.ok(auditPageSrc.includes('data-testid="save-session-audit-btn"'), 'Session audit page must have save button');
     assert.ok(auditPageSrc.includes('data-testid="export-session-dossier-btn"'), 'Session audit page must have 5-part dossier export button');
   });
+
+  test('3. Fixed Floating Dockbar (DockBar.svelte), Top Dockbar Capsule & Smooth Zoom In-Out Physics', () => {
+    const dockBarSrc = fs.readFileSync('src/lib/components/ui/DockBar.svelte', 'utf8');
+    assert.ok(dockBarSrc.includes('id="floating-dockbar"'), 'DockBar must have id="floating-dockbar"');
+    assert.ok(dockBarSrc.includes('data-testid="floating-dockbar"'), 'DockBar must have data-testid="floating-dockbar"');
+    assert.ok(dockBarSrc.includes('getItemTransform'), 'DockBar must implement proximity magnification physics');
+    assert.ok(dockBarSrc.includes('scale('), 'DockBar must apply smooth scale transform');
+
+    const layoutSrc = fs.readFileSync('src/routes/+layout.svelte', 'utf8');
+    assert.ok(layoutSrc.includes('<DockBar'), 'Root layout must mount <DockBar />');
+    assert.ok(layoutSrc.includes('data-testid="top-dock-nav"'), 'Root layout must include top-dock-nav capsule');
+    assert.ok(layoutSrc.includes('top-dock-pill'), 'Root layout nav items must use top-dock-pill zoom class');
+
+    const appCss = fs.readFileSync('src/app.css', 'utf8');
+    assert.ok(appCss.includes('.dockbar-item'), 'app.css must define .dockbar-item transition');
+    assert.ok(appCss.includes('.top-dock-pill:hover'), 'app.css must define .top-dock-pill:hover zoom magnification');
+  });
+
+  test('4. Zalo Bot Platform Token Verification (verify_bot_config) & Webhook Subscriber Capture', async () => {
+    const verifyRes = await postSessionAudit({
+      request: new Request('https://timbk.io.vn/api/session-audit', {
+        method: 'POST',
+        headers: teacherHeaders,
+        body: JSON.stringify({
+          action: 'verify_bot_config',
+          id: 'bot_primary'
+        })
+      }),
+      platform
+    });
+    assert.equal(verifyRes.status, 200);
+    const verifyData = await verifyRes.json();
+    assert.equal(verifyData.success, true);
+    assert.equal(verifyData.verified, true);
+    assert.equal(verifyData.bot_profile?.id, '2267052943606876676');
+    assert.equal(verifyData.bot_profile?.account_name, 'bot.ynKabJAc');
+  });
 });
+

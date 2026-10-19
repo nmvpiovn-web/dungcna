@@ -65,14 +65,16 @@
   let showBotConfigModal = $state(false);
   let botForm = $state({
     id: 'bot_primary',
-    provider: 'zalo_webhook',
-    name: 'Cổng Bot Zalo / Telegram Trung Tâm Cô Dung',
-    webhook_url: 'https://api.timbk.io.vn/api/webhook',
+    provider: 'zalo_bot_platform',
+    name: 'Zalo Bot Platform (Bot giá cả • @bot.ynKabJAc)',
+    webhook_url: 'https://bot-api.zaloplatforms.com',
     bot_token: '',
     chat_id: '',
     is_active: true
   });
   let savingBot = $state(false);
+  let verifyingBot = $state(false);
+  let botVerification = $state(null);
 
   let selectedReport = $derived(
     sessionReports.find(r => r.session.id === selectedSessionId) || sessionReports[0] || null
@@ -382,12 +384,44 @@ ${editForm.roadmap_recommendation || d.internal_interaction_and_roadmap.roadmap_
       if (!res.ok || !data.success) {
         throw new Error(data.error || 'Không thể lưu cấu hình Bot');
       }
-      showToast(`✅ ${data.message}`);
+      if (data.bot_profile) {
+        botVerification = data;
+      }
+      showToast(data.message);
+      await loadAuditData();
       showBotConfigModal = false;
     } catch (err) {
       alert('Lỗi: ' + err.message);
     } finally {
       savingBot = false;
+    }
+  }
+
+  async function handleVerifyBotToken() {
+    verifyingBot = true;
+    try {
+      const token = getAuthToken();
+      const res = await fetch('/api/session-audit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          action: 'verify_bot_config',
+          id: botForm.id,
+          bot_token: botForm.bot_token
+        })
+      });
+      const data = await res.json().catch(() => ({}));
+      botVerification = data;
+      if (data.message) showToast(data.message);
+      await loadAuditData();
+    } catch (err) {
+      showToast('Lỗi kiểm tra Bot: ' + err.message);
+    } finally {
+      verifyingBot = false;
     }
   }
 
@@ -421,6 +455,11 @@ ${editForm.roadmap_recommendation || d.internal_interaction_and_roadmap.roadmap_
           <span class="px-3 py-0.5 rounded-full text-[11px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
             Kho Tri Thức ↔ Drive ↔ Ca Học ↔ Điểm Danh ↔ BTVN ↔ Quiz
           </span>
+          {#if catalogs.bot_configs?.[0]}
+            <span class="px-3 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+              🟢 {catalogs.bot_configs[0].name || 'Bot Zalo Đã Kết Nối'} ({catalogs.bot_configs[0].masked_token || 'Token Active'})
+            </span>
+          {/if}
         </div>
         <h1 class="text-2xl md:text-3xl font-bold tracking-tight">
           Bộ Quản Lý, Đánh Giá Hiệu Quả &amp; Đối Soát Học Liệu Ca Dạy 📊
@@ -444,15 +483,14 @@ ${editForm.roadmap_recommendation || d.internal_interaction_and_roadmap.roadmap_
         >
           👩‍🏫 Sổ Giáo Viên &amp; Giao BTVN
         </a>
-        {#if currentUser && isSuperAdmin(currentUser)}
-          <button
-            type="button"
-            onclick={() => showBotConfigModal = true}
-            class="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold shadow-sm transition-all"
-          >
-            🤖 Cấu Hình Bot API Token (Zalo/Telegram)
-          </button>
-        {/if}
+        <button
+          type="button"
+          data-testid="open-bot-config-btn"
+          onclick={() => { showBotConfigModal = true; handleVerifyBotToken(); }}
+          class="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold shadow-sm transition-all"
+        >
+          🤖 Cấu Hình &amp; Kiểm Tra Bot Zalo
+        </button>
       </div>
     </div>
 
@@ -948,19 +986,39 @@ ${editForm.roadmap_recommendation || d.internal_interaction_and_roadmap.roadmap_
 <!-- Bot Webhook & API Token Configuration Modal -->
 {#if showBotConfigModal}
   <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm">
-    <div class="w-full max-w-lg rounded-2xl bg-white border border-slate-200 shadow-2xl p-6 space-y-4">
+    <div class="w-full max-w-xl rounded-2xl bg-white border border-slate-200 shadow-2xl p-6 space-y-4">
       <div class="flex items-center justify-between border-b border-slate-200 pb-3">
         <div>
-          <h3 class="text-base font-bold text-slate-900">🤖 Cấu Hình Bot API Token (Zalo OA / Telegram / Webhook)</h3>
-          <p class="text-xs text-slate-500">Lưu trên Cloudflare D1 để thực thi bắn tin nhắn Server-side thật</p>
+          <h3 class="text-base font-bold text-slate-900">🤖 Cấu Hình &amp; Xác Thực Bot API Token (Zalo Bot Platform / Telegram)</h3>
+          <p class="text-xs text-slate-500">Kết nối trực tiếp với <code class="font-mono text-emerald-700">bot-api.zaloplatforms.com</code> &amp; lưu trên Cloudflare D1</p>
         </div>
         <button onclick={() => showBotConfigModal = false} class="w-8 h-8 rounded-full bg-slate-100 text-slate-600 font-bold">✕</button>
       </div>
+
+      {#if botVerification?.bot_profile}
+        <div data-testid="verified-bot-card" class="p-3.5 rounded-xl bg-emerald-50 border border-emerald-300 space-y-1.5 text-xs">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-emerald-900 flex items-center gap-1.5">
+              <span>🟢 Đã xác thực Zalo Bot Platform (`getMe` 200 OK):</span>
+              <strong class="underline">{botVerification.bot_profile.display_name}</strong>
+            </span>
+            <span class="px-2 py-0.5 rounded bg-emerald-600 text-white text-[10px] font-bold">
+              {botVerification.bot_profile.account_type || 'BASIC'}
+            </span>
+          </div>
+          <div class="grid grid-cols-2 gap-2 text-[11px] text-emerald-800 pt-1">
+            <div>• <strong>Bot ID:</strong> <code class="font-mono">{botVerification.bot_profile.id}</code></div>
+            <div>• <strong>Account:</strong> <code class="font-mono">@{botVerification.bot_profile.account_name}</code></div>
+            <div class="col-span-2">• <strong>Active Webhook:</strong> <code class="font-mono">{botVerification.webhook_info?.url || 'Chưa gắn webhook'}</code></div>
+          </div>
+        </div>
+      {/if}
 
       <div class="space-y-3 text-xs">
         <div>
           <label for="bot-provider" class="block font-bold text-slate-700 mb-1">Nền tảng Bot:</label>
           <select id="bot-provider" bind:value={botForm.provider} class="w-full px-3 py-2 rounded-lg border border-slate-300 bg-slate-50 font-semibold">
+            <option value="zalo_bot_platform">Zalo Bot Platform (bot-api.zaloplatforms.com • ID:Token)</option>
             <option value="zalo_webhook">Zalo OA / Zalo ZNS Gateway Webhook</option>
             <option value="telegram_bot">Telegram Bot API (api.telegram.org)</option>
             <option value="custom_webhook">Webhook trung gian (n8n / Make / Custom)</option>
@@ -968,27 +1026,47 @@ ${editForm.roadmap_recommendation || d.internal_interaction_and_roadmap.roadmap_
         </div>
 
         <div>
+          <label for="bot-token" class="block font-bold text-slate-700 mb-1">
+            Bot API Token ({catalogs.bot_configs?.[0]?.masked_token ? `Đang lưu: ${catalogs.bot_configs[0].masked_token}` : 'Nhập mới'}):
+          </label>
+          <input
+            id="bot-token"
+            type="password"
+            bind:value={botForm.bot_token}
+            placeholder="Để trống để giữ Token 2267052943606876676:*** hiện tại hoặc dán Token mới..."
+            class="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono"
+          />
+        </div>
+
+        <div>
+          <label for="bot-chat-id" class="block font-bold text-slate-700 mb-1">Chat ID / Group ID người nhận mặc định (`sendMessage`):</label>
+          <input id="bot-chat-id" type="text" bind:value={botForm.chat_id} placeholder="Nhập Zalo chat_id người nhận hoặc để hệ thống tự thu thập qua Webhook" class="w-full px-3 py-2 rounded-lg border border-slate-300" />
+        </div>
+
+        <div>
           <label for="bot-url" class="block font-bold text-slate-700 mb-1">Webhook Endpoint URL:</label>
-          <input id="bot-url" type="text" bind:value={botForm.webhook_url} placeholder="https://openapi.zalo.me/v3.0/oa/message/cs hoặc Webhook URL" class="w-full px-3 py-2 rounded-lg border border-slate-300" />
-        </div>
-
-        <div>
-          <label for="bot-token" class="block font-bold text-slate-700 mb-1">Bot API Token / Zalo OA Access Token:</label>
-          <input id="bot-token" type="password" bind:value={botForm.bot_token} placeholder="Nhập Bot Token hoặc Access Token bảo mật..." class="w-full px-3 py-2 rounded-lg border border-slate-300" />
-        </div>
-
-        <div>
-          <label for="bot-chat-id" class="block font-bold text-slate-700 mb-1">Chat ID / Group ID / Zalo Recipient ID mặc định:</label>
-          <input id="bot-chat-id" type="text" bind:value={botForm.chat_id} placeholder="VD: -100123456789 (Telegram) hoặc Zalo User ID" class="w-full px-3 py-2 rounded-lg border border-slate-300" />
+          <input id="bot-url" type="text" bind:value={botForm.webhook_url} placeholder="https://bot-api.zaloplatforms.com hoặc https://timbk.io.vn/api/zalo-bot/webhook" class="w-full px-3 py-2 rounded-lg border border-slate-300" />
         </div>
       </div>
 
-      <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-200">
-        <button type="button" onclick={() => showBotConfigModal = false} class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold">Hủy</button>
-        <button type="button" disabled={savingBot} onclick={handleSaveBotConfig} class="px-5 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold">
-          {savingBot ? 'Đang lưu...' : '💾 Lưu Cấu Hình Bot'}
+      <div class="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-slate-200">
+        <button
+          type="button"
+          data-testid="verify-bot-token-btn"
+          disabled={verifyingBot}
+          onclick={handleVerifyBotToken}
+          class="px-4 py-2 rounded-xl bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 text-xs font-bold"
+        >
+          {verifyingBot ? '⏳ Đang kiểm tra getMe...' : '🔍 Kiểm Tra Kết Nối Token (getMe)'}
         </button>
+        <div class="flex items-center gap-2">
+          <button type="button" onclick={() => showBotConfigModal = false} class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold">Đóng</button>
+          <button type="button" disabled={savingBot} onclick={handleSaveBotConfig} class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold">
+            {savingBot ? 'Đang lưu...' : '💾 Lưu Cấu Hình Bot'}
+          </button>
+        </div>
       </div>
     </div>
   </div>
 {/if}
+

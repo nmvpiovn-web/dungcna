@@ -29,6 +29,7 @@
  import EducationNavigation from '$lib/components/EducationNavigation.svelte';
  import ThemeSwitcher from '$lib/components/ui/ThemeSwitcher.svelte';
  import BottomNav from '$lib/components/ui/BottomNav.svelte';
+ import DockBar from '$lib/components/ui/DockBar.svelte';
  import ZaloCta from '$lib/components/ui/ZaloCta.svelte';
  import ThemeStudio from '$lib/components/ThemeStudio.svelte';
  import PersonalThemeModal from '$lib/components/PersonalThemeModal.svelte';
@@ -391,14 +392,24 @@
  </div>
  </a>
 
- <!-- Desktop Navigation with Flyout Submenus -->
- <nav class="hidden lg:flex items-center gap-1 relative z-40 shrink-0">
+ <!-- Desktop Navigation with Dockbar Capsule & Smooth Zoom In-Out -->
+ <nav data-testid="top-dock-nav" class="top-dock-nav hidden lg:flex items-center gap-1 relative z-40 shrink-0">
+ <!-- Item 0: Trang Chủ (Direct Link) -->
+ <a
+ href="/"
+ onclick={closeAllDropdowns}
+ class="top-dock-pill flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold tracking-wide {$page.url.pathname === '/' ? 'bg-brand-600 text-white shadow-xs' : 'text-ink-900 hover:bg-surface-0'}"
+ >
+ <span>🏠</span>
+ <span class="hidden xl:inline whitespace-nowrap">Trang Chủ</span>
+ </a>
+
  <!-- Item 1: Lộ Trình Đào Tạo Dropdown (Or Direct Student Course) -->
  {#if currentUser?.role === 'student'}
  <a
  href="/"
  onclick={closeAllDropdowns}
- class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold tracking-wide transition-all bg-emerald-50 text-emerald-800 border border-emerald-300/60"
+ class="top-dock-pill flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide bg-emerald-50 text-emerald-800 border border-emerald-300/60"
  >
  <span>🎓</span>
  <span>Lớp Của Tôi: {currentUserGrade || 'Chưa có lớp'}</span>
@@ -409,7 +420,7 @@
  id="nav-btn-courses"
  data-testid="nav-btn-courses"
  onclick={() => toggleSubmenu('courses')}
- class="flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-semibold tracking-wide transition-all {activeDropdown === 'courses' ? 'bg-brand-50 text-brand-700' : 'text-ink-500 hover:text-ink-900 hover:bg-surface-1'}"
+ class="top-dock-pill flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide {activeDropdown === 'courses' ? 'bg-brand-50 text-brand-700' : 'text-ink-900 hover:bg-surface-0'}"
  >
  <span>📚</span>
  <span class="whitespace-nowrap">Lộ Trình</span>
@@ -417,7 +428,7 @@
  </button>
 
  {#if activeDropdown === 'courses'}
- <div class="absolute left-0 mt-2 w-72 rounded-lg bg-surface-0 border border-line shadow-xl p-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+ <div class="absolute left-0 mt-2.5 w-72 rounded-xl bg-surface-0 border border-line shadow-xl p-2 z-50 animate-in fade-in zoom-in-95 duration-150">
  <a
  href="/?tab=primary"
  onclick={closeAllDropdowns}
@@ -529,7 +540,7 @@
  id="nav-btn-exams"
  data-testid="nav-btn-exams"
  onclick={() => toggleSubmenu('exams')}
- class="flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-semibold tracking-wide transition-all {$page.url.pathname.startsWith('/exam') ? 'bg-brand-600 text-white shadow-xs' : activeDropdown === 'exams' ? 'bg-brand-50 text-brand-700' : 'text-ink-500 hover:text-ink-900 hover:bg-surface-1'}"
+ class="top-dock-pill flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide {$page.url.pathname.startsWith('/exam') ? 'bg-brand-600 text-white shadow-xs' : activeDropdown === 'exams' ? 'bg-brand-50 text-brand-700' : 'text-ink-900 hover:bg-surface-0'}"
  >
  <span>⏱️</span>
  <span class="whitespace-nowrap">Phòng Thi</span>
@@ -537,7 +548,7 @@
  </button>
 
  {#if activeDropdown === 'exams'}
- <div class="absolute left-0 mt-2 w-72 rounded-lg bg-surface-0 border border-line shadow-xl p-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+ <div class="absolute left-0 mt-2.5 w-72 rounded-xl bg-surface-0 border border-line shadow-xl p-2 z-50 animate-in fade-in zoom-in-95 duration-150">
  <a
  href="/exam"
  onclick={closeAllDropdowns}
@@ -600,7 +611,7 @@
  id="nav-btn-tools"
  data-testid="nav-btn-tools"
  onclick={() => toggleSubmenu('tools')}
- class="flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-semibold tracking-wide transition-all {$page.url.pathname === '/dictionary' || $page.url.pathname === '/flashcards' || $page.url.pathname === '/games' || $page.url.pathname === '/grammar' || $page.url.pathname === '/pedagogy' ? 'bg-brand-600 text-white shadow-xs' : activeDropdown === 'tools' ? 'bg-brand-50 text-brand-700' : 'text-ink-500 hover:text-ink-900 hover:bg-surface-1'}"
+ class="top-dock-pill flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide {$page.url.pathname === '/dictionary' || $page.url.pathname === '/flashcards' || $page.url.pathname === '/games' || $page.url.pathname === '/grammar' || $page.url.pathname === '/pedagogy' ? 'bg-brand-600 text-white shadow-xs' : activeDropdown === 'tools' ? 'bg-brand-50 text-brand-700' : 'text-ink-900 hover:bg-surface-0'}"
  >
  <span>🛠️</span>
  <span class="whitespace-nowrap">Công Cụ</span>
@@ -608,7 +619,7 @@
  </button>
 
  {#if activeDropdown === 'tools'}
- <div class="absolute left-0 mt-2 w-72 rounded-lg bg-surface-0 border border-line shadow-xl p-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+ <div class="absolute left-0 mt-2.5 w-72 rounded-xl bg-surface-0 border border-line shadow-xl p-2 z-50 animate-in fade-in zoom-in-95 duration-150">
  <a
  href="/dictionary"
  onclick={closeAllDropdowns}
@@ -699,7 +710,7 @@
  <a
  href="/schedule"
  onclick={closeAllDropdowns}
- class="flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-semibold tracking-wide transition-all {$page.url.pathname === '/schedule' ? 'bg-indigo-700 text-white shadow-xs' : 'text-ink-500 hover:text-ink-900 hover:bg-surface-1'}"
+ class="top-dock-pill flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide {$page.url.pathname === '/schedule' ? 'bg-indigo-700 text-white shadow-xs' : 'text-ink-900 hover:bg-surface-0'}"
  >
  <span>📅</span>
  <span class="whitespace-nowrap">Thời Khóa Biểu</span>
@@ -709,30 +720,30 @@
  <a
  href="/quiz-menu"
  onclick={closeAllDropdowns}
- class="flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-semibold tracking-wide transition-all {$page.url.pathname.startsWith('/quiz-menu') ? 'bg-rose-600 text-white shadow-xs' : 'text-ink-500 hover:text-ink-900 hover:bg-surface-1'}"
+ class="top-dock-pill flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide {$page.url.pathname.startsWith('/quiz-menu') ? 'bg-rose-600 text-white shadow-xs' : 'text-ink-900 hover:bg-surface-0'}"
  >
  <span>📝</span>
  <span class="whitespace-nowrap">Quiz</span>
  </a>
 
- <!-- Role-based Portal Link: Sổ Phụ Huynh (parent only) / Sổ Giáo Viên (teacher only) -->
+ <!-- Role-based Portal Link: Sổ Phụ Huynh (parent only) / Sổ Giáo Viên & Đối Soát (teacher/admin) -->
  {#if currentUser?.role === 'parent'}
  <a
- href="/?tab=parent"
+ href="/cpanel/parent"
  onclick={closeAllDropdowns}
- class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold tracking-wide transition-all bg-purple-50 text-purple-700 border border-purple-200 shadow-xs"
+ class="top-dock-pill flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide bg-purple-50 text-purple-700 border border-purple-200 shadow-xs"
  >
  <span>👨‍👩‍👧</span>
  <span>Sổ Phụ Huynh</span>
  </a>
- {:else if currentUser?.role === 'teacher'}
+ {:else if isTeacherOrAdmin(currentUser)}
  <a
- href="/schedule"
+ href="/session-audit"
  onclick={closeAllDropdowns}
- class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold tracking-wide transition-all bg-teal-50 text-teal-700 border border-teal-200 shadow-xs"
+ class="top-dock-pill flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide {$page.url.pathname.startsWith('/session-audit') ? 'bg-emerald-700 text-white shadow-xs' : 'bg-emerald-50 text-emerald-800 border border-emerald-200 shadow-xs'}"
  >
- <span>👨‍🏫</span>
- <span>Sổ Giáo Viên</span>
+ <span>📊</span>
+ <span class="whitespace-nowrap">Đối Soát Ca Dạy</span>
  </a>
  {/if}
 
@@ -743,7 +754,7 @@
  id="nav-btn-admin"
  data-testid="nav-btn-admin"
  onclick={() => toggleSubmenu('admin')}
- class="flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-semibold tracking-wide transition-all {$page.url.pathname.startsWith('/admin') || $page.url.pathname.startsWith('/second-brain') ? 'bg-amber-600 text-white shadow-xs' : activeDropdown === 'admin' ? 'bg-amber-50 text-amber-800' : 'text-amber-700 hover:bg-amber-50'}"
+ class="top-dock-pill flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide {$page.url.pathname.startsWith('/admin') || $page.url.pathname.startsWith('/second-brain') ? 'bg-amber-600 text-white shadow-xs' : activeDropdown === 'admin' ? 'bg-amber-50 text-amber-800' : 'text-amber-700 hover:bg-amber-50'}"
  >
  <span>⚙️</span>
  <span>Admin CP</span>
@@ -751,7 +762,49 @@
  </button>
 
  {#if activeDropdown === 'admin'}
- <div class="absolute right-0 mt-2 w-72 rounded-lg bg-surface-0 border border-line shadow-xl p-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+ <div class="absolute right-0 mt-2.5 w-76 rounded-xl bg-surface-0 border border-line shadow-xl p-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+ <a
+ href="/cpanel/teacher"
+ onclick={closeAllDropdowns}
+ class="flex items-center gap-3 p-2.5 rounded-md hover:bg-surface-1 transition-colors group"
+ >
+ <div class="w-8 h-8 rounded-md bg-teal-100 text-teal-800 flex items-center justify-center text-sm font-semibold">
+ 👨‍🏫
+ </div>
+ <div>
+ <div class="font-semibold text-xs text-ink-900 group-hover:text-brand-600">Sổ Giáo Viên &amp; Giao BTVN</div>
+ <div class="text-[11px] text-ink-500 font-medium">Giao bài tập, gắn đề Quiz &amp; chấm điểm</div>
+ </div>
+ </a>
+
+ <a
+ href="/session-audit"
+ onclick={closeAllDropdowns}
+ class="flex items-center gap-3 p-2.5 rounded-md hover:bg-surface-1 transition-colors group"
+ >
+ <div class="w-8 h-8 rounded-md bg-emerald-100 text-emerald-700 flex items-center justify-center text-sm font-semibold">
+ 📊
+ </div>
+ <div>
+ <div class="font-semibold text-xs text-ink-900 group-hover:text-brand-600">Đối Soát Chất Lượng Ca Dạy</div>
+ <div class="text-[11px] text-ink-500 font-medium">Hồi quy Kho Tri Thức, Drive, BTVN &amp; Bot Zalo</div>
+ </div>
+ </a>
+
+ <a
+ href="/admincp"
+ onclick={closeAllDropdowns}
+ class="flex items-center gap-3 p-2.5 rounded-md hover:bg-surface-1 transition-colors group"
+ >
+ <div class="w-8 h-8 rounded-md bg-amber-100 text-amber-800 flex items-center justify-center text-sm font-semibold">
+ ⚡
+ </div>
+ <div>
+ <div class="font-semibold text-xs text-ink-900 group-hover:text-brand-600">Quản Trị User &amp; Phân Quyền Role</div>
+ <div class="text-[11px] text-ink-500 font-medium">Quản lý HS, PH, GV, đổi mật khẩu đồng bộ D1</div>
+ </div>
+ </a>
+
  <a
  href="/admin"
  onclick={closeAllDropdowns}
@@ -802,7 +855,7 @@
  class="flex items-center gap-3 p-2.5 rounded-md hover:bg-surface-1 transition-colors group"
  >
  <div class="w-8 h-8 rounded-md bg-purple-100 text-purple-700 flex items-center justify-center text-sm font-semibold">
- 📊
+ 📈
  </div>
  <div>
  <div class="font-semibold text-xs text-ink-900 group-hover:text-brand-600">Đánh Giá Năng Lực Học Viên</div>
@@ -1393,14 +1446,20 @@
  {@render children()}
  </main>
 
- <!-- Global mobile bottom nav + floating Zalo (render 1 lan cho moi trang) -->
+ <!-- Global Fixed Floating Dockbar (Desktop/Tablet) + Mobile BottomNav + Floating Zalo -->
+ <DockBar
+ {currentUser}
+ {currentUserGrade}
+ onOpenAuth={openAuthModal}
+ onOpenLeaderDrawer={() => showLeaderDrawer = true}
+ />
  <BottomNav />
  <ZaloCta />
  <ThemeStudio />
  <PersonalThemeModal bind:isOpen={showPersonalThemeModal} />
 
  <!-- Footer -->
- <footer class="bg-surface-0 border-t border-line pt-8 pb-24 lg:pb-8 mt-auto text-xs text-ink-500 transition-colors duration-200">
+ <footer class="bg-surface-0 border-t border-line pt-8 pb-24 lg:pb-24 mt-auto text-xs text-ink-500 transition-colors duration-200">
  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
  <div class="flex items-center gap-3">
  <div class="w-8 h-8 rounded-md bg-brand-700 flex items-center justify-center text-white font-semibold text-sm">

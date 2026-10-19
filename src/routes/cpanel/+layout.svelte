@@ -326,13 +326,13 @@
  </div>
  </div>
 
- <!-- Secondary Nav Tabs -->
- <div class="max-w-7xl mx-auto flex items-center gap-2 overflow-x-auto pt-2 scrollbar-none w-full min-w-0">
+ <!-- Secondary Nav Tabs (Cpanel Sub-Dockbar) -->
+ <div data-testid="cpanel-sub-dockbar" class="max-w-7xl mx-auto flex items-center gap-2 overflow-x-auto pt-2 pb-1 scrollbar-none w-full min-w-0">
  {#each navItems as item}
  {@const isActive = $page.url.pathname === item.path || ($page.url.hash && item.path.includes($page.url.hash))}
  <a
  href={item.path}
- class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold whitespace-nowrap transition-all shrink-0 {isActive ? 'bg-cx-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'}"
+ class="cpanel-dock-item flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap shrink-0 border {isActive ? 'bg-cx-600 text-white border-cx-700 shadow-xs' : 'bg-white text-slate-700 border-slate-200 hover:border-cx-400 hover:bg-slate-50'}"
  >
  <span aria-hidden="true">{item.icon}</span>
  <span>{item.label}</span>
