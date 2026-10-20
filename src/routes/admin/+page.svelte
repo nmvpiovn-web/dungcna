@@ -1414,7 +1414,7 @@
  <div class="pt-2 flex items-center justify-center gap-3">
  <a
  href="/"
- class="px-6 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white font-extrabold text-xs shadow-lg transition-all flex items-center justify-center gap-2"
+ class="px-6 py-3 rounded-2xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs shadow-lg transition-all flex items-center justify-center gap-2"
  >
  <span>🏠 Về Trang Chủ</span>
  </a>
@@ -1422,38 +1422,38 @@
  </div>
  {:else}
  <!-- Header Banner -->
- <div class="rounded-3xl bg-slate-900 border border-slate-800 p-6 md:p-8 shadow-2xl relative overflow-hidden">
+ <div class="rounded-3xl bg-white border border-slate-200 p-6 md:p-8 shadow-2xl relative overflow-hidden">
  <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
  <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
  <div class="space-y-2">
  <div class="flex flex-wrap items-center gap-2">
- <span class="px-3 py-1 rounded-full text-[11px] font-extrabold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 uppercase tracking-wider flex items-center gap-1.5">
+ <span class="px-3 py-1 rounded-full text-[11px] font-extrabold bg-emerald-500/20 text-emerald-700 border border-emerald-500/30 uppercase tracking-wider flex items-center gap-1.5">
  <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
  <span>HỆ THỐNG ĐIỀU HÀNH ADMIN CP &amp; TEACHER PORTAL</span>
  </span>
  {#if isSuperAdmin(currentUser)}
- <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">
+ <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-700 border border-amber-500/30">
  👑 SuperAdmin Tối Cao
  </span>
  {:else}
- <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-teal-500/20 text-teal-400 border border-teal-500/30">
+ <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-teal-500/20 text-teal-700 border border-teal-500/30">
  👩‍🏫 Cổng Giáo Viên &amp; Trợ Giảng
  </span>
  {/if}
  </div>
 
- <h1 class="text-2xl md:text-3xl font-black text-white tracking-tight">
+ <h1 class="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">
  Bảng Điều Khiển Quản Trị Toàn Diện Tiếng Anh Cô Dung
  </h1>
- <p class="text-xs text-slate-300 max-w-3xl leading-relaxed">
+ <p class="text-xs text-slate-700 max-w-3xl leading-relaxed">
  Đồng bộ tức thời giữa <strong>Học sinh (Duyệt Trial)</strong> • <strong>Giáo viên &amp; Lương ca dạy</strong> • <strong>Thời khóa biểu &amp; Nhắc đón 10p</strong> • <strong>Học phí trừ Sao thưởng</strong> • <strong>Báo cáo Webhook Bot</strong>.
 					</p>
 					<div class="flex flex-wrap items-center gap-2 pt-2">
 						<a href="/admincp" class="px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs shadow-sm transition-all">⚡ AdminCP Tổng Hợp &amp; Đổi Mật Khẩu User D1 (/admincp)</a>
-						<a href="/cpanel/leader" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-slate-700 font-bold text-xs transition-all">👑 Cpanel Leader</a>
-						<a href="/cpanel/teacher" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-teal-300 border border-slate-700 font-bold text-xs transition-all">👩‍🏫 Cpanel Giáo Viên</a>
-						<button type="button" onclick={() => syncAllOperationalDataFromD1()} class="px-3 py-1.5 rounded-xl bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-200 border border-emerald-500/40 font-bold text-xs transition-all">🔄 Đồng Bộ Ngay Từ D1</button>
+						<a href="/cpanel/leader" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200/80 text-emerald-700 border border-slate-200 font-bold text-xs transition-all">👑 Cpanel Leader</a>
+						<a href="/cpanel/teacher" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200/80 text-teal-700 border border-slate-200 font-bold text-xs transition-all">👩‍🏫 Cpanel Giáo Viên</a>
+						<button type="button" onclick={() => syncAllOperationalDataFromD1()} class="px-3 py-1.5 rounded-xl bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-700 border border-emerald-500/40 font-bold text-xs transition-all">🔄 Đồng Bộ Ngay Từ D1</button>
 					</div>
 					<p class="hidden">
  </p>
@@ -1461,39 +1461,39 @@
 
  <!-- Quick Metrics Ribbon -->
  <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 flex-shrink-0">
- <div class="p-3 rounded-2xl bg-slate-950 border border-slate-800 text-center min-w-[100px]">
- <div class="text-[10px] font-bold text-slate-400 uppercase">Học Sinh</div>
- <div class="text-xl font-black text-white mt-0.5">{studentsList.length}</div>
+ <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200 text-center min-w-[100px]">
+ <div class="text-[10px] font-bold text-slate-600 uppercase">Học Sinh</div>
+ <div class="text-xl font-black text-slate-900 mt-0.5">{studentsList.length}</div>
  {#if trialStudents.length > 0}
- <span class="text-[9px] font-bold text-amber-400 animate-pulse">{trialStudents.length} chờ duyệt</span>
+ <span class="text-[9px] font-bold text-amber-700 animate-pulse">{trialStudents.length} chờ duyệt</span>
  {/if}
  </div>
 
- <div class="p-3 rounded-2xl bg-slate-950 border border-slate-800 text-center min-w-[100px]">
- <div class="text-[10px] font-bold text-slate-400 uppercase">Giáo Viên</div>
- <div class="text-xl font-black text-teal-400 mt-0.5">{teachersList.length}</div>
- <span class="text-[9px] text-slate-400 font-semibold">4 Phân cấp</span>
+ <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200 text-center min-w-[100px]">
+ <div class="text-[10px] font-bold text-slate-600 uppercase">Giáo Viên</div>
+ <div class="text-xl font-black text-teal-700 mt-0.5">{teachersList.length}</div>
+ <span class="text-[9px] text-slate-600 font-semibold">4 Phân cấp</span>
  </div>
 
- <div class="p-3 rounded-2xl bg-slate-950 border border-slate-800 text-center min-w-[100px]">
- <div class="text-[10px] font-bold text-slate-400 uppercase">Buổi Học</div>
- <div class="text-xl font-black text-indigo-400 mt-0.5">{classSessions.length}</div>
- <span class="text-[9px] text-slate-400 font-semibold">Nhắc đón 10p</span>
+ <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200 text-center min-w-[100px]">
+ <div class="text-[10px] font-bold text-slate-600 uppercase">Buổi Học</div>
+ <div class="text-xl font-black text-indigo-700 mt-0.5">{classSessions.length}</div>
+ <span class="text-[9px] text-slate-600 font-semibold">Nhắc đón 10p</span>
  </div>
 
- <div class="p-3 rounded-2xl bg-slate-950 border border-slate-800 text-center min-w-[100px]">
- <div class="text-[10px] font-bold text-slate-400 uppercase">Quỹ Sao</div>
- <div class="text-xl font-black text-amber-400 mt-0.5">{totalStudentStars.toLocaleString()}</div>
- <span class="text-[9px] text-slate-400 font-semibold">{(totalStudentStars * 10).toLocaleString()}đ</span>
+ <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200 text-center min-w-[100px]">
+ <div class="text-[10px] font-bold text-slate-600 uppercase">Quỹ Sao</div>
+ <div class="text-xl font-black text-amber-700 mt-0.5">{totalStudentStars.toLocaleString()}</div>
+ <span class="text-[9px] text-slate-600 font-semibold">{(totalStudentStars * 10).toLocaleString()}đ</span>
  </div>
  </div>
  </div>
 
  <!-- Navigation Tabs Ribbon -->
- <div class="mt-6 pt-4 border-t border-slate-800/80 flex items-center gap-1.5 overflow-x-auto pb-1 text-xs font-bold">
+ <div class="mt-6 pt-4 border-t border-slate-200 flex items-center gap-1.5 overflow-x-auto pb-1 text-xs font-bold">
  <button
  onclick={() => activeTab = 'leader_notifications'}
- class="px-3.5 py-2 rounded-xl transition-all whitespace-nowrap flex items-center gap-2 {activeTab === 'leader_notifications' ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-600/30' : 'bg-slate-950 text-slate-400 hover:text-white hover:bg-slate-800'}"
+ class="px-3.5 py-2 rounded-xl transition-all whitespace-nowrap flex items-center gap-2 {activeTab === 'leader_notifications' ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-slate-900 shadow-lg shadow-emerald-600/30' : 'bg-slate-50 text-slate-600 hover:text-slate-900 hover:bg-slate-200/80'}"
  >
  <span>🔔 Cảnh Báo Leader</span>
  {#if unreadLeaderCount > 0}
@@ -1505,7 +1505,7 @@
 
  <button
  onclick={() => activeTab = 'workflows'}
- class="px-3.5 py-2 rounded-xl transition-all whitespace-nowrap flex items-center gap-2 {activeTab === 'workflows' ? 'bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-lg shadow-amber-600/30' : 'bg-slate-950 text-slate-400 hover:text-white hover:bg-slate-800'}"
+ class="px-3.5 py-2 rounded-xl transition-all whitespace-nowrap flex items-center gap-2 {activeTab === 'workflows' ? 'bg-gradient-to-r from-amber-600 to-orange-600 text-slate-900 shadow-lg shadow-amber-600/30' : 'bg-slate-50 text-slate-600 hover:text-slate-900 hover:bg-slate-200/80'}"
  >
  <span>📋 Hàng Đợi Duyệt &amp; Tuyển Dụng</span>
  {#if (adminWorkflows.leaves.filter(l => l.admin_status === 'pending').length + adminWorkflows.advances.filter(a => a.status === 'pending').length) > 0}
@@ -1518,7 +1518,7 @@
  {#if currentUser && ['superadmin', 'admin', 'leader'].includes((currentUser.role || '').toLowerCase())}
  <button
  onclick={() => activeTab = 'hiring'}
- class="px-3.5 py-2 rounded-xl transition-all whitespace-nowrap flex items-center gap-2 {activeTab === 'hiring' ? 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg shadow-violet-600/30' : 'bg-slate-950 text-slate-400 hover:text-white hover:bg-slate-800'}"
+ class="px-3.5 py-2 rounded-xl transition-all whitespace-nowrap flex items-center gap-2 {activeTab === 'hiring' ? 'bg-gradient-to-r from-violet-600 to-purple-600 text-slate-900 shadow-lg shadow-violet-600/30' : 'bg-slate-50 text-slate-600 hover:text-slate-900 hover:bg-slate-200/80'}"
  >
  <span>✅ Duyệt Giáo Viên</span>
  {#if adminWorkflows.recruitment.filter(r => r.status === 'applied').length > 0}
@@ -1531,7 +1531,7 @@
 
  <button
  onclick={() => activeTab = 'students'}
- class="px-3.5 py-2 rounded-xl transition-all whitespace-nowrap flex items-center gap-2 {activeTab === 'students' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30' : 'bg-slate-950 text-slate-400 hover:text-white hover:bg-slate-800'}"
+ class="px-3.5 py-2 rounded-xl transition-all whitespace-nowrap flex items-center gap-2 {activeTab === 'students' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30' : 'bg-slate-50 text-slate-600 hover:text-slate-900 hover:bg-slate-200/80'}"
  >
  <span>🎒 Quản Lý Học Sinh</span>
  {#if trialStudents.length > 0}
@@ -1543,35 +1543,35 @@
 
  <button
  onclick={() => activeTab = 'teachers'}
- class="px-3.5 py-2 rounded-xl transition-all whitespace-nowrap flex items-center gap-1.5 {activeTab === 'teachers' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30' : 'bg-slate-950 text-slate-400 hover:text-white hover:bg-slate-800'}"
+ class="px-3.5 py-2 rounded-xl transition-all whitespace-nowrap flex items-center gap-1.5 {activeTab === 'teachers' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30' : 'bg-slate-50 text-slate-600 hover:text-slate-900 hover:bg-slate-200/80'}"
  >
  <span>👨‍🏫 Giáo Viên &amp; Lương Ca Dạy</span>
  </button>
 
  <button
  onclick={() => activeTab = 'schedule'}
- class="px-3.5 py-2 rounded-xl transition-all whitespace-nowrap flex items-center gap-1.5 {activeTab === 'schedule' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30' : 'bg-slate-950 text-slate-400 hover:text-white hover:bg-slate-800'}"
+ class="px-3.5 py-2 rounded-xl transition-all whitespace-nowrap flex items-center gap-1.5 {activeTab === 'schedule' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30' : 'bg-slate-50 text-slate-600 hover:text-slate-900 hover:bg-slate-200/80'}"
  >
  <span>📅 Thời Khóa Biểu &amp; Ca Học</span>
  </button>
 
  <button
  onclick={() => activeTab = 'tuition'}
- class="px-3.5 py-2 rounded-xl transition-all whitespace-nowrap flex items-center gap-1.5 {activeTab === 'tuition' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30' : 'bg-slate-950 text-slate-400 hover:text-white hover:bg-slate-800'}"
+ class="px-3.5 py-2 rounded-xl transition-all whitespace-nowrap flex items-center gap-1.5 {activeTab === 'tuition' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30' : 'bg-slate-50 text-slate-600 hover:text-slate-900 hover:bg-slate-200/80'}"
  >
  <span>💰 Học Phí &amp; Đổi Sao (VietQR)</span>
  </button>
 
  <button
  onclick={() => activeTab = 'teacher_cp'}
- class="px-3.5 py-2 rounded-xl transition-all whitespace-nowrap flex items-center gap-1.5 {activeTab === 'teacher_cp' ? 'bg-teal-600 text-white shadow-lg shadow-teal-600/30' : 'bg-slate-950 text-slate-400 hover:text-white hover:bg-slate-800'}"
+ class="px-3.5 py-2 rounded-xl transition-all whitespace-nowrap flex items-center gap-1.5 {activeTab === 'teacher_cp' ? 'bg-teal-600 text-white shadow-lg shadow-teal-600/30' : 'bg-slate-50 text-slate-600 hover:text-slate-900 hover:bg-slate-200/80'}"
  >
  <span>👩‍🏫 Giáo Viên CP (Teacher Portal)</span>
  </button>
 
  <button
  onclick={() => activeTab = 'games'}
- class="px-3.5 py-2 rounded-xl transition-all whitespace-nowrap flex items-center gap-1.5 {activeTab === 'games' ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30' : 'bg-slate-950 text-slate-400 hover:text-white hover:bg-slate-800'}"
+ class="px-3.5 py-2 rounded-xl transition-all whitespace-nowrap flex items-center gap-1.5 {activeTab === 'games' ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30' : 'bg-slate-50 text-slate-600 hover:text-slate-900 hover:bg-slate-200/80'}"
  >
  <span>🎮 Đấu Trường Game</span>
  <span class="px-1.5 py-0.5 rounded text-[9px] font-black {gameSettings.is_portal_open ? 'bg-emerald-500 text-slate-950' : 'bg-rose-500 text-white'}">
@@ -1581,21 +1581,21 @@
 
  <button
  onclick={() => activeTab = 'webhooks'}
- class="px-3.5 py-2 rounded-xl transition-all whitespace-nowrap flex items-center gap-1.5 {activeTab === 'webhooks' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30' : 'bg-slate-950 text-slate-400 hover:text-white hover:bg-slate-800'}"
+ class="px-3.5 py-2 rounded-xl transition-all whitespace-nowrap flex items-center gap-1.5 {activeTab === 'webhooks' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30' : 'bg-slate-50 text-slate-600 hover:text-slate-900 hover:bg-slate-200/80'}"
  >
  <span>📡 Webhook Bot</span>
  </button>
 
  <button
  onclick={() => activeTab = 'snapshots'}
- class="px-3.5 py-2 rounded-xl transition-all whitespace-nowrap flex items-center gap-1.5 {activeTab === 'snapshots' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30' : 'bg-slate-950 text-slate-400 hover:text-white hover:bg-slate-800'}"
+ class="px-3.5 py-2 rounded-xl transition-all whitespace-nowrap flex items-center gap-1.5 {activeTab === 'snapshots' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30' : 'bg-slate-50 text-slate-600 hover:text-slate-900 hover:bg-slate-200/80'}"
  >
  <span>📜 Kiểm Toán ({snapshots.length})</span>
  </button>
 
  <button
  onclick={() => activeTab = 'theme'}
- class="px-3.5 py-2 rounded-xl transition-all whitespace-nowrap flex items-center gap-1.5 {activeTab === 'theme' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30' : 'bg-slate-950 text-slate-400 hover:text-white hover:bg-slate-800'}"
+ class="px-3.5 py-2 rounded-xl transition-all whitespace-nowrap flex items-center gap-1.5 {activeTab === 'theme' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30' : 'bg-slate-50 text-slate-600 hover:text-slate-900 hover:bg-slate-200/80'}"
  >
  <span>🎨 Giao Diện &amp; Màu Sắc</span>
  </button>
@@ -1606,20 +1606,20 @@
  {#if activeTab === 'leader_notifications'}
  <div class="space-y-6 animate-in fade-in duration-200">
  <!-- Header Banner & Action Deck -->
- <div class="p-6 rounded-3xl bg-gradient-to-r from-slate-900 via-emerald-950/40 to-slate-900 border border-emerald-500/30 shadow-2xl flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+ <div class="p-6 rounded-3xl bg-gradient-to-r from-brand-50 via-emerald-950/40 to-emerald-50 border border-emerald-500/30 shadow-2xl flex flex-col lg:flex-row lg:items-center justify-between gap-4">
  <div class="space-y-1.5">
  <div class="flex items-center gap-2">
- <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5">
+ <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-700 border border-emerald-500/30 flex items-center gap-1.5">
  <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
  <span>CƠ CHẾ GIÁM SÁT SỰ KIỆN THỜI GIAN THỰC (REAL-TIME EVENT HUB)</span>
  </span>
  {#if pwaStatus === 'granted'}
- <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-teal-500/20 text-teal-300 border border-teal-500/30">
+ <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-teal-500/20 text-teal-700 border border-teal-500/30">
  📲 PWA Push: Sẵn Sàng
  </span>
  {/if}
  </div>
- <h2 class="text-xl md:text-2xl font-black text-white flex items-center gap-2.5">
+ <h2 class="text-xl md:text-2xl font-black text-slate-900 flex items-center gap-2.5">
  <span>🔔</span>
  <span>Trung Tâm Báo Cáo &amp; Cảnh Báo Cho Leader Cô Dung</span>
  {#if unreadLeaderCount > 0}
@@ -1628,7 +1628,7 @@
  </span>
  {/if}
  </h2>
- <p class="text-xs text-slate-300 max-w-2xl leading-relaxed">
+ <p class="text-xs text-slate-700 max-w-2xl leading-relaxed">
  Hệ thống tự động thông báo trước lịch học 1h &amp; 10p, cảnh báo khi giáo viên chưa điểm danh quá 15 phút, tổng hợp học sinh vắng, bài thi hoàn thành và học phí đến hạn.
  </p>
  </div>
@@ -1656,7 +1656,7 @@
  <button
  onclick={() => { markAllNotificationsAsRead(); leaderNotifications = getAllLeaderNotifications(); showToast('Đã đánh dấu tất cả thông báo là đã đọc!'); }}
  disabled={unreadLeaderCount === 0}
- class="px-3.5 py-2.5 rounded-2xl bg-slate-800 hover:bg-slate-700 disabled:opacity-40 text-slate-300 font-bold text-xs border border-slate-700 transition-colors"
+ class="px-3.5 py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200/80 disabled:opacity-40 text-slate-700 font-bold text-xs border border-slate-200 transition-colors"
  >
  ✓ Đọc Tất Cả
  </button>
@@ -1670,7 +1670,7 @@
  }
  }}
  disabled={leaderNotifications.length === 0}
- class="px-3.5 py-2.5 rounded-2xl bg-slate-800 hover:bg-rose-900/50 hover:border-rose-700 disabled:opacity-40 text-rose-400 font-bold text-xs border border-slate-700 transition-colors"
+ class="px-3.5 py-2.5 rounded-2xl bg-slate-100 hover:bg-rose-900/50 hover:border-rose-700 disabled:opacity-40 text-rose-700 font-bold text-xs border border-slate-200 transition-colors"
  >
  🗑️ Xóa Hết
  </button>
@@ -1679,110 +1679,110 @@
 
  <!-- Live Stat Cards Deck -->
  <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 text-xs">
- <div class="p-4 rounded-2xl bg-slate-900 border border-rose-500/40 shadow-xl">
- <div class="flex items-center justify-between text-slate-400 font-bold text-[11px] mb-1">
+ <div class="p-4 rounded-2xl bg-white border border-rose-500/40 shadow-xl">
+ <div class="flex items-center justify-between text-slate-600 font-bold text-[11px] mb-1">
  <span>GV CHƯA ĐIỂM DANH</span>
  <span>⚠️</span>
  </div>
- <div class="text-2xl font-black text-rose-400">
+ <div class="text-2xl font-black text-rose-700">
  {leaderNotifications.filter(n => n.type === 'teacher_missing_attendance' && !n.is_read).length}
  </div>
- <div class="text-[10px] text-slate-400 mt-1">Cảnh báo khẩn sau 15p</div>
+ <div class="text-[10px] text-slate-600 mt-1">Cảnh báo khẩn sau 15p</div>
  </div>
 
- <div class="p-4 rounded-2xl bg-slate-900 border border-emerald-500/40 shadow-xl">
- <div class="flex items-center justify-between text-slate-400 font-bold text-[11px] mb-1">
+ <div class="p-4 rounded-2xl bg-white border border-emerald-500/40 shadow-xl">
+ <div class="flex items-center justify-between text-slate-600 font-bold text-[11px] mb-1">
  <span>ĐĂNG KÝ MỚI (TRIAL)</span>
  <span>🔔</span>
  </div>
- <div class="text-2xl font-black text-emerald-400">
+ <div class="text-2xl font-black text-emerald-700">
  {leaderNotifications.filter(n => n.type === 'new_registration' && !n.is_read).length}
  </div>
- <div class="text-[10px] text-slate-400 mt-1">Chờ Cô Dung duyệt</div>
+ <div class="text-[10px] text-slate-600 mt-1">Chờ Cô Dung duyệt</div>
  </div>
 
- <div class="p-4 rounded-2xl bg-slate-900 border border-cx-500/40 shadow-xl">
- <div class="flex items-center justify-between text-slate-400 font-bold text-[11px] mb-1">
+ <div class="p-4 rounded-2xl bg-white border border-cx-500/40 shadow-xl">
+ <div class="flex items-center justify-between text-slate-600 font-bold text-[11px] mb-1">
  <span>BÁO CÁO ĐIỂM DANH</span>
  <span>📋</span>
  </div>
- <div class="text-2xl font-black text-cx-400">
+ <div class="text-2xl font-black text-brand-700">
  {leaderNotifications.filter(n => n.type === 'attendance_summary').length}
  </div>
- <div class="text-[10px] text-slate-400 mt-1">Đủ &amp; vắng học sinh</div>
+ <div class="text-[10px] text-slate-600 mt-1">Đủ &amp; vắng học sinh</div>
  </div>
 
- <div class="p-4 rounded-2xl bg-slate-900 border border-amber-500/40 shadow-xl">
- <div class="flex items-center justify-between text-slate-400 font-bold text-[11px] mb-1">
+ <div class="p-4 rounded-2xl bg-white border border-amber-500/40 shadow-xl">
+ <div class="flex items-center justify-between text-slate-600 font-bold text-[11px] mb-1">
  <span>LỊCH HỌC 1H &amp; 10P</span>
  <span>⏰</span>
  </div>
- <div class="text-2xl font-black text-amber-400">
+ <div class="text-2xl font-black text-amber-700">
  {leaderNotifications.filter(n => n.type === 'schedule_reminder_1h' || n.type === 'schedule_reminder_10m').length}
  </div>
- <div class="text-[10px] text-slate-400 mt-1">Chuông đón học sinh</div>
+ <div class="text-[10px] text-slate-600 mt-1">Chuông đón học sinh</div>
  </div>
 
- <div class="p-4 rounded-2xl bg-slate-900 border border-teal-500/40 shadow-xl">
- <div class="flex items-center justify-between text-slate-400 font-bold text-[11px] mb-1">
+ <div class="p-4 rounded-2xl bg-white border border-teal-500/40 shadow-xl">
+ <div class="flex items-center justify-between text-slate-600 font-bold text-[11px] mb-1">
  <span>HẠN HỌC PHÍ</span>
  <span>💰</span>
  </div>
- <div class="text-2xl font-black text-teal-400">
+ <div class="text-2xl font-black text-teal-700">
  {leaderNotifications.filter(n => n.type === 'tuition_due').length}
  </div>
- <div class="text-[10px] text-slate-400 mt-1">Đến hạn &amp; quá hạn</div>
+ <div class="text-[10px] text-slate-600 mt-1">Đến hạn &amp; quá hạn</div>
  </div>
  </div>
 
  <!-- Test Deck / Simulation Controls -->
- <div class="p-4 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-xl space-y-3">
+ <div class="p-4 rounded-3xl bg-stone-500/25 border border-slate-200 shadow-xl space-y-3">
  <div class="flex items-center justify-between">
  <div class="flex items-center gap-2">
  <span class="text-sm">🧪</span>
- <span class="font-bold text-xs text-white">Khung Giả Lập Tình Huống Cảnh Báo Cho Leader (Simulation Deck)</span>
+ <span class="font-bold text-xs text-slate-900">Khung Giả Lập Tình Huống Cảnh Báo Cho Leader (Simulation Deck)</span>
  </div>
- <span class="text-[10px] text-slate-400 font-normal">Nhấn để phát sinh sự kiện thử nghiệm</span>
+ <span class="text-[10px] text-slate-600 font-normal">Nhấn để phát sinh sự kiện thử nghiệm</span>
  </div>
  <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 text-xs">
  <button
  onclick={() => handleAdminSimulate('teacher_missing_attendance')}
- class="p-2.5 rounded-xl bg-slate-950 border border-rose-500/40 text-rose-400 hover:bg-rose-950/40 font-bold text-left transition-all truncate"
+ class="p-2.5 rounded-xl bg-slate-50 border border-rose-500/40 text-rose-700 hover:bg-rose-50/80 font-bold text-left transition-all truncate"
  title="Mô phỏng: Buổi học diễn ra hơn 15 phút nhưng giáo viên chưa điểm danh"
  >
  ⚠️ GV Quên Điểm Danh
  </button>
  <button
  onclick={() => handleAdminSimulate('attendance_summary_absent')}
- class="p-2.5 rounded-xl bg-slate-950 border border-cx-500/40 text-cx-400 hover:bg-cx-950/40 font-bold text-left transition-all truncate"
+ class="p-2.5 rounded-xl bg-slate-50 border border-cx-500/40 text-brand-700 hover:bg-brand-50/70 font-bold text-left transition-all truncate"
  title="Mô phỏng: Điểm danh lớp thiếu học sinh"
  >
  📋 Điểm Danh Thiếu 2 Em
  </button>
  <button
  onclick={() => handleAdminSimulate('schedule_reminder_10m')}
- class="p-2.5 rounded-xl bg-slate-950 border border-amber-500/40 text-amber-400 hover:bg-amber-950/40 font-bold text-left transition-all truncate"
+ class="p-2.5 rounded-xl bg-slate-50 border border-amber-500/40 text-amber-700 hover:bg-amber-50/80 font-bold text-left transition-all truncate"
  title="Mô phỏng: Nhắc nhở lịch học trước 10 phút"
  >
  🚨 Nhắc Lịch Học 10 Phút
  </button>
  <button
  onclick={() => handleAdminSimulate('new_registration')}
- class="p-2.5 rounded-xl bg-slate-950 border border-emerald-500/40 text-emerald-400 hover:bg-emerald-950/40 font-bold text-left transition-all truncate"
+ class="p-2.5 rounded-xl bg-slate-50 border border-emerald-500/40 text-emerald-700 hover:bg-emerald-50/80 font-bold text-left transition-all truncate"
  title="Mô phỏng: Học sinh mới đăng ký tài khoản"
  >
  🔔 Đăng Ký Mới (Trial)
  </button>
  <button
  onclick={() => handleAdminSimulate('test_completed')}
- class="p-2.5 rounded-xl bg-slate-950 border border-purple-500/40 text-purple-400 hover:bg-purple-950/40 font-bold text-left transition-all truncate"
+ class="p-2.5 rounded-xl bg-slate-50 border border-purple-500/40 text-purple-700 hover:bg-purple-50/80 font-bold text-left transition-all truncate"
  title="Mô phỏng: Học sinh vừa hoàn thành bài test"
  >
  📝 Học Sinh Nộp Bài Test
  </button>
  <button
  onclick={() => handleAdminSimulate('tuition_due')}
- class="p-2.5 rounded-xl bg-slate-950 border border-teal-500/40 text-teal-400 hover:bg-teal-950/40 font-bold text-left transition-all truncate"
+ class="p-2.5 rounded-xl bg-slate-50 border border-teal-500/40 text-teal-700 hover:bg-teal-50/80 font-bold text-left transition-all truncate"
  title="Mô phỏng: Học phí đến hạn nộp"
  >
  💰 Tới Hạn Học Phí
@@ -1794,43 +1794,43 @@
  <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
  <button
  onclick={() => notifFilter = 'all'}
- class="px-3 py-1.5 rounded-xl font-bold shrink-0 transition-colors {notifFilter === 'all' ? 'bg-white text-slate-900 font-black' : 'bg-slate-900 text-slate-400 hover:text-white'}"
+ class="px-3 py-1.5 rounded-xl font-bold shrink-0 transition-colors {notifFilter === 'all' ? 'bg-white text-slate-900 font-black' : 'bg-white text-slate-600 hover:text-slate-900'}"
  >
  Tất cả ({leaderNotifications.length})
  </button>
  <button
  onclick={() => notifFilter = 'teacher_missing_attendance'}
- class="px-3 py-1.5 rounded-xl font-bold shrink-0 transition-colors {notifFilter === 'teacher_missing_attendance' ? 'bg-rose-600 text-white' : 'bg-slate-900 text-rose-400 hover:bg-rose-950/40'}"
+ class="px-3 py-1.5 rounded-xl font-bold shrink-0 transition-colors {notifFilter === 'teacher_missing_attendance' ? 'bg-rose-600 text-white' : 'bg-white text-rose-700 hover:bg-rose-50/80'}"
  >
  ⚠️ GV Chưa Điểm Danh
  </button>
  <button
  onclick={() => notifFilter = 'attendance_summary'}
- class="px-3 py-1.5 rounded-xl font-bold shrink-0 transition-colors {notifFilter === 'attendance_summary' ? 'bg-cx-600 text-white' : 'bg-slate-900 text-cx-400 hover:bg-cx-950/40'}"
+ class="px-3 py-1.5 rounded-xl font-bold shrink-0 transition-colors {notifFilter === 'attendance_summary' ? 'bg-cx-600 text-white' : 'bg-white text-brand-700 hover:bg-brand-50/70'}"
  >
  📋 Điểm Danh &amp; Vắng
  </button>
  <button
  onclick={() => notifFilter = 'schedule'}
- class="px-3 py-1.5 rounded-xl font-bold shrink-0 transition-colors {notifFilter === 'schedule' ? 'bg-amber-600 text-white' : 'bg-slate-900 text-amber-400 hover:bg-amber-950/40'}"
+ class="px-3 py-1.5 rounded-xl font-bold shrink-0 transition-colors {notifFilter === 'schedule' ? 'bg-amber-600 text-white' : 'bg-white text-amber-700 hover:bg-amber-50/80'}"
  >
  ⏰ Lịch Học 1h / 10p
  </button>
  <button
  onclick={() => notifFilter = 'new_registration'}
- class="px-3 py-1.5 rounded-xl font-bold shrink-0 transition-colors {notifFilter === 'new_registration' ? 'bg-emerald-600 text-white' : 'bg-slate-900 text-emerald-400 hover:bg-emerald-950/40'}"
+ class="px-3 py-1.5 rounded-xl font-bold shrink-0 transition-colors {notifFilter === 'new_registration' ? 'bg-emerald-600 text-white' : 'bg-white text-emerald-700 hover:bg-emerald-50/80'}"
  >
  🔔 Đăng Ký Mới
  </button>
  <button
  onclick={() => notifFilter = 'test_completed'}
- class="px-3 py-1.5 rounded-xl font-bold shrink-0 transition-colors {notifFilter === 'test_completed' ? 'bg-purple-600 text-white' : 'bg-slate-900 text-purple-400 hover:bg-purple-950/40'}"
+ class="px-3 py-1.5 rounded-xl font-bold shrink-0 transition-colors {notifFilter === 'test_completed' ? 'bg-purple-600 text-white' : 'bg-white text-purple-700 hover:bg-purple-50/80'}"
  >
  📝 Bài Thi Xong
  </button>
  <button
  onclick={() => notifFilter = 'tuition_due'}
- class="px-3 py-1.5 rounded-xl font-bold shrink-0 transition-colors {notifFilter === 'tuition_due' ? 'bg-teal-600 text-white' : 'bg-slate-900 text-teal-400 hover:bg-teal-950/40'}"
+ class="px-3 py-1.5 rounded-xl font-bold shrink-0 transition-colors {notifFilter === 'tuition_due' ? 'bg-teal-600 text-white' : 'bg-white text-teal-700 hover:bg-teal-50/80'}"
  >
  💰 Hạn Học Phí
  </button>
@@ -1839,19 +1839,19 @@
  <!-- Notification Feed List -->
  <div class="space-y-3">
  {#if filteredLeaderNotifs.length === 0}
- <div class="p-12 rounded-3xl bg-slate-900 border border-slate-800 text-center space-y-3">
+ <div class="p-12 rounded-3xl bg-white border border-slate-200 text-center space-y-3">
  <div class="text-5xl">✨</div>
- <div class="text-base font-bold text-white">Không có thông báo nào trong bộ lọc này</div>
- <p class="text-xs text-slate-400 max-w-sm mx-auto">
+ <div class="text-base font-bold text-slate-900">Không có thông báo nào trong bộ lọc này</div>
+ <p class="text-xs text-slate-600 max-w-sm mx-auto">
  Mọi lịch học, sổ điểm danh và học phí thuộc danh mục này đều đang ở trạng thái chuẩn xác.
  </p>
  </div>
  {:else}
  {#each filteredLeaderNotifs as notif (notif.id)}
- <div class="p-4 sm:p-5 rounded-3xl border transition-all duration-200 {notif.is_read ? 'bg-slate-900/60 border-slate-800 opacity-75' : 'bg-slate-900 border-emerald-500/50 shadow-xl shadow-emerald-950/20 ring-1 ring-emerald-500/20'}">
+ <div class="p-4 sm:p-5 rounded-3xl border transition-all duration-200 {notif.is_read ? 'bg-stone-500/25 border-slate-200 opacity-75' : 'bg-white border-emerald-500/50 shadow-xl shadow-emerald-950/20 ring-1 ring-emerald-500/20'}">
  <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-2">
  <div class="flex flex-wrap items-center gap-2">
- <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border {notif.priority === 'urgent' ? 'bg-rose-950/80 text-rose-300 border-rose-700' : notif.priority === 'high' ? 'bg-amber-950/80 text-amber-300 border-amber-700' : 'bg-emerald-950/80 text-emerald-300 border-emerald-700'}">
+ <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border {notif.priority === 'urgent' ? 'bg-rose-50/80 text-rose-700 border-rose-700' : notif.priority === 'high' ? 'bg-amber-50/80 text-amber-700 border-amber-700' : 'bg-emerald-50/80 text-emerald-700 border-emerald-700'}">
  {#if notif.priority === 'urgent'}
  🚨 KHẨN CẤP
  {:else if notif.type === 'teacher_missing_attendance'}
@@ -1877,16 +1877,16 @@
  <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" title="Thông báo mới chưa đọc"></span>
  {/if}
 
- <h3 class="text-sm font-bold text-white">
+ <h3 class="text-sm font-bold text-slate-900">
  {notif.title}
  </h3>
  </div>
 
- <div class="flex items-center gap-3 text-xs text-slate-400 self-end sm:self-auto">
+ <div class="flex items-center gap-3 text-xs text-slate-600 self-end sm:self-auto">
  <span>{new Date(notif.timestamp).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} • {new Date(notif.timestamp).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })}</span>
  <button
  onclick={() => { deleteLeaderNotification(notif.id); leaderNotifications = getAllLeaderNotifications(); }}
- class="text-slate-500 hover:text-rose-400 p-1 transition-colors"
+ class="text-slate-500 hover:text-rose-700 p-1 transition-colors"
  title="Xóa thông báo"
  >
  ✕
@@ -1894,12 +1894,12 @@
  </div>
  </div>
 
- <p class="text-xs text-slate-300 leading-relaxed whitespace-pre-line mb-3">
+ <p class="text-xs text-slate-700 leading-relaxed whitespace-pre-line mb-3">
  {notif.message}
  </p>
 
  <!-- Action Bar -->
- <div class="flex flex-wrap items-center gap-2 pt-3 border-t border-slate-800/80 text-xs">
+ <div class="flex flex-wrap items-center gap-2 pt-3 border-t border-slate-200 text-xs">
  {#if notif.type === 'teacher_missing_attendance'}
  <button
  onclick={() => handleRemindTeacherDirectly(notif)}
@@ -1910,7 +1910,7 @@
  </button>
  <button
  onclick={() => activeTab = 'schedule'}
- class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold transition-colors"
+ class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200/80 text-slate-900 font-bold transition-colors"
  >
  Xem Ca Học &amp; Điểm Danh
  </button>
@@ -1959,7 +1959,7 @@
  {#if !notif.is_read}
  <button
  onclick={() => { markNotificationAsRead(notif.id); leaderNotifications = getAllLeaderNotifications(); }}
- class="px-3 py-1.5 rounded-xl text-slate-400 hover:text-white font-medium ml-auto transition-colors"
+ class="px-3 py-1.5 rounded-xl text-slate-600 hover:text-slate-900 font-medium ml-auto transition-colors"
  >
  Đánh dấu đã đọc
  </button>
@@ -1975,15 +1975,15 @@
  {:else if activeTab === 'workflows'}
  <div class="space-y-6 animate-in fade-in duration-200">
  <!-- Header Deck -->
- <div class="p-6 rounded-3xl bg-gradient-to-r from-slate-900 via-amber-950/40 to-slate-900 border border-amber-500/30 shadow-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+ <div class="p-6 rounded-3xl bg-gradient-to-r from-brand-50 via-amber-950/40 to-emerald-50 border border-amber-500/30 shadow-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
  <div class="space-y-1">
- <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/30">
+ <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500/20 text-amber-700 border border-amber-500/30">
  <span>📋 HÀNG ĐỢI NGHIỆP VỤ NHÂN SỰ &amp; ĐIỀU HÀNH GIẢNG DẠY</span>
  </div>
- <h2 class="text-xl sm:text-2xl font-black text-white">
+ <h2 class="text-xl sm:text-2xl font-black text-slate-900">
  Phê Duyệt Dạy Thay, Ứng Lương &amp; Tuyển Dụng Giáo Viên 👩‍🏫
  </h2>
- <p class="text-xs text-slate-300 max-w-2xl leading-relaxed">
+ <p class="text-xs text-slate-700 max-w-2xl leading-relaxed">
  Quy trình dạy thay 2 bước chuẩn hóa (Đồng nghiệp nhận ca → Leader Cô Dung duyệt). Ứng lương tự động đối trừ vào kỳ tính lương cuối tháng. Quản lý ứng viên tuyển dụng giáo viên thời vụ/cố định và lịch phỏng vấn.
  </p>
  </div>
@@ -1998,7 +1998,7 @@
  <button
  type="button"
  onclick={loadAdminWorkflows}
- class="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs border border-slate-700 transition-all"
+ class="px-3.5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs border border-slate-200 transition-all"
  title="Tải lại dữ liệu hàng đợi"
  >
  🔄
@@ -2007,66 +2007,66 @@
  </div>
 
  <!-- SECTION 1: PHÊ DUYỆT NGHỈ & DẠY THAY (2 BƯỚC) -->
- <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-4">
+ <div class="bg-white border border-slate-200 rounded-3xl p-5 shadow-xl space-y-4">
  <div class="flex items-center justify-between">
  <div class="flex items-center gap-2.5">
  <span class="text-lg">📝</span>
  <div>
- <h3 class="font-black text-sm text-white">Đơn Xin Nghỉ &amp; Đề Nghị Dạy Thay ({adminWorkflows.leaves.length})</h3>
- <p class="text-[11px] text-slate-400">Yêu cầu giáo viên thay thế đồng ý trước khi Leader phê duyệt chính thức</p>
+ <h3 class="font-black text-sm text-slate-900">Đơn Xin Nghỉ &amp; Đề Nghị Dạy Thay ({adminWorkflows.leaves.length})</h3>
+ <p class="text-[11px] text-slate-600">Yêu cầu giáo viên thay thế đồng ý trước khi Leader phê duyệt chính thức</p>
  </div>
  </div>
- <span class="text-xs px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">
+ <span class="text-xs px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-700 font-bold border border-amber-500/30">
  {adminWorkflows.leaves.filter(l => l.admin_status === 'pending').length} đơn chờ duyệt
  </span>
  </div>
 
  {#if adminWorkflows.leaves.length === 0}
- <div class="p-8 text-center text-xs text-slate-500 bg-slate-950/50 rounded-2xl border border-slate-800/80">
+ <div class="p-8 text-center text-xs text-slate-500 bg-stone-500/25 rounded-2xl border border-slate-200">
  Hiện không có đơn xin nghỉ hoặc đề nghị dạy thay nào.
  </div>
  {:else}
  <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
  {#each adminWorkflows.leaves as req}
- <div class="p-4 rounded-2xl bg-slate-950 border {req.admin_status === 'approved' ? 'border-emerald-500/40' : req.admin_status === 'rejected' ? 'border-rose-500/30' : 'border-amber-500/40'} space-y-3">
+ <div class="p-4 rounded-2xl bg-slate-50 border {req.admin_status === 'approved' ? 'border-emerald-500/40' : req.admin_status === 'rejected' ? 'border-rose-500/30' : 'border-amber-500/40'} space-y-3">
  <div class="flex items-start justify-between gap-2">
  <div>
- <div class="font-bold text-xs text-white flex items-center gap-1.5">
+ <div class="font-bold text-xs text-slate-900 flex items-center gap-1.5">
  <span>👨‍🏫 {req.teacher_name}</span>
- <span class="text-[10px] text-slate-400">xin nghỉ ca dạy</span>
+ <span class="text-[10px] text-slate-600">xin nghỉ ca dạy</span>
  </div>
- <div class="text-[11px] text-amber-300 font-semibold mt-0.5">
+ <div class="text-[11px] text-amber-700 font-semibold mt-0.5">
  Ca học: {req.session_date} ({req.start_time} - {req.end_time}) • Lớp {req.class_id}
  </div>
  </div>
- <span class="text-[10px] px-2 py-0.5 rounded-full font-black uppercase tracking-wider {req.admin_status === 'approved' ? 'bg-emerald-500/20 text-emerald-400' : req.admin_status === 'rejected' ? 'bg-rose-500/20 text-rose-400' : 'bg-amber-500/20 text-amber-400'}">
+ <span class="text-[10px] px-2 py-0.5 rounded-full font-black uppercase tracking-wider {req.admin_status === 'approved' ? 'bg-emerald-500/20 text-emerald-700' : req.admin_status === 'rejected' ? 'bg-rose-500/20 text-rose-700' : 'bg-amber-500/20 text-amber-700'}">
  {req.admin_status === 'approved' ? '✓ Đã Duyệt' : req.admin_status === 'rejected' ? '✕ Từ Chối' : '⏳ Chờ Duyệt'}
  </span>
  </div>
 
- <div class="text-xs text-slate-300 bg-slate-900/60 p-2.5 rounded-xl border border-slate-800 italic">
+ <div class="text-xs text-slate-700 bg-stone-500/25 p-2.5 rounded-xl border border-slate-200 italic">
  "{req.reason}"
  </div>
 
  <!-- 2-Step Substitute Status -->
- <div class="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800 text-xs flex items-center justify-between">
+ <div class="p-2.5 rounded-xl bg-stone-500/25 border border-slate-200 text-xs flex items-center justify-between">
  <div>
- <span class="text-slate-400 text-[10px]">Giáo viên dạy thay:</span>
- <div class="font-bold text-slate-200">
+ <span class="text-slate-600 text-[10px]">Giáo viên dạy thay:</span>
+ <div class="font-bold text-slate-900">
  {req.substitute_teacher_name || 'Chưa chỉ định'}
  </div>
  </div>
  <div>
  {#if req.substitute_status === 'accepted'}
- <span class="px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 font-bold text-[10px]">
+ <span class="px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-700 font-bold text-[10px]">
  ✓ Đồng nghiệp đã đồng ý
  </span>
  {:else if req.substitute_status === 'rejected'}
- <span class="px-2 py-0.5 rounded-md bg-rose-500/20 text-rose-300 font-bold text-[10px]">
+ <span class="px-2 py-0.5 rounded-md bg-rose-500/20 text-rose-700 font-bold text-[10px]">
  ✕ Đồng nghiệp từ chối
  </span>
  {:else}
- <span class="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold text-[10px]">
+ <span class="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-700 font-bold text-[10px]">
  ⏳ Chờ đồng nghiệp xác nhận
  </span>
  {/if}
@@ -2087,13 +2087,13 @@
  <button
  type="button"
  onclick={() => handleAdminLeaveDecision(req.id, 'reject')}
- class="py-2 px-3 rounded-xl bg-slate-800 hover:bg-rose-600 hover:text-white text-slate-300 font-bold text-xs transition-all"
+ class="py-2 px-3 rounded-xl bg-slate-100 hover:bg-rose-600 hover:text-slate-900 text-slate-700 font-bold text-xs transition-all"
  >
  Từ Chối
  </button>
  </div>
  {#if req.substitute_status !== 'accepted'}
- <p class="text-[10px] text-amber-400/80 italic text-center">
+ <p class="text-[10px] text-amber-700/80 italic text-center">
  * Cần giáo viên dạy thay bấm đồng ý nhận ca trước khi Leader duyệt
  </p>
  {/if}
@@ -2105,46 +2105,46 @@
  </div>
 
  <!-- SECTION 2: DUYỆT ỨNG LƯƠNG & ĐỐI TRỪ KỲ LƯƠNG -->
- <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-4">
+ <div class="bg-white border border-slate-200 rounded-3xl p-5 shadow-xl space-y-4">
  <div class="flex items-center justify-between">
  <div class="flex items-center gap-2.5">
  <span class="text-lg">💰</span>
  <div>
- <h3 class="font-black text-sm text-white">Đơn Xin Ứng Lương &amp; Khấu Trừ Kỳ Lương ({adminWorkflows.advances.length})</h3>
- <p class="text-[11px] text-slate-400">Số tiền được duyệt sẽ tự động đối trừ vào bảng tính lương cuối tháng</p>
+ <h3 class="font-black text-sm text-slate-900">Đơn Xin Ứng Lương &amp; Khấu Trừ Kỳ Lương ({adminWorkflows.advances.length})</h3>
+ <p class="text-[11px] text-slate-600">Số tiền được duyệt sẽ tự động đối trừ vào bảng tính lương cuối tháng</p>
  </div>
  </div>
- <span class="text-xs px-2.5 py-0.5 rounded-full bg-teal-500/20 text-teal-300 font-bold border border-teal-500/30">
+ <span class="text-xs px-2.5 py-0.5 rounded-full bg-teal-500/20 text-teal-700 font-bold border border-teal-500/30">
  {adminWorkflows.advances.filter(a => a.status === 'pending').length} đơn chờ duyệt
  </span>
  </div>
 
  {#if adminWorkflows.advances.length === 0}
- <div class="p-8 text-center text-xs text-slate-500 bg-slate-950/50 rounded-2xl border border-slate-800/80">
+ <div class="p-8 text-center text-xs text-slate-500 bg-stone-500/25 rounded-2xl border border-slate-200">
  Chưa có yêu cầu ứng lương nào trong hệ thống.
  </div>
  {:else}
  <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
  {#each adminWorkflows.advances as adv}
- <div class="p-4 rounded-2xl bg-slate-950 border {adv.status === 'approved' ? 'border-emerald-500/40' : adv.status === 'rejected' ? 'border-rose-500/30' : 'border-teal-500/40'} space-y-3">
+ <div class="p-4 rounded-2xl bg-slate-50 border {adv.status === 'approved' ? 'border-emerald-500/40' : adv.status === 'rejected' ? 'border-rose-500/30' : 'border-teal-500/40'} space-y-3">
  <div class="flex items-start justify-between gap-2">
  <div>
- <div class="font-bold text-xs text-white">
+ <div class="font-bold text-xs text-slate-900">
  👨‍🏫 {adv.teacher_name}
  </div>
- <div class="text-base font-black text-emerald-400 mt-0.5">
+ <div class="text-base font-black text-emerald-700 mt-0.5">
  {Number(adv.amount_vnd).toLocaleString('vi-VN')} đ
  </div>
- <div class="text-[10px] text-slate-400">
- Kỳ lương đối trừ: <strong class="text-slate-200">{adv.billing_cycle}</strong>
+ <div class="text-[10px] text-slate-600">
+ Kỳ lương đối trừ: <strong class="text-slate-900">{adv.billing_cycle}</strong>
  </div>
  </div>
- <span class="text-[10px] px-2 py-0.5 rounded-full font-black uppercase tracking-wider {adv.status === 'approved' ? 'bg-emerald-500/20 text-emerald-400' : adv.status === 'rejected' ? 'bg-rose-500/20 text-rose-400' : 'bg-amber-500/20 text-amber-400'}">
+ <span class="text-[10px] px-2 py-0.5 rounded-full font-black uppercase tracking-wider {adv.status === 'approved' ? 'bg-emerald-500/20 text-emerald-700' : adv.status === 'rejected' ? 'bg-rose-500/20 text-rose-700' : 'bg-amber-500/20 text-amber-700'}">
  {adv.status === 'approved' ? '✓ Đã Chi Ứng' : adv.status === 'rejected' ? '✕ Từ Chối' : '⏳ Chờ Duyệt'}
  </span>
  </div>
 
- <div class="text-xs text-slate-300 bg-slate-900/60 p-2.5 rounded-xl border border-slate-800 italic">
+ <div class="text-xs text-slate-700 bg-stone-500/25 p-2.5 rounded-xl border border-slate-200 italic">
  Lý do: "{adv.reason}"
  </div>
 
@@ -2160,7 +2160,7 @@
  <button
  type="button"
  onclick={() => handleAdminAdvanceDecision(adv.id, 'reject')}
- class="py-2 px-3 rounded-xl bg-slate-800 hover:bg-rose-600 hover:text-white text-slate-300 font-bold text-xs transition-all"
+ class="py-2 px-3 rounded-xl bg-slate-100 hover:bg-rose-600 hover:text-slate-900 text-slate-700 font-bold text-xs transition-all"
  >
  Từ Chối
  </button>
@@ -2173,13 +2173,13 @@
  </div>
 
  <!-- SECTION 3: TUYỂN DỤNG GIÁO VIÊN & LỊCH PHỎNG VẤN -->
- <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-4">
+ <div class="bg-white border border-slate-200 rounded-3xl p-5 shadow-xl space-y-4">
  <div class="flex items-center justify-between">
  <div class="flex items-center gap-2.5">
  <span class="text-lg">🎯</span>
  <div>
- <h3 class="font-black text-sm text-white">Quản Lý Tuyển Dụng Giáo Viên Thời Vụ / Cố Định ({adminWorkflows.recruitment.length})</h3>
- <p class="text-[11px] text-slate-400">Theo dõi hồ sơ ứng viên, lịch phỏng vấn và kết quả tuyển chọn đội ngũ</p>
+ <h3 class="font-black text-sm text-slate-900">Quản Lý Tuyển Dụng Giáo Viên Thời Vụ / Cố Định ({adminWorkflows.recruitment.length})</h3>
+ <p class="text-[11px] text-slate-600">Theo dõi hồ sơ ứng viên, lịch phỏng vấn và kết quả tuyển chọn đội ngũ</p>
  </div>
  </div>
  <button
@@ -2192,13 +2192,13 @@
  </div>
 
  {#if adminWorkflows.recruitment.length === 0}
- <div class="p-8 text-center text-xs text-slate-500 bg-slate-950/50 rounded-2xl border border-slate-800/80">
+ <div class="p-8 text-center text-xs text-slate-500 bg-stone-500/25 rounded-2xl border border-slate-200">
  Chưa có hồ sơ ứng viên tuyển dụng nào.
  </div>
  {:else}
  <div class="overflow-x-auto">
  <table class="w-full text-left text-xs">
- <thead class="bg-slate-950/80 text-slate-400 text-[10px] uppercase font-bold tracking-wider">
+ <thead class="bg-stone-500/25 text-slate-600 text-[10px] uppercase font-bold tracking-wider">
  <tr>
  <th class="p-3 rounded-l-xl">Ứng Viên</th>
  <th class="p-3">Vị Trí</th>
@@ -2208,32 +2208,32 @@
  <th class="p-3 rounded-r-xl text-right">Trạng Thái</th>
  </tr>
  </thead>
- <tbody class="divide-y divide-slate-800/60">
+ <tbody class="divide-y divide-slate-200">
  {#each adminWorkflows.recruitment as rec}
- <tr class="hover:bg-slate-800/30 transition-all">
- <td class="p-3 font-bold text-white">
+ <tr class="hover:bg-slate-200/80 transition-all">
+ <td class="p-3 font-bold text-slate-900">
  {rec.candidate_name}
  </td>
  <td class="p-3">
- <span class="px-2 py-0.5 rounded-md font-bold text-[10px] {rec.position_type === 'permanent' ? 'bg-indigo-500/20 text-indigo-300' : 'bg-amber-500/20 text-amber-300'}">
+ <span class="px-2 py-0.5 rounded-md font-bold text-[10px] {rec.position_type === 'permanent' ? 'bg-indigo-500/20 text-indigo-700' : 'bg-amber-500/20 text-amber-700'}">
  {rec.position_type === 'permanent' ? 'Cố Định (Full-time)' : 'Thời Vụ (Contractor)'}
  </span>
  </td>
- <td class="p-3 text-slate-300">
+ <td class="p-3 text-slate-700">
  <div>📞 {rec.phone || 'Chưa có'}</div>
- <div class="text-[10px] text-slate-400">✉️ {rec.email || 'Chưa có'}</div>
+ <div class="text-[10px] text-slate-600">✉️ {rec.email || 'Chưa có'}</div>
  </td>
- <td class="p-3 text-amber-300 font-semibold">
+ <td class="p-3 text-amber-700 font-semibold">
  {rec.interview_time || 'Chưa xếp lịch'}
  </td>
- <td class="p-3 text-slate-300 max-w-[200px] truncate">
+ <td class="p-3 text-slate-700 max-w-[200px] truncate">
  {#if rec.cv_link}
- <a href={rec.cv_link} target="_blank" class="text-cx-400 hover:underline">📄 Xem CV</a>
+ <a href={rec.cv_link} target="_blank" class="text-brand-700 hover:underline">📄 Xem CV</a>
  {/if}
- <div class="text-[11px] text-slate-400 italic truncate">{rec.notes || 'Không có ghi chú'}</div>
+ <div class="text-[11px] text-slate-600 italic truncate">{rec.notes || 'Không có ghi chú'}</div>
  </td>
  <td class="p-3 text-right">
- <span class="px-2.5 py-1 rounded-full text-[10px] font-bold {rec.status === 'accepted' ? 'bg-emerald-500/20 text-emerald-400' : rec.status === 'rejected' ? 'bg-rose-500/20 text-rose-400' : 'bg-slate-800 text-slate-300'}">
+ <span class="px-2.5 py-1 rounded-full text-[10px] font-bold {rec.status === 'accepted' ? 'bg-emerald-500/20 text-emerald-700' : rec.status === 'rejected' ? 'bg-rose-500/20 text-rose-700' : 'bg-slate-100 text-slate-700'}">
  {rec.status === 'accepted' ? '✓ Trúng Tuyển' : rec.status === 'rejected' ? '✕ Không Đạt' : '⏳ Đang Phỏng Vấn'}
  </span>
  </td>
@@ -2248,27 +2248,27 @@
 
  <!-- Modal Thêm Ứng Viên Tuyển Dụng -->
  {#if showAddRecruitModal}
- <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in">
- <div class="w-full max-w-lg rounded-3xl bg-slate-900 border border-slate-800 p-6 space-y-4 shadow-2xl text-xs">
+ <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-500/25 backdrop-blur-sm animate-in fade-in">
+ <div class="w-full max-w-lg rounded-3xl bg-white border border-slate-200 p-6 space-y-4 shadow-2xl text-xs">
  <div class="flex items-center justify-between">
- <h3 class="font-black text-base text-white">Thêm Hồ Sơ Ứng Viên Tuyển Dụng</h3>
- <button onclick={() => showAddRecruitModal = false} class="text-slate-400 hover:text-white">✕</button>
+ <h3 class="font-black text-base text-slate-900">Thêm Hồ Sơ Ứng Viên Tuyển Dụng</h3>
+ <button onclick={() => showAddRecruitModal = false} class="text-slate-600 hover:text-slate-900">✕</button>
  </div>
 
  <div class="space-y-3">
  <div>
- <label class="block text-slate-400 font-bold mb-1">Họ và tên ứng viên *</label>
- <input type="text" bind:value={newRecruit.candidate_name} placeholder="VD: Thầy Nguyễn Hoàng Nam" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white" />
+ <label class="block text-slate-600 font-bold mb-1">Họ và tên ứng viên *</label>
+ <input type="text" bind:value={newRecruit.candidate_name} placeholder="VD: Thầy Nguyễn Hoàng Nam" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900" />
  </div>
 
  <div class="grid grid-cols-2 gap-3">
  <div>
- <label class="block text-slate-400 font-bold mb-1">Số điện thoại</label>
- <input type="text" bind:value={newRecruit.phone} placeholder="0912345678" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white" />
+ <label class="block text-slate-600 font-bold mb-1">Số điện thoại</label>
+ <input type="text" bind:value={newRecruit.phone} placeholder="0912345678" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900" />
  </div>
  <div>
- <label class="block text-slate-400 font-bold mb-1">Loại hợp đồng</label>
- <select bind:value={newRecruit.position_type} class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white">
+ <label class="block text-slate-600 font-bold mb-1">Loại hợp đồng</label>
+ <select bind:value={newRecruit.position_type} class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900">
  <option value="contractor">Thời Vụ (Contractor)</option>
  <option value="permanent">Cố Định (Full-time)</option>
  </select>
@@ -2276,23 +2276,23 @@
  </div>
 
  <div>
- <label class="block text-slate-400 font-bold mb-1">Lịch phỏng vấn dự kiến</label>
- <input type="datetime-local" bind:value={newRecruit.interview_time} class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white" />
+ <label class="block text-slate-600 font-bold mb-1">Lịch phỏng vấn dự kiến</label>
+ <input type="datetime-local" bind:value={newRecruit.interview_time} class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900" />
  </div>
 
  <div>
- <label class="block text-slate-400 font-bold mb-1">Link CV / Google Drive</label>
- <input type="url" bind:value={newRecruit.cv_link} placeholder="https://drive.google.com/..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white" />
+ <label class="block text-slate-600 font-bold mb-1">Link CV / Google Drive</label>
+ <input type="url" bind:value={newRecruit.cv_link} placeholder="https://drive.google.com/..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900" />
  </div>
 
  <div>
- <label class="block text-slate-400 font-bold mb-1">Ghi chú bằng cấp / kinh nghiệm</label>
- <textarea bind:value={newRecruit.notes} rows="2" placeholder="IELTS 8.0, 3 năm kinh nghiệm dạy GDPT Lớp 10-12..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white"></textarea>
+ <label class="block text-slate-600 font-bold mb-1">Ghi chú bằng cấp / kinh nghiệm</label>
+ <textarea bind:value={newRecruit.notes} rows="2" placeholder="IELTS 8.0, 3 năm kinh nghiệm dạy GDPT Lớp 10-12..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900"></textarea>
  </div>
  </div>
 
  <div class="flex items-center justify-end gap-2 pt-2">
- <button type="button" onclick={() => showAddRecruitModal = false} class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 font-bold">Hủy</button>
+ <button type="button" onclick={() => showAddRecruitModal = false} class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 font-bold">Hủy</button>
  <button type="button" onclick={handleSaveRecruitment} class="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold">Lưu Hồ Sơ</button>
  </div>
  </div>
@@ -2304,15 +2304,15 @@
  {#if currentUser && ['superadmin', 'admin', 'leader'].includes((currentUser.role || '').toLowerCase())}
  <div class="space-y-6 animate-in fade-in duration-200">
  <!-- Header Deck -->
- <div class="p-6 rounded-3xl bg-gradient-to-r from-slate-900 via-violet-950/40 to-slate-900 border border-violet-500/30 shadow-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+ <div class="p-6 rounded-3xl bg-gradient-to-r from-brand-50 via-violet-950/40 to-emerald-50 border border-violet-500/30 shadow-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
  <div class="space-y-1">
  <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-violet-500/20 text-violet-300 border border-violet-500/30">
  <span>✅ PIPELINE TUYỂN DỤNG GIÁO VIÊN</span>
  </div>
- <h2 class="text-xl sm:text-2xl font-black text-white">
+ <h2 class="text-xl sm:text-2xl font-black text-slate-900">
  Duyệt Giáo Viên — 5 Bước 👩‍🏫
  </h2>
- <p class="text-xs text-slate-300 max-w-2xl leading-relaxed">
+ <p class="text-xs text-slate-700 max-w-2xl leading-relaxed">
  Chờ duyệt → Phỏng vấn → Quyết định → Cấp tài khoản → Phân công lịch dạy. Tập trung toàn bộ luồng tuyển dụng tại đây.
  </p>
  </div>
@@ -2327,7 +2327,7 @@
  <button
  type="button"
  onclick={loadAdminWorkflows}
- class="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs border border-slate-700 transition-all"
+ class="px-3.5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs border border-slate-200 transition-all"
  title="Tải lại dữ liệu"
  >
  🔄
@@ -2337,58 +2337,58 @@
 
  <!-- Pipeline Stats -->
  <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
- <div class="p-4 rounded-2xl bg-slate-900 border border-amber-500/30 text-center">
- <div class="text-2xl font-black text-amber-400">{adminWorkflows.recruitment.filter(r => r.status === 'applied').length}</div>
- <div class="text-[10px] text-slate-400 font-bold uppercase mt-1">⏳ Chờ Duyệt</div>
+ <div class="p-4 rounded-2xl bg-white border border-amber-500/30 text-center">
+ <div class="text-2xl font-black text-amber-700">{adminWorkflows.recruitment.filter(r => r.status === 'applied').length}</div>
+ <div class="text-[10px] text-slate-600 font-bold uppercase mt-1">⏳ Chờ Duyệt</div>
  </div>
- <div class="p-4 rounded-2xl bg-slate-900 border border-sky-500/30 text-center">
+ <div class="p-4 rounded-2xl bg-white border border-sky-500/30 text-center">
  <div class="text-2xl font-black text-sky-400">{adminWorkflows.recruitment.filter(r => r.status === 'interview_scheduled').length}</div>
- <div class="text-[10px] text-slate-400 font-bold uppercase mt-1">🎤 Phỏng Vấn</div>
+ <div class="text-[10px] text-slate-600 font-bold uppercase mt-1">🎤 Phỏng Vấn</div>
  </div>
- <div class="p-4 rounded-2xl bg-slate-900 border border-emerald-500/30 text-center">
- <div class="text-2xl font-black text-emerald-400">{adminWorkflows.recruitment.filter(r => r.status === 'accepted').length}</div>
- <div class="text-[10px] text-slate-400 font-bold uppercase mt-1">✅ Trúng Tuyển</div>
+ <div class="p-4 rounded-2xl bg-white border border-emerald-500/30 text-center">
+ <div class="text-2xl font-black text-emerald-700">{adminWorkflows.recruitment.filter(r => r.status === 'accepted').length}</div>
+ <div class="text-[10px] text-slate-600 font-bold uppercase mt-1">✅ Trúng Tuyển</div>
  </div>
- <div class="p-4 rounded-2xl bg-slate-900 border border-rose-500/30 text-center">
- <div class="text-2xl font-black text-rose-400">{adminWorkflows.recruitment.filter(r => r.status === 'rejected').length}</div>
- <div class="text-[10px] text-slate-400 font-bold uppercase mt-1">✕ Không Đạt</div>
+ <div class="p-4 rounded-2xl bg-white border border-rose-500/30 text-center">
+ <div class="text-2xl font-black text-rose-700">{adminWorkflows.recruitment.filter(r => r.status === 'rejected').length}</div>
+ <div class="text-[10px] text-slate-600 font-bold uppercase mt-1">✕ Không Đạt</div>
  </div>
- <div class="p-4 rounded-2xl bg-slate-900 border border-violet-500/30 text-center">
+ <div class="p-4 rounded-2xl bg-white border border-violet-500/30 text-center">
  <div class="text-2xl font-black text-violet-400">{adminWorkflows.recruitment.length}</div>
- <div class="text-[10px] text-slate-400 font-bold uppercase mt-1">📊 Tổng Hồ Sơ</div>
+ <div class="text-[10px] text-slate-600 font-bold uppercase mt-1">📊 Tổng Hồ Sơ</div>
  </div>
  </div>
 
  <!-- BƯỚC 1: CHỜ DUYỆT -->
- <div class="bg-slate-900 border border-amber-500/30 rounded-3xl p-5 shadow-xl space-y-4">
+ <div class="bg-white border border-amber-500/30 rounded-3xl p-5 shadow-xl space-y-4">
  <div class="flex items-center gap-2.5">
  <span class="text-lg">⏳</span>
  <div>
- <h3 class="font-black text-sm text-white">Bước 1: Hồ Sơ Chờ Duyệt ({adminWorkflows.recruitment.filter(r => r.status === 'applied').length})</h3>
- <p class="text-[11px] text-slate-400">Xem hồ sơ, chuyển sang phỏng vấn hoặc từ chối</p>
+ <h3 class="font-black text-sm text-slate-900">Bước 1: Hồ Sơ Chờ Duyệt ({adminWorkflows.recruitment.filter(r => r.status === 'applied').length})</h3>
+ <p class="text-[11px] text-slate-600">Xem hồ sơ, chuyển sang phỏng vấn hoặc từ chối</p>
  </div>
  </div>
  {#if adminWorkflows.recruitment.filter(r => r.status === 'applied').length === 0}
- <div class="p-6 text-center text-xs text-slate-500 bg-slate-950/50 rounded-2xl border border-slate-800/80">
+ <div class="p-6 text-center text-xs text-slate-500 bg-stone-500/25 rounded-2xl border border-slate-200">
  Không có hồ sơ nào đang chờ duyệt.
  </div>
  {:else}
  <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
  {#each adminWorkflows.recruitment.filter(r => r.status === 'applied') as rec}
- <div class="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-2">
+ <div class="p-4 rounded-2xl bg-stone-500/25 border border-slate-200 space-y-2">
  <div class="flex items-center justify-between">
- <span class="font-bold text-white text-sm">{rec.candidate_name}</span>
- <span class="px-2 py-0.5 rounded-md font-bold text-[10px] {rec.role_type === 'lead' ? 'bg-indigo-500/20 text-indigo-300' : rec.role_type === 'assistant' ? 'bg-sky-500/20 text-sky-300' : 'bg-amber-500/20 text-amber-300'}">
+ <span class="font-bold text-slate-900 text-sm">{rec.candidate_name}</span>
+ <span class="px-2 py-0.5 rounded-md font-bold text-[10px] {rec.role_type === 'lead' ? 'bg-indigo-500/20 text-indigo-700' : rec.role_type === 'assistant' ? 'bg-sky-500/20 text-sky-300' : 'bg-amber-500/20 text-amber-700'}">
  {rec.role_type === 'lead' ? 'Giáo Viên Chính' : rec.role_type === 'assistant' ? 'Trợ Giảng' : 'Thời Vụ'}
  </span>
  </div>
- <div class="text-xs text-slate-300">📞 {rec.phone || 'Chưa có'} {rec.email ? `· ✉️ ${rec.email}` : ''}</div>
- {#if rec.certificates}<div class="text-[11px] text-slate-400">🎓 {rec.certificates}</div>{/if}
+ <div class="text-xs text-slate-700">📞 {rec.phone || 'Chưa có'} {rec.email ? `· ✉️ ${rec.email}` : ''}</div>
+ {#if rec.certificates}<div class="text-[11px] text-slate-600">🎓 {rec.certificates}</div>{/if}
  {#if rec.cv_link}<a href={rec.cv_link} target="_blank" class="text-xs text-cyan-400 hover:underline">📄 Xem CV</a>{/if}
- {#if rec.interview_notes}<div class="text-[11px] text-slate-400 italic">{rec.interview_notes}</div>{/if}
+ {#if rec.interview_notes}<div class="text-[11px] text-slate-600 italic">{rec.interview_notes}</div>{/if}
  <div class="flex gap-2 pt-2">
  <button type="button" onclick={() => handleRecruitStatus(rec.id, 'interview_scheduled')} class="flex-1 px-3 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs">🎤 Lên Lịch PV</button>
- <button type="button" onclick={() => handleRecruitStatus(rec.id, 'rejected')} class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-rose-900/50 text-slate-300 font-bold text-xs border border-slate-700">✕ Từ Chối</button>
+ <button type="button" onclick={() => handleRecruitStatus(rec.id, 'rejected')} class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-rose-900/50 text-slate-700 font-bold text-xs border border-slate-200">✕ Từ Chối</button>
  </div>
  </div>
  {/each}
@@ -2397,32 +2397,32 @@
  </div>
 
  <!-- BƯỚC 2: PHỎNG VẤN -->
- <div class="bg-slate-900 border border-sky-500/30 rounded-3xl p-5 shadow-xl space-y-4">
+ <div class="bg-white border border-sky-500/30 rounded-3xl p-5 shadow-xl space-y-4">
  <div class="flex items-center gap-2.5">
  <span class="text-lg">🎤</span>
  <div>
- <h3 class="font-black text-sm text-white">Bước 2: Lịch Phỏng Vấn ({adminWorkflows.recruitment.filter(r => r.status === 'interview_scheduled').length})</h3>
- <p class="text-[11px] text-slate-400">Giờ phỏng vấn, người PV, ghi chú feedback</p>
+ <h3 class="font-black text-sm text-slate-900">Bước 2: Lịch Phỏng Vấn ({adminWorkflows.recruitment.filter(r => r.status === 'interview_scheduled').length})</h3>
+ <p class="text-[11px] text-slate-600">Giờ phỏng vấn, người PV, ghi chú feedback</p>
  </div>
  </div>
  {#if adminWorkflows.recruitment.filter(r => r.status === 'interview_scheduled').length === 0}
- <div class="p-6 text-center text-xs text-slate-500 bg-slate-950/50 rounded-2xl border border-slate-800/80">
+ <div class="p-6 text-center text-xs text-slate-500 bg-stone-500/25 rounded-2xl border border-slate-200">
  Chưa có lịch phỏng vấn nào.
  </div>
  {:else}
  <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
  {#each adminWorkflows.recruitment.filter(r => r.status === 'interview_scheduled') as rec}
- <div class="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-2">
+ <div class="p-4 rounded-2xl bg-stone-500/25 border border-slate-200 space-y-2">
  <div class="flex items-center justify-between">
- <span class="font-bold text-white text-sm">{rec.candidate_name}</span>
+ <span class="font-bold text-slate-900 text-sm">{rec.candidate_name}</span>
  <span class="text-[10px] text-sky-300 font-bold">🕐 {rec.interview_time || 'Chưa xếp giờ'}</span>
  </div>
- <div class="text-xs text-slate-300">👤 PV: {rec.interviewer_name || 'Chưa phân công'}</div>
- <div class="text-xs text-slate-300">📞 {rec.phone || 'Chưa có'}</div>
- {#if rec.interview_notes}<div class="text-[11px] text-slate-400 italic">📝 {rec.interview_notes}</div>{/if}
+ <div class="text-xs text-slate-700">👤 PV: {rec.interviewer_name || 'Chưa phân công'}</div>
+ <div class="text-xs text-slate-700">📞 {rec.phone || 'Chưa có'}</div>
+ {#if rec.interview_notes}<div class="text-[11px] text-slate-600 italic">📝 {rec.interview_notes}</div>{/if}
  <div class="flex gap-2 pt-2">
  <button type="button" onclick={() => handleRecruitStatus(rec.id, 'accepted')} class="flex-1 px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs">✅ Trúng Tuyển</button>
- <button type="button" onclick={() => handleRecruitStatus(rec.id, 'rejected')} class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-rose-900/50 text-slate-300 font-bold text-xs border border-slate-700">✕ Không Đạt</button>
+ <button type="button" onclick={() => handleRecruitStatus(rec.id, 'rejected')} class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-rose-900/50 text-slate-700 font-bold text-xs border border-slate-200">✕ Không Đạt</button>
  </div>
  </div>
  {/each}
@@ -2431,32 +2431,32 @@
  </div>
 
  <!-- BƯỚC 3+4: QUYẾT ĐỊNH & CẤP TÀI KHOẢN -->
- <div class="bg-slate-900 border border-emerald-500/30 rounded-3xl p-5 shadow-xl space-y-4">
+ <div class="bg-white border border-emerald-500/30 rounded-3xl p-5 shadow-xl space-y-4">
  <div class="flex items-center gap-2.5">
  <span class="text-lg">🎓</span>
  <div>
- <h3 class="font-black text-sm text-white">Bước 3+4: Trúng Tuyển & Cấp Tài Khoản ({adminWorkflows.recruitment.filter(r => r.status === 'accepted').length})</h3>
- <p class="text-[11px] text-slate-400">Cấp tài khoản teacher từ hồ sơ đã duyệt</p>
+ <h3 class="font-black text-sm text-slate-900">Bước 3+4: Trúng Tuyển & Cấp Tài Khoản ({adminWorkflows.recruitment.filter(r => r.status === 'accepted').length})</h3>
+ <p class="text-[11px] text-slate-600">Cấp tài khoản teacher từ hồ sơ đã duyệt</p>
  </div>
  </div>
  {#if adminWorkflows.recruitment.filter(r => r.status === 'accepted').length === 0}
- <div class="p-6 text-center text-xs text-slate-500 bg-slate-950/50 rounded-2xl border border-slate-800/80">
+ <div class="p-6 text-center text-xs text-slate-500 bg-stone-500/25 rounded-2xl border border-slate-200">
  Chưa có ứng viên trúng tuyển nào.
  </div>
  {:else}
  <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
  {#each adminWorkflows.recruitment.filter(r => r.status === 'accepted') as rec}
- <div class="p-4 rounded-2xl bg-slate-950/60 border border-emerald-800/50 space-y-2">
+ <div class="p-4 rounded-2xl bg-stone-500/25 border border-emerald-200/50 space-y-2">
  <div class="flex items-center justify-between">
- <span class="font-bold text-white text-sm">{rec.candidate_name}</span>
- <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400">✅ Trúng Tuyển</span>
+ <span class="font-bold text-slate-900 text-sm">{rec.candidate_name}</span>
+ <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-700">✅ Trúng Tuyển</span>
  </div>
- <div class="text-xs text-slate-300">📞 {rec.phone || 'Chưa có'} {rec.email ? `· ✉️ ${rec.email}` : ''}</div>
+ <div class="text-xs text-slate-700">📞 {rec.phone || 'Chưa có'} {rec.email ? `· ✉️ ${rec.email}` : ''}</div>
  <div class="flex gap-2 pt-2">
  {#if currentUser && ['superadmin', 'admin'].includes((currentUser.role || '').toLowerCase())}
  <button type="button" onclick={() => handleProvisionAccount(rec.id, rec.candidate_name)} class="flex-1 px-3 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-bold text-xs">🔑 Cấp Tài Khoản GV</button>
  {/if}
- <a href="/admin?tab=schedule" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs border border-slate-700 text-center">📅 Phân Công</a>
+ <a href="/admin?tab=schedule" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200/80 text-slate-900 font-bold text-xs border border-slate-200 text-center">📅 Phân Công</a>
  </div>
  </div>
  {/each}
@@ -2466,25 +2466,25 @@
 
  <!-- BƯỚC 5: DANH SÁCH ĐÃ XỬ LÝ -->
  {#if adminWorkflows.recruitment.filter(r => r.status === 'rejected').length > 0}
- <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-4 opacity-75">
- <h3 class="font-black text-sm text-slate-300">📁 Hồ Sơ Không Đạt ({adminWorkflows.recruitment.filter(r => r.status === 'rejected').length})</h3>
+ <div class="bg-white border border-slate-200 rounded-3xl p-5 shadow-xl space-y-4 opacity-75">
+ <h3 class="font-black text-sm text-slate-700">📁 Hồ Sơ Không Đạt ({adminWorkflows.recruitment.filter(r => r.status === 'rejected').length})</h3>
  <div class="text-xs text-slate-500">
  {#each adminWorkflows.recruitment.filter(r => r.status === 'rejected') as rec}
- <span class="inline-block px-2 py-1 mr-2 mb-1 rounded-lg bg-slate-950 border border-slate-800">{rec.candidate_name}</span>
+ <span class="inline-block px-2 py-1 mr-2 mb-1 rounded-lg bg-slate-50 border border-slate-200">{rec.candidate_name}</span>
  {/each}
  </div>
  </div>
  {/if}
  </div>
  {:else}
- <div class="p-8 text-center text-slate-400">Không có quyền truy cập tab này.</div>
+ <div class="p-8 text-center text-slate-600">Không có quyền truy cập tab này.</div>
  {/if}
 
  <!-- ================= TAB 1: QUẢN LÝ HỌC SINH & DUYỆT TRIAL ================= -->
  {:else if activeTab === 'students'}
  <div class="space-y-4">
  <!-- Action & Filter Ribbon -->
- <div class="p-4 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 text-xs">
+ <div class="p-4 rounded-3xl bg-white border border-slate-200 shadow-xl flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 text-xs">
  <div class="flex flex-wrap items-center gap-2">
  <!-- Search -->
  <div class="relative min-w-[200px]">
@@ -2492,7 +2492,7 @@
  type="text"
  bind:value={studentSearchTerm}
  placeholder="Tìm theo tên, username, SĐT..."
- class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+ class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 placeholder-slate-500 focus:outline-none focus:border-emerald-500"
  />
  <span class="absolute right-3 top-2 text-slate-500">🔍</span>
  </div>
@@ -2500,7 +2500,7 @@
  <!-- Status Filter -->
  <select
  bind:value={studentStatusFilter}
- class="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-emerald-500"
+ class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:border-emerald-500"
  >
  <option value="all">Tất cả trạng thái ({studentsList.length})</option>
  <option value="trial">⏳ Chờ duyệt (Trial - {trialStudents.length})</option>
@@ -2510,7 +2510,7 @@
  <!-- Grade Filter -->
  <select
  bind:value={studentGradeFilter}
- class="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-emerald-500"
+ class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:border-emerald-500"
  >
  <option value="all">Tất cả khối lớp</option>
  <option value="Lớp 1">Lớp 1</option>
@@ -2539,10 +2539,10 @@
  </div>
 
  <!-- Students Table -->
- <div class="rounded-3xl bg-slate-900 border border-slate-800 shadow-xl overflow-hidden">
+ <div class="rounded-3xl bg-white border border-slate-200 shadow-xl overflow-hidden">
  <div class="overflow-x-auto">
- <table class="w-full text-left text-xs text-slate-300">
- <thead class="bg-slate-950/80 border-b border-slate-800 text-[11px] uppercase tracking-wider text-slate-400 font-extrabold">
+ <table class="w-full text-left text-xs text-slate-700">
+ <thead class="bg-stone-500/25 border-b border-slate-200 text-[11px] uppercase tracking-wider text-slate-600 font-extrabold">
  <tr>
  <th class="p-4">Học Sinh</th>
  <th class="p-4">Khối Lớp</th>
@@ -2552,13 +2552,13 @@
  <th class="p-4 text-right">Thao Tác Quản Trị</th>
  </tr>
  </thead>
- <tbody class="divide-y divide-slate-800">
+ <tbody class="divide-y divide-slate-200">
  {#each filteredStudents as st}
  {@const isTrial = st.status === 'trial' || st.approval_status === 'trial'}
  {@const stars = getStudentStars(st.id)}
  {@const meta = typeof st.metadata === 'string' ? JSON.parse(st.metadata || '{}') : (st.metadata || {})}
 
- <tr class="hover:bg-slate-800/40 transition-colors">
+ <tr class="hover:bg-slate-200/80 transition-colors">
  <!-- Name & Avatar -->
  <td class="p-4">
  <div class="flex items-center gap-3">
@@ -2566,16 +2566,16 @@
  src={st.avatar && !st.avatar.includes('dicebear.com') ? st.avatar : '/icon.svg'}
  alt={st.name}
  onerror={(e) => { if (e.currentTarget.src !== window.location.origin + '/icon.svg') e.currentTarget.src = '/icon.svg'; }}
- class="w-10 h-10 rounded-2xl bg-slate-800 object-cover border border-slate-700 shadow-md"
+ class="w-10 h-10 rounded-2xl bg-slate-100 object-cover border border-slate-200 shadow-md"
  />
  <div>
- <div class="font-extrabold text-sm text-white flex items-center gap-1.5">
+ <div class="font-extrabold text-sm text-slate-900 flex items-center gap-1.5">
  <span>{st.name}</span>
  {#if st.status === 'blocked'}
- <span class="px-1.5 py-0.5 rounded text-[9px] bg-rose-500/20 text-rose-400 border border-rose-500/30 font-bold">Đã Khóa</span>
+ <span class="px-1.5 py-0.5 rounded text-[9px] bg-rose-500/20 text-rose-700 border border-rose-500/30 font-bold">Đã Khóa</span>
  {/if}
  </div>
- <div class="text-[11px] text-slate-400 font-mono">@{st.username || st.phone}</div>
+ <div class="text-[11px] text-slate-600 font-mono">@{st.username || st.phone}</div>
  {#if st.phone}
  <div class="text-[10px] text-slate-500">📞 {st.phone}</div>
  {/if}
@@ -2587,13 +2587,13 @@
  <td class="p-4">
  <div class="flex flex-wrap items-center gap-1.5">
  {#each getUserEnrolledGrades(st) as g}
- <span class="px-2 py-0.5 rounded-lg bg-indigo-500/10 text-indigo-300 font-bold border border-indigo-500/20 text-xs">
+ <span class="px-2 py-0.5 rounded-lg bg-indigo-500/10 text-indigo-700 font-bold border border-indigo-500/20 text-xs">
  {g}
  </span>
  {/each}
  <button
  onclick={() => openClassModal(st)}
- class="text-[10px] text-emerald-400 hover:text-emerald-300 px-1.5 py-0.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 font-bold transition-all"
+ class="text-[10px] text-emerald-700 hover:text-emerald-700 px-1.5 py-0.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 font-bold transition-all"
  title="Đổi hoặc gán thêm khối lớp"
  >
  ✏️ Set Lớp
@@ -2607,11 +2607,11 @@
  <!-- Status -->
  <td class="p-4">
  {#if isTrial}
- <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-amber-500/20 text-amber-300 font-extrabold border border-amber-500/40 text-[11px] animate-pulse">
+ <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-amber-500/20 text-amber-700 font-extrabold border border-amber-500/40 text-[11px] animate-pulse">
  <span>⏳ Dùng Thử (Trial)</span>
  </span>
  {:else}
- <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/30 text-[11px]">
+ <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-emerald-500/20 text-emerald-700 font-bold border border-emerald-500/30 text-[11px]">
  <span>✓ Chính Thức</span>
  </span>
  {/if}
@@ -2620,12 +2620,12 @@
  <!-- Stars -->
  <td class="p-4">
  <div class="flex items-center gap-2">
- <span class="font-extrabold text-sm text-amber-400 font-mono">
+ <span class="font-extrabold text-sm text-amber-700 font-mono">
  {stars.stars_balance || 0} ⭐
  </span>
  <button
  onclick={() => openStarModal(st)}
- class="px-2 py-0.5 rounded-lg bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 border border-amber-500/30 text-[10px] font-bold"
+ class="px-2 py-0.5 rounded-lg bg-amber-500/10 text-amber-700 hover:bg-amber-500/20 border border-amber-500/30 text-[10px] font-bold"
  title="Thưởng / Phạt sao"
  >
  + / -
@@ -2639,8 +2639,8 @@
  <!-- Parent -->
  <td class="p-4">
  {#if meta.parent_name || meta.linked_student_name}
- <div class="font-bold text-xs text-white">{meta.parent_name || 'Phụ huynh'}</div>
- <div class="text-[10px] text-slate-400">{meta.parent_phone || 'Chưa có SĐT'}</div>
+ <div class="font-bold text-xs text-slate-900">{meta.parent_name || 'Phụ huynh'}</div>
+ <div class="text-[10px] text-slate-600">{meta.parent_phone || 'Chưa có SĐT'}</div>
  {:else}
  <span class="text-slate-500 text-[11px] italic">Chưa liên kết</span>
  {/if}
@@ -2661,7 +2661,7 @@
 
  <button
  onclick={() => openStarModal(st)}
- class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-400 text-xs"
+ class="p-2 rounded-xl bg-slate-100 hover:bg-slate-200/80 text-amber-700 text-xs"
  title="Thưởng/phạt Sao"
  >
  ⭐
@@ -2669,7 +2669,7 @@
 
  <button
  onclick={() => handleToggleBlockUser(st)}
- class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 {st.status === 'blocked' ? 'text-emerald-400' : 'text-slate-400'} text-xs"
+ class="p-2 rounded-xl bg-slate-100 hover:bg-slate-200/80 {st.status === 'blocked' ? 'text-emerald-700' : 'text-slate-600'} text-xs"
  title={st.status === 'blocked' ? 'Mở khóa tài khoản' : 'Khóa tài khoản'}
  >
  {st.status === 'blocked' ? '🔓' : '🔒'}
@@ -2677,7 +2677,7 @@
 
  <button
  onclick={() => handleRemoveStudent(st.id, st.name)}
- class="p-2 rounded-xl bg-slate-800 hover:bg-rose-900/50 text-rose-400 text-xs"
+ class="p-2 rounded-xl bg-slate-100 hover:bg-rose-900/50 text-rose-700 text-xs"
  title="Xóa học sinh"
  >
  🗑️
@@ -2702,10 +2702,10 @@
  <!-- ================= TAB 2: ĐỘI NGŨ GIÁO VIÊN & LƯƠNG CA DẠY ================= -->
  {:else if activeTab === 'teachers'}
  <div class="space-y-4">
- <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-3xl bg-slate-900 border border-slate-800">
+ <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-3xl bg-white border border-slate-200">
  <div>
- <h2 class="text-base font-extrabold text-white">Đội Ngũ Nhân Sự &amp; Bảng Lương Ca Dạy</h2>
- <p class="text-xs text-slate-400">Phân cấp 4 role: Leader Cô Dung • Bản Ngữ • Trợ Giảng Cố Định • Trợ Giảng Part-time</p>
+ <h2 class="text-base font-extrabold text-slate-900">Đội Ngũ Nhân Sự &amp; Bảng Lương Ca Dạy</h2>
+ <p class="text-xs text-slate-600">Phân cấp 4 role: Leader Cô Dung • Bản Ngữ • Trợ Giảng Cố Định • Trợ Giảng Part-time</p>
  </div>
  <button
  onclick={() => showAddTeacherModal = true}
@@ -2721,69 +2721,69 @@
  {@const isLeader = isSuperAdmin(t) || t.username === 'msdung' || profile.role_level === 'lead'}
  {@const pendingReminders = (profile.private_reminders || []).filter(r => r.status === 'pending')}
 
- <div class="rounded-3xl bg-slate-900 border {isLeader ? 'border-amber-500/40' : 'border-slate-800'} p-5 space-y-4 shadow-xl flex flex-col justify-between">
+ <div class="rounded-3xl bg-white border {isLeader ? 'border-amber-500/40' : 'border-slate-200'} p-5 space-y-4 shadow-xl flex flex-col justify-between">
  <div class="space-y-3">
  <div class="flex items-start justify-between gap-3">
  <div class="flex items-center gap-3">
  <img
  src={t.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150'}
  alt={t.name}
- class="w-12 h-12 rounded-2xl bg-slate-800 object-cover border border-slate-700 shadow-md"
+ class="w-12 h-12 rounded-2xl bg-slate-100 object-cover border border-slate-200 shadow-md"
  />
  <div>
- <div class="font-extrabold text-sm text-white flex items-center gap-1.5">
+ <div class="font-extrabold text-sm text-slate-900 flex items-center gap-1.5">
  <span>{t.name}</span>
  {#if isLeader}
- <span class="text-amber-400" title="Leader">👑</span>
+ <span class="text-amber-700" title="Leader">👑</span>
  {/if}
  </div>
- <div class="text-[11px] text-teal-400 font-mono">@{t.username}</div>
- <div class="text-[10px] text-slate-400">{t.email}</div>
+ <div class="text-[11px] text-teal-700 font-mono">@{t.username}</div>
+ <div class="text-[10px] text-slate-600">{t.email}</div>
  </div>
  </div>
 
- <span class="px-2.5 py-1 rounded-xl text-[10px] font-extrabold uppercase border {isLeader ? 'bg-amber-500/20 text-amber-300 border-amber-500/30' : (profile.role_type === 'native' || profile.role_level === 'native') ? 'bg-teal-500/20 text-teal-300 border-teal-500/30' : 'bg-slate-800 text-slate-300 border-slate-700'}">
+ <span class="px-2.5 py-1 rounded-xl text-[10px] font-extrabold uppercase border {isLeader ? 'bg-amber-500/20 text-amber-700 border-amber-500/30' : (profile.role_type === 'native' || profile.role_level === 'native') ? 'bg-teal-500/20 text-teal-700 border-teal-500/30' : 'bg-slate-100 text-slate-700 border-slate-200'}">
  {profile.role_title || profile.role_label || (isLeader ? 'Leader Cô Dung' : 'Giáo Viên')}
  </span>
  </div>
 
  <!-- Compensation & Ratings -->
- <div class="p-3 rounded-2xl bg-slate-950 border border-slate-800/80 space-y-2 text-xs">
- <div class="flex justify-between items-center text-slate-400">
+ <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200 space-y-2 text-xs">
+ <div class="flex justify-between items-center text-slate-600">
  <span>Lương Cứng:</span>
- <span class="font-bold text-white">{(profile.base_salary_vnd || 5000000).toLocaleString('vi-VN')}đ / tháng</span>
+ <span class="font-bold text-slate-900">{(profile.base_salary_vnd || 5000000).toLocaleString('vi-VN')}đ / tháng</span>
  </div>
- <div class="flex justify-between items-center text-slate-400">
+ <div class="flex justify-between items-center text-slate-600">
  <span>Thù Lao Ca Dạy:</span>
- <span class="font-bold text-emerald-400">{(profile.rate_per_session_vnd || profile.per_session_rate_vnd || 200000).toLocaleString('vi-VN')}đ / ca</span>
+ <span class="font-bold text-emerald-700">{(profile.rate_per_session_vnd || profile.per_session_rate_vnd || 200000).toLocaleString('vi-VN')}đ / ca</span>
  </div>
- <div class="flex justify-between items-center text-slate-400">
+ <div class="flex justify-between items-center text-slate-600">
  <span>Ca Đã Dạy Tháng:</span>
- <span class="font-bold text-indigo-400">{profile.total_sessions_taught || profile.monthly_completed_sessions || 0} ca</span>
+ <span class="font-bold text-indigo-700">{profile.total_sessions_taught || profile.monthly_completed_sessions || 0} ca</span>
  </div>
- <div class="flex justify-between items-center text-slate-300">
+ <div class="flex justify-between items-center text-slate-700">
  <span>Đánh Giá Leader:</span>
- <span class="font-bold text-amber-400">{'⭐'.repeat(Math.min(5, Math.max(1, Math.round(profile.leader_rating || profile.rating_stars || 5))))} ({profile.leader_rating || profile.rating_stars || 5.0})</span>
+ <span class="font-bold text-amber-700">{'⭐'.repeat(Math.min(5, Math.max(1, Math.round(profile.leader_rating || profile.rating_stars || 5))))} ({profile.leader_rating || profile.rating_stars || 5.0})</span>
  </div>
- <div class="flex justify-between items-center border-t border-slate-800/80 pt-1.5 text-xs font-bold">
- <span class="text-teal-300">💰 Tổng Thu Nhập Dự Kiến:</span>
- <span class="text-emerald-400 font-black text-sm">
+ <div class="flex justify-between items-center border-t border-slate-200 pt-1.5 text-xs font-bold">
+ <span class="text-teal-700">💰 Tổng Thu Nhập Dự Kiến:</span>
+ <span class="text-emerald-700 font-black text-sm">
  {((profile.base_salary_vnd || 5000000) + ((profile.total_sessions_taught || profile.monthly_completed_sessions || 0) * (profile.rate_per_session_vnd || profile.per_session_rate_vnd || 200000))).toLocaleString('vi-VN')} đ
  </span>
  </div>
  </div>
 
  {#if pendingReminders.length > 0}
- <div class="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-[11px] flex items-center justify-between">
+ <div class="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-700 text-[11px] flex items-center justify-between">
  <span>⚠️ Có {pendingReminders.length} nhắc nhở riêng chưa xem</span>
  </div>
  {/if}
  </div>
 
- <div class="flex items-center justify-between pt-2 border-t border-slate-800">
+ <div class="flex items-center justify-between pt-2 border-t border-slate-200">
  <button
  onclick={() => openEditStaff(t)}
- class="px-3.5 py-1.5 rounded-xl bg-teal-600/20 hover:bg-teal-600 text-teal-300 hover:text-white border border-teal-500/30 font-bold text-xs transition-all"
+ class="px-3.5 py-1.5 rounded-xl bg-teal-600/20 hover:bg-teal-600 text-teal-700 hover:text-slate-900 border border-teal-500/30 font-bold text-xs transition-all"
  >
  ⚙️ Cấu Hình Lương &amp; Nhắc Nhở
  </button>
@@ -2791,7 +2791,7 @@
  {#if !SUPERADMIN_EMAILS.includes(t.email)}
  <button
  onclick={() => handleRemoveTeacher(t.id, t.email, t.name)}
- class="p-2 rounded-xl bg-slate-800 hover:bg-rose-900/50 text-rose-400 text-xs"
+ class="p-2 rounded-xl bg-slate-100 hover:bg-rose-900/50 text-rose-700 text-xs"
  title="Xóa quyền giáo viên"
  >
  🗑️
@@ -2806,10 +2806,10 @@
  <!-- ================= TAB 3: THỜI KHÓA BIỂU ĐỒNG BỘ ================= -->
  {:else if activeTab === 'schedule'}
  <div class="space-y-4">
- <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-3xl bg-slate-900 border border-slate-800">
+ <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-3xl bg-white border border-slate-200">
  <div>
- <h2 class="text-base font-extrabold text-white">Thời Khóa Biểu &amp; Ca Học Toàn Hệ Thống</h2>
- <p class="text-xs text-slate-400">Đồng bộ với phân quyền lớp, danh sách học sinh và giáo viên phụ trách</p>
+ <h2 class="text-base font-extrabold text-slate-900">Thời Khóa Biểu &amp; Ca Học Toàn Hệ Thống</h2>
+ <p class="text-xs text-slate-600">Đồng bộ với phân quyền lớp, danh sách học sinh và giáo viên phụ trách</p>
  </div>
  <button
  onclick={openCreateSessionModal}
@@ -2821,47 +2821,47 @@
 
  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
  {#each classSessions as sess}
- <div class="rounded-3xl bg-slate-900 border border-slate-800 p-5 space-y-4 shadow-xl flex flex-col justify-between">
+ <div class="rounded-3xl bg-white border border-slate-200 p-5 space-y-4 shadow-xl flex flex-col justify-between">
  <div class="space-y-3">
  <div class="flex items-start justify-between gap-3">
  <div>
- <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 uppercase">
+ <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-indigo-500/20 text-indigo-700 border border-indigo-500/30 uppercase">
  {sess.grade_level || '—'}
  </span>
- <h3 class="text-base font-black text-white mt-1">{sess.class_name}</h3>
- <div class="text-xs text-slate-400 mt-0.5">{sess.subject_topic}</div>
+ <h3 class="text-base font-black text-slate-900 mt-1">{sess.class_name}</h3>
+ <div class="text-xs text-slate-600 mt-0.5">{sess.subject_topic}</div>
  </div>
 
  <div class="text-right">
- <div class="text-xs font-bold text-emerald-400">{sess.day_name}</div>
- <div class="text-sm font-black font-mono text-white">{sess.start_time} - {sess.end_time}</div>
+ <div class="text-xs font-bold text-emerald-700">{sess.day_name}</div>
+ <div class="text-sm font-black font-mono text-slate-900">{sess.start_time} - {sess.end_time}</div>
  </div>
  </div>
 
- <div class="p-3 rounded-2xl bg-slate-950 border border-slate-800 space-y-1.5 text-xs text-slate-300">
+ <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200 space-y-1.5 text-xs text-slate-700">
  <div class="flex items-center gap-2">
- <span class="text-slate-400">👩‍🏫 Phụ trách:</span>
- <span class="font-bold text-white">{sess.teacher_name}</span>
+ <span class="text-slate-600">👩‍🏫 Phụ trách:</span>
+ <span class="font-bold text-slate-900">{sess.teacher_name}</span>
  {#if sess.assistant_teacher_name}
  <span class="text-slate-500">• Trợ giảng: {sess.assistant_teacher_name}</span>
  {/if}
  </div>
  <div class="flex items-center gap-2">
- <span class="text-slate-400">📍 Địa điểm:</span>
- <span class="text-slate-200 line-clamp-1">{sess.location}</span>
+ <span class="text-slate-600">📍 Địa điểm:</span>
+ <span class="text-slate-900 line-clamp-1">{sess.location}</span>
  </div>
- <div class="flex items-center justify-between pt-1 border-t border-slate-800">
- <span class="text-slate-400">👥 Học sinh theo lớp:</span>
- <span class="font-bold text-indigo-300">{(sess.student_ids || []).length} em</span>
+ <div class="flex items-center justify-between pt-1 border-t border-slate-200">
+ <span class="text-slate-600">👥 Học sinh theo lớp:</span>
+ <span class="font-bold text-indigo-700">{(sess.student_ids || []).length} em</span>
  </div>
  </div>
  </div>
 
  <!-- Actions Bar -->
- <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-800">
+ <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-200">
  <button
  onclick={() => handleTriggerNotification(sess)}
- class="px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-white border border-amber-500/30 font-bold text-xs transition-all flex items-center gap-1"
+ class="px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500 text-amber-700 hover:text-slate-900 border border-amber-500/30 font-bold text-xs transition-all flex items-center gap-1"
  title="Bắn thông báo nhắc đón 10 phút trước giờ học"
  >
  <span>🔔 Bắn Nhắc Đón 10p</span>
@@ -2876,14 +2876,14 @@
  </button>
  <button
  onclick={() => openEditSession(sess)}
- class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs"
+ class="p-2 rounded-xl bg-slate-100 hover:bg-slate-200/80 text-slate-700 text-xs"
  title="Sửa lịch học"
  >
  ✏️
  </button>
  <button
  onclick={() => handleDeleteSession(sess.id, sess.class_name)}
- class="p-2 rounded-xl bg-slate-800 hover:bg-rose-900/50 text-rose-400 text-xs"
+ class="p-2 rounded-xl bg-slate-100 hover:bg-rose-900/50 text-rose-700 text-xs"
  title="Xóa buổi học"
  >
  🗑️
@@ -2898,15 +2898,15 @@
  <!-- ================= TAB 4: HỌC PHÍ & ĐỔI SAO TRỪ TIỀN (VIETQR) ================= -->
  {:else if activeTab === 'tuition'}
  <div class="space-y-4">
- <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-3xl bg-slate-900 border border-slate-800">
+ <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-3xl bg-white border border-slate-200">
  <div>
- <h2 class="text-base font-extrabold text-white">Quản Lý Học Phí &amp; Khấu Trừ Sao Thưởng (100 Sao = 1.000đ)</h2>
- <p class="text-xs text-slate-400">Xuất hóa đơn VietQR thông minh, kiểm toán tăng trưởng &amp; 5 mẫu PDF xanh lá dễ thương</p>
+ <h2 class="text-base font-extrabold text-slate-900">Quản Lý Học Phí &amp; Khấu Trừ Sao Thưởng (100 Sao = 1.000đ)</h2>
+ <p class="text-xs text-slate-600">Xuất hóa đơn VietQR thông minh, kiểm toán tăng trưởng &amp; 5 mẫu PDF xanh lá dễ thương</p>
  </div>
  <div class="flex items-center gap-2">
  <button
  onclick={handleExportGoogleSheetCSV}
- class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs flex items-center gap-1.5 border border-slate-700"
+ class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200/80 text-slate-700 font-bold text-xs flex items-center gap-1.5 border border-slate-200"
  >
  <span>📊 Xuất CSV Google Sheets</span>
  </button>
@@ -2919,10 +2919,10 @@
  </div>
  </div>
 
- <div class="rounded-3xl bg-slate-900 border border-slate-800 shadow-xl overflow-hidden">
+ <div class="rounded-3xl bg-white border border-slate-200 shadow-xl overflow-hidden">
  <div class="overflow-x-auto">
- <table class="w-full text-left text-xs text-slate-300">
- <thead class="bg-slate-950/80 border-b border-slate-800 text-[11px] uppercase tracking-wider text-slate-400 font-extrabold">
+ <table class="w-full text-left text-xs text-slate-700">
+ <thead class="bg-stone-500/25 border-b border-slate-200 text-[11px] uppercase tracking-wider text-slate-600 font-extrabold">
  <tr>
  <th class="p-4">Học Sinh</th>
  <th class="p-4">Kỳ Học Phí</th>
@@ -2933,26 +2933,26 @@
  <th class="p-4 text-right">Xem &amp; Gửi QR</th>
  </tr>
  </thead>
- <tbody class="divide-y divide-slate-800">
+ <tbody class="divide-y divide-slate-200">
  {#each tuitionBills as bill}
- <tr class="hover:bg-slate-800/40 transition-colors">
+ <tr class="hover:bg-slate-200/80 transition-colors">
  <td class="p-4">
- <div class="font-extrabold text-white text-sm">{bill.student_name}</div>
- <div class="text-[10px] text-slate-400">{bill.grade_level} • {bill.age} tuổi</div>
+ <div class="font-extrabold text-slate-900 text-sm">{bill.student_name}</div>
+ <div class="text-[10px] text-slate-600">{bill.grade_level} • {bill.age} tuổi</div>
  </td>
- <td class="p-4 font-bold text-slate-200">{bill.billing_period}</td>
+ <td class="p-4 font-bold text-slate-900">{bill.billing_period}</td>
  <td class="p-4 font-mono font-bold">{bill.base_tuition_vnd.toLocaleString()}đ</td>
  <td class="p-4">
- <span class="text-amber-400 font-bold font-mono">-{bill.stars_deducted} ⭐</span>
- <div class="text-[10px] text-emerald-400">(-{bill.discount_vnd.toLocaleString()}đ)</div>
+ <span class="text-amber-700 font-bold font-mono">-{bill.stars_deducted} ⭐</span>
+ <div class="text-[10px] text-emerald-700">(-{bill.discount_vnd.toLocaleString()}đ)</div>
  </td>
  <td class="p-4">
- <span class="text-emerald-400 font-black text-sm font-mono">
+ <span class="text-emerald-700 font-black text-sm font-mono">
  {bill.final_amount_vnd.toLocaleString()}đ
  </span>
  </td>
  <td class="p-4">
- <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+ <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-700 border border-emerald-500/30">
  +{bill.growth_percentage}% Bứt phá
  </span>
  </td>
@@ -2960,7 +2960,7 @@
  <div class="flex items-center justify-end gap-1.5">
  <button
  onclick={() => openPreview(bill)}
- class="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs"
+ class="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200/80 text-slate-900 font-bold text-xs"
  title="Xem trước 5 mẫu PDF"
  >
  📄 Preview
@@ -2992,16 +2992,16 @@
  <!-- ================= TAB 5: GIÁO VIÊN CP (TEACHER PORTAL) ================= -->
  {:else if activeTab === 'teacher_cp'}
  <div class="space-y-4">
- <div class="p-5 rounded-3xl bg-gradient-to-r from-teal-950/60 via-slate-900 to-slate-900 border border-teal-500/30 shadow-xl space-y-2">
+ <div class="p-5 rounded-3xl bg-gradient-to-r from-teal-950/60 via-white to-emerald-50 border border-teal-500/30 shadow-xl space-y-2">
  <div class="flex items-center justify-between">
- <span class="text-xs font-extrabold text-teal-400 uppercase tracking-wider flex items-center gap-2">
+ <span class="text-xs font-extrabold text-teal-700 uppercase tracking-wider flex items-center gap-2">
  <span class="w-2.5 h-2.5 rounded-full bg-teal-400 animate-pulse"></span>
  <span>KHÔNG GIAN ĐIỀU HÀNH DÀNH RIÊNG CHO GIÁO VIÊN &amp; TRỢ GIẢNG</span>
  </span>
- <span class="text-xs text-slate-400 font-mono">Đang thao tác: <strong>{currentUser?.name}</strong></span>
+ <span class="text-xs text-slate-600 font-mono">Đang thao tác: <strong>{currentUser?.name}</strong></span>
  </div>
- <h2 class="text-lg font-black text-white">Quản Lý Lớp Học, Điểm Danh &amp; Gửi Báo Cáo Tức Thời Đến Leader Cô Dung</h2>
- <p class="text-xs text-slate-300 leading-relaxed">
+ <h2 class="text-lg font-black text-slate-900">Quản Lý Lớp Học, Điểm Danh &amp; Gửi Báo Cáo Tức Thời Đến Leader Cô Dung</h2>
+ <p class="text-xs text-slate-700 leading-relaxed">
  Mỗi khi giáo viên thực hiện chỉnh sửa lịch học, điểm danh, ghi nhận xét sổ đầu bài hoặc chấm bài thi, hệ thống sẽ tự động lưu Snapshot kiểm toán và bắn thông báo trực tiếp đến tài khoản SuperAdmin của Cô Dung!
  </p>
  </div>
@@ -3010,45 +3010,45 @@
  <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
  <button
  onclick={() => handleTeacherLogQuickAction('BÁO_CÁO_TIẾN_ĐỘ', 'Đã hoàn thành giảng dạy chuyên đề ngữ pháp theo kế hoạch')}
- class="p-4 rounded-2xl bg-slate-900 border border-slate-800 hover:border-teal-500 text-left transition-all group"
+ class="p-4 rounded-2xl bg-white border border-slate-200 hover:border-teal-500 text-left transition-all group"
  >
  <div class="text-xl mb-1">📢</div>
- <div class="font-extrabold text-white group-hover:text-teal-400">Báo Cáo Tiến Độ Hôm Nay</div>
- <div class="text-[11px] text-slate-400 mt-0.5">Gửi thông báo tới Leader Cô Dung hoàn thành giáo án</div>
+ <div class="font-extrabold text-slate-900 group-hover:text-teal-700">Báo Cáo Tiến Độ Hôm Nay</div>
+ <div class="text-[11px] text-slate-600 mt-0.5">Gửi thông báo tới Leader Cô Dung hoàn thành giáo án</div>
  </button>
 
  <button
  onclick={() => handleTeacherLogQuickAction('ĐỀ_XUẤT_KHEN_THƯỞNG', 'Đề xuất thưởng Sao cho các học sinh đạt điểm cao bài test')}
- class="p-4 rounded-2xl bg-slate-900 border border-slate-800 hover:border-amber-500 text-left transition-all group"
+ class="p-4 rounded-2xl bg-white border border-slate-200 hover:border-amber-500 text-left transition-all group"
  >
  <div class="text-xl mb-1">⭐</div>
- <div class="font-extrabold text-white group-hover:text-amber-400">Đề Xuất Khen Thưởng Sao</div>
- <div class="text-[11px] text-slate-400 mt-0.5">Báo cáo các em học sinh có tinh thần học tập vượt bậc</div>
+ <div class="font-extrabold text-slate-900 group-hover:text-amber-700">Đề Xuất Khen Thưởng Sao</div>
+ <div class="text-[11px] text-slate-600 mt-0.5">Báo cáo các em học sinh có tinh thần học tập vượt bậc</div>
  </button>
 
  <button
  onclick={() => handleTeacherLogQuickAction('GHI_CHÚ_LỚP_HỌC', 'Cần nhắc nhở lớp ôn tập kỹ collocations trước giờ kiểm tra')}
- class="p-4 rounded-2xl bg-slate-900 border border-slate-800 hover:border-indigo-500 text-left transition-all group"
+ class="p-4 rounded-2xl bg-white border border-slate-200 hover:border-indigo-500 text-left transition-all group"
  >
  <div class="text-xl mb-1">📝</div>
- <div class="font-extrabold text-white group-hover:text-indigo-400">Ghi Chú &amp; Dặn Dò Phụ Huynh</div>
- <div class="text-[11px] text-slate-400 mt-0.5">Đồng bộ tức thì sang Sổ phụ huynh &amp; Zalo bot</div>
+ <div class="font-extrabold text-slate-900 group-hover:text-indigo-700">Ghi Chú &amp; Dặn Dò Phụ Huynh</div>
+ <div class="text-[11px] text-slate-600 mt-0.5">Đồng bộ tức thì sang Sổ phụ huynh &amp; Zalo bot</div>
  </button>
  </div>
 
  <!-- Teacher's Assigned Classes -->
  <div class="space-y-3">
- <h3 class="text-sm font-extrabold text-slate-200">Các Lớp Được Phân Công Quản Lý ({teacherManagedSessions.length}):</h3>
+ <h3 class="text-sm font-extrabold text-slate-900">Các Lớp Được Phân Công Quản Lý ({teacherManagedSessions.length}):</h3>
  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
  {#each teacherManagedSessions as sess}
- <div class="p-5 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl space-y-3">
+ <div class="p-5 rounded-3xl bg-white border border-slate-200 shadow-xl space-y-3">
  <div class="flex justify-between items-start">
  <div>
- <span class="text-[10px] px-2 py-0.5 rounded-full bg-teal-500/20 text-teal-300 font-bold border border-teal-500/30 uppercase">
+ <span class="text-[10px] px-2 py-0.5 rounded-full bg-teal-500/20 text-teal-700 font-bold border border-teal-500/30 uppercase">
  {sess.grade_level}
  </span>
- <h4 class="text-base font-black text-white mt-1">{sess.class_name}</h4>
- <div class="text-xs text-slate-400">{sess.day_name} • {sess.start_time} - {sess.end_time}</div>
+ <h4 class="text-base font-black text-slate-900 mt-1">{sess.class_name}</h4>
+ <div class="text-xs text-slate-600">{sess.day_name} • {sess.start_time} - {sess.end_time}</div>
  </div>
  <button
  onclick={() => openRollCall(sess)}
@@ -3058,9 +3058,9 @@
  </button>
  </div>
 
- <div class="p-3 rounded-2xl bg-slate-950 border border-slate-800 text-xs text-slate-300 flex items-center justify-between">
+ <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-700 flex items-center justify-between">
  <span>Số học sinh thuộc quản lý:</span>
- <span class="font-bold text-emerald-400">{(sess.student_ids || []).length} học sinh</span>
+ <span class="font-bold text-emerald-700">{(sess.student_ids || []).length} học sinh</span>
  </div>
  </div>
  {/each}
@@ -3068,21 +3068,21 @@
  </div>
 
  <!-- Live Stream of Teacher Actions Log -->
- <div class="p-5 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl space-y-3">
- <div class="flex items-center justify-between border-b border-slate-800 pb-2">
- <span class="text-xs font-extrabold text-teal-400 uppercase tracking-wider">
+ <div class="p-5 rounded-3xl bg-white border border-slate-200 shadow-xl space-y-3">
+ <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+ <span class="text-xs font-extrabold text-teal-700 uppercase tracking-wider">
  NHẬT KÝ THAO TÁC CỦA GIÁO VIÊN (ĐÃ BÁO CÁO LEADER CÔ DUNG)
  </span>
- <span class="text-[11px] text-slate-400">{recentTeacherActions.length} bản ghi gần nhất</span>
+ <span class="text-[11px] text-slate-600">{recentTeacherActions.length} bản ghi gần nhất</span>
  </div>
 
  <div class="space-y-2 text-xs font-mono">
  {#each recentTeacherActions as act}
- <div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800/80 flex items-center justify-between">
+ <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
  <div>
- <span class="text-teal-400 font-bold">[{act.action}]</span>
- <span class="text-white ml-2">{act.actor_email}</span>
- <span class="text-slate-400 text-[10px] ml-2 font-sans">{act.data_after ? act.data_after.slice(0, 80) + '...' : ''}</span>
+ <span class="text-teal-700 font-bold">[{act.action}]</span>
+ <span class="text-slate-900 ml-2">{act.actor_email}</span>
+ <span class="text-slate-600 text-[10px] ml-2 font-sans">{act.data_after ? act.data_after.slice(0, 80) + '...' : ''}</span>
  </div>
  <span class="text-[10px] text-slate-500">{new Date(act.created_at).toLocaleTimeString('vi-VN')}</span>
  </div>
@@ -3098,20 +3098,20 @@
  {:else if activeTab === 'games'}
  <div class="space-y-6 max-w-4xl">
  <!-- Master Switch Control Card -->
- <div class="p-6 rounded-3xl bg-slate-900 border-2 {gameSettings.is_portal_open ? 'border-emerald-500/50' : 'border-rose-500/50'} shadow-xl space-y-4">
- <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+ <div class="p-6 rounded-3xl bg-white border-2 {gameSettings.is_portal_open ? 'border-emerald-500/50' : 'border-rose-500/50'} shadow-xl space-y-4">
+ <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
  <div class="flex items-center gap-3">
- <div class="w-12 h-12 rounded-2xl {gameSettings.is_portal_open ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'} flex items-center justify-center text-3xl font-bold">
+ <div class="w-12 h-12 rounded-2xl {gameSettings.is_portal_open ? 'bg-emerald-500/20 text-emerald-700' : 'bg-rose-500/20 text-rose-700'} flex items-center justify-center text-3xl font-bold">
  {gameSettings.is_portal_open ? '🟢' : '🔒'}
  </div>
  <div>
  <div class="flex items-center gap-2">
- <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">CÔNG TẮC TỔNG (MASTER GATEKEEPER)</span>
- <span class="px-2 py-0.5 rounded text-[10px] font-black {gameSettings.is_portal_open ? 'bg-emerald-500/20 text-emerald-300' : 'bg-rose-500/20 text-rose-300'}">
+ <span class="text-xs font-bold text-slate-600 uppercase tracking-wider">CÔNG TẮC TỔNG (MASTER GATEKEEPER)</span>
+ <span class="px-2 py-0.5 rounded text-[10px] font-black {gameSettings.is_portal_open ? 'bg-emerald-500/20 text-emerald-700' : 'bg-rose-500/20 text-rose-700'}">
  {gameSettings.is_portal_open ? 'HỌC SINH ĐƯỢC CHƠI' : 'HỌC SINH BỊ KHÓA'}
  </span>
  </div>
- <h2 class="text-xl font-black text-white mt-0.5">
+ <h2 class="text-xl font-black text-slate-900 mt-0.5">
  Quyền Truy Cập Đấu Trường Game Của Học Sinh
  </h2>
  </div>
@@ -3136,7 +3136,7 @@
  </div>
  </div>
 
- <p class="text-xs text-slate-300 leading-relaxed">
+ <p class="text-xs text-slate-700 leading-relaxed">
  Khi <strong>Khóa</strong>: Học sinh khi vào mục trò chơi sẽ thấy thông báo chờ lệnh và yêu cầu tập trung làm bài chính khóa. 
  Giáo viên luôn có quyền vào chơi thử nghiệm bất cứ lúc nào để kiểm tra học liệu trước giờ dạy.
  </p>
@@ -3154,104 +3154,104 @@
  </div>
 
  <!-- Granular Games List -->
- <div class="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl space-y-4">
- <div class="border-b border-slate-800 pb-3">
- <h3 class="text-base font-extrabold text-white">Quản Lý Từng Trò Chơi Giáo Dục (Bật / Tắt Linh Hoạt)</h3>
- <p class="text-xs text-slate-400 mt-0.5">Giáo viên có thể mở riêng lẻ từng trò chơi theo đúng chủ điểm bài học trong ngày.</p>
+ <div class="p-6 rounded-3xl bg-white border border-slate-200 shadow-xl space-y-4">
+ <div class="border-b border-slate-200 pb-3">
+ <h3 class="text-base font-extrabold text-slate-900">Quản Lý Từng Trò Chơi Giáo Dục (Bật / Tắt Linh Hoạt)</h3>
+ <p class="text-xs text-slate-600 mt-0.5">Giáo viên có thể mở riêng lẻ từng trò chơi theo đúng chủ điểm bài học trong ngày.</p>
  </div>
 
  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs">
  <!-- Game 1 -->
- <div class="p-4 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-between">
+ <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between">
  <div>
- <div class="font-bold text-white flex items-center gap-1.5">
+ <div class="font-bold text-slate-900 flex items-center gap-1.5">
  <span>⚡ Speed Match</span>
  </div>
- <div class="text-[11px] text-slate-400">Từ vựng phản xạ (12 thẻ)</div>
+ <div class="text-[11px] text-slate-600">Từ vựng phản xạ (12 thẻ)</div>
  </div>
  <button
  onclick={() => handleAdminToggleGame('speed_match')}
- class="px-3 py-1.5 rounded-xl font-bold text-[11px] transition-all {gameSettings.active_games.speed_match ? 'bg-emerald-500 text-slate-950' : 'bg-slate-800 text-slate-400'}"
+ class="px-3 py-1.5 rounded-xl font-bold text-[11px] transition-all {gameSettings.active_games.speed_match ? 'bg-emerald-500 text-slate-950' : 'bg-slate-100 text-slate-600'}"
  >
  {gameSettings.active_games.speed_match ? 'Đang Bật' : 'Đã Tắt'}
  </button>
  </div>
 
  <!-- Game 2 -->
- <div class="p-4 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-between">
+ <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between">
  <div>
- <div class="font-bold text-white flex items-center gap-1.5">
+ <div class="font-bold text-slate-900 flex items-center gap-1.5">
  <span>🔤 Word Scramble</span>
  </div>
- <div class="text-[11px] text-slate-400">Từ vựng ghép chữ Duolingo</div>
+ <div class="text-[11px] text-slate-600">Từ vựng ghép chữ Duolingo</div>
  </div>
  <button
  onclick={() => handleAdminToggleGame('word_scramble')}
- class="px-3 py-1.5 rounded-xl font-bold text-[11px] transition-all {gameSettings.active_games.word_scramble ? 'bg-emerald-500 text-slate-950' : 'bg-slate-800 text-slate-400'}"
+ class="px-3 py-1.5 rounded-xl font-bold text-[11px] transition-all {gameSettings.active_games.word_scramble ? 'bg-emerald-500 text-slate-950' : 'bg-slate-100 text-slate-600'}"
  >
  {gameSettings.active_games.word_scramble ? 'Đang Bật' : 'Đã Tắt'}
  </button>
  </div>
 
  <!-- Game 3 -->
- <div class="p-4 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-between">
+ <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between">
  <div>
- <div class="font-bold text-white flex items-center gap-1.5">
+ <div class="font-bold text-slate-900 flex items-center gap-1.5">
  <span>☄️ Meteor Rush</span>
  </div>
- <div class="text-[11px] text-slate-400">Bắn thiên thạch 10 giây</div>
+ <div class="text-[11px] text-slate-600">Bắn thiên thạch 10 giây</div>
  </div>
  <button
  onclick={() => handleAdminToggleGame('meteor_rush')}
- class="px-3 py-1.5 rounded-xl font-bold text-[11px] transition-all {gameSettings.active_games.meteor_rush ? 'bg-emerald-500 text-slate-950' : 'bg-slate-800 text-slate-400'}"
+ class="px-3 py-1.5 rounded-xl font-bold text-[11px] transition-all {gameSettings.active_games.meteor_rush ? 'bg-emerald-500 text-slate-950' : 'bg-slate-100 text-slate-600'}"
  >
  {gameSettings.active_games.meteor_rush ? 'Đang Bật' : 'Đã Tắt'}
  </button>
  </div>
 
  <!-- Game 4 -->
- <div class="p-4 rounded-2xl bg-slate-950 border border-indigo-500/30 flex items-center justify-between">
+ <div class="p-4 rounded-2xl bg-slate-50 border border-indigo-500/30 flex items-center justify-between">
  <div>
- <div class="font-bold text-indigo-300 flex items-center gap-1.5">
+ <div class="font-bold text-indigo-700 flex items-center gap-1.5">
  <span>🧩 Sentence Builder</span>
  </div>
- <div class="text-[11px] text-slate-400">Ngữ pháp cấu trúc câu K12</div>
+ <div class="text-[11px] text-slate-600">Ngữ pháp cấu trúc câu K12</div>
  </div>
  <button
  onclick={() => handleAdminToggleGame('sentence_builder')}
- class="px-3 py-1.5 rounded-xl font-bold text-[11px] transition-all {gameSettings.active_games.sentence_builder ? 'bg-indigo-500 text-white' : 'bg-slate-800 text-slate-400'}"
+ class="px-3 py-1.5 rounded-xl font-bold text-[11px] transition-all {gameSettings.active_games.sentence_builder ? 'bg-indigo-500 text-white' : 'bg-slate-100 text-slate-600'}"
  >
  {gameSettings.active_games.sentence_builder ? 'Đang Bật' : 'Đã Tắt'}
  </button>
  </div>
 
  <!-- Game 5 -->
- <div class="p-4 rounded-2xl bg-slate-950 border border-indigo-500/30 flex items-center justify-between">
+ <div class="p-4 rounded-2xl bg-slate-50 border border-indigo-500/30 flex items-center justify-between">
  <div>
- <div class="font-bold text-indigo-300 flex items-center gap-1.5">
+ <div class="font-bold text-indigo-700 flex items-center gap-1.5">
  <span>⏱️ Grammar Tense</span>
  </div>
- <div class="text-[11px] text-slate-400">Thì động từ &amp; bẫy ngữ pháp</div>
+ <div class="text-[11px] text-slate-600">Thì động từ &amp; bẫy ngữ pháp</div>
  </div>
  <button
  onclick={() => handleAdminToggleGame('grammar_tense')}
- class="px-3 py-1.5 rounded-xl font-bold text-[11px] transition-all {gameSettings.active_games.grammar_tense ? 'bg-indigo-500 text-white' : 'bg-slate-800 text-slate-400'}"
+ class="px-3 py-1.5 rounded-xl font-bold text-[11px] transition-all {gameSettings.active_games.grammar_tense ? 'bg-indigo-500 text-white' : 'bg-slate-100 text-slate-600'}"
  >
  {gameSettings.active_games.grammar_tense ? 'Đang Bật' : 'Đã Tắt'}
  </button>
  </div>
 
  <!-- Game 6 -->
- <div class="p-4 rounded-2xl bg-slate-950 border border-purple-500/30 flex items-center justify-between">
+ <div class="p-4 rounded-2xl bg-slate-50 border border-purple-500/30 flex items-center justify-between">
  <div>
- <div class="font-bold text-purple-300 flex items-center gap-1.5">
+ <div class="font-bold text-purple-700 flex items-center gap-1.5">
  <span>🎴 Memory Flip 3D</span>
  </div>
- <div class="text-[11px] text-slate-400">Lật thẻ bài trí nhớ đa giác quan</div>
+ <div class="text-[11px] text-slate-600">Lật thẻ bài trí nhớ đa giác quan</div>
  </div>
  <button
  onclick={() => handleAdminToggleGame('memory_flip')}
- class="px-3 py-1.5 rounded-xl font-bold text-[11px] transition-all {gameSettings.active_games.memory_flip ? 'bg-purple-500 text-white' : 'bg-slate-800 text-slate-400'}"
+ class="px-3 py-1.5 rounded-xl font-bold text-[11px] transition-all {gameSettings.active_games.memory_flip ? 'bg-purple-500 text-white' : 'bg-slate-100 text-slate-600'}"
  >
  {gameSettings.active_games.memory_flip ? 'Đang Bật' : 'Đã Tắt'}
  </button>
@@ -3260,16 +3260,16 @@
  </div>
 
  <!-- Settings & Star Reward Configuration -->
- <div class="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl space-y-4">
- <h3 class="text-base font-extrabold text-white">Cấu Hình Thưởng Sao &amp; Thông Điệp Khóa</h3>
+ <div class="p-6 rounded-3xl bg-white border border-slate-200 shadow-xl space-y-4">
+ <h3 class="text-base font-extrabold text-slate-900">Cấu Hình Thưởng Sao &amp; Thông Điệp Khóa</h3>
  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
  <div>
- <label class="block font-bold text-slate-300 mb-1" for="game-reward">Mức Thưởng Sao (⭐) Mỗi Trận Thắng:</label>
+ <label class="block font-bold text-slate-700 mb-1" for="game-reward">Mức Thưởng Sao (⭐) Mỗi Trận Thắng:</label>
  <select
  id="game-reward"
  value={gameSettings.reward_stars_per_game || 20}
  onchange={(e) => handleAdminSaveRewardStars(e.currentTarget.value)}
- class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-bold focus:outline-none focus:border-emerald-500"
+ class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 font-bold focus:outline-none focus:border-emerald-500"
  >
  <option value="10">+10 ⭐ (100đ trừ học phí)</option>
  <option value="20">+20 ⭐ (200đ trừ học phí)</option>
@@ -3279,13 +3279,13 @@
  </div>
 
  <div>
- <label class="block font-bold text-slate-300 mb-1" for="game-lock-msg">Thông Điệp Khóa Cho Học Sinh:</label>
+ <label class="block font-bold text-slate-700 mb-1" for="game-lock-msg">Thông Điệp Khóa Cho Học Sinh:</label>
  <input
  id="game-lock-msg"
  type="text"
  bind:value={gameSettings.lock_message}
  onblur={() => saveGameArenaSettings({ lock_message: gameSettings.lock_message }, currentUser)}
- class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-emerald-500"
+ class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:border-emerald-500"
  />
  </div>
  </div>
@@ -3296,7 +3296,7 @@
  {:else if activeTab === 'webhooks'}
  <div class="space-y-4 max-w-4xl">
   <!-- Live Verified Zalo Bot Platform Card -->
-  <div data-testid="admin-zalo-bot-verified-card" class="p-5 rounded-3xl bg-emerald-950/60 border-2 border-emerald-500/50 shadow-xl space-y-3">
+  <div data-testid="admin-zalo-bot-verified-card" class="p-5 rounded-3xl bg-emerald-50/80 border-2 border-emerald-500/50 shadow-xl space-y-3">
    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
     <div class="flex items-center gap-3">
      <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 border-2 border-emerald-400/50 flex items-center justify-center text-2xl shadow-md">
@@ -3304,12 +3304,12 @@
      </div>
      <div>
       <div class="flex flex-wrap items-center gap-2">
-       <span class="text-sm font-black text-white">Zalo Bot Platform: {liveZaloBotState.bot_profile?.display_name || 'Bot giá cả'}</span>
-       <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/25 border border-emerald-400/50 text-emerald-300 text-[11px] font-extrabold">
+       <span class="text-sm font-black text-slate-900">Zalo Bot Platform: {liveZaloBotState.bot_profile?.display_name || 'Bot giá cả'}</span>
+       <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/25 border border-emerald-400/50 text-emerald-700 text-[11px] font-extrabold">
         🟢 ĐÃ KẾT NỐI TOKEN (getMe 200 OK)
        </span>
       </div>
-      <div class="text-xs text-emerald-200/90 font-mono mt-0.5">
+      <div class="text-xs text-emerald-700/90 font-mono mt-0.5">
        Account: @{liveZaloBotState.bot_profile?.account_name || 'bot.ynKabJAc'} • Bot ID: {liveZaloBotState.bot_profile?.id || '2267052943606876676'} • Loại: {liveZaloBotState.bot_profile?.account_type || 'BASIC'}
       </div>
      </div>
@@ -3326,26 +3326,26 @@
      </button>
      <a
       href="/session-audit"
-      class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-bold text-xs transition-all"
+      class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200/80 border border-slate-200 text-slate-900 font-bold text-xs transition-all"
      >
       📊 Mở Trung Tâm Đối Soát ➔
      </a>
     </div>
    </div>
 
-   <div class="p-3 rounded-2xl bg-slate-950/80 border border-emerald-500/30 text-xs text-emerald-300 font-semibold flex flex-wrap items-center justify-between gap-2">
+   <div class="p-3 rounded-2xl bg-stone-500/25 border border-emerald-500/30 text-xs text-emerald-700 font-semibold flex flex-wrap items-center justify-between gap-2">
     <span>{liveZaloBotState.status_message}</span>
-    <span class="text-[11px] text-slate-400 font-mono">Gateway: https://bot-api.zaloplatforms.com/bot...</span>
+    <span class="text-[11px] text-slate-600 font-mono">Gateway: https://bot-api.zaloplatforms.com/bot...</span>
    </div>
   </div>
 
-  <div class="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl space-y-4">
-   <div class="border-b border-slate-800 pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+  <div class="p-6 rounded-3xl bg-white border border-slate-200 shadow-xl space-y-4">
+   <div class="border-b border-slate-200 pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
     <div>
-     <h2 class="text-base font-extrabold text-white">Cấu Hình Token Zalo Bot Platform &amp; Webhook Báo Cáo Tức Thời</h2>
-     <p class="text-xs text-slate-400 mt-0.5">Tự động phát thông báo qua Zalo Bot khi học sinh nộp bài, điểm danh ca học, nhắc đón con trước 10 phút hoặc xuất phiếu học phí.</p>
+     <h2 class="text-base font-extrabold text-slate-900">Cấu Hình Token Zalo Bot Platform &amp; Webhook Báo Cáo Tức Thời</h2>
+     <p class="text-xs text-slate-600 mt-0.5">Tự động phát thông báo qua Zalo Bot khi học sinh nộp bài, điểm danh ca học, nhắc đón con trước 10 phút hoặc xuất phiếu học phí.</p>
     </div>
-    <span class="px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/40 text-indigo-300 text-[11px] font-bold whitespace-nowrap">
+    <span class="px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/40 text-indigo-700 text-[11px] font-bold whitespace-nowrap">
      Đồng bộ Cloudflare D1
     </span>
    </div>
@@ -3353,29 +3353,29 @@
    <div class="space-y-3.5 text-xs">
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
      <div>
-      <label class="block font-bold text-slate-300 mb-1" for="wh-name">Tên Bot / Kênh Thông Báo:</label>
+      <label class="block font-bold text-slate-700 mb-1" for="wh-name">Tên Bot / Kênh Thông Báo:</label>
       <input
        id="wh-name"
        type="text"
        bind:value={webhookForm.name}
-       class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-emerald-500"
+       class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-900 focus:outline-none focus:border-emerald-500"
       />
      </div>
 
      <div>
-      <label class="block font-bold text-slate-300 mb-1" for="wh-chat-id">Chat ID Người Nhận (Zalo User / Group Chat ID):</label>
+      <label class="block font-bold text-slate-700 mb-1" for="wh-chat-id">Chat ID Người Nhận (Zalo User / Group Chat ID):</label>
       <input
        id="wh-chat-id"
        type="text"
        bind:value={webhookForm.chat_id}
        placeholder="VD: ID người nhận (hoặc nhắn tin vào @bot.ynKabJAc để tự bắt ID)"
-       class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-white font-mono focus:outline-none focus:border-emerald-500"
+       class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-900 font-mono focus:outline-none focus:border-emerald-500"
       />
      </div>
     </div>
 
     <div>
-     <label class="block font-bold text-emerald-300 mb-1" for="wh-secret">Zalo Bot API Token (Format: BOT_ID:SECRET_TOKEN):</label>
+     <label class="block font-bold text-emerald-700 mb-1" for="wh-secret">Zalo Bot API Token (Format: BOT_ID:SECRET_TOKEN):</label>
      <div class="flex flex-wrap sm:flex-nowrap gap-2">
       <input
        id="wh-secret"
@@ -3384,46 +3384,46 @@
        bind:value={webhookForm.secret}
        placeholder="2267052943606876676:BohTEeIARkSRcUEqfZLDnvxEjSwPVyNSujkIEWeAYRXoCCljFJwYXhhkDbGIUVwd"
        autocomplete="off"
-       class="flex-1 bg-slate-950 border-2 border-emerald-500/40 rounded-xl px-3.5 py-2.5 text-emerald-300 font-mono focus:outline-none focus:border-emerald-400"
+       class="flex-1 bg-slate-50 border-2 border-emerald-500/40 rounded-xl px-3.5 py-2.5 text-emerald-700 font-mono focus:outline-none focus:border-emerald-400"
       />
       <button
        type="button"
        onclick={() => showBotTokenPlaintext = !showBotTokenPlaintext}
-       class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs whitespace-nowrap cursor-pointer"
+       class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200/80 text-slate-900 font-bold text-xs whitespace-nowrap cursor-pointer"
       >
        {showBotTokenPlaintext ? '🙈 Ẩn Token' : '👁️ Hiện Token'}
       </button>
       <button
        type="button"
        onclick={generateWebhookSecret}
-       class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-300 font-bold text-xs whitespace-nowrap cursor-pointer"
+       class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200/80 text-emerald-700 font-bold text-xs whitespace-nowrap cursor-pointer"
       >🔄 Khôi phục Token Gốc</button>
      </div>
-     <p class="text-[11px] text-slate-400 mt-1">Token <code class="text-emerald-300">2267052943606876676:BohTEe...</code> đã được nối trực tiếp vào máy chủ Cloudflare D1 và xác thực <code class="text-emerald-300">getMe 200 OK</code>.</p>
+     <p class="text-[11px] text-slate-600 mt-1">Token <code class="text-emerald-700">2267052943606876676:BohTEe...</code> đã được nối trực tiếp vào máy chủ Cloudflare D1 và xác thực <code class="text-emerald-700">getMe 200 OK</code>.</p>
     </div>
 
     <div>
-     <label class="block font-bold text-slate-300 mb-1" for="wh-url">Endpoint URL (Zalo Webhook / Relay Target):</label>
+     <label class="block font-bold text-slate-700 mb-1" for="wh-url">Endpoint URL (Zalo Webhook / Relay Target):</label>
      <input
       id="wh-url"
       type="url"
       bind:value={webhookForm.url}
-      class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-white font-mono focus:outline-none focus:border-emerald-500"
+      class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-900 font-mono focus:outline-none focus:border-emerald-500"
      />
     </div>
 
     <div>
-     <label class="block font-bold text-slate-300 mb-1" for="wh-events">Sự Kiện Lắng Nghe Tự Động (Event Types):</label>
+     <label class="block font-bold text-slate-700 mb-1" for="wh-events">Sự Kiện Lắng Nghe Tự Động (Event Types):</label>
      <input
       id="wh-events"
       type="text"
       bind:value={webhookForm.event_types}
-      class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-white font-mono focus:outline-none focus:border-emerald-500"
+      class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-900 font-mono focus:outline-none focus:border-emerald-500"
      />
     </div>
    </div>
 
-   <div class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-800">
+   <div class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-200">
     <div class="flex flex-wrap items-center gap-2">
      <button
       type="button"
@@ -3436,7 +3436,7 @@
      <button
       type="button"
       onclick={handleVerifyZaloBotToken}
-      class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-300 font-bold text-xs flex items-center gap-1.5 cursor-pointer"
+      class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200/80 text-emerald-700 font-bold text-xs flex items-center gap-1.5 cursor-pointer"
      >
       <span>🔍 Kiểm Tra Kết Nối Bot</span>
      </button>
@@ -3457,18 +3457,18 @@
  <!-- ================= TAB 7: SNAPSHOTS KIỂM TOÁN ================= -->
  {:else if activeTab === 'snapshots'}
  <div class="space-y-4">
- <div class="p-4 rounded-3xl bg-slate-900 border border-slate-800 flex items-center justify-between">
+ <div class="p-4 rounded-3xl bg-white border border-slate-200 flex items-center justify-between">
  <div>
- <h2 class="text-base font-extrabold text-white">Kiểm Toán Lịch Sử Snapshot (100% Audit Trail)</h2>
- <p class="text-xs text-slate-400">Toàn bộ hành động thêm/sửa/xóa, điểm danh, nộp bài đều được ghi vết vĩnh viễn.</p>
+ <h2 class="text-base font-extrabold text-slate-900">Kiểm Toán Lịch Sử Snapshot (100% Audit Trail)</h2>
+ <p class="text-xs text-slate-600">Toàn bộ hành động thêm/sửa/xóa, điểm danh, nộp bài đều được ghi vết vĩnh viễn.</p>
  </div>
- <span class="text-xs font-mono font-bold text-emerald-400">{snapshots.length} bản ghi</span>
+ <span class="text-xs font-mono font-bold text-emerald-700">{snapshots.length} bản ghi</span>
  </div>
 
- <div class="rounded-3xl bg-slate-900 border border-slate-800 shadow-xl overflow-hidden">
+ <div class="rounded-3xl bg-white border border-slate-200 shadow-xl overflow-hidden">
  <div class="overflow-x-auto">
- <table class="w-full text-left text-xs text-slate-300">
- <thead class="bg-slate-950/80 border-b border-slate-800 text-[11px] uppercase tracking-wider text-slate-400 font-extrabold">
+ <table class="w-full text-left text-xs text-slate-700">
+ <thead class="bg-stone-500/25 border-b border-slate-200 text-[11px] uppercase tracking-wider text-slate-600 font-extrabold">
  <tr>
  <th class="p-4">Thời Gian</th>
  <th class="p-4">Tác Tử (Actor)</th>
@@ -3477,24 +3477,24 @@
  <th class="p-4 text-right">Chi Tiết Diff</th>
  </tr>
  </thead>
- <tbody class="divide-y divide-slate-800 font-mono text-[11px]">
+ <tbody class="divide-y divide-slate-200 font-mono text-[11px]">
  {#each snapshots.slice(0, 30) as snap}
- <tr class="hover:bg-slate-800/40 transition-colors">
- <td class="p-4 text-slate-400">{new Date(snap.created_at).toLocaleString('vi-VN')}</td>
+ <tr class="hover:bg-slate-200/80 transition-colors">
+ <td class="p-4 text-slate-600">{new Date(snap.created_at).toLocaleString('vi-VN')}</td>
  <td class="p-4">
- <span class="font-bold text-white">{snap.actor_email}</span>
+ <span class="font-bold text-slate-900">{snap.actor_email}</span>
  <span class="text-slate-500">({snap.actor_role})</span>
  </td>
  <td class="p-4">
- <span class="px-2 py-0.5 rounded-lg bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 font-bold">
+ <span class="px-2 py-0.5 rounded-lg bg-indigo-500/10 text-indigo-700 border border-indigo-500/20 font-bold">
  {snap.action}
  </span>
  </td>
- <td class="p-4 text-slate-400">{snap.entity_type} #{snap.entity_id}</td>
+ <td class="p-4 text-slate-600">{snap.entity_type} #{snap.entity_id}</td>
  <td class="p-4 text-right">
  <button
  onclick={() => selectedSnapshot = snap}
- class="px-2.5 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-sans font-bold text-xs"
+ class="px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-slate-200/80 text-slate-900 font-sans font-bold text-xs"
  >
  Xem Diff
  </button>
@@ -3511,21 +3511,21 @@
  <!-- ================= TAB: GIAO DIEN & MAU SAC (Theme Studio) ================= -->
  {#if activeTab === 'theme'}
  <div class="space-y-4">
- <div class="p-4 rounded-3xl bg-slate-900 border border-slate-800">
- <div class="border-b border-slate-800 pb-3 mb-4">
- <h2 class="text-base font-extrabold text-white">🎨 Giao Diện &amp; Màu Sắc Web</h2>
- <p class="text-xs text-slate-400 mt-0.5">
- Chọn màu bên dưới để <b class="text-slate-200">xem trước trực tiếp</b> trên trang này.
- Bấm <b class="text-slate-200">💾 Lưu lên web</b> thì toàn bộ khách truy cập sẽ thấy màu mới.
+ <div class="p-4 rounded-3xl bg-white border border-slate-200">
+ <div class="border-b border-slate-200 pb-3 mb-4">
+ <h2 class="text-base font-extrabold text-slate-900">🎨 Giao Diện &amp; Màu Sắc Web</h2>
+ <p class="text-xs text-slate-600 mt-0.5">
+ Chọn màu bên dưới để <b class="text-slate-900">xem trước trực tiếp</b> trên trang này.
+ Bấm <b class="text-slate-900">💾 Lưu lên web</b> thì toàn bộ khách truy cập sẽ thấy màu mới.
  </p>
  <div class="mt-2 text-xs font-bold">
  {#if themeSaved}
- <span class="text-emerald-400">● Đang áp dụng chung: {themeSaved.name}</span>
+ <span class="text-emerald-700">● Đang áp dụng chung: {themeSaved.name}</span>
  {:else}
  <span class="text-slate-500">○ Chưa có theme chung — đang dùng màu mặc định (Lavie Aqua).</span>
  {/if}
  {#if themeDraft}
- <span class="text-amber-400"> • Xem trước: {themeDraft.name} (chưa lưu)</span>
+ <span class="text-amber-700"> • Xem trước: {themeDraft.name} (chưa lưu)</span>
  {/if}
  </div>
  </div>
@@ -3535,7 +3535,7 @@
  </div>
 
  {#if themeMsg}
- <div class="mt-4 p-3 rounded-xl text-xs font-bold text-center {themeMsg.startsWith('✓') ? 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/30' : 'bg-amber-500/10 text-amber-300 border border-amber-500/30'}">
+ <div class="mt-4 p-3 rounded-xl text-xs font-bold text-center {themeMsg.startsWith('✓') ? 'bg-emerald-500/10 text-emerald-700 border border-emerald-500/30' : 'bg-amber-500/10 text-amber-700 border border-amber-500/30'}">
  {themeMsg}
  </div>
  {/if}
@@ -3552,7 +3552,7 @@
  <button
  onclick={clearGlobalTheme}
  disabled={themeSaving}
- class="px-5 py-2.5 rounded-xl text-sm font-bold text-slate-200 bg-slate-800 hover:bg-slate-700 border border-slate-700 disabled:opacity-40 transition-all"
+ class="px-5 py-2.5 rounded-xl text-sm font-bold text-slate-900 bg-slate-100 hover:bg-slate-200/80 border border-slate-200 disabled:opacity-40 transition-all"
  >
  {themeSaving ? '⏳...' : '🗑 Gỡ theme chung'}
  </button>
@@ -3567,18 +3567,18 @@
  <!-- MODAL 1: THƯỞNG / PHẠT SAO HỌC SINH -->
  {#if showStarModal && selectedStudentForStar}
  <div class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
- <div class="bg-slate-900 border border-amber-500/40 rounded-3xl w-full max-w-md p-6 space-y-4 shadow-2xl">
- <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+ <div class="bg-white border border-amber-500/40 rounded-3xl w-full max-w-md p-6 space-y-4 shadow-2xl">
+ <div class="flex items-center justify-between border-b border-slate-200 pb-3">
  <div>
- <div class="text-xs font-bold text-amber-400 uppercase">QUẢN LÝ SAO THƯỞNG &amp; KỶ LUẬT</div>
- <h3 class="text-base font-black text-white mt-0.5">{selectedStudentForStar.name}</h3>
+ <div class="text-xs font-bold text-amber-700 uppercase">QUẢN LÝ SAO THƯỞNG &amp; KỶ LUẬT</div>
+ <h3 class="text-base font-black text-slate-900 mt-0.5">{selectedStudentForStar.name}</h3>
  </div>
- <button onclick={() => showStarModal = false} class="text-slate-400 hover:text-white">✕</button>
+ <button onclick={() => showStarModal = false} class="text-slate-600 hover:text-slate-900">✕</button>
  </div>
 
  <div class="space-y-3 text-xs">
  <div>
- <label class="block font-bold text-slate-300 mb-1" for="star-amount">
+ <label class="block font-bold text-slate-700 mb-1" for="star-amount">
  Số Sao Thay Đổi (Dương = Thưởng, Âm = Phạt):
  </label>
  <div class="flex items-center gap-2">
@@ -3587,37 +3587,37 @@
  type="number"
  step="10"
  bind:value={starDelta}
- class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-white font-mono font-bold text-sm focus:outline-none focus:border-amber-400"
+ class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-900 font-mono font-bold text-sm focus:outline-none focus:border-amber-400"
  />
- <span class="text-amber-400 font-bold text-sm">⭐</span>
+ <span class="text-amber-700 font-bold text-sm">⭐</span>
  </div>
  <div class="flex gap-1.5 mt-2">
- <button onclick={() => starDelta = 50} class="px-2 py-1 rounded bg-slate-800 text-amber-400 font-bold text-[10px]">+50 ⭐</button>
- <button onclick={() => starDelta = 100} class="px-2 py-1 rounded bg-slate-800 text-amber-400 font-bold text-[10px]">+100 ⭐</button>
- <button onclick={() => starDelta = 200} class="px-2 py-1 rounded bg-slate-800 text-amber-400 font-bold text-[10px]">+200 ⭐</button>
- <button onclick={() => starDelta = -20} class="px-2 py-1 rounded bg-slate-800 text-rose-400 font-bold text-[10px]">-20 ⭐</button>
- <button onclick={() => starDelta = -50} class="px-2 py-1 rounded bg-slate-800 text-rose-400 font-bold text-[10px]">-50 ⭐</button>
+ <button onclick={() => starDelta = 50} class="px-2 py-1 rounded bg-slate-100 text-amber-700 font-bold text-[10px]">+50 ⭐</button>
+ <button onclick={() => starDelta = 100} class="px-2 py-1 rounded bg-slate-100 text-amber-700 font-bold text-[10px]">+100 ⭐</button>
+ <button onclick={() => starDelta = 200} class="px-2 py-1 rounded bg-slate-100 text-amber-700 font-bold text-[10px]">+200 ⭐</button>
+ <button onclick={() => starDelta = -20} class="px-2 py-1 rounded bg-slate-100 text-rose-700 font-bold text-[10px]">-20 ⭐</button>
+ <button onclick={() => starDelta = -50} class="px-2 py-1 rounded bg-slate-100 text-rose-700 font-bold text-[10px]">-50 ⭐</button>
  </div>
  </div>
 
  <div>
- <label class="block font-bold text-slate-300 mb-1" for="star-reason">Lý Do Ghi Nhận:</label>
+ <label class="block font-bold text-slate-700 mb-1" for="star-reason">Lý Do Ghi Nhận:</label>
  <input
  id="star-reason"
  type="text"
  bind:value={starReason}
  placeholder="VD: Điểm thi 15p xuất sắc, vi phạm giờ giấc..."
- class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-white focus:outline-none focus:border-amber-400"
+ class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-slate-900 focus:outline-none focus:border-amber-400"
  />
  </div>
 
- <div class="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-[11px] leading-relaxed">
+ <div class="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-700 text-[11px] leading-relaxed">
  💡 Tỉ lệ chuẩn: <strong>100 Sao = 1.000 VNĐ</strong> trừ trực tiếp vào hóa đơn học phí hàng tháng của học sinh.
  </div>
  </div>
 
- <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-800">
- <button onclick={() => showStarModal = false} class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold">
+ <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-200">
+ <button onclick={() => showStarModal = false} class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold">
  Hủy Bỏ
  </button>
  <button onclick={handleSaveStarAdjustment} class="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs shadow-lg">
@@ -3631,31 +3631,31 @@
  <!-- MODAL 2: ĐỔI KHỐI LỚP HỌC SINH -->
  {#if showClassModal && selectedStudentForClass}
  <div class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
- <div class="bg-slate-900 border border-indigo-500/40 rounded-3xl w-full max-w-md p-6 space-y-4 shadow-2xl">
- <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+ <div class="bg-white border border-indigo-500/40 rounded-3xl w-full max-w-md p-6 space-y-4 shadow-2xl">
+ <div class="flex items-center justify-between border-b border-slate-200 pb-3">
  <div>
- <div class="text-xs font-bold text-indigo-400 uppercase">CHUYỂN KHỐI LỚP &amp; PHÂN PHÒNG</div>
- <h3 class="text-base font-black text-white mt-0.5">{selectedStudentForClass.name}</h3>
+ <div class="text-xs font-bold text-indigo-700 uppercase">CHUYỂN KHỐI LỚP &amp; PHÂN PHÒNG</div>
+ <h3 class="text-base font-black text-slate-900 mt-0.5">{selectedStudentForClass.name}</h3>
  </div>
- <button onclick={() => showClassModal = false} class="text-slate-400 hover:text-white">✕</button>
+ <button onclick={() => showClassModal = false} class="text-slate-600 hover:text-slate-900">✕</button>
  </div>
 
  <div class="space-y-4 text-xs">
  <!-- Active Enrolled Classes Tag List -->
  <div>
  <div class="flex items-center justify-between mb-1.5">
- <label class="font-bold text-slate-300">Khóa Học Đang Mở Cho Học Sinh Này:</label>
- <span class="text-[10px] text-emerald-400 font-bold">{currentStudentEnrolledList.length} lớp kích hoạt</span>
+ <label class="font-bold text-slate-700">Khóa Học Đang Mở Cho Học Sinh Này:</label>
+ <span class="text-[10px] text-emerald-700 font-bold">{currentStudentEnrolledList.length} lớp kích hoạt</span>
  </div>
- <div class="flex flex-wrap gap-1.5 p-2.5 rounded-xl bg-slate-950 border border-slate-800 min-h-[42px] items-center">
+ <div class="flex flex-wrap gap-1.5 p-2.5 rounded-xl bg-slate-50 border border-slate-200 min-h-[42px] items-center">
  {#each currentStudentEnrolledList as g}
- <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 text-xs font-bold border border-emerald-500/30">
+ <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-700 text-xs font-bold border border-emerald-500/30">
  <span>✓ {g}</span>
  {#if currentStudentEnrolledList.length > 1}
  <button
  type="button"
  onclick={() => handleRemoveAdditionalGrade(g)}
- class="text-rose-400 hover:text-rose-300 text-xs font-black ml-1 p-0.5 rounded hover:bg-rose-900/30"
+ class="text-rose-700 hover:text-rose-700 text-xs font-black ml-1 p-0.5 rounded hover:bg-rose-900/30"
  title="Gỡ quyền lớp này"
  >
  ✕
@@ -3664,16 +3664,16 @@
  </span>
  {/each}
  </div>
- <p class="text-[10px] text-slate-400 mt-1">Học sinh chỉ nhìn thấy bài học và phòng thi của các lớp được liệt kê ở đây.</p>
+ <p class="text-[10px] text-slate-600 mt-1">Học sinh chỉ nhìn thấy bài học và phòng thi của các lớp được liệt kê ở đây.</p>
  </div>
 
  <!-- Add Additional Grade Section -->
- <div class="p-3 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-2">
- <label class="block font-bold text-slate-200">➕ Set / Cấp Quyền Thêm Lớp Mới:</label>
+ <div class="p-3 rounded-2xl bg-stone-500/25 border border-slate-200 space-y-2">
+ <label class="block font-bold text-slate-900">➕ Set / Cấp Quyền Thêm Lớp Mới:</label>
  <div class="flex gap-2">
  <select
  bind:value={additionalGradeToEnroll}
- class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white font-bold focus:outline-none focus:border-emerald-400 text-xs"
+ class="flex-1 bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-900 font-bold focus:outline-none focus:border-emerald-400 text-xs"
  >
  <option value="Lớp 1">Lớp 1 (Phonics &amp; Global Success)</option>
  <option value="Lớp 2">Lớp 2 (Global Success)</option>
@@ -3703,13 +3703,13 @@
  </div>
 
  <!-- Primary Grade & Timetable Section -->
- <div class="space-y-3 pt-2 border-t border-slate-800">
+ <div class="space-y-3 pt-2 border-t border-slate-200">
  <div>
- <label class="block font-bold text-slate-300 mb-1" for="target-grade">Khối Lớp Chính Khóa Mặc Định:</label>
+ <label class="block font-bold text-slate-700 mb-1" for="target-grade">Khối Lớp Chính Khóa Mặc Định:</label>
  <select
  id="target-grade"
  bind:value={targetGrade}
- class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-white font-bold focus:outline-none focus:border-indigo-400"
+ class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-900 font-bold focus:outline-none focus:border-indigo-400"
  >
  <option value="" disabled>-- Chọn khối lớp --</option>
  <option value="Lớp 1">Lớp 1 (Phonics &amp; Global Success)</option>
@@ -3730,11 +3730,11 @@
  </div>
 
  <div>
- <label class="block font-bold text-slate-300 mb-1" for="target-class">Gán Vào Buổi Học / Lịch Học:</label>
+ <label class="block font-bold text-slate-700 mb-1" for="target-class">Gán Vào Buổi Học / Lịch Học:</label>
  <select
  id="target-class"
  bind:value={targetClassId}
- class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-white font-medium focus:outline-none focus:border-indigo-400"
+ class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-900 font-medium focus:outline-none focus:border-indigo-400"
  >
  {#each classSessions as s}
  <option value={s.id}>
@@ -3746,8 +3746,8 @@
  </div>
  </div>
 
- <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-800">
- <button onclick={() => showClassModal = false} class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold">
+ <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-200">
+ <button onclick={() => showClassModal = false} class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold">
  Đóng
  </button>
  <button onclick={handleSaveClassChange} class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs">
@@ -3761,58 +3761,58 @@
  <!-- MODAL 3: THÊM HỌC SINH MỚI -->
  {#if showAddStudentModal}
  <div class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
- <div class="bg-slate-900 border border-emerald-500/40 rounded-3xl w-full max-w-md p-6 space-y-4 shadow-2xl">
- <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+ <div class="bg-white border border-emerald-500/40 rounded-3xl w-full max-w-md p-6 space-y-4 shadow-2xl">
+ <div class="flex items-center justify-between border-b border-slate-200 pb-3">
  <div>
- <div class="text-xs font-bold text-emerald-400 uppercase">THÊM HỌC SINH MỚI TRỰC TIẾP</div>
- <h3 class="text-base font-black text-white mt-0.5">Khởi Tạo Hồ Sơ Học Viên</h3>
+ <div class="text-xs font-bold text-emerald-700 uppercase">THÊM HỌC SINH MỚI TRỰC TIẾP</div>
+ <h3 class="text-base font-black text-slate-900 mt-0.5">Khởi Tạo Hồ Sơ Học Viên</h3>
  </div>
- <button onclick={() => showAddStudentModal = false} class="text-slate-400 hover:text-white">✕</button>
+ <button onclick={() => showAddStudentModal = false} class="text-slate-600 hover:text-slate-900">✕</button>
  </div>
 
  <div class="space-y-3 text-xs">
  <div>
- <label class="block font-bold text-slate-300 mb-1" for="new-st-name">Họ và Tên (*):</label>
+ <label class="block font-bold text-slate-700 mb-1" for="new-st-name">Họ và Tên (*):</label>
  <input
  id="new-st-name"
  type="text"
  bind:value={newStudentForm.name}
  placeholder="VD: Trần Hoàng Minh"
  required
- class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-white focus:outline-none focus:border-emerald-500"
+ class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-slate-900 focus:outline-none focus:border-emerald-500"
  />
  </div>
 
  <div class="grid grid-cols-2 gap-2">
  <div>
- <label class="block font-bold text-slate-300 mb-1" for="new-st-user">Tên Đăng Nhập:</label>
+ <label class="block font-bold text-slate-700 mb-1" for="new-st-user">Tên Đăng Nhập:</label>
  <input
  id="new-st-user"
  type="text"
  bind:value={newStudentForm.username}
  placeholder="hoangminh..."
- class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-white focus:outline-none focus:border-emerald-500"
+ class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-slate-900 focus:outline-none focus:border-emerald-500"
  />
  </div>
  <div>
- <label class="block font-bold text-slate-300 mb-1" for="new-st-phone">Số Điện Thoại:</label>
+ <label class="block font-bold text-slate-700 mb-1" for="new-st-phone">Số Điện Thoại:</label>
  <input
  id="new-st-phone"
  type="tel"
  bind:value={newStudentForm.phone}
  placeholder="09..."
- class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-white focus:outline-none focus:border-emerald-500"
+ class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-slate-900 focus:outline-none focus:border-emerald-500"
  />
  </div>
  </div>
 
  <div class="grid grid-cols-2 gap-2">
  <div>
- <label class="block font-bold text-slate-300 mb-1" for="new-st-grade">Khối Lớp:</label>
+ <label class="block font-bold text-slate-700 mb-1" for="new-st-grade">Khối Lớp:</label>
  <select
  id="new-st-grade"
  bind:value={newStudentForm.grade}
- class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-emerald-500"
+ class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:border-emerald-500"
  >
  <option value="" disabled>-- Chọn khối lớp --</option>
  <option value="Lớp 1">Lớp 1</option>
@@ -3832,43 +3832,43 @@
  </select>
  </div>
  <div>
- <label class="block font-bold text-slate-300 mb-1" for="new-st-school">Trường Học:</label>
+ <label class="block font-bold text-slate-700 mb-1" for="new-st-school">Trường Học:</label>
  <input
  id="new-st-school"
  type="text"
  bind:value={newStudentForm.school}
  placeholder="THCS Giảng Võ..."
- class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-white focus:outline-none focus:border-emerald-500"
+ class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-slate-900 focus:outline-none focus:border-emerald-500"
  />
  </div>
  </div>
 
  <div class="grid grid-cols-2 gap-2">
  <div>
- <label class="block font-bold text-slate-300 mb-1" for="new-st-pname">Tên Phụ Huynh:</label>
+ <label class="block font-bold text-slate-700 mb-1" for="new-st-pname">Tên Phụ Huynh:</label>
  <input
  id="new-st-pname"
  type="text"
  bind:value={newStudentForm.parent_name}
  placeholder="Anh Hùng..."
- class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-white focus:outline-none focus:border-emerald-500"
+ class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-slate-900 focus:outline-none focus:border-emerald-500"
  />
  </div>
  <div>
- <label class="block font-bold text-slate-300 mb-1" for="new-st-pphone">SĐT Phụ Huynh:</label>
+ <label class="block font-bold text-slate-700 mb-1" for="new-st-pphone">SĐT Phụ Huynh:</label>
  <input
  id="new-st-pphone"
  type="tel"
  bind:value={newStudentForm.parent_phone}
  placeholder="09..."
- class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-white focus:outline-none focus:border-emerald-500"
+ class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-slate-900 focus:outline-none focus:border-emerald-500"
  />
  </div>
  </div>
  </div>
 
- <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-800">
- <button onclick={() => showAddStudentModal = false} class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold">
+ <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-200">
+ <button onclick={() => showAddStudentModal = false} class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold">
  Hủy Bỏ
  </button>
  <button onclick={handleAddStudent} class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg">
@@ -3882,65 +3882,65 @@
  <!-- MODAL 4: THÊM GIÁO VIÊN MỚI -->
  {#if showAddTeacherModal}
  <div class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
- <div class="bg-slate-900 border border-teal-500/40 rounded-3xl w-full max-w-md p-6 space-y-4 shadow-2xl">
- <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+ <div class="bg-white border border-teal-500/40 rounded-3xl w-full max-w-md p-6 space-y-4 shadow-2xl">
+ <div class="flex items-center justify-between border-b border-slate-200 pb-3">
  <div>
- <div class="text-xs font-bold text-teal-400 uppercase">CẤP QUYỀN GIÁO VIÊN &amp; TRỢ GIẢNG</div>
- <h3 class="text-base font-black text-white mt-0.5">Thêm Nhân Sự Giảng Dạy</h3>
+ <div class="text-xs font-bold text-teal-700 uppercase">CẤP QUYỀN GIÁO VIÊN &amp; TRỢ GIẢNG</div>
+ <h3 class="text-base font-black text-slate-900 mt-0.5">Thêm Nhân Sự Giảng Dạy</h3>
  </div>
- <button onclick={() => showAddTeacherModal = false} class="text-slate-400 hover:text-white">✕</button>
+ <button onclick={() => showAddTeacherModal = false} class="text-slate-600 hover:text-slate-900">✕</button>
  </div>
 
  <div class="space-y-3 text-xs">
  <div>
- <label class="block font-bold text-slate-300 mb-1" for="new-teach-name">Họ và Tên (*):</label>
+ <label class="block font-bold text-slate-700 mb-1" for="new-teach-name">Họ và Tên (*):</label>
  <input
  id="new-teach-name"
  type="text"
  bind:value={newTeacher.name}
  placeholder="VD: Cô Mai Phương"
  required
- class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-white focus:outline-none focus:border-teal-500"
+ class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-slate-900 focus:outline-none focus:border-teal-500"
  />
  </div>
 
  <div class="grid grid-cols-2 gap-2">
  <div>
- <label class="block font-bold text-slate-300 mb-1" for="new-teach-user">Tên Đăng Nhập:</label>
+ <label class="block font-bold text-slate-700 mb-1" for="new-teach-user">Tên Đăng Nhập:</label>
  <input
  id="new-teach-user"
  type="text"
  bind:value={newTeacher.username}
  placeholder="teacher.phuong..."
- class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-white focus:outline-none focus:border-teal-500"
+ class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-slate-900 focus:outline-none focus:border-teal-500"
  />
  </div>
  <div>
- <label class="block font-bold text-slate-300 mb-1" for="new-teach-phone">Số Điện Thoại:</label>
+ <label class="block font-bold text-slate-700 mb-1" for="new-teach-phone">Số Điện Thoại:</label>
  <input
  id="new-teach-phone"
  type="tel"
  bind:value={newTeacher.phone}
  placeholder="09..."
- class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-white focus:outline-none focus:border-teal-500"
+ class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-slate-900 focus:outline-none focus:border-teal-500"
  />
  </div>
  </div>
 
  <div>
- <label class="block font-bold text-slate-300 mb-1" for="new-teach-certs">Chứng Chỉ &amp; Bằng Cấp:</label>
+ <label class="block font-bold text-slate-700 mb-1" for="new-teach-certs">Chứng Chỉ &amp; Bằng Cấp:</label>
  <input
  id="new-teach-certs"
  type="text"
  bind:value={newTeacher.certs}
  placeholder="TESOL, IELTS 8.0, Cử nhân Sư phạm Anh..."
- class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-white focus:outline-none focus:border-teal-500"
+ class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-slate-900 focus:outline-none focus:border-teal-500"
  />
  </div>
  </div>
 
- <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-800">
- <button onclick={() => showAddTeacherModal = false} class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold">
+ <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-200">
+ <button onclick={() => showAddTeacherModal = false} class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold">
  Hủy Bỏ
  </button>
  <button onclick={handleAddTeacher} class="px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs shadow-lg">
@@ -3978,15 +3978,15 @@
  <!-- MODAL 8: HÓA ĐƠN HỌC PHÍ & PREVIEW 5 MẪU PDF (TuitionBillReport) -->
  {#if showPdfPreviewModal && previewBill}
  <div class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
- <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-4xl p-6 md:p-8 space-y-4 shadow-2xl my-8 relative">
- <div class="flex items-center justify-between pb-2 border-b border-slate-800">
- <div class="text-sm font-bold text-white flex items-center gap-2">
+ <div class="bg-white border border-slate-200 rounded-3xl w-full max-w-4xl p-6 md:p-8 space-y-4 shadow-2xl my-8 relative">
+ <div class="flex items-center justify-between pb-2 border-b border-slate-200">
+ <div class="text-sm font-bold text-slate-900 flex items-center gap-2">
  <span>📑</span>
  <span>Bản Xem Trước Hóa Đơn &amp; Đổi Sao (Mẫu {previewTemplateId})</span>
  </div>
  <button
  onclick={() => showPdfPreviewModal = false}
- class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center text-sm font-bold transition-colors"
+ class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900 flex items-center justify-center text-sm font-bold transition-colors"
  >
  ✕
  </button>
@@ -4002,18 +4002,18 @@
  <!-- MODAL 9: LẬP HÓA ĐƠN HỌC PHÍ MỚI -->
  {#if showBillModal}
  <div class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
- <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-2xl p-6 md:p-8 space-y-4 shadow-2xl my-8">
- <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+ <div class="bg-white border border-slate-200 rounded-3xl w-full max-w-2xl p-6 md:p-8 space-y-4 shadow-2xl my-8">
+ <div class="flex items-center justify-between border-b border-slate-200 pb-3">
  <div>
- <div class="text-xs font-bold text-emerald-400 uppercase">LẬP HÓA ĐƠN HỌC PHÍ &amp; TRỪ SAO THƯỞNG</div>
- <h3 class="text-lg font-black text-white mt-0.5">Quy Đổi 100 Sao = 1.000 VNĐ</h3>
+ <div class="text-xs font-bold text-emerald-700 uppercase">LẬP HÓA ĐƠN HỌC PHÍ &amp; TRỪ SAO THƯỞNG</div>
+ <h3 class="text-lg font-black text-slate-900 mt-0.5">Quy Đổi 100 Sao = 1.000 VNĐ</h3>
  </div>
- <button onclick={() => showBillModal = false} class="text-slate-400 hover:text-white">✕</button>
+ <button onclick={() => showBillModal = false} class="text-slate-600 hover:text-slate-900">✕</button>
  </div>
 
  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
  <div>
- <label class="block font-bold text-slate-300 mb-1" for="bill-st">Học Sinh:</label>
+ <label class="block font-bold text-slate-700 mb-1" for="bill-st">Học Sinh:</label>
  <select
  id="bill-st"
  bind:value={billForm.student_id}
@@ -4031,7 +4031,7 @@
  billForm.parent_phone = meta.parent_phone || '';
  }
  }}
- class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-bold"
+ class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 font-bold"
  >
  {#each studentsList as s}
  <option value={s.id}>{s.name} (@{s.username})</option>
@@ -4040,28 +4040,28 @@
  </div>
 
  <div>
- <label class="block font-bold text-slate-300 mb-1" for="bill-period">Kỳ Thu Phí:</label>
+ <label class="block font-bold text-slate-700 mb-1" for="bill-period">Kỳ Thu Phí:</label>
  <input
  id="bill-period"
  type="text"
  bind:value={billForm.billing_period}
- class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white"
+ class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900"
  />
  </div>
 
  <div>
- <label class="block font-bold text-slate-300 mb-1" for="bill-base">Học Phí Gốc (VNĐ):</label>
+ <label class="block font-bold text-slate-700 mb-1" for="bill-base">Học Phí Gốc (VNĐ):</label>
  <input
  id="bill-base"
  type="number"
  step="50000"
  bind:value={billForm.base_tuition_vnd}
- class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-mono font-bold"
+ class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 font-mono font-bold"
  />
  </div>
 
  <div>
- <label class="block font-bold text-slate-300 mb-1" for="bill-stars">
+ <label class="block font-bold text-slate-700 mb-1" for="bill-stars">
  Số Sao Trừ (Khả dụng: {billForm.stars_available} ⭐):
  </label>
  <input
@@ -4071,16 +4071,16 @@
  min="0"
  max={billForm.stars_available}
  bind:value={billForm.stars_deducted}
- class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-amber-400 font-mono font-bold"
+ class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-amber-700 font-mono font-bold"
  />
  </div>
 
  <div>
- <label class="block font-bold text-slate-300 mb-1" for="bill-template">Mẫu Thiết Kế PDF:</label>
+ <label class="block font-bold text-slate-700 mb-1" for="bill-template">Mẫu Thiết Kế PDF:</label>
  <select
  id="bill-template"
  bind:value={billForm.template_id}
- class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-emerald-400 font-bold"
+ class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-emerald-700 font-bold"
  >
  {#each TUITION_TEMPLATES as t}
  <option value={t.id}>{t.name} ({t.highlight})</option>
@@ -4089,28 +4089,28 @@
  </div>
 
  <div>
- <label class="block font-bold text-slate-300 mb-1" for="bill-growth">Đánh Giá Tăng Trưởng:</label>
+ <label class="block font-bold text-slate-700 mb-1" for="bill-growth">Đánh Giá Tăng Trưởng:</label>
  <input
  id="bill-growth"
  type="text"
  bind:value={billForm.growth_notes}
- class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white"
+ class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900"
  />
  </div>
  </div>
 
- <div class="p-3 rounded-2xl bg-emerald-950/40 border border-emerald-500/30 flex items-center justify-between text-xs">
+ <div class="p-3 rounded-2xl bg-emerald-50/80 border border-emerald-500/30 flex items-center justify-between text-xs">
  <div>
- <span class="text-slate-300">Tổng Học Phí Sau Khi Trừ Sao:</span>
- <div class="text-[10px] text-slate-400">Giảm: {((billForm.stars_deducted || 0) * 10).toLocaleString()}đ</div>
+ <span class="text-slate-700">Tổng Học Phí Sau Khi Trừ Sao:</span>
+ <div class="text-[10px] text-slate-600">Giảm: {((billForm.stars_deducted || 0) * 10).toLocaleString()}đ</div>
  </div>
- <div class="text-xl font-black text-emerald-400 font-mono">
+ <div class="text-xl font-black text-emerald-700 font-mono">
  {Math.max(0, (billForm.base_tuition_vnd || 0) - ((billForm.stars_deducted || 0) * 10)).toLocaleString()}đ
  </div>
  </div>
 
- <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-800">
- <button onclick={() => showBillModal = false} class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold">
+ <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-200">
+ <button onclick={() => showBillModal = false} class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold">
  Hủy Bỏ
  </button>
  <button onclick={handleSaveBill} class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg">
@@ -4124,36 +4124,36 @@
  <!-- MODAL 10: SNAPSHOT DIFF VIEWER -->
  {#if selectedSnapshot}
  <div class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
- <div class="bg-slate-900 border border-slate-700 rounded-3xl w-full max-w-2xl p-6 md:p-8 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto">
- <div class="flex items-start justify-between border-b border-slate-800 pb-3">
+ <div class="bg-white border border-slate-200 rounded-3xl w-full max-w-2xl p-6 md:p-8 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto">
+ <div class="flex items-start justify-between border-b border-slate-200 pb-3">
  <div>
- <span class="text-xs font-bold text-indigo-400">SNAPSHOT ID: {selectedSnapshot.id}</span>
- <h3 class="text-base font-black text-white mt-1">Chi Tiết Kiểm Toán: {selectedSnapshot.action}</h3>
+ <span class="text-xs font-bold text-indigo-700">SNAPSHOT ID: {selectedSnapshot.id}</span>
+ <h3 class="text-base font-black text-slate-900 mt-1">Chi Tiết Kiểm Toán: {selectedSnapshot.action}</h3>
  </div>
- <button onclick={() => selectedSnapshot = null} class="text-slate-400 hover:text-white">✕</button>
+ <button onclick={() => selectedSnapshot = null} class="text-slate-600 hover:text-slate-900">✕</button>
  </div>
 
  <div class="text-xs space-y-3 font-mono">
- <div class="text-slate-300">
+ <div class="text-slate-700">
  <strong>Người thực hiện:</strong> {selectedSnapshot.actor_email} ({selectedSnapshot.actor_role})
  </div>
- <div class="text-slate-300">
+ <div class="text-slate-700">
  <strong>Thời điểm:</strong> {selectedSnapshot.created_at}
  </div>
 
  <div>
- <div class="text-rose-400 font-bold mb-1">Dữ Liệu Trước Khi Thay Đổi (Before):</div>
- <pre class="bg-slate-950 p-3 rounded-xl border border-slate-800 text-[10px] text-rose-300 overflow-x-auto">{selectedSnapshot.data_before || '(Không có / Tạo mới)'}</pre>
+ <div class="text-rose-700 font-bold mb-1">Dữ Liệu Trước Khi Thay Đổi (Before):</div>
+ <pre class="bg-slate-50 p-3 rounded-xl border border-slate-200 text-[10px] text-rose-700 overflow-x-auto">{selectedSnapshot.data_before || '(Không có / Tạo mới)'}</pre>
  </div>
 
  <div>
- <div class="text-emerald-400 font-bold mb-1">Dữ Liệu Sau Khi Thay Đổi (After):</div>
- <pre class="bg-slate-950 p-3 rounded-xl border border-slate-800 text-[10px] text-emerald-300 overflow-x-auto">{selectedSnapshot.data_after || '(Đã xóa / Không còn dữ liệu)'}</pre>
+ <div class="text-emerald-700 font-bold mb-1">Dữ Liệu Sau Khi Thay Đổi (After):</div>
+ <pre class="bg-slate-50 p-3 rounded-xl border border-slate-200 text-[10px] text-emerald-700 overflow-x-auto">{selectedSnapshot.data_after || '(Đã xóa / Không còn dữ liệu)'}</pre>
  </div>
  </div>
 
- <div class="flex justify-end pt-3 border-t border-slate-800">
- <button onclick={() => selectedSnapshot = null} class="px-4 py-2 rounded-xl bg-slate-800 text-slate-200 text-xs font-bold">
+ <div class="flex justify-end pt-3 border-t border-slate-200">
+ <button onclick={() => selectedSnapshot = null} class="px-4 py-2 rounded-xl bg-slate-100 text-slate-900 text-xs font-bold">
  Đóng
  </button>
  </div>

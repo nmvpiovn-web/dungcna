@@ -474,7 +474,7 @@
  <span>✅</span>
  <span>{toastMsg}</span>
  </div>
- <button onclick={() => toastMsg = ''} class="text-emerald-500 hover:text-white">✕</button>
+ <button onclick={() => toastMsg = ''} class="text-emerald-500 hover:text-slate-900">✕</button>
  </div>
  {/if}
 
@@ -482,56 +482,56 @@
  {#if currentUser?.role === 'student'}
  {@const isOfficial = currentUser.approval_status === 'official' || (currentUser.status === 'active' && !currentUser.is_trial && !currentUser.metadata?.includes('"is_trial":true'))}
  {@const primaryGrade = currentUser.grade || 'Chưa có lớp'}
- <div class="rounded-lg bg-indigo-950/40 border border-indigo-500/30 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
+ <div class="rounded-lg bg-indigo-50/80 border border-indigo-500/30 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
  <div class="flex items-center gap-3.5">
- <div class="w-11 h-11 rounded-lg bg-indigo-600/30 border border-indigo-500/40 text-indigo-300 font-bold flex items-center justify-center text-xl shadow-md">
+ <div class="w-11 h-11 rounded-lg bg-indigo-600/30 border border-indigo-500/40 text-indigo-700 font-bold flex items-center justify-center text-xl shadow-md">
  📅
  </div>
  <div class="space-y-0.5">
- <div class="text-sm font-bold text-white flex flex-wrap items-center gap-2">
- <span>Học Sinh: <strong class="text-indigo-200">{currentUser.name}</strong></span>
+ <div class="text-sm font-bold text-slate-900 flex flex-wrap items-center gap-2">
+ <span>Học Sinh: <strong class="text-indigo-700">{currentUser.name}</strong></span>
  {#if isOfficial}
- <span class="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/30">
+ <span class="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-700 font-bold border border-emerald-500/30">
  ✓ Học Sinh Chính Thức
  </span>
  {:else}
- <span class="text-[10px] px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">
+ <span class="text-[10px] px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-700 font-bold border border-amber-500/30">
  ⏳ Dùng Thử (Trial) • Chờ Cô Dung Duyệt
  </span>
  {/if}
  </div>
- <div class="text-xs text-slate-400">
- Tài khoản: <strong class="text-slate-200">@{currentUser.username}</strong> • Thời khóa biểu học trực tiếp tại nhà Cô Dung
+ <div class="text-xs text-slate-600">
+ Tài khoản: <strong class="text-slate-900">@{currentUser.username}</strong> • Thời khóa biểu học trực tiếp tại nhà Cô Dung
  </div>
  </div>
  </div>
- <div class="sm:text-right bg-indigo-900/30 px-3.5 py-2 rounded-md border border-indigo-500/20">
- <div class="text-[10px] text-indigo-300 font-extrabold uppercase tracking-wider">Khối Lớp Đã Đăng Ký</div>
- <div class="text-sm font-semibold text-white">{primaryGrade}</div>
+ <div class="sm:text-right bg-indigo-50/80 px-3.5 py-2 rounded-md border border-indigo-500/20">
+ <div class="text-[10px] text-indigo-700 font-extrabold uppercase tracking-wider">Khối Lớp Đã Đăng Ký</div>
+ <div class="text-sm font-semibold text-slate-900">{primaryGrade}</div>
  </div>
  </div>
  {/if}
 
  <!-- Header Banner -->
- <div class="rounded-lg bg-slate-900 border border-slate-800 p-6 md:p-8 shadow-sm relative overflow-hidden">
+ <div class="rounded-lg bg-white border border-slate-200 p-6 md:p-8 shadow-sm relative overflow-hidden">
  <div class="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
  <div class="space-y-2">
  <div class="flex items-center gap-2">
- <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+ <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-700 border border-emerald-500/30">
  HỆ THỐNG THỜI KHÓA BIỂU &amp; ĐIỂM DANH 2026
  </span>
- <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+ <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-500/20 text-indigo-700 border border-indigo-500/30">
  Thông Báo Phụ Huynh 10 Phút Trước Ca Học
  </span>
- <a href="/admin?tab=webhooks" data-testid="schedule-zalo-bot-status-pill" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/25 text-emerald-300 border border-emerald-400/50 hover:bg-emerald-500/35 transition-colors flex items-center gap-1">
+ <a href="/admin?tab=webhooks" data-testid="schedule-zalo-bot-status-pill" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/25 text-emerald-700 border border-emerald-400/50 hover:bg-emerald-500/35 transition-colors flex items-center gap-1">
  <span>🤖</span>
  <span>Zalo Bot: Bot giá cả (@bot.ynKabJAc) • Đã nối Token</span>
  </a>
  </div>
- <h1 class="text-2xl md:text-3xl font-heading font-semibold text-white">
+ <h1 class="text-2xl md:text-3xl font-heading font-semibold text-slate-900">
  Lịch Học, Thời Khóa Biểu &amp; Sổ Đầu Bài Tức Thời 📅
  </h1>
- <p class="text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed">
+ <p class="text-xs sm:text-sm text-slate-700 max-w-2xl leading-relaxed">
  Quản lý toàn bộ ca học tại nhà Cô Dung và trực tuyến. Tự động gửi tin nhắn Zalo cho phụ huynh đưa đón trước 10 phút,
  giáo viên điểm danh trực tiếp và gán học sinh vào bài kiểm tra theo sĩ số có mặt thực tế.
  </p>
@@ -619,7 +619,7 @@
  <button
  type="button"
  onclick={() => handleRespondSubstitute(req.id, 'reject')}
- class="px-3 py-1.5 rounded-md bg-slate-200 hover:bg-rose-600 hover:text-white text-slate-700 font-bold text-xs transition-all"
+ class="px-3 py-1.5 rounded-md bg-slate-200 hover:bg-rose-600 hover:text-slate-900 text-slate-700 font-bold text-xs transition-all"
  >
  ✕ Từ Chối
  </button>
@@ -702,7 +702,7 @@
  <button
  type="button"
  onclick={() => quickAddSession(day, shift)}
- class="w-full mt-0.5 rounded-md border border-dashed border-slate-300 text-slate-400 hover:text-emerald-700 hover:border-emerald-400 hover:bg-emerald-50/60 text-[11px] font-bold py-2 min-h-[44px] md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+ class="w-full mt-0.5 rounded-md border border-dashed border-slate-300 text-slate-600 hover:text-emerald-700 hover:border-emerald-400 hover:bg-emerald-50/60 text-[11px] font-bold py-2 min-h-[44px] md:opacity-0 md:group-hover:opacity-100 transition-opacity"
  title="Thêm buổi học ca {shift.label} ngày {day.label} {day.date.getDate()}"
  >
  ＋ Thêm
@@ -732,33 +732,33 @@
  {:else}
  <button
  onclick={() => activeTabFilter = 'all'}
- class="px-3.5 py-1.5 rounded-md transition-all whitespace-nowrap {activeTabFilter === 'all' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:text-white'}"
+ class="px-3.5 py-1.5 rounded-md transition-all whitespace-nowrap {activeTabFilter === 'all' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:text-slate-900'}"
  >
  🌟 Tất Cả Lớp ({sessions.length})
  </button>
  {#if currentUser}
  <button
  onclick={() => activeTabFilter = 'my_schedule'}
- class="px-3.5 py-1.5 rounded-md transition-all whitespace-nowrap {activeTabFilter === 'my_schedule' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:text-white'}"
+ class="px-3.5 py-1.5 rounded-md transition-all whitespace-nowrap {activeTabFilter === 'my_schedule' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:text-slate-900'}"
  >
  👤 Lịch Học Của Tôi
  </button>
  {/if}
  <button
  onclick={() => activeTabFilter = 'primary'}
- class="px-3.5 py-1.5 rounded-md transition-all whitespace-nowrap {activeTabFilter === 'primary' ? 'bg-amber-600 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:text-white'}"
+ class="px-3.5 py-1.5 rounded-md transition-all whitespace-nowrap {activeTabFilter === 'primary' ? 'bg-amber-600 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:text-slate-900'}"
  >
  🎒 Tiểu Học (Lớp 1 - 5)
  </button>
  <button
  onclick={() => activeTabFilter = 'secondary'}
- class="px-3.5 py-1.5 rounded-md transition-all whitespace-nowrap {activeTabFilter === 'secondary' ? 'bg-teal-600 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:text-white'}"
+ class="px-3.5 py-1.5 rounded-md transition-all whitespace-nowrap {activeTabFilter === 'secondary' ? 'bg-teal-600 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:text-slate-900'}"
  >
  📚 THCS (Lớp 6 - 9)
  </button>
  <button
  onclick={() => activeTabFilter = 'high_school'}
- class="px-3.5 py-1.5 rounded-md transition-all whitespace-nowrap {activeTabFilter === 'high_school' ? 'bg-purple-600 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:text-white'}"
+ class="px-3.5 py-1.5 rounded-md transition-all whitespace-nowrap {activeTabFilter === 'high_school' ? 'bg-purple-600 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:text-slate-900'}"
  >
  🎓 THPT &amp; IELTS (Lớp 10 - 12)
  </button>
@@ -769,49 +769,49 @@
  <div class="flex items-center gap-1 overflow-x-auto text-[11px] font-bold">
  <button
  onclick={() => dayFilter = 'all'}
- class="px-2.5 py-1 rounded-lg border {dayFilter === 'all' ? 'bg-slate-800 text-white' : 'bg-slate-50 text-slate-600'}"
+ class="px-2.5 py-1 rounded-lg border {dayFilter === 'all' ? 'bg-brand-600 text-white' : 'bg-slate-50 text-slate-600'}"
  >
  Cả tuần
  </button>
  <button
  onclick={() => dayFilter = 1}
- class="px-2 py-1 rounded-lg border {dayFilter === 1 ? 'bg-slate-800 text-white' : 'bg-slate-50 text-slate-600'}"
+ class="px-2 py-1 rounded-lg border {dayFilter === 1 ? 'bg-brand-600 text-white' : 'bg-slate-50 text-slate-600'}"
  >
  T2
  </button>
  <button
  onclick={() => dayFilter = 2}
- class="px-2 py-1 rounded-lg border {dayFilter === 2 ? 'bg-slate-800 text-white' : 'bg-slate-50 text-slate-600'}"
+ class="px-2 py-1 rounded-lg border {dayFilter === 2 ? 'bg-brand-600 text-white' : 'bg-slate-50 text-slate-600'}"
  >
  T3
  </button>
  <button
  onclick={() => dayFilter = 3}
- class="px-2 py-1 rounded-lg border {dayFilter === 3 ? 'bg-slate-800 text-white' : 'bg-slate-50 text-slate-600'}"
+ class="px-2 py-1 rounded-lg border {dayFilter === 3 ? 'bg-brand-600 text-white' : 'bg-slate-50 text-slate-600'}"
  >
  T4
  </button>
  <button
  onclick={() => dayFilter = 4}
- class="px-2 py-1 rounded-lg border {dayFilter === 4 ? 'bg-slate-800 text-white' : 'bg-slate-50 text-slate-600'}"
+ class="px-2 py-1 rounded-lg border {dayFilter === 4 ? 'bg-brand-600 text-white' : 'bg-slate-50 text-slate-600'}"
  >
  T5
  </button>
  <button
  onclick={() => dayFilter = 5}
- class="px-2 py-1 rounded-lg border {dayFilter === 5 ? 'bg-slate-800 text-white' : 'bg-slate-50 text-slate-600'}"
+ class="px-2 py-1 rounded-lg border {dayFilter === 5 ? 'bg-brand-600 text-white' : 'bg-slate-50 text-slate-600'}"
  >
  T6
  </button>
  <button
  onclick={() => dayFilter = 6}
- class="px-2 py-1 rounded-lg border {dayFilter === 6 ? 'bg-slate-800 text-white' : 'bg-slate-50 text-slate-600'}"
+ class="px-2 py-1 rounded-lg border {dayFilter === 6 ? 'bg-brand-600 text-white' : 'bg-slate-50 text-slate-600'}"
  >
  T7
  </button>
  <button
  onclick={() => dayFilter = 0}
- class="px-2 py-1 rounded-lg border {dayFilter === 0 ? 'bg-slate-800 text-white' : 'bg-slate-50 text-slate-600'}"
+ class="px-2 py-1 rounded-lg border {dayFilter === 0 ? 'bg-brand-600 text-white' : 'bg-slate-50 text-slate-600'}"
  >
  CN
  </button>

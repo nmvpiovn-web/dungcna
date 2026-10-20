@@ -628,7 +628,7 @@
  <span>📢</span>
  <span>{teacherNotice}</span>
  </div>
- <button onclick={() => teacherNotice = ''} class="text-white hover:opacity-80">✕</button>
+ <button onclick={() => teacherNotice = ''} class="text-slate-900 hover:opacity-80">✕</button>
  </div>
  {/if}
 
@@ -636,20 +636,20 @@
  <!-- TEACHER CONTROL PANEL (BẢNG ĐIỀU KHIỂN GATEKEEPER CỦA GIÁO VIÊN) -->
  <!-- ========================================================================= -->
  {#if isTeacher}
- <div class="rounded-3xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 border-2 border-amber-500/60 p-6 shadow-2xl text-white space-y-4">
- <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+ <div class="rounded-3xl bg-gradient-to-r from-amber-50 via-white to-indigo-50 border-2 border-amber-500/60 p-6 shadow-2xl text-slate-900 space-y-4">
+ <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-200">
  <div class="flex items-center gap-3">
- <div class="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-2xl font-bold">
+ <div class="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-700 flex items-center justify-center text-2xl font-bold">
  👨‍🏫
  </div>
  <div>
  <div class="flex items-center gap-2">
- <span class="text-xs font-bold text-amber-400 uppercase tracking-wider">CỔNG KIỂM SOÁT GIÁO VIÊN (GATEKEEPER)</span>
- <span class="px-2 py-0.5 rounded text-[10px] font-black {isPortalOpen ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'bg-rose-500/20 text-rose-300 border border-rose-500/40'}">
+ <span class="text-xs font-bold text-amber-700 uppercase tracking-wider">CỔNG KIỂM SOÁT GIÁO VIÊN (GATEKEEPER)</span>
+ <span class="px-2 py-0.5 rounded text-[10px] font-black {isPortalOpen ? 'bg-emerald-500/20 text-emerald-700 border border-emerald-500/40' : 'bg-rose-500/20 text-rose-700 border border-rose-500/40'}">
  {isPortalOpen ? '🟢 HỌC SINH ĐANG ĐƯỢC CHƠI' : '🔒 ĐANG KHÓA HỌC SINH'}
  </span>
  </div>
- <h2 class="text-xl font-heading font-black text-white mt-0.5">
+ <h2 class="text-xl font-heading font-black text-slate-900 mt-0.5">
  Điều Khiển Trò Chơi Tiếng Anh Lớp Học
  </h2>
  </div>
@@ -677,80 +677,80 @@
 
  <!-- Granular Switch Toggles for Each Game -->
  <div class="space-y-2">
- <div class="text-[11px] font-bold text-slate-300 uppercase tracking-wide">
+ <div class="text-[11px] font-bold text-slate-700 uppercase tracking-wide">
  Bật / Tắt Từng Trò Chơi Cụ Thể (Giáo viên luôn có quyền chơi thử bất cứ lúc nào):
  </div>
  <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 text-xs">
  <!-- Game 1 -->
  <button
  onclick={() => handleToggleGame('speed_match')}
- class="p-2.5 rounded-xl border text-left transition-all {gameSettings.active_games.speed_match ? 'bg-emerald-950/50 border-emerald-500 text-emerald-200' : 'bg-slate-950 border-slate-800 text-slate-400'}"
+ class="p-2.5 rounded-xl border text-left transition-all {gameSettings.active_games.speed_match ? 'bg-emerald-50/80 border-emerald-500 text-emerald-700' : 'bg-slate-50 border-slate-200 text-slate-600'}"
  >
  <div class="font-bold flex items-center justify-between">
  <span>⚡ Speed Match</span>
  <span>{gameSettings.active_games.speed_match ? '✓' : '✕'}</span>
  </div>
- <div class="text-[10px] text-slate-400">Từ vựng</div>
+ <div class="text-[10px] text-slate-600">Từ vựng</div>
  </button>
 
  <!-- Game 2 -->
  <button
  onclick={() => handleToggleGame('word_scramble')}
- class="p-2.5 rounded-xl border text-left transition-all {gameSettings.active_games.word_scramble ? 'bg-emerald-950/50 border-emerald-500 text-emerald-200' : 'bg-slate-950 border-slate-800 text-slate-400'}"
+ class="p-2.5 rounded-xl border text-left transition-all {gameSettings.active_games.word_scramble ? 'bg-emerald-50/80 border-emerald-500 text-emerald-700' : 'bg-slate-50 border-slate-200 text-slate-600'}"
  >
  <div class="font-bold flex items-center justify-between">
  <span>🔤 Xếp Chữ</span>
  <span>{gameSettings.active_games.word_scramble ? '✓' : '✕'}</span>
  </div>
- <div class="text-[10px] text-slate-400">Từ vựng</div>
+ <div class="text-[10px] text-slate-600">Từ vựng</div>
  </button>
 
  <!-- Game 3 -->
  <button
  onclick={() => handleToggleGame('meteor_rush')}
- class="p-2.5 rounded-xl border text-left transition-all {gameSettings.active_games.meteor_rush ? 'bg-emerald-950/50 border-emerald-500 text-emerald-200' : 'bg-slate-950 border-slate-800 text-slate-400'}"
+ class="p-2.5 rounded-xl border text-left transition-all {gameSettings.active_games.meteor_rush ? 'bg-emerald-50/80 border-emerald-500 text-emerald-700' : 'bg-slate-50 border-slate-200 text-slate-600'}"
  >
  <div class="font-bold flex items-center justify-between">
  <span>☄️ Bắn Thiên Thạch</span>
  <span>{gameSettings.active_games.meteor_rush ? '✓' : '✕'}</span>
  </div>
- <div class="text-[10px] text-slate-400">Từ vựng 10s</div>
+ <div class="text-[10px] text-slate-600">Từ vựng 10s</div>
  </button>
 
  <!-- Game 4 -->
  <button
  onclick={() => handleToggleGame('sentence_builder')}
- class="p-2.5 rounded-xl border text-left transition-all {gameSettings.active_games.sentence_builder ? 'bg-indigo-950/60 border-indigo-400 text-indigo-200' : 'bg-slate-950 border-slate-800 text-slate-400'}"
+ class="p-2.5 rounded-xl border text-left transition-all {gameSettings.active_games.sentence_builder ? 'bg-indigo-50/80 border-indigo-400 text-indigo-700' : 'bg-slate-50 border-slate-200 text-slate-600'}"
  >
  <div class="font-bold flex items-center justify-between">
  <span>🧩 Xây Dựng Câu</span>
  <span>{gameSettings.active_games.sentence_builder ? '✓' : '✕'}</span>
  </div>
- <div class="text-[10px] text-indigo-300 font-bold">Ngữ Pháp K12</div>
+ <div class="text-[10px] text-indigo-700 font-bold">Ngữ Pháp K12</div>
  </button>
 
  <!-- Game 5 -->
  <button
  onclick={() => handleToggleGame('grammar_tense')}
- class="p-2.5 rounded-xl border text-left transition-all {gameSettings.active_games.grammar_tense ? 'bg-indigo-950/60 border-indigo-400 text-indigo-200' : 'bg-slate-950 border-slate-800 text-slate-400'}"
+ class="p-2.5 rounded-xl border text-left transition-all {gameSettings.active_games.grammar_tense ? 'bg-indigo-50/80 border-indigo-400 text-indigo-700' : 'bg-slate-50 border-slate-200 text-slate-600'}"
  >
  <div class="font-bold flex items-center justify-between">
  <span>⏱️ Thì Động Từ</span>
  <span>{gameSettings.active_games.grammar_tense ? '✓' : '✕'}</span>
  </div>
- <div class="text-[10px] text-indigo-300 font-bold">Bẫy Ngữ Pháp</div>
+ <div class="text-[10px] text-indigo-700 font-bold">Bẫy Ngữ Pháp</div>
  </button>
 
  <!-- Game 6 -->
  <button
  onclick={() => handleToggleGame('memory_flip')}
- class="p-2.5 rounded-xl border text-left transition-all {gameSettings.active_games.memory_flip ? 'bg-purple-950/60 border-purple-400 text-purple-200' : 'bg-slate-950 border-slate-800 text-slate-400'}"
+ class="p-2.5 rounded-xl border text-left transition-all {gameSettings.active_games.memory_flip ? 'bg-purple-50/80 border-purple-400 text-purple-700' : 'bg-slate-50 border-slate-200 text-slate-600'}"
  >
  <div class="font-bold flex items-center justify-between">
  <span>🎴 Memory Flip 3D</span>
  <span>{gameSettings.active_games.memory_flip ? '✓' : '✕'}</span>
  </div>
- <div class="text-[10px] text-purple-300 font-bold">Thẻ Bài Flashcard</div>
+ <div class="text-[10px] text-purple-700 font-bold">Thẻ Bài Flashcard</div>
  </button>
  </div>
  </div>
@@ -809,7 +809,7 @@
  <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-black bg-white/20 backdrop-blur-sm tracking-wider">
  <span>🎮 ĐẤU TRƯỜNG TIẾNG ANH TOÀN DIỆN 2026</span>
  </div>
- <h1 class="text-2xl sm:text-4xl font-heading font-black text-white">
+ <h1 class="text-2xl sm:text-4xl font-heading font-black text-slate-900">
  Học Vui &amp; Bứt Phá Điểm Số Cùng Cô Dung 🌟
  </h1>
  <p class="text-xs sm:text-sm text-emerald-100 leading-relaxed">
@@ -821,8 +821,8 @@
  <div class="p-5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 shadow-lg flex items-center gap-4 flex-shrink-0">
  <div class="text-4xl animate-bounce">⭐</div>
  <div>
- <div class="text-[11px] font-bold uppercase tracking-wider text-emerald-200">Ví Sao Tích Lũy</div>
- <div class="text-2xl font-heading font-black text-amber-300">{studentStarBalance} Sao</div>
+ <div class="text-[11px] font-bold uppercase tracking-wider text-emerald-700">Ví Sao Tích Lũy</div>
+ <div class="text-2xl font-heading font-black text-amber-700">{studentStarBalance} Sao</div>
  <div class="text-[10px] text-emerald-100">+{gameSettings.reward_stars_per_game || 20} ⭐ mỗi trận thắng</div>
  </div>
  </div>
@@ -868,7 +868,7 @@
  {isTeacher ? 'Chơi Thử ➔' : 'Vào Chơi Ngay ➔'}
  </button>
  {:else}
- <span class="text-xs text-slate-400 italic">Cô giáo chưa kích hoạt</span>
+ <span class="text-xs text-slate-600 italic">Cô giáo chưa kích hoạt</span>
  {/if}
  </div>
  </div>
@@ -898,7 +898,7 @@
  {isTeacher ? 'Chơi Thử ➔' : 'Vào Chơi Ngay ➔'}
  </button>
  {:else}
- <span class="text-xs text-slate-400 italic">Cô giáo chưa kích hoạt</span>
+ <span class="text-xs text-slate-600 italic">Cô giáo chưa kích hoạt</span>
  {/if}
  </div>
  </div>
@@ -943,7 +943,7 @@
  {isTeacher ? 'Chơi Thử ➔' : 'Vào Chơi Ngay ➔'}
  </button>
  {:else}
- <span class="text-xs text-slate-400 italic">Cô giáo chưa kích hoạt</span>
+ <span class="text-xs text-slate-600 italic">Cô giáo chưa kích hoạt</span>
  {/if}
  </div>
  </div>
@@ -973,7 +973,7 @@
  {isTeacher ? 'Chơi Thử ➔' : 'Vào Chơi Ngay ➔'}
  </button>
  {:else}
- <span class="text-xs text-slate-400 italic">Cô giáo chưa kích hoạt</span>
+ <span class="text-xs text-slate-600 italic">Cô giáo chưa kích hoạt</span>
  {/if}
  </div>
  </div>
@@ -1015,7 +1015,7 @@
  {isTeacher ? 'Chơi Thử ➔' : 'Vào Chơi Ngay ➔'}
  </button>
  {:else}
- <span class="text-xs text-slate-400 italic">Cô giáo chưa kích hoạt</span>
+ <span class="text-xs text-slate-600 italic">Cô giáo chưa kích hoạt</span>
  {/if}
  </div>
  </div>
@@ -1045,7 +1045,7 @@
  {isTeacher ? 'Chơi Thử ➔' : 'Vào Chơi Ngay ➔'}
  </button>
  {:else}
- <span class="text-xs text-slate-400 italic">Cô giáo chưa kích hoạt</span>
+ <span class="text-xs text-slate-600 italic">Cô giáo chưa kích hoạt</span>
  {/if}
  </div>
  </div>
@@ -1085,7 +1085,7 @@
  <!-- Sentence Assembly Slot -->
  <div class="min-h-[70px] p-4 rounded-2xl bg-slate-50 border-2 {sentenceStatus === 'correct' ? 'border-emerald-500 bg-emerald-50/50' : sentenceStatus === 'wrong' ? 'border-rose-500 bg-rose-50/50' : 'border-dashed border-slate-300'} flex flex-wrap items-center gap-2 transition-all">
  {#if placedChunks.length === 0}
- <span class="text-xs text-slate-400 italic mx-auto">Bấm chọn các khối từ ngữ bên dưới theo đúng trật tự câu...</span>
+ <span class="text-xs text-slate-600 italic mx-auto">Bấm chọn các khối từ ngữ bên dưới theo đúng trật tự câu...</span>
  {:else}
  {#each placedChunks as chunk, idx}
  <button
@@ -1111,7 +1111,7 @@
 
  <!-- Available Word Chunks to Pick -->
  <div class="pt-4 border-t border-slate-100">
- <div class="text-[11px] font-bold text-slate-400 mb-2">Các khối từ có sẵn (Bấm để xếp vào câu):</div>
+ <div class="text-[11px] font-bold text-slate-600 mb-2">Các khối từ có sẵn (Bấm để xếp vào câu):</div>
  <div class="flex flex-wrap gap-2.5 justify-center">
  {#each availableChunks as chunk}
  <button
@@ -1239,8 +1239,8 @@
  {card.sub}
  </div>
  {:else}
- <div class="text-2xl text-white/90 animate-pulse">🎴</div>
- <div class="text-[9px] font-bold text-white/70 uppercase mt-1">Cô Dung 3D</div>
+ <div class="text-2xl text-slate-600 animate-pulse">🎴</div>
+ <div class="text-[9px] font-bold text-slate-600 uppercase mt-1">Cô Dung 3D</div>
  {/if}
  </button>
  {/each}
@@ -1284,7 +1284,7 @@
  class="h-28 rounded-2xl border-2 p-3 flex flex-col justify-center items-center text-center transition-all {card.matched ? 'opacity-20 border-emerald-500 pointer-events-none' : matchSelected.includes(index) ? 'border-emerald-500 bg-emerald-50 scale-105' : 'bg-white border-slate-200 hover:border-slate-400'}"
  >
  <div class="font-extrabold text-xs sm:text-sm text-slate-900">{card.text}</div>
- <div class="text-[10px] text-slate-400 font-mono mt-1">{card.sub}</div>
+ <div class="text-[10px] text-slate-600 font-mono mt-1">{card.sub}</div>
  <span class="text-[9px] font-bold px-1.5 py-0.5 rounded mt-1 {card.type === 'en' ? 'bg-cx-50 text-cx-700' : 'bg-emerald-50 text-emerald-700'}">
  {card.type === 'en' ? 'EN' : 'VN'}
  </span>

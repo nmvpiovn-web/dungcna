@@ -35,17 +35,17 @@
     <div class="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
       <div>
         <div class="flex flex-wrap items-center gap-2 mb-2.5">
-          <span class="px-3 py-1 rounded-full text-xs font-extrabold bg-white/15 text-white border border-white/25">
+          <span class="px-3 py-1 rounded-full text-xs font-extrabold bg-white/15 text-slate-900 border border-white/25">
             👩‍🏫 Giáo Viên Bản Ngữ &amp; Kế Hoạch 5512
           </span>
           <span class="px-3 py-1 rounded-full text-xs font-extrabold bg-amber-400/20 text-amber-100 border border-amber-300/30">
             ⚡ Nội Suy &amp; Tra Cứu Tức Thì
           </span>
         </div>
-        <h1 class="text-2xl md:text-3xl font-heading font-extrabold text-white tracking-tight">
+        <h1 class="text-2xl md:text-3xl font-heading font-extrabold text-slate-900 tracking-tight">
           Phương Pháp Sư Phạm Hiện Đại &amp; Kế Hoạch Bài Dạy 5512
         </h1>
-        <p class="text-sm text-white/90 mt-2 max-w-3xl leading-relaxed">
+        <p class="text-sm text-slate-600 mt-2 max-w-3xl leading-relaxed">
           Kho học liệu nội bộ Tiếng Anh Cô Dung kết hợp thực tiễn Việt Nam: Mô hình đồng giảng dạy (Co-Teaching),
           phương pháp phản xạ toàn thân (TPR), tiếp cận giao tiếp (CLT), cấu trúc giáo án 4 bước theo Công văn 5512/BGDĐT.
         </p>
@@ -65,9 +65,9 @@
             <button onclick={() => searchQuery = ''} class="absolute right-3 top-2.5 text-ink-500 hover:text-ink-900 text-xs font-bold">✕</button>
           {/if}
         </div>
-        <div class="text-[11px] text-white/85 mt-1.5 flex items-center justify-between px-1">
+        <div class="text-[11px] text-slate-600 mt-1.5 flex items-center justify-between px-1">
           <span>Tìm kiếm đa chiều theo ngữ nghĩa</span>
-          <span class="font-extrabold text-amber-200">{filteredResources.length} tài liệu</span>
+          <span class="font-extrabold text-amber-700">{filteredResources.length} tài liệu</span>
         </div>
       </div>
     </div>

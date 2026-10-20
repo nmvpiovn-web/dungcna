@@ -374,7 +374,7 @@
     bind:this={modalDialogEl}
     onkeydown={handleModalKeydown}
     tabindex="-1"
-    class="fixed inset-0 z-50 bg-stone-950/70 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150 overflow-y-auto"
+    class="fixed inset-0 z-50 bg-stone-500/25 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150 overflow-y-auto"
     role="dialog"
     aria-modal="true"
     aria-labelledby="update-modal-title"

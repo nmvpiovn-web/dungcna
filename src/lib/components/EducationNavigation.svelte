@@ -40,13 +40,13 @@
 <svelte:window onkeydown={(event) => event.key === 'Escape' && closeMenus()} />
 
 {#if moreOpen || accountOpen}
-  <button class="fixed inset-0 z-40 bg-stone-900/20" aria-label="Đóng menu" onclick={closeMenus}></button>
+  <button class="fixed inset-0 z-40 bg-stone-400/15" aria-label="Đóng menu" onclick={closeMenus}></button>
 {/if}
 
 <header class="sticky top-0 z-50 border-b border-cx-200 bg-white/95 backdrop-blur-md shadow-sm">
   <div class="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-3 sm:px-6 lg:px-8">
     <a href="/" class="flex min-w-0 items-center gap-2.5" onclick={closeMenus}>
-      <span class="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-cx-800 bg-cx-700 text-xl text-white">👩‍🏫</span>
+      <span class="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-brand-700 bg-cx-700 text-xl text-white">👩‍🏫</span>
       <span class="min-w-0">
         <strong class="block truncate text-sm text-stone-900 sm:text-base">Tiếng Anh Cô Dung</strong>
         <span class="hidden text-xs font-medium text-stone-600 sm:block">Học tiếng Anh theo lộ trình rõ ràng</span>
@@ -78,7 +78,7 @@
           {#if userUnreadCount > 0}<span class="absolute -right-1 -top-1 rounded-full bg-rose-700 px-1.5 text-[10px] text-white">{userUnreadCount}</span>{/if}
         </button>
       {:else}
-        <button type="button" class="min-h-11 rounded-lg bg-cx-700 px-4 text-sm font-extrabold text-white hover:bg-cx-800" onclick={onLogin}>Đăng nhập</button>
+        <button type="button" class="min-h-11 rounded-lg bg-cx-700 px-4 text-sm font-extrabold text-white hover:bg-brand-700" onclick={onLogin}>Đăng nhập</button>
       {/if}
     </div>
   </div>

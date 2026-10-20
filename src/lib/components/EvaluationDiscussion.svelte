@@ -181,7 +181,7 @@
  <button
  type="button"
  onclick={() => commentType = 'comment'}
- class="px-2.5 py-1 rounded-lg text-[10px] font-bold border transition-all {commentType === 'comment' ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-600'}"
+ class="px-2.5 py-1 rounded-lg text-[10px] font-bold border transition-all {commentType === 'comment' ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-600'}"
  >
  💬 Bình Luận
  </button>

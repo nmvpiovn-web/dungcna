@@ -160,7 +160,7 @@
 {#if isOpen}
  <!-- Backdrop -->
  <div 
- class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-[9990] transition-opacity duration-300 animate-in fade-in"
+ class="fixed inset-0 bg-stone-500/25 backdrop-blur-sm z-[9990] transition-opacity duration-300 animate-in fade-in"
  onclick={onClose}
  onkeydown={(e) => e.key === 'Escape' && onClose()}
  role="button"
@@ -176,14 +176,14 @@
  aria-label="Trung Tâm Báo Cáo Leader"
  >
  <!-- Drawer Header (Academic Ledger Style) -->
- <div class="p-4 sm:p-5 border-b border-slate-800 bg-slate-900 text-slate-100">
+ <div class="p-4 sm:p-5 border-b border-slate-200 bg-white text-slate-900">
  <div class="flex items-center justify-between mb-3">
  <div class="flex items-center gap-2.5">
  <div class="w-10 h-10 rounded-md bg-emerald-700 text-white flex items-center justify-center text-lg shadow-xs">
  🔔
  </div>
  <div>
- <h2 class="text-base sm:text-lg font-semibold text-white flex items-center gap-2">
+ <h2 class="text-base sm:text-lg font-semibold text-slate-900 flex items-center gap-2">
  Trung Tâm Báo Cáo Leader
  {#if unreadCount > 0}
  <span class="px-2 py-0.5 rounded text-xs font-semibold bg-rose-600 text-white">
@@ -191,7 +191,7 @@
  </span>
  {/if}
  </h2>
- <p class="text-xs text-slate-400 font-normal">
+ <p class="text-xs text-slate-600 font-normal">
  Dành riêng cho Cô Dung • Đăng ký, Lịch học, Điểm danh &amp; Học phí
  </p>
  </div>
@@ -199,7 +199,7 @@
 
  <button
  onclick={onClose}
- class="w-8 h-8 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-semibold text-sm transition-colors"
+ class="w-8 h-8 rounded-md bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900 flex items-center justify-center font-semibold text-sm transition-colors"
  title="Đóng"
  >
  ✕
@@ -258,7 +258,7 @@
  <button
  onclick={handleClearAll}
  disabled={notifications.length === 0}
- class="px-2 py-1.5 rounded-xl text-slate-400 hover:text-rose-600 disabled:opacity-40 font-medium transition-colors"
+ class="px-2 py-1.5 rounded-xl text-slate-600 hover:text-rose-600 disabled:opacity-40 font-medium transition-colors"
  title="Xóa tất cả thông báo"
  >
  Xóa hết
@@ -284,7 +284,7 @@
  <div class="flex items-center gap-1.5 overflow-x-auto pt-3 pb-1 no-scrollbar text-xs">
  <button
  onclick={() => activeFilter = 'all'}
- class="px-2.5 py-1 rounded-lg font-bold shrink-0 transition-colors {activeFilter === 'all' ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}"
+ class="px-2.5 py-1 rounded-lg font-bold shrink-0 transition-colors {activeFilter === 'all' ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}"
  >
  Tất cả ({notifications.length})
  </button>
@@ -373,11 +373,11 @@
  {/if}
  </div>
 
- <div class="flex items-center gap-2 text-[11px] text-slate-400">
+ <div class="flex items-center gap-2 text-[11px] text-slate-600">
  <span>{formatTime(notif.timestamp)}</span>
  <button
  onclick={() => handleDelete(notif.id)}
- class="text-slate-400 hover:text-rose-500 transition-colors p-1"
+ class="text-slate-600 hover:text-rose-500 transition-colors p-1"
  title="Xóa thông báo này"
  >
  ✕
@@ -475,7 +475,7 @@
  <div class="p-3.5 sm:p-4 border-t border-slate-200 bg-slate-50">
  <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2 flex items-center justify-between">
  <span>🧪 Giả Lập Tình Huống Cảnh Báo (Test Deck)</span>
- <span class="text-[11px] lowercase text-slate-400 font-normal">Click để kích hoạt kiểm thử</span>
+ <span class="text-[11px] lowercase text-slate-600 font-normal">Click để kích hoạt kiểm thử</span>
  </div>
  <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5 text-xs">
  <button

@@ -445,18 +445,18 @@ ${editForm.roadmap_recommendation || d.internal_interaction_and_roadmap.roadmap_
   {/if}
 
   <!-- Hero Banner -->
-  <div class="rounded-2xl bg-slate-900 border border-slate-800 p-6 md:p-8 text-white shadow-md">
+  <div class="rounded-2xl bg-white border border-slate-200 p-6 md:p-8 text-slate-900 shadow-md">
     <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
       <div class="space-y-2">
         <div class="flex flex-wrap items-center gap-2">
-          <span class="px-3 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+          <span class="px-3 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/20 text-emerald-700 border border-emerald-500/30">
             TRUNG TÂM ĐỐI SOÁT &amp; HỒI QUY CHẤT LƯỢNG CA DẠY
           </span>
-          <span class="px-3 py-0.5 rounded-full text-[11px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+          <span class="px-3 py-0.5 rounded-full text-[11px] font-bold bg-indigo-500/20 text-indigo-700 border border-indigo-500/30">
             Kho Tri Thức ↔ Drive ↔ Ca Học ↔ Điểm Danh ↔ BTVN ↔ Quiz
           </span>
           {#if catalogs.bot_configs?.[0]}
-            <span class="px-3 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+            <span class="px-3 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/20 text-amber-700 border border-amber-500/30">
               🟢 {catalogs.bot_configs[0].name || 'Bot Zalo Đã Kết Nối'} ({catalogs.bot_configs[0].masked_token || 'Token Active'})
             </span>
           {/if}
@@ -464,7 +464,7 @@ ${editForm.roadmap_recommendation || d.internal_interaction_and_roadmap.roadmap_
         <h1 class="text-2xl md:text-3xl font-bold tracking-tight">
           Bộ Quản Lý, Đánh Giá Hiệu Quả &amp; Đối Soát Học Liệu Ca Dạy 📊
         </h1>
-        <p class="text-xs sm:text-sm text-slate-300 max-w-3xl leading-relaxed">
+        <p class="text-xs sm:text-sm text-slate-700 max-w-3xl leading-relaxed">
           Theo dõi từng ca học đang sử dụng giáo án nào từ Kho Tri Thức &amp; Google Drive, kiểm tra trạng thái điểm danh (Đúng giờ, Đi muộn, Đủ sĩ số),
           đo lường tỷ lệ % đáp ứng Bài tập về nhà &amp; Quiz, đối soát tương tác phụ huynh – nội bộ và xuất lộ trình nâng cấp chất lượng giảng dạy.
         </p>
@@ -473,7 +473,7 @@ ${editForm.roadmap_recommendation || d.internal_interaction_and_roadmap.roadmap_
       <div class="flex flex-wrap items-center gap-2.5">
         <a
           href="/schedule"
-          class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-100 border border-slate-700 text-xs font-bold transition-all"
+          class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200/80 text-slate-900 border border-slate-200 text-xs font-bold transition-all"
         >
           📅 Về Thời Khóa Biểu
         </a>
@@ -495,36 +495,36 @@ ${editForm.roadmap_recommendation || d.internal_interaction_and_roadmap.roadmap_
     </div>
 
     <!-- Summary KPI Strip -->
-    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mt-6 pt-6 border-t border-slate-800">
-      <div class="p-3.5 rounded-xl bg-slate-800/80 border border-slate-700">
-        <div class="text-[11px] text-slate-400 font-semibold">Độ Phù Hợp TB</div>
-        <div class="text-2xl font-black text-emerald-400 mt-0.5">{summary.avg_overall_suitability_pct}%</div>
-        <div class="text-[10px] text-slate-400">{summary.total_sessions} ca học đang theo dõi</div>
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mt-6 pt-6 border-t border-slate-200">
+      <div class="p-3.5 rounded-xl bg-slate-100 border border-slate-200">
+        <div class="text-[11px] text-slate-600 font-semibold">Độ Phù Hợp TB</div>
+        <div class="text-2xl font-black text-emerald-700 mt-0.5">{summary.avg_overall_suitability_pct}%</div>
+        <div class="text-[10px] text-slate-600">{summary.total_sessions} ca học đang theo dõi</div>
       </div>
-      <div class="p-3.5 rounded-xl bg-slate-800/80 border border-slate-700">
-        <div class="text-[11px] text-slate-400 font-semibold">Đã Điểm Danh ĐỦ</div>
-        <div class="text-2xl font-black text-teal-300 mt-0.5">{summary.roll_call_complete_count}</div>
-        <div class="text-[10px] text-slate-400">Thiếu: {summary.roll_call_incomplete_count} • Chưa: {summary.roll_call_unmarked_count}</div>
+      <div class="p-3.5 rounded-xl bg-slate-100 border border-slate-200">
+        <div class="text-[11px] text-slate-600 font-semibold">Đã Điểm Danh ĐỦ</div>
+        <div class="text-2xl font-black text-teal-700 mt-0.5">{summary.roll_call_complete_count}</div>
+        <div class="text-[10px] text-slate-600">Thiếu: {summary.roll_call_incomplete_count} • Chưa: {summary.roll_call_unmarked_count}</div>
       </div>
-      <div class="p-3.5 rounded-xl bg-slate-800/80 border border-slate-700">
-        <div class="text-[11px] text-slate-400 font-semibold">Ca Có HS Đi Muộn</div>
-        <div class="text-2xl font-black text-amber-400 mt-0.5">{summary.sessions_with_late_count}</div>
-        <div class="text-[10px] text-slate-400">Cần nhắc lịch trước 15p</div>
+      <div class="p-3.5 rounded-xl bg-slate-100 border border-slate-200">
+        <div class="text-[11px] text-slate-600 font-semibold">Ca Có HS Đi Muộn</div>
+        <div class="text-2xl font-black text-amber-700 mt-0.5">{summary.sessions_with_late_count}</div>
+        <div class="text-[10px] text-slate-600">Cần nhắc lịch trước 15p</div>
       </div>
-      <div class="p-3.5 rounded-xl bg-slate-800/80 border border-slate-700">
-        <div class="text-[11px] text-slate-400 font-semibold">Ca Có HS Vắng</div>
-        <div class="text-2xl font-black text-rose-400 mt-0.5">{summary.sessions_with_absent_count}</div>
-        <div class="text-[10px] text-slate-400">Cần gửi bài bù từ Vault</div>
+      <div class="p-3.5 rounded-xl bg-slate-100 border border-slate-200">
+        <div class="text-[11px] text-slate-600 font-semibold">Ca Có HS Vắng</div>
+        <div class="text-2xl font-black text-rose-700 mt-0.5">{summary.sessions_with_absent_count}</div>
+        <div class="text-[10px] text-slate-600">Cần gửi bài bù từ Vault</div>
       </div>
-      <div class="p-3.5 rounded-xl bg-slate-800/80 border border-slate-700">
-        <div class="text-[11px] text-slate-400 font-semibold">Đã Gắn Tài Liệu</div>
-        <div class="text-2xl font-black text-indigo-300 mt-0.5">{summary.sessions_with_material_count}/{summary.total_sessions}</div>
-        <div class="text-[10px] text-slate-400">Kho Tri Thức &amp; Drive</div>
+      <div class="p-3.5 rounded-xl bg-slate-100 border border-slate-200">
+        <div class="text-[11px] text-slate-600 font-semibold">Đã Gắn Tài Liệu</div>
+        <div class="text-2xl font-black text-indigo-700 mt-0.5">{summary.sessions_with_material_count}/{summary.total_sessions}</div>
+        <div class="text-[10px] text-slate-600">Kho Tri Thức &amp; Drive</div>
       </div>
-      <div class="p-3.5 rounded-xl bg-slate-800/80 border border-slate-700">
-        <div class="text-[11px] text-slate-400 font-semibold">Kho Học Liệu Sẵn Sàng</div>
+      <div class="p-3.5 rounded-xl bg-slate-100 border border-slate-200">
+        <div class="text-[11px] text-slate-600 font-semibold">Kho Học Liệu Sẵn Sàng</div>
         <div class="text-2xl font-black text-cyan-300 mt-0.5">{catalogs.vault_articles.length + catalogs.drive_files.length}</div>
-        <div class="text-[10px] text-slate-400">{catalogs.quizzes.length} đề Quiz xuất bản</div>
+        <div class="text-[10px] text-slate-600">{catalogs.quizzes.length} đề Quiz xuất bản</div>
       </div>
     </div>
   </div>
@@ -938,7 +938,7 @@ ${editForm.roadmap_recommendation || d.internal_interaction_and_roadmap.roadmap_
 
 <!-- Export 5-Part Dossier Modal -->
 {#if showExportModal}
-  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm">
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-500/25 backdrop-blur-sm">
     <div class="w-full max-w-3xl rounded-2xl bg-white border border-slate-200 shadow-2xl p-6 space-y-4 max-h-[90vh] flex flex-col">
       <div class="flex items-center justify-between border-b border-slate-200 pb-3">
         <div>
@@ -953,7 +953,7 @@ ${editForm.roadmap_recommendation || d.internal_interaction_and_roadmap.roadmap_
         rows="16"
         data-testid="session-dossier-export-text"
         value={exportedMarkdown}
-        class="w-full flex-1 font-mono text-xs p-4 rounded-xl bg-slate-900 text-emerald-300 border border-slate-800 overflow-y-auto"
+        class="w-full flex-1 font-mono text-xs p-4 rounded-xl bg-white text-emerald-700 border border-slate-200 overflow-y-auto"
       ></textarea>
 
       <div class="flex flex-wrap items-center justify-end gap-2.5 pt-2">
@@ -985,7 +985,7 @@ ${editForm.roadmap_recommendation || d.internal_interaction_and_roadmap.roadmap_
 
 <!-- Bot Webhook & API Token Configuration Modal -->
 {#if showBotConfigModal}
-  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm">
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-500/25 backdrop-blur-sm">
     <div class="w-full max-w-xl rounded-2xl bg-white border border-slate-200 shadow-2xl p-6 space-y-4">
       <div class="flex items-center justify-between border-b border-slate-200 pb-3">
         <div>

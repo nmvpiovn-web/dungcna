@@ -14,10 +14,10 @@
 {#if bill}
 <div class="tuition-container">
   {#if showPrintBtn}
-    <div class="no-print flex items-center justify-between pb-4 border-b border-slate-700/50 mb-6">
-      <div class="flex items-center gap-2 text-xs text-slate-300">
+    <div class="no-print flex items-center justify-between pb-4 border-b border-slate-200 mb-6">
+      <div class="flex items-center gap-2 text-xs text-slate-700">
         <span>Mẫu đang hiển thị:</span>
-        <strong class="text-emerald-400">Template {templateId}</strong>
+        <strong class="text-emerald-700">Template {templateId}</strong>
       </div>
       <button
         onclick={printBill}
@@ -216,67 +216,67 @@
 
   <!-- ==================== TEMPLATE 2: NGÔI SAO TRI THỨC (EMERALD ACADEMIC) ==================== -->
   {:else if templateId === 2}
-    <div class="bill-page bg-slate-900 text-slate-100 rounded-3xl p-8 border-4 border-teal-500 shadow-2xl relative overflow-hidden font-sans">
+    <div class="bill-page bg-white text-slate-900 rounded-3xl p-8 border-4 border-teal-500 shadow-2xl relative overflow-hidden font-sans">
       <div class="flex items-center justify-between border-b border-teal-500/50 pb-5">
         <div class="flex items-center gap-3">
           <div class="w-14 h-14 rounded-2xl bg-teal-500 flex items-center justify-center text-white text-3xl shadow-lg shadow-teal-500/30">
             👑
           </div>
           <div>
-            <div class="text-xs font-bold tracking-widest uppercase text-teal-400">TIẾNG ANH CÔ DUNG • BÁO CÁO HỌC THUẬT K12</div>
-            <h1 class="text-2xl font-black text-white">TIẾNG ANH CÔ DUNG - BÁO ĐIỂM &amp; HỌC PHÍ</h1>
-            <div class="text-xs text-slate-400">Niên Khóa 2026 • Chuẩn GDPT 2018</div>
+            <div class="text-xs font-bold tracking-widest uppercase text-teal-700">TIẾNG ANH CÔ DUNG • BÁO CÁO HỌC THUẬT K12</div>
+            <h1 class="text-2xl font-black text-slate-900">TIẾNG ANH CÔ DUNG - BÁO ĐIỂM &amp; HỌC PHÍ</h1>
+            <div class="text-xs text-slate-600">Niên Khóa 2026 • Chuẩn GDPT 2018</div>
           </div>
         </div>
         <div class="text-right">
-          <span class="px-3 py-1 rounded-full bg-teal-500/20 text-teal-300 font-bold text-xs border border-teal-500/30">
+          <span class="px-3 py-1 rounded-full bg-teal-500/20 text-teal-700 font-bold text-xs border border-teal-500/30">
             Hạng Mục Xuất Sắc
           </span>
-          <div class="text-[11px] text-slate-400 mt-1 font-mono">#{bill.id}</div>
+          <div class="text-[11px] text-slate-600 mt-1 font-mono">#{bill.id}</div>
         </div>
       </div>
 
       <!-- Info Bar -->
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 my-5 p-4 rounded-2xl bg-slate-950 border border-slate-800 text-xs">
-        <div><span class="text-slate-400">Học Viên:</span> <strong class="text-white block font-black">{bill.student_name}</strong></div>
-        <div><span class="text-slate-400">Độ Tuổi &amp; Lớp:</span> <strong class="text-teal-300 block">{bill.age} tuổi • {bill.grade_level}</strong></div>
-        <div class="sm:col-span-2"><span class="text-slate-400">Chương Trình:</span> <strong class="text-slate-200 block">{bill.program_name}</strong></div>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 my-5 p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs">
+        <div><span class="text-slate-600">Học Viên:</span> <strong class="text-slate-900 block font-black">{bill.student_name}</strong></div>
+        <div><span class="text-slate-600">Độ Tuổi &amp; Lớp:</span> <strong class="text-teal-700 block">{bill.age} tuổi • {bill.grade_level}</strong></div>
+        <div class="sm:col-span-2"><span class="text-slate-600">Chương Trình:</span> <strong class="text-slate-900 block">{bill.program_name}</strong></div>
       </div>
 
       <!-- Growth & Attendance -->
       <div class="grid grid-cols-2 gap-4 my-5 text-xs">
-        <div class="p-4 rounded-2xl bg-slate-950 border border-teal-500/40">
-          <div class="font-bold text-teal-400 mb-1">CHUYÊN CẦN: {bill.attendance_rate}%</div>
-          <div class="text-slate-300">Tham gia {bill.attendance_attended_sessions}/{bill.attendance_total_sessions} buổi trọn vẹn cùng Cô Dung.</div>
+        <div class="p-4 rounded-2xl bg-slate-50 border border-teal-500/40">
+          <div class="font-bold text-teal-700 mb-1">CHUYÊN CẦN: {bill.attendance_rate}%</div>
+          <div class="text-slate-700">Tham gia {bill.attendance_attended_sessions}/{bill.attendance_total_sessions} buổi trọn vẹn cùng Cô Dung.</div>
         </div>
-        <div class="p-4 rounded-2xl bg-slate-950 border border-emerald-500/40">
-          <div class="font-bold text-emerald-400 mb-1">TĂNG TRƯỞNG: +{bill.growth_percentage}%</div>
-          <div class="text-slate-300 line-clamp-2">{bill.growth_notes}</div>
+        <div class="p-4 rounded-2xl bg-slate-50 border border-emerald-500/40">
+          <div class="font-bold text-emerald-700 mb-1">TĂNG TRƯỞNG: +{bill.growth_percentage}%</div>
+          <div class="text-slate-700 line-clamp-2">{bill.growth_notes}</div>
         </div>
       </div>
 
       <!-- Tuition & Stars -->
-      <div class="my-5 rounded-2xl bg-slate-950 border border-teal-500/30 p-4 space-y-2 text-xs">
-        <div class="flex justify-between text-slate-300">
+      <div class="my-5 rounded-2xl bg-slate-50 border border-teal-500/30 p-4 space-y-2 text-xs">
+        <div class="flex justify-between text-slate-700">
           <span>Học phí định kỳ:</span>
           <span>{bill.base_tuition_vnd.toLocaleString('vi-VN')} đ</span>
         </div>
-        <div class="flex justify-between text-amber-400 font-bold">
+        <div class="flex justify-between text-amber-700 font-bold">
           <span>Trừ thưởng {bill.stars_deducted.toLocaleString('vi-VN')} Sao:</span>
           <span>-{bill.discount_vnd.toLocaleString('vi-VN')} đ</span>
         </div>
-        <div class="flex justify-between text-base font-black text-white pt-2 border-t border-slate-800">
-          <span class="text-teal-400">THỰC NỘP:</span>
-          <span class="text-emerald-400">{bill.final_amount_vnd.toLocaleString('vi-VN')} đ</span>
+        <div class="flex justify-between text-base font-black text-slate-900 pt-2 border-t border-slate-200">
+          <span class="text-teal-700">THỰC NỘP:</span>
+          <span class="text-emerald-700">{bill.final_amount_vnd.toLocaleString('vi-VN')} đ</span>
         </div>
       </div>
 
       <!-- QR -->
-      <div class="p-4 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-between gap-4 text-xs">
+      <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-4 text-xs">
         <div>
-          <div class="font-bold text-teal-400">VIETQR THANH TOÁN TIẾNG ANH CÔ DUNG:</div>
-          <div class="text-slate-300">{bill.bank_name} • {bill.bank_account}</div>
-          <div class="text-slate-400">Chủ TK: {bill.account_holder} &amp; Cô Dung</div>
+          <div class="font-bold text-teal-700">VIETQR THANH TOÁN TIẾNG ANH CÔ DUNG:</div>
+          <div class="text-slate-700">{bill.bank_name} • {bill.bank_account}</div>
+          <div class="text-slate-600">Chủ TK: {bill.account_holder} &amp; Cô Dung</div>
         </div>
         <img src={bill.vietqr_url} alt="" class="w-28 h-28 rounded-lg bg-white p-1" />
       </div>
@@ -345,37 +345,37 @@
 
   <!-- ==================== TEMPLATE 5: BẢNG VÀNG DANH DỰ (HONOR FOREST GOLD) ==================== -->
   {:else}
-    <div class="bill-page bg-emerald-950 text-amber-100 rounded-3xl p-8 border-4 border-amber-400 shadow-2xl relative font-serif">
+    <div class="bill-page bg-emerald-50/80 text-amber-100 rounded-3xl p-8 border-4 border-amber-400 shadow-2xl relative font-serif">
       <div class="border-2 border-amber-400/60 p-6 rounded-2xl">
         <div class="text-center space-y-1 border-b border-amber-400/40 pb-4">
-          <div class="text-xs tracking-widest text-amber-300 uppercase font-sans">TIẾNG ANH CÔ DUNG • BẢNG VÀNG THÀNH TÍCH</div>
-          <h1 class="text-2xl font-bold text-amber-200">TIẾNG ANH CÔ DUNG - BẢNG VÀNG THÀNH TÍCH &amp; HỌC PHÍ</h1>
-          <div class="text-xs text-amber-400/80 font-sans">{bill.student_name} • {bill.grade_level} • {bill.billing_period}</div>
+          <div class="text-xs tracking-widest text-amber-700 uppercase font-sans">TIẾNG ANH CÔ DUNG • BẢNG VÀNG THÀNH TÍCH</div>
+          <h1 class="text-2xl font-bold text-amber-700">TIẾNG ANH CÔ DUNG - BẢNG VÀNG THÀNH TÍCH &amp; HỌC PHÍ</h1>
+          <div class="text-xs text-amber-700/80 font-sans">{bill.student_name} • {bill.grade_level} • {bill.billing_period}</div>
         </div>
 
-        <div class="my-4 text-xs font-sans space-y-2 text-slate-200">
+        <div class="my-4 text-xs font-sans space-y-2 text-slate-900">
           <div class="flex justify-between">
             <span>Tăng trưởng học lực:</span>
-            <strong class="text-amber-300">+{bill.growth_percentage}% ({bill.growth_status})</strong>
+            <strong class="text-amber-700">+{bill.growth_percentage}% ({bill.growth_status})</strong>
           </div>
           <div class="flex justify-between">
             <span>Học phí định mức:</span>
             <span>{bill.base_tuition_vnd.toLocaleString('vi-VN')} đ</span>
           </div>
-          <div class="flex justify-between text-amber-400">
+          <div class="flex justify-between text-amber-700">
             <span>Thưởng Sao danh dự (-{bill.stars_deducted} ⭐):</span>
             <span>-{bill.discount_vnd.toLocaleString('vi-VN')} đ</span>
           </div>
-          <div class="flex justify-between text-base font-bold text-amber-200 pt-2 border-t border-amber-400/40">
+          <div class="flex justify-between text-base font-bold text-amber-700 pt-2 border-t border-amber-400/40">
             <span>TỔNG THU:</span>
             <span>{bill.final_amount_vnd.toLocaleString('vi-VN')} đ</span>
           </div>
         </div>
 
         <div class="flex items-center justify-between pt-3 border-t border-amber-400/40 font-sans text-xs">
-          <div class="text-slate-300">
+          <div class="text-slate-700">
             <div>Chuyển khoản VietQR Tiếng Anh Cô Dung:</div>
-            <strong class="text-amber-200">{bill.bank_account} ({bill.account_holder} &amp; Cô Dung)</strong>
+            <strong class="text-amber-700">{bill.bank_account} ({bill.account_holder} &amp; Cô Dung)</strong>
           </div>
           <img src={bill.vietqr_url} alt="" class="w-24 h-24 rounded-lg bg-white p-1" />
         </div>

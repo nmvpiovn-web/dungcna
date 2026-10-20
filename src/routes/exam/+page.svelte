@@ -1016,14 +1016,14 @@
 
  {#if currentUser?.role === 'teacher' || currentUser?.role === 'superadmin' || isSuperAdmin(currentUser)}
  <!-- Teacher & Leader Attendance-Linked Exam Panel -->
- <div class="rounded-3xl bg-slate-900 border border-emerald-500/30 p-5 md:p-6 shadow-xl space-y-4">
+ <div class="rounded-3xl bg-white border border-emerald-500/30 p-5 md:p-6 shadow-xl space-y-4">
  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
  <div>
- <div class="text-xs font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-2">
+ <div class="text-xs font-bold text-emerald-700 uppercase tracking-wider flex items-center gap-2">
  <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
  <span>👩‍🏫 ĐIỀU PHỐI PHÒNG THI THEO LỚP &amp; ĐIỂM DANH (Teacher &amp; Leader Cô Dung)</span>
  </div>
- <div class="text-sm font-black text-white mt-1">
+ <div class="text-sm font-black text-slate-900 mt-1">
  Khởi Tạo Đề Thi &amp; Gán Học Sinh Trực Tiếp Theo Buổi Học
  </div>
  </div>
@@ -1040,7 +1040,7 @@
  </button>
  <a
  href="/schedule"
- class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs flex items-center gap-1 border border-slate-700"
+ class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200/80 text-slate-700 font-bold text-xs flex items-center gap-1 border border-slate-200"
  >
  <span>📅 Điểm Danh Buổi Học</span>
  </a>
@@ -1051,12 +1051,12 @@
  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs pt-1">
  <!-- 1. Select Session -->
  <div class="space-y-1">
- <label class="font-bold text-slate-300" for="sess-select">1. Chọn Buổi Học / Lớp:</label>
+ <label class="font-bold text-slate-700" for="sess-select">1. Chọn Buổi Học / Lớp:</label>
  <select
  id="sess-select"
  bind:value={selectedSessionId}
  onchange={handleSessionChange}
- class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-medium focus:outline-none focus:border-emerald-500"
+ class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 font-medium focus:outline-none focus:border-emerald-500"
  >
  {#each (data.sessions || []) as s}
  <option value={s.id}>
@@ -1068,31 +1068,31 @@
 
  <!-- 2. Select Date -->
  <div class="space-y-1">
- <label class="font-bold text-slate-300" for="sess-date">2. Ngày Điểm Danh:</label>
+ <label class="font-bold text-slate-700" for="sess-date">2. Ngày Điểm Danh:</label>
  <input
  id="sess-date"
  type="date"
  bind:value={selectedSessionDate}
  onchange={handleDateChange}
- class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-medium focus:outline-none focus:border-emerald-500"
+ class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 font-medium focus:outline-none focus:border-emerald-500"
  />
  </div>
 
  <!-- 3. Attendance Filter -->
  <div class="space-y-1">
- <span class="font-bold text-slate-300 block">3. Bộ Lọc Điểm Danh:</span>
- <div class="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
+ <span class="font-bold text-slate-700 block">3. Bộ Lọc Điểm Danh:</span>
+ <div class="flex items-center gap-1 bg-slate-50 p-1 rounded-xl border border-slate-200">
  <button
  type="button"
  onclick={() => { filterAttendedOnly = true; refreshEligibleStudents(); }}
- class="flex-1 py-1.5 px-2 rounded-lg font-bold text-[11px] transition-all {filterAttendedOnly ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'}"
+ class="flex-1 py-1.5 px-2 rounded-lg font-bold text-[11px] transition-all {filterAttendedOnly ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'}"
  >
  🟢 Có Mặt Hôm Nay
  </button>
  <button
  type="button"
  onclick={() => { filterAttendedOnly = false; refreshEligibleStudents(); }}
- class="flex-1 py-1.5 px-2 rounded-lg font-bold text-[11px] transition-all {!filterAttendedOnly ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'}"
+ class="flex-1 py-1.5 px-2 rounded-lg font-bold text-[11px] transition-all {!filterAttendedOnly ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'}"
  >
  👥 Tất Cả ({allSessionStudentCount})
  </button>
@@ -1101,15 +1101,15 @@
 
  <!-- 4. Selected Candidate -->
  <div class="space-y-1">
- <label class="font-bold text-slate-300 flex items-center justify-between" for="cand-select">
+ <label class="font-bold text-slate-700 flex items-center justify-between" for="cand-select">
  <span>4. Thí Sinh Làm Bài:</span>
- <span class="text-[10px] font-semibold text-emerald-400">{eligibleStudents.length} em đủ điều kiện</span>
+ <span class="text-[10px] font-semibold text-emerald-700">{eligibleStudents.length} em đủ điều kiện</span>
  </label>
  <select
  id="cand-select"
  bind:value={selectedStudentId}
  onchange={handleStudentChange}
- class="w-full bg-slate-950 border border-emerald-500/40 rounded-xl px-3 py-2 text-white font-bold focus:outline-none focus:border-emerald-400"
+ class="w-full bg-slate-50 border border-emerald-500/40 rounded-xl px-3 py-2 text-slate-900 font-bold focus:outline-none focus:border-emerald-400"
  >
  {#each eligibleStudents as st}
  <option value={st.id}>
@@ -1132,7 +1132,7 @@
  <button
  type="button"
  onclick={() => { selectedStudentId = st.id; handleStudentChange(); }}
- class="px-2.5 py-1 rounded-lg border font-semibold text-[11px] transition-all whitespace-nowrap flex items-center gap-1.5 {isChosen ? 'bg-emerald-500/20 border-emerald-400 text-emerald-300 shadow-sm ring-1 ring-emerald-400/50' : 'bg-slate-950/80 border-slate-800 text-slate-400 hover:text-white hover:border-slate-700'}"
+ class="px-2.5 py-1 rounded-lg border font-semibold text-[11px] transition-all whitespace-nowrap flex items-center gap-1.5 {isChosen ? 'bg-emerald-500/20 border-emerald-400 text-emerald-700 shadow-sm ring-1 ring-emerald-400/50' : 'bg-stone-500/25 border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-200'}"
  >
  <span class="w-1.5 h-1.5 rounded-full {isChosen ? 'bg-emerald-400' : 'bg-ink-500'}"></span>
  <span>{st.name}</span>
@@ -1146,32 +1146,32 @@
  {@const isOfficial = currentUser.approval_status === 'official' || (currentUser.status === 'active' && !isTrialUser)}
  {@const primaryGrade = currentUser.grade || 'Chưa có lớp'}
  <!-- Student Header Badge -->
- <div class="rounded-2xl bg-indigo-950/40 border border-indigo-500/30 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg">
+ <div class="rounded-2xl bg-indigo-50/80 border border-indigo-500/30 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg">
  <div class="flex items-center gap-3.5">
- <div class="w-11 h-11 rounded-2xl bg-indigo-600/30 border border-indigo-500/40 text-indigo-300 font-bold flex items-center justify-center text-xl shadow-md">
+ <div class="w-11 h-11 rounded-2xl bg-indigo-600/30 border border-indigo-500/40 text-indigo-700 font-bold flex items-center justify-center text-xl shadow-md">
  🎓
  </div>
  <div class="space-y-0.5">
- <div class="text-sm font-bold text-white flex flex-wrap items-center gap-2">
- <span>Thí Sinh: <strong class="text-indigo-200">{currentUser.name}</strong></span>
+ <div class="text-sm font-bold text-slate-900 flex flex-wrap items-center gap-2">
+ <span>Thí Sinh: <strong class="text-indigo-700">{currentUser.name}</strong></span>
  {#if isOfficial}
- <span class="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/30">
+ <span class="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-700 font-bold border border-emerald-500/30">
  ✓ Học Sinh Chính Thức
  </span>
  {:else}
- <span class="text-[10px] px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">
+ <span class="text-[10px] px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-700 font-bold border border-amber-500/30">
  ⏳ Dùng Thử (Trial) • Chờ Cô Dung Duyệt
  </span>
  {/if}
  </div>
  <div class="text-xs text-ink-500">
- Tài khoản: <strong class="text-slate-200">@{currentUser.username}</strong> • Chương trình: <strong class="text-emerald-400">{primaryGrade} GDPT 2026</strong>
+ Tài khoản: <strong class="text-slate-900">@{currentUser.username}</strong> • Chương trình: <strong class="text-emerald-700">{primaryGrade} GDPT 2026</strong>
  </div>
  </div>
  </div>
- <div class="sm:text-right bg-indigo-900/30 px-3.5 py-2 rounded-xl border border-indigo-500/20">
- <div class="text-[10px] text-indigo-300 font-extrabold uppercase tracking-wider">Khối Lớp Đã Đăng Ký</div>
- <div class="text-sm font-black text-white">{primaryGrade}</div>
+ <div class="sm:text-right bg-indigo-50/80 px-3.5 py-2 rounded-xl border border-indigo-500/20">
+ <div class="text-[10px] text-indigo-700 font-extrabold uppercase tracking-wider">Khối Lớp Đã Đăng Ký</div>
+ <div class="text-sm font-black text-slate-900">{primaryGrade}</div>
  </div>
  </div>
  {/if}
@@ -1183,7 +1183,7 @@
  <span class="text-xl">🔒</span>
  <span>{lockedExamAlert}</span>
  </div>
- <button onclick={() => lockedExamAlert = ''} class="text-amber-600 hover:text-white font-bold text-sm">✕</button>
+ <button onclick={() => lockedExamAlert = ''} class="text-amber-600 hover:text-slate-900 font-bold text-sm">✕</button>
  </div>
  {/if}
 
@@ -1359,10 +1359,10 @@
 
  <!-- RANDOM EXAM GENERATOR INTERACTIVE PANEL -->
  {#if activeExamGroup === 'random_builder'}
- <div class="rounded-2xl bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950/60 border border-amber-500/40 p-5 md:p-6 shadow-2xl space-y-5 animate-in fade-in duration-200">
- <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
+ <div class="rounded-2xl bg-gradient-to-br from-amber-50/80 via-white to-indigo-50/60 border border-amber-500/40 p-5 md:p-6 shadow-2xl space-y-5 animate-in fade-in duration-200">
+ <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
  <div class="space-y-1">
- <div class="text-xs font-black text-amber-400 uppercase tracking-wider flex items-center gap-2">
+ <div class="text-xs font-black text-amber-700 uppercase tracking-wider flex items-center gap-2">
  <span class="text-lg">🎲</span>
  <span>BỘ TẠO ĐỀ THI TRẮC NGHIỆM NGẪU NHIÊN THEO THỜI LƯỢNG (DYNAMIC TEST BUILDER)</span>
  </div>
@@ -1371,7 +1371,7 @@
  </p>
  </div>
  {#if randomSuccessNotice}
- <div class="px-3 py-1.5 rounded-xl bg-emerald-500/20 text-emerald-300 font-bold text-xs border border-emerald-500/30 animate-pulse">
+ <div class="px-3 py-1.5 rounded-xl bg-emerald-500/20 text-emerald-700 font-bold text-xs border border-emerald-500/30 animate-pulse">
  {randomSuccessNotice}
  </div>
  {/if}
@@ -1380,12 +1380,12 @@
  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
  <!-- 1. Duration Choice -->
  <div class="space-y-2">
- <span class="block font-bold text-slate-300">1. Thời Lượng Làm Bài:</span>
+ <span class="block font-bold text-slate-700">1. Thời Lượng Làm Bài:</span>
  <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
  <button
  type="button"
  onclick={() => randomDuration = 5}
- class="py-2 px-1.5 rounded-xl font-bold text-xs text-center border transition-all {randomDuration === 5 ? 'bg-amber-500 text-ink-900 border-amber-400 shadow-md shadow-amber-500/30 font-black' : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700'}"
+ class="py-2 px-1.5 rounded-xl font-bold text-xs text-center border transition-all {randomDuration === 5 ? 'bg-amber-500 text-ink-900 border-amber-400 shadow-md shadow-amber-500/30 font-black' : 'bg-white border-slate-200 text-slate-700 hover:border-slate-200'}"
  >
  <div>⚡ 5 Phút</div>
  <div class="text-[10px] opacity-80 font-normal">5 câu</div>
@@ -1393,7 +1393,7 @@
  <button
  type="button"
  onclick={() => randomDuration = 15}
- class="py-2 px-1.5 rounded-xl font-bold text-xs text-center border transition-all {randomDuration === 15 ? 'bg-indigo-600 text-white border-indigo-400 shadow-md shadow-indigo-600/30 font-black' : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700'}"
+ class="py-2 px-1.5 rounded-xl font-bold text-xs text-center border transition-all {randomDuration === 15 ? 'bg-indigo-600 text-white border-indigo-400 shadow-md shadow-indigo-600/30 font-black' : 'bg-white border-slate-200 text-slate-700 hover:border-slate-200'}"
  >
  <div>⏱️ 15 Phút</div>
  <div class="text-[10px] opacity-80 font-normal">15 câu</div>
@@ -1401,7 +1401,7 @@
  <button
  type="button"
  onclick={() => randomDuration = 45}
- class="py-2 px-1.5 rounded-xl font-bold text-xs text-center border transition-all {randomDuration === 45 ? 'bg-emerald-600 text-white border-emerald-400 shadow-md shadow-emerald-600/30 font-black' : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700'}"
+ class="py-2 px-1.5 rounded-xl font-bold text-xs text-center border transition-all {randomDuration === 45 ? 'bg-emerald-600 text-white border-emerald-400 shadow-md shadow-emerald-600/30 font-black' : 'bg-white border-slate-200 text-slate-700 hover:border-slate-200'}"
  >
  <div>📝 45 Phút</div>
  <div class="text-[10px] opacity-80 font-normal">30 câu</div>
@@ -1409,7 +1409,7 @@
  <button
  type="button"
  onclick={() => randomDuration = 50}
- class="py-2 px-1.5 rounded-xl font-bold text-xs text-center border transition-all {randomDuration === 50 ? 'bg-rose-600 text-white border-rose-400 shadow-md shadow-rose-600/30 font-black ring-1 ring-rose-400' : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700'}"
+ class="py-2 px-1.5 rounded-xl font-bold text-xs text-center border transition-all {randomDuration === 50 ? 'bg-rose-600 text-white border-rose-400 shadow-md shadow-rose-600/30 font-black ring-1 ring-rose-400' : 'bg-white border-slate-200 text-slate-700 hover:border-slate-200'}"
  >
  <div>🎯 50 Phút</div>
  <div class="text-[10px] opacity-80 font-normal">40 câu (2025)</div>
@@ -1419,12 +1419,12 @@
 
  <!-- 2. Grade Choice -->
  <div class="space-y-2">
- <label class="block font-bold text-slate-300" for="rand-grade">2. Khối Lớp / Hệ Học:</label>
+ <label class="block font-bold text-slate-700" for="rand-grade">2. Khối Lớp / Hệ Học:</label>
  <select
  id="rand-grade"
  bind:value={randomGrade}
  disabled={currentUser?.role === 'student' && randomGrade !== null}
- class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-white font-bold focus:outline-none focus:border-amber-400 disabled:opacity-90"
+ class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-900 font-bold focus:outline-none focus:border-amber-400 disabled:opacity-90"
  >
  {#if currentUser?.role === 'student' && randomGrade !== null}
  <option value={randomGrade}>{randomGrade === 0 ? 'IELTS Academic & Cambridge KET/PET' : `Lớp ${randomGrade} (Khối Đã Đăng Ký)`}</option>
@@ -1457,11 +1457,11 @@
 
  <!-- 3. Skill Choice -->
  <div class="space-y-2">
- <label class="block font-bold text-slate-300" for="rand-skill">3. Trọng Tâm Kỹ Năng:</label>
+ <label class="block font-bold text-slate-700" for="rand-skill">3. Trọng Tâm Kỹ Năng:</label>
  <select
  id="rand-skill"
  bind:value={randomSkill}
- class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-white font-medium focus:outline-none focus:border-amber-400"
+ class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-900 font-medium focus:outline-none focus:border-amber-400"
  >
  <option value="all">🌟 Tổng Hợp Toàn Diện (Mixed Skills)</option>
  <option value="grammar">📐 Ngữ Pháp Cú Pháp (Grammar Focus)</option>
@@ -1501,7 +1501,7 @@
  <!-- Quick Random Banner for other tabs -->
  {#if activeExamCategory !== 'random_builder'}
  <div class="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs">
- <div class="flex items-center gap-2 text-slate-300">
+ <div class="flex items-center gap-2 text-slate-700">
  <span class="text-base">🎲</span>
  <span>Cần bài tập nhanh không trùng lặp? Hãy thử <strong>Bộ Tạo Đề Ngẫu Nhiên 5p • 15p • 45p</strong> từ kho 573 câu hỏi!</span>
  </div>
@@ -1578,7 +1578,7 @@
  <button
  type="button"
  onclick={abandonExam}
- class="shrink-0 px-4 py-2 rounded-xl {abandonConfirming ? 'bg-rose-600 border-rose-500 text-white' : 'bg-slate-100 hover:bg-rose-600 border-slate-300 text-slate-600 hover:text-white'} border font-bold text-xs transition-all"
+ class="shrink-0 px-4 py-2 rounded-xl {abandonConfirming ? 'bg-rose-600 border-rose-500 text-white' : 'bg-slate-100 hover:bg-rose-600 border-slate-300 text-slate-600 hover:text-slate-900'} border font-bold text-xs transition-all"
  >
  {abandonConfirming ? '⚠️ Chắc chắn bỏ?' : '✕ Bỏ Test'}
  </button>
@@ -1625,7 +1625,7 @@
  {:else if !isSubmitted}
  <div class="flex flex-col items-end gap-2">
  {#if submitError}
- <div class="p-3 bg-rose-950/90 border border-rose-500 rounded-xl text-rose-300 text-xs flex items-center justify-between gap-3 max-w-md">
+ <div class="p-3 bg-rose-50/80 border border-rose-500 rounded-xl text-rose-700 text-xs flex items-center justify-between gap-3 max-w-md">
  <span>⚠️ {submitError}</span>
  <button
  onclick={submitExam}
@@ -1657,49 +1657,49 @@
 
  <!-- RESULT CARD BANNER (After submission) -->
  {#if isSubmitted}
- <div id="exam-result-banner" class="p-6 md:p-8 rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl space-y-4 animate-in zoom-in-95 duration-200">
- <div class="flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-slate-800 pb-4">
+ <div id="exam-result-banner" class="p-6 md:p-8 rounded-3xl bg-white border border-slate-200 shadow-2xl space-y-4 animate-in zoom-in-95 duration-200">
+ <div class="flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-slate-200 pb-4">
  <div>
- <span class="text-xs font-bold text-emerald-400 uppercase tracking-wider">KẾT QUẢ ĐÁNH GIÁ LỘ TRÌNH CHÍNH THỨC</span>
- <h2 class="text-2xl font-black text-white mt-1">Thí Sinh: {studentName}</h2>
- <div class="text-xs text-slate-400 mt-0.5">Thời gian hoàn thành: {Math.floor(((currentExam.duration_minutes * 60) - timeLeftSeconds) / 60)} phút {((currentExam.duration_minutes * 60) - timeLeftSeconds) % 60} giây</div>
+ <span class="text-xs font-bold text-emerald-700 uppercase tracking-wider">KẾT QUẢ ĐÁNH GIÁ LỘ TRÌNH CHÍNH THỨC</span>
+ <h2 class="text-2xl font-black text-slate-900 mt-1">Thí Sinh: {studentName}</h2>
+ <div class="text-xs text-slate-600 mt-0.5">Thời gian hoàn thành: {Math.floor(((currentExam.duration_minutes * 60) - timeLeftSeconds) / 60)} phút {((currentExam.duration_minutes * 60) - timeLeftSeconds) % 60} giây</div>
  </div>
 
  <div class="flex flex-wrap items-center gap-3">
- <div class="text-center p-3 rounded-2xl bg-slate-950 border border-indigo-500/30 min-w-[130px] shadow-lg">
- <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{formattedResultBadge.scaleName}</div>
+ <div class="text-center p-3 rounded-2xl bg-slate-50 border border-indigo-500/30 min-w-[130px] shadow-lg">
+ <div class="text-[10px] text-slate-600 font-bold uppercase tracking-wider">{formattedResultBadge.scaleName}</div>
  <div class="text-2xl font-black {formattedResultBadge.badgeColor}">
  {formattedResultBadge.value}
  </div>
- <div class="text-[10px] font-semibold text-slate-400 mt-0.5">{formattedResultBadge.sub}</div>
+ <div class="text-[10px] font-semibold text-slate-600 mt-0.5">{formattedResultBadge.sub}</div>
  </div>
- <div class="text-center p-3 rounded-2xl bg-slate-950 border border-slate-800 min-w-[80px]">
- <div class="text-[10px] text-slate-400 font-bold uppercase">Hệ 10</div>
- <div class="text-2xl font-black {parseFloat(calculatedScore) >= 7.0 ? 'text-emerald-400' : 'text-amber-400'}">
+ <div class="text-center p-3 rounded-2xl bg-slate-50 border border-slate-200 min-w-[80px]">
+ <div class="text-[10px] text-slate-600 font-bold uppercase">Hệ 10</div>
+ <div class="text-2xl font-black {parseFloat(calculatedScore) >= 7.0 ? 'text-emerald-700' : 'text-amber-700'}">
  {calculatedScore}
  </div>
  </div>
- <div class="text-center p-3 rounded-2xl bg-slate-950 border border-slate-800 min-w-[80px]">
- <div class="text-[10px] text-slate-400 font-bold uppercase">Số Câu Đúng</div>
- <div class="text-2xl font-black text-indigo-400">
+ <div class="text-center p-3 rounded-2xl bg-slate-50 border border-slate-200 min-w-[80px]">
+ <div class="text-[10px] text-slate-600 font-bold uppercase">Số Câu Đúng</div>
+ <div class="text-2xl font-black text-indigo-700">
  {correctCount}/{activeQuestions.length}
  </div>
  </div>
  </div>
  </div>
 
- <div class="text-xs text-slate-300 bg-slate-950 p-4 rounded-2xl border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3">
+ <div class="text-xs text-slate-700 bg-slate-50 p-4 rounded-2xl border border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3">
  <div class="flex items-center gap-2">
  <span>✅ Kết quả bài thi của thí sinh <strong>{studentName}</strong> đã được lưu vào hệ thống Cloudflare D1.</span>
  {#if earnedStars > 0}
- <span class="px-2.5 py-1 rounded-xl bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30 flex items-center gap-1">
+ <span class="px-2.5 py-1 rounded-xl bg-amber-500/20 text-amber-700 font-bold border border-amber-500/30 flex items-center gap-1">
  ⭐ Thưởng +{earnedStars} Sao
  </span>
  {/if}
  </div>
  <div class="flex items-center gap-3">
- <a href="/evaluations" class="text-indigo-400 font-bold hover:underline">Chuyển sang Đánh giá học viên ➔</a>
- <a href="/tuition" class="text-emerald-400 font-bold hover:underline">Xem trừ học phí sao ➔</a>
+ <a href="/evaluations" class="text-indigo-700 font-bold hover:underline">Chuyển sang Đánh giá học viên ➔</a>
+ <a href="/tuition" class="text-emerald-700 font-bold hover:underline">Xem trừ học phí sao ➔</a>
  </div>
  </div>
  </div>
@@ -1708,10 +1708,10 @@
  <!-- MAIN EXAM PLAYER BODY -->
  {#if !isStarted && !isSubmitted}
  <!-- Instructions Screen -->
- <div class="p-8 rounded-3xl bg-slate-900 border border-slate-800 text-center space-y-4">
+ <div class="p-8 rounded-3xl bg-white border border-slate-200 text-center space-y-4">
  <div class="text-5xl">📝</div>
- <h2 class="text-xl font-bold text-white">Bạn Đã Sẵn Sàng Làm Bài?</h2>
- <p class="text-xs text-slate-400 max-w-lg mx-auto leading-relaxed">
+ <h2 class="text-xl font-bold text-slate-900">Bạn Đã Sẵn Sàng Làm Bài?</h2>
+ <p class="text-xs text-slate-600 max-w-lg mx-auto leading-relaxed">
  Bài thi gồm {activeQuestions.length} câu hỏi. Thời gian làm bài là {currentExam.duration_minutes} phút.
  Đồng hồ sẽ bắt đầu đếm ngược ngay khi bạn bấm nút bên dưới.
  </p>
@@ -1727,20 +1727,20 @@
  {#if currentExam.skill_category === 'writing'}
  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
  <!-- Left: Prompt & Criteria -->
- <div class="rounded-3xl bg-slate-900 border border-slate-800 p-6 space-y-4">
- <div class="flex items-center justify-between border-b border-slate-800 pb-3">
- <span class="text-xs font-bold text-purple-400">WRITING TASK 2 PROMPT</span>
- <span class="text-xs font-bold text-slate-400">Yêu cầu tối thiểu: 250 từ</span>
+ <div class="rounded-3xl bg-white border border-slate-200 p-6 space-y-4">
+ <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+ <span class="text-xs font-bold text-purple-700">WRITING TASK 2 PROMPT</span>
+ <span class="text-xs font-bold text-slate-600">Yêu cầu tối thiểu: 250 từ</span>
  </div>
 
- <div class="p-4 rounded-2xl bg-slate-950 border border-slate-800 text-xs text-slate-200 leading-relaxed font-sans whitespace-pre-line">
+ <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-900 leading-relaxed font-sans whitespace-pre-line">
  {activeQuestions[0]?.prompt || 'Viết một bài luận học thuật thảo luận về tác động của Trí Tuệ Nhân Tạo đối với giáo dục phổ thông.'}
  </div>
 
  <!-- Criteria Rubric Preview -->
- <div class="p-4 rounded-2xl bg-purple-950/20 border border-purple-500/20 space-y-2 text-xs">
- <div class="font-bold text-purple-300">4 Tiêu Chí Chấm Điểm Chuẩn Cambridge IELTS:</div>
- <ul class="list-disc pl-4 space-y-1 text-slate-300 text-[11px]">
+ <div class="p-4 rounded-2xl bg-purple-50/80 border border-purple-500/20 space-y-2 text-xs">
+ <div class="font-bold text-purple-700">4 Tiêu Chí Chấm Điểm Chuẩn Cambridge IELTS:</div>
+ <ul class="list-disc pl-4 space-y-1 text-slate-700 text-[11px]">
  <li><strong>Task Response (25%):</strong> Trả lời trọn vẹn cả 2 quan điểm và nêu lập trường cá nhân xuyên suốt.</li>
  <li><strong>Coherence &amp; Cohesion (25%):</strong> Bố cục 4 đoạn mạch lạc, liên kết câu tự nhiên.</li>
  <li><strong>Lexical Resource (25%):</strong> Sử dụng linh hoạt vốn từ vựng học thuật B2-C1.</li>
@@ -1750,11 +1750,11 @@
  </div>
 
  <!-- Right: Essay Editor -->
- <div class="rounded-3xl bg-slate-900 border border-slate-800 p-6 space-y-4 flex flex-col justify-between">
- <div class="flex items-center justify-between border-b border-slate-800 pb-3">
- <span class="text-xs font-bold text-slate-300">KHUNG BÀI LÀM CỦA THÍ SINH</span>
+ <div class="rounded-3xl bg-white border border-slate-200 p-6 space-y-4 flex flex-col justify-between">
+ <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+ <span class="text-xs font-bold text-slate-700">KHUNG BÀI LÀM CỦA THÍ SINH</span>
  <div class="flex items-center gap-2">
- <span class="text-xs font-mono font-bold {essayWordCount >= 250 ? 'text-emerald-400' : 'text-amber-400'}">
+ <span class="text-xs font-mono font-bold {essayWordCount >= 250 ? 'text-emerald-700' : 'text-amber-700'}">
  {essayWordCount} từ {essayWordCount >= 250 ? '✓ Đạt chuẩn' : '(Cần thêm ' + (250 - essayWordCount) + ' từ)'}
  </span>
  </div>
@@ -1765,10 +1765,10 @@
  disabled={isSubmitted}
  rows="16"
  placeholder="Type your essay here in English... (Live word counter is enabled)"
- class="w-full flex-1 bg-slate-950 border border-slate-800 rounded-2xl p-4 text-xs font-sans text-slate-100 placeholder-slate-500 focus:outline-none focus:border-purple-500 leading-relaxed resize-none"
+ class="w-full flex-1 bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-sans text-slate-900 placeholder-slate-500 focus:outline-none focus:border-purple-500 leading-relaxed resize-none"
  ></textarea>
 
- <div class="flex justify-between items-center text-xs text-slate-400 pt-2">
+ <div class="flex justify-between items-center text-xs text-slate-600 pt-2">
  <span>Hệ thống tự động lưu từng ký tự</span>
  {#if !isSubmitted}
  <button
@@ -1784,19 +1784,19 @@
 
  <!-- MODULE: IELTS SPEAKING MOCK -->
  {:else if currentExam.skill_category === 'speaking'}
- <div class="rounded-3xl bg-slate-900 border border-slate-800 p-8 max-w-3xl mx-auto space-y-6 text-center">
+ <div class="rounded-3xl bg-white border border-slate-200 p-8 max-w-3xl mx-auto space-y-6 text-center">
  <div class="space-y-2">
- <span class="text-xs font-bold text-rose-400 uppercase tracking-wider">IELTS SPEAKING PART 2 &amp; CUE CARD</span>
- <h2 class="text-xl font-black text-white">Luyện Thi Nói Trực Tiếp Với Microphone</h2>
+ <span class="text-xs font-bold text-rose-700 uppercase tracking-wider">IELTS SPEAKING PART 2 &amp; CUE CARD</span>
+ <h2 class="text-xl font-black text-slate-900">Luyện Thi Nói Trực Tiếp Với Microphone</h2>
  </div>
 
  <!-- Cue Card Box -->
- <div class="p-6 rounded-2xl bg-slate-950 border border-slate-800 text-left text-xs leading-relaxed text-slate-200 whitespace-pre-line">
+ <div class="p-6 rounded-2xl bg-slate-50 border border-slate-200 text-left text-xs leading-relaxed text-slate-900 whitespace-pre-line">
  {activeQuestions[0]?.prompt || 'Describe a skill you learned that you found extremely useful.'}
  </div>
 
  <!-- Audio Recorder Controls -->
- <div class="p-6 rounded-2xl bg-slate-950 border border-slate-800 flex flex-col items-center gap-4">
+ <div class="p-6 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col items-center gap-4">
  <div class="flex items-center gap-4">
  {#if !isRecording}
  <button
@@ -1816,7 +1816,7 @@
 
  <button
  onclick={() => speakWord(activeQuestions[0]?.prompt?.split('\n')[0] || 'Describe a skill you learned')}
- class="px-4 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold flex items-center gap-2"
+ class="px-4 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200/80 text-slate-900 text-xs font-bold flex items-center gap-2"
  >
  <span>🔊 Nghe Đề Bản Ngữ</span>
  </button>
@@ -1824,7 +1824,7 @@
 
  {#if recordedAudioUrl}
  <div class="w-full max-w-md pt-2">
- <div class="text-[11px] text-emerald-400 font-bold mb-1">Bản Ghi Âm Của Bạn:</div>
+ <div class="text-[11px] text-emerald-700 font-bold mb-1">Bản Ghi Âm Của Bạn:</div>
  <audio controls src={recordedAudioUrl} class="w-full"></audio>
  </div>
  {/if}
@@ -2036,37 +2036,37 @@
  <!-- BATCH GRADING MODAL FOR ATTENDED STUDENTS -->
  {#if isBatchGradingOpen}
  <div class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-150">
- <div class="bg-slate-900 border border-emerald-500/30 rounded-3xl max-w-2xl w-full p-6 space-y-4 shadow-2xl my-8">
- <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+ <div class="bg-white border border-emerald-500/30 rounded-3xl max-w-2xl w-full p-6 space-y-4 shadow-2xl my-8">
+ <div class="flex items-center justify-between border-b border-slate-200 pb-3">
  <div>
- <div class="text-xs font-bold text-emerald-400 uppercase tracking-wider">CHẤM ĐIỂM HÀNG LOẠT THEO ĐIỂM DANH</div>
- <h2 class="text-lg font-black text-white mt-0.5">{currentExam.title}</h2>
+ <div class="text-xs font-bold text-emerald-700 uppercase tracking-wider">CHẤM ĐIỂM HÀNG LOẠT THEO ĐIỂM DANH</div>
+ <h2 class="text-lg font-black text-slate-900 mt-0.5">{currentExam.title}</h2>
  <div class="text-xs text-ink-500 mt-0.5">Lớp: {currentSession?.class_name} • Ngày: {selectedSessionDate} ({batchScores.length} học sinh có mặt)</div>
  </div>
  <button
  type="button"
  onclick={closeBatchGradingModal}
- class="w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center font-bold"
+ class="w-8 h-8 rounded-full bg-slate-100 text-slate-600 hover:text-slate-900 flex items-center justify-center font-bold"
  >
  ✕
  </button>
  </div>
 
  {#if batchStatusMsg}
- <div class="p-3 rounded-2xl bg-emerald-950/60 border border-emerald-500 text-emerald-300 text-xs font-bold flex items-center gap-2">
+ <div class="p-3 rounded-2xl bg-emerald-50/80 border border-emerald-500 text-emerald-700 text-xs font-bold flex items-center gap-2">
  <span>{batchStatusMsg}</span>
  </div>
  {/if}
 
  <div class="max-h-96 overflow-y-auto space-y-2 pr-1">
  {#each batchScores as item, idx}
- <div class="p-3 rounded-2xl bg-slate-950 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+ <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
  <div class="flex items-center gap-3">
- <span class="w-6 h-6 rounded-lg bg-slate-800 text-emerald-400 font-bold text-xs flex items-center justify-center">
+ <span class="w-6 h-6 rounded-lg bg-slate-100 text-emerald-700 font-bold text-xs flex items-center justify-center">
  #{idx + 1}
  </span>
  <div>
- <div class="text-xs font-bold text-white">{item.student_name}</div>
+ <div class="text-xs font-bold text-slate-900">{item.student_name}</div>
  <div class="text-[10px] text-ink-500">ID: {item.student_id}</div>
  </div>
  </div>
@@ -2081,7 +2081,7 @@
  min="0"
  max="10"
  bind:value={item.score}
- class="w-16 bg-slate-900 border border-slate-700 rounded-xl px-2 py-1 text-center font-bold text-white text-xs focus:outline-none focus:border-emerald-500"
+ class="w-16 bg-white border border-slate-200 rounded-xl px-2 py-1 text-center font-bold text-slate-900 text-xs focus:outline-none focus:border-emerald-500"
  />
  </div>
 
@@ -2089,7 +2089,7 @@
  type="text"
  bind:value={item.note}
  placeholder="Nhận xét bài thi..."
- class="flex-1 min-w-[140px] bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+ class="flex-1 min-w-[140px] bg-white border border-slate-200 rounded-xl px-2.5 py-1 text-xs text-slate-900 placeholder-slate-500 focus:outline-none focus:border-emerald-500"
  />
  </div>
  </div>
@@ -2101,7 +2101,7 @@
  {/if}
  </div>
 
- <div class="flex items-center justify-between border-t border-slate-800 pt-3">
+ <div class="flex items-center justify-between border-t border-slate-200 pt-3">
  <div class="text-[11px] text-ink-500">
  💡 Điểm từ 7.0 trở lên tự động cộng sao thưởng tích lũy (100 sao = 1.000 VNĐ trừ học phí)!
  </div>
@@ -2109,7 +2109,7 @@
  <button
  type="button"
  onclick={closeBatchGradingModal}
- class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs"
+ class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200/80 text-slate-700 font-bold text-xs"
  >
  Đóng
  </button>

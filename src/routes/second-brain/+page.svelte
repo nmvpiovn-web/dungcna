@@ -406,7 +406,7 @@
 
 <div class="min-h-screen bg-slate-50 font-sans text-slate-800 flex flex-col">
  <!-- Top Banner / Header -->
- <header class="bg-gradient-to-r from-slate-900 via-teal-950 to-slate-950 text-white border-b border-teal-500/20 px-4 py-4 sm:px-6 shadow-md">
+ <header class="bg-gradient-to-r from-teal-50 via-white to-emerald-50 text-slate-900 border-b border-teal-500/20 px-4 py-4 sm:px-6 shadow-md">
  <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
  <div class="flex items-center gap-3">
  <div class="w-12 h-12 rounded-2xl bg-teal-500/20 border border-teal-400/30 flex items-center justify-center text-2xl shadow-inner shadow-teal-500/30">
@@ -414,12 +414,12 @@
  </div>
  <div>
  <div class="flex items-center gap-2">
- <h1 class="text-xl font-heading font-black text-white tracking-tight">Obsidian Second Brain</h1>
- <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-teal-500/20 text-teal-300 border border-teal-500/30">
+ <h1 class="text-xl font-heading font-black text-slate-900 tracking-tight">Obsidian Second Brain</h1>
+ <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-teal-500/20 text-teal-700 border border-teal-500/30">
  v{vaultVersion}
  </span>
  </div>
- <p class="text-xs text-teal-200/80">Lớp tri thức thứ hai • Bản đồ liên kết WikiLinks [[...]] chuẩn GDPT &amp; CEFR</p>
+ <p class="text-xs text-teal-700/80">Lớp tri thức thứ hai • Bản đồ liên kết WikiLinks [[...]] chuẩn GDPT &amp; CEFR</p>
  </div>
  </div>
 
@@ -444,14 +444,14 @@
  <span>{syncing ? '⏳' : '🔄'}</span> {syncing ? 'Đang sync...' : 'Sync DB → Vault'}
  </button>
  {#if syncResult}
- <div class="text-xs px-3 py-1.5 rounded-lg {syncResult.startsWith('✅') ? 'bg-emerald-500/20 text-emerald-200' : 'bg-red-500/20 text-red-200'}">{syncResult}</div>
+ <div class="text-xs px-3 py-1.5 rounded-lg {syncResult.startsWith('✅') ? 'bg-emerald-500/20 text-emerald-700' : 'bg-red-500/20 text-red-200'}">{syncResult}</div>
  {/if}
 
  <!-- Mobile Toggle Button -->
  <button
  type="button"
  onclick={() => isMobileSidebarOpen = !isMobileSidebarOpen}
- class="sm:hidden px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs font-semibold"
+ class="sm:hidden px-3 py-2 rounded-xl bg-slate-100 border border-slate-200 text-slate-900 text-xs font-semibold"
  >
  {isMobileSidebarOpen ? '✕ Đóng mục lục' : '📂 Danh mục'}
  </button>
@@ -504,9 +504,9 @@
  value={searchQuery}
  oninput={onSearchChange}
  placeholder="Tìm khái niệm, ngữ pháp, đề thi (FTS5)..."
- class="w-full bg-white border border-slate-300 rounded-2xl pl-10 pr-8 py-2.5 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-teal-500 shadow-sm"
+ class="w-full bg-white border border-slate-300 rounded-2xl pl-10 pr-8 py-2.5 text-xs text-slate-900 placeholder:text-slate-600 focus:outline-none focus:border-teal-500 shadow-sm"
  />
- <span class="absolute left-3.5 top-2.5 text-sm text-slate-400">
+ <span class="absolute left-3.5 top-2.5 text-sm text-slate-600">
  {#if isSearching}
  <span class="inline-block animate-spin">⏳</span>
  {:else}
@@ -516,7 +516,7 @@
  {#if searchQuery}
  <button
  onclick={() => { searchQuery = ''; fetchVaultList(); }}
- class="absolute right-3 top-2.5 text-xs text-slate-400 hover:text-slate-600"
+ class="absolute right-3 top-2.5 text-xs text-slate-600 hover:text-slate-600"
  >
  ✕
  </button>
@@ -532,7 +532,7 @@
  class="px-2.5 py-1.5 rounded-xl text-[11px] font-bold whitespace-nowrap transition-all flex items-center gap-1 border {selectedFolder === f.id ? 'bg-teal-600 text-white border-teal-500 shadow-sm' : 'bg-white text-slate-700 font-semibold border-slate-200 hover:bg-slate-100'}"
  >
  <span>{f.name}</span>
- <span class="px-1.5 py-0.2 rounded-full text-[9px] {selectedFolder === f.id ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'}">
+ <span class="px-1.5 py-0.2 rounded-full text-[9px] {selectedFolder === f.id ? 'bg-white/20 text-slate-900' : 'bg-slate-100 text-slate-700'}">
  {f.count}
  </span>
  </button>
@@ -681,10 +681,10 @@
  <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
  <div class="text-[11px] font-bold text-slate-700 flex items-center justify-between">
  <span>🔗 Liên Kết Trỏ Tới ({(currentNote.wikilinks || []).length})</span>
- <span class="text-[9px] text-slate-400">Outgoing</span>
+ <span class="text-[9px] text-slate-600">Outgoing</span>
  </div>
  {#if (currentNote.wikilinks || []).length === 0}
- <div class="text-[11px] text-slate-400 italic">Không có liên kết ngoại vi nào.</div>
+ <div class="text-[11px] text-slate-600 italic">Không có liên kết ngoại vi nào.</div>
  {:else}
  <div class="flex flex-wrap gap-1.5">
  {#each (currentNote.wikilinks || []) as wl}
@@ -704,10 +704,10 @@
  <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
  <div class="text-[11px] font-bold text-slate-700 flex items-center justify-between">
  <span>↩️ Được Trích Dẫn Từ ({currentBacklinks.length})</span>
- <span class="text-[9px] text-slate-400">Backlinks</span>
+ <span class="text-[9px] text-slate-600">Backlinks</span>
  </div>
  {#if currentBacklinks.length === 0}
- <div class="text-[11px] text-slate-400 italic">Chưa có ghi chú nào khác trích dẫn node này.</div>
+ <div class="text-[11px] text-slate-600 italic">Chưa có ghi chú nào khác trích dẫn node này.</div>
  {:else}
  <div class="flex flex-wrap gap-1.5">
  {#each currentBacklinks as bl}

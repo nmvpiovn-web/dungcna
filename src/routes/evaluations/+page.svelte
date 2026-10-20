@@ -529,7 +529,7 @@
  <div class="rounded-xl border border-cx-200 bg-white p-8 text-center shadow-sm">
  <h2 class="text-lg font-black text-slate-950">Đăng nhập để xem phiếu đánh giá</h2>
  <p class="mt-2 text-sm text-slate-700">Phiếu năng lực và thông tin phụ huynh chỉ hiển thị cho tài khoản đã được xác thực.</p>
- <a href="/login" class="mt-5 inline-flex min-h-11 items-center rounded-lg bg-cx-700 px-5 font-bold text-white hover:bg-cx-800">Đăng nhập</a>
+ <a href="/login" class="mt-5 inline-flex min-h-11 items-center rounded-lg bg-cx-700 px-5 font-bold text-white hover:bg-brand-700">Đăng nhập</a>
  </div>
  {:else}
  <div class="flex items-center justify-between border-b border-slate-200 pb-3">
@@ -637,23 +637,23 @@
  <div class="grid grid-cols-5 gap-2 text-center text-xs">
  <div class="p-2 rounded-xl bg-cx-50 border border-cx-200">
  <div class="text-[10px] text-slate-700">🎧 Nghe</div>
- <div class="font-black text-cx-400 text-sm">{ev.listening_score}</div>
+ <div class="font-black text-brand-700 text-sm">{ev.listening_score}</div>
  </div>
  <div class="p-2 rounded-xl bg-cx-50 border border-cx-200">
  <div class="text-[10px] text-slate-700">📖 Đọc</div>
- <div class="font-black text-cx-400 text-sm">{ev.reading_score}</div>
+ <div class="font-black text-brand-700 text-sm">{ev.reading_score}</div>
  </div>
  <div class="p-2 rounded-xl bg-cx-50 border border-cx-200">
  <div class="text-[10px] text-slate-700">✍️ Viết</div>
- <div class="font-black text-purple-400 text-sm">{ev.writing_score}</div>
+ <div class="font-black text-purple-700 text-sm">{ev.writing_score}</div>
  </div>
  <div class="p-2 rounded-xl bg-cx-50 border border-cx-200">
  <div class="text-[10px] text-slate-700">🗣️ Nói</div>
- <div class="font-black text-rose-400 text-sm">{ev.speaking_score}</div>
+ <div class="font-black text-rose-700 text-sm">{ev.speaking_score}</div>
  </div>
  <div class="p-2 rounded-xl bg-cx-50 border border-cx-200">
  <div class="text-[10px] text-slate-700">🧠 Ngữ Pháp</div>
- <div class="font-black text-amber-400 text-sm">{ev.grammar_vocab_score}</div>
+ <div class="font-black text-amber-700 text-sm">{ev.grammar_vocab_score}</div>
  </div>
  </div>
  </div>
@@ -667,7 +667,7 @@
  {/if}
  {#if ev.weaknesses}
  <div class="text-slate-800">
- <strong class="text-rose-400">⚠️ Điểm cần khắc phục:</strong> {ev.weaknesses}
+ <strong class="text-rose-700">⚠️ Điểm cần khắc phục:</strong> {ev.weaknesses}
  </div>
  {/if}
  {#if ev.action_plan}
@@ -698,14 +698,14 @@
  <div class="space-y-2 text-xs mb-3">
  {#if ev.teacher_direct_feedback || ev.teacher_feedback}
  <div class="p-3 rounded-2xl bg-teal-50 border border-teal-200 text-slate-800">
- <strong class="text-teal-400 block mb-0.5">👩‍🏫 Nhận xét giáo viên ({ev.teacher_name}):</strong>
+ <strong class="text-teal-700 block mb-0.5">👩‍🏫 Nhận xét giáo viên ({ev.teacher_name}):</strong>
  {ev.teacher_direct_feedback || ev.teacher_feedback}
  </div>
  {/if}
 
  {#if ev.leader_codung_feedback}
  <div class="p-3 rounded-2xl bg-amber-50 border border-amber-300 text-amber-950">
- <strong class="text-amber-400 block mb-0.5">👑 Định hướng chuyên môn từ Cô Dung Leader:</strong>
+ <strong class="text-amber-700 block mb-0.5">👑 Định hướng chuyên môn từ Cô Dung Leader:</strong>
  {ev.leader_codung_feedback}
  </div>
  {/if}
@@ -879,7 +879,7 @@
 
  <!-- MODAL 1: EVALUATION EDITOR -->
  {#if showEvalModal}
- <div class="fixed inset-0 z-50 bg-slate-900/45 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4" role="presentation" onclick={() => showEvalModal = false}>
+ <div class="fixed inset-0 z-50 bg-stone-500/25 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4" role="presentation" onclick={() => showEvalModal = false}>
  <div class="evaluation-modal bg-white border-2 border-cx-200 rounded-2xl w-full max-w-4xl shadow-2xl max-h-[calc(100vh-1rem)] sm:max-h-[calc(100vh-2rem)] overflow-hidden flex flex-col text-slate-900" role="dialog" aria-modal="true" aria-labelledby="evaluation-modal-title" tabindex="-1" onclick={(event) => event.stopPropagation()} onkeydown={(event) => event.stopPropagation()}>
  <!-- Header -->
  <div class="flex items-start justify-between gap-4 border-b border-cx-200 bg-cx-50 p-4 sm:px-6 shrink-0">
@@ -1037,7 +1037,7 @@
  <div class="flex items-center justify-between text-[11px]">
  <span class="font-extrabold text-violet-900">👨‍👩‍👧 Thông Tin Phụ Huynh Liên Kết (Tự Động Trích Xuất Hoặc Nhập Tay):</span>
  {#if evalForm.linked_parent_id}
- <span class="px-2 py-0.5 rounded-full bg-purple-900 text-purple-200 font-bold text-[10px]">
+ <span class="px-2 py-0.5 rounded-full bg-purple-900 text-purple-700 font-bold text-[10px]">
  ✓ Đã đồng bộ tài khoản phụ huynh
  </span>
  {/if}
@@ -1095,7 +1095,7 @@
 
  <!-- MODAL 2: PARENT REPORT CARD PREVIEW & DISPATCH -->
  {#if showReportModal}
- <div class="fixed inset-0 z-50 bg-slate-900/45 backdrop-blur-sm flex items-center justify-center p-4">
+ <div class="fixed inset-0 z-50 bg-stone-500/25 backdrop-blur-sm flex items-center justify-center p-4">
  <div class="bg-white border border-cx-200 rounded-2xl w-full max-w-2xl p-6 md:p-8 shadow-2xl space-y-6">
  <div class="flex items-start justify-between border-b border-slate-200 pb-4">
  <div>
@@ -1141,7 +1141,7 @@
 
  <!-- MODAL 3: ADD NEW STUDENT -->
  {#if showAddStudentModal}
- <div class="fixed inset-0 z-50 bg-slate-900/45 backdrop-blur-sm flex items-center justify-center p-4">
+ <div class="fixed inset-0 z-50 bg-stone-500/25 backdrop-blur-sm flex items-center justify-center p-4">
  <div class="bg-white border border-cx-200 rounded-2xl w-full max-w-lg p-6 md:p-8 shadow-2xl space-y-5">
  <div class="flex items-start justify-between border-b border-slate-200 pb-3">
  <div>
@@ -1249,7 +1249,7 @@
 
  <!-- MODAL 4: ASSIGN MULTI-TEACHERS (LEAD, NATIVE, ASSISTANT) -->
  {#if showAssignTeacherModal && studentToAssign}
- <div class="fixed inset-0 z-50 bg-slate-900/45 backdrop-blur-sm flex items-center justify-center p-4">
+ <div class="fixed inset-0 z-50 bg-stone-500/25 backdrop-blur-sm flex items-center justify-center p-4">
  <div class="bg-white border border-slate-200 rounded-3xl w-full max-w-lg p-6 shadow-2xl space-y-5 text-xs text-slate-800">
  <div class="flex items-start justify-between border-b border-slate-200 pb-3">
  <div>

@@ -352,33 +352,33 @@
 
 <div class="space-y-6">
  <!-- Top Welcome Banner (Emerald) -->
- <div class="bg-emerald-900 border border-emerald-800 rounded-xl p-6 text-white shadow-sm relative overflow-hidden">
+ <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-6 text-slate-900 shadow-sm relative overflow-hidden">
  <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
  <div>
- <div class="flex items-center gap-2 text-cx-400 text-xs font-semibold uppercase tracking-wider mb-1">
+ <div class="flex items-center gap-2 text-brand-700 text-xs font-semibold uppercase tracking-wider mb-1">
  <span>🎒 Không Gian Học Tập Của Em</span>
  <span>•</span>
  <span>{currentUser?.grade || 'Chưa phân lớp'}</span>
  </div>
- <h1 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">Xin chào, {currentUser?.name || currentUser?.username || 'Học Sinh'}! 👋</h1>
- <p class="text-slate-300 text-sm mt-1 max-w-xl">
+ <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">Xin chào, {currentUser?.name || currentUser?.username || 'Học Sinh'}! 👋</h1>
+ <p class="text-slate-700 text-sm mt-1 max-w-xl">
  Hãy hoàn thành bài tập về nhà trước buổi học tiếp theo để nhận sao thưởng tích lũy học phí và được cô giáo nhận xét nhé!
  </p>
  </div>
 
  <div class="flex items-center gap-3">
- <div class="bg-slate-800/90 border border-slate-700/80 rounded-lg p-3 text-center min-w-[110px]">
- <div class="text-2xl font-bold text-amber-300 flex items-center justify-center gap-1">
+ <div class="bg-slate-100 border border-slate-200 rounded-lg p-3 text-center min-w-[110px]">
+ <div class="text-2xl font-bold text-amber-700 flex items-center justify-center gap-1">
  <span>⭐</span>
  <span>{studentStars?.stars_balance || 0}</span>
  </div>
- <div class="text-[11px] text-slate-300 font-medium mt-0.5">Sao Tích Lũy</div>
+ <div class="text-[11px] text-slate-700 font-medium mt-0.5">Sao Tích Lũy</div>
  </div>
- <div class="bg-slate-800/90 border border-slate-700/80 rounded-lg p-3 text-center min-w-[110px]">
- <div class="text-2xl font-bold text-emerald-300">
+ <div class="bg-slate-100 border border-slate-200 rounded-lg p-3 text-center min-w-[110px]">
+ <div class="text-2xl font-bold text-emerald-700">
  {assignmentItems.filter(i => i.isGraded).length}/{assignmentItems.length}
  </div>
- <div class="text-[11px] text-slate-300 font-medium mt-0.5">Bài Hoàn Thành</div>
+ <div class="text-[11px] text-slate-700 font-medium mt-0.5">Bài Hoàn Thành</div>
  </div>
  </div>
  </div>
@@ -410,7 +410,7 @@
 
  <!-- Skill Filter -->
  <div class="flex items-center gap-1.5 self-end sm:self-center">
- <span class="text-xs text-slate-400 font-medium hidden sm:inline">Kỹ năng:</span>
+ <span class="text-xs text-slate-600 font-medium hidden sm:inline">Kỹ năng:</span>
  <select 
  bind:value={skillFilter}
  class="text-xs font-semibold bg-slate-100 text-slate-700 px-3 py-1.5 rounded-md border border-slate-300 focus:outline-none"
@@ -437,7 +437,7 @@
  </button>
  </div>
  {:else if loading}
- <div class="text-center py-12 text-slate-400">
+ <div class="text-center py-12 text-slate-600">
  <div class="inline-block animate-spin w-8 h-8 border-4 border-cx-500 border-t-transparent rounded-full mb-3"></div>
  <p class="text-sm font-medium">Đang tải bài tập về nhà...</p>
  </div>
@@ -566,7 +566,7 @@
 
 <!-- SUBMISSION MODAL (Writing, Reading, Speaking with Web Audio Recorder & Photo Upload) -->
 {#if showSubmitModal && selectedAssignment}
- <div class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
+ <div class="fixed inset-0 z-50 bg-stone-500/25 backdrop-blur-sm flex items-center justify-center p-4">
  <div class="bg-white rounded-xl max-w-2xl w-full border border-slate-200 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
  <!-- Modal Header -->
  <div class="p-5 border-b border-slate-200 flex items-center justify-between">
@@ -623,7 +623,7 @@
  <div class="space-y-1.5">
  <div class="flex items-center justify-between text-xs">
  <label for="writing-textarea" class="font-semibold text-slate-700">✍️ Bài viết trực tiếp:</label>
- <span class="text-slate-400 font-medium">Số từ: <strong class="text-cx-500">{wordCount}</strong> từ</span>
+ <span class="text-slate-600 font-medium">Số từ: <strong class="text-cx-500">{wordCount}</strong> từ</span>
  </div>
  <textarea 
  id="writing-textarea"
@@ -723,7 +723,7 @@
  >
  ▶️ Bắt Đầu Thu Âm
  </button>
- <p class="text-[11px] text-slate-400 mt-2">Bấm để ghi âm bằng micro máy tính hoặc điện thoại</p>
+ <p class="text-[11px] text-slate-600 mt-2">Bấm để ghi âm bằng micro máy tính hoặc điện thoại</p>
  </div>
  {/if}
 
@@ -779,14 +779,14 @@
 
 <!-- WORKSHEET A4 PRINT MODAL (English 4-line Ruling Handwriting Sheet) -->
 {#if showWorksheetPrintModal && worksheetToPrint}
- <div class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+ <div class="fixed inset-0 z-50 bg-stone-500/25 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
  <div class="bg-white text-slate-900 rounded-xl max-w-4xl w-full border border-slate-300 shadow-2xl overflow-hidden flex flex-col my-auto">
  <!-- Toolbar (Non-printable) -->
- <div class="p-4 bg-emerald-900 text-white flex items-center justify-between print:hidden">
+ <div class="p-4 bg-emerald-50 text-slate-900 flex items-center justify-between print:hidden">
  <div class="flex items-center gap-2">
  <span class="text-xl">🖨️</span>
  <div>
- <div class="text-xs font-semibold uppercase tracking-wider text-cx-400">Xem Trước Bản In Phiếu Bài Tập A4</div>
+ <div class="text-xs font-semibold uppercase tracking-wider text-brand-700">Xem Trước Bản In Phiếu Bài Tập A4</div>
  <div class="text-sm font-bold">{worksheetToPrint.title}</div>
  </div>
  </div>
@@ -799,7 +799,7 @@
  </button>
  <button 
  onclick={() => showWorksheetPrintModal = false}
- class="px-3 py-2 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs"
+ class="px-3 py-2 rounded-md bg-slate-100 hover:bg-slate-200/80 text-slate-700 font-semibold text-xs"
  >
  ✕ Đóng
  </button>
@@ -809,7 +809,7 @@
  <!-- Printable A4 Worksheet Sheet Container -->
  <div id="printable-worksheet" class="p-8 sm:p-12 bg-white text-slate-900 font-serif leading-relaxed max-w-3xl mx-auto w-full">
  <!-- Header Section -->
- <div class="border-b-2 border-slate-900 pb-4 mb-4">
+ <div class="border-b-2 border-slate-200 pb-4 mb-4">
  <div class="flex items-start justify-between">
  <div>
  <div class="text-xs font-sans font-bold uppercase tracking-widest text-cx-800">TRUNG TÂM TIẾNG ANH CÔ DUNG</div>
@@ -865,13 +865,13 @@
  <div class="relative py-2 border-b border-slate-400">
  <!-- Midline guideline for lowercase letters -->
  <div class="border-b border-dashed border-cx-300/80 mb-2"></div>
- <div class="text-[11px] font-sans text-slate-400 absolute left-0 top-1">{i + 1}</div>
+ <div class="text-[11px] font-sans text-slate-600 absolute left-0 top-1">{i + 1}</div>
  </div>
  {/each}
  </div>
 
  <!-- Teacher Grading & Feedback Footer Box -->
- <div class="mt-8 pt-4 border-t-2 border-slate-900 grid grid-cols-3 gap-4 font-sans text-xs">
+ <div class="mt-8 pt-4 border-t-2 border-slate-200 grid grid-cols-3 gap-4 font-sans text-xs">
  <div class="col-span-2 border border-slate-300 rounded-lg p-3 min-h-[90px] flex flex-col justify-between">
  <span class="font-bold text-slate-800">💬 Nhận xét của Giáo viên:</span>
  <div class="border-b border-dotted border-slate-300 h-4"></div>
@@ -879,7 +879,7 @@
  </div>
  <div class="border border-slate-300 rounded-lg p-3 text-center flex flex-col justify-between">
  <span class="font-bold text-slate-800">Điểm Số / Chữ Ký</span>
- <div class="text-2xl font-bold text-slate-300 my-auto">....... / 10</div>
+ <div class="text-2xl font-bold text-slate-700 my-auto">....... / 10</div>
  <div class="text-xs text-slate-500">Thưởng sao: ....... ⭐</div>
  </div>
  </div>

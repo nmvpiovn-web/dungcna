@@ -527,37 +527,37 @@
 
 <div class="space-y-6 min-w-0 max-w-full overflow-x-hidden">
  <!-- Top Banner: Academic Ledger Header with Gamification & Badges -->
- <header class="bg-slate-900 border border-slate-800 rounded-lg p-6 text-slate-100 shadow-sm relative">
+ <header class="bg-white border border-slate-200 rounded-lg p-6 text-slate-900 shadow-sm relative">
  <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
  <div class="space-y-2">
- <div class="flex items-center gap-2 text-cx-400 text-xs font-semibold uppercase tracking-wider">
+ <div class="flex items-center gap-2 text-brand-700 text-xs font-semibold uppercase tracking-wider">
  <span>Ngân Hàng Từ Vựng Sư Phạm</span>
  <span>•</span>
  <span>Stealth Vocabulary &amp; Pronunciation Engine</span>
  </div>
- <h1 class="text-2xl font-semibold text-white">
+ <h1 class="text-2xl font-semibold text-slate-900">
  Từ Điển Chuyên Sâu, Phonics &amp; Đánh Giá Phát Âm
  </h1>
- <p class="text-slate-300 text-sm max-w-2xl leading-relaxed">
+ <p class="text-slate-700 text-sm max-w-2xl leading-relaxed">
  Tách âm tiết, phân tích biến thể ngữ pháp, luyện nói đối chiếu Microphone rubric 3 tiêu chí và cơ chế ẩn từ giãn cách Spaced Repetition (SRS).
  </p>
  </div>
 
  <!-- Gamification Badge Card -->
- <div class="bg-slate-800/80 border border-slate-700/60 rounded-md p-4 min-w-0 sm:min-w-[260px] w-full sm:w-auto space-y-2">
+ <div class="bg-slate-100 border border-slate-200 rounded-md p-4 min-w-0 sm:min-w-[260px] w-full sm:w-auto space-y-2">
  <div class="flex items-center justify-between text-xs">
- <span class="text-slate-400 font-medium">Danh hiệu hiện tại:</span>
- <span class="text-amber-400 font-semibold tabular-nums" title="Điểm sao thưởng chính thức được ghi nhận qua bài kiểm tra & bài tập chính khóa">⭐ {officialStars} sao</span>
+ <span class="text-slate-600 font-medium">Danh hiệu hiện tại:</span>
+ <span class="text-amber-700 font-semibold tabular-nums" title="Điểm sao thưởng chính thức được ghi nhận qua bài kiểm tra & bài tập chính khóa">⭐ {officialStars} sao</span>
  </div>
  <div class="flex items-center gap-2.5">
  <div class="text-2xl">{userBadge.icon}</div>
  <div>
- <div class="text-sm font-semibold text-white">{userBadge.title}</div>
- <div class="text-[11px] text-slate-400 tabular-nums">Đã chinh phục: {masteredCount} từ vựng</div>
+ <div class="text-sm font-semibold text-slate-900">{userBadge.title}</div>
+ <div class="text-[11px] text-slate-600 tabular-nums">Đã chinh phục: {masteredCount} từ vựng</div>
  </div>
  </div>
  <!-- Progress bar toward next badge -->
- <div class="w-full bg-slate-700/60 rounded-full h-1.5 overflow-hidden">
+ <div class="w-full bg-brand-600/60 rounded-full h-1.5 overflow-hidden">
  <div class="bg-cx-500 h-1.5 rounded-full transition-all duration-300" style="width: {Math.min(100, (masteredCount % 30) * 3.33)}%"></div>
  </div>
  </div>
@@ -569,7 +569,7 @@
  <!-- Row 1: Search, Shuffle, Add Custom -->
  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
  <div class="relative flex-1">
- <span class="absolute left-3 top-2.5 text-slate-400 text-sm">🔍</span>
+ <span class="absolute left-3 top-2.5 text-slate-600 text-sm">🔍</span>
  <input
  type="text"
  bind:value={searchQuery}
@@ -577,7 +577,7 @@
  class="w-full pl-9 pr-8 py-2 rounded-md text-xs bg-slate-50 border border-slate-200 text-slate-900 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cx-500"
  />
  {#if searchQuery}
- <button onclick={() => searchQuery = ''} class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 text-xs">✕</button>
+ <button onclick={() => searchQuery = ''} class="absolute right-3 top-2.5 text-slate-600 hover:text-slate-600 text-xs">✕</button>
  {/if}
  </div>
 
@@ -704,7 +704,7 @@
  <span class="text-xs px-2 py-0.5 rounded font-semibold border {diff.badgeClass}">
  {diff.label} ({word.cambridge_level || 'A2'})
  </span>
- <span class="text-xs text-slate-400 font-mono">
+ <span class="text-xs text-slate-600 font-mono">
  {word.pos || 'n'}
  </span>
  </div>
@@ -736,7 +736,7 @@
  <div class="text-xs text-slate-500 space-y-0.5">
  <p class="italic text-slate-700">"{word.example_en}"</p>
  {#if word.example_vi}
- <p class="text-[11px] text-slate-400">↳ {word.example_vi}</p>
+ <p class="text-[11px] text-slate-600">↳ {word.example_vi}</p>
  {/if}
  </div>
  {/if}
@@ -767,7 +767,7 @@
 
 <!-- DEEP BREAKDOWN & PRONUNCIATION RUBRIC MODAL -->
 {#if showDeepModal && selectedWordForDeep}
- <div class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
+ <div class="fixed inset-0 z-50 bg-stone-500/25 backdrop-blur-sm flex items-center justify-center p-4">
  <div class="bg-white rounded-lg max-w-2xl w-full border border-slate-200 shadow-2xl p-6 space-y-5 text-xs max-h-[90vh] overflow-y-auto">
  <!-- Modal Header -->
  <div class="flex items-start justify-between border-b border-slate-200 pb-3">
@@ -776,7 +776,7 @@
  <span class="text-xs px-2 py-0.5 rounded font-semibold bg-cx-50 text-cx-700 border border-cx-200">
  {deepAnalysisData?.cefr_level || 'A2'} • {deepAnalysisData?.pos || selectedWordForDeep.pos || 'Động từ'}
  </span>
- <span class="text-slate-400 font-mono">{deepAnalysisData?.syllables || selectedWordForDeep.term}</span>
+ <span class="text-slate-600 font-mono">{deepAnalysisData?.syllables || selectedWordForDeep.term}</span>
  </div>
  <h2 class="text-2xl font-semibold text-slate-900 mt-1">
  {selectedWordForDeep.term}
@@ -785,7 +785,7 @@
  {deepAnalysisData?.ipa || selectedWordForDeep.ipa || '/.../'}
  </div>
  </div>
- <button id="btn-close-deep-modal-x" onclick={closeDeepModal} class="text-slate-400 hover:text-slate-600 font-bold p-1 text-sm">✕</button>
+ <button id="btn-close-deep-modal-x" onclick={closeDeepModal} class="text-slate-600 hover:text-slate-600 font-bold p-1 text-sm">✕</button>
  </div>
 
  <!-- SECTION 1: MICROPHONE PRONUNCIATION EVALUATION (RUBRIC) -->
@@ -823,7 +823,7 @@
  <button
  id="btn-dict-stop-record"
  onclick={stopRecording}
- class="px-4 py-2 rounded-md font-semibold bg-slate-900 hover:bg-slate-800 text-white transition-colors flex items-center gap-1.5 animate-pulse"
+ class="px-4 py-2 rounded-md font-semibold bg-brand-600 hover:bg-brand-700 text-white transition-colors flex items-center gap-1.5 animate-pulse"
  >
  <span>⏹️</span>
  <span>Dừng &amp; Chấm Điểm</span>
@@ -993,8 +993,8 @@
 
  <!-- Modal Footer -->
  <div class="flex items-center justify-between pt-2 border-t border-slate-200">
- <span class="text-[11px] text-slate-400">Nguồn: Giáo án Second-Brain Cô Dung</span>
- <button id="btn-close-deep-modal" onclick={closeDeepModal} class="px-4 py-2 rounded-md font-semibold bg-slate-900 hover:bg-slate-800 text-white">Đóng</button>
+ <span class="text-[11px] text-slate-600">Nguồn: Giáo án Second-Brain Cô Dung</span>
+ <button id="btn-close-deep-modal" onclick={closeDeepModal} class="px-4 py-2 rounded-md font-semibold bg-brand-600 hover:bg-brand-700 text-white">Đóng</button>
  </div>
  </div>
  </div>
@@ -1002,11 +1002,11 @@
 
 <!-- ADD WORD MODAL -->
 {#if showAddModal}
- <div class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
+ <div class="fixed inset-0 z-50 bg-stone-500/25 backdrop-blur-sm flex items-center justify-center p-4">
  <div class="bg-white rounded-lg max-w-lg w-full border border-slate-200 shadow-xl p-6 space-y-4 text-xs">
  <div class="flex items-center justify-between border-b border-slate-200 pb-3">
  <h3 class="text-base font-semibold text-slate-900">Thêm Từ Vựng Vào Kho Tri Thức</h3>
- <button onclick={() => showAddModal = false} class="text-slate-400 hover:text-slate-600 font-bold p-1">✕</button>
+ <button onclick={() => showAddModal = false} class="text-slate-600 hover:text-slate-600 font-bold p-1">✕</button>
  </div>
 
  <form onsubmit={handleAddWord} class="space-y-3">

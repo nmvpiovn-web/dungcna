@@ -66,19 +66,19 @@
   aria-labelledby="cred-modal-title"
 >
   <div 
-    class="bg-slate-900 border border-emerald-500/40 rounded-3xl w-full max-w-lg p-4 sm:p-6 shadow-2xl space-y-4 sm:space-y-5 text-white my-auto max-h-[94vh] overflow-y-auto"
+    class="bg-white border border-emerald-500/40 rounded-3xl w-full max-w-lg p-4 sm:p-6 shadow-2xl space-y-4 sm:space-y-5 text-slate-900 my-auto max-h-[94vh] overflow-y-auto"
   >
     <!-- Modal Header -->
-    <div class="flex items-start justify-between gap-3 border-b border-slate-800 pb-3">
+    <div class="flex items-start justify-between gap-3 border-b border-slate-200 pb-3">
       <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center text-xl shrink-0">
+        <div class="w-10 h-10 rounded-2xl bg-emerald-500/20 text-emerald-700 border border-emerald-500/30 flex items-center justify-center text-xl shrink-0">
           🔑
         </div>
         <div>
-          <h2 id="cred-modal-title" class="text-base sm:text-lg font-black tracking-tight text-white">
+          <h2 id="cred-modal-title" class="text-base sm:text-lg font-black tracking-tight text-slate-900">
             Tài Khoản Giáo Viên Đã Cấp
           </h2>
-          <p class="text-xs text-slate-400">
+          <p class="text-xs text-slate-600">
             Thông tin mật khẩu dùng một lần (One-Time Credential)
           </p>
         </div>
@@ -87,7 +87,7 @@
       <button 
         type="button" 
         onclick={handleClose}
-        class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors"
+        class="text-slate-600 hover:text-slate-900 p-1 rounded-lg hover:bg-slate-200/80 transition-colors"
         aria-label="Đóng modal"
       >
         ✕
@@ -96,21 +96,21 @@
     </div>
 
     <!-- Security Alert Box -->
-    <div class="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs space-y-1">
+    <div class="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-700 text-xs space-y-1">
       <div class="font-bold flex items-center gap-1.5">
         <span>⚠️</span>
         <span>Lưu ý quan trọng cho Quản trị viên:</span>
       </div>
-      <p class="text-[11px] leading-relaxed text-amber-200/90">
+      <p class="text-[11px] leading-relaxed text-amber-700/90">
         Mật khẩu tạm chỉ hiển thị <strong>DUY NHẤT một lần</strong> tại màn hình này và <strong>không được lưu trữ dạng thô</strong> trong hệ thống. Hãy sao chép và gửi trực tiếp cho giáo viên trước khi đóng hộp thoại.
       </p>
     </div>
 
     <!-- Candidate Info -->
     {#if credential.candidate_name}
-    <div class="text-xs text-slate-300 flex items-center justify-between p-2.5 rounded-xl bg-slate-950/60 border border-slate-800">
-      <span class="text-slate-400">Giáo viên:</span>
-      <span class="font-bold text-white">{credential.candidate_name}</span>
+    <div class="text-xs text-slate-700 flex items-center justify-between p-2.5 rounded-xl bg-stone-500/25 border border-slate-200">
+      <span class="text-slate-600">Giáo viên:</span>
+      <span class="font-bold text-slate-900">{credential.candidate_name}</span>
     </div>
     {/if}
 
@@ -118,7 +118,7 @@
     <div class="space-y-3">
       <!-- Username Field -->
       <div class="space-y-1">
-        <label for="cred-username-val" class="block text-xs font-semibold text-slate-400">
+        <label for="cred-username-val" class="block text-xs font-semibold text-slate-600">
           Tên đăng nhập (Username):
         </label>
         <div class="flex items-center gap-2">
@@ -127,12 +127,12 @@
             type="text" 
             readonly 
             value={credential.username}
-            class="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-mono text-emerald-400 font-bold focus:outline-none focus:border-emerald-500 select-all"
+            class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-mono text-emerald-700 font-bold focus:outline-none focus:border-emerald-500 select-all"
           />
           <button 
             type="button"
             onclick={() => copyToClipboard(credential.username, 'username')}
-            class="px-3 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition-all border border-slate-700 shrink-0"
+            class="px-3 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200/80 text-slate-900 text-xs font-bold transition-all border border-slate-200 shrink-0"
             title="Sao chép username"
           >
             {copiedUser ? '✓ Đã chép' : 'Sao chép'}
@@ -142,7 +142,7 @@
 
       <!-- Password Field -->
       <div class="space-y-1">
-        <label for="cred-password-val" class="block text-xs font-semibold text-slate-400">
+        <label for="cred-password-val" class="block text-xs font-semibold text-slate-600">
           Mật khẩu tạm thời (Temporary Password):
         </label>
         <div class="flex items-center gap-2">
@@ -151,7 +151,7 @@
             type="text" 
             readonly 
             value={credential.temp_password}
-            class="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-mono text-amber-400 font-bold tracking-wider focus:outline-none focus:border-amber-500 select-all"
+            class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-mono text-amber-700 font-bold tracking-wider focus:outline-none focus:border-amber-500 select-all"
           />
           <button 
             type="button"
@@ -167,14 +167,14 @@
 
     <!-- Copy Status Notification -->
     {#if copyFeedback}
-    <div class="text-center text-xs font-semibold text-emerald-400 animate-in fade-in duration-150">
+    <div class="text-center text-xs font-semibold text-emerald-700 animate-in fade-in duration-150">
       {copyFeedback}
     </div>
     {/if}
 
     <!-- Workflow Instructions -->
-    <div class="p-3 rounded-2xl bg-slate-950 border border-slate-800/80 text-[11px] text-slate-400 space-y-1 leading-relaxed">
-      <div class="font-bold text-slate-300">Quy trình bắt buộc tiếp theo:</div>
+    <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200 text-[11px] text-slate-600 space-y-1 leading-relaxed">
+      <div class="font-bold text-slate-700">Quy trình bắt buộc tiếp theo:</div>
       <ol class="list-decimal list-inside space-y-0.5 pl-1">
         <li>Giáo viên sử dụng tài khoản trên để đăng nhập tại trang chủ hoặc cpanel.</li>
         <li>Hệ thống <strong>tự động chặn truy cập lịch dạy & tính lương</strong> và yêu cầu đổi mật khẩu lần đầu ngay lập tức.</li>
@@ -183,13 +183,13 @@
     </div>
 
     <!-- Confirmation Checkbox before Close -->
-    <div class="p-3 rounded-2xl bg-slate-950/80 border border-slate-800 text-xs">
-      <label class="flex items-start gap-2.5 cursor-pointer text-slate-300 select-none">
+    <div class="p-3 rounded-2xl bg-stone-500/25 border border-slate-200 text-xs">
+      <label class="flex items-start gap-2.5 cursor-pointer text-slate-700 select-none">
         <input 
           id="confirm-saved-cred"
           type="checkbox" 
           bind:checked={hasConfirmedSaved}
-          class="mt-0.5 rounded border-slate-700 bg-slate-900 text-emerald-500 focus:ring-emerald-500 shrink-0 w-4 h-4 cursor-pointer"
+          class="mt-0.5 rounded border-slate-200 bg-white text-emerald-500 focus:ring-emerald-500 shrink-0 w-4 h-4 cursor-pointer"
         />
         <span class="leading-snug">
           Tôi xác nhận đã sao chép và lưu trữ an toàn mật khẩu tạm để bàn giao cho giáo viên.
@@ -198,12 +198,12 @@
     </div>
 
     <!-- Actions Bar -->
-    <div class="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-2.5 pt-3 border-t border-slate-800">
+    <div class="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-2.5 pt-3 border-t border-slate-200">
       <button 
         type="button"
         onclick={handleClose}
         disabled={!hasConfirmedSaved}
-        class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed text-slate-200 text-xs font-bold transition-colors text-center"
+        class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200/80 disabled:opacity-40 disabled:cursor-not-allowed text-slate-900 text-xs font-bold transition-colors text-center"
       >
         Đóng Hộp Thoại
       </button>

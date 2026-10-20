@@ -396,7 +396,7 @@
  role="dialog"
  aria-modal="true"
  aria-labelledby="session-modal-title"
- class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-sm animate-in fade-in duration-200"
+ class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-500/25 backdrop-blur-sm animate-in fade-in duration-200"
  >
  <div class="w-full max-w-2xl rounded-3xl bg-[#fdfbf7] border border-stone-200 shadow-2xl p-6 md:p-8 space-y-5 max-h-[90vh] overflow-y-auto">
 

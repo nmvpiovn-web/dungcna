@@ -484,15 +484,15 @@
 
 <div class="space-y-6 max-w-full overflow-x-hidden">
  <!-- Leader Banner (Academic Ledger Style: Emerald, 8px radius, Restrained Borders) -->
- <header class="bg-emerald-900 border border-emerald-800 rounded-lg p-4 sm:p-6 text-slate-100 shadow-sm relative overflow-hidden min-w-0">
+ <header class="bg-emerald-50 border border-emerald-200 rounded-lg p-4 sm:p-6 text-slate-100 shadow-sm relative overflow-hidden min-w-0">
  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
  <div class="space-y-2 min-w-0">
- <div class="flex items-center gap-2 text-cx-400 text-xs font-semibold uppercase tracking-wider">
+ <div class="flex items-center gap-2 text-brand-700 text-xs font-semibold uppercase tracking-wider">
  <span>Trung Tâm Điều Hành Chuyên Môn</span>
  <span>•</span>
  <span>Ban Giám Sát Sư Phạm</span>
  </div>
- <h1 class="text-xl sm:text-2xl font-semibold text-white tracking-tight">Quản Trị Nghiệp Vụ Sư Phạm &amp; Nhân Sự</h1>
+ <h1 class="text-xl sm:text-2xl font-semibold text-slate-900 tracking-tight">Quản Trị Nghiệp Vụ Sư Phạm &amp; Nhân Sự</h1>
  <p class="text-slate-300 text-xs sm:text-sm max-w-2xl leading-relaxed">
  Kiểm soát lộ trình giảng dạy theo Obsidian Second-Brain, tỷ lệ hoàn thành BTVN, ngân hàng Bài Test / Kiểm Tra, phê duyệt đơn xin nghỉ &amp; phân công dạy thay, duyệt hạn mức ứng lương và quy trình tuyển dụng giáo viên.
  </p>
@@ -867,7 +867,7 @@
  </div>
  <div class="flex gap-2 shrink-0">
  <button type="button" onclick={() => decideParentLink(link.link_id, 'rejected')} disabled={isProcessing} class="min-h-11 px-4 rounded-md border border-rose-300 bg-white text-rose-800 font-bold hover:bg-rose-50 disabled:opacity-50">Từ chối</button>
- <button type="button" onclick={() => decideParentLink(link.link_id, 'verified')} disabled={isProcessing} class="min-h-11 px-4 rounded-md bg-cx-700 text-white font-bold hover:bg-cx-800 disabled:opacity-50">Xác minh</button>
+ <button type="button" onclick={() => decideParentLink(link.link_id, 'verified')} disabled={isProcessing} class="min-h-11 px-4 rounded-md bg-cx-700 text-white font-bold hover:bg-brand-700 disabled:opacity-50">Xác minh</button>
  </div>
  </article>
  {/each}
@@ -1026,7 +1026,7 @@
  </select>
  </div>
  <div class="flex items-end">
- <button type="button" onclick={saveSelectedTeacherSalary} disabled={isSavingSalary || !payrollTeacherId} class="w-full min-h-11 px-4 rounded-md bg-cx-700 hover:bg-cx-800 text-white font-bold disabled:opacity-50">
+ <button type="button" onclick={saveSelectedTeacherSalary} disabled={isSavingSalary || !payrollTeacherId} class="w-full min-h-11 px-4 rounded-md bg-cx-700 hover:bg-brand-700 text-white font-bold disabled:opacity-50">
  {isSavingSalary ? 'Đang lưu D1...' : 'Lưu Mức Lương'}
  </button>
  </div>
@@ -1271,7 +1271,7 @@
 
 <!-- INTERVIEW / CANDIDATE PROCESSING MODAL -->
 {#if showInterviewModal && selectedCandidate}
- <div class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
+ <div class="fixed inset-0 z-50 bg-stone-500/25 backdrop-blur-sm flex items-center justify-center p-4">
  <div class="bg-white rounded-lg max-w-lg w-full border border-slate-200 shadow-xl p-6 space-y-4 text-xs">
  <div class="flex items-center justify-between border-b border-slate-200 pb-3">
  <div>

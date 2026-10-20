@@ -1661,7 +1661,7 @@ export const TUITION_TEMPLATES = [
     name: 'Chiến Binh IELTS / Cambridge (Modern Mint)',
     accentColor: 'cyan',
     badge: 'IELTS & THPT QG',
-    headerBg: 'bg-slate-900',
+    headerBg: 'bg-white',
     borderColor: 'border-cx-500',
     tagColor: 'bg-cx-100 text-cx-800'
   },

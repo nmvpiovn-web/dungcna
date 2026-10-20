@@ -320,37 +320,37 @@
 
 <div class="space-y-6 max-w-full overflow-x-hidden">
  <!-- Teacher Banner (Academic Ledger Style: Emerald, 8px radius, Restrained Borders) -->
- <header class="bg-emerald-900 border border-emerald-800 rounded-lg p-4 sm:p-6 text-slate-100 shadow-sm relative overflow-hidden min-w-0">
+ <header class="bg-emerald-50 border border-emerald-200 rounded-lg p-4 sm:p-6 text-slate-900 shadow-sm relative overflow-hidden min-w-0">
  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
  <div class="space-y-2 min-w-0">
- <div class="flex items-center gap-2 text-cx-400 text-xs font-semibold uppercase tracking-wider">
+ <div class="flex items-center gap-2 text-brand-700 text-xs font-semibold uppercase tracking-wider">
  <span>Sổ Giáo Viên</span>
  <span>•</span>
  <span>Không Gian Sư Phạm &amp; Nghiệp Vụ</span>
  </div>
- <h1 class="text-xl sm:text-2xl font-semibold text-white tracking-tight">
+ <h1 class="text-xl sm:text-2xl font-semibold text-slate-900 tracking-tight">
  Bàn Làm Việc Giảng Dạy — {currentUser?.name || currentUser?.username || 'Giáo Viên'}
  </h1>
- <p class="text-slate-300 text-xs sm:text-sm max-w-2xl leading-relaxed">
+ <p class="text-slate-700 text-xs sm:text-sm max-w-2xl leading-relaxed">
  Quản lý ca dạy thực tế, chấm bài tập về nhà (viết tay &amp; thu âm), gửi đề nghị dạy thay theo ca và theo dõi tạm ứng lương.
  </p>
  </div>
 
  <!-- Quick Actions & Metrics -->
  <div class="grid grid-cols-3 gap-2 sm:gap-3 w-full md:w-auto min-w-0">
- <div class="bg-slate-800/80 border border-slate-700/60 rounded-md p-2.5 sm:p-3 text-center min-w-0">
- <div class="text-lg sm:text-xl font-semibold text-amber-400 tabular-nums truncate">{pendingSubmissions.length}</div>
- <div class="text-[11px] sm:text-xs text-slate-400 mt-0.5 truncate">Chờ Chấm</div>
+ <div class="bg-slate-100 border border-slate-200 rounded-md p-2.5 sm:p-3 text-center min-w-0">
+ <div class="text-lg sm:text-xl font-semibold text-amber-700 tabular-nums truncate">{pendingSubmissions.length}</div>
+ <div class="text-[11px] sm:text-xs text-slate-600 mt-0.5 truncate">Chờ Chấm</div>
  </div>
- <div class="bg-slate-800/80 border border-slate-700/60 rounded-md p-2.5 sm:p-3 text-center min-w-0">
- <div class="text-lg sm:text-xl font-semibold text-cx-400 tabular-nums truncate">{assignments.length}</div>
- <div class="text-[11px] sm:text-xs text-slate-400 mt-0.5 truncate">Đã Giao</div>
+ <div class="bg-slate-100 border border-slate-200 rounded-md p-2.5 sm:p-3 text-center min-w-0">
+ <div class="text-lg sm:text-xl font-semibold text-brand-700 tabular-nums truncate">{assignments.length}</div>
+ <div class="text-[11px] sm:text-xs text-slate-600 mt-0.5 truncate">Đã Giao</div>
  </div>
  <button 
  onclick={() => showAdvanceModal = true}
- class="p-2.5 sm:p-3 rounded-md text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-cx-300 border border-slate-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cx-500 flex flex-col items-center justify-center min-w-0"
+ class="p-2.5 sm:p-3 rounded-md text-xs font-semibold bg-slate-100 hover:bg-slate-200/80 text-brand-700 border border-slate-200 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cx-500 flex flex-col items-center justify-center min-w-0"
  >
- <span class="text-lg sm:text-xl font-semibold text-emerald-400">⚡</span>
+ <span class="text-lg sm:text-xl font-semibold text-emerald-700">⚡</span>
  <span class="text-[11px] sm:text-xs mt-0.5 truncate">Ứng Lương</span>
  </button>
  </div>
@@ -451,7 +451,7 @@
  </button>
  <button 
  onclick={() => gradingFilter = 'all'}
- class="px-3 py-1.5 rounded-md text-xs font-medium transition-colors {gradingFilter === 'all' ? 'bg-slate-700 text-white' : 'bg-slate-100 text-slate-700'}"
+ class="px-3 py-1.5 rounded-md text-xs font-medium transition-colors {gradingFilter === 'all' ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-700'}"
  >
  Tất Cả ({submissions.length})
  </button>
@@ -518,7 +518,7 @@
 
  <!-- Action button -->
  <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
- <span class="text-[11px] text-slate-400">
+ <span class="text-[11px] text-slate-600">
  {sub.is_on_time ? 'Đủ điều kiện thưởng sao' : 'Nộp muộn (không cộng sao)'}
  </span>
  <button 
@@ -795,7 +795,7 @@
  <div>
  <div class="flex items-center gap-2">
  <span class="text-xs font-semibold text-cx-600 uppercase tracking-wider">Phiếu Lương Giáo Viên</span>
- <span class="text-xs text-slate-400">•</span>
+ <span class="text-xs text-slate-600">•</span>
  <span class="text-xs font-bold text-slate-700">Kỳ: {currentPayroll.billing_cycle}</span>
  </div>
  <p class="text-xs text-slate-500 mt-0.5">
@@ -958,7 +958,7 @@
  </div>
  </div>
 
- <div class="text-xs text-slate-400 tabular-nums">
+ <div class="text-xs text-slate-600 tabular-nums">
  {new Date(adv.created_at || Date.now()).toLocaleDateString('vi-VN')}
  </div>
  </div>
@@ -972,7 +972,7 @@
 
 <!-- GRADING MODAL -->
 {#if showGradeModal && selectedSubmission}
- <div class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
+ <div class="fixed inset-0 z-50 bg-stone-500/25 backdrop-blur-sm flex items-center justify-center p-4">
  <div class="bg-white rounded-lg max-w-lg w-full border border-slate-200 shadow-xl p-6 space-y-4">
  <div class="flex items-center justify-between border-b border-slate-200 pb-3">
  <div>
@@ -981,7 +981,7 @@
  {selectedSubmission.student_name}
  </h3>
  </div>
- <button onclick={() => showGradeModal = false} class="text-slate-400 hover:text-slate-600 font-bold p-1">✕</button>
+ <button onclick={() => showGradeModal = false} class="text-slate-600 hover:text-slate-600 font-bold p-1">✕</button>
  </div>
 
  <!-- Submission Artifacts Preview -->

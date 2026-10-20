@@ -295,7 +295,7 @@
 </script>
 
 {#if isOpen && profile}
- <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in duration-200">
+ <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-500/25 backdrop-blur-sm animate-in fade-in duration-200">
  <div class="w-full max-w-3xl rounded-3xl bg-white border border-slate-200 shadow-2xl p-6 md:p-8 space-y-6 max-h-[90vh] overflow-y-auto">
  
  <!-- Header -->
@@ -655,7 +655,7 @@
  <button
  type="button"
  onclick={() => isOpen = false}
- class="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs"
+ class="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs"
  >
  Đóng
  </button>

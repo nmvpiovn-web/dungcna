@@ -67,13 +67,13 @@
 
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
  <!-- Hero Banner -->
- <div class="rounded-3xl bg-gradient-to-br from-cx-900 via-indigo-900 to-slate-950 text-white p-8 sm:p-12 shadow-2xl relative overflow-hidden">
+ <div class="rounded-3xl bg-gradient-to-br from-brand-50 via-white to-indigo-50 text-slate-900 p-8 sm:p-12 shadow-2xl relative overflow-hidden">
  <div class="absolute -right-10 -bottom-10 opacity-10 text-9xl select-none pointer-events-none">🛠️</div>
  <div class="relative z-10 max-w-3xl space-y-4">
- <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-black bg-cx-500/20 text-cx-200 border border-cx-400/30">
+ <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-black bg-cx-500/20 text-brand-700 border border-cx-400/30">
  <span>⚡ TRUNG TÂM TIỆN ÍCH HỌC TẬP THẾ HỆ MỚI</span>
  </div>
- <h1 class="text-3xl sm:text-5xl font-heading font-black tracking-tight leading-tight text-white">
+ <h1 class="text-3xl sm:text-5xl font-heading font-black tracking-tight leading-tight text-slate-900">
  Bộ Công Cụ Học Tập &amp; Lộ Trình Đa Giác Quan
  </h1>
  <p class="text-sm sm:text-base text-slate-200 leading-relaxed font-normal">

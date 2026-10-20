@@ -224,7 +224,7 @@
  <!-- Left: Logo & Portal Badge -->
  <div class="flex items-center gap-2 sm:gap-3 shrink min-w-0">
  <a href="/" class="flex items-center gap-2 group shrink min-w-0">
- <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-cx-700 flex items-center justify-center text-white font-bold text-base shadow-sm group-hover:bg-cx-800 transition-colors shrink-0">
+ <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-cx-700 flex items-center justify-center text-white font-bold text-base shadow-sm group-hover:bg-brand-700 transition-colors shrink-0">
  D
  </div>
  <div class="min-w-0">
@@ -294,7 +294,7 @@
 
  <!-- User Chip, Password Change & Role Switch for Superadmin -->
  <div class="flex items-center gap-1.5 sm:gap-2 pl-1.5 sm:pl-2 border-l border-slate-200">
- <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-md bg-slate-700 text-white flex items-center justify-center font-semibold text-xs shadow-xs shrink-0">
+ <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-md bg-brand-600 text-white flex items-center justify-center font-semibold text-xs shadow-xs shrink-0">
  {currentUser?.name?.[0] || currentUser?.username?.[0] || 'U'}
  </div>
  <div class="hidden sm:block text-left text-xs">
@@ -349,7 +349,7 @@
 
 {#if showChangePasswordModal}
   <div
-    class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-3 sm:p-4 overflow-y-auto"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-stone-500/25 backdrop-blur-sm p-3 sm:p-4 overflow-y-auto"
     role="dialog"
     aria-modal="true"
     aria-labelledby="change-password-modal-title"

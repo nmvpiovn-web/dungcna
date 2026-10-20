@@ -817,7 +817,7 @@
   }
 
   :global(.dark) .card-face {
-    background: #0f172a;
+    background: #ffffff;
     border-color: #334155;
     color: #f8fafc;
   }
@@ -984,7 +984,7 @@
   }
 
   :global(.dark) .ipa-pill {
-    background: #1e293b;
+    background: #f8fafc;
     color: #38bdf8;
     border-color: #334155;
   }
@@ -1009,7 +1009,7 @@
   }
 
   :global(.dark) .vietnamese-def {
-    background: #1e293b;
+    background: #f8fafc;
     border-left-color: #38bdf8;
   }
 
@@ -1037,7 +1037,7 @@
   }
 
   :global(.dark) .phonics-breakdown-box {
-    background: #1e293b;
+    background: #f8fafc;
     border-color: #334155;
   }
 
@@ -1117,7 +1117,7 @@
   }
 
   :global(.dark) .example-box {
-    background: #0f172a;
+    background: #ffffff;
     border-color: #334155;
   }
 

@@ -508,7 +508,7 @@
     />
     <button
      type="submit"
-     class="px-3.5 py-2 text-xs font-bold rounded-lg bg-stone-800 text-white hover:bg-stone-900"
+     class="px-3.5 py-2 text-xs font-bold rounded-lg bg-brand-600 text-white hover:bg-brand-700"
     >
      Tìm
     </button>
@@ -758,7 +758,7 @@
 
 <!-- MODAL 1: CREATE USER -->
 {#if showCreateModal}
- <div class="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/60 backdrop-blur-sm p-4 overflow-y-auto" role="dialog" aria-modal="true">
+ <div class="fixed inset-0 z-50 flex items-center justify-center bg-stone-500/25 backdrop-blur-sm p-4 overflow-y-auto" role="dialog" aria-modal="true">
   <div class="bg-white rounded-2xl border border-stone-200 shadow-2xl w-full max-w-lg p-6 space-y-4 my-auto max-h-[90vh] overflow-y-auto">
    <div class="flex items-center justify-between border-b border-stone-200 pb-3">
     <h3 class="text-base font-black text-stone-900">➕ Tạo Tài Khoản Mới Trên Cloudflare D1</h3>
@@ -860,7 +860,7 @@
 
 <!-- MODAL 2: RESET PASSWORD -->
 {#if showResetPwModal && targetUserForPw}
- <div class="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/60 backdrop-blur-sm p-4" role="dialog" aria-modal="true">
+ <div class="fixed inset-0 z-50 flex items-center justify-center bg-stone-500/25 backdrop-blur-sm p-4" role="dialog" aria-modal="true">
   <div class="bg-white rounded-2xl border border-stone-200 shadow-2xl w-full max-w-md p-6 space-y-4">
    <div class="flex items-center justify-between border-b border-stone-200 pb-3">
     <div>
@@ -905,7 +905,7 @@
 
 <!-- MODAL 3: EDIT USER / GRADE / SALARY -->
 {#if showEditModal}
- <div class="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/60 backdrop-blur-sm p-4 overflow-y-auto" role="dialog" aria-modal="true">
+ <div class="fixed inset-0 z-50 flex items-center justify-center bg-stone-500/25 backdrop-blur-sm p-4 overflow-y-auto" role="dialog" aria-modal="true">
   <div class="bg-white rounded-2xl border border-stone-200 shadow-2xl w-full max-w-lg p-6 space-y-4 my-auto">
    <div class="flex items-center justify-between border-b border-stone-200 pb-3">
     <h3 class="text-base font-black text-stone-900">✏️ Chỉnh Sửa Hồ Sơ &amp; Nghiệp Vụ (@{editForm.username})</h3>
@@ -988,7 +988,7 @@
 
 <!-- MODAL 4: STAR ADJUSTMENT -->
 {#if showStarModal && targetStudentForStar}
- <div class="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/60 backdrop-blur-sm p-4" role="dialog" aria-modal="true">
+ <div class="fixed inset-0 z-50 flex items-center justify-center bg-stone-500/25 backdrop-blur-sm p-4" role="dialog" aria-modal="true">
   <div class="bg-white rounded-2xl border border-stone-200 shadow-2xl w-full max-w-md p-6 space-y-4">
    <div class="flex items-center justify-between border-b border-stone-200 pb-3">
     <h3 class="text-base font-black text-stone-900">⭐ Thưởng / Phạt Sao Học Sinh (D1)</h3>
@@ -1019,7 +1019,7 @@
 
 <!-- MODAL 5: LINK PARENT TO STUDENT -->
 {#if showLinkChildModal && targetParentForLink}
- <div class="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/60 backdrop-blur-sm p-4" role="dialog" aria-modal="true">
+ <div class="fixed inset-0 z-50 flex items-center justify-center bg-stone-500/25 backdrop-blur-sm p-4" role="dialog" aria-modal="true">
   <div class="bg-white rounded-2xl border border-stone-200 shadow-2xl w-full max-w-md p-6 space-y-4">
    <div class="flex items-center justify-between border-b border-stone-200 pb-3">
     <h3 class="text-base font-black text-stone-900">🔗 Gán &amp; Xác Minh Học Sinh Cho Phụ Huynh</h3>

@@ -115,7 +115,7 @@
 </script>
 
 {#if isOpen && session}
- <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in duration-200">
+ <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-500/25 backdrop-blur-sm animate-in fade-in duration-200">
  <div class="w-full max-w-3xl rounded-3xl bg-white border border-slate-200 shadow-2xl p-6 md:p-8 space-y-6 max-h-[90vh] overflow-y-auto">
  
  <!-- Header -->

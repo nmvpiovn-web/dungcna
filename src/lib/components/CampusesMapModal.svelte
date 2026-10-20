@@ -52,7 +52,7 @@
 </script>
 
 {#if isOpen}
- <div class="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-4">
+ <div class="fixed inset-0 z-50 bg-stone-500/25 backdrop-blur-sm flex items-center justify-center p-4">
  <div class="bg-white rounded-lg max-w-2xl w-full border border-slate-200 shadow-2xl p-6 space-y-5 text-xs max-h-[90vh] overflow-y-auto">
  <div class="flex items-center justify-between border-b border-slate-200 pb-3">
  <div class="flex items-center gap-2">
@@ -126,7 +126,7 @@
  {/if}
 
  <div class="flex justify-end pt-1">
- <button onclick={onClose} class="px-5 py-2 rounded-md font-semibold bg-slate-900 hover:bg-slate-800 text-white">
+ <button onclick={onClose} class="px-5 py-2 rounded-md font-semibold bg-brand-600 hover:bg-brand-700 text-white">
  Đóng
  </button>
  </div>

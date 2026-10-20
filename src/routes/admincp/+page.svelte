@@ -955,7 +955,7 @@
 
 <!-- Self Password Change Modal for AdminCP -->
 {#if showSelfPwModal}
- <div class="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/60 backdrop-blur-sm p-4" role="dialog" aria-modal="true">
+ <div class="fixed inset-0 z-50 flex items-center justify-center bg-stone-500/25 backdrop-blur-sm p-4" role="dialog" aria-modal="true">
   <div class="bg-white rounded-2xl border border-stone-200 shadow-2xl w-full max-w-md p-6 space-y-4">
    <div class="flex items-center justify-between border-b border-stone-200 pb-3">
     <h3 class="text-base font-black text-stone-900">🔑 Đổi Mật Khẩu Tài Khoản Đang Đăng Nhập</h3>

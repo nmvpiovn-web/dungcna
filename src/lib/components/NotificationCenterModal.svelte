@@ -86,16 +86,16 @@
 </script>
 
 {#if isOpen}
- <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in duration-150">
+ <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-500/25 backdrop-blur-sm animate-in fade-in duration-150">
  <div class="w-full max-w-lg rounded-xl bg-white border border-slate-200 shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-150">
  
  <!-- Top Bar (Academic Ledger Style) -->
- <div class="flex items-center justify-between px-5 py-4 border-b border-slate-800 bg-slate-900 text-slate-100">
+ <div class="flex items-center justify-between px-5 py-4 border-b border-slate-200 bg-white text-slate-900">
  <div class="flex items-center gap-2.5">
  <span class="text-lg">🔔</span>
  <div>
- <h3 class="font-semibold text-sm text-white">Trung Tâm Thông Báo</h3>
- <p class="text-[11px] text-slate-400">
+ <h3 class="font-semibold text-sm text-slate-900">Trung Tâm Thông Báo</h3>
+ <p class="text-[11px] text-slate-600">
  {unreadCount > 0 ? `Có ${unreadCount} thông báo mới chưa đọc` : 'Bạn đã đọc tất cả thông báo'}
  </p>
  </div>
@@ -106,7 +106,7 @@
  <button
  type="button"
  onclick={() => markRead(null, true)}
- class="px-2.5 py-1 rounded-md bg-slate-800 text-cx-300 text-[11px] font-semibold hover:bg-slate-700 border border-slate-700"
+ class="px-2.5 py-1 rounded-md bg-slate-100 text-brand-700 text-[11px] font-semibold hover:bg-slate-200/80 border border-slate-200"
  >
  Đọc tất cả
  </button>
@@ -114,7 +114,7 @@
  <button
  type="button"
  onclick={() => isOpen = false}
- class="w-7 h-7 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center text-xs font-semibold"
+ class="w-7 h-7 rounded-md bg-slate-100 hover:bg-slate-200/80 text-slate-600 hover:text-slate-900 flex items-center justify-center text-xs font-semibold"
  >
  ✕
  </button>
@@ -142,12 +142,12 @@
  <!-- List Container -->
  <div class="flex-1 overflow-y-auto p-4 space-y-2.5">
  {#if isLoading}
- <div class="py-12 text-center text-xs text-slate-400">
+ <div class="py-12 text-center text-xs text-slate-600">
  <div class="w-8 h-8 border-2 border-cx-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
  Đang tải thông báo...
  </div>
  {:else if filteredNotifications.length === 0}
- <div class="py-12 text-center text-xs text-slate-400">
+ <div class="py-12 text-center text-xs text-slate-600">
  Không có thông báo nào trong mục này.
  </div>
  {:else}
@@ -180,7 +180,7 @@
  {item.body}
  </p>
 
- <div class="text-[11px] font-mono text-slate-400 flex items-center justify-between">
+ <div class="text-[11px] font-mono text-slate-600 flex items-center justify-between">
  <span>{item.created_at}</span>
  {#if item.reference_id}
  <span>Ref: {item.reference_id}</span>

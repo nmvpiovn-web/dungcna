@@ -130,25 +130,25 @@
  <div class="flex items-center gap-1.5 flex-wrap">
  <span class="text-xs font-bold text-slate-500 uppercase mr-1">Nhóm:</span>
  <button
- class="px-2.5 py-1 rounded-lg text-xs font-medium transition-all {selectedCategory === 'all' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:bg-slate-100'}"
+ class="px-2.5 py-1 rounded-lg text-xs font-medium transition-all {selectedCategory === 'all' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-100'}"
  onclick={() => selectedCategory = 'all'}
  >
  Tất cả
  </button>
  <button
- class="px-2.5 py-1 rounded-lg text-xs font-medium transition-all {selectedCategory === 'tenses' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:bg-slate-100'}"
+ class="px-2.5 py-1 rounded-lg text-xs font-medium transition-all {selectedCategory === 'tenses' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-100'}"
  onclick={() => selectedCategory = 'tenses'}
  >
  Thì (Tenses)
  </button>
  <button
- class="px-2.5 py-1 rounded-lg text-xs font-medium transition-all {selectedCategory === 'structures' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:bg-slate-100'}"
+ class="px-2.5 py-1 rounded-lg text-xs font-medium transition-all {selectedCategory === 'structures' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-100'}"
  onclick={() => selectedCategory = 'structures'}
  >
  Cấu trúc
  </button>
  <button
- class="px-2.5 py-1 rounded-lg text-xs font-medium transition-all {selectedCategory === 'clauses' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:bg-slate-100'}"
+ class="px-2.5 py-1 rounded-lg text-xs font-medium transition-all {selectedCategory === 'clauses' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-100'}"
  onclick={() => selectedCategory = 'clauses'}
  >
  Mệnh đề

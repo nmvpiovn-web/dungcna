@@ -977,7 +977,7 @@
   .btn-next-q {
     margin-top: 10px;
     align-self: flex-end;
-    background: #0f172a;
+    background: #ffffff;
     color: white;
     font-weight: 700;
     padding: 10px 22px;

@@ -236,7 +236,7 @@
 </script>
 
 {#if isOpen}
- <div class="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md animate-in fade-in duration-200">
+ <div class="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-stone-500/25 backdrop-blur-md animate-in fade-in duration-200">
  <div class="w-full max-w-xl bg-white border border-purple-200 rounded-3xl shadow-2xl overflow-hidden relative font-sans text-slate-800 flex flex-col max-h-[92vh]">
  
  <!-- Modal Header -->

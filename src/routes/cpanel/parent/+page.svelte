@@ -122,18 +122,18 @@
 
 <div class="space-y-6 max-w-7xl mx-auto">
  <!-- Parent Header Banner (Academic Ledger Style: Emerald, Restrained borders, 390px responsive) -->
- <header class="bg-emerald-900 border border-emerald-800 rounded-lg p-4 sm:p-6 text-slate-100 shadow-sm relative overflow-hidden">
+ <header class="bg-emerald-50 border border-emerald-200 rounded-lg p-4 sm:p-6 text-slate-100 shadow-sm relative overflow-hidden">
  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
  <div class="space-y-2 min-w-0">
- <div class="flex items-center gap-2 text-cx-400 text-xs font-semibold uppercase tracking-wider">
- <svg class="w-4 h-4 text-cx-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+ <div class="flex items-center gap-2 text-brand-700 text-xs font-semibold uppercase tracking-wider">
+ <svg class="w-4 h-4 text-brand-700 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
  </svg>
  <span>Sổ Phụ Huynh</span>
  <span>•</span>
  <span>Cổng Thông Tin Học Vụ Gia Đình</span>
  </div>
- <h1 class="text-xl sm:text-2xl font-semibold text-white tracking-tight">Báo Cáo Tiến Độ Học Tập &amp; Học Phí</h1>
+ <h1 class="text-xl sm:text-2xl font-semibold text-slate-900 tracking-tight">Báo Cáo Tiến Độ Học Tập &amp; Học Phí</h1>
  <p class="text-slate-300 text-xs sm:text-sm max-w-2xl leading-relaxed">
  Theo dõi trực tiếp kết quả bài tập về nhà, bài viết tay, file ghi âm giọng nói của con và chi tiết đối trừ sao thưởng vào học phí định kỳ.
  </p>
@@ -142,15 +142,15 @@
  <!-- Quick Metrics (Academic Ledger: Tabular Numbers, Restrained Borders, Non-overflowing 390px) -->
  <div class="grid grid-cols-3 gap-2 sm:gap-3 w-full md:w-auto min-w-0">
  <div class="bg-emerald-800/80 border border-emerald-700/60 rounded-md p-2.5 sm:p-3 text-center min-w-0">
- <div class="text-lg sm:text-xl font-semibold text-amber-400 tabular-nums truncate">{totalStarsEarned}</div>
+ <div class="text-lg sm:text-xl font-semibold text-amber-700 tabular-nums truncate">{totalStarsEarned}</div>
  <div class="text-[11px] sm:text-xs text-slate-400 mt-0.5 truncate">Sao Tích Lũy</div>
  </div>
  <div class="bg-emerald-800/80 border border-emerald-700/60 rounded-md p-2.5 sm:p-3 text-center min-w-0">
- <div class="text-lg sm:text-xl font-semibold text-white tabular-nums truncate">{totalGraded}/{assignments.length}</div>
+ <div class="text-lg sm:text-xl font-semibold text-slate-900 tabular-nums truncate">{totalGraded}/{assignments.length}</div>
  <div class="text-[11px] sm:text-xs text-slate-400 mt-0.5 truncate">Đã Chấm</div>
  </div>
  <div class="bg-emerald-800/80 border border-emerald-700/60 rounded-md p-2.5 sm:p-3 text-center min-w-0">
- <div class="text-lg sm:text-xl font-semibold text-cx-400 tabular-nums truncate">{avgScore}</div>
+ <div class="text-lg sm:text-xl font-semibold text-brand-700 tabular-nums truncate">{avgScore}</div>
  <div class="text-[11px] sm:text-xs text-slate-400 mt-0.5 truncate">Điểm TB</div>
  </div>
  </div>

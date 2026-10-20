@@ -386,7 +386,7 @@
  <button 
  type="button"
  onclick={handleDismiss} 
- class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition-colors text-base"
+ class="text-slate-600 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition-colors text-base"
  aria-label="Đóng khảo sát năng lực"
  title="Đóng (Escape)"
  >
@@ -561,10 +561,10 @@
  {:else if step === 'testing'}
  <div class="space-y-4">
  <!-- Timer Bar -->
- <div class="flex items-center justify-between bg-slate-900 text-white p-3 rounded-md">
+ <div class="flex items-center justify-between bg-white text-slate-900 p-3 rounded-md">
  <div>
- <span class="text-xs text-cx-400 font-semibold">{candidateName}</span>
- <span class="text-slate-400 text-xs">
+ <span class="text-xs text-brand-700 font-semibold">{candidateName}</span>
+ <span class="text-slate-600 text-xs">
  • {selectedGrade === 'ielts' ? 'IELTS Placement' : selectedGrade === 'toeic' ? 'TOEIC Placement' : `Khối: ${selectedGrade.replace('lop_', 'Lớp ')}`}
  {#if selectedCurriculum}
  • {selectedCurriculum === 'global_success' ? 'Global Success' : selectedCurriculum === 'friends_plus' ? 'Friends Plus' : selectedCurriculum === 'smart_world' ? 'Smart World' : selectedCurriculum === 'ielts_academic' ? 'IELTS Academic' : selectedCurriculum === 'toeic_lr' ? 'TOEIC L&R' : 'THPT QG'}
@@ -573,15 +573,15 @@
  </div>
  <div class="flex items-center gap-3">
  <div class="flex items-center gap-1.5">
- <span class="text-xs text-slate-400">Thời gian:</span>
- <span class="font-mono text-base font-semibold text-amber-400 tabular-nums">{formattedTime}</span>
+ <span class="text-xs text-slate-600">Thời gian:</span>
+ <span class="font-mono text-base font-semibold text-amber-700 tabular-nums">{formattedTime}</span>
  </div>
  <button
  type="button"
  onclick={() => {
  if (confirm('Bạn có chắc muốn dừng bài khảo sát và thoát?')) handleReset();
  }}
- class="text-xs text-rose-400 hover:text-rose-300 font-medium px-2 py-1 rounded hover:bg-slate-800 transition-colors"
+ class="text-xs text-rose-700 hover:text-rose-700 font-medium px-2 py-1 rounded hover:bg-slate-200/80 transition-colors"
  title="Dừng bài thi"
  >
  ✕ Thoát
@@ -836,7 +836,7 @@
  <button 
  type="button"
  onclick={handleReset} 
- class="px-5 py-2.5 rounded-md font-semibold bg-slate-900 hover:bg-slate-800 text-white text-xs"
+ class="px-5 py-2.5 rounded-md font-semibold bg-brand-600 hover:bg-brand-700 text-white text-xs"
  >
  Đóng &amp; Trở Về
  </button>

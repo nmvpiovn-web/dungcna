@@ -456,7 +456,7 @@
  <UiButton href={roadmapHint.href}>Xem lộ trình chi tiết →</UiButton>
  <a href={SITE_CONTACT.zaloUrl} target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl font-bold text-sm text-white bg-brand-600 hover:bg-brand-700 transition-all">💬 Nhận tư vấn Zalo</a>
  </div>
- <button type="button" onclick={() => { step = 'pick'; result = null; session = null; abandonConfirming = false; if (typeof document !== 'undefined') document.body.style.overflow = ''; }} class="mt-4 px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-sm font-bold transition-all">✓ Đóng</button>
+ <button type="button" onclick={() => { step = 'pick'; result = null; session = null; abandonConfirming = false; if (typeof document !== 'undefined') document.body.style.overflow = ''; }} class="mt-4 px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-bold transition-all">✓ Đóng</button>
  <button type="button" onclick={() => { step = 'pick'; result = null; session = null; abandonConfirming = false; if (typeof document !== 'undefined') document.body.style.overflow = ''; }} class="mt-2 text-xs font-bold text-ink-500 hover:text-brand-600 underline">Làm lại bài test</button>
  </div>
  {/if}

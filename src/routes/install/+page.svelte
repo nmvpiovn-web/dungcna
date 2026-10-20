@@ -161,7 +161,7 @@
       <a
         href="/app"
         data-testid="install-open-mobile-app-btn"
-        class="w-full min-h-[50px] px-5 py-3 rounded-2xl bg-sky-700 hover:bg-sky-800 text-white font-black text-xs sm:text-sm shadow-sm transition-all flex items-center justify-center gap-2"
+        class="w-full min-h-[50px] px-5 py-3 rounded-2xl bg-sky-700 hover:bg-sky-700 text-white font-black text-xs sm:text-sm shadow-sm transition-all flex items-center justify-center gap-2"
       >
         <span class="text-lg">📱</span>
         <span>Mở Trực Tiếp Giao Diện App Mobile (LingoNest • R10)</span>

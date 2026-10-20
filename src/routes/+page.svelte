@@ -431,7 +431,7 @@
       <a
         href="/app"
         data-testid="home-open-mobile-app-btn"
-        class="flex-1 sm:flex-initial min-h-[44px] px-4 py-2.5 rounded-xl bg-sky-700 hover:bg-sky-800 text-white font-extrabold text-xs shadow-xs transition-all flex items-center justify-center gap-1.5"
+        class="flex-1 sm:flex-initial min-h-[44px] px-4 py-2.5 rounded-xl bg-sky-700 hover:bg-sky-700 text-white font-extrabold text-xs shadow-xs transition-all flex items-center justify-center gap-1.5"
       >
         <span>📱</span>
         <span>Mở Giao Diện App Mobile (R10)</span>
@@ -536,7 +536,7 @@
  <div class="rounded-2xl hof-card p-4">
  <div class="text-2xl mb-2">{h.emoji}</div>
  <div class="font-extrabold text-sm mb-1">{h.title}</div>
- <div class="text-xs text-white/85 leading-relaxed">{h.desc}</div>
+ <div class="text-xs text-slate-600 leading-relaxed">{h.desc}</div>
  </div>
  {/each}
  </div>

@@ -16,7 +16,7 @@
 {#if isOpen}
  <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
  <div
- class="fixed inset-0 z-[110] flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200"
+ class="fixed inset-0 z-[110] flex items-center justify-center p-3 sm:p-4 bg-stone-500/25 backdrop-blur-md animate-in fade-in duration-200"
  onclick={(e) => { if (e.target === e.currentTarget) handleClose(); }}
  role="dialog"
  aria-modal="true"
@@ -24,17 +24,17 @@
  >
  <div class="w-full max-w-2xl bg-white border border-slate-200 rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
  <!-- Header -->
- <div class="flex-shrink-0 bg-slate-900 px-5 py-4 flex items-center justify-between text-white border-b border-slate-800">
+ <div class="flex-shrink-0 bg-white px-5 py-4 flex items-center justify-between text-slate-900 border-b border-slate-200">
  <div class="flex items-center gap-2.5">
  <span class="text-2xl">🎓</span>
  <div>
- <h2 class="text-sm sm:text-base font-semibold text-white">Hướng Dẫn Hệ Thống &amp; Tầm Nhìn Sư Phạm</h2>
- <div class="text-[11px] text-slate-400">Tiếng Anh Cô Dung • Hệ Thống Lộ Trình &amp; Đào Tạo K12 Chuẩn 2026</div>
+ <h2 class="text-sm sm:text-base font-semibold text-slate-900">Hướng Dẫn Hệ Thống &amp; Tầm Nhìn Sư Phạm</h2>
+ <div class="text-[11px] text-slate-600">Tiếng Anh Cô Dung • Hệ Thống Lộ Trình &amp; Đào Tạo K12 Chuẩn 2026</div>
  </div>
  </div>
  <button
  onclick={handleClose}
- class="w-7 h-7 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center text-xs font-semibold transition-colors"
+ class="w-7 h-7 rounded-md bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900 flex items-center justify-center text-xs font-semibold transition-colors"
  title="Đóng"
  >
  ✕

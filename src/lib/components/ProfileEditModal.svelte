@@ -484,7 +484,7 @@
 {#if isOpen}
  <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
  <div
- class="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md animate-in fade-in duration-200"
+ class="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-stone-500/25 backdrop-blur-md animate-in fade-in duration-200"
  onclick={(e) => { if (e.target === e.currentTarget) isOpen = false; }}
  role="dialog"
  aria-modal="true"
@@ -493,22 +493,22 @@
  <div class="w-full max-w-lg bg-white border border-slate-200 rounded-xl shadow-2xl overflow-hidden relative font-sans text-slate-800 flex flex-col max-h-[92vh]">
  
  <!-- Modal Header (Academic Ledger Style) -->
- <div class="bg-slate-900 p-5 text-slate-100 border-b border-slate-800 relative">
+ <div class="bg-white p-5 text-slate-900 border-b border-slate-200 relative">
  <button
  onclick={() => isOpen = false}
- class="absolute top-4 right-4 text-slate-400 hover:text-white p-1 rounded-md bg-slate-800 hover:bg-slate-700 text-xs transition-colors"
+ class="absolute top-4 right-4 text-slate-600 hover:text-slate-900 p-1 rounded-md bg-slate-100 hover:bg-slate-200/80 text-xs transition-colors"
  title="Đóng"
  >
  ✕
  </button>
 
  <div class="flex items-center gap-3">
- <div class="w-10 h-10 rounded-md bg-slate-800 border border-slate-700 flex items-center justify-center text-xl">
+ <div class="w-10 h-10 rounded-md bg-slate-100 border border-slate-200 flex items-center justify-center text-xl">
  👤
  </div>
  <div>
- <div class="text-[11px] font-semibold uppercase tracking-wider text-cx-400">TIẾNG ANH CÔ DUNG</div>
- <h2 class="text-lg font-semibold text-white">Chỉnh Sửa Hồ Sơ Cá Nhân</h2>
+ <div class="text-[11px] font-semibold uppercase tracking-wider text-brand-700">TIẾNG ANH CÔ DUNG</div>
+ <h2 class="text-lg font-semibold text-slate-900">Chỉnh Sửa Hồ Sơ Cá Nhân</h2>
  </div>
  </div>
  </div>
@@ -767,7 +767,7 @@
  type="submit"
  disabled={true}
  title="Vui lòng tải lại dữ liệu đối soát trước khi lưu"
- class="flex-1 py-2.5 rounded-md bg-slate-400 cursor-not-allowed text-white/70 font-semibold text-xs shadow-xs transition-colors flex items-center justify-center gap-2"
+ class="flex-1 py-2.5 rounded-md bg-slate-400 cursor-not-allowed text-slate-600 font-semibold text-xs shadow-xs transition-colors flex items-center justify-center gap-2"
  >
  <span>💾 Lưu Thay Đổi Hồ Sơ</span>
  </button>

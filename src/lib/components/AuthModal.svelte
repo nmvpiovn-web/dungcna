@@ -186,7 +186,7 @@
 {#if isOpen}
  <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
  <div 
- class="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200"
+ class="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-stone-500/25 backdrop-blur-md animate-in fade-in duration-200"
  onclick={(e) => { if (e.target === e.currentTarget && canDismiss) isOpen = false; }}
  role="dialog"
  aria-modal="true"
@@ -195,16 +195,16 @@
  <div class="w-full max-w-lg bg-white border border-slate-200 rounded-xl shadow-2xl overflow-hidden relative font-sans text-slate-800 flex flex-col max-h-[92dvh] sm:max-h-[85vh]">
  
  <!-- Top Slim Header: Brand + Hotline (Academic Ledger: Firm Slate-900, Clean Border) -->
- <div class="flex-shrink-0 bg-slate-900 px-4 py-3 flex items-center justify-between text-slate-100 border-b border-slate-800">
+ <div class="flex-shrink-0 bg-white px-4 py-3 flex items-center justify-between text-slate-900 border-b border-slate-200">
  <div class="flex items-center gap-2">
  <span class="text-xl">🎓</span>
- <span class="font-semibold text-sm sm:text-base tracking-tight text-white">Tiếng Anh Cô Dung</span>
+ <span class="font-semibold text-sm sm:text-base tracking-tight text-slate-900">Tiếng Anh Cô Dung</span>
  </div>
 
  <div class="flex items-center gap-2">
  <a
  href="tel:0905960437"
- class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-cx-400 text-xs font-semibold border border-slate-700 transition-colors"
+ class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 hover:bg-slate-200/80 text-brand-700 text-xs font-semibold border border-slate-200 transition-colors"
  title="Gọi Hotline tư vấn"
  >
  <span>📞</span>
@@ -214,7 +214,7 @@
  {#if canDismiss}
  <button
  onclick={() => isOpen = false}
- class="w-7 h-7 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center text-xs font-semibold transition-colors ml-1"
+ class="w-7 h-7 rounded-md bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900 flex items-center justify-center text-xs font-semibold transition-colors ml-1"
  title="Đóng"
  >
  ✕
@@ -271,7 +271,7 @@
  required
  class="w-full bg-slate-50 border border-slate-300 focus:border-cx-500 rounded-md px-3.5 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-cx-500"
  />
- <span class="absolute right-3 top-2.5 text-sm text-slate-400">👤</span>
+ <span class="absolute right-3 top-2.5 text-sm text-slate-600">👤</span>
  </div>
  </div>
 
@@ -288,7 +288,7 @@
  required
  class="w-full bg-slate-50 border border-slate-300 focus:border-cx-500 rounded-md px-3.5 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-cx-500"
  />
- <span class="absolute right-3 top-2.5 text-sm text-slate-400">🔒</span>
+ <span class="absolute right-3 top-2.5 text-sm text-slate-600">🔒</span>
  </div>
  </div>
  </form>
@@ -305,12 +305,12 @@
  <span class="w-5 h-5 rounded flex items-center justify-center text-xs font-semibold {regStep === 'role' ? 'bg-cx-700 text-white' : 'bg-slate-200 text-slate-700'}">1</span>
  <span>Chọn Role</span>
  </span>
- <span class="text-slate-400">➔</span>
+ <span class="text-slate-600">➔</span>
  <span class="flex items-center gap-1.5 {regStep === 'credentials' ? 'text-cx-700 font-bold' : 'text-slate-600'}">
  <span class="w-5 h-5 rounded flex items-center justify-center text-xs font-semibold {regStep === 'credentials' ? 'bg-cx-700 text-white' : 'bg-slate-200 text-slate-700'}">2</span>
  <span>Tài Khoản</span>
  </span>
- <span class="text-slate-400">➔</span>
+ <span class="text-slate-600">➔</span>
  <span class="flex items-center gap-1.5 {regStep === 'class_popup' ? 'text-cx-700 font-bold' : 'text-slate-600'}">
  <span class="w-5 h-5 rounded flex items-center justify-center text-xs font-semibold {regStep === 'class_popup' ? 'bg-cx-700 text-white' : 'bg-slate-200 text-slate-700'}">3</span>
  <span>Chọn Lớp (*)</span>
@@ -443,7 +443,7 @@
  required
  class="w-full bg-slate-50 border border-slate-300 focus:border-cx-500 rounded-md px-3.5 py-2 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-cx-500"
  />
- <span class="absolute right-3 top-2 text-xs text-slate-400">🔒</span>
+ <span class="absolute right-3 top-2 text-xs text-slate-600">🔒</span>
  </div>
  <span class="text-[11px] text-cx-600 mt-0.5 block">✓ Không đòi hỏi ký tự đặc biệt, thuận tiện cho học sinh.</span>
  </div>
@@ -562,7 +562,7 @@
  type="button"
  aria-pressed={isSelected}
  onclick={() => regSelectedGrades = isSelected ? regSelectedGrades.filter(g => g !== item.id) : [...regSelectedGrades, item.id]}
- class="p-2.5 rounded-md border text-left transition-colors {isSelected ? 'bg-cx-700 text-white border-cx-800 shadow-xs' : 'bg-slate-50 border-slate-200 text-slate-700 hover:border-cx-400 hover:bg-white'}"
+ class="p-2.5 rounded-md border text-left transition-colors {isSelected ? 'bg-cx-700 text-white border-brand-700 shadow-xs' : 'bg-slate-50 border-slate-200 text-slate-700 hover:border-cx-400 hover:bg-white'}"
  >
  <div class="font-semibold flex items-center justify-between">
  <span>{item.title}</span>
