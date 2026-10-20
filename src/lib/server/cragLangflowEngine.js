@@ -548,28 +548,35 @@ export async function runCragLangflowPipeline({
       }
     }
 
-    // 1. Check explicit student mention in current message (Prioritize exact/2-word match over 1-word suffix)
-    const twoWordMatches = allowedStudents.filter((st) => {
-      const n = normalizeVi(st.name);
-      const u = normalizeVi(st.username);
-      if ((n.length >= 3 && normText.includes(n)) || (u && u.length >= 3 && normText.includes(u))) return true;
-      const parts = n.replace(/\(.*?\)/g, '').trim().split(/\s+/);
-      if (parts.length >= 2) {
-        const lastTwo = `${parts[parts.length - 2]} ${parts[parts.length - 1]}`;
-        if (normText.includes(lastTwo)) return true;
-      }
-      return false;
-    });
+    // 1. Check explicit student mention in current message (Score by matched word count so "Bảo Khiêm" (2 words) beats "Khiêm" (1 word))
+    const scoredMatches = [];
+    for (const st of allowedStudents) {
+      const cleanName = normalizeVi(st.name).replace(/\(.*?\)/g, '').trim();
+      const words = cleanName.split(/\s+/).filter((w) => w.length >= 2);
+      if (words.length === 0) continue;
 
-    if (twoWordMatches.length > 0) {
-      matchedStudents = twoWordMatches;
-    } else {
-      matchedStudents = allowedStudents.filter((st) => {
-        const n = normalizeVi(st.name);
-        const parts = n.replace(/\(.*?\)/g, '').trim().split(/\s+/);
-        const lastOne = parts[parts.length - 1];
-        return Boolean(lastOne && lastOne.length >= 4 && normText.includes(lastOne));
-      });
+      let score = 0;
+      if (cleanName.length >= 4 && normText.includes(cleanName)) {
+        score = words.length + 2;
+      } else if (words.length >= 2) {
+        const lastTwo = `${words[words.length - 2]} ${words[words.length - 1]}`;
+        if (normText.includes(lastTwo)) {
+          score = 2;
+        }
+      }
+      if (score === 0) {
+        const lastOne = words[words.length - 1];
+        if (lastOne && lastOne.length >= 4 && normText.includes(lastOne)) {
+          score = 1;
+        }
+      }
+      if (score > 0) {
+        scoredMatches.push({ st, score });
+      }
+    }
+    if (scoredMatches.length > 0) {
+      const maxScore = Math.max(...scoredMatches.map((m) => m.score));
+      matchedStudents = scoredMatches.filter((m) => m.score === maxScore).map((m) => m.st);
     }
 
     // 2. SESSION CONTINUITY: If current message didn't name a student (e.g. "Còn học phí tháng này bao nhiêu?", "Gửi mã QR luôn nhé", "Điểm của cháu thế nào?")
@@ -902,10 +909,12 @@ export async function runCragLangflowPipeline({
     }
 
     if (detectedIntents.includes('schedule_attendance') && scopedSessions.length > 0) {
+      const cleanSessions = scopedSessions.filter((s) => s.class_name && !/^\d+$/.test(String(s.class_name).trim()));
+      const listToUse = cleanSessions.length > 0 ? cleanSessions : scopedSessions;
       const header = studentDisplayName
-        ? `📅 ${continuityPrefix}Lịch học tuần này của ${studentDisplayName} (${matchedStudents[0]?.grade || 'Lớp 7'}${matchedStudents[0]?.school ? ` - ${matchedStudents[0].school}` : ''}):`
+        ? (continuityPrefix ? `📅 ${continuityPrefix}Lịch học tuần này:` : `📅 Lịch học tuần này của ${studentDisplayName} (${matchedStudents[0]?.grade || 'Lớp 7'}${matchedStudents[0]?.school ? ` - ${matchedStudents[0].school}` : ''}):`)
         : `📅 Lịch học tại lớp Cô Dung (123 Phố Vọng):`;
-      const lines = scopedSessions.slice(0, 5).map((s) =>
+      const lines = listToUse.slice(0, 4).map((s) =>
         `• ${s.day_name} (${s.start_time} – ${s.end_time}): ${s.class_name}\n  - Giáo viên: ${s.teacher_name}${s.assistant_teacher_name ? ` (Trợ giảng: ${s.assistant_teacher_name})` : ''}\n  - Phòng: ${s.room_notes || 'Phòng VIP 201'} — ${s.location}\n  - Bài học: ${s.subject_topic}`
       );
       if (scopedAttendance.length > 0 && studentDisplayName) {
@@ -919,7 +928,7 @@ export async function runCragLangflowPipeline({
 
     if (detectedIntents.includes('academic_results') && scopedEvaluations.length > 0) {
       const lines = scopedEvaluations.slice(0, 2).map((e) =>
-        `📈 ${continuityPrefix}Đánh giá 5 kỹ năng của ${e.student_name} (${e.grade_level} - GV: ${e.teacher_name}):\n` +
+        `📈 ${continuityPrefix ? `${continuityPrefix}Kết quả 5 kỹ năng (GV: ${e.teacher_name}):` : `Đánh giá 5 kỹ năng của ${e.student_name} (${e.grade_level} - GV: ${e.teacher_name}):`}\n` +
         `• Điểm số: Nghe ${e.listening_score} | Nói ${e.speaking_score} | Đọc ${e.reading_score} | Viết ${e.writing_score} | Ngữ pháp ${e.grammar_vocab_score}\n` +
         `• Điểm mạnh: ${e.strengths}\n` +
         `• Lưu ý rèn thêm: ${e.teacher_feedback}`
@@ -929,7 +938,7 @@ export async function runCragLangflowPipeline({
 
     if (detectedIntents.includes('tuition_finance') && scopedBills.length > 0 && effectiveRole !== 'student') {
       const lines = scopedBills.slice(0, 2).map((b) =>
-        `💳 ${continuityPrefix}Học phí ${b.billing_period} của ${b.student_name} (${b.grade_level}):\n` +
+        `💳 ${continuityPrefix ? `${continuityPrefix}Học phí ${b.billing_period}:` : `Học phí ${b.billing_period} của ${b.student_name} (${b.grade_level}):`}\n` +
         `• Học phí gốc: ${Number(b.base_tuition_vnd).toLocaleString('vi-VN')}đ (${b.attendance_attended_sessions}/${b.attendance_total_sessions} buổi)\n` +
         `• Trừ sao tích lũy: -${Number(b.discount_vnd).toLocaleString('vi-VN')}đ (${Number(b.stars_deducted).toLocaleString('vi-VN')} sao)\n` +
         `➔ Thực đóng: ${Number(b.final_amount_vnd).toLocaleString('vi-VN')}đ\n` +
