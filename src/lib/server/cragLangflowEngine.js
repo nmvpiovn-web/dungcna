@@ -401,7 +401,7 @@ export async function runCragLangflowPipeline({
     matchedStudents = allowedStudents.filter((st) => {
       const n = normalizeVi(st.name);
       const u = normalizeVi(st.username);
-      if (normText.includes(n) || (u && normText.includes(u))) return true;
+      if ((n.length >= 3 && normText.includes(n)) || (u && u.length >= 3 && normText.includes(u))) return true;
       // Check 2-word suffix of Vietnamese name (e.g. "bao khiem", "bao anh", "gia huy", "hoang minh")
       const parts = n.replace(/\(.*?\)/g, '').trim().split(/\s+/);
       if (parts.length >= 2) {
@@ -686,7 +686,7 @@ ${verifiedFactsText}`;
             { role: 'system', content: systemPrompt },
             { role: 'user', content: cleanText || 'Tổng hợp thông tin học vụ' }
           ],
-          max_tokens: 650,
+          max_tokens: 1500,
           temperature: 0.2
         });
         const raw = aiRes?.response || aiRes?.result?.response || '';
@@ -704,7 +704,7 @@ ${verifiedFactsText}`;
               { role: 'system', content: systemPrompt },
               { role: 'user', content: cleanText || 'Tổng hợp thông tin học vụ' }
             ],
-            max_tokens: 550,
+            max_tokens: 1000,
             temperature: 0.2
           });
           const cleaned = String(llamaRes?.response || '').trim();
