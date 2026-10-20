@@ -159,7 +159,7 @@
  let webhookForm = $state({
  id: 'bot_primary',
  name: 'Zalo Bot: Bot giá cả (@bot.ynKabJAc)',
- url: 'https://grokbot-box-1.tail2facc5.ts.net/zalo',
+ url: 'https://timbk.io.vn/api/zalo-bot/webhook',
  secret: '2267052943606876676:BohTEeIARkSRcUEqfZLDnvxEjSwPVyNSujkIEWeAYRXoCCljFJwYXhhkDbGIUVwd',
  bot_token: '2267052943606876676:BohTEeIARkSRcUEqfZLDnvxEjSwPVyNSujkIEWeAYRXoCCljFJwYXhhkDbGIUVwd',
  chat_id: '',
@@ -178,7 +178,7 @@
   account_type: 'BASIC'
  },
  webhook_info: {
-  url: 'https://grokbot-box-1.tail2facc5.ts.net/zalo'
+  url: 'https://timbk.io.vn/api/zalo-bot/webhook'
  },
  subscribers: [],
  status_message: '✅ Đã kết nối trực tiếp Zalo Bot Platform (getMe 200 OK): Bot giá cả (@bot.ynKabJAc • ID: 2267052943606876676)'

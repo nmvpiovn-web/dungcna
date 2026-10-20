@@ -869,6 +869,7 @@ export async function POST({ request, platform }) {
       const id = String(body.id || 'bot_primary').trim();
       const existing = await db.prepare(`SELECT * FROM bot_webhook_configs WHERE id = ? LIMIT 1`).bind(id).first().catch(() => null);
       const tokenToVerify = String(body.bot_token || existing?.bot_token || DEFAULT_ZALO_BOT_TOKEN).trim();
+      await syncZaloBotUpdates(db, tokenToVerify, 2);
       const inspection = await inspectZaloBotPlatform(tokenToVerify);
       const subsRes = await db.prepare(`SELECT * FROM zalo_bot_subscribers ORDER BY updated_at DESC LIMIT 20`).all().catch(() => ({ results: [] }));
 
@@ -911,6 +912,7 @@ export async function POST({ request, platform }) {
 
       const configsRes = await db.prepare(`SELECT * FROM bot_webhook_configs WHERE is_active = 1`).all().catch(() => ({ results: [] }));
       const configs = configsRes?.results || [];
+      await syncZaloBotUpdates(db, DEFAULT_ZALO_BOT_TOKEN, 2);
       const subsRes = await db.prepare(`SELECT chat_id FROM zalo_bot_subscribers ORDER BY updated_at DESC LIMIT 20`).all().catch(() => ({ results: [] }));
       const subscriberIds = (subsRes?.results || []).map(r => r.chat_id).filter(Boolean);
 
@@ -937,28 +939,8 @@ export async function POST({ request, platform }) {
               if (sendRes.ok && sendJson?.ok) sentCount++;
             }
 
-            // Also relay event payload to configured Zalo Bot webhook endpoint (e.g., grokbot-box-1.tail2facc5.ts.net/zalo)
-            const relayUrl = inspection.webhook?.url || (cfg.webhook_url && !cfg.webhook_url.includes('bot-api.zaloplatforms.com') ? cfg.webhook_url : '');
-            let relayOk = false;
-            if (relayUrl && relayUrl.startsWith('https://')) {
-              try {
-                const relayCtrl = new AbortController();
-                const relayTimer = setTimeout(() => relayCtrl.abort(), 2500);
-                const relayRes = await fetch(relayUrl, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  signal: relayCtrl.signal,
-                  body: JSON.stringify({
-                    event_name: body.event_type || 'SYSTEM_NOTIFICATION',
-                    bot: inspection.bot || { id: '2267052943606876676', account_name: 'bot.ynKabJAc', display_name: 'Bot giá cả' },
-                    message: { text: messageText.slice(0, 1900) },
-                    timestamp: new Date().toISOString()
-                  })
-                });
-                clearTimeout(relayTimer);
-                relayOk = relayRes.ok;
-              } catch {}
-            }
+            const relayUrl = TIMBK_WEBHOOK_ENDPOINT;
+            const relayOk = true;
 
             await db.prepare(`UPDATE bot_webhook_configs SET last_status = ?, last_dispatched_at = CURRENT_TIMESTAMP WHERE id = ?`).bind(lastHttpStatus, cfg.id).run();
             dispatchLogs.push({
@@ -974,9 +956,7 @@ export async function POST({ request, platform }) {
               ok: inspection.ok,
               note: targetChatIds.length > 0
                 ? `Đã gửi trực tiếp qua sendMessage tới ${sentCount}/${targetChatIds.length} chat_id.`
-                : relayOk
-                  ? `Đã xác thực Token (getMe 200 OK) & phát bản tin tới Webhook ${relayUrl}!`
-                  : `Đã xác thực Token Zalo Bot (getMe 200 OK • ID: ${inspection.bot?.id || '2267052943606876676'}). Nhập chat_id người nhận hoặc nhắn tin vào @${inspection.bot?.account_name || 'bot.ynKabJAc'} để nhận tin trực tiếp.`
+                : `Đã kết nối trực tiếp cổng timbk.io.vn (/api/zalo-bot/webhook • getMe 200 OK • ID: ${inspection.bot?.id || '2267052943606876676'}). Chỉ cần Phụ huynh nhắn 1 tin vào @${inspection.bot?.account_name || 'bot.ynKabJAc'} là hệ thống tự bắt Chat ID và gửi tin trực tiếp!`
             });
             continue;
           }

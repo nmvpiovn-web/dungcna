@@ -1,10 +1,15 @@
 // src/routes/api/zalo-bot/webhook/+server.js
-// Webhook receiver & status endpoint for Zalo Bot Platform (https://bot-api.zaloplatforms.com)
+// Direct Webhook Receiver & Real-Time Polling Gateway on https://timbk.io.vn (Zero Grokbot)
 import { json } from '@sveltejs/kit';
+import {
+  DEFAULT_ZALO_BOT_TOKEN,
+  TIMBK_WEBHOOK_ENDPOINT,
+  ensureZaloSubscribersSchema,
+  processIncomingZaloMessage,
+  syncZaloBotUpdates
+} from '$lib/server/zaloBotGateway.js';
 
 export const prerender = false;
-
-const DEFAULT_ZALO_BOT_TOKEN = '2267052943606876676:BohTEeIARkSRcUEqfZLDnvxEjSwPVyNSujkIEWeAYRXoCCljFJwYXhhkDbGIUVwd';
 
 export async function GET({ platform }) {
   const db = platform?.env?.DB;
@@ -13,9 +18,24 @@ export async function GET({ platform }) {
 
   if (db) {
     try {
-      const cfg = await db.prepare(`SELECT bot_token, chat_id, name, updated_at FROM bot_webhook_configs WHERE id = 'bot_primary' LIMIT 1`).first();
+      await ensureZaloSubscribersSchema(db);
+      const cfg = await db.prepare(`SELECT bot_token FROM bot_webhook_configs WHERE id = 'bot_primary' LIMIT 1`).first().catch(() => null);
       if (cfg?.bot_token) token = cfg.bot_token;
-      const subs = await db.prepare(`SELECT * FROM zalo_bot_subscribers ORDER BY updated_at DESC LIMIT 20`).all();
+
+      // Ensure webhook_url in D1 points to timbk.io.vn (never grokbot)
+      await db.prepare(`UPDATE bot_webhook_configs SET webhook_url = ? WHERE id = 'bot_primary' AND (webhook_url LIKE '%grokbot%' OR webhook_url = '')`)
+        .bind(TIMBK_WEBHOOK_ENDPOINT)
+        .run()
+        .catch(() => {});
+    } catch {}
+  }
+
+  // Pull any pending messages from Zalo Bot Platform queue & auto-reply from timbk.io.vn
+  const newlyCaptured = await syncZaloBotUpdates(db, token, 3);
+
+  if (db) {
+    try {
+      const subs = await db.prepare(`SELECT * FROM zalo_bot_subscribers ORDER BY updated_at DESC LIMIT 30`).all();
       subscribers = subs?.results || [];
     } catch {}
   }
@@ -25,8 +45,14 @@ export async function GET({ platform }) {
     const meData = await meRes.json().catch(() => ({}));
     return json({
       success: Boolean(meData?.ok),
+      bot_connected: Boolean(meData?.ok),
       bot: meData?.result || null,
-      webhook_endpoint: 'https://timbk.io.vn/api/zalo-bot/webhook',
+      webhook_endpoint: TIMBK_WEBHOOK_ENDPOINT,
+      zalo_platform_webhook: {
+        url: TIMBK_WEBHOOK_ENDPOINT,
+        mode: 'timbk_direct_gateway'
+      },
+      newly_captured_count: newlyCaptured.length,
       subscribers_count: subscribers.length,
       subscribers
     });
@@ -37,66 +63,31 @@ export async function GET({ platform }) {
 
 export async function POST({ request, platform }) {
   const db = platform?.env?.DB;
-  let payload = {};
-  try {
-    payload = await request.json();
-  } catch {
-    return json({ ok: false, error: 'Invalid JSON' }, { status: 400 });
-  }
-
-  const msg = payload?.message || payload?.result?.message || payload?.data?.message || payload;
-  const chatId = String(
-    msg?.chat?.id ||
-    msg?.from?.id ||
-    payload?.sender?.id ||
-    payload?.recipient?.id ||
-    payload?.chat_id ||
-    ''
-  ).trim();
-
-  const displayName = String(
-    msg?.from?.display_name ||
-    msg?.from?.name ||
-    msg?.chat?.title ||
-    payload?.sender?.name ||
-    'Người dùng Zalo'
-  ).trim();
-
-  const text = String(msg?.text || payload?.text || '').trim();
-
-  if (db && chatId) {
+  let token = DEFAULT_ZALO_BOT_TOKEN;
+  if (db) {
     try {
-      await db.prepare(`
-        CREATE TABLE IF NOT EXISTS zalo_bot_subscribers (
-          chat_id TEXT PRIMARY KEY,
-          display_name TEXT,
-          role_hint TEXT DEFAULT 'parent_or_teacher',
-          last_message TEXT,
-          updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-        );
-      `).run();
-
-      await db.prepare(`
-        INSERT INTO zalo_bot_subscribers (chat_id, display_name, last_message, updated_at)
-        VALUES (?, ?, ?, CURRENT_TIMESTAMP)
-        ON CONFLICT(chat_id) DO UPDATE SET
-          display_name = excluded.display_name,
-          last_message = excluded.last_message,
-          updated_at = CURRENT_TIMESTAMP;
-      `).bind(chatId, displayName, text).run();
-
-      await db.prepare(`
-        UPDATE bot_webhook_configs
-        SET chat_id = CASE WHEN chat_id IS NULL OR chat_id = '' THEN ? ELSE chat_id END,
-            updated_at = CURRENT_TIMESTAMP
-        WHERE id = 'bot_primary';
-      `).bind(chatId).run().catch(() => {});
+      const cfg = await db.prepare(`SELECT bot_token FROM bot_webhook_configs WHERE id = 'bot_primary' LIMIT 1`).first().catch(() => null);
+      if (cfg?.bot_token) token = cfg.bot_token;
     } catch {}
   }
 
+  let payload = {};
+  try {
+    const rawText = await request.text();
+    if (rawText && rawText.trim()) {
+      try {
+        payload = JSON.parse(rawText);
+      } catch {
+        const params = new URLSearchParams(rawText);
+        payload = Object.fromEntries(params.entries());
+      }
+    }
+  } catch {}
+
+  const result = await processIncomingZaloMessage(db, token, payload);
   return json({
     ok: true,
-    captured_chat_id: chatId || null,
-    display_name: displayName
+    webhook_endpoint: TIMBK_WEBHOOK_ENDPOINT,
+    ...result
   });
 }

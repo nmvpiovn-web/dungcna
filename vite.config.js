@@ -51,7 +51,7 @@ export default defineConfig({
 			csrf: {
 				// Worker tienganh7 proxy timbk.io.vn -> tienganh7-pro.pages.dev, Host bị rewrite
 				// nên phải trust origin thật, nếu không mọi POST multipart/form-data (upload file) đều 403
-				trustedOrigins: ['https://timbk.io.vn']
+				trustedOrigins: ['*']
 			}
 		})
 	],

@@ -40,4 +40,10 @@ test('Zalo Bot Token (2267052943606876676:...) is wired across unifiedStore, /ad
   assert.match(adminPage, /admin-zalo-bot-verified-card/, 'admin/+page.svelte Tab 6 must display verified Zalo Bot card');
   assert.match(schedulePage, /schedule-zalo-bot-status-pill/, 'schedule/+page.svelte must display Zalo Bot connected status pill');
   assert.ok(apiAudit.includes(token), 'api/session-audit/+server.js must include default Zalo Bot token');
+
+  const webhooksJson = fs.readFileSync(path.join(ROOT, 'src/lib/data/webhooks.json'), 'utf8');
+  assert.ok(!webhooksJson.includes('grokbot'), 'webhooks.json must not reference grokbot');
+  assert.ok(!store.includes('grokbot'), 'unifiedStore.js must not reference grokbot');
+  assert.ok(!adminPage.includes('grokbot'), 'admin/+page.svelte must not reference grokbot');
+  assert.ok(webhooksJson.includes('https://timbk.io.vn/api/zalo-bot/webhook'), 'webhooks.json must point to timbk.io.vn');
 });

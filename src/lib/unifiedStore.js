@@ -1509,7 +1509,7 @@ export function saveWebhook(webhook) {
   const newWebhook = {
     id: webhook.id || 'bot_primary',
     name: (webhook.name || 'Zalo Bot: Bot giá cả (@bot.ynKabJAc)').trim(),
-    url: (webhook.url || 'https://grokbot-box-1.tail2facc5.ts.net/zalo').trim(),
+    url: (webhook.url || 'https://timbk.io.vn/api/zalo-bot/webhook').trim(),
     secret: cleanSecret,
     bot_token: cleanSecret,
     chat_id: (webhook.chat_id || '').trim(),
