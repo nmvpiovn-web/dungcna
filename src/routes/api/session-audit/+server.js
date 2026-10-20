@@ -817,7 +817,12 @@ export async function POST({ request, platform }) {
       let name = String(body.name || 'Zalo Bot Platform Gateway').trim();
       let webhookUrl = String(body.webhook_url || 'https://bot-api.zaloplatforms.com').trim();
       const chatId = String(body.chat_id || '').trim();
+      const deepseekApiKey = body.deepseek_api_key !== undefined ? String(body.deepseek_api_key || '').trim() : undefined;
+      const aiEnabled = body.ai_enabled !== undefined ? (body.ai_enabled ? 1 : 0) : 1;
       const isActive = body.is_active !== undefined ? (body.is_active ? 1 : 0) : 1;
+
+      await db.prepare(`ALTER TABLE bot_webhook_configs ADD COLUMN deepseek_api_key TEXT DEFAULT ''`).run().catch(() => {});
+      await db.prepare(`ALTER TABLE bot_webhook_configs ADD COLUMN ai_enabled INTEGER DEFAULT 1`).run().catch(() => {});
 
       // Read existing token if user didn't re-type it
       if (!botToken) {
@@ -841,18 +846,20 @@ export async function POST({ request, platform }) {
       }
 
       await db.prepare(`
-        INSERT INTO bot_webhook_configs (id, provider, name, webhook_url, bot_token, chat_id, is_active, last_status, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+        INSERT INTO bot_webhook_configs (id, provider, name, webhook_url, bot_token, chat_id, deepseek_api_key, ai_enabled, is_active, last_status, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
         ON CONFLICT(id) DO UPDATE SET
           provider = excluded.provider,
           name = excluded.name,
           webhook_url = excluded.webhook_url,
           bot_token = CASE WHEN excluded.bot_token != '' THEN excluded.bot_token ELSE bot_webhook_configs.bot_token END,
           chat_id = excluded.chat_id,
+          deepseek_api_key = CASE WHEN excluded.deepseek_api_key != '' THEN excluded.deepseek_api_key ELSE bot_webhook_configs.deepseek_api_key END,
+          ai_enabled = excluded.ai_enabled,
           is_active = excluded.is_active,
           last_status = excluded.last_status,
           updated_at = CURRENT_TIMESTAMP;
-      `).bind(id, provider, name, webhookUrl, botToken, chatId, isActive, statusCode).run();
+      `).bind(id, provider, name, webhookUrl, botToken, chatId, deepseekApiKey || '', aiEnabled, isActive, statusCode).run();
 
       return json({
         success: true,

@@ -35,10 +35,24 @@ export async function GET({ url, platform }) {
     ? await syncZaloBotUpdates(db, token, 1)
     : [];
 
+  let recentMessages = [];
+  let aiConfig = { ai_enabled: true, deepseek_key_configured: false, active_engine: 'deepseek-r1-distill-qwen-32b (Edge AI)' };
+
   if (db) {
     try {
       const subs = await db.prepare(`SELECT * FROM zalo_bot_subscribers ORDER BY updated_at DESC LIMIT 30`).all();
       subscribers = subs?.results || [];
+      const msgs = await db.prepare(`SELECT * FROM zalo_bot_messages ORDER BY id DESC LIMIT 20`).all().catch(() => ({ results: [] }));
+      recentMessages = msgs?.results || [];
+      const cfg = await db.prepare(`SELECT deepseek_api_key, ai_enabled, ai_model FROM bot_webhook_configs WHERE id = 'bot_primary' LIMIT 1`).first().catch(() => null);
+      if (cfg) {
+        const hasKey = Boolean(cfg.deepseek_api_key && String(cfg.deepseek_api_key).trim() && !String(cfg.deepseek_api_key).startsWith('sk-placeholder'));
+        aiConfig = {
+          ai_enabled: cfg.ai_enabled !== 0,
+          deepseek_key_configured: hasKey,
+          active_engine: hasKey ? 'deepseek-chat (api.deepseek.com)' : 'deepseek-r1-distill-qwen-32b (Cloudflare Edge AI)'
+        };
+      }
     } catch {}
   }
 
@@ -54,9 +68,11 @@ export async function GET({ url, platform }) {
         url: TIMBK_WEBHOOK_ENDPOINT,
         mode: 'timbk_direct_gateway'
       },
+      ai_config: aiConfig,
       newly_captured_count: newlyCaptured.length,
       subscribers_count: subscribers.length,
-      subscribers
+      subscribers,
+      recent_messages: recentMessages
     });
   } catch (err) {
     return json({ success: false, error: err.message }, { status: 500 });

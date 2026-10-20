@@ -67,9 +67,11 @@
     id: 'bot_primary',
     provider: 'zalo_bot_platform',
     name: 'Zalo Bot Platform (Bot giá cả • @bot.ynKabJAc)',
-    webhook_url: 'https://bot-api.zaloplatforms.com',
+    webhook_url: 'https://timbk.io.vn/api/zalo-bot/webhook',
     bot_token: '',
-    chat_id: '',
+    chat_id: 'b3845beb38a2d1fc88b3',
+    deepseek_api_key: '',
+    ai_enabled: true,
     is_active: true
   });
   let savingBot = $state(false);
@@ -1045,7 +1047,27 @@ ${editForm.roadmap_recommendation || d.internal_interaction_and_roadmap.roadmap_
 
         <div>
           <label for="bot-url" class="block font-bold text-slate-700 mb-1">Webhook Endpoint URL:</label>
-          <input id="bot-url" type="text" bind:value={botForm.webhook_url} placeholder="https://bot-api.zaloplatforms.com hoặc https://timbk.io.vn/api/zalo-bot/webhook" class="w-full px-3 py-2 rounded-lg border border-slate-300" />
+          <input id="bot-url" type="text" bind:value={botForm.webhook_url} placeholder="https://timbk.io.vn/api/zalo-bot/webhook" class="w-full px-3 py-2 rounded-lg border border-slate-300" />
+        </div>
+
+        <div class="p-3 rounded-xl bg-sky-50 border border-sky-200 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-sky-950">🧠 Trợ Lý AI Tương Tác 2 Chiều (DeepSeek AI + Dữ Liệu D1):</span>
+            <label class="inline-flex items-center gap-1.5 font-bold text-emerald-700 cursor-pointer">
+              <input type="checkbox" bind:checked={botForm.ai_enabled} class="rounded text-emerald-600" />
+              <span>Đang bật trả lời 2 chiều</span>
+            </label>
+          </div>
+          <p class="text-[11px] text-sky-800">
+            Mặc định chạy <strong>DeepSeek R1 Distill Qwen 32B (Cloudflare Edge AI)</strong> miễn phí kết hợp tra cứu trực tiếp Lịch học, Học phí, Điểm số từ D1. Bạn cũng có thể dán thêm <code>DEEPSEEK_API_KEY (sk-...)</code> riêng bên dưới:
+          </p>
+          <input
+            id="bot-deepseek-key"
+            type="password"
+            bind:value={botForm.deepseek_api_key}
+            placeholder="Tùy chọn: Dán DeepSeek API Key (sk-...) hoặc để trống dùng DeepSeek R1 32B tích hợp sẵn"
+            class="w-full px-3 py-2 rounded-lg border border-sky-300 bg-white font-mono text-xs"
+          />
         </div>
       </div>
 

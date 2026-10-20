@@ -235,6 +235,15 @@
         match: (p) => p === '/session-audit' || p.startsWith('/session-audit/')
       },
       {
+        id: 'langflow',
+        href: '/langflow',
+        icon: '🕸️',
+        label: 'Langflow',
+        sub: 'CRAG 7-Node & Role Bot D1',
+        iconBg: 'bg-gradient-to-b from-indigo-500 via-purple-500 to-pink-600 text-white border-white/85',
+        match: (p) => p === '/langflow' || p.startsWith('/langflow/')
+      },
+      {
         id: 'workspace',
         href: userRoleType === 'superadmin' ? '/admincp' : '/cpanel/leader',
         icon: '👑',
@@ -244,6 +253,7 @@
         hasPopover: true,
         match: (p) => p.startsWith('/cpanel') || p.startsWith('/admin') || p.startsWith('/second-brain') || p.startsWith('/drive'),
         children: [
+          { href: '/langflow', icon: '🕸️', title: 'Langflow CRAG Studio (7-Node AI)', desc: 'Điều khiển Bot Zalo đọc 81 bảng D1 & phân quyền Role' },
           { href: '/admincp', icon: '⚡', title: 'Admin CP Quản Trị User & Role', desc: 'Phân quyền HS, PH, GV & đổi mật khẩu D1' },
           { href: '/cpanel/leader', icon: '👑', title: 'Bàn Điều Hành Leader (Cô Dung)', desc: 'Kiểm soát chất lượng, duyệt đơn & lương GV' },
           { href: '/admin', icon: '💰', title: 'Báo Học Phí, Đổi Sao & VietQR', desc: 'Lập hóa đơn học phí khấu trừ sao thưởng' },
