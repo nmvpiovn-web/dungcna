@@ -935,15 +935,50 @@ export async function POST({ request, platform }) {
             let sentCount = 0;
             let lastHttpStatus = inspection.ok ? 200 : 401;
 
+            const rawPhotoUrl = String(body.photo_url || body.url_img || body.qr_url || '').trim() ||
+              (messageText.match(/https:\/\/img\.vietqr\.io\/[^\s)]+/i)?.[0] || '');
+            const safePhotoUrl = rawPhotoUrl
+              ? (rawPhotoUrl.includes('wsrv.nl') || rawPhotoUrl.includes('api.qrserver.com') || rawPhotoUrl.includes('images.unsplash.com')
+                  ? rawPhotoUrl
+                  : `https://wsrv.nl/?url=${encodeURIComponent(rawPhotoUrl)}&output=png`)
+              : '';
+            const rawVoiceUrl = String(body.voice_url || body.audio_url || '').trim();
+            const rawVideoUrl = String(body.video_url || '').trim();
+            const finalMessageText = rawVideoUrl
+              ? `${messageText}\n🎬 Video bài giảng: ${rawVideoUrl}`
+              : messageText;
+
             for (const cid of targetChatIds) {
               const sendRes = await fetch(`https://bot-api.zaloplatforms.com/bot${effectiveToken}/sendMessage`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ chat_id: cid, text: messageText.slice(0, 1900) })
+                body: JSON.stringify({ chat_id: cid, text: finalMessageText.slice(0, 1900) })
               });
               const sendJson = await sendRes.json().catch(() => ({}));
               lastHttpStatus = sendRes.status;
               if (sendRes.ok && sendJson?.ok) sentCount++;
+
+              if (safePhotoUrl) {
+                const photoRes = await fetch(`https://bot-api.zaloplatforms.com/bot${effectiveToken}/sendPhoto`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    chat_id: cid,
+                    photo: safePhotoUrl,
+                    caption: (body.caption || '💳 Mã QR Học Phí VietQR — Quét trực tiếp trên App Ngân hàng').slice(0, 500)
+                  })
+                });
+                const photoJson = await photoRes.json().catch(() => ({}));
+                if (photoRes.ok && photoJson?.ok) sentCount++;
+              }
+
+              if (rawVoiceUrl) {
+                await fetch(`https://bot-api.zaloplatforms.com/bot${effectiveToken}/sendVoice`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ chat_id: cid, voice: rawVoiceUrl })
+                }).catch(() => {});
+              }
             }
 
             const relayUrl = TIMBK_WEBHOOK_ENDPOINT;

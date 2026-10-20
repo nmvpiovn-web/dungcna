@@ -138,7 +138,81 @@ export function normalizeVi(str = '') {
     .trim();
 }
 
-export function safeJsonParse(raw, fallback = {}) {
+export 
+function toZaloCompatiblePhotoUrl(rawUrl = '') {
+  const clean = String(rawUrl || '').trim();
+  if (!clean) return '';
+  if (clean.includes('wsrv.nl') || clean.includes('api.qrserver.com') || clean.includes('images.unsplash.com')) {
+    return clean;
+  }
+  return 'https://wsrv.nl/?url=' + encodeURIComponent(clean) + '&output=png';
+}
+
+async function sendZaloRichPayload({ botToken, chatId, text, photoUrls = [], photoCaptions = [], voiceUrl = '', videoUrl = '' }) {
+  const baseUrl = 'https://bot-api.zaloplatforms.com/bot' + botToken;
+  const results = { text_sent: false, photos_sent: 0, voice_sent: false, video_sent: false, message_ids: [] };
+
+  // 1. Send text message (and append video link if provided so Zalo renders native video preview)
+  const fullText = videoUrl ? (String(text || '').trim() + '\n🎬 Video bài giảng: ' + videoUrl).trim() : String(text || '').trim();
+  if (fullText) {
+    try {
+      const zRes = await fetch(baseUrl + '/sendMessage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: chatId, text: fullText.slice(0, 1950) })
+      });
+      const zData = await zRes.json().catch(() => ({}));
+      if (zRes.ok && zData?.ok) {
+        results.text_sent = true;
+        if (zData.result?.message_id) results.message_ids.push(zData.result.message_id);
+      }
+    } catch {}
+  }
+
+  // 2. Send native CHAT_PHOTO for each QR / image URL via /sendPhoto
+  for (let i = 0; i < photoUrls.length; i++) {
+    const rawPhoto = photoUrls[i];
+    const safePhotoUrl = toZaloCompatiblePhotoUrl(rawPhoto);
+    if (!safePhotoUrl) continue;
+    const cap = photoCaptions[i] || '💳 Mã QR Học Phí VietQR (Quét trực tiếp trên App Ngân hàng)';
+    try {
+      const pRes = await fetch(baseUrl + '/sendPhoto', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: chatId,
+          photo: safePhotoUrl,
+          caption: cap.slice(0, 500)
+        })
+      });
+      const pData = await pRes.json().catch(() => ({}));
+      if (pRes.ok && pData?.ok) {
+        results.photos_sent++;
+        if (pData.result?.message_id) results.message_ids.push(pData.result.message_id);
+      }
+    } catch {}
+  }
+
+  // 3. Send native CHAT_VOICE via /sendVoice if audio/voice URL is present
+  if (voiceUrl) {
+    try {
+      const vRes = await fetch(baseUrl + '/sendVoice', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: chatId, voice: voiceUrl })
+      });
+      const vData = await vRes.json().catch(() => ({}));
+      if (vRes.ok && vData?.ok) {
+        results.voice_sent = true;
+        if (vData.result?.message_id) results.message_ids.push(vData.result.message_id);
+      }
+    } catch {}
+  }
+
+  return results;
+}
+
+function safeJsonParse(raw, fallback = {}) {
   if (!raw) return fallback;
   if (typeof raw === 'object') return raw;
   try {
@@ -248,6 +322,13 @@ export async function runCragLangflowPipeline({
   // =========================================================================
   // NODE 1: IDENTITY & RBAC GUARD
   // =========================================================================
+    if (sendToZalo && chatId && botToken) {
+    fetch('https://bot-api.zaloplatforms.com/bot' + botToken + '/sendChatAction', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: chatId, action: 'typing' })
+    }).catch(() => {});
+  }
   const t1 = Date.now();
   let subscriber = null;
   let linkedUser = null;
@@ -768,19 +849,29 @@ ${verifiedFactsText}`;
   // =========================================================================
   const t7 = Date.now();
   let zaloSent = false;
+  let zaloMediaStats = { text_sent: false, photos_sent: 0, voice_sent: false };
+  const qrPhotosToSend = [];
+  const qrCaptionsToSend = [];
+
+  if (detectedIntents.includes('tuition_finance') || /(qr|vietqr|hoc phi|dong tien|chuyen khoan|hoa don)/i.test(normText)) {
+    const billsForQr = (scopedBills.length > 0 ? scopedBills : matchedBills).filter((b) => b.vietqr_url);
+    for (const b of billsForQr.slice(0, 2)) {
+      qrPhotosToSend.push(b.vietqr_url);
+      qrCaptionsToSend.push(
+        `💳 Mã VietQR Học Phí (${b.billing_period}) — HS: ${b.student_name} (${b.grade_level})\n• Thực thu: ${Number(b.final_amount_vnd || 0).toLocaleString('vi-VN')}đ (Đã trừ ${Number(b.stars_deducted || 0).toLocaleString('vi-VN')} ⭐)\n• NH: ${b.bank_name} • STK: ${b.bank_account} (${b.account_holder})`
+      );
+    }
+  }
+
   if (sendToZalo && chatId && botToken) {
-    try {
-      const zRes = await fetch(`https://bot-api.zaloplatforms.com/bot${botToken}/sendMessage`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: chatId,
-          text: finalReply.slice(0, 1950)
-        })
-      });
-      const zData = await zRes.json().catch(() => ({}));
-      zaloSent = Boolean(zRes.ok && zData?.ok);
-    } catch {}
+    zaloMediaStats = await sendZaloRichPayload({
+      botToken,
+      chatId,
+      text: finalReply,
+      photoUrls: qrPhotosToSend,
+      photoCaptions: qrCaptionsToSend
+    });
+    zaloSent = Boolean(zaloMediaStats.text_sent || zaloMediaStats.photos_sent > 0);
   }
   nodeTimings.node_zalo_dispatcher = Date.now() - t7;
   const totalMs = Date.now() - pipelineStart;

@@ -266,15 +266,27 @@ export async function POST({ request, platform }) {
           `💬 Nhận xét trên lớp: ${a?.in_class_attitude || 'Hăng hái phát biểu, chuẩn bị bài tốt.'}`;
       } else if (ruleId === 'tuition_vietqr') {
         const b = await db.prepare(`SELECT * FROM tuition_bills ORDER BY created_at ASC LIMIT 1`).first().catch(() => null);
+        const rawQr = b?.vietqr_url || 'https://img.vietqr.io/image/970422-0901234567-compact2.png?amount=2100000&addInfo=HP_BAOANH_T10&accountName=NGUYEN%20MINH%20VU';
+        const safeQrPhoto = 'https://wsrv.nl/?url=' + encodeURIComponent(rawQr) + '&output=png';
         messageText =
           `💰 [PHIẾU BÁO HỌC PHÍ & KHẤU TRỪ SAO THƯỞNG — TIMBK.IO.VN]\n` +
-          `👤 Học sinh: ${b?.student_name || 'Trần Gia Huy'} (${b?.grade_level || 'Lớp 7'})\n` +
+          `👤 Học sinh: ${b?.student_name || 'Lê Bảo Anh'} (${b?.grade_level || 'Lớp 12'})\n` +
           `🗓️ Kỳ học phí: ${b?.billing_period || 'Tháng 10/2026'}\n` +
-          `• Học phí gốc: ${Number(b?.base_tuition_vnd || 1600000).toLocaleString('vi-VN')}đ (${b?.attendance_attended_sessions || 12}/${b?.attendance_total_sessions || 12} buổi)\n` +
-          `• Khấu trừ Sao học tập: -${Number(b?.stars_deducted || 5000).toLocaleString('vi-VN')} ⭐ (-${Number(b?.discount_vnd || 50000).toLocaleString('vi-VN')}đ)\n` +
-          `👉 THỰC THU: ${Number(b?.final_amount_vnd || 1550000).toLocaleString('vi-VN')}đ\n` +
+          `• Học phí gốc: ${Number(b?.base_tuition_vnd || 2200000).toLocaleString('vi-VN')}đ (${b?.attendance_attended_sessions || 12}/${b?.attendance_total_sessions || 12} buổi)\n` +
+          `• Khấu trừ Sao học tập: -${Number(b?.stars_deducted || 10000).toLocaleString('vi-VN')} ⭐ (-${Number(b?.discount_vnd || 100000).toLocaleString('vi-VN')}đ)\n` +
+          `👉 THỰC THU: ${Number(b?.final_amount_vnd || 2100000).toLocaleString('vi-VN')}đ\n` +
           `🏦 Chuyển khoản: ${b?.bank_name || 'MBBank'} • STK: ${b?.bank_account || '0901234567'} (${b?.account_holder || 'NGUYEN MINH VU'})\n` +
-          `🔗 Link mã VietQR: ${b?.vietqr_url || 'https://timbk.io.vn/cpanel/parent'}`;
+          `📸 Hệ thống đính kèm ảnh thẻ QR ngân hàng (CHAT_PHOTO) ngay bên dưới để Phụ huynh quét trực tiếp!`;
+
+        await fetch(`https://bot-api.zaloplatforms.com/bot${DEFAULT_ZALO_BOT_TOKEN}/sendPhoto`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: targetChatId,
+            photo: safeQrPhoto,
+            caption: `💳 Mã QR Học Phí (${b?.student_name || 'Lê Bảo Anh'}) — Thực thu: ${Number(b?.final_amount_vnd || 2100000).toLocaleString('vi-VN')}đ`
+          })
+        }).catch(() => {});
       } else if (ruleId === 'evaluation_report') {
         const e = await db.prepare(`SELECT * FROM student_evaluations ORDER BY created_at ASC LIMIT 1`).first().catch(() => null);
         messageText =
@@ -322,6 +334,96 @@ export async function POST({ request, platform }) {
         ? `🚀 Đã bắn thông báo tự động (${ruleId}) về Zalo Chat ID ${targetChatId} thành công!`
         : `⚠️ Không gửi được qua Zalo: ${zData?.description || 'Lỗi kết nối'}`
     });
+  }
+
+  
+  // 4. Test & Dispatch Rich Media Webhook (sendPhoto / url_img, sendVoice, Video Lesson)
+  if (action === 'dispatch_media_webhook') {
+    const mediaType = String(body.media_type || 'qr_photo').trim();
+    const targetChatId = String(body.chat_id || SUPERADMIN_DEFAULT_CHAT_ID).trim();
+    const rawUrl = String(body.media_url || '').trim();
+    const caption = String(body.caption || '').trim();
+    const baseUrl = `https://bot-api.zaloplatforms.com/bot${DEFAULT_ZALO_BOT_TOKEN}`;
+
+    if (mediaType === 'qr_photo' || mediaType === 'custom_photo') {
+      const defaultQr = 'https://img.vietqr.io/image/970422-0901234567-compact2.png?amount=1550000&addInfo=HP_GIAHUY_T10&accountName=NGUYEN%20MINH%20VU';
+      const photoToUse = rawUrl || defaultQr;
+      const safePhotoUrl = photoToUse.includes('wsrv.nl') || photoToUse.includes('api.qrserver.com') || photoToUse.includes('images.unsplash.com')
+        ? photoToUse
+        : 'https://wsrv.nl/?url=' + encodeURIComponent(photoToUse) + '&output=png';
+
+      const zRes = await fetch(baseUrl + '/sendPhoto', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: targetChatId,
+          photo: safePhotoUrl,
+          caption: (caption || '💳 Ảnh Mã QR Học Phí VietQR — Bắn trực tiếp qua endpoint /sendPhoto (CHAT_PHOTO)').slice(0, 500)
+        })
+      });
+      const zData = await zRes.json().catch(() => ({}));
+      return json({
+        success: Boolean(zRes.ok && zData?.ok),
+        endpoint: '/sendPhoto',
+        message_type: zData?.result?.message_type || 'CHAT_PHOTO',
+        message_id: zData?.result?.message_id || null,
+        safe_photo_url: safePhotoUrl,
+        zalo_response: zData,
+        message: zRes.ok && zData?.ok
+          ? `📸 Đã bắn trực tiếp Ảnh QR (CHAT_PHOTO • ID: ${zData.result?.message_id}) về Zalo ${targetChatId} thành công!`
+          : `❌ Lỗi bắn ảnh (/sendPhoto): ${zData?.description || 'Không hợp lệ'}`
+      });
+    }
+
+    if (mediaType === 'voice_audio') {
+      const voiceToUse = rawUrl || 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3';
+      const zRes = await fetch(baseUrl + '/sendVoice', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: targetChatId,
+          voice: voiceToUse
+        })
+      });
+      const zData = await zRes.json().catch(() => ({}));
+      return json({
+        success: Boolean(zRes.ok && zData?.ok),
+        endpoint: '/sendVoice',
+        zalo_response: zData,
+        message: zRes.ok && zData?.ok
+          ? `🔊 Đã bắn file âm thanh luyện nghe (/sendVoice) về Zalo ${targetChatId} thành công!`
+          : `⚠️ Phản hồi /sendVoice: ${zData?.description || 'Cần URL file .aac/.m4a/.mp3 chuẩn Zalo'}`
+      });
+    }
+
+    if (mediaType === 'video_lesson') {
+      const videoUrl = rawUrl || 'https://www.youtube.com/watch?v=jul2urONzOQ';
+      const thumbUrl = 'https://wsrv.nl/?url=' + encodeURIComponent('https://img.youtube.com/vi/jul2urONzOQ/maxresdefault.jpg') + '&output=png';
+      const pRes = await fetch(baseUrl + '/sendPhoto', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: targetChatId,
+          photo: thumbUrl,
+          caption: (caption || '🎬 Video Bài Giảng Tiếng Anh Lớp 7 Global Success — Unit 7: Traffic').slice(0, 500)
+        })
+      });
+      const mRes = await fetch(baseUrl + '/sendMessage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: targetChatId,
+          text: `🎬 [VIDEO BÀI GIẢNG & LUYỆN NGHE TIẾNG ANH CÔ DUNG]\n📖 Chủ đề: ${caption || 'Unit 7: Traffic — Phonics & Grammar Used to'}\n▶️ Xem video trực tiếp: ${videoUrl}`
+        })
+      });
+      const mData = await mRes.json().catch(() => ({}));
+      return json({
+        success: Boolean(mRes.ok && mData?.ok),
+        endpoint: '/sendPhoto + /sendMessage (Video Rich Preview)',
+        zalo_response: mData,
+        message: `🎬 Đã bắn Thumbnail + Video bài giảng trực tiếp về Zalo ${targetChatId} thành công!`
+      });
+    }
   }
 
   return json({ success: false, error: `Unknown action: ${action}` }, { status: 400 });

@@ -1586,7 +1586,10 @@ export async function dispatchBotReport(eventType, payload = {}) {
             action: 'dispatch_bot_message',
             event_type: eventType,
             message: messageText,
-            chat_id: payload?.chat_id || payload?.parent_zalo_id || ''
+            chat_id: payload?.chat_id || payload?.parent_zalo_id || '',
+            photo_url: payload?.qr_url || payload?.photo_url || payload?.url_img || payload?.vietqr_url || '',
+            voice_url: payload?.voice_url || payload?.audio_url || '',
+            video_url: payload?.video_url || ''
           })
         });
         serverData = await res.json().catch(() => null);

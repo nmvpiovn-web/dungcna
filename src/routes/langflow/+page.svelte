@@ -199,6 +199,37 @@
     }
   }
 
+  let mediaType = $state('qr_photo');
+  let mediaUrl = $state('https://img.vietqr.io/image/970422-0901234567-compact2.png?amount=1550000&addInfo=HP_GIAHUY_T10&accountName=NGUYEN%20MINH%20VU');
+  let mediaCaption = $state('💳 Mã QR Học Phí VietQR — HS Trần Gia Huy (Lớp 7) • Thực thu: 1.550.000đ');
+  let sendingMedia = $state(false);
+  let lastMediaRes = $state(null);
+
+  async function handleDispatchMediaWebhook() {
+    sendingMedia = true;
+    try {
+      const res = await fetch('/api/langflow', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'dispatch_media_webhook',
+          media_type: mediaType,
+          chat_id: superadminChatId,
+          media_url: mediaUrl,
+          caption: mediaCaption
+        })
+      });
+      const data = await res.json();
+      lastMediaRes = data;
+      showToast(data.message || 'Đã bắn Media qua Zalo Bot!');
+      await loadLangflowStudio();
+    } catch (e) {
+      showToast('Lỗi bắn Media: ' + e.message);
+    } finally {
+      sendingMedia = false;
+    }
+  }
+
   function applyPreset(p) {
     simQuery = p.query;
     simRole = p.role;
@@ -540,6 +571,83 @@
               {/if}
             </div>
           {/each}
+        </div>
+      </div>
+
+
+      <!-- Rich Media Webhook Tester (sendPhoto / url_img / sendVoice / Video) -->
+      <div data-testid="langflow-media-webhook-panel" class="p-5 rounded-3xl bg-white border-2 border-emerald-200 shadow-md space-y-3">
+        <div class="border-b border-slate-200 pb-3">
+          <h2 class="text-base font-black text-slate-900">📸 Bắn Ảnh QR Trực Tiếp (`sendPhoto` / `url_img`), Voice &amp; Video</h2>
+          <p class="text-xs text-slate-600">Tự động qua proxy PNG chuẩn Zalo (`wsrv.nl`) để khắc phục lỗi chặn `Java/17` (424) của `img.vietqr.io`, gửi thẳng ảnh thẻ QR thật (`CHAT_PHOTO`) vào khung chat Zalo.</p>
+        </div>
+
+        <div class="space-y-2.5 text-xs">
+          <div>
+            <label for="media-type-select" class="block font-bold text-slate-700 mb-1">Loại Media / Endpoint Zalo Bot Platform:</label>
+            <select
+              id="media-type-select"
+              bind:value={mediaType}
+              onchange={() => {
+                if (mediaType === 'qr_photo') {
+                  mediaUrl = 'https://img.vietqr.io/image/970422-0901234567-compact2.png?amount=1550000&addInfo=HP_GIAHUY_T10&accountName=NGUYEN%20MINH%20VU';
+                  mediaCaption = '💳 Mã QR Học Phí VietQR — HS Trần Gia Huy (Lớp 7) • Thực thu: 1.550.000đ';
+                } else if (mediaType === 'video_lesson') {
+                  mediaUrl = 'https://www.youtube.com/watch?v=jul2urONzOQ';
+                  mediaCaption = '🎬 Video Bài Giảng Tiếng Anh 7 Global Success — Unit 7: Traffic';
+                } else if (mediaType === 'voice_audio') {
+                  mediaUrl = 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3';
+                  mediaCaption = '🔊 File Audio Luyện Nghe Tiếng Anh';
+                }
+              }}
+              class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-slate-50 font-bold text-slate-900"
+            >
+              <option value="qr_photo">📸 Ảnh Thẻ Mã QR VietQR (/sendPhoto • CHAT_PHOTO)</option>
+              <option value="custom_photo">🖼️ Ảnh Học Liệu / Bảng Điểm Bất Kỳ (url_img ➔ /sendPhoto)</option>
+              <option value="video_lesson">🎬 Video Bài Giảng + Ảnh Bìa Thumbnail (Video Rich Preview)</option>
+              <option value="voice_audio">🔊 Âm Thanh Luyện Nghe (/sendVoice • CHAT_VOICE)</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="media-url-input" class="block font-bold text-slate-700 mb-1">URL Ảnh QR / `url_img` / Video / Voice:</label>
+            <input
+              id="media-url-input"
+              type="text"
+              bind:value={mediaUrl}
+              class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white font-mono text-[11px] text-slate-900"
+            />
+          </div>
+
+          <div>
+            <label for="media-caption-input" class="block font-bold text-slate-700 mb-1">Chú thích đính kèm (`caption`):</label>
+            <input
+              id="media-caption-input"
+              type="text"
+              bind:value={mediaCaption}
+              class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-900"
+            />
+          </div>
+
+          <button
+            type="button"
+            data-testid="dispatch-media-btn"
+            disabled={sendingMedia}
+            onclick={handleDispatchMediaWebhook}
+            class="w-full py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs shadow-md cursor-pointer disabled:opacity-50"
+          >
+            {sendingMedia ? '⏳ Đang bắn Media về Zalo...' : '📸 Bắn Ngay Ảnh QR / Media Thật Về Zalo (' + superadminChatId + ')'}
+          </button>
+
+          {#if lastMediaRes}
+            <div class="p-3 rounded-xl bg-emerald-50 border border-emerald-200 font-mono text-[11px] text-emerald-950 space-y-1">
+              <div class="font-sans font-bold">{lastMediaRes.message}</div>
+              <div>• Endpoint: {lastMediaRes.endpoint} | Type: {lastMediaRes.message_type || 'OK'}</div>
+              {#if lastMediaRes.message_id}
+                <div>• Zalo Message ID: {lastMediaRes.message_id}</div>
+              {/if}
+            </div>
+          {/if}
         </div>
       </div>
 
