@@ -61,33 +61,35 @@
  let searchInputRef = $state(null);
 
  const globalSearchCatalog = [
-   { title: 'Trang Chủ & Tổng Quan Lộ Trình', desc: 'Cổng chính hệ thống đào tạo K12 & Quốc Tế', href: '/', icon: '🏠', category: 'Điều Hướng', keywords: 'trang chu home tong quan' },
-   { title: 'Thời Khóa Biểu & Điểm Danh Ca Học', desc: 'Lịch học tuần, điểm danh đi muộn/đúng giờ, gắn đề BTVN', href: '/schedule', icon: '📅', category: 'Học Vụ', keywords: 'thoi khoa bieu lich hoc diem danh schedule ca hoc' },
-   { title: 'Đối Soát Chất Lượng Ca Dạy & Zalo Bot', desc: 'Hồi quy Kho Tri Thức, Drive, BTVN, xuất hồ sơ 5 phần', href: '/session-audit', icon: '📊', category: 'Quản Trị', keywords: 'doi soat ca day session audit zalo bot bao cao' },
-   { title: 'Phòng Thi Số Hóa (15p • 45p • Học Kỳ)', desc: 'Luyện đề chuẩn Bộ GD&ĐT 2026 & IELTS 4 kỹ năng', href: '/exam', icon: '⏱️', category: 'Khảo Thí', keywords: 'phong thi de thi 15p 45p ielts placement test' },
-   { title: 'Quiz Menu — Kho Đề & Làm Bài Trắc Nghiệm', desc: 'Ngân hàng câu hỏi D1 theo khối lớp 1-12', href: '/quiz-menu', icon: '🧩', category: 'Khảo Thí', keywords: 'quiz trac nghiem bai tap kho de' },
-   { title: 'Toàn Bộ 19 Khóa Học K12 & Quốc Tế', desc: 'Tiểu học, THCS, THPT, IELTS, TOEIC, VSTEP', href: '/courses', icon: '📚', category: 'Khóa Học', keywords: 'khoa hoc lo trinh k12 ielts toeic vstep lop 1 2 3 4 5 6 7 8 9 10 11 12' },
-   { title: 'Từ Điển Cambridge & Phát Âm IPA', desc: 'Tra từ vựng, phiên âm chuẩn bản ngữ & Phonics', href: '/dictionary', icon: '📖', category: 'Công Cụ', keywords: 'tu dien dictionary ipa phat am tu vung' },
-   { title: 'Flashcard Ngữ Âm 3D Đa Giác Quan', desc: 'Ôn tập từ vựng theo Unit SGK Global Success', href: '/flashcards', icon: '🗂️', category: 'Công Cụ', keywords: 'flashcard the tu vung 3d on tap' },
-   { title: 'Đấu Trường Trò Chơi Từ Vựng', desc: 'Speed Match, Meteor Rush & Memory Flip tích sao', href: '/games', icon: '🎮', category: 'Công Cụ', keywords: 'game tro choi speed match meteor rush' },
-   { title: '14 Chuyên Đề Ngữ Pháp & Công Thức K12', desc: 'Các thì tiếng Anh, câu điều kiện, bị động, mệnh đề', href: '/grammar', icon: '📐', category: 'Công Cụ', keywords: 'ngu phap grammar cong thuc thi cau dieu kien' },
-   { title: 'Sổ Giáo Viên & Giao Bài Tập Về Nhà', desc: 'Giao BTVN, chấm bài, nhận xét & tính lương', href: '/cpanel/teacher', icon: '👩‍🏫', category: 'Cổng Nội Bộ', keywords: 'so giao vien teacher btvn bai tap ve nha cham bai' },
-   { title: 'Bàn Điều Hành Leader (Cô Dung)', desc: 'Kiểm soát chất lượng, duyệt lương & cảnh báo sớm', href: '/cpanel/leader', icon: '👑', category: 'Quản Trị', keywords: 'ban dieu hanh leader co dung luong giao vien' },
-   { title: 'Sổ Phụ Huynh Theo Dõi Việc Học', desc: 'Xem chuyên cần, điểm số, học phí VietQR của con', href: '/cpanel/parent', icon: '👨‍👩‍👧', category: 'Cổng Nội Bộ', keywords: 'so phu huynh parent hoc phi diem danh con' },
-   { title: 'Sổ Học Sinh & Đổi Sao Học Phí', desc: 'Làm BTVN được giao, tích lũy 100 sao = 1.000đ', href: '/cpanel/student', icon: '🎒', category: 'Cổng Nội Bộ', keywords: 'so hoc sinh student sao btvn' },
-   { title: 'Kho Tri Thức Obsidian Second Brain', desc: '220+ chuyên đề sư phạm, giáo án 5512 & tài liệu', href: '/second-brain', icon: '🧠', category: 'Học Liệu', keywords: 'second brain kho tri thuc obsidian giao an' },
-   { title: 'Kho Tài Liệu Google Drive Đồng Bộ', desc: 'Đề cương, Audio, PDF phân loại theo khối lớp', href: '/drive', icon: '📁', category: 'Học Liệu', keywords: 'google drive kho tai lieu pdf audio de cuong' },
-   { title: 'Đánh Giá Năng Lực 5 Kỹ Năng Học Viên', desc: 'Biểu đồ tiến bộ Nghe-Nói-Đọc-Viết-Ngữ pháp', href: '/evaluations', icon: '📈', category: 'Học Vụ', keywords: 'danh gia nang luc evaluations bieu do' },
-   { title: 'Admin CP — Báo Học Phí, Đổi Sao & Zalo Bot', desc: 'Quản lý hóa đơn học phí VietQR & Bot @bot.ynKabJAc', href: '/admin', icon: '💰', category: 'Quản Trị', keywords: 'admin hoc phi vietqr zalo bot webhook' },
-   { title: 'Admin CP — Quản Trị Tài Khoản & Phân Quyền Role', desc: 'Tạo/sửa tài khoản Học sinh, Phụ huynh, Giáo viên', href: '/admincp', icon: '⚡', category: 'Quản Trị', keywords: 'admincp tai khoan user role mat khau' },
-   { title: 'Bảng Vàng Vinh Danh Học Viên CEFR', desc: 'Top học viên tích sao & đạt chứng chỉ xuất sắc', href: '/hall-of-fame', icon: '🏆', category: 'Trường Học', keywords: 'bang vang hall of fame vinh danh' },
-   { title: 'Về Trường Học Cô Dung & Tuyển Dụng', desc: 'Mô hình Co-Teaching bản ngữ & ứng tuyển giáo viên', href: '/truong-hoc', icon: '🏫', category: 'Trường Học', keywords: 'truong hoc tuyen dung co teaching' }
+   { title: 'Trang Chủ & Tổng Quan Lộ Trình', desc: 'Cổng chính hệ thống đào tạo K12 & Quốc Tế', href: '/', icon: '🏠', category: 'Điều Hướng', keywords: 'trang chu home tong quan', roles: ['all'] },
+   { title: 'Thời Khóa Biểu & Điểm Danh Ca Học', desc: 'Lịch học tuần, điểm danh đi muộn/đúng giờ, gắn đề BTVN', href: '/schedule', icon: '📅', category: 'Học Vụ', keywords: 'thoi khoa bieu lich hoc diem danh schedule ca hoc', roles: ['all'] },
+   { title: 'Đối Soát Chất Lượng Ca Dạy & Zalo Bot', desc: 'Hồi quy Kho Tri Thức, Drive, BTVN, xuất hồ sơ 5 phần', href: '/session-audit', icon: '📊', category: 'Quản Trị', keywords: 'doi soat ca day session audit zalo bot bao cao', roles: ['teacher', 'leader', 'superadmin'] },
+   { title: 'Phòng Thi Số Hóa (15p • 45p • Học Kỳ)', desc: 'Luyện đề chuẩn Bộ GD&ĐT 2026 & IELTS 4 kỹ năng', href: '/exam', icon: '⏱️', category: 'Khảo Thí', keywords: 'phong thi de thi 15p 45p ielts placement test', roles: ['all'] },
+   { title: 'Quiz Menu — Kho Đề & Làm Bài Trắc Nghiệm', desc: 'Ngân hàng câu hỏi D1 theo khối lớp 1-12', href: '/quiz-menu', icon: '🧩', category: 'Khảo Thí', keywords: 'quiz trac nghiem bai tap kho de', roles: ['all'] },
+   { title: 'Toàn Bộ 19 Khóa Học K12 & Quốc Tế', desc: 'Tiểu học, THCS, THPT, IELTS, TOEIC, VSTEP', href: '/courses', icon: '📚', category: 'Khóa Học', keywords: 'khoa hoc lo trinh k12 ielts toeic vstep lop 1 2 3 4 5 6 7 8 9 10 11 12', roles: ['all'] },
+   { title: 'Từ Điển Cambridge & Phát Âm IPA', desc: 'Tra từ vựng, phiên âm chuẩn bản ngữ & Phonics', href: '/dictionary', icon: '📖', category: 'Công Cụ', keywords: 'tu dien dictionary ipa phat am tu vung', roles: ['all'] },
+   { title: 'Flashcard Ngữ Âm 3D Đa Giác Quan', desc: 'Ôn tập từ vựng theo Unit SGK Global Success', href: '/flashcards', icon: '🗂️', category: 'Công Cụ', keywords: 'flashcard the tu vung 3d on tap', roles: ['all'] },
+   { title: 'Đấu Trường Trò Chơi Từ Vựng', desc: 'Speed Match, Meteor Rush & Memory Flip tích sao', href: '/games', icon: '🎮', category: 'Công Cụ', keywords: 'game tro choi speed match meteor rush', roles: ['all'] },
+   { title: '14 Chuyên Đề Ngữ Pháp & Công Thức K12', desc: 'Các thì tiếng Anh, câu điều kiện, bị động, mệnh đề', href: '/grammar', icon: '📐', category: 'Công Cụ', keywords: 'ngu phap grammar cong thuc thi cau dieu kien', roles: ['all'] },
+   { title: 'Sổ Giáo Viên & Giao Bài Tập Về Nhà', desc: 'Giao BTVN, chấm bài, nhận xét & tính lương', href: '/cpanel/teacher', icon: '👩‍🏫', category: 'Cổng Nội Bộ', keywords: 'so giao vien teacher btvn bai tap ve nha cham bai', roles: ['teacher', 'leader', 'superadmin'] },
+   { title: 'Bàn Điều Hành Leader (Cô Dung)', desc: 'Kiểm soát chất lượng, duyệt lương & cảnh báo sớm', href: '/cpanel/leader', icon: '👑', category: 'Quản Trị', keywords: 'ban dieu hanh leader co dung luong giao vien', roles: ['leader', 'superadmin'] },
+   { title: 'Sổ Phụ Huynh Theo Dõi Việc Học', desc: 'Xem chuyên cần, điểm số, học phí VietQR của con', href: '/cpanel/parent', icon: '👨‍👩‍👧', category: 'Cổng Nội Bộ', keywords: 'so phu huynh parent hoc phi diem danh con', roles: ['parent', 'leader', 'superadmin'] },
+   { title: 'Sổ Học Sinh & Đổi Sao Học Phí', desc: 'Làm BTVN được giao, tích lũy 100 sao = 1.000đ', href: '/cpanel/student', icon: '🎒', category: 'Cổng Nội Bộ', keywords: 'so hoc sinh student sao btvn', roles: ['student', 'leader', 'superadmin'] },
+   { title: 'Kho Tri Thức Obsidian Second Brain', desc: '220+ chuyên đề sư phạm, giáo án 5512 & tài liệu', href: '/second-brain', icon: '🧠', category: 'Học Liệu', keywords: 'second brain kho tri thuc obsidian giao an', roles: ['teacher', 'leader', 'superadmin'] },
+   { title: 'Kho Tài Liệu Google Drive Đồng Bộ', desc: 'Đề cương, Audio, PDF phân loại theo khối lớp', href: '/drive', icon: '📁', category: 'Học Liệu', keywords: 'google drive kho tai lieu pdf audio de cuong', roles: ['teacher', 'leader', 'superadmin'] },
+   { title: 'Đánh Giá Năng Lực 5 Kỹ Năng Học Viên', desc: 'Biểu đồ tiến bộ Nghe-Nói-Đọc-Viết-Ngữ pháp', href: '/evaluations', icon: '📈', category: 'Học Vụ', keywords: 'danh gia nang luc evaluations bieu do', roles: ['student', 'parent', 'teacher', 'leader', 'superadmin'] },
+   { title: 'Admin CP — Báo Học Phí, Đổi Sao & Zalo Bot', desc: 'Quản lý hóa đơn học phí VietQR & Bot @bot.ynKabJAc', href: '/admin', icon: '💰', category: 'Quản Trị', keywords: 'admin hoc phi vietqr zalo bot webhook', roles: ['leader', 'superadmin'] },
+   { title: 'Admin CP — Quản Trị Tài Khoản & Phân Quyền Role', desc: 'Tạo/sửa tài khoản Học sinh, Phụ huynh, Giáo viên', href: '/admincp', icon: '⚡', category: 'Quản Trị', keywords: 'admincp tai khoan user role mat khau', roles: ['leader', 'superadmin'] },
+   { title: 'Bảng Vàng Vinh Danh Học Viên CEFR', desc: 'Top học viên tích sao & đạt chứng chỉ xuất sắc', href: '/hall-of-fame', icon: '🏆', category: 'Trường Học', keywords: 'bang vang hall of fame vinh danh', roles: ['all'] },
+   { title: 'Về Trường Học Cô Dung & Tuyển Dụng', desc: 'Mô hình Co-Teaching bản ngữ & ứng tuyển giáo viên', href: '/truong-hoc', icon: '🏫', category: 'Trường Học', keywords: 'truong hoc tuyen dung co teaching', roles: ['all'] }
  ];
 
  let filteredSearchItems = $derived.by(() => {
+   const roleKey = !currentUser ? 'guest' : (isSuperAdmin(currentUser) ? 'superadmin' : (currentUser.role || 'student'));
+   const allowedCatalog = globalSearchCatalog.filter(item => item.roles.includes('all') || item.roles.includes(roleKey));
    const q = globalSearchQuery.trim().toLowerCase();
-   if (!q) return globalSearchCatalog.slice(0, 8);
-   return globalSearchCatalog.filter(item =>
+   if (!q) return allowedCatalog.slice(0, 8);
+   return allowedCatalog.filter(item =>
      item.title.toLowerCase().includes(q) ||
      item.desc.toLowerCase().includes(q) ||
      item.category.toLowerCase().includes(q) ||
@@ -686,14 +688,65 @@
  </div>
 
  <div class="py-2 space-y-1">
- {#if isSuperAdmin(currentUser)}
+ {#if isSuperAdmin(currentUser) || currentUser.role === 'leader'}
  <a
- href="/admin"
+ href="/admincp"
  onclick={() => showUserDropdown = false}
  class="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-extrabold bg-amber-50 text-amber-800 hover:bg-amber-100 transition-all border border-amber-200"
  >
- <span>⚙️</span>
- <span>Admin CP (Học Phí &amp; Zalo Bot)</span>
+ <span>⚡</span>
+ <span>Admin CP Quản Trị User &amp; Role (/admincp)</span>
+ </a>
+ <a
+ href="/cpanel/leader"
+ onclick={() => showUserDropdown = false}
+ class="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-extrabold bg-emerald-50 text-emerald-800 hover:bg-emerald-100 transition-all border border-emerald-200"
+ >
+ <span>👑</span>
+ <span>Bàn Điều Hành Leader (/cpanel/leader)</span>
+ </a>
+ <a
+ href="/admin"
+ onclick={() => showUserDropdown = false}
+ class="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-extrabold bg-cyan-50 text-cyan-800 hover:bg-cyan-100 transition-all border border-cyan-200"
+ >
+ <span>💰</span>
+ <span>Báo Học Phí, Đổi Sao &amp; Zalo Bot (/admin)</span>
+ </a>
+ {:else if currentUser.role === 'teacher'}
+ <a
+ href="/cpanel/teacher"
+ onclick={() => showUserDropdown = false}
+ class="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-extrabold bg-teal-50 text-teal-800 hover:bg-teal-100 transition-all border border-teal-200"
+ >
+ <span>👩‍🏫</span>
+ <span>CPanel Giáo Viên &amp; Giao BTVN (/cpanel/teacher)</span>
+ </a>
+ <a
+ href="/session-audit"
+ onclick={() => showUserDropdown = false}
+ class="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-extrabold bg-emerald-50 text-emerald-800 hover:bg-emerald-100 transition-all border border-emerald-200"
+ >
+ <span>📊</span>
+ <span>Đối Soát Chất Lượng Ca Dạy (/session-audit)</span>
+ </a>
+ {:else if currentUser.role === 'parent'}
+ <a
+ href="/cpanel/parent"
+ onclick={() => showUserDropdown = false}
+ class="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-extrabold bg-purple-50 text-purple-800 hover:bg-purple-100 transition-all border border-purple-200"
+ >
+ <span>👨‍👩‍👧</span>
+ <span>CPanel Sổ Liên Lạc Phụ Huynh (/cpanel/parent)</span>
+ </a>
+ {:else}
+ <a
+ href="/cpanel/student"
+ onclick={() => showUserDropdown = false}
+ class="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-extrabold bg-cyan-50 text-cyan-800 hover:bg-cyan-100 transition-all border border-cyan-200"
+ >
+ <span>🎒</span>
+ <span>CPanel Bàn Học Tập Học Sinh (/cpanel/student)</span>
  </a>
  {/if}
 

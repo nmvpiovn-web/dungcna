@@ -11,7 +11,7 @@ import {
 
 export const prerender = false;
 
-export async function GET({ platform }) {
+export async function GET({ url, platform }) {
   const db = platform?.env?.DB;
   let token = DEFAULT_ZALO_BOT_TOKEN;
   let subscribers = [];
@@ -30,8 +30,10 @@ export async function GET({ platform }) {
     } catch {}
   }
 
-  // Pull any pending messages from Zalo Bot Platform queue & auto-reply from timbk.io.vn
-  const newlyCaptured = await syncZaloBotUpdates(db, token, 3);
+  // Only manual ?poll=1 pulls directly; otherwise 24/7 timbk-zalo-webhook Worker holds the continuous getUpdates stream
+  const newlyCaptured = url.searchParams.get('poll') === '1'
+    ? await syncZaloBotUpdates(db, token, 1)
+    : [];
 
   if (db) {
     try {

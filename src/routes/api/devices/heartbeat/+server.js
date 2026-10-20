@@ -1,6 +1,5 @@
 import { json } from '@sveltejs/kit';
 import { verifyServerAuth, isManager } from '$lib/server/auth.js';
-import { syncZaloBotUpdates, DEFAULT_ZALO_BOT_TOKEN } from '$lib/server/zaloBotGateway.js';
 
 export const prerender = false;
 
@@ -68,10 +67,6 @@ export async function POST({ request, platform }) {
     const rawDeviceId = String(body.device_id || sessionId || `${ipAddress}_${deviceModel}`).replace(/[^a-zA-Z0-9_.:-]/g, '_').slice(0, 120);
 
     if (platform?.env?.DB) {
-      try {
-        const bgPromise = syncZaloBotUpdates(platform.env.DB, DEFAULT_ZALO_BOT_TOKEN, 1);
-        if (platform?.context?.waitUntil) platform.context.waitUntil(bgPromise);
-      } catch {}
       try {
         await platform.env.DB.prepare(`
           INSERT INTO device_heartbeats (
