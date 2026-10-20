@@ -548,30 +548,18 @@ export async function runCragLangflowPipeline({
       }
     }
 
-    // 1. Check explicit student mention in current message (Score by matched word count so "Bảo Khiêm" (2 words) beats "Khiêm" (1 word))
+    // 1. Check explicit student mention in current message (Score by exact number of name words matched in query)
     const scoredMatches = [];
     for (const st of allowedStudents) {
       const cleanName = normalizeVi(st.name).replace(/\(.*?\)/g, '').trim();
       const words = cleanName.split(/\s+/).filter((w) => w.length >= 2);
       if (words.length === 0) continue;
 
-      let score = 0;
-      if (cleanName.length >= 4 && normText.includes(cleanName)) {
-        score = words.length + 2;
-      } else if (words.length >= 2) {
-        const lastTwo = `${words[words.length - 2]} ${words[words.length - 1]}`;
-        if (normText.includes(lastTwo)) {
-          score = 2;
-        }
-      }
-      if (score === 0) {
-        const lastOne = words[words.length - 1];
-        if (lastOne && lastOne.length >= 4 && normText.includes(lastOne)) {
-          score = 1;
-        }
-      }
-      if (score > 0) {
-        scoredMatches.push({ st, score });
+      const matchedWords = words.filter((w) => normText.includes(w));
+      const lastOne = words[words.length - 1];
+      // Require at least the given name (last word >= 3 chars) to match, and score by how many words of their name matched
+      if (lastOne && lastOne.length >= 3 && normText.includes(lastOne)) {
+        scoredMatches.push({ st, score: matchedWords.length });
       }
     }
     if (scoredMatches.length > 0) {
