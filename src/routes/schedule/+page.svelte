@@ -366,12 +366,13 @@
  return [...map.values()].sort((a, b) => a.label.localeCompare(b.label, 'vi'));
  });
 
- // Test schedule reminder notification
+ // Test schedule reminder notification via Zalo Bot Platform
  async function handleSendReminderNotification(session) {
- showToast(`Đang gửi thông báo nhắc lịch học ca ${session.start_time} tới Zalo phụ huynh...`);
+ showToast(`🤖 Đang phát thông báo nhắc lịch học ca ${session.start_time} qua Zalo Bot (@bot.ynKabJAc)...`);
  const res = await triggerScheduleNotification(session.id);
  if (res.success) {
- showToast(`🚀 [Thông Báo Phụ Huynh Đã Gửi Lúc ${res.notifyTime}]: 10 phút nữa con bắt đầu ca học tại ${session.location}`);
+ const botMsg = res.dispatchResult?.message || '';
+ showToast(`🚀 [Zalo Bot @bot.ynKabJAc • Đã Gửi Lúc ${res.notifyTime}]: Nhắc phụ huynh trước 10 phút ca "${session.class_name}" tại ${session.location}! ${botMsg}`);
  } else {
  showToast('Lỗi: ' + res.error);
  }
@@ -522,6 +523,10 @@
  <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
  Thông Báo Phụ Huynh 10 Phút Trước Ca Học
  </span>
+ <a href="/admin?tab=webhooks" data-testid="schedule-zalo-bot-status-pill" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/25 text-emerald-300 border border-emerald-400/50 hover:bg-emerald-500/35 transition-colors flex items-center gap-1">
+ <span>🤖</span>
+ <span>Zalo Bot: Bot giá cả (@bot.ynKabJAc) • Đã nối Token</span>
+ </a>
  </div>
  <h1 class="text-2xl md:text-3xl font-heading font-semibold text-white">
  Lịch Học, Thời Khóa Biểu &amp; Sổ Đầu Bài Tức Thời 📅

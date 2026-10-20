@@ -369,8 +369,8 @@
 {/if}
 
 <div class="min-h-screen flex flex-col bg-transparent text-ink-900 font-sans transition-colors duration-250">
- <!-- Top Navigation Header -->
- <header class="sticky top-0 z-50 bg-surface-0/95 backdrop-blur-md border-b border-line shadow-xs transition-colors duration-250 w-full" style="padding-top: env(safe-area-inset-top);">
+ <!-- Mobile-Only Compact Header (Hidden on Desktop/Tablet — Replaced by Unified Floating Dockbar) -->
+ <header class="md:hidden sticky top-0 z-50 bg-surface-0/95 backdrop-blur-md border-b border-line shadow-xs transition-colors duration-250 w-full" style="padding-top: env(safe-area-inset-top);">
  <div class="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
  <div class="flex items-center justify-between h-16 gap-2 sm:gap-3 min-w-0">
 
@@ -958,8 +958,8 @@
  <div class="relative">
  {#if currentUser}
  <button
- id="user-profile-btn"
- data-testid="user-profile-btn"
+ id="mobile-user-profile-btn"
+ data-testid="mobile-user-profile-btn"
  onclick={() => { showUserDropdown = !showUserDropdown; activeDropdown = null; }}
  class="flex items-center gap-1 sm:gap-2 p-1 sm:px-2.5 sm:py-1.5 rounded-md bg-surface-1 border border-line hover:border-brand-600 transition-all text-left text-xs"
  >
@@ -990,8 +990,8 @@
  </button>
  {:else}
  <button
- id="login-btn"
- data-testid="login-btn"
+ id="mobile-login-btn"
+ data-testid="mobile-login-btn"
  onclick={openAuthModal}
  class="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-md bg-brand-600 hover:bg-brand-700 text-white font-semibold text-xs shadow-xs transition-all"
  >
@@ -1062,8 +1062,8 @@
  </button>
 
  <button
- id="logout-btn"
- data-testid="logout-btn"
+ id="mobile-logout-btn"
+ data-testid="mobile-logout-btn"
  onclick={handleLogout}
  class="w-full flex items-center gap-2 px-3 py-2 rounded-md text-xs font-semibold text-rose-600 hover:bg-rose-50 transition-all text-left"
  >
@@ -1450,8 +1450,16 @@
  <DockBar
  {currentUser}
  {currentUserGrade}
+ {currentUserRoleLabel}
+ {userUnreadCount}
+ {leaderUnreadCount}
+ {hasPersonalTheme}
  onOpenAuth={openAuthModal}
+ onOpenProfile={() => showProfileModal = true}
+ onOpenNotificationModal={() => showNotificationModal = true}
  onOpenLeaderDrawer={() => showLeaderDrawer = true}
+ onOpenPersonalTheme={() => showPersonalThemeModal = true}
+ onLogout={handleLogout}
  />
  <BottomNav />
  <ZaloCta />

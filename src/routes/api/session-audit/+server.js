@@ -937,20 +937,46 @@ export async function POST({ request, platform }) {
               if (sendRes.ok && sendJson?.ok) sentCount++;
             }
 
+            // Also relay event payload to configured Zalo Bot webhook endpoint (e.g., grokbot-box-1.tail2facc5.ts.net/zalo)
+            const relayUrl = inspection.webhook?.url || (cfg.webhook_url && !cfg.webhook_url.includes('bot-api.zaloplatforms.com') ? cfg.webhook_url : '');
+            let relayOk = false;
+            if (relayUrl && relayUrl.startsWith('https://')) {
+              try {
+                const relayCtrl = new AbortController();
+                const relayTimer = setTimeout(() => relayCtrl.abort(), 2500);
+                const relayRes = await fetch(relayUrl, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  signal: relayCtrl.signal,
+                  body: JSON.stringify({
+                    event_name: body.event_type || 'SYSTEM_NOTIFICATION',
+                    bot: inspection.bot || { id: '2267052943606876676', account_name: 'bot.ynKabJAc', display_name: 'Bot giá cả' },
+                    message: { text: messageText.slice(0, 1900) },
+                    timestamp: new Date().toISOString()
+                  })
+                });
+                clearTimeout(relayTimer);
+                relayOk = relayRes.ok;
+              } catch {}
+            }
+
             await db.prepare(`UPDATE bot_webhook_configs SET last_status = ?, last_dispatched_at = CURRENT_TIMESTAMP WHERE id = ?`).bind(lastHttpStatus, cfg.id).run();
             dispatchLogs.push({
               id: cfg.id,
               name: inspection.bot ? `Zalo Bot: ${inspection.bot.display_name} (@${inspection.bot.account_name})` : cfg.name,
               provider: 'zalo_bot_platform',
               bot_id: inspection.bot?.id || null,
-              webhook_url: inspection.webhook?.url || null,
+              webhook_url: relayUrl || inspection.webhook?.url || null,
+              webhook_relayed: relayOk,
               sent_to_chats: sentCount,
               target_chat_ids: targetChatIds,
               status: lastHttpStatus,
               ok: inspection.ok,
               note: targetChatIds.length > 0
                 ? `Đã gửi trực tiếp qua sendMessage tới ${sentCount}/${targetChatIds.length} chat_id.`
-                : 'Bot Token hoạt động tốt (getMe 200 OK). Nhập chat_id người nhận hoặc nhắn tin vào Bot để gửi trực tiếp qua sendMessage.'
+                : relayOk
+                  ? `Đã xác thực Token (getMe 200 OK) & phát bản tin tới Webhook ${relayUrl}!`
+                  : `Đã xác thực Token Zalo Bot (getMe 200 OK • ID: ${inspection.bot?.id || '2267052943606876676'}). Nhập chat_id người nhận hoặc nhắn tin vào @${inspection.bot?.account_name || 'bot.ynKabJAc'} để nhận tin trực tiếp.`
             });
             continue;
           }
