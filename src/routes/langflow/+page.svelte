@@ -42,29 +42,29 @@
 
   const presetQueries = [
     {
-      label: '📅 Lịch học của Bảo Khiêm (CRAG Grade Inference)',
+      label: '1️⃣ Hỏi mở đầu: Lịch học của Bảo Khiêm',
       role: 'superadmin',
-      query: 'Tao hỏi lịch học của Bảo Khiêm'
+      query: 'Bảo Khiêm tuần này học những buổi nào?'
     },
     {
-      label: '💰 Phụ huynh hỏi Học phí & Sao trừ của Gia Huy',
-      role: 'parent',
-      query: 'Cho phụ huynh hỏi học phí tháng 10, số sao được khấu trừ và điểm kiểm tra của cháu Trần Gia Huy?'
-    },
-    {
-      label: '📈 Kết quả đánh giá 5 kỹ năng của Hoàng Minh',
-      role: 'parent',
-      query: 'Kết quả đánh giá 5 kỹ năng Nghe Nói Đọc Viết Ngữ pháp và nhận xét giáo viên của Nguyễn Hoàng Minh thế nào?'
-    },
-    {
-      label: '📝 Phụ huynh nhắn xin nghỉ phép tự động vào D1',
-      role: 'parent',
-      query: 'Xin phép cho cháu Nguyễn Bảo Khiêm nghỉ buổi học tối nay vì cháu bị sốt nhẹ'
-    },
-    {
-      label: '👑 SuperAdmin hỏi tổng quan Học phí & Điểm danh toàn trường',
+      label: '2️⃣ Hỏi nối tiếp (Không cần nhắc tên): Còn học phí & mã QR?',
       role: 'superadmin',
-      query: 'Tổng hợp danh sách học phí tháng 10 của Lê Bảo Anh, Trần Gia Huy, Nguyễn Hoàng Minh và tình hình điểm danh Lớp 7'
+      query: 'Còn học phí tháng này bao nhiêu? Gửi mã QR luôn nhé'
+    },
+    {
+      label: '3️⃣ Đổi học sinh (Giữ mạch chủ đề): Thế còn Gia Huy?',
+      role: 'parent',
+      query: 'Thế còn Trần Gia Huy thì sao?'
+    },
+    {
+      label: '4️⃣ Hỏi nối tiếp điểm số: Kết quả 5 kỹ năng đợt này?',
+      role: 'parent',
+      query: 'Kết quả 5 kỹ năng đợt này của bạn ấy thế nào?'
+    },
+    {
+      label: '5️⃣ Xin nghỉ phép: Bảo Khiêm xin nghỉ tối nay',
+      role: 'parent',
+      query: 'Cho cháu Nguyễn Bảo Khiêm xin nghỉ buổi học tối nay vì cháu bị sốt nhẹ'
     }
   ];
 
@@ -252,20 +252,20 @@
     <div class="space-y-2">
       <div class="flex flex-wrap items-center gap-2">
         <span class="px-3 py-1 rounded-full bg-emerald-600 text-white text-[11px] font-black tracking-wide uppercase">
-          🧠 LANGFLOW CRAG STUDIO • 7-NODE PIPELINE
+          🕸️ ĐIỀU PHỐI LUỒNG DỮ LIỆU &amp; HỘI THOẠI ZALO
         </span>
         <span class="px-3 py-1 rounded-full bg-sky-100 text-sky-900 border border-sky-300 text-[11px] font-extrabold">
-          👑 SuperAdmin Mặc Định: Hải ({superadminChatId})
+          👑 Quản trị viên: Hải ({superadminChatId})
         </span>
         <span class="px-3 py-1 rounded-full bg-amber-100 text-amber-900 border border-amber-300 text-[11px] font-extrabold">
-          🗄️ Đọc Trực Tiếp {dbOverview.total_tables} Bảng Cloudflare D1
+          🔗 Giữ mạch hội thoại đa lượt • {dbOverview.total_tables} bảng dữ liệu
         </span>
       </div>
       <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-        Trung Tâm Điều Khiển Langflow CRAG &amp; Phân Quyền Dữ Liệu Bot Zalo
+        Trung Tâm Điều Phối Luồng Hội Thoại &amp; Dữ Liệu Zalo
       </h1>
       <p class="text-xs sm:text-sm text-slate-600 max-w-3xl leading-relaxed">
-        Kiến trúc <strong>Corrective RAG (CRAG) 7 Node</strong> kết nối trực tiếp vào 81 bảng D1 (`users`, `class_sessions`, `attendance_records`, `tuition_bills`, `student_evaluations`, `student_stars`, `knowledge_vault`...). Tự động kiểm tra Role người hỏi, tự động suy luận khối lớp khi thiếu liên kết trực tiếp và bắn thông báo 2 chiều qua Zalo `@bot.ynKabJAc`.
+        Tự động ghi nhớ học sinh và chủ đề đang trao đổi giữa các tin nhắn liên tiếp, trả lời ngắn gọn đúng trọng tâm như người thật nhắn Zalo và gửi trực tiếp thẻ ảnh QR học phí.
       </p>
     </div>
 
@@ -484,22 +484,27 @@
       {#if lastRunResult}
         <div data-testid="crag-result-box" class="mt-4 p-4 rounded-2xl bg-emerald-50/70 border-2 border-emerald-200 space-y-3 text-xs">
           <div class="flex flex-wrap items-center justify-between gap-2 border-b border-emerald-200 pb-2">
-            <div class="flex items-center gap-2">
+            <div class="flex flex-wrap items-center gap-2">
               <span class="px-2.5 py-0.5 rounded-full bg-emerald-600 text-white font-black text-[10px]">
-                CRAG SCORE: {lastRunResult.crag_evaluation?.score || 98}% ({lastRunResult.crag_evaluation?.status || 'VERIFIED'})
+                ĐỘ KHỚP: {lastRunResult.crag_evaluation?.score || 98}% ({lastRunResult.crag_evaluation?.status || 'VERIFIED'})
               </span>
               <span class="font-bold text-emerald-950">
-                Role: {String(lastRunResult.effective_role || 'superadmin').toUpperCase()}
+                Quyền: {String(lastRunResult.effective_role || 'superadmin').toUpperCase()}
               </span>
+              {#if lastRunResult.session_continuity?.carried_over_student || lastRunResult.session_continuity?.carried_over_intent}
+                <span class="px-2.5 py-0.5 rounded-full bg-sky-600 text-white font-bold text-[10px]">
+                  🔗 Đã nối mạch từ câu trước
+                </span>
+              {/if}
             </div>
             <span class="font-mono text-[11px] text-emerald-800 font-bold">
-              ⏱️ Tổng thời gian: {lastRunResult.total_ms || 0}ms
+              ⏱️ {lastRunResult.total_ms || 0}ms
             </span>
           </div>
 
           {#if lastRunResult.crag_evaluation?.corrective_actions?.length}
             <div class="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-950 text-[11px]">
-              <strong>⚖️ Node 5 (CRAG Self-Correction):</strong>
+              <strong>🔗 Xử lý ngữ cảnh &amp; nối mạch:</strong>
               {lastRunResult.crag_evaluation.corrective_actions.join(' • ')}
             </div>
           {/if}

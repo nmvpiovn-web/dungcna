@@ -248,63 +248,80 @@ export async function POST({ request, platform }) {
       if (ruleId === 'schedule_10m') {
         const s = await db.prepare(`SELECT * FROM class_sessions WHERE id = 'sess_g7_mon' OR grade_level = 'Lớp 7' LIMIT 1`).first().catch(() => null);
         messageText =
-          `⏰ [THÔNG BÁO TỰ ĐỘNG TRƯỚC GIỜ HỌC 10 PHÚT — TIMBK.IO.VN]\n` +
-          `🏫 Lớp: ${s?.class_name || 'Lớp 7 - Global Success & KET A2'}\n` +
-          `🕒 Thời gian: ${s?.day_name || 'Thứ Hai'} (${s?.start_time || '18:00'} – ${s?.end_time || '19:30'})\n` +
-          `👩‍🏫 Giáo viên: ${s?.teacher_name || 'Ms. Dung'} • Trợ giảng: ${s?.assistant_teacher_name || 'Mr. Johnathan Miller'}\n` +
-          `📍 Địa điểm: ${s?.location || 'Tại nhà Cô Dung (123 Phố Vọng, Hai Bà Trưng, Hà Nội)'} (${s?.room_notes || 'Phòng VIP 201'})\n` +
-          `📖 Chủ đề hôm nay: ${s?.subject_topic || 'Unit 7: Traffic & Phonics'}\n` +
-          `👉 Phụ huynh vui lòng chuẩn bị đưa đón các con đúng giờ nhé!`;
+          `⏰ Nhắc lịch học hôm nay (${s?.day_name || 'Thứ Hai'}, ${s?.start_time || '18:00'} – ${s?.end_time || '19:30'}):\n` +
+          `• Lớp: ${s?.class_name || 'Lớp 7 - Global Success & KET A2'}\n` +
+          `• Giáo viên: ${s?.teacher_name || 'Ms. Dung'}${s?.assistant_teacher_name ? ` (Trợ giảng: ${s.assistant_teacher_name})` : ''}\n` +
+          `• Phòng học: ${s?.room_notes || 'Phòng VIP 201'} — ${s?.location || '123 Phố Vọng, Hai Bà Trưng'}\n` +
+          `• Bài học: ${s?.subject_topic || 'Unit 7: Traffic & Phonics'}\n\n` +
+          `Chỉ còn 10 phút nữa vào lớp, phụ huynh nhắc con chuẩn bị sách vở nhé. Nếu hôm nay con bận hoặc đến muộn, anh/chị nhắn lại tin này để lớp ghi nhận ạ.`;
       } else if (ruleId === 'attendance_instant') {
         const a = await db.prepare(`SELECT * FROM attendance_records ORDER BY created_at DESC LIMIT 1`).first().catch(() => null);
         messageText =
-          `📋 [THÔNG BÁO ĐIỂM DANH TỨC THỜI — TIMBK.IO.VN]\n` +
-          `👤 Học sinh: ${a?.student_name || 'Nguyễn Bảo Khiêm (Lớp 7)'}\n` +
-          `📅 Ngày học: ${a?.session_date || new Date().toISOString().slice(0, 10)}\n` +
-          `✅ Trạng thái: ${a?.status === 'late' ? '⏰ Đi muộn' : '🟢 Có mặt đúng giờ'}\n` +
-          `⭐ Sao thưởng chuyên cần: +${a?.instant_stars_rewarded || 15} Sao\n` +
-          `💬 Nhận xét trên lớp: ${a?.in_class_attitude || 'Hăng hái phát biểu, chuẩn bị bài tốt.'}`;
+          `📋 Điểm danh buổi học ngày ${a?.session_date || new Date().toISOString().slice(0, 10)}:\n` +
+          `• Học sinh: ${a?.student_name || 'Nguyễn Bảo Khiêm (Lớp 7)'}\n` +
+          `• Trạng thái: ${a?.status === 'late' ? 'Đi muộn' : 'Đã vào lớp đúng giờ'} (+${a?.instant_stars_rewarded || 15} sao chuyên cần)\n` +
+          `• Ghi chú trên lớp: ${a?.in_class_attitude || 'Hăng hái phát biểu, chuẩn bị bài đầy đủ.'}`;
       } else if (ruleId === 'tuition_vietqr') {
         const b = await db.prepare(`SELECT * FROM tuition_bills ORDER BY created_at ASC LIMIT 1`).first().catch(() => null);
         const rawQr = b?.vietqr_url || 'https://img.vietqr.io/image/970422-0901234567-compact2.png?amount=2100000&addInfo=HP_BAOANH_T10&accountName=NGUYEN%20MINH%20VU';
         const safeQrPhoto = 'https://wsrv.nl/?url=' + encodeURIComponent(rawQr) + '&output=png';
         messageText =
-          `💰 [PHIẾU BÁO HỌC PHÍ & KHẤU TRỪ SAO THƯỞNG — TIMBK.IO.VN]\n` +
-          `👤 Học sinh: ${b?.student_name || 'Lê Bảo Anh'} (${b?.grade_level || 'Lớp 12'})\n` +
-          `🗓️ Kỳ học phí: ${b?.billing_period || 'Tháng 10/2026'}\n` +
+          `💳 Phiếu báo học phí ${b?.billing_period || 'Tháng 10/2026'} — ${b?.student_name || 'Lê Bảo Anh'} (${b?.grade_level || 'Lớp 12'}):\n` +
           `• Học phí gốc: ${Number(b?.base_tuition_vnd || 2200000).toLocaleString('vi-VN')}đ (${b?.attendance_attended_sessions || 12}/${b?.attendance_total_sessions || 12} buổi)\n` +
-          `• Khấu trừ Sao học tập: -${Number(b?.stars_deducted || 10000).toLocaleString('vi-VN')} ⭐ (-${Number(b?.discount_vnd || 100000).toLocaleString('vi-VN')}đ)\n` +
-          `👉 THỰC THU: ${Number(b?.final_amount_vnd || 2100000).toLocaleString('vi-VN')}đ\n` +
-          `🏦 Chuyển khoản: ${b?.bank_name || 'MBBank'} • STK: ${b?.bank_account || '0901234567'} (${b?.account_holder || 'NGUYEN MINH VU'})\n` +
-          `📸 Hệ thống đính kèm ảnh thẻ QR ngân hàng (CHAT_PHOTO) ngay bên dưới để Phụ huynh quét trực tiếp!`;
+          `• Đổi sao tích lũy: -${Number(b?.discount_vnd || 100000).toLocaleString('vi-VN')}đ (${Number(b?.stars_deducted || 10000).toLocaleString('vi-VN')} sao)\n` +
+          `➔ Thực đóng: ${Number(b?.final_amount_vnd || 2100000).toLocaleString('vi-VN')}đ\n` +
+          `🏦 ${b?.bank_name || 'MBBank'} • STK: ${b?.bank_account || '0901234567'} (${b?.account_holder || 'NGUYEN MINH VU'})\n\n` +
+          `Lớp gửi kèm mã QR ngay bên dưới để phụ huynh tiện quét nhanh ạ:`;
 
-        await fetch(`https://bot-api.zaloplatforms.com/bot${DEFAULT_ZALO_BOT_TOKEN}/sendPhoto`, {
+        await fetch(`https://bot-api.zaloplatforms.com/bot${DEFAULT_ZALO_BOT_TOKEN}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: targetChatId,
+            text: messageText
+          })
+        }).catch(() => {});
+
+        const pRes = await fetch(`https://bot-api.zaloplatforms.com/bot${DEFAULT_ZALO_BOT_TOKEN}/sendPhoto`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             chat_id: targetChatId,
             photo: safeQrPhoto,
-            caption: `💳 Mã QR Học Phí (${b?.student_name || 'Lê Bảo Anh'}) — Thực thu: ${Number(b?.final_amount_vnd || 2100000).toLocaleString('vi-VN')}đ`
+            caption: `Mã QR học phí ${b?.billing_period || 'T10/2026'} - ${b?.student_name || 'Lê Bảo Anh'}: ${Number(b?.final_amount_vnd || 2100000).toLocaleString('vi-VN')}đ`
           })
-        }).catch(() => {});
+        });
+        const pData = await pRes.json().catch(() => ({}));
+
+        if (db) {
+          await db.prepare(`
+            INSERT INTO zalo_bot_messages (chat_id, sender_name, direction, content, ai_model)
+            VALUES (?, 'Lớp Cô Dung', 'out', ?, ?)
+          `).bind(targetChatId, messageText, `auto_rule:${ruleId}`).run().catch(() => {});
+        }
+
+        return json({
+          success: Boolean(pRes.ok && pData?.ok),
+          rule_id: ruleId,
+          chat_id: targetChatId,
+          message_sent: messageText,
+          message: pRes.ok && pData?.ok
+            ? `Đã gửi phiếu học phí kèm thẻ ảnh QR về Zalo ${targetChatId}`
+            : `Không gửi được qua Zalo: ${pData?.description || 'Lỗi kết nối'}`
+        });
       } else if (ruleId === 'evaluation_report') {
         const e = await db.prepare(`SELECT * FROM student_evaluations ORDER BY created_at ASC LIMIT 1`).first().catch(() => null);
         messageText =
-          `📈 [PHIẾU ĐÁNH GIÁ KẾT QUẢ HỌC TẬP 5 KỸ NĂNG — TIMBK.IO.VN]\n` +
-          `👤 Học sinh: ${e?.student_name || 'Trần Gia Huy'} (${e?.grade_level || 'Lớp 7'})\n` +
-          `👩‍🏫 Giáo viên đánh giá: ${e?.teacher_name || 'Ms. Dung'}\n` +
-          `📊 Điểm 5 kỹ năng: Nghe ${e?.listening_score || 9.0} | Nói ${e?.speaking_score || 8.5} | Đọc ${e?.reading_score || 7.5} | Viết ${e?.writing_score || 7.0} | Ngữ pháp ${e?.grammar_vocab_score || 8.0}\n` +
-          `🌟 Điểm mạnh: ${e?.strengths || 'Phát âm chuẩn, phản xạ nghe nói rất tự nhiên.'}\n` +
-          `🎯 Kế hoạch hành động: ${e?.action_plan || 'Luyện thêm bài tập viết câu & ngữ pháp 15p mỗi ngày trên timbk.io.vn.'}`;
+          `📈 Nhận xét định kỳ của ${e?.student_name || 'Trần Gia Huy'} (${e?.grade_level || 'Lớp 7'} - GV: ${e?.teacher_name || 'Ms. Dung'}):\n` +
+          `• Điểm 5 kỹ năng: Nghe ${e?.listening_score || 9.0} | Nói ${e?.speaking_score || 8.5} | Đọc ${e?.reading_score || 7.5} | Viết ${e?.writing_score || 7.0} | Ngữ pháp ${e?.grammar_vocab_score || 8.0}\n` +
+          `• Điểm mạnh: ${e?.strengths || 'Phát âm chuẩn, phản xạ nghe nói tự nhiên.'}\n` +
+          `• Hướng rèn thêm: ${e?.action_plan || 'Luyện thêm bài tập viết câu & ngữ pháp 15p mỗi ngày.'}`;
       } else {
         messageText =
-          `📊 [BÁO CÁO ĐỐI SOÁT CHẤT LƯỢNG CA DẠY 5 PHẦN — TIMBK.IO.VN]\n` +
-          `🏫 Lớp 7 - Global Success & KET A2 (Thứ Hai & Thứ Năm 18:00 - 19:30)\n` +
-          `1️⃣ Tỷ lệ BTVN & Quiz đáp ứng: 92% đạt chuẩn\n` +
-          `2️⃣ Học liệu: Kho Tri Thức Obsidian + Đề cương Google Drive Lớp 7\n` +
-          `3️⃣ Hiệu quả giảng dạy: Xuất sắc — Học sinh nắm vững cấu trúc trọng tâm\n` +
-          `4️⃣ Tương tác phụ huynh: Đã kết nối 2 chiều qua CRAG Bot @bot.ynKabJAc\n` +
-          `5️⃣ Lộ trình: Tiếp tục nâng cao kỹ năng Viết & Nghe KET A2.`;
+          `📊 Tổng kết ca dạy Lớp 7 - Global Success & KET A2 (Thứ Hai & Thứ Năm, 18:00 - 19:30):\n` +
+          `• Hoàn thành BTVN & Quiz: 92% học sinh đạt yêu cầu\n` +
+          `• Tài liệu đã giảng: Unit 7 Traffic + Đề cương Google Drive Lớp 7\n` +
+          `• Ghi chú chuyên môn: Học sinh nắm chắc cấu trúc trọng tâm, buổi tới tăng thêm 15 phút luyện Viết câu KET A2.`;
       }
     }
 
@@ -321,7 +338,7 @@ export async function POST({ request, platform }) {
     if (db) {
       await db.prepare(`
         INSERT INTO zalo_bot_messages (chat_id, sender_name, direction, content, ai_model)
-        VALUES (?, 'Auto-Notify Cron (CRAG)', 'out', ?, ?)
+        VALUES (?, 'Lớp Cô Dung', 'out', ?, ?)
       `).bind(targetChatId, messageText, `auto_rule:${ruleId}`).run().catch(() => {});
     }
 
@@ -331,12 +348,11 @@ export async function POST({ request, platform }) {
       chat_id: targetChatId,
       message_sent: messageText,
       message: zRes.ok && zData?.ok
-        ? `🚀 Đã bắn thông báo tự động (${ruleId}) về Zalo Chat ID ${targetChatId} thành công!`
-        : `⚠️ Không gửi được qua Zalo: ${zData?.description || 'Lỗi kết nối'}`
+        ? `Đã gửi thông báo (${ruleId}) về Zalo ${targetChatId}`
+        : `Không gửi được qua Zalo: ${zData?.description || 'Lỗi kết nối'}`
     });
   }
 
-  
   // 4. Test & Dispatch Rich Media Webhook (sendPhoto / url_img, sendVoice, Video Lesson)
   if (action === 'dispatch_media_webhook') {
     const mediaType = String(body.media_type || 'qr_photo').trim();
@@ -358,7 +374,7 @@ export async function POST({ request, platform }) {
         body: JSON.stringify({
           chat_id: targetChatId,
           photo: safePhotoUrl,
-          caption: (caption || '💳 Ảnh Mã QR Học Phí VietQR — Bắn trực tiếp qua endpoint /sendPhoto (CHAT_PHOTO)').slice(0, 500)
+          caption: (caption || 'Mã QR đóng học phí (quét trực tiếp trên ứng dụng ngân hàng)').slice(0, 500)
         })
       });
       const zData = await zRes.json().catch(() => ({}));
@@ -370,8 +386,8 @@ export async function POST({ request, platform }) {
         safe_photo_url: safePhotoUrl,
         zalo_response: zData,
         message: zRes.ok && zData?.ok
-          ? `📸 Đã bắn trực tiếp Ảnh QR (CHAT_PHOTO • ID: ${zData.result?.message_id}) về Zalo ${targetChatId} thành công!`
-          : `❌ Lỗi bắn ảnh (/sendPhoto): ${zData?.description || 'Không hợp lệ'}`
+          ? `Đã gửi thẻ ảnh QR (ID: ${zData.result?.message_id}) về Zalo ${targetChatId}`
+          : `Lỗi gửi ảnh (/sendPhoto): ${zData?.description || 'Không hợp lệ'}`
       });
     }
 
@@ -391,21 +407,21 @@ export async function POST({ request, platform }) {
         endpoint: '/sendVoice',
         zalo_response: zData,
         message: zRes.ok && zData?.ok
-          ? `🔊 Đã bắn file âm thanh luyện nghe (/sendVoice) về Zalo ${targetChatId} thành công!`
-          : `⚠️ Phản hồi /sendVoice: ${zData?.description || 'Cần URL file .aac/.m4a/.mp3 chuẩn Zalo'}`
+          ? `Đã gửi file âm thanh luyện nghe về Zalo ${targetChatId}`
+          : `Phản hồi /sendVoice: ${zData?.description || 'Cần URL file âm thanh hợp lệ'}`
       });
     }
 
     if (mediaType === 'video_lesson') {
       const videoUrl = rawUrl || 'https://www.youtube.com/watch?v=jul2urONzOQ';
       const thumbUrl = 'https://wsrv.nl/?url=' + encodeURIComponent('https://img.youtube.com/vi/jul2urONzOQ/maxresdefault.jpg') + '&output=png';
-      const pRes = await fetch(baseUrl + '/sendPhoto', {
+      await fetch(baseUrl + '/sendPhoto', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           chat_id: targetChatId,
           photo: thumbUrl,
-          caption: (caption || '🎬 Video Bài Giảng Tiếng Anh Lớp 7 Global Success — Unit 7: Traffic').slice(0, 500)
+          caption: (caption || 'Bài giảng Tiếng Anh Lớp 7 — Unit 7: Traffic').slice(0, 500)
         })
       });
       const mRes = await fetch(baseUrl + '/sendMessage', {
@@ -413,15 +429,15 @@ export async function POST({ request, platform }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           chat_id: targetChatId,
-          text: `🎬 [VIDEO BÀI GIẢNG & LUYỆN NGHE TIẾNG ANH CÔ DUNG]\n📖 Chủ đề: ${caption || 'Unit 7: Traffic — Phonics & Grammar Used to'}\n▶️ Xem video trực tiếp: ${videoUrl}`
+          text: `🎬 Video bài học: ${caption || 'Unit 7: Traffic — Phonics & Cấu trúc Used to'}\n▶️ Mở xem bài giảng: ${videoUrl}`
         })
       });
       const mData = await mRes.json().catch(() => ({}));
       return json({
         success: Boolean(mRes.ok && mData?.ok),
-        endpoint: '/sendPhoto + /sendMessage (Video Rich Preview)',
+        endpoint: '/sendPhoto + /sendMessage',
         zalo_response: mData,
-        message: `🎬 Đã bắn Thumbnail + Video bài giảng trực tiếp về Zalo ${targetChatId} thành công!`
+        message: `Đã gửi ảnh bìa + link video bài giảng về Zalo ${targetChatId}`
       });
     }
   }
