@@ -78,7 +78,7 @@ export async function GET({ platform }) {
     try {
       const [subsRes, tracesRes, msgsRes, usersRes, sessRes, billsRes, evalsRes, vaultRes] = await Promise.all([
         db.prepare(`SELECT * FROM zalo_bot_subscribers ORDER BY updated_at DESC LIMIT 30`).all().catch(() => ({ results: [] })),
-        db.prepare(`SELECT * FROM crag_execution_traces ORDER BY created_at DESC LIMIT 25`).all().catch(() => ({ results: [] })),
+        db.prepare(`SELECT * FROM crag_execution_traces ORDER BY rowid DESC LIMIT 25`).all().catch(() => ({ results: [] })),
         db.prepare(`SELECT * FROM zalo_bot_messages ORDER BY id DESC LIMIT 25`).all().catch(() => ({ results: [] })),
         db.prepare(`SELECT id, username, name, role, phone, status, metadata FROM users ORDER BY created_at ASC LIMIT 50`).all().catch(() => ({ results: [] })),
         db.prepare(`SELECT COUNT(*) as cnt FROM class_sessions`).first().catch(() => ({ cnt: 0 })),

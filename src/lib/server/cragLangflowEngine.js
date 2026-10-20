@@ -386,12 +386,12 @@ export async function runCragLangflowPipeline({
         content: String(m.content).slice(0, 600)
       }));
 
-    // Load last 3 traces of this chatId to remember which student / grade / intent was just discussed
+    // Load last 3 traces of this chatId (ordered by rowid DESC so newest insert is always first)
     const recentTracesRes = await db.prepare(`
       SELECT detected_intents, extracted_entities, query_text
       FROM crag_execution_traces
       WHERE chat_id = ?
-      ORDER BY created_at DESC
+      ORDER BY rowid DESC
       LIMIT 3
     `).bind(chatId).all().catch(() => ({ results: [] }));
 
@@ -457,10 +457,10 @@ export async function runCragLangflowPipeline({
   // =========================================================================
   const t2 = Date.now();
   const detectedIntents = [];
-  if (/(lich hoc|thoi khoa bieu|tkb|ca hoc|may gio|thu may|buoi hoc|phong hoc|diem danh|di muon|vang|co mat|di hoc)/i.test(normText)) {
+  if (/(lich hoc|thoi khoa bieu|tkb|ca hoc|may gio|thu may|buoi hoc|buoi nao|hoc nhung buoi|phong hoc|diem danh|di muon|vang|co mat|di hoc)/i.test(normText)) {
     detectedIntents.push('schedule_attendance');
   }
-  if (/(hoc phi|tien hoc|hoa don|vietqr|qr|dong tien|chuyen khoan|sao|doi sao|khau tru|cong no|thanh toan)/i.test(normText)) {
+  if (/(hoc phi|tien hoc|hoa don|vietqr|qr|dong tien|chuyen khoan|doi sao|tru sao|so sao|sao thuong|khau tru|cong no|thanh toan)/i.test(normText)) {
     detectedIntents.push('tuition_finance');
   }
   if (/(ket qua|diem|danh gia|btvn|bai tap|quiz|kiem tra|nhan xet|hoc luc|tien bo|5 ky nang|ky nang)/i.test(normText)) {
