@@ -349,6 +349,23 @@
     (async () => {
       const existingByTerm = new Map(words.map((w) => [String(w.term || '').toLowerCase().trim(), w]));
       let addedCount = 0;
+
+      // 1. Đồng bộ trực tiếp từ bảng D1 cambridge_vocabulary (/api/vocabulary)
+      try {
+        const d1Res = await fetch('/api/vocabulary');
+        const d1Data = await d1Res.json().catch(() => ({}));
+        if (d1Data.success && Array.isArray(d1Data.words)) {
+          for (const dw of d1Data.words) {
+            if (!dw?.term) continue;
+            const key = String(dw.term).toLowerCase().trim();
+            const prev = existingByTerm.get(key) || {};
+            existingByTerm.set(key, { ...prev, ...dw });
+            addedCount++;
+          }
+        }
+      } catch {}
+
+      // 2. Bổ sung thêm từ vựng mở rộng từ /vocab_m0.json & /vocab_m1.json
       for (let i = 0; i < 2; i++) {
         const chunk = await fetchChunk(i);
         for (const item of chunk) {

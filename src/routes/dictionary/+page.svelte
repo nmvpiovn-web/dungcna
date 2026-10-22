@@ -63,9 +63,32 @@
  return null;
  }
 
+ let d1SyncedCount = $state(0);
+
+ async function syncVocabularyFromD1() {
+  try {
+   const res = await fetch('/api/vocabulary');
+   const vData = await res.json().catch(() => ({}));
+   if (vData.success && Array.isArray(vData.words) && vData.words.length > 0) {
+    d1SyncedCount = Number(vData.total_d1_rows || vData.words.length);
+    const byKey = new Map();
+    for (const w of words) {
+     if (w?.term) byKey.set(String(w.term).toLowerCase(), w);
+    }
+    for (const dw of vData.words) {
+     if (!dw?.term) continue;
+     const k = String(dw.term).toLowerCase();
+     byKey.set(k, { ...(byKey.get(k) || {}), ...dw });
+    }
+    words = Array.from(byKey.values());
+   }
+  } catch {}
+ }
+
  // Load persistence and auto-scope vocabulary to student enrolled grade
  onMount(() => {
  currentUser = getCurrentUser();
+ syncVocabularyFromD1();
  if (currentUser?.role === 'student') {
  let g = currentUser.grade;
  if (!g && currentUser.metadata) {
@@ -511,6 +534,11 @@
 
  if (created) {
  words.unshift(created);
+ fetch('/api/vocabulary', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ action: 'add_word', ...created })
+ }).catch(() => {});
  showAddModal = false;
  newTerm = '';
  newIpa = '';

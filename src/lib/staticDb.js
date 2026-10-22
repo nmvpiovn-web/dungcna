@@ -3,11 +3,101 @@ import questionsData from '$lib/data/questions.json';
 import unitsData from '$lib/data/units.json';
 import grammarTopicsData from '$lib/data/grammar_topics.json';
 import vocabularyDbData from '$lib/data/vocabulary_db.json';
+import cambridgeVocabularyData from '$lib/data/cambridge_vocabulary.json';
 import examsData from '$lib/data/exams.json';
 
 const STORAGE_KEY_PROGRESS = 'tienganh7_user_progress';
 const STORAGE_KEY_SCORES = 'tienganh7_game_scores';
 const STORAGE_KEY_CUSTOM_WORDS = 'tienganh7_custom_words';
+
+export function normalizeUnifiedWord(raw) {
+  if (!raw) return null;
+  const term = String(raw.term || raw.word || '').trim();
+  if (!term) return null;
+  const ipa = String(raw.ipa || '').trim();
+  const vowelTokens = ipa.match(/(?:iː|uː|ɑː|ɔː|ɜː|eɪ|aɪ|ɔɪ|aʊ|əʊ|ɪə|eə|ʊə|ɪ|e|æ|ʌ|ɒ|ʊ|ə|i|u)/g) || [];
+  const consonantTokens = ipa.match(/(?:tʃ|dʒ|θ|ð|ʃ|ʒ|ŋ|p|b|t|d|k|ɡ|g|f|v|s|z|h|m|n|l|r|j|w)/g) || [];
+
+  let vowelsDetail = raw.vowels_detail;
+  if (!vowelsDetail || vowelsDetail === 'Nguyên âm chuẩn IPA' || vowelsDetail.includes('Đang cập nhật')) {
+    const uniqV = [...new Set(vowelTokens)];
+    vowelsDetail = uniqV.length > 0
+      ? `Tổ hợp nguyên âm IPA: /${uniqV.join('/, /')}/ — mở khẩu hình rõ ở âm tiết mang dấu trọng âm chính (ˈ).`
+      : `Nguyên âm chuẩn Cambridge IPA cho "${term}" (${ipa || '/.../'}).`;
+  }
+
+  let consonantsDetail = raw.consonants_detail;
+  if (!consonantsDetail || consonantsDetail === 'Phụ âm chuẩn IPA' || consonantsDetail.includes('Đang cập nhật')) {
+    const uniqC = [...new Set(consonantTokens)];
+    consonantsDetail = uniqC.length > 0
+      ? `Phụ âm cấu thành: /${uniqC.join('/, /')}/ — bật rõ phụ âm đầu và giữ âm đuôi (ending sound) chuẩn bản xứ.`
+      : `Phụ âm đầu và âm cuối chuẩn Cambridge cho "${term}".`;
+  }
+
+  const phonicsNote = raw.phonics_note || (
+    ipa.includes('ˈ')
+      ? `Chú ý nhấn trọng âm chính tại vị trí dấu (ˈ) trong phiên âm ${ipa}.`
+      : `Phát âm liền mạch các âm tiết theo chuẩn Cambridge (${ipa || term}).`
+  );
+
+  const wordCount = term.split(/\s+/).filter(Boolean).length;
+  const syllables = raw.syllables || (
+    wordCount > 1 ? `${term} (Cụm ${wordCount} từ)` : `${term} (${Math.max(1, vowelTokens.length)} âm tiết)`
+  );
+
+  const cefr = String(raw.cefr_level || raw.cefr || '').trim() || 'A2';
+  const tier = String(raw.cambridge_level || raw.cambridge_tier || '').trim() || (
+    cefr === 'C1' ? 'CAE_C1' : cefr === 'B2' ? 'FCE_B2' : cefr === 'B1' ? 'PET_B1' : 'KET_A2'
+  );
+  const grade = String(raw.grade || raw.grade_suitability || 'Lớp 7').trim();
+
+  return {
+    ...raw,
+    id: raw.id || `voc_${term.toLowerCase().replace(/[^a-z0-9]+/g, '_')}`,
+    term,
+    word: term,
+    ipa,
+    pos: raw.pos || 'noun',
+    cefr_level: cefr,
+    cambridge_level: tier,
+    cambridge_tier: tier,
+    meaning_vi: String(raw.meaning_vi || '').trim(),
+    example_en: String(raw.example_en || '').trim(),
+    example_vi: String(raw.example_vi || '').trim(),
+    collocations: raw.collocations || '',
+    grade,
+    grade_suitability: raw.grade_suitability || grade,
+    unit_id: raw.unit_id || 'unit1',
+    category: raw.category || 'Vocabulary',
+    vowels_detail: vowelsDetail,
+    consonants_detail: consonantsDetail,
+    phonics_note: phonicsNote,
+    syllables,
+    source_repo: raw.source_repo || 'cambridge-global-success',
+    status: raw.status || 'new'
+  };
+}
+
+export function getUnifiedVocabularyPool() {
+  const byTerm = new Map();
+  const sources = [
+    ...(Array.isArray(wordsData) ? wordsData : []),
+    ...(Array.isArray(vocabularyDbData) ? vocabularyDbData : []),
+    ...(Array.isArray(cambridgeVocabularyData) ? cambridgeVocabularyData : [])
+  ];
+  for (const raw of sources) {
+    const norm = normalizeUnifiedWord(raw);
+    if (!norm) continue;
+    const key = norm.term.toLowerCase();
+    const existing = byTerm.get(key);
+    if (!existing) {
+      byTerm.set(key, norm);
+    } else {
+      byTerm.set(key, normalizeUnifiedWord({ ...existing, ...raw }));
+    }
+  }
+  return Array.from(byTerm.values());
+}
 
 export function getStaticGrammarTopics({ grade, category, search } = {}) {
   let list = [...grammarTopicsData];
@@ -29,7 +119,7 @@ export function getStaticGrammarTopics({ grade, category, search } = {}) {
 }
 
 export function getStaticVocabularyDB({ grade, category, level, search, limit } = {}) {
-  let list = [...vocabularyDbData];
+  let list = getUnifiedVocabularyPool();
   if (grade && grade !== 'all') {
     list = list.filter(w => (w.grade || '').toLowerCase().includes(grade.toLowerCase()));
   }
@@ -63,9 +153,9 @@ export function getStaticExamsCatalog({ grade, type } = {}) {
   return list;
 }
 
-// Get all words (static default + any user-created custom words)
+// Get all words (unified pool + any user-created custom words)
 export function getStaticWords({ unitId, search, limit, shuffle } = {}) {
-  let list = [...wordsData];
+  let list = getUnifiedVocabularyPool();
 
   // Merge custom words from localStorage if in browser
   if (typeof window !== 'undefined') {
