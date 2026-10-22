@@ -1,7 +1,7 @@
 // Cloudflare Worker: timbk-zalo-webhook (Repository Path: workers/zalo-crag-worker/worker.js)
 // 24/7 Conversational Zalo Bot Gateway with Multi-Turn Context Continuity, 7-Node CRAG & Proactive 10m Class Reminders
 
-const DEFAULT_ZALO_BOT_TOKEN = '2267052943606876676:BohTEeIARkSRcUEqfZLDnvxEjSwPVyNSujkIEWeAYRXoCCljFJwYXhhkDbGIUVwd';
+const DEFAULT_ZALO_BOT_TOKEN = '2950137408122467629:qIytiJpTiFiCxTcamXXhXexdXHdcHDrhZCWwHwHgaUzAOwsJasNhxIqbXYMQwCVP';
 const SUPERADMIN_DEFAULT_CHAT_ID = 'b3845beb38a2d1fc88b3';
 const TIMBK_WEBHOOK_ENDPOINT = 'https://timbk.io.vn/api/zalo-bot/webhook';
 const WORKER_SELF_URL = 'https://timbk-zalo-webhook.tienganh7-sveltekit.workers.dev';
@@ -73,9 +73,9 @@ function toZaloCompatiblePhotoUrl(rawUrl = '', options = {}) {
       .slice(0, 40) || 'HP_T10';
 
     if (options?.download) {
-      return `${WORKER_SELF_URL}/vietqr/${bank}-${account}-${amount}-${safeAddInfo}.png?download=1`;
+      return `https://timbk.io.vn/api/vietqr/${bank}-${account}-${amount}-${safeAddInfo}.png?download=1`;
     }
-    return `${WORKER_SELF_URL}/vietqr/${bank}-${account}-${amount}-${safeAddInfo}.png`;
+    return `https://timbk.io.vn/api/vietqr/${bank}-${account}-${amount}-${safeAddInfo}.png`;
   }
 
   if (clean.includes('api.qrserver.com') || clean.includes('images.unsplash.com') || clean.includes('timbk.io.vn') || clean.includes('workers.dev')) {

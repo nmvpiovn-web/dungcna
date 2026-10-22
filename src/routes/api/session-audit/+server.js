@@ -6,7 +6,7 @@ import { toZaloCompatiblePhotoUrl } from '$lib/server/cragLangflowEngine.js';
 
 export const prerender = false;
 
-const DEFAULT_ZALO_BOT_TOKEN = '2267052943606876676:BohTEeIARkSRcUEqfZLDnvxEjSwPVyNSujkIEWeAYRXoCCljFJwYXhhkDbGIUVwd';
+const DEFAULT_ZALO_BOT_TOKEN = '2950137408122467629:qIytiJpTiFiCxTcamXXhXexdXHdcHDrhZCWwHwHgaUzAOwsJasNhxIqbXYMQwCVP';
 
 function isZaloBotPlatformToken(token) {
   return /^\d{15,22}:[A-Za-z0-9_-]{30,}$/.test(String(token || '').trim());

@@ -1,7 +1,7 @@
 // src/lib/server/cragLangflowEngine.js
 // 7-Node CRAG + Multi-Turn Conversational Memory Engine with Role-Based D1 Access Control (RBAC)
 
-export const DEFAULT_ZALO_BOT_TOKEN = '2267052943606876676:BohTEeIARkSRcUEqfZLDnvxEjSwPVyNSujkIEWeAYRXoCCljFJwYXhhkDbGIUVwd';
+export const DEFAULT_ZALO_BOT_TOKEN = '2950137408122467629:qIytiJpTiFiCxTcamXXhXexdXHdcHDrhZCWwHwHgaUzAOwsJasNhxIqbXYMQwCVP';
 export const SUPERADMIN_DEFAULT_CHAT_ID = 'b3845beb38a2d1fc88b3'; // Hải (SuperAdmin)
 
 export const DEFAULT_LANGFLOW_NODES = [
@@ -201,7 +201,7 @@ export function toZaloCompatiblePhotoUrl(rawUrl = '', options = {}) {
     if (options?.download) {
       return `https://timbk.io.vn/api/vietqr/${bank}-${account}-${amount}-${safeAddInfo}.png?download=1`;
     }
-    return `https://timbk-zalo-webhook.tienganh7-sveltekit.workers.dev/vietqr/${bank}-${account}-${amount}-${safeAddInfo}.png`;
+    return `https://timbk.io.vn/api/vietqr/${bank}-${account}-${amount}-${safeAddInfo}.png`;
   }
 
   if (clean.includes('api.qrserver.com') || clean.includes('images.unsplash.com') || clean.includes('timbk.io.vn') || clean.includes('workers.dev')) {
