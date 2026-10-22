@@ -56,6 +56,8 @@
  // Parent-Student Links State (D1)
  let parentLinks = $state([]);
  let parentLinksLoading = $state(false);
+ let marketingCampaigns = $state([]);
+ let campaignLeads = $state([]);
 
  // New / Edit Campus Modal State
  let showAddCampusModal = $state(false);
@@ -98,14 +100,20 @@
   currentUser = getCurrentUser();
   try {
    const headers = getHeaders();
-   const [campRes, notifRes] = await Promise.all([
+   const [campRes, notifRes, mktRes] = await Promise.all([
     fetch('/api/campuses', { headers, credentials: 'include' }),
-    fetch('/api/notifications?role=superadmin', { headers, credentials: 'include' })
+    fetch('/api/notifications?role=superadmin', { headers, credentials: 'include' }),
+    fetch('/api/campaigns', { headers, credentials: 'include' }).catch(() => null)
    ]);
    const campData = await campRes.json().catch(() => ({}));
    const notifData = await notifRes.json().catch(() => ({}));
+   const mktData = mktRes ? await mktRes.json().catch(() => ({})) : {};
    if (campData.success) campuses = campData.campuses || [];
    if (notifData.success) events = notifData.notifications || [];
+   if (mktData.success) {
+    marketingCampaigns = mktData.campaigns || [];
+    campaignLeads = mktData.recent_leads || [];
+   }
   } catch (e) {
    console.error('Failed to load AdminCP data:', e);
   } finally {
@@ -858,6 +866,7 @@
      <div class="flex flex-wrap items-center gap-2">
       {#each [
        ['campuses', `🏢 Cơ Sở Học (${campuses.length})`],
+       ['campaigns', `🎃 Chiến Dịch Marketing (${marketingCampaigns.length || 2})`],
        ['reminders', '⚡ Nhắc Nhở Chéo'],
        ['streams', `📡 Nhật Ký Thông Báo (${events.length})`],
        ['theme', '🎨 Giao Diện (Theme)']
@@ -927,6 +936,52 @@
         </div>
        </div>
       {/each}
+     </div>
+    {:else if subTabSystem === 'campaigns'}
+     <div class="p-5 rounded-2xl bg-white border border-stone-200 space-y-4 shadow-xs text-xs">
+      <div class="flex flex-wrap items-center justify-between gap-2 border-b border-stone-200 pb-3">
+       <div>
+        <h2 class="text-base font-black text-stone-900">🎃 Quản Trị Chiến Dịch Popup Marketing &amp; Lễ Hội Halloween (D1)</h2>
+        <p class="text-xs text-stone-500">Điều khiển các Popup chào mời, học bổng Sao thưởng theo mùa lễ hội (Halloween 31/10, Tuyển sinh KET/PET/IELTS) và danh sách Phụ huynh đăng ký.</p>
+       </div>
+       <span class="px-3 py-1 rounded-full bg-orange-100 text-orange-800 border border-orange-300 font-bold">
+        🎁 {campaignLeads.length} lượt nhận học bổng
+       </span>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+       {#each marketingCampaigns as mc (mc.id)}
+        <div class="p-4 rounded-2xl bg-stone-50 border border-stone-200 space-y-2 flex flex-col justify-between">
+         <div class="space-y-1">
+          <div class="flex items-center justify-between gap-2">
+           <span class="px-2.5 py-0.5 rounded-full bg-orange-500 text-white font-black text-[10px]">{mc.badge_text}</span>
+           <span class="font-mono text-[10px] text-stone-500">Mã: {mc.discount_code} (+{mc.bonus_stars}⭐)</span>
+          </div>
+          <h3 class="text-sm font-black text-stone-900">{mc.title}</h3>
+          <p class="text-stone-600">{mc.offer_highlight}</p>
+         </div>
+         <div class="pt-3 border-t border-stone-200 flex items-center justify-between">
+          <span class="font-bold {mc.is_active ? 'text-emerald-700' : 'text-stone-400'}">
+           {mc.is_active ? '🟢 Đang kích hoạt Popup' : '⚪ Đang tạm ẩn'}
+          </span>
+          <button
+           type="button"
+           onclick={async () => {
+            await fetch('/api/campaigns', {
+             method: 'POST',
+             headers: getHeaders(),
+             body: JSON.stringify({ action: 'toggle_campaign', id: mc.id, is_active: !mc.is_active })
+            });
+            showNotice(`🎃 Đã cập nhật trạng thái chiến dịch "${mc.id}" trên D1!`);
+            await loadData();
+           }}
+           class="px-3 py-1.5 rounded-xl bg-white hover:bg-stone-100 border border-stone-300 font-bold text-stone-800"
+          >
+           {mc.is_active ? 'Tạm ẩn Popup' : 'Kích hoạt Popup'}
+          </button>
+         </div>
+        </div>
+       {/each}
+      </div>
      </div>
     {:else if subTabSystem === 'reminders'}
      <div class="max-w-2xl mx-auto p-6 rounded-2xl bg-white border border-stone-200 space-y-4 shadow-xs">

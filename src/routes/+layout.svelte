@@ -33,6 +33,7 @@
  import ZaloCta from '$lib/components/ui/ZaloCta.svelte';
  import ThemeStudio from '$lib/components/ThemeStudio.svelte';
  import PersonalThemeModal from '$lib/components/PersonalThemeModal.svelte';
+ import HalloweenMarketingPopup from '$lib/components/HalloweenMarketingPopup.svelte';
  import { loadLocal } from '$lib/themeStudio.js';
 
  let { children } = $props();
@@ -1416,4 +1417,7 @@
 
  <!-- Universal Role-based Notification Center Modal -->
  <NotificationCenterModal bind:isOpen={showNotificationModal} on:read={() => loadUserNotificationsCount()} />
+
+ <!-- Seasonal & Campaign Marketing Popup (Halloween 2026 & Cambridge Campaigns) -->
+ <HalloweenMarketingPopup />
 </div>
