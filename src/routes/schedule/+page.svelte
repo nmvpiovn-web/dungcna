@@ -552,72 +552,68 @@
  </div>
  {/if}
 
- <!-- Header Banner -->
- <div class="rounded-lg bg-white border border-slate-200 p-6 md:p-8 shadow-sm relative overflow-hidden">
- <div class="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
- <div class="space-y-2">
- <div class="flex items-center gap-2">
- <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-700 border border-emerald-500/30">
- HỆ THỐNG THỜI KHÓA BIỂU &amp; ĐIỂM DANH 2026
+ <!-- Compact Duolingo-Style Tactile Command Header -->
+ <div class="rounded-2xl bg-white border-2 border-b-[3px] border-stone-200 p-4 sm:p-5 shadow-xs relative overflow-hidden">
+ <div class="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+ <div class="space-y-1">
+ <div class="flex flex-wrap items-center gap-1.5">
+ <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/20 text-emerald-700 border border-emerald-500/30">
+ STUDIO THỜI KHÓA BIỂU • BÀI GIẢNG &amp; ĐIỂM DANH
  </span>
- <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-500/20 text-indigo-700 border border-indigo-500/30">
- Thông Báo Phụ Huynh 10 Phút Trước Ca Học
+ <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+ ⏰ Báo Zalo Phụ Huynh Trước 10 Phút
  </span>
- <a href="/admin?tab=webhooks" data-testid="schedule-zalo-bot-status-pill" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/25 text-emerald-700 border border-emerald-400/50 hover:bg-emerald-500/35 transition-colors flex items-center gap-1">
+ <a href="/admin?tab=webhooks" data-testid="schedule-zalo-bot-status-pill" class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/25 text-emerald-700 border border-emerald-400/50 hover:bg-emerald-500/35 transition-colors flex items-center gap-1">
  <span>🤖</span>
  <span>Zalo Bot: Bot giá cả (@bot.ynKabJAc) • Đã nối Token</span>
  </a>
  </div>
- <h1 class="text-2xl md:text-3xl font-heading font-semibold text-slate-900">
- Lịch Học, Thời Khóa Biểu &amp; Sổ Đầu Bài Tức Thời 📅
+ <h1 class="text-xl sm:text-2xl font-heading font-extrabold text-slate-900">
+ Lịch Học, Gắn Bài Giảng (Link/Drive) &amp; Tổng Kết Ca Dạy 📅
  </h1>
- <p class="text-xs sm:text-sm text-slate-700 max-w-2xl leading-relaxed">
- Quản lý toàn bộ ca học tại nhà Cô Dung và trực tuyến. Tự động gửi tin nhắn Zalo cho phụ huynh đưa đón trước 10 phút,
- giáo viên điểm danh trực tiếp và gán học sinh vào bài kiểm tra theo sĩ số có mặt thực tế.
- </p>
  </div>
 
  <!-- Quick Action Buttons -->
- <div class="flex flex-wrap items-center gap-2.5">
+ <div class="flex flex-wrap items-center gap-2">
  {#if currentUser && isTeacherOrAdmin(currentUser)}
  <a
  href="/session-audit"
- class="px-3.5 py-2.5 rounded-md bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-md transition-all flex items-center gap-1.5"
+ class="px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white border-2 border-b-[3px] border-indigo-800 font-extrabold text-xs shadow-xs transition-all flex items-center gap-1.5"
  title="Đối soát tài liệu Kho Tri Thức, Drive, Tỷ lệ đáp ứng BTVN & Quiz theo từng ca học"
  >
- <span>📊</span> <span>Đối Soát Chất Lượng Ca Dạy</span>
+ <span>📊</span> <span>Đối Soát &amp; Tổng Kết Ca</span>
  </a>
 
  <button
  type="button"
  onclick={() => showLeaveModal = true}
- class="px-3.5 py-2.5 rounded-md bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs shadow-md transition-all flex items-center gap-1.5"
+ class="px-3 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 border-2 border-b-[3px] border-amber-700 font-extrabold text-xs shadow-xs transition-all flex items-center gap-1.5"
  title="Đăng ký xin nghỉ và đề nghị đồng nghiệp dạy thay 2 bước"
  >
- <span>📝</span> <span>Xin Nghỉ &amp; Dạy Thay</span>
+ <span>📝</span> <span>Xin Nghỉ / Dạy Thay</span>
  </button>
 
  <button
  type="button"
  onclick={() => showAdvanceModal = true}
- class="px-3.5 py-2.5 rounded-md bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs shadow-md transition-all flex items-center gap-1.5"
+ class="px-3 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white border-2 border-b-[3px] border-teal-800 font-extrabold text-xs shadow-xs transition-all flex items-center gap-1.5"
  title="Đề nghị ứng lương cho kỳ hiện tại"
  >
- <span>💰</span> <span>Đề Nghị Ứng Lương</span>
+ <span>💰</span> <span>Ứng Lương</span>
  </button>
 
  <button
  type="button"
  onclick={() => openStaffManagement()}
- class="px-3.5 py-2.5 rounded-md bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs shadow-md transition-all flex items-center gap-1.5"
+ class="px-3 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white border-2 border-b-[3px] border-purple-800 font-extrabold text-xs shadow-xs transition-all flex items-center gap-1.5"
  >
- <span>👨‍🏫 Phân Quyền Leader &amp; Lương</span>
+ <span>👨‍🏫 Phân Quyền &amp; Lương</span>
  </button>
 
  <button
  type="button"
  onclick={() => { sessionPreset = null; handleOpenEdit(null); }}
- class="px-3.5 py-2.5 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md shadow-emerald-600/20 transition-all flex items-center gap-1.5"
+ class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white border-2 border-b-[3px] border-emerald-800 font-extrabold text-xs shadow-xs transition-all flex items-center gap-1.5"
  >
  <span>➕ Thêm Buổi Học Mới</span>
  </button>
@@ -670,85 +666,65 @@
  </div>
  {/if}
 
- <!-- Role Notification Callout (Example: 6h học -> 5h50 thông báo) -->
- <div class="p-4 rounded-lg bg-amber-50 border border-amber-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
- <div class="flex items-center gap-3">
- <div class="w-10 h-10 rounded-md bg-amber-500/20 text-amber-700 flex items-center justify-center text-xl font-bold flex-shrink-0">
- ⏰
- </div>
- <div>
- <div class="font-bold text-slate-900">
- Cơ Chế Báo Lịch Đưa Đón Tự Động (API Schedule Webhook):
- </div>
- <div class="text-slate-600 mt-0.5">
- Ví dụ ca học <strong>18:00 tại nhà Cô Dung</strong> sẽ tự động bắn tin nhắn Zalo lúc <strong>17:50 (trước 10 phút)</strong> để bố mẹ chuẩn bị đưa đón các con đúng giờ!
- </div>
- </div>
- </div>
- <span class="px-3 py-1 rounded-md bg-amber-500 text-white font-bold text-[11px] whitespace-nowrap shadow-sm">
- Đang Hoạt Động
- </span>
- </div>
-
- <!-- ===== THANH SUB-MENU & THẺ NGHIỆP VỤ ĐIỂM DANH - LỊCH HỌC (GOM TỪ SLIDE-BAR VỀ TRỰC DIỆN) ===== -->
- <section data-testid="schedule-business-hub-cards" aria-label="Phân hệ nghiệp vụ Điểm danh & Thời khóa biểu" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5">
+ <!-- ===== THANH SUB-MENU NGHIỆP VỤ ĐIỂM DANH - LỊCH HỌC (DUOLINGO TACTILE SEGMENTED BAR) ===== -->
+ <section data-testid="schedule-business-hub-cards" aria-label="Phân hệ nghiệp vụ Điểm danh & Thời khóa biểu" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
  <button
  type="button"
  onclick={() => scheduleViewMode = 'all'}
- class="p-3.5 rounded-xl border-2 text-left transition-all flex items-start gap-2.5 {scheduleViewMode === 'all' ? 'bg-emerald-50 border-emerald-600 shadow-xs' : 'bg-white border-slate-200 hover:border-emerald-300'}"
+ class="px-3 py-2.5 rounded-xl border-2 border-b-[3px] text-left transition-all flex items-center gap-2 {scheduleViewMode === 'all' ? 'bg-emerald-50 border-emerald-600 shadow-xs' : 'bg-white border-stone-200 hover:border-emerald-300'}"
  >
- <span class="text-xl">🌟</span>
+ <span class="text-base">🌟</span>
  <div class="min-w-0">
- <div class="text-xs font-extrabold text-slate-900">Tổng Quan ({sessions.length} Ca)</div>
- <div class="text-[11px] text-slate-500 mt-0.5">Xem cả Lịch tuần &amp; Thẻ điểm danh</div>
+ <div class="text-xs font-extrabold text-slate-900 truncate">Tổng Quan ({sessions.length} Ca)</div>
+ <div class="text-[10px] text-slate-500 truncate">Lịch tuần &amp; Thẻ ca học</div>
  </div>
  </button>
 
  <button
  type="button"
  onclick={() => scheduleViewMode = 'rollcall'}
- class="p-3.5 rounded-xl border-2 text-left transition-all flex items-start gap-2.5 {scheduleViewMode === 'rollcall' ? 'bg-emerald-50 border-emerald-600 shadow-xs' : 'bg-white border-slate-200 hover:border-emerald-300'}"
+ class="px-3 py-2.5 rounded-xl border-2 border-b-[3px] text-left transition-all flex items-center gap-2 {scheduleViewMode === 'rollcall' ? 'bg-emerald-50 border-emerald-600 shadow-xs' : 'bg-white border-stone-200 hover:border-emerald-300'}"
  >
- <span class="text-xl">📋</span>
+ <span class="text-base">📋</span>
  <div class="min-w-0">
- <div class="text-xs font-extrabold text-slate-900">Bảng Điểm Danh Nhanh</div>
- <div class="text-[11px] text-slate-500 mt-0.5">Điểm danh 1 chạm &amp; báo Zalo phụ huynh</div>
+ <div class="text-xs font-extrabold text-slate-900 truncate">Bảng Điểm Danh Nhanh</div>
+ <div class="text-[10px] text-slate-500 truncate">Điểm danh 1 chạm &amp; Zalo</div>
  </div>
  </button>
 
  <button
  type="button"
  onclick={() => scheduleViewMode = 'calendar'}
- class="p-3.5 rounded-xl border-2 text-left transition-all flex items-start gap-2.5 {scheduleViewMode === 'calendar' ? 'bg-emerald-50 border-emerald-600 shadow-xs' : 'bg-white border-slate-200 hover:border-emerald-300'}"
+ class="px-3 py-2.5 rounded-xl border-2 border-b-[3px] text-left transition-all flex items-center gap-2 {scheduleViewMode === 'calendar' ? 'bg-emerald-50 border-emerald-600 shadow-xs' : 'bg-white border-stone-200 hover:border-emerald-300'}"
  >
- <span class="text-xl">📅</span>
+ <span class="text-base">📅</span>
  <div class="min-w-0">
- <div class="text-xs font-extrabold text-slate-900">Lịch Học Tuần (7 Ngày)</div>
- <div class="text-[11px] text-slate-500 mt-0.5">Lưới Sáng • Chiều • Tối trực quan</div>
+ <div class="text-xs font-extrabold text-slate-900 truncate">Lịch Học Tuần (7 Ngày)</div>
+ <div class="text-[10px] text-slate-500 truncate">Sáng • Chiều • Tối</div>
  </div>
  </button>
 
  <button
  type="button"
  onclick={() => scheduleViewMode = 'sessions'}
- class="p-3.5 rounded-xl border-2 text-left transition-all flex items-start gap-2.5 {scheduleViewMode === 'sessions' ? 'bg-emerald-50 border-emerald-600 shadow-xs' : 'bg-white border-slate-200 hover:border-emerald-300'}"
+ class="px-3 py-2.5 rounded-xl border-2 border-b-[3px] text-left transition-all flex items-center gap-2 {scheduleViewMode === 'sessions' ? 'bg-emerald-50 border-emerald-600 shadow-xs' : 'bg-white border-stone-200 hover:border-emerald-300'}"
  >
- <span class="text-xl">📚</span>
+ <span class="text-base">📚</span>
  <div class="min-w-0">
- <div class="text-xs font-extrabold text-slate-900">Sổ Đầu Bài &amp; Giao BTVN</div>
- <div class="text-[11px] text-slate-500 mt-0.5">Gắn đề Quiz, học liệu &amp; đối soát ca</div>
+ <div class="text-xs font-extrabold text-slate-900 truncate">Sổ Đầu Bài &amp; Bài Giảng</div>
+ <div class="text-[10px] text-slate-500 truncate">Link, Drive &amp; Tổng kết ca</div>
  </div>
  </button>
 
  <button
  type="button"
  onclick={() => { scheduleViewMode = 'alerts'; inlineLeaderNotifs = getAllLeaderNotifications(); }}
- class="p-3.5 rounded-xl border-2 text-left transition-all flex items-start gap-2.5 {scheduleViewMode === 'alerts' ? 'bg-emerald-50 border-emerald-600 shadow-xs' : 'bg-white border-slate-200 hover:border-emerald-300'}"
+ class="px-3 py-2.5 rounded-xl border-2 border-b-[3px] text-left transition-all flex items-center gap-2 {scheduleViewMode === 'alerts' ? 'bg-emerald-50 border-emerald-600 shadow-xs' : 'bg-white border-stone-200 hover:border-emerald-300'}"
  >
- <span class="text-xl">🔔</span>
+ <span class="text-base">🔔</span>
  <div class="min-w-0">
- <div class="text-xs font-extrabold text-slate-900">Trung Tâm Báo Cáo &amp; Cảnh Báo</div>
- <div class="text-[11px] text-slate-500 mt-0.5">Gom thẻ cảnh báo từ Slide-bar về đây</div>
+ <div class="text-xs font-extrabold text-slate-900 truncate">Báo Cáo &amp; Cảnh Báo</div>
+ <div class="text-[10px] text-slate-500 truncate">Cảnh báo lịch &amp; học phí</div>
  </div>
  </button>
  </section>
@@ -1115,8 +1091,21 @@
  📖 <strong>Chủ đề:</strong> {s.subject_topic}
  </p>
 
- {#if auditInfo?.materials && (auditInfo.materials.vault_article_title || auditInfo.materials.drive_file_name)}
- <div class="p-2 rounded-md bg-indigo-50/60 border border-indigo-100 text-[11px] text-indigo-950 space-y-0.5">
+ {#if auditInfo?.materials && (auditInfo.materials.vault_article_title || auditInfo.materials.drive_file_name || auditInfo.materials.drive_file_url)}
+ <div class="p-2 rounded-xl bg-indigo-50/70 border border-indigo-200 text-[11px] text-indigo-950 space-y-1">
+ {#if auditInfo.materials.drive_file_url}
+ <div class="flex items-center justify-between gap-2">
+   <span class="font-bold text-indigo-900 truncate">🔗 Bài giảng theo Link đã gắn</span>
+   <a
+     href={auditInfo.materials.drive_file_url}
+     target="_blank"
+     rel="noopener noreferrer"
+     class="px-2 py-0.5 rounded bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-[10px] whitespace-nowrap"
+   >
+     ↗ Mở Link
+   </a>
+ </div>
+ {/if}
  {#if auditInfo.materials.vault_article_title}
  <div class="break-words">🧠 <strong>Kho Tri Thức:</strong> {auditInfo.materials.vault_article_title}</div>
  {/if}

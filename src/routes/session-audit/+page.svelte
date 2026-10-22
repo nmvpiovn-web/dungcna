@@ -39,6 +39,7 @@
 
   // Selected Session for Deep Audit & Editing
   let selectedSessionId = $state('');
+  let activeInspectorTab = $state('materials'); // 'materials' | 'summary' | 'interactions' | 'all'
   let editForm = $state({
     session_id: '',
     vault_article_id: '',
@@ -446,42 +447,38 @@ ${editForm.roadmap_recommendation || d.internal_interaction_and_roadmap.roadmap_
     </div>
   {/if}
 
-  <!-- Hero Banner -->
-  <div class="rounded-2xl bg-white border border-slate-200 p-6 md:p-8 text-slate-900 shadow-md">
-    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-      <div class="space-y-2">
-        <div class="flex flex-wrap items-center gap-2">
-          <span class="px-3 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/20 text-emerald-700 border border-emerald-500/30">
-            TRUNG TÂM ĐỐI SOÁT &amp; HỒI QUY CHẤT LƯỢNG CA DẠY
+  <!-- Compact Duolingo-Style Tactile Workspace Header + KPI Strip -->
+  <div class="rounded-2xl bg-white border-2 border-b-[3px] border-stone-200 p-4 sm:p-5 text-slate-900 shadow-xs space-y-4">
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+      <div class="space-y-1">
+        <div class="flex flex-wrap items-center gap-1.5">
+          <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200">
+            STUDIO BÀI GIẢNG &amp; TỔNG KẾT CA DẠY
           </span>
-          <span class="px-3 py-0.5 rounded-full text-[11px] font-bold bg-indigo-500/20 text-indigo-700 border border-indigo-500/30">
-            Kho Tri Thức ↔ Drive ↔ Ca Học ↔ Điểm Danh ↔ BTVN ↔ Quiz
+          <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+            Link Bài Giảng ↔ Google Drive ↔ Nguồn Dán ↔ Kho Tri Thức ↔ Tổng Kết Ca
           </span>
           {#if catalogs.bot_configs?.[0]}
-            <span class="px-3 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/20 text-amber-700 border border-amber-500/30">
-              🟢 {catalogs.bot_configs[0].name || 'Bot Zalo Đã Kết Nối'} ({catalogs.bot_configs[0].masked_token || 'Token Active'})
+            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+              🟢 {catalogs.bot_configs[0].name || 'Bot Zalo Đã Kết Nối'}
             </span>
           {/if}
         </div>
-        <h1 class="text-2xl md:text-3xl font-bold tracking-tight">
-          Bộ Quản Lý, Đánh Giá Hiệu Quả &amp; Đối Soát Học Liệu Ca Dạy 📊
+        <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight text-stone-900">
+          Quản Lý Bài Giảng (Link • Drive • Nguồn Dán) &amp; Tổng Kết Chất Lượng Ca Dạy 📊
         </h1>
-        <p class="text-xs sm:text-sm text-slate-700 max-w-3xl leading-relaxed">
-          Theo dõi từng ca học đang sử dụng giáo án nào từ Kho Tri Thức &amp; Google Drive, kiểm tra trạng thái điểm danh (Đúng giờ, Đi muộn, Đủ sĩ số),
-          đo lường tỷ lệ % đáp ứng Bài tập về nhà &amp; Quiz, đối soát tương tác phụ huynh – nội bộ và xuất lộ trình nâng cấp chất lượng giảng dạy.
-        </p>
       </div>
 
-      <div class="flex flex-wrap items-center gap-2.5">
+      <div class="flex flex-wrap items-center gap-2">
         <a
           href="/schedule"
-          class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200/80 text-slate-900 border border-slate-200 text-xs font-bold transition-all"
+          class="px-3.5 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-900 border-2 border-b-[3px] border-stone-300 text-xs font-extrabold transition-all"
         >
-          📅 Về Thời Khóa Biểu
+          📅 Thời Khóa Biểu
         </a>
         <a
           href="/cpanel/teacher"
-          class="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-sm transition-all"
+          class="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white border-2 border-b-[3px] border-indigo-800 text-xs font-extrabold transition-all"
         >
           👩‍🏫 Sổ Giáo Viên &amp; Giao BTVN
         </a>
@@ -489,44 +486,44 @@ ${editForm.roadmap_recommendation || d.internal_interaction_and_roadmap.roadmap_
           type="button"
           data-testid="open-bot-config-btn"
           onclick={() => { showBotConfigModal = true; handleVerifyBotToken(); }}
-          class="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold shadow-sm transition-all"
+          class="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 border-2 border-b-[3px] border-amber-700 text-xs font-extrabold transition-all"
         >
-          🤖 Cấu Hình &amp; Kiểm Tra Bot Zalo
+          🤖 Cấu Hình Bot Zalo
         </button>
       </div>
     </div>
 
-    <!-- Summary KPI Strip -->
-    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mt-6 pt-6 border-t border-slate-200">
-      <div class="p-3.5 rounded-xl bg-slate-100 border border-slate-200">
-        <div class="text-[11px] text-slate-600 font-semibold">Độ Phù Hợp TB</div>
-        <div class="text-2xl font-black text-emerald-700 mt-0.5">{summary.avg_overall_suitability_pct}%</div>
-        <div class="text-[10px] text-slate-600">{summary.total_sessions} ca học đang theo dõi</div>
+    <!-- Compact Tactile KPI Strip -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 pt-3 border-t border-stone-200">
+      <div class="p-2.5 rounded-xl bg-emerald-50/70 border border-emerald-200">
+        <div class="text-[10px] text-emerald-900 font-bold uppercase">Độ Phù Hợp TB</div>
+        <div class="text-xl font-black text-emerald-700">{summary.avg_overall_suitability_pct}%</div>
+        <div class="text-[10px] text-emerald-800">{summary.total_sessions} ca học</div>
       </div>
-      <div class="p-3.5 rounded-xl bg-slate-100 border border-slate-200">
-        <div class="text-[11px] text-slate-600 font-semibold">Đã Điểm Danh ĐỦ</div>
-        <div class="text-2xl font-black text-teal-700 mt-0.5">{summary.roll_call_complete_count}</div>
-        <div class="text-[10px] text-slate-600">Thiếu: {summary.roll_call_incomplete_count} • Chưa: {summary.roll_call_unmarked_count}</div>
+      <div class="p-2.5 rounded-xl bg-teal-50/70 border border-teal-200">
+        <div class="text-[10px] text-teal-900 font-bold uppercase">Điểm Danh ĐỦ</div>
+        <div class="text-xl font-black text-teal-700">{summary.roll_call_complete_count}</div>
+        <div class="text-[10px] text-teal-800">Thiếu: {summary.roll_call_incomplete_count} • Chưa: {summary.roll_call_unmarked_count}</div>
       </div>
-      <div class="p-3.5 rounded-xl bg-slate-100 border border-slate-200">
-        <div class="text-[11px] text-slate-600 font-semibold">Ca Có HS Đi Muộn</div>
-        <div class="text-2xl font-black text-amber-700 mt-0.5">{summary.sessions_with_late_count}</div>
-        <div class="text-[10px] text-slate-600">Cần nhắc lịch trước 15p</div>
+      <div class="p-2.5 rounded-xl bg-amber-50/70 border border-amber-200">
+        <div class="text-[10px] text-amber-900 font-bold uppercase">Ca Đi Muộn</div>
+        <div class="text-xl font-black text-amber-700">{summary.sessions_with_late_count}</div>
+        <div class="text-[10px] text-amber-800">Nhắc trước 10p</div>
       </div>
-      <div class="p-3.5 rounded-xl bg-slate-100 border border-slate-200">
-        <div class="text-[11px] text-slate-600 font-semibold">Ca Có HS Vắng</div>
-        <div class="text-2xl font-black text-rose-700 mt-0.5">{summary.sessions_with_absent_count}</div>
-        <div class="text-[10px] text-slate-600">Cần gửi bài bù từ Vault</div>
+      <div class="p-2.5 rounded-xl bg-rose-50/70 border border-rose-200">
+        <div class="text-[10px] text-rose-900 font-bold uppercase">Ca Vắng Mặt</div>
+        <div class="text-xl font-black text-rose-700">{summary.sessions_with_absent_count}</div>
+        <div class="text-[10px] text-rose-800">Gửi bài bù từ Kho</div>
       </div>
-      <div class="p-3.5 rounded-xl bg-slate-100 border border-slate-200">
-        <div class="text-[11px] text-slate-600 font-semibold">Đã Gắn Tài Liệu</div>
-        <div class="text-2xl font-black text-indigo-700 mt-0.5">{summary.sessions_with_material_count}/{summary.total_sessions}</div>
-        <div class="text-[10px] text-slate-600">Kho Tri Thức &amp; Drive</div>
+      <div class="p-2.5 rounded-xl bg-indigo-50/70 border border-indigo-200">
+        <div class="text-[10px] text-indigo-900 font-bold uppercase">Đã Gắn Bài Giảng</div>
+        <div class="text-xl font-black text-indigo-700">{summary.sessions_with_material_count}/{summary.total_sessions}</div>
+        <div class="text-[10px] text-indigo-800">Link • Drive • Kho</div>
       </div>
-      <div class="p-3.5 rounded-xl bg-slate-100 border border-slate-200">
-        <div class="text-[11px] text-slate-600 font-semibold">Kho Học Liệu Sẵn Sàng</div>
-        <div class="text-2xl font-black text-cyan-300 mt-0.5">{catalogs.vault_articles.length + catalogs.drive_files.length}</div>
-        <div class="text-[10px] text-slate-600">{catalogs.quizzes.length} đề Quiz xuất bản</div>
+      <div class="p-2.5 rounded-xl bg-stone-50 border border-stone-200">
+        <div class="text-[10px] text-stone-700 font-bold uppercase">Kho Học Liệu</div>
+        <div class="text-xl font-black text-emerald-700">{catalogs.vault_articles.length + catalogs.drive_files.length}</div>
+        <div class="text-[10px] text-stone-600">{catalogs.quizzes.length} đề Quiz</div>
       </div>
     </div>
   </div>
@@ -643,6 +640,11 @@ ${editForm.roadmap_recommendation || d.internal_interaction_and_roadmap.roadmap_
 
               <!-- Material Badges -->
               <div class="flex flex-wrap items-center gap-1.5 text-[10px]">
+                {#if mat.drive_file_url}
+                  <span class="px-2 py-0.5 rounded bg-indigo-50 text-indigo-800 border border-indigo-200 font-semibold break-words">
+                    🔗 Link Bài Giảng
+                  </span>
+                {/if}
                 {#if mat.vault_article_title}
                   <span class="px-2 py-0.5 rounded bg-purple-50 text-purple-800 border border-purple-200 font-semibold break-words">
                     🧠 {mat.vault_article_title}
@@ -653,9 +655,9 @@ ${editForm.roadmap_recommendation || d.internal_interaction_and_roadmap.roadmap_
                     📁 {mat.drive_file_name}
                   </span>
                 {/if}
-                {#if !mat.vault_article_title && !mat.drive_file_name}
+                {#if !mat.vault_article_title && !mat.drive_file_name && !mat.drive_file_url}
                   <span class="px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 font-semibold">
-                    ⚠️ Chưa gắn tài liệu Kho/Drive
+                    ⚠️ Chưa gắn tài liệu Kho/Drive/Link
                   </span>
                 {/if}
               </div>
@@ -695,17 +697,17 @@ ${editForm.roadmap_recommendation || d.internal_interaction_and_roadmap.roadmap_
           {@const s = selectedReport.session}
           {@const m = selectedReport.metrics}
           {@const mat = selectedReport.materials}
-          <div class="rounded-2xl bg-white border border-slate-200 p-6 shadow-sm space-y-6">
+          <div class="rounded-2xl bg-white border-2 border-b-[3px] border-stone-200 p-5 shadow-xs space-y-4">
             <!-- Header -->
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-stone-200">
               <div>
                 <div class="flex items-center gap-2 flex-wrap">
-                  <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
-                    HỒ SƠ ĐỐI SOÁT CA HỌC
+                  <span class="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-emerald-100 text-emerald-800">
+                    STUDIO CA HỌC &amp; TỔNG KẾT
                   </span>
                   <span class="text-xs font-mono text-slate-500">{s.id} • {s.day_name} ({s.start_time}–{s.end_time})</span>
                 </div>
-                <h2 class="text-xl font-bold text-slate-900 mt-1">{s.class_name}</h2>
+                <h2 class="text-lg sm:text-xl font-extrabold text-slate-900 mt-1">{s.class_name}</h2>
                 <p class="text-xs text-slate-600">Chủ đề: <strong>{s.subject_topic}</strong> • GV: <strong>{s.teacher_name}</strong></p>
               </div>
 
@@ -714,58 +716,120 @@ ${editForm.roadmap_recommendation || d.internal_interaction_and_roadmap.roadmap_
                   type="button"
                   data-testid="export-session-dossier-btn"
                   onclick={handleOpenExportModal}
-                  class="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-sm transition-all"
+                  class="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white border-2 border-b-[3px] border-indigo-800 text-xs font-extrabold shadow-xs transition-all"
                 >
                   📄 Xuất Báo Cáo Ca Học (5 Mục)
                 </button>
               </div>
             </div>
 
-            <!-- Section 1: Regression Metrics Strip (Homework + Quiz + Attendance + Overall Suitability) -->
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div class="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200">
-                <div class="text-[11px] font-bold text-emerald-800">🎯 Độ Phù Hợp Tổng Hợp</div>
-                <div class="text-2xl font-black text-emerald-700 mt-1">{m.overall_suitability_pct}%</div>
-                <div class="text-[10px] text-emerald-700">Kết hợp Tự động &amp; Thủ công</div>
+            <!-- Compact 4-KPI Strip -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+              <div class="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200">
+                <div class="text-[10px] font-bold text-emerald-800 uppercase">🎯 Độ Phù Hợp</div>
+                <div class="text-xl font-black text-emerald-700">{m.overall_suitability_pct}%</div>
+                <div class="text-[10px] text-emerald-700">Tổng hợp Ca dạy</div>
               </div>
 
-              <div class="p-3.5 rounded-xl bg-indigo-50 border border-indigo-200">
-                <div class="text-[11px] font-bold text-indigo-800">📚 Tỷ Lệ BTVN Đáp Ứng</div>
-                <div class="text-2xl font-black text-indigo-700 mt-1">
+              <div class="p-2.5 rounded-xl bg-indigo-50 border border-indigo-200">
+                <div class="text-[10px] font-bold text-indigo-800 uppercase">📚 BTVN Đáp Ứng</div>
+                <div class="text-xl font-black text-indigo-700">
                   {m.homework_fulfillment_pct !== null ? `${m.homework_fulfillment_pct}%` : 'Chưa nộp'}
                 </div>
-                <div class="text-[10px] text-indigo-700">{mat.linked_homeworks.length} bài tập đã giao</div>
+                <div class="text-[10px] text-indigo-700">{mat.linked_homeworks.length} bài tập</div>
               </div>
 
-              <div class="p-3.5 rounded-xl bg-purple-50 border border-purple-200">
-                <div class="text-[11px] font-bold text-purple-800">🧩 Kết Quả Đề Quiz</div>
-                <div class="text-2xl font-black text-purple-700 mt-1">
+              <div class="p-2.5 rounded-xl bg-purple-50 border border-purple-200">
+                <div class="text-[10px] font-bold text-purple-800 uppercase">🧩 Đề Quiz</div>
+                <div class="text-xl font-black text-purple-700">
                   {m.quiz_mastery_pct !== null ? `${m.quiz_mastery_pct}%` : 'Chưa làm'}
                 </div>
-                <div class="text-[10px] text-purple-700">{mat.linked_quizzes.length} đề Quiz liên kết</div>
+                <div class="text-[10px] text-purple-700">{mat.linked_quizzes.length} đề liên kết</div>
               </div>
 
-              <div class="p-3.5 rounded-xl bg-amber-50 border border-amber-200">
-                <div class="text-[11px] font-bold text-amber-900">📋 Điểm Danh &amp; Đúng Giờ</div>
-                <div class="text-lg font-black text-amber-800 mt-1">
+              <div class="p-2.5 rounded-xl bg-amber-50 border border-amber-200">
+                <div class="text-[10px] font-bold text-amber-900 uppercase">📋 Điểm Danh</div>
+                <div class="text-sm font-black text-amber-800 mt-0.5">
                   {m.present_count} Đúng • {m.late_count} Muộn
                 </div>
                 <div class="text-[10px] text-amber-800">
-                  Vắng: {m.total_absent_count} • Đã điểm danh: {m.marked_count}/{m.enrolled_count}
+                  Vắng: {m.total_absent_count} ({m.marked_count}/{m.enrolled_count})
                 </div>
               </div>
             </div>
 
-            <!-- Section 2: Material Selection (Knowledge Vault + Drive Storage + Lesson Plan) -->
-            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-4">
-              <div class="flex items-center justify-between">
-                <h3 class="text-sm font-bold text-slate-900">1. Tài Liệu Đang Dùng &amp; Nội Dung Giáo Án (Kho Tri Thức + Drive Storage)</h3>
+            <!-- Duolingo Tactile Inspector Tabs (Progressive Disclosure to eliminate noisy vertical stacking) -->
+            <div data-testid="inspector-workspace-tabs" class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs font-extrabold">
+              <button
+                type="button"
+                onclick={() => activeInspectorTab = 'materials'}
+                class="px-3 py-2 rounded-xl border-2 border-b-[3px] transition-all flex items-center justify-center gap-1.5 {activeInspectorTab === 'materials' ? 'bg-indigo-600 border-indigo-800 text-white' : 'bg-stone-50 border-stone-200 text-stone-700 hover:border-indigo-300'}"
+              >
+                <span>📚</span>
+                <span class="truncate">1. Bài Giảng (Link/Drive)</span>
+              </button>
+              <button
+                type="button"
+                onclick={() => activeInspectorTab = 'summary'}
+                class="px-3 py-2 rounded-xl border-2 border-b-[3px] transition-all flex items-center justify-center gap-1.5 {activeInspectorTab === 'summary' ? 'bg-emerald-600 border-emerald-800 text-white' : 'bg-stone-50 border-stone-200 text-stone-700 hover:border-emerald-300'}"
+              >
+                <span>📊</span>
+                <span class="truncate">2. Tổng Kết Ca Dạy</span>
+              </button>
+              <button
+                type="button"
+                onclick={() => activeInspectorTab = 'interactions'}
+                class="px-3 py-2 rounded-xl border-2 border-b-[3px] transition-all flex items-center justify-center gap-1.5 {activeInspectorTab === 'interactions' ? 'bg-amber-500 border-amber-700 text-stone-950' : 'bg-stone-50 border-stone-200 text-stone-700 hover:border-amber-300'}"
+              >
+                <span>💬</span>
+                <span class="truncate">3. Phụ Huynh &amp; Lộ Trình</span>
+              </button>
+              <button
+                type="button"
+                onclick={() => activeInspectorTab = 'all'}
+                class="px-3 py-2 rounded-xl border-2 border-b-[3px] transition-all flex items-center justify-center gap-1.5 {activeInspectorTab === 'all' ? 'bg-stone-900 border-stone-950 text-white' : 'bg-stone-50 border-stone-200 text-stone-700 hover:border-stone-400'}"
+              >
+                <span>👁️</span>
+                <span class="truncate">Mở Tất Cả (5 Mục)</span>
+              </button>
+            </div>
+
+            <!-- Section 2 (Tab 1): Material Selection (Link Bài Giảng + Google Drive + Kho Tri Thức + Nguồn Dán Thêm) -->
+            <div class:hidden={activeInspectorTab !== 'materials' && activeInspectorTab !== 'all'} class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3.5">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <h3 class="text-sm font-extrabold text-slate-900">1. Học Liệu Ca Học: Link Bài Giảng • Google Drive • Kho Tri Thức • Nguồn Dán Thêm</h3>
                 <a
                   href="/cpanel/teacher?session_id={encodeURIComponent(s.id)}&amp;class_id={encodeURIComponent(s.class_id)}"
                   class="text-xs font-bold text-indigo-600 hover:underline"
                 >
                   ➕ Giao thêm BTVN / Quiz cho ca này →
                 </a>
+              </div>
+
+              <!-- Link Bài Giảng Trực Tiếp -->
+              <div class="p-3 rounded-xl bg-indigo-50/70 border border-indigo-200 space-y-1.5 text-xs">
+                <div class="flex items-center justify-between gap-2">
+                  <label for="audit-drive-url" class="font-extrabold text-indigo-950">
+                    🔗 Link Bài Giảng Trực Tiếp (Google Docs/Slides, Canva, PDF, Video...):
+                  </label>
+                  {#if editForm.drive_file_url}
+                    <a
+                      href={editForm.drive_file_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[11px]"
+                    >
+                      ↗ Mở Link Bài Giảng
+                    </a>
+                  {/if}
+                </div>
+                <input
+                  id="audit-drive-url"
+                  type="url"
+                  bind:value={editForm.drive_file_url}
+                  placeholder="Dán link bài giảng trực tiếp (https://docs.google.com/presentation/... hoặc Canva/Drive)"
+                  class="w-full px-3 py-2 rounded-lg border border-indigo-300 bg-white text-slate-900 font-medium"
+                />
               </div>
 
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
@@ -824,20 +888,20 @@ ${editForm.roadmap_recommendation || d.internal_interaction_and_roadmap.roadmap_
               </div>
 
               <div>
-                <label for="audit-lesson-plan" class="block text-xs font-bold text-slate-700 mb-1">📖 Nội dung Giáo án &amp; Mục tiêu bài học:</label>
+                <label for="audit-lesson-plan" class="block text-xs font-bold text-slate-700 mb-1">📋 Nguồn Bài Giảng Dán Thêm &amp; Nội Dung Giáo Án Chi Tiết:</label>
                 <textarea
                   id="audit-lesson-plan"
-                  rows="3"
+                  rows="4"
                   bind:value={editForm.lesson_plan_content}
-                  placeholder="Tóm tắt tiến trình giảng dạy, kiến thức trọng tâm, cấu trúc ngữ pháp và kỹ năng rèn luyện trong ca..."
+                  placeholder="Dán trực tiếp nguồn bài giảng, từ vựng, cấu trúc ngữ pháp và tiến trình giảng dạy trong ca..."
                   class="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs text-slate-900"
                 ></textarea>
               </div>
             </div>
 
-            <!-- Section 3: Effectiveness Evaluation & Manual Suitability % -->
-            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
-              <h3 class="text-sm font-bold text-slate-900">2. Đánh Giá Hiệu Quả Giảng Dạy &amp; Tỷ Lệ % Phù Hợp Thực Tế</h3>
+            <!-- Section 3 (Tab 2): Effectiveness Evaluation & Manual Suitability % -->
+            <div class:hidden={activeInspectorTab !== 'summary' && activeInspectorTab !== 'all'} class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+              <h3 class="text-sm font-extrabold text-slate-900">2. Tổng Kết Ca Dạy &amp; Đánh Giá Hiệu Quả Giảng Dạy</h3>
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center text-xs">
                 <div>
                   <label for="audit-manual-pct" class="block font-bold text-slate-700 mb-1">
@@ -870,55 +934,58 @@ ${editForm.roadmap_recommendation || d.internal_interaction_and_roadmap.roadmap_
               </div>
 
               <div>
-                <label for="audit-eff-notes" class="block text-xs font-bold text-slate-700 mb-1">Nhận xét hiệu quả thực tế sau ca học:</label>
+                <label for="audit-eff-notes" class="block text-xs font-bold text-slate-700 mb-1">Nhận xét tổng kết hiệu quả thực tế sau ca học:</label>
                 <textarea
                   id="audit-eff-notes"
-                  rows="2"
+                  rows="3"
                   bind:value={editForm.effectiveness_notes}
                   class="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs text-slate-900"
                 ></textarea>
               </div>
             </div>
 
-            <!-- Section 4 & 5: Parent Interaction, Internal Interaction & Upgrade Roadmap -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
-                <h3 class="text-xs font-bold text-slate-900 uppercase">3. Tương Tác Phụ Huynh</h3>
-                <textarea
-                  id="audit-parent-notes"
-                  rows="3"
-                  bind:value={editForm.parent_interaction_notes}
-                  placeholder="Ghi nhận phản hồi phụ huynh, tình hình đưa đón, thông báo điểm danh & kết quả BTVN..."
-                  class="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs text-slate-900"
-                ></textarea>
+            <!-- Section 4 & 5 (Tab 3): Parent Interaction, Internal Interaction & Upgrade Roadmap -->
+            <div class:hidden={activeInspectorTab !== 'interactions' && activeInspectorTab !== 'all'} class="space-y-3">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                  <h3 class="text-xs font-extrabold text-slate-900 uppercase">3. Tương Tác Phụ Huynh</h3>
+                  <textarea
+                    id="audit-parent-notes"
+                    rows="3"
+                    bind:value={editForm.parent_interaction_notes}
+                    placeholder="Ghi nhận phản hồi phụ huynh, tình hình đưa đón, thông báo điểm danh & kết quả BTVN..."
+                    class="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs text-slate-900"
+                  ></textarea>
+                </div>
+
+                <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                  <h3 class="text-xs font-extrabold text-slate-900 uppercase">4. Tương Tác Nội Bộ (GV - Trợ Giảng - Leader)</h3>
+                  <textarea
+                    id="audit-internal-notes"
+                    rows="3"
+                    bind:value={editForm.internal_interaction_notes}
+                    placeholder="Bàn giao giữa Giáo viên chính, Trợ giảng và chỉ đạo chuyên môn của Cô Dung..."
+                    class="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs text-slate-900"
+                  ></textarea>
+                </div>
               </div>
 
-              <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
-                <h3 class="text-xs font-bold text-slate-900 uppercase">4. Tương Tác Nội Bộ (GV - Trợ Giảng - Leader)</h3>
+              <div class="p-3.5 rounded-xl bg-emerald-50/70 border border-emerald-200 space-y-2">
+                <h3 class="text-xs font-extrabold text-emerald-950 uppercase">5. Lộ Trình Đánh Giá &amp; Đề Xuất Nâng Cấp Ca Dạy Tiếp Theo</h3>
                 <textarea
-                  id="audit-internal-notes"
+                  id="audit-roadmap"
                   rows="3"
-                  bind:value={editForm.internal_interaction_notes}
-                  placeholder="Bàn giao giữa Giáo viên chính, Trợ giảng và chỉ đạo chuyên môn của Cô Dung..."
-                  class="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs text-slate-900"
+                  bind:value={editForm.roadmap_recommendation}
+                  class="w-full px-3 py-2 rounded-lg border border-emerald-300 bg-white text-xs text-slate-900"
                 ></textarea>
               </div>
             </div>
 
-            <div class="p-4 rounded-xl bg-emerald-50/70 border border-emerald-200 space-y-2">
-              <h3 class="text-xs font-bold text-emerald-950 uppercase">5. Lộ Trình Đánh Giá &amp; Đề Xuất Nâng Cấp Ca Dạy Tiếp Theo</h3>
-              <textarea
-                id="audit-roadmap"
-                rows="3"
-                bind:value={editForm.roadmap_recommendation}
-                class="w-full px-3 py-2 rounded-lg border border-emerald-300 bg-white text-xs text-slate-900"
-              ></textarea>
-            </div>
-
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
+            <!-- Sticky Action Footer -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-stone-200">
               <label class="flex items-center gap-2 text-xs text-slate-700 font-medium cursor-pointer">
                 <input type="checkbox" bind:checked={editForm.notify_internal} class="rounded text-emerald-600" />
-                <span>Gửi thông báo đồng bộ lộ trình này vào chuông thông báo của Giáo viên phụ trách</span>
+                <span>Đồng bộ lộ trình &amp; tổng kết ca vào chuông thông báo của Giáo viên</span>
               </label>
 
               <button
@@ -926,9 +993,9 @@ ${editForm.roadmap_recommendation || d.internal_interaction_and_roadmap.roadmap_
                 data-testid="save-session-audit-btn"
                 disabled={saving}
                 onclick={handleSaveAudit}
-                class="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition-all disabled:opacity-50"
+                class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white border-2 border-b-[3px] border-emerald-800 font-extrabold text-xs shadow-sm transition-all disabled:opacity-50"
               >
-                {saving ? '⏳ Đang lưu vào D1...' : '💾 Lưu Đối Soát & Học Liệu Ca Dạy'}
+                {saving ? '⏳ Đang lưu vào D1...' : '💾 Lưu Tổng Kết & Học Liệu Ca Dạy'}
               </button>
             </div>
           </div>

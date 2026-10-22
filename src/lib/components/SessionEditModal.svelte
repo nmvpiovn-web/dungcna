@@ -25,6 +25,25 @@
  let allStudents = $state([]);
  let allTeachers = $state([]);
  let isManager = $derived(['admin', 'superadmin', 'leader'].includes(String(currentUser?.role || '').toLowerCase()));
+ let activeModalTab = $state('schedule'); // 'schedule' | 'materials' | 'summary' | 'all'
+ let driveCatalog = $state([]);
+ let vaultCatalog = $state([]);
+
+ let auditForm = $state({
+   vault_article_id: '',
+   vault_article_title: '',
+   drive_file_id: '',
+   drive_file_name: '',
+   drive_file_url: '',
+   lesson_plan_content: '',
+   manual_suitability_pct: 85,
+   effectiveness_rating: 'good',
+   effectiveness_notes: '',
+   parent_interaction_notes: '',
+   internal_interaction_notes: '',
+   roadmap_recommendation: '',
+   notify_internal: true
+ });
 
  let form = $state({
  id: '',
@@ -169,12 +188,62 @@
  if (!wasOpen) {
  wasOpen = true;
  errorMessage = '';
+ activeModalTab = 'schedule';
  currentUser = getCurrentUser();
  const users = getAllUsers();
  allTeachers = users.filter(u => ['teacher', 'superadmin', 'admin', 'leader'].includes(String(u.role || '').toLowerCase()));
  allStudents = users.filter(u => u.role === 'student');
  const token = getAuthToken();
  const authHeaders = token ? { 'Authorization': `Bearer ${token}` } : {};
+
+ auditForm = {
+   vault_article_id: session?.vault_article_id || '',
+   vault_article_title: session?.vault_article_title || '',
+   drive_file_id: session?.drive_file_id || '',
+   drive_file_name: session?.drive_file_name || '',
+   drive_file_url: session?.drive_file_url || '',
+   lesson_plan_content: session?.lesson_plan_content || '',
+   manual_suitability_pct: 85,
+   effectiveness_rating: 'good',
+   effectiveness_notes: '',
+   parent_interaction_notes: '',
+   internal_interaction_notes: '',
+   roadmap_recommendation: '',
+   notify_internal: true
+ };
+
+ fetch('/api/session-audit', { headers: authHeaders, credentials: 'include' })
+ .then(r => r.json())
+ .then(data => {
+   if (data.success) {
+     if (data.catalogs) {
+       vaultCatalog = data.catalogs.vault_articles || [];
+       driveCatalog = data.catalogs.drive_files || [];
+     }
+     if (session?.id && Array.isArray(data.sessions)) {
+       const rep = data.sessions.find(item => item?.session?.id === session.id);
+       if (rep) {
+         auditForm = {
+           vault_article_id: rep.materials?.vault_article_id || '',
+           vault_article_title: rep.materials?.vault_article_title || '',
+           drive_file_id: rep.materials?.drive_file_id || '',
+           drive_file_name: rep.materials?.drive_file_name || '',
+           drive_file_url: rep.materials?.drive_file_url || '',
+           lesson_plan_content: rep.materials?.lesson_plan_content || '',
+           manual_suitability_pct: rep.metrics?.manual_suitability_pct ?? rep.metrics?.overall_suitability_pct ?? 85,
+           effectiveness_rating: rep.dossier?.effectiveness_evaluation?.rating || 'good',
+           effectiveness_notes: rep.dossier?.effectiveness_evaluation?.notes || '',
+           parent_interaction_notes: rep.dossier?.parent_interaction?.notes || '',
+           internal_interaction_notes: rep.dossier?.internal_interaction_and_roadmap?.internal_notes || '',
+           roadmap_recommendation: rep.dossier?.internal_interaction_and_roadmap?.roadmap_recommendation || '',
+           notify_internal: true
+         };
+       }
+     }
+   }
+ })
+ .catch(() => {});
+
  fetch('/api/students', { headers: authHeaders, credentials: 'include' })
  .then(r => r.json())
  .then(data => {
@@ -285,6 +354,30 @@
  }
  }
 
+ function handleModalSelectVaultArticle(e) {
+   const vid = e.currentTarget.value;
+   auditForm.vault_article_id = vid;
+   const found = vaultCatalog.find(v => v.id === vid);
+   if (found) {
+     auditForm.vault_article_title = found.title;
+     if (!auditForm.lesson_plan_content.includes(found.title)) {
+       auditForm.lesson_plan_content = `[Kho Tri Thức: ${found.title}]\n${auditForm.lesson_plan_content || ''}`.trim();
+     }
+   }
+ }
+
+ function handleModalSelectDriveFile(e) {
+   const fid = e.currentTarget.value;
+   auditForm.drive_file_id = fid;
+   const found = driveCatalog.find(f => f.id === fid);
+   if (found) {
+     auditForm.drive_file_name = found.title_vi || found.name;
+     if (found.webViewLink) {
+       auditForm.drive_file_url = found.webViewLink;
+     }
+   }
+ }
+
  let errorMessage = $state('');
  let saving = $state(false);
  let deleting = $state(false);
@@ -373,6 +466,40 @@
  if (data.session) {
    savedData = data.session;
  }
+
+ const hasAuditInput = Boolean(
+   form.id ||
+   auditForm.drive_file_url ||
+   auditForm.drive_file_id ||
+   auditForm.drive_file_name ||
+   auditForm.vault_article_id ||
+   auditForm.vault_article_title ||
+   auditForm.lesson_plan_content ||
+   auditForm.effectiveness_notes ||
+   auditForm.parent_interaction_notes ||
+   auditForm.internal_interaction_notes ||
+   auditForm.roadmap_recommendation
+ );
+ if (savedData?.id && hasAuditInput) {
+   try {
+     await fetch('/api/session-audit', {
+       method: 'POST',
+       headers: {
+         'Content-Type': 'application/json',
+         ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+       },
+       credentials: 'include',
+       body: JSON.stringify({
+         action: 'save_audit',
+         session_id: savedData.id,
+         ...auditForm
+       })
+     });
+   } catch (auditErr) {
+     console.warn('Session audit sync ignored:', auditErr);
+   }
+ }
+
  try {
    upsertClassSessionInStore(savedData);
  } catch (cacheErr) {
@@ -434,13 +561,14 @@
  <div class="w-full max-w-2xl rounded-2xl bg-[#fdfbf7] border border-stone-200 shadow-2xl flex flex-col max-h-[85vh] overflow-hidden">
 
  <!-- Sticky Header -->
- <div class="shrink-0 flex items-start justify-between border-b border-stone-200/80 px-6 py-4 bg-[#fdfbf7]">
+ <div class="shrink-0 border-b border-stone-200/80 px-6 py-3.5 bg-[#fdfbf7] space-y-3">
+ <div class="flex items-start justify-between">
  <div>
  <span class="text-xs font-bold text-emerald-700 uppercase tracking-wider">
  {form.id ? 'CẬP NHẬT / XÓA THỜI KHÓA BIỂU' : 'THÊM BUỔI HỌC MỚI'}
  </span>
  <h2 id="session-modal-title" class="text-lg sm:text-xl font-black text-stone-900 mt-0.5">
- Thiết Lập Lịch Học &amp; Danh Sách Học Sinh
+ Thiết Lập Ca Học • Bài Giảng &amp; Tổng Kết Ca Dạy
  </h2>
  </div>
  <button
@@ -450,6 +578,38 @@
  >
  ✕
  </button>
+ </div>
+
+ <!-- Duolingo Tactile 3-Tab Segmented Switcher -->
+ <div data-testid="session-modal-tabs" class="grid grid-cols-3 gap-2 text-xs font-extrabold">
+   <button
+     type="button"
+     data-testid="session-modal-tab-schedule"
+     onclick={() => activeModalTab = 'schedule'}
+     class="px-3 py-2 rounded-xl border-2 border-b-[3px] transition-all flex items-center justify-center gap-1.5 {activeModalTab === 'schedule' ? 'bg-emerald-600 border-emerald-700 text-white shadow-xs' : 'bg-white border-stone-200 text-stone-700 hover:border-emerald-300'}"
+   >
+     <span>📅</span>
+     <span class="truncate">1. Ca Học &amp; Sĩ Số</span>
+   </button>
+   <button
+     type="button"
+     data-testid="session-modal-tab-materials"
+     onclick={() => activeModalTab = 'materials'}
+     class="px-3 py-2 rounded-xl border-2 border-b-[3px] transition-all flex items-center justify-center gap-1.5 {activeModalTab === 'materials' ? 'bg-indigo-600 border-indigo-700 text-white shadow-xs' : 'bg-white border-stone-200 text-stone-700 hover:border-indigo-300'}"
+   >
+     <span>📚</span>
+     <span class="truncate">2. Bài Giảng (Link/Drive)</span>
+   </button>
+   <button
+     type="button"
+     data-testid="session-modal-tab-summary"
+     onclick={() => activeModalTab = 'summary'}
+     class="px-3 py-2 rounded-xl border-2 border-b-[3px] transition-all flex items-center justify-center gap-1.5 {activeModalTab === 'summary' ? 'bg-amber-500 border-amber-600 text-stone-950 shadow-xs' : 'bg-white border-stone-200 text-stone-700 hover:border-amber-300'}"
+   >
+     <span>📊</span>
+     <span class="truncate">3. Tổng Kết Ca Dạy</span>
+   </button>
+ </div>
  </div>
 
  <!-- Scrollable Modal Body -->
@@ -470,7 +630,8 @@
  </div>
  {/if}
 
- <!-- Form Grid -->
+ <!-- TAB 1: Form Grid (Ca Học & Sĩ Số) -->
+ <div class:hidden={activeModalTab !== 'schedule'} class="space-y-5">
  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
  <div>
  <label for="session-class-name" class="block font-bold text-stone-700 mb-1">Tên Khóa / Lớp Học *</label>
@@ -702,6 +863,174 @@
         {/each}
       </div>
     </fieldset>
+ </div>
+
+ <!-- TAB 2: Bài Giảng Theo Link, Nguồn Dán Thêm, Google Drive & Kho Tri Thức -->
+ <div class:hidden={activeModalTab !== 'materials'} class="space-y-4 text-xs" data-testid="session-modal-materials-pane">
+   <div class="p-3.5 rounded-2xl bg-indigo-50/70 border-2 border-indigo-200 space-y-3">
+     <div class="flex items-center justify-between gap-2">
+       <label for="session-lesson-link" class="font-extrabold text-indigo-950 flex items-center gap-1.5">
+         <span>🔗</span>
+         <span>1. Bài Giảng Theo Link (Google Docs/Slides, Canva, PDF, Video...):</span>
+       </label>
+       {#if auditForm.drive_file_url}
+         <a
+           href={auditForm.drive_file_url}
+           target="_blank"
+           rel="noopener noreferrer"
+           class="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[11px] shadow-xs"
+         >
+           ↗ Mở Link Bài Giảng
+         </a>
+       {/if}
+     </div>
+     <input
+       id="session-lesson-link"
+       type="url"
+       bind:value={auditForm.drive_file_url}
+       placeholder="https://docs.google.com/presentation/... hoặc link bài giảng bất kỳ"
+       class="w-full bg-white border border-indigo-200 rounded-xl px-3 py-2 text-stone-900 focus:outline-none focus:border-indigo-600 font-medium"
+     />
+   </div>
+
+   <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+     <div class="p-3.5 rounded-2xl bg-sky-50/70 border border-sky-200 space-y-2">
+       <label for="session-drive-select" class="block font-extrabold text-sky-950">
+         📁 2. Chọn Bài Giảng Trên Google Drive ({driveCatalog.length}):
+       </label>
+       <select
+         id="session-drive-select"
+         value={auditForm.drive_file_id}
+         onchange={handleModalSelectDriveFile}
+         class="w-full bg-white border border-sky-200 rounded-xl px-3 py-2 text-stone-900 font-semibold focus:outline-none focus:border-sky-600"
+       >
+         <option value="">-- Chọn file từ Google Drive --</option>
+         {#each driveCatalog as f}
+           <option value={f.id}>{f.title_vi || f.name}</option>
+         {/each}
+       </select>
+       <input
+         id="session-drive-name"
+         type="text"
+         bind:value={auditForm.drive_file_name}
+         placeholder="Tên hiển thị tài liệu Drive / Phiếu in..."
+         class="w-full bg-white border border-stone-200 rounded-xl px-3 py-1.5 text-stone-900"
+       />
+     </div>
+
+     <div class="p-3.5 rounded-2xl bg-purple-50/70 border border-purple-200 space-y-2">
+       <label for="session-vault-select" class="block font-extrabold text-purple-950">
+         🧠 3. Chọn Giáo Án Kho Tri Thức ({vaultCatalog.length}):
+       </label>
+       <select
+         id="session-vault-select"
+         value={auditForm.vault_article_id}
+         onchange={handleModalSelectVaultArticle}
+         class="w-full bg-white border border-purple-200 rounded-xl px-3 py-2 text-stone-900 font-semibold focus:outline-none focus:border-purple-600"
+       >
+         <option value="">-- Chọn bài giảng Kho Tri Thức --</option>
+         {#each vaultCatalog as v}
+           <option value={v.id}>{v.title} ({v.category || 'Chuyên đề'})</option>
+         {/each}
+       </select>
+       <input
+         id="session-vault-title"
+         type="text"
+         bind:value={auditForm.vault_article_title}
+         placeholder="Tên chuyên đề / bài giảng chính..."
+         class="w-full bg-white border border-stone-200 rounded-xl px-3 py-1.5 text-stone-900"
+       />
+     </div>
+   </div>
+
+   <div class="p-3.5 rounded-2xl bg-emerald-50/60 border border-emerald-200 space-y-2">
+     <label for="session-lesson-source" class="block font-extrabold text-emerald-950">
+       📋 4. Nguồn Bài Giảng Dán Thêm &amp; Nội Dung Giáo Án Chi Tiết:
+     </label>
+     <textarea
+       id="session-lesson-source"
+       rows="4"
+       bind:value={auditForm.lesson_plan_content}
+       placeholder="Dán trực tiếp nội dung bài giảng, từ vựng, cấu trúc ngữ pháp, kịch bản dạy hoặc ghi chú học liệu cho ca học này..."
+       class="w-full bg-white border border-emerald-200 rounded-xl px-3 py-2 text-stone-900 focus:outline-none focus:border-emerald-600"
+     ></textarea>
+   </div>
+ </div>
+
+ <!-- TAB 3: Tổng Kết Ca Dạy & Đánh Giá Chất Lượng -->
+ <div class:hidden={activeModalTab !== 'summary'} class="space-y-4 text-xs" data-testid="session-modal-summary-pane">
+   <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200">
+     <div>
+       <label for="session-suitability-pct" class="block font-extrabold text-stone-900 mb-1">
+         🎯 Độ phù hợp học liệu &amp; đáp ứng ca dạy: <strong class="text-emerald-700 text-sm">{auditForm.manual_suitability_pct}%</strong>
+       </label>
+       <input
+         id="session-suitability-pct"
+         type="range"
+         min="0"
+         max="100"
+         step="5"
+         bind:value={auditForm.manual_suitability_pct}
+         class="w-full accent-emerald-600"
+       />
+     </div>
+     <div>
+       <label for="session-effectiveness-rating" class="block font-extrabold text-stone-900 mb-1">
+         ⭐ Xếp loại tổng kết ca dạy:
+       </label>
+       <select
+         id="session-effectiveness-rating"
+         bind:value={auditForm.effectiveness_rating}
+         class="w-full bg-white border border-amber-300 rounded-xl px-3 py-2 text-stone-900 font-bold"
+       >
+         <option value="excellent">🌟 Xuất sắc (Hiểu sâu &amp; hoàn thành tốt)</option>
+         <option value="good">👍 Tốt (Đạt chuẩn mục tiêu bài giảng)</option>
+         <option value="needs_improvement">🔧 Cần điều chỉnh (Cần củng cố thêm)</option>
+         <option value="critical">🚨 Báo động (Cần dạy bù / kèm sát)</option>
+       </select>
+     </div>
+   </div>
+
+   <div>
+     <label for="session-effectiveness-notes" class="block font-extrabold text-stone-800 mb-1">
+       📝 Nhận Xét Tổng Kết Sau Ca Dạy (Mức độ tiếp thu của học sinh):
+     </label>
+     <textarea
+       id="session-effectiveness-notes"
+       rows="3"
+       bind:value={auditForm.effectiveness_notes}
+       placeholder="Ghi nhận kết quả sau ca dạy: Học sinh nắm bài tới đâu, phần nào làm tốt, phần nào cần lưu ý..."
+       class="w-full bg-white border border-stone-200 rounded-xl px-3 py-2 text-stone-900"
+     ></textarea>
+   </div>
+
+   <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+     <div>
+       <label for="session-parent-notes" class="block font-extrabold text-stone-800 mb-1">
+         💬 Tương Tác Phụ Huynh:
+       </label>
+       <textarea
+         id="session-parent-notes"
+         rows="2"
+         bind:value={auditForm.parent_interaction_notes}
+         placeholder="Phản hồi với phụ huynh về chuyên cần, BTVN..."
+         class="w-full bg-white border border-stone-200 rounded-xl px-3 py-2 text-stone-900"
+       ></textarea>
+     </div>
+     <div>
+       <label for="session-roadmap-notes" class="block font-extrabold text-stone-800 mb-1">
+         🚀 Đề Xuất Lộ Trình Buổi Tiếp Theo:
+       </label>
+       <textarea
+         id="session-roadmap-notes"
+         rows="2"
+         bind:value={auditForm.roadmap_recommendation}
+         placeholder="Hướng nâng cấp bài giảng / giao BTVN buổi tới..."
+         class="w-full bg-white border border-stone-200 rounded-xl px-3 py-2 text-stone-900"
+       ></textarea>
+     </div>
+   </div>
+ </div>
 
  </div>
 

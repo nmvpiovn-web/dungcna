@@ -216,6 +216,9 @@ export async function GET({ url, request, platform }) {
         WHERE (status IN ('active', 'published') OR status IS NULL)
           AND (category IS NULL OR category != 'drive_folder')
           AND title NOT LIKE '📁%'
+          AND title NOT LIKE '%.mp3'
+          AND title NOT LIKE '%.rar'
+          AND (content_markdown IS NULL OR content_markdown NOT LIKE '%Không trích xuất được nội dung%')
         ORDER BY id ASC LIMIT 120
       `).all().catch(() => ({ results: [] })),
       db.prepare(`SELECT id, target_role, target_user_id, title, body, category, reference_id, created_at FROM system_notifications ORDER BY created_at DESC LIMIT 200`).all().catch(() => ({ results: [] })),
@@ -445,7 +448,8 @@ export async function GET({ url, request, platform }) {
       const resolvedDriveId = audit?.drive_file_id || '';
       const resolvedDriveName = audit?.drive_file_name || '';
       const resolvedDriveUrl = audit?.drive_file_url || '';
-      const hasMaterial = Boolean(resolvedVaultId || resolvedVaultTitle || resolvedDriveId || resolvedDriveName);
+      const hasCustomLessonPlan = Boolean(audit?.lesson_plan_content && String(audit.lesson_plan_content).trim());
+      const hasMaterial = Boolean(resolvedVaultId || resolvedVaultTitle || resolvedDriveId || resolvedDriveName || resolvedDriveUrl || hasCustomLessonPlan);
 
       const manualSuitabilityPct = (audit?.manual_suitability_pct !== null && audit?.manual_suitability_pct !== undefined && Number.isFinite(Number(audit.manual_suitability_pct)))
         ? Math.min(100, Math.max(0, Math.round(Number(audit.manual_suitability_pct))))
