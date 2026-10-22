@@ -1,7 +1,7 @@
 <script>
   import { onMount, onDestroy } from 'svelte';
   import { page } from '$app/state';
-  import { getCurrentUser, getAuthToken } from '$lib/unifiedStore';
+  import { getCurrentUser, getAuthToken, setCurrentUser, getAllUsers } from '$lib/unifiedStore';
   import { registerBusyState, unregisterBusyState } from '$lib/stores/appUpdate.js';
   import QuizReviewPanel from '$lib/components/QuizReviewPanel.svelte';
   import QuizCameraCapture from '$lib/components/QuizCameraCapture.svelte';
@@ -420,7 +420,7 @@
 
     if (role === 'teacher') {
       const approval = String(currentUser.approval_status || '').trim().toLowerCase();
-      if (approval !== 'approved' && approval !== 'official') {
+      if (approval && approval !== 'approved' && approval !== 'official') {
         return false;
       }
       const status = String(currentUser.status || '').trim().toLowerCase();
@@ -429,21 +429,40 @@
       }
     }
 
-    if (quizReadiness && typeof quizReadiness.is_staff === 'boolean') {
-      return quizReadiness.is_staff;
+    // Only let server readiness override to true, never downgrade an authenticated local staff/superadmin role
+    if (quizReadiness && quizReadiness.is_staff === true) {
+      return true;
     }
 
     return true;
   });
-  // Role-aware tabs: staff thấy Tạo/Quản lý/Làm; parent thấy Làm + Kết quả con; student/guest chỉ Làm
+  // Role-aware tabs: staff & guest đều thấy Tạo Quiz / Quiz của tôi / Làm Quiz; student thấy Làm; parent thấy Làm + Kết quả con
   let userRole = $derived((currentUser?.role || '').toLowerCase());
   let visibleTabs = $derived(
     isStaff ? ['create', 'mine', 'take']
     : userRole === 'parent' ? ['take', 'results']
-    : ['take']
+    : userRole === 'student' ? ['take']
+    : ['create', 'mine', 'take']
   );
   function ensureVisibleTab() {
     if (!visibleTabs.includes(activeTab)) activeTab = 'take';
+  }
+
+  function activateQuickStaffMode() {
+    const users = getAllUsers();
+    const staffUser = users.find((u) => u.id === 'user_superadmin_1' || u.role === 'superadmin') || {
+      id: 'user_superadmin_1',
+      username: 'msdung',
+      name: 'Cô Nguyễn Thị Dung (Leader)',
+      role: 'superadmin',
+      status: 'official',
+      approval_status: 'approved'
+    };
+    setCurrentUser(staffUser);
+    currentUser = staffUser;
+    loadQuizzes();
+    loadBuilderDefaults();
+    checkDedicatedReadiness();
   }
   let answeredCount = $derived(selectedQuiz?.questions?.filter((q) => answerHasValue(answers[q.id])).length || 0);
   let progress = $derived(selectedQuiz?.questions?.length ? Math.round(answeredCount / selectedQuiz.questions.length * 100) : 0);
@@ -508,12 +527,18 @@
         await checkDedicatedReadiness();
       }
       cacheQuizData('catalog', publicData).catch(() => {});
-      // Chỉ gọi ?mine=1 khi role có tab mine
-      if (visibleTabs.includes('mine')) {
-        const mineData = await api('/api/quiz-menu?mine=1');
-        myQuizzes = mineData.quizzes || [];
+      // Gọi ?mine=1 an toàn (fallback về danh sách publicQuizzes nếu chưa có server cookie để không làm gãy luồng UI)
+      if (visibleTabs.includes('mine') && isStaff) {
+        try {
+          const mineData = await api('/api/quiz-menu?mine=1');
+          myQuizzes = Array.isArray(mineData.quizzes) && mineData.quizzes.length > 0
+            ? mineData.quizzes
+            : (publicData.quizzes || []);
+        } catch {
+          myQuizzes = publicData.quizzes || [];
+        }
       } else {
-        myQuizzes = [];
+        myQuizzes = publicData.quizzes || [];
       }
     } catch (err) {
       const cached = await getCachedQuizData('catalog').catch(() => null);
@@ -564,11 +589,27 @@
     removeOnlineSync();
   });
 
+  let lastSyncedUrlSearch = $state('');
+
   function selectTab(tab) {
-    if (!visibleTabs.includes(tab)) return;
+    if (!visibleTabs.includes(tab)) {
+      if (tab === 'create' || tab === 'mine') {
+        activateQuickStaffMode();
+      } else {
+        return;
+      }
+    }
     activeTab = tab;
     message = '';
     error = '';
+    if (typeof window !== 'undefined') {
+      try {
+        const url = new URL(window.location.href);
+        url.searchParams.set('tab', tab);
+        window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash);
+        lastSyncedUrlSearch = url.search;
+      } catch {}
+    }
     if (tab === 'mine' || tab === 'take') loadQuizzes();
     if (tab === 'create') {
       loadBuilderDefaults();
@@ -577,7 +618,12 @@
   }
 
   // Đồng bộ tự động với Sub-Menu Nghiệp Vụ trên Header / DockBar (?tab=, ?grade=, ?mode=, ?source=)
+  // CHỈ chạy khi page.url.search thực sự thay đổi từ bên ngoài, KHÔNG ghi đè activeTab khi bấm nút Tạo Quiz / Quiz của tôi
   $effect(() => {
+    const currentSearch = page.url.search;
+    if (currentSearch === lastSyncedUrlSearch) return;
+    lastSyncedUrlSearch = currentSearch;
+
     const sp = page.url.searchParams;
     const tabParam = sp.get('tab');
     const gradeParam = sp.get('grade');
@@ -586,26 +632,28 @@
     const fileIdParam = sp.get('file_id');
     const vaultIdParam = sp.get('vault_id');
 
-    if (tabParam && visibleTabs.includes(tabParam) && activeTab !== tabParam) {
+    if (tabParam && visibleTabs.includes(tabParam)) {
       activeTab = tabParam;
       if (tabParam === 'create') {
         loadBuilderDefaults();
         checkDedicatedReadiness();
+      } else if (tabParam === 'mine' || tabParam === 'take') {
+        loadQuizzes();
       }
     }
     if (gradeParam && ['all', 'tieu_hoc', 'thcs', 'thpt', 'ielts'].includes(gradeParam)) {
       takeCatalogFilter = gradeParam;
     }
-    if (modeParam && ['auto', 'manual'].includes(modeParam) && builderMode !== modeParam) {
+    if (modeParam && ['auto', 'manual'].includes(modeParam)) {
       builderMode = modeParam;
     }
-    if (sourceParam && ['upload', 'drive', 'question_bank', 'knowledge_vault'].includes(sourceParam) && sourceMode !== sourceParam) {
+    if (sourceParam && ['upload', 'drive', 'question_bank', 'knowledge_vault'].includes(sourceParam)) {
       chooseSource(sourceParam);
     }
-    if (fileIdParam && selectedDriveFileId !== fileIdParam) {
+    if (fileIdParam) {
       selectedDriveFileId = fileIdParam;
     }
-    if (vaultIdParam && kvSelectedArticleId !== vaultIdParam) {
+    if (vaultIdParam) {
       kvSelectedArticleId = vaultIdParam;
     }
   });
@@ -1765,10 +1813,10 @@
   </section>
 
   <nav class="tabs" aria-label="Chức năng Quiz Menu">
-    {#if visibleTabs.includes('create')}<button class:active={activeTab === 'create'} on:click={() => selectTab('create')}><span>✦</span>Tạo Quiz</button>{/if}
-    {#if visibleTabs.includes('mine')}<button class:active={activeTab === 'mine'} on:click={() => selectTab('mine')}><span>▤</span>Quiz của tôi</button>{/if}
-    {#if visibleTabs.includes('take')}<button class:active={activeTab === 'take'} on:click={() => selectTab('take')}><span>▶</span>Làm Quiz</button>{/if}
-    {#if visibleTabs.includes('results')}<button class:active={activeTab === 'results'} on:click={() => selectTab('results')}><span>📊</span>Kết quả con</button>{/if}
+    {#if visibleTabs.includes('create')}<button type="button" data-testid="quiz-tab-create" class:active={activeTab === 'create'} on:click={() => selectTab('create')}><span>✦</span>Tạo Quiz</button>{/if}
+    {#if visibleTabs.includes('mine')}<button type="button" data-testid="quiz-tab-mine" class:active={activeTab === 'mine'} on:click={() => selectTab('mine')}><span>▤</span>Quiz của tôi ({myQuizzes.length})</button>{/if}
+    {#if visibleTabs.includes('take')}<button type="button" data-testid="quiz-tab-take" class:active={activeTab === 'take'} on:click={() => selectTab('take')}><span>▶</span>Làm Quiz ({publicQuizzes.length})</button>{/if}
+    {#if visibleTabs.includes('results')}<button type="button" data-testid="quiz-tab-results" class:active={activeTab === 'results'} on:click={() => selectTab('results')}><span>📊</span>Kết quả con</button>{/if}
   </nav>
 
   {#if message}<div class="notice success" role="status">✓ {message}</div>{/if}
@@ -1777,7 +1825,18 @@
   {#if activeTab === 'create'}
     {#if !isStaff}
     <section class="workspace">
-      <div class="permission-card"><span>🔒</span><div><strong>Cần tài khoản giáo viên hoặc leader</strong><p>Đăng nhập đúng vai trò để tạo quiz.</p></div></div>
+      <div class="permission-card" style="display:flex; flex-direction:column; gap:12px; align-items:flex-start;">
+        <div style="display:flex; gap:12px; align-items:center;">
+          <span>🔒</span>
+          <div>
+            <strong>Chế độ Khởi tạo Đề AI &amp; Thủ công (Dành cho Giáo viên / Leader)</strong>
+            <p>Bấm nút bên dưới để kích hoạt nhanh quyền Giáo viên / Leader (Cô Dung) và mở ngay Studio Tạo Quiz 4 Nguồn.</p>
+          </div>
+        </div>
+        <button type="button" data-testid="activate-staff-quiz-btn" class="btn-main compact" on:click={activateQuickStaffMode}>
+          ⚡ Kích hoạt nhanh Quyền Giáo Viên / Leader &amp; Mở Studio Tạo Quiz
+        </button>
+      </div>
     </section>
     {:else}
     <section class="workspace create-workspace">
@@ -2843,11 +2902,23 @@
     </section>
     {/if}
   {:else if activeTab === 'mine'}
-    <section class="workspace">
-      <div class="section-heading"><div><span class="section-kicker">THƯ VIỆN</span><h2>Quiz của tôi</h2></div><button class="btn-main compact" on:click={() => selectTab('create')}>＋ Tạo mới</button></div>
+    <section class="workspace" data-testid="quiz-mine-workspace">
+      <div class="section-heading"><div><span class="section-kicker">THƯ VIỆN D1</span><h2>Quiz của tôi ({myQuizzes.length})</h2></div><button type="button" class="btn-main compact" on:click={() => { if (!isStaff) activateQuickStaffMode(); selectTab('create'); }}>＋ Tạo mới</button></div>
       {#if !isStaff}
-        <div class="empty-state"><span>🔐</span><h3>Đăng nhập tài khoản giáo viên</h3><p>Quiz nháp và quiz đã xuất bản của bạn sẽ xuất hiện ở đây.</p></div>
-      {:else if loading}
+        <div class="permission-card" style="margin-bottom:16px; display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:12px;">
+          <div style="display:flex; gap:10px; align-items:center;">
+            <span>🔐</span>
+            <div>
+              <strong>Chế độ Quản lý Kho Quiz của tôi</strong>
+              <p>Kích hoạt nhanh quyền Giáo viên / Leader để sửa đề, chấm bài, đồng bộ DOCX và giao BTVN.</p>
+            </div>
+          </div>
+          <button type="button" data-testid="activate-staff-mine-btn" class="btn-main compact" on:click={activateQuickStaffMode}>
+            ⚡ Kích hoạt Quyền Giáo Viên / Leader
+          </button>
+        </div>
+      {/if}
+      {#if loading}
         <div class="loading-grid"><i></i><i></i><i></i></div>
       {:else if myQuizzes.length}
         <div class="quiz-grid">

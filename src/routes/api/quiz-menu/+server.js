@@ -57,8 +57,11 @@ export async function GET({ url, request, platform }) {
       if (readiness) resPayload.readiness = readiness;
       return json(resPayload);
     }
+    const isManagerRole = auth?.authenticated && ['superadmin', 'admin', 'leader'].includes(String(auth.user.role || '').toLowerCase());
     const query = mine
-      ? `SELECT id, title, description, creator_name, time_limit_minutes, status, created_at, updated_at FROM quizzes WHERE created_by = ? ORDER BY updated_at DESC LIMIT ?`
+      ? (isManagerRole
+          ? `SELECT id, title, description, creator_name, time_limit_minutes, status, created_at, updated_at FROM quizzes ORDER BY updated_at DESC LIMIT ?`
+          : `SELECT id, title, description, creator_name, time_limit_minutes, status, created_at, updated_at FROM quizzes WHERE created_by = ? OR status = 'published' ORDER BY CASE WHEN created_by = ? THEN 0 ELSE 1 END, updated_at DESC LIMIT ?`)
       : `SELECT id, title, description, creator_name, time_limit_minutes, status, created_at, updated_at FROM quizzes WHERE status = 'published' ORDER BY updated_at DESC LIMIT ?`;
     // Student đã đăng nhập: catalog public cũng lọc theo quiz được giao (chống bypass gỡ auth)
     const studentRole = auth?.authenticated && String(auth.user.role || '').toLowerCase() === 'student';
@@ -82,7 +85,9 @@ export async function GET({ url, request, platform }) {
       return json(resPayload);
     }
     const rows = mine
-      ? await platform.env.DB.prepare(query).bind(auth.user.id, limit).all()
+      ? (isManagerRole
+          ? await platform.env.DB.prepare(query).bind(limit).all()
+          : await platform.env.DB.prepare(query).bind(auth.user.id, auth.user.id, limit).all())
       : await platform.env.DB.prepare(query).bind(limit).all();
     const quizzesList = rows.results || [];
     const readiness = await resolveReadinessIfNeeded(quizzesList);
