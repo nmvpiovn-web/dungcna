@@ -2,7 +2,12 @@ import { json } from '@sveltejs/kit';
 import { isStaffUser, verifyServerAuth } from '../../../../../lib/server/auth.js';
 import { canManageQuiz } from '../../../../../lib/server/quizMenu.js';
 import { generateDeterministicQuiz, parseGradeLevel } from '../../../../../lib/server/quizAutoBuilder.js';
-import { saveQuizSourceAndDrafts } from '../../../../../lib/server/quizDrive.js';
+import {
+  cleanDriveMarkdownWrapper,
+  readAllowedDriveSource,
+  saveQuizSourceAndDrafts,
+  syncDriveSourceToKnowledgeVault
+} from '../../../../../lib/server/quizDrive.js';
 
 export const prerender = false;
 
@@ -38,14 +43,39 @@ export async function POST({ params, request, platform }) {
   const gradeLevel = gradeValidation.gradeLevel;
 
   const article = await db.prepare(
-    `SELECT id, title, content_markdown FROM knowledge_vault WHERE id = ? AND (status IN ('active', 'published') OR status IS NULL) LIMIT 1`
+    `SELECT id, title, folder, category, source_path, content_markdown
+     FROM knowledge_vault
+     WHERE id = ? AND (status IN ('active', 'published') OR status IS NULL)
+     LIMIT 1`
   ).bind(vaultId).first();
 
   if (!article) {
     return json({ success: false, error: 'ArticleNotFound', message: 'Không tìm thấy bài học trong Kho tri thức' }, { status: 404 });
   }
 
-  const text = String(article.content_markdown || '').trim();
+  let text = cleanDriveMarkdownWrapper(article.content_markdown || '');
+
+  // Vòng cứu hộ tự động Drive -> Vault -> D1 nếu bài học trong Kho Tri Thức chưa trích xuất đủ text
+  if (text.length < 50) {
+    const rawSourcePath = String(article.source_path || '');
+    const linkMatch = String(article.content_markdown || '').match(/https:\/\/(?:drive|docs)\.google\.com\/(?:file|document)\/d\/([A-Za-z0-9_-]+)/i);
+    const candidateDriveId = rawSourcePath.startsWith('drive://')
+      ? rawSourcePath.replace(/^drive:\/\//, '').trim()
+      : vaultId.startsWith('db_drive_')
+        ? vaultId.replace(/^db_drive_/, '').trim()
+        : linkMatch?.[1] || '';
+
+    if (candidateDriveId && /^[A-Za-z0-9_-]{6,200}$/.test(candidateDriveId)) {
+      try {
+        const rescued = await readAllowedDriveSource(platform, candidateDriveId);
+        if (rescued?.text) {
+          text = cleanDriveMarkdownWrapper(rescued.text);
+          await syncDriveSourceToKnowledgeVault(db, { ...rescued.file, id: vaultId, name: article.title || rescued.file?.name }, text);
+        }
+      } catch {}
+    }
+  }
+
   if (text.length < 20) {
     return json({ success: false, error: 'ContentTooShort', message: 'Nội dung bài học quá ngắn để tạo quiz' }, { status: 400 });
   }

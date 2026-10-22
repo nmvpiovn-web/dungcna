@@ -218,6 +218,7 @@ export async function GET({ url, request, platform }) {
           AND title NOT LIKE '📁%'
           AND title NOT LIKE '%.mp3'
           AND title NOT LIKE '%.rar'
+          AND LOWER(title) NOT LIKE '%.doc'
           AND (content_markdown IS NULL OR content_markdown NOT LIKE '%Không trích xuất được nội dung%')
         ORDER BY id ASC LIMIT 120
       `).all().catch(() => ({ results: [] })),

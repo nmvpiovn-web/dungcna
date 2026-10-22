@@ -36,16 +36,18 @@
 
  const DRIVE_GROUPS = [
   { key: 'all', label: '📚 Tất cả tài liệu' },
-  { key: 'thpt_arch', label: '🎓 Luyện thi THPT & Đề chuẩn' },
-  { key: 'intl_cert', label: '🌍 Chứng chỉ Quốc tế (IELTS / Cambridge)' },
-  { key: 'k12_curriculum', label: '🏫 Chương trình Phổ thông (THCS / THPT)' },
-  { key: 'pedagogy_ops', label: '👩‍🏫 Tài liệu Sư phạm & Giáo án' }
+  { key: 'tieu_hoc', label: '📘 Khối Tiểu học (Lớp 1–5)' },
+  { key: 'thcs', label: '📗 Khối THCS (Lớp 6–9)' },
+  { key: 'thpt_hsg', label: '📙 Khối THPT & HSG (Lớp 10–12)' },
+  { key: 'ngu_phap', label: '📐 Chuyên đề Ngữ pháp' },
+  { key: 'tu_vung_ky_nang', label: '🌍 Từ vựng & IELTS' },
+  { key: 'de_luyen_tap', label: '📝 Bộ Đề Luyện Tập' }
  ];
 
  let filteredFiles = $derived(
   activeGroup === 'all'
    ? files
-   : files.filter((f) => f.groupKey === activeGroup)
+   : files.filter((f) => f.isFolder || f.groupKey === activeGroup)
  );
 
  async function checkKeyStatus() {
@@ -138,9 +140,10 @@
  }
 
  function openFolder(f) {
-  breadcrumbs = [...breadcrumbs, { id: f.id, name: f.name }];
-  currentFolderId = f.id;
-  loadFiles(f.id, search);
+  const cleanFolderId = String(f.driveId || f.id || '').replace(/^db_drive_/, '');
+  breadcrumbs = [...breadcrumbs, { id: cleanFolderId, name: f.name }];
+  currentFolderId = cleanFolderId;
+  loadFiles(cleanFolderId, search);
  }
 
  function goToCrumb(idx) {
@@ -229,7 +232,7 @@
   <div>
    <h1 class="text-2xl font-heading font-extrabold text-ink-900">📚 Kho Tài Liệu Google Drive</h1>
    <p class="text-sm text-ink-500">
-    Hệ thống học liệu tiếng Anh chuẩn hóa theo nhóm chuyên đề • Đồng bộ trực tiếp với Kho Tri Thức D1
+    Hệ thống học liệu tiếng Anh chuẩn hóa theo nhóm chuyên đề • Vòng kết nối khép kín Drive ↔ Obsidian Vault ↔ Kho Tri Thức D1
    </p>
   </div>
   <input
@@ -256,11 +259,23 @@
   <div class="rounded-2xl bg-surface-0 border border-line p-4 sm:p-5 space-y-3 shadow-xs">
    <div class="flex flex-wrap items-center justify-between gap-2">
     <div class="font-heading font-bold text-sm text-ink-900">📁 Quản lý thư mục Drive &amp; Đồng bộ Kho Tri Thức</div>
-    {#if dataSource === 'knowledge_vault_mirror'}
-     <span class="px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-bold">
-      ✓ Đang hiển thị bản đồng bộ Kho Tri Thức D1 ({files.length} tài liệu)
-     </span>
-    {/if}
+    <div class="flex items-center gap-2 flex-wrap">
+     {#if dataSource === 'knowledge_vault_mirror'}
+      <span class="px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-bold">
+       ✓ Đang hiển thị bản đồng bộ Kho Tri Thức D1 ({files.length} tài liệu)
+      </span>
+     {:else}
+      <span class="px-2.5 py-0.5 rounded-full bg-sky-50 border border-sky-200 text-sky-700 text-[11px] font-bold">
+       ✓ Đã kết nối Google Drive + Kho Tri Thức D1 ({files.length} mục)
+      </span>
+     {/if}
+     <a
+      href="/second-brain?folder=07_GOOGLE_DRIVE_LIBRARY"
+      class="px-2.5 py-0.5 rounded-full bg-purple-50 border border-purple-200 text-purple-700 text-[11px] font-bold hover:bg-purple-100"
+     >
+      🧠 Xem trong Obsidian Vault →
+     </a>
+    </div>
    </div>
    <div class="flex flex-col sm:flex-row gap-2">
     <input
@@ -363,14 +378,11 @@
       >
        <div class="text-3xl mb-2">📁</div>
        <div class="font-bold text-sm text-ink-900 group-hover:text-brand-700 break-words">{f.name}</div>
-       <div class="text-xs text-ink-500 mt-1">Thư mục →</div>
+       <div class="text-xs text-ink-500 mt-1">Mở thư mục con →</div>
       </button>
      {:else}
-      <a
-       href={f.webViewLink}
-       target="_blank"
-       rel="noopener noreferrer"
-       class="rounded-2xl border border-line bg-surface-0 p-4 hover:border-brand-600 hover:shadow-md transition-all group flex flex-col justify-between gap-2"
+      <div
+       class="rounded-2xl border border-line bg-surface-0 p-4 hover:border-brand-600 hover:shadow-md transition-all group flex flex-col justify-between gap-2.5"
       >
        <div>
         <div class="flex items-start justify-between gap-2 mb-2">
@@ -381,13 +393,38 @@
           </span>
          {/if}
         </div>
-        <div class="font-bold text-xs sm:text-sm text-ink-900 group-hover:text-brand-700 leading-snug break-words" title={f.name}>{f.name}</div>
+        <a
+         href={f.webViewLink}
+         target="_blank"
+         rel="noopener noreferrer"
+         class="font-bold text-xs sm:text-sm text-ink-900 group-hover:text-brand-700 leading-snug break-words block"
+         title={f.name}
+        >{f.name}</a>
        </div>
-       <div class="flex items-center justify-between text-[11px] text-ink-500 pt-2 border-t border-line">
-        <span>{formatSize(f.size)}</span>
-        <span class="text-brand-600 font-semibold">Mở tài liệu ↗</span>
+       <div class="space-y-2 pt-2 border-t border-line">
+        <div class="flex items-center justify-between text-[11px] text-ink-500">
+         <span>{formatSize(f.size)}</span>
+         <a href={f.webViewLink} target="_blank" rel="noopener noreferrer" class="text-brand-600 font-semibold hover:underline">Mở gốc ↗</a>
+        </div>
+        <div class="flex items-center gap-1.5 flex-wrap">
+         <a
+          href={`/quiz-menu?tab=create&mode=auto&source=drive&file_id=${encodeURIComponent(f.id)}`}
+          class="flex-1 text-center px-2 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-extrabold hover:bg-emerald-100"
+          title="Tạo đề Quiz tự động từ tài liệu Drive này"
+         >⚡ Tạo Quiz</a>
+         <a
+          href={`/second-brain?id=${encodeURIComponent(f.vaultId || f.id)}`}
+          class="px-2 py-1 rounded-lg bg-purple-50 border border-purple-200 text-purple-700 text-[10px] font-extrabold hover:bg-purple-100"
+          title="Xem bản đồng bộ trong Kho Tri Thức D1"
+         >🧠 Vault</a>
+         <a
+          href="/session-audit"
+          class="px-2 py-1 rounded-lg bg-sky-50 border border-sky-200 text-sky-700 text-[10px] font-extrabold hover:bg-sky-100"
+          title="Gắn tài liệu vào Ca dạy"
+         >📅 Ca dạy</a>
+        </div>
        </div>
-      </a>
+      </div>
      {/if}
     {/each}
    </div>

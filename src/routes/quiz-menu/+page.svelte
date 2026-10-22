@@ -583,6 +583,8 @@
     const gradeParam = sp.get('grade');
     const modeParam = sp.get('mode');
     const sourceParam = sp.get('source');
+    const fileIdParam = sp.get('file_id');
+    const vaultIdParam = sp.get('vault_id');
 
     if (tabParam && visibleTabs.includes(tabParam) && activeTab !== tabParam) {
       activeTab = tabParam;
@@ -599,6 +601,12 @@
     }
     if (sourceParam && ['upload', 'drive', 'question_bank', 'knowledge_vault'].includes(sourceParam) && sourceMode !== sourceParam) {
       chooseSource(sourceParam);
+    }
+    if (fileIdParam && selectedDriveFileId !== fileIdParam) {
+      selectedDriveFileId = fileIdParam;
+    }
+    if (vaultIdParam && kvSelectedArticleId !== vaultIdParam) {
+      kvSelectedArticleId = vaultIdParam;
     }
   });
 
@@ -677,7 +685,10 @@
           default_status: res.defaults.default_status || 'draft'
         };
         draft.time_limit_minutes = autoConfig.time_limit_minutes;
-        sourceMode = autoConfig.source_type;
+        const urlSource = page?.url?.searchParams?.get('source');
+        if (!urlSource || !['upload', 'drive', 'question_bank', 'knowledge_vault'].includes(urlSource)) {
+          sourceMode = autoConfig.source_type;
+        }
         if (autoConfig.default_status) {
           draft.status = autoConfig.default_status;
         }

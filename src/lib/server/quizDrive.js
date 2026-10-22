@@ -329,21 +329,88 @@ function decodePdfString(s) {
     .replace(/\\\(/g, '(').replace(/\\\)/g, ')').replace(/\\\\/g, '\\');
 }
 
-function assertExtractedText(text) {
-  const cleaned = String(text || '')
+export function cleanDriveMarkdownWrapper(text) {
+  return String(text || '')
     .replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/m, '')
     .replace(/^#+\s+.*$/gm, '')
-    .replace(/^\s*[-*•]?\s*\*\*(?:Loại|Phân loại|Nguồn|Thư mục|Định dạng|Dung lượng|Cập nhật)[:\s]*\*\*.*$/gim, '')
-    .replace(/^\s*[-*•]?\s*(?:Loại|Phân loại|Nguồn|Thư mục|Định dạng|Dung lượng|Cập nhật)\s*[:=].*$/gim, '')
+    .replace(/^\s*[-*•]?\s*\*\*(?:Loại|Phân loại|Nguồn|Thư mục|Định dạng|Dung lượng|Cập nhật|Tệp gốc)[:\s]*\*\*.*$/gim, '')
+    .replace(/^\s*[-*•]?\s*(?:Loại|Phân loại|Nguồn|Thư mục|Định dạng|Dung lượng|Cập nhật|Tệp gốc)\s*[:=].*$/gim, '')
     .replace(/\*?\(Không trích xuất được nội dung[^)]*\)\*?/gi, '')
     .replace(/Thư mục tài liệu trên Google Drive\.?/gi, '')
-    .replace(/🔗\s*\[Mở trên Drive\]\([^)]*\)/gi, '')
+    .replace(/🔗\s*\[Mở(?:\s+file\s+gốc)?\s+trên\s+(?:Google\s+)?Drive\]\([^)]*\)/gi, '')
     .replace(/^---+\s*$/gm, '')
     .trim();
+}
+
+export async function syncDriveSourceToKnowledgeVault(db, source, text) {
+  if (!db) return false;
+  try {
+    const cleaned = cleanDriveMarkdownWrapper(text);
+    if (!cleaned || cleaned.length < 80) return false;
+    const rawId = String(source?.id || '').trim();
+    const rawName = String(source?.name || '').trim() || rawId || 'Tai_lieu_Drive.docx';
+    if (/\.(mp3|rar|zip)$/i.test(rawName)) return false;
+
+    const cleanDriveId = rawId
+      .replace(/^db_drive_/, '')
+      .replace(/^drive-/, '')
+      .replace(/[^A-Za-z0-9_-]/g, '');
+    const vaultId = rawId.startsWith('07_GOOGLE_DRIVE_LIBRARY__')
+      ? rawId
+      : cleanDriveId
+        ? `db_drive_${cleanDriveId}`
+        : `db_drive_${rawName.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 60)}`;
+
+    const displayTitle = normalizeVietnameseSourceTitle(rawName, vaultId) || rawName.replace(/\.[^.]+$/, '');
+    const groupInfo = classifyDriveFileGroup(rawName, vaultId);
+    const webViewLink =
+      source?.webViewLink ||
+      source?.web_view_link ||
+      (cleanDriveId ? `https://drive.google.com/file/d/${cleanDriveId}/view` : '');
+
+    const md =
+      `# 📄 ${displayTitle}\n\n` +
+      `- **Loại:** Tài liệu Google Drive đã trích xuất\n` +
+      `- **Phân loại:** ${groupInfo.label}\n` +
+      `- **Tệp gốc:** ${rawName}\n` +
+      (webViewLink ? `- **Nguồn:** [Mở trên Google Drive](${webViewLink})\n` : '') +
+      `\n---\n\n` +
+      cleaned.slice(0, 50000);
+
+    await db
+      .prepare(
+        `INSERT INTO knowledge_vault (id, title, folder, category, tags, source_path, source_hash, content_markdown, status)
+         VALUES (?, ?, '07_GOOGLE_DRIVE_LIBRARY', ?, ?, ?, ?, ?, 'published')
+         ON CONFLICT(id) DO UPDATE SET
+           title = excluded.title,
+           category = excluded.category,
+           tags = excluded.tags,
+           content_markdown = excluded.content_markdown,
+           status = 'published',
+           updated_at = CURRENT_TIMESTAMP`
+      )
+      .bind(
+        vaultId,
+        displayTitle,
+        groupInfo.key || 'tai_lieu_drive',
+        JSON.stringify(['google-drive', groupInfo.key, groupInfo.short].filter(Boolean)),
+        cleanDriveId ? `drive://${cleanDriveId}` : `upload://${rawName}`,
+        `sync_${vaultId}_${cleaned.length}`,
+        md
+      )
+      .run();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function assertExtractedText(text) {
+  const cleaned = cleanDriveMarkdownWrapper(text);
   if (!cleaned || cleaned.length < 50) {
     throw new QuizDriveError('Không đọc được nội dung tệp (tệp rỗng hoặc định dạng không đọc được)', 400, 'EmptyExtraction');
   }
-  return text;
+  return cleaned;
 }
 
 export async function uploadQuizSource(platform, file) {
@@ -423,10 +490,12 @@ function assertSupportedMetadata(file) {
 async function readD1SyncedDriveSource(platform, id) {
   const db = platform?.env?.DB;
   if (!db || !id) return null;
+  const rawDriveId = String(id).replace(/^db_drive_/, '').replace(/^drive-/, '');
+  const candidateVaultId = String(id).startsWith('db_drive_') ? String(id) : `db_drive_${rawDriveId}`;
   try {
     const kvRow = await db.prepare(
-      `SELECT id, title, content_markdown, updated_at FROM knowledge_vault WHERE id = ? AND folder = '07_GOOGLE_DRIVE_LIBRARY' LIMIT 1`
-    ).bind(id).first();
+      `SELECT id, title, content_markdown, updated_at FROM knowledge_vault WHERE (id = ? OR id = ?) AND folder = '07_GOOGLE_DRIVE_LIBRARY' LIMIT 1`
+    ).bind(id, candidateVaultId).first();
     if (kvRow && kvRow.content_markdown) {
       const name = String(kvRow.title || id).trim();
       return {
@@ -444,8 +513,8 @@ async function readD1SyncedDriveSource(platform, id) {
 
   try {
     const dfRow = await db.prepare(
-      `SELECT drive_id, name, mime_type, size_bytes, web_view_link, modified_time FROM drive_file_index WHERE drive_id = ? LIMIT 1`
-    ).bind(id).first();
+      `SELECT drive_id, name, mime_type, size_bytes, web_view_link, modified_time FROM drive_file_index WHERE (drive_id = ? OR drive_id = ?) LIMIT 1`
+    ).bind(id, rawDriveId).first();
     if (dfRow) {
       const baseName = String(dfRow.name || '').replace(/\.[^.]+$/, '').trim();
       try {
@@ -1019,6 +1088,9 @@ export async function saveQuizSourceAndDrafts(db, quizId, source, text, question
     }
   }
   await db.batch(statements);
+  if (options.sourceType !== 'knowledge_vault') {
+    await syncDriveSourceToKnowledgeVault(db, metadata, text);
+  }
   return metadata;
 }
 

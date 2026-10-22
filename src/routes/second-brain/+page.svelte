@@ -203,6 +203,19 @@
  }
 
  onMount(() => {
+ try {
+  const sp = new URLSearchParams(window.location.search);
+  const idParam = sp.get('id');
+  const folderParam = sp.get('folder');
+  if (idParam) {
+   selectedNoteId = idParam;
+   historyStack = [idParam];
+   historyIndex = 0;
+  }
+  if (folderParam) {
+   selectedFolder = folderParam;
+  }
+ } catch {}
  // Nếu server đã cung cấp dữ liệu, không cần fetch lại
  // Chỉ fetch khi không có dữ liệu server
  if (!data || data.forbidden || !data.notes?.length) {
@@ -212,6 +225,9 @@
  try { currentUser = getCurrentUser(); } catch {}
  isLoading = false;
  isForbidden = false;
+ if (selectedFolder !== 'all') {
+  fetchVaultList();
+ }
  fetchNoteDetail(selectedNoteId);
  }
  const handleAuth = (e) => {
@@ -627,6 +643,24 @@
  <span class="hidden sm:inline-block text-[11px] font-bold px-2 py-0.5 rounded-full bg-teal-500/10 text-teal-600 border border-teal-500/20">
  WikiLinks
  </span>
+
+ <!-- Tạo Quiz từ bài học trong Kho Tri Thức -->
+ <a
+ href={`/quiz-menu?tab=create&mode=auto&source=knowledge_vault&vault_id=${encodeURIComponent(currentNote.id)}`}
+ class="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-sm transition-all hover:scale-105"
+ title="Tạo đề Quiz tự động từ bài học này trong Quiz Studio"
+ >
+ <span>⚡</span> <span>Tạo Quiz từ bài này</span>
+ </a>
+
+ <!-- Gắn vào Ca dạy -->
+ <a
+ href="/session-audit"
+ class="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs shadow-sm transition-all hover:scale-105"
+ title="Gắn bài học này vào Ca dạy & Giáo án"
+ >
+ <span>📅</span> <span>Gắn Ca dạy</span>
+ </a>
 
  <!-- Direct Link to Open File in Obsidian -->
  <a
