@@ -7,7 +7,8 @@ import {
   DEFAULT_LANGFLOW_NODES,
   DEFAULT_LANGFLOW_EDGES,
   ensureCragLangflowTables,
-  runCragLangflowPipeline
+  runCragLangflowPipeline,
+  toZaloCompatiblePhotoUrl
 } from '$lib/server/cragLangflowEngine.js';
 
 export const prerender = false;
@@ -286,15 +287,17 @@ export async function POST({ request, platform }) {
           `• Trạng thái: ${a?.status === 'late' ? 'Đi muộn' : 'Đã vào lớp đúng giờ'} (+${a?.instant_stars_rewarded || 15} sao chuyên cần)\n` +
           `• Ghi chú trên lớp: ${a?.in_class_attitude || 'Hăng hái phát biểu, chuẩn bị bài đầy đủ.'}`;
       } else if (ruleId === 'tuition_vietqr') {
-        const b = await db.prepare(`SELECT * FROM tuition_bills ORDER BY created_at ASC LIMIT 1`).first().catch(() => null);
+        const b = await db.prepare(`SELECT * FROM tuition_bills WHERE billing_period NOT LIKE '%PROBE%' AND LOWER(student_name) != 'test' ORDER BY created_at ASC LIMIT 1`).first().catch(() => null);
         const rawQr = b?.vietqr_url || 'https://img.vietqr.io/image/970422-0901234567-compact2.png?amount=2100000&addInfo=HP_BAOANH_T10&accountName=NGUYEN%20MINH%20VU';
-        const safeQrPhoto = 'https://wsrv.nl/?url=' + encodeURIComponent(rawQr) + '&output=png';
+        const safeQrPhoto = toZaloCompatiblePhotoUrl(rawQr);
+        const dlQrLink = toZaloCompatiblePhotoUrl(rawQr, { download: true });
         messageText =
           `💳 Phiếu báo học phí ${b?.billing_period || 'Tháng 10/2026'} — ${b?.student_name || 'Lê Bảo Anh'} (${b?.grade_level || 'Lớp 12'}):\n` +
           `• Học phí gốc: ${Number(b?.base_tuition_vnd || 2200000).toLocaleString('vi-VN')}đ (${b?.attendance_attended_sessions || 12}/${b?.attendance_total_sessions || 12} buổi)\n` +
           `• Đổi sao tích lũy: -${Number(b?.discount_vnd || 100000).toLocaleString('vi-VN')}đ (${Number(b?.stars_deducted || 10000).toLocaleString('vi-VN')} sao)\n` +
           `➔ Thực đóng: ${Number(b?.final_amount_vnd || 2100000).toLocaleString('vi-VN')}đ\n` +
-          `🏦 ${b?.bank_name || 'MBBank'} • STK: ${b?.bank_account || '0901234567'} (${b?.account_holder || 'NGUYEN MINH VU'})\n\n` +
+          `🏦 ${b?.bank_name || 'MBBank'} • STK: ${b?.bank_account || '0901234567'} (${b?.account_holder || 'NGUYEN MINH VU'})\n` +
+          `• Tải ảnh QR nét cao (.PNG): ${dlQrLink}\n\n` +
           `Lớp gửi kèm mã QR ngay bên dưới để phụ huynh tiện quét nhanh ạ:`;
 
         await fetch(`https://bot-api.zaloplatforms.com/bot${DEFAULT_ZALO_BOT_TOKEN}/sendMessage`, {
@@ -386,11 +389,9 @@ export async function POST({ request, platform }) {
     const baseUrl = `https://bot-api.zaloplatforms.com/bot${DEFAULT_ZALO_BOT_TOKEN}`;
 
     if (mediaType === 'qr_photo' || mediaType === 'custom_photo') {
-      const defaultQr = 'https://img.vietqr.io/image/970422-0901234567-compact2.png?amount=1550000&addInfo=HP_GIAHUY_T10&accountName=NGUYEN%20MINH%20VU';
+      const defaultQr = 'https://timbk-zalo-webhook.tienganh7-sveltekit.workers.dev/vietqr/970422-0901234567-1550000-HP_GIAHUY_T10.png';
       const photoToUse = rawUrl || defaultQr;
-      const safePhotoUrl = photoToUse.includes('wsrv.nl') || photoToUse.includes('api.qrserver.com') || photoToUse.includes('images.unsplash.com')
-        ? photoToUse
-        : 'https://wsrv.nl/?url=' + encodeURIComponent(photoToUse) + '&output=png';
+      const safePhotoUrl = toZaloCompatiblePhotoUrl(photoToUse);
 
       const zRes = await fetch(baseUrl + '/sendPhoto', {
         method: 'POST',

@@ -9,6 +9,40 @@
   function printBill() {
     window.print();
   }
+
+  function getQrPngUrl(b, isDownload = false) {
+    if (!b) return '';
+    const raw = String(b.vietqr_url || '').trim();
+    const bank = '970422';
+    const account = String(b.bank_account || '0901234567').replace(/[^0-9]/g, '') || '0901234567';
+    const amount = Math.max(0, Math.round(Number(b.final_amount_vnd) || 0));
+
+    let addInfo = '';
+    if (raw) {
+      const cleanMatch = raw.match(/\/vietqr\/\d{6}-\d+-\d+-([A-Za-z0-9_-]+)\.png/i);
+      if (cleanMatch) {
+        addInfo = cleanMatch[1];
+      } else {
+        try {
+          const u = new URL(raw, 'https://timbk.io.vn');
+          addInfo = u.searchParams.get('addInfo') || '';
+        } catch {}
+      }
+    }
+    if (!addInfo) {
+      const shortName = String(b.student_name || 'HOCSINH')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/đ/g, 'd')
+        .replace(/Đ/g, 'D')
+        .replace(/[^A-Za-z0-9]/g, '')
+        .toUpperCase()
+        .slice(0, 12) || 'HOCSINH';
+      addInfo = `HP_${shortName}_T10`;
+    }
+    const safeSlug = String(addInfo).replace(/[^A-Za-z0-9_-]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '') || 'HP_T10';
+    return `/api/vietqr/${bank}-${account}-${amount}-${safeSlug}.png${isDownload ? '?download=1' : ''}`;
+  }
 </script>
 
 {#if bill}
@@ -19,12 +53,21 @@
         <span>Mẫu đang hiển thị:</span>
         <strong class="text-emerald-700">Template {templateId}</strong>
       </div>
-      <button
-        onclick={printBill}
-        class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-2 shadow-lg shadow-emerald-600/30 transition-all hover:scale-105"
-      >
-        <span>🖨️ In / Xuất PDF (A4 Chuẩn)</span>
-      </button>
+      <div class="flex items-center gap-2">
+        <a
+          href={getQrPngUrl(bill, true)}
+          download={`VietQR_${bill.student_name || 'HocPhi'}.png`}
+          class="px-3.5 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-md transition-all"
+        >
+          <span>⬇️ Tải Mã QR (.PNG)</span>
+        </a>
+        <button
+          onclick={printBill}
+          class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-2 shadow-lg shadow-emerald-600/30 transition-all hover:scale-105"
+        >
+          <span>🖨️ In / Xuất PDF (A4 Chuẩn)</span>
+        </button>
+      </div>
     </div>
   {/if}
 
@@ -187,13 +230,20 @@
           </div>
         </div>
 
-        <div class="flex-shrink-0 text-center">
+        <div class="flex-shrink-0 text-center space-y-1.5">
           <img
-            src={bill.vietqr_url}
+            src={getQrPngUrl(bill, false)}
             alt="VietQR Payment"
             class="w-36 h-36 rounded-xl border border-emerald-300 p-1 bg-white shadow-sm mx-auto"
           />
-          <span class="text-[10px] font-bold text-emerald-700 block mt-1">Quét mã để nộp</span>
+          <span class="text-[10px] font-bold text-emerald-700 block">Quét mã để nộp</span>
+          <a
+            href={getQrPngUrl(bill, true)}
+            download={`VietQR_${bill.student_name || 'HocPhi'}.png`}
+            class="no-print inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] shadow-sm transition-all"
+          >
+            ⬇️ Tải ảnh QR (.PNG)
+          </a>
         </div>
       </div>
 
@@ -277,8 +327,15 @@
           <div class="font-bold text-teal-700">VIETQR THANH TOÁN TIẾNG ANH CÔ DUNG:</div>
           <div class="text-slate-700">{bill.bank_name} • {bill.bank_account}</div>
           <div class="text-slate-600">Chủ TK: {bill.account_holder} &amp; Cô Dung</div>
+          <a
+            href={getQrPngUrl(bill, true)}
+            download={`VietQR_${bill.student_name || 'HocPhi'}.png`}
+            class="no-print mt-2 inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-bold text-[10px]"
+          >
+            ⬇️ Tải ảnh QR (.PNG)
+          </a>
         </div>
-        <img src={bill.vietqr_url} alt="" class="w-28 h-28 rounded-lg bg-white p-1" />
+        <img src={getQrPngUrl(bill, false)} alt="VietQR" class="w-28 h-28 rounded-lg bg-white p-1" />
       </div>
     </div>
 
@@ -312,8 +369,15 @@
         <div>
           <div class="text-xs opacity-80">Tổng thanh toán sau khi trừ {bill.stars_deducted} Sao:</div>
           <div class="text-2xl font-black">{bill.final_amount_vnd.toLocaleString('vi-VN')} đ</div>
+          <a
+            href={getQrPngUrl(bill, true)}
+            download={`VietQR_${bill.student_name || 'HocPhi'}.png`}
+            class="no-print mt-2 inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white text-cx-700 font-bold text-[10px]"
+          >
+            ⬇️ Tải ảnh QR (.PNG)
+          </a>
         </div>
-        <img src={bill.vietqr_url} alt="" class="w-24 h-24 rounded-lg bg-white p-1" />
+        <img src={getQrPngUrl(bill, false)} alt="VietQR" class="w-24 h-24 rounded-lg bg-white p-1" />
       </div>
     </div>
 
@@ -338,8 +402,15 @@
         <div class="text-xs text-slate-600">
           <div>Quét mã VietQR chuyển học phí cho bé:</div>
           <div class="font-bold text-slate-900">{bill.bank_name} - {bill.bank_account}</div>
+          <a
+            href={getQrPngUrl(bill, true)}
+            download={`VietQR_${bill.student_name || 'HocPhi'}.png`}
+            class="no-print mt-2 inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px]"
+          >
+            ⬇️ Tải ảnh QR (.PNG)
+          </a>
         </div>
-        <img src={bill.vietqr_url} alt="" class="w-24 h-24 rounded-lg border border-lime-300 p-1" />
+        <img src={getQrPngUrl(bill, false)} alt="VietQR" class="w-24 h-24 rounded-lg border border-lime-300 p-1" />
       </div>
     </div>
 
@@ -376,8 +447,17 @@
           <div class="text-slate-700">
             <div>Chuyển khoản VietQR Tiếng Anh Cô Dung:</div>
             <strong class="text-amber-700">{bill.bank_account} ({bill.account_holder} &amp; Cô Dung)</strong>
+            <div class="mt-1.5">
+              <a
+                href={getQrPngUrl(bill, true)}
+                download={`VietQR_${bill.student_name || 'HocPhi'}.png`}
+                class="no-print inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-bold text-[10px]"
+              >
+                ⬇️ Tải ảnh QR (.PNG)
+              </a>
+            </div>
           </div>
-          <img src={bill.vietqr_url} alt="" class="w-24 h-24 rounded-lg bg-white p-1" />
+          <img src={getQrPngUrl(bill, false)} alt="VietQR" class="w-24 h-24 rounded-lg bg-white p-1" />
         </div>
       </div>
     </div>

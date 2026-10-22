@@ -153,13 +153,61 @@ export function cleanNaturalZaloText(raw = '') {
     .trim();
 }
 
-export function toZaloCompatiblePhotoUrl(rawUrl = '') {
-  const clean = String(rawUrl || '').trim();
+export function toZaloCompatiblePhotoUrl(rawUrl = '', options = {}) {
+  let clean = String(rawUrl || '').trim();
   if (!clean) return '';
-  if (clean.includes('wsrv.nl') || clean.includes('api.qrserver.com') || clean.includes('images.unsplash.com')) {
+
+  // Unwrap wsrv.nl if previously wrapped
+  if (clean.includes('wsrv.nl')) {
+    try {
+      const u = new URL(clean);
+      const inner = u.searchParams.get('url');
+      if (inner) clean = inner;
+    } catch {}
+  }
+
+  // Convert any VietQR URL (img.vietqr.io or /vietqr/) into a clean, first-party raster .png path with zero wsrv.nl dependency
+  if (clean.includes('vietqr.io') || clean.includes('/vietqr/')) {
+    let bank = '970422';
+    let account = '0901234567';
+    let amount = 0;
+    let addInfo = 'HP_T10';
+
+    const existingCleanMatch = clean.match(/\/vietqr\/(\d{6})-(\d{6,20})-(\d+)-([A-Za-z0-9_-]+)\.png/i);
+    if (existingCleanMatch) {
+      bank = existingCleanMatch[1];
+      account = existingCleanMatch[2];
+      amount = Number(existingCleanMatch[3]) || 0;
+      addInfo = existingCleanMatch[4];
+    } else {
+      const imgMatch = clean.match(/\/image\/(\d{6}|[A-Za-z0-9]+)-(\d{6,20})-/i);
+      if (imgMatch) {
+        bank = /^\d{6}$/.test(imgMatch[1]) ? imgMatch[1] : '970422';
+        account = imgMatch[2];
+      }
+      try {
+        const u = new URL(clean, 'https://timbk.io.vn');
+        if (u.searchParams.get('amount')) amount = Math.max(0, Math.round(Number(u.searchParams.get('amount')) || 0));
+        if (u.searchParams.get('addInfo')) addInfo = u.searchParams.get('addInfo');
+      } catch {}
+    }
+
+    const safeAddInfo = String(addInfo || 'HP_T10')
+      .replace(/[^A-Za-z0-9_-]/g, '_')
+      .replace(/_+/g, '_')
+      .replace(/^_|_$/g, '')
+      .slice(0, 40) || 'HP_T10';
+
+    if (options?.download) {
+      return `https://timbk.io.vn/api/vietqr/${bank}-${account}-${amount}-${safeAddInfo}.png?download=1`;
+    }
+    return `https://timbk-zalo-webhook.tienganh7-sveltekit.workers.dev/vietqr/${bank}-${account}-${amount}-${safeAddInfo}.png`;
+  }
+
+  if (clean.includes('api.qrserver.com') || clean.includes('images.unsplash.com') || clean.includes('timbk.io.vn') || clean.includes('workers.dev')) {
     return clean;
   }
-  return 'https://wsrv.nl/?url=' + encodeURIComponent(clean) + '&output=png';
+  return clean;
 }
 
 export function buildStudentVietQrUrl({ studentName = 'HOC SINH', amountVnd = 1800000, bankAccount = '0901234567', accountHolder = 'NGUYEN MINH VU', period = 'T10' }) {
@@ -169,7 +217,8 @@ export function buildStudentVietQrUrl({ studentName = 'HOC SINH', amountVnd = 18
     .toUpperCase()
     .slice(0, 12) || 'HOCSINH';
   const addInfo = `HP_${shortName}_${period}`;
-  return `https://img.vietqr.io/image/970422-${bankAccount}-compact2.png?amount=${Math.max(0, Number(amountVnd) || 0)}&addInfo=${encodeURIComponent(addInfo)}&accountName=${encodeURIComponent(accountHolder)}`;
+  const cleanAmount = Math.max(0, Math.round(Number(amountVnd) || 0));
+  return `https://timbk.io.vn/api/vietqr/970422-${bankAccount}-${cleanAmount}-${addInfo}.png`;
 }
 
 export async function sendZaloRichPayload({ botToken, chatId, text, photoUrls = [], photoCaptions = [], voiceUrl = '', videoUrl = '' }) {
@@ -386,13 +435,13 @@ export async function runCragLangflowPipeline({
         content: String(m.content).slice(0, 600)
       }));
 
-    // Load last 3 traces of this chatId (ordered by rowid DESC so newest insert is always first)
+    // Load last 10 traces of this chatId (ordered by rowid DESC so newest insert is always first)
     const recentTracesRes = await db.prepare(`
       SELECT detected_intents, extracted_entities, query_text
       FROM crag_execution_traces
       WHERE chat_id = ?
       ORDER BY rowid DESC
-      LIMIT 3
+      LIMIT 10
     `).bind(chatId).all().catch(() => ({ results: [] }));
 
     for (const tr of recentTracesRes?.results || []) {
@@ -533,7 +582,7 @@ export async function runCragLangflowPipeline({
     let allowedStudents = studentUsers;
     const linkedUserMeta = safeJsonParse(linkedUser?.metadata, {});
 
-    if (effectiveRole === 'parent') {
+    if (effectiveRole === 'parent' || effectiveRole === 'guest') {
       const parentPhone = extractedPhone || subscriber?.phone || linkedUser?.phone || '';
       const explicitlyLinked = studentUsers.filter((st) => {
         if (linkedUser && (st.id === linkedUser.id || linkedUserMeta?.linked_student_id === st.id || st.meta?.parent_id === linkedUser.id)) return true;
@@ -629,7 +678,7 @@ export async function runCragLangflowPipeline({
     `).all().catch(() => ({ results: [] }));
     matchedAttendance = attRes?.results || [];
 
-    if (effectiveRole === 'superadmin' || effectiveRole === 'leader' || effectiveRole === 'parent' || effectiveRole === 'student') {
+    if (effectiveRole === 'superadmin' || effectiveRole === 'leader' || effectiveRole === 'parent' || effectiveRole === 'student' || effectiveRole === 'guest') {
       tablesQueried.push('tuition_bills', 'student_stars');
       const billsRes = await db.prepare(`
         SELECT id, student_id, student_name, grade_level, program_name, billing_period,
@@ -640,6 +689,8 @@ export async function runCragLangflowPipeline({
                eval_speaking, eval_grammar, test_score_15m, test_score_45m,
                superadmin_notes, status, parent_name, parent_phone
         FROM tuition_bills
+        WHERE billing_period NOT LIKE '%PROBE%'
+          AND LOWER(student_name) != 'test'
         ORDER BY updated_at DESC
         LIMIT 20
       `).all().catch(() => ({ results: [] }));
@@ -656,6 +707,7 @@ export async function runCragLangflowPipeline({
              aptitude_description, strengths, weaknesses, teacher_feedback, action_plan,
              recommended_materials, parent_name, parent_phone
       FROM student_evaluations
+      WHERE LOWER(student_name) != 'test'
       ORDER BY updated_at DESC
       LIMIT 20
     `).all().catch(() => ({ results: [] }));
@@ -792,9 +844,9 @@ export async function runCragLangflowPipeline({
   }
 
   let scopedSessions = matchedSessions;
-  let scopedBills = (effectiveRole === 'parent' || effectiveRole === 'student') ? [] : matchedBills;
-  let scopedEvaluations = (effectiveRole === 'parent' || effectiveRole === 'student') ? [] : matchedEvaluations;
-  let scopedAttendance = (effectiveRole === 'parent' || effectiveRole === 'student') ? [] : matchedAttendance;
+  let scopedBills = (effectiveRole === 'parent' || effectiveRole === 'student' || effectiveRole === 'guest') ? [] : matchedBills;
+  let scopedEvaluations = (effectiveRole === 'parent' || effectiveRole === 'student' || effectiveRole === 'guest') ? [] : matchedEvaluations;
+  let scopedAttendance = (effectiveRole === 'parent' || effectiveRole === 'student' || effectiveRole === 'guest') ? [] : matchedAttendance;
   let scopedHomework = matchedHomework;
   let scopedSessionAudits = matchedSessionAudits;
 
@@ -1100,13 +1152,17 @@ export async function runCragLangflowPipeline({
     }
 
     if (detectedIntents.includes('tuition_finance') && scopedBills.length > 0 && effectiveRole !== 'student') {
-      const lines = scopedBills.slice(0, 2).map((b) =>
-        `💳 ${continuityPrefix ? `${continuityPrefix}Học phí ${b.billing_period}:` : `Học phí ${b.billing_period} của ${b.student_name} (${b.grade_level}):`}\n` +
-        `• Học phí gốc: ${Number(b.base_tuition_vnd).toLocaleString('vi-VN')}đ (${b.attendance_attended_sessions}/${b.attendance_total_sessions} buổi)\n` +
-        `• Trừ sao tích lũy: -${Number(b.discount_vnd).toLocaleString('vi-VN')}đ (${Number(b.stars_deducted).toLocaleString('vi-VN')} sao)\n` +
-        `➔ Thực đóng: ${Number(b.final_amount_vnd).toLocaleString('vi-VN')}đ\n` +
-        `• Tài khoản: ${b.bank_name} • ${b.bank_account} (${b.account_holder})`
-      );
+      const lines = scopedBills.slice(0, 2).map((b) => {
+        const dlUrl = toZaloCompatiblePhotoUrl(b.vietqr_url, { download: true });
+        return (
+          `💳 ${continuityPrefix ? `${continuityPrefix}Học phí ${b.billing_period}:` : `Học phí ${b.billing_period} của ${b.student_name} (${b.grade_level}):`}\n` +
+          `• Học phí gốc: ${Number(b.base_tuition_vnd).toLocaleString('vi-VN')}đ (${b.attendance_attended_sessions}/${b.attendance_total_sessions} buổi)\n` +
+          `• Trừ sao tích lũy: -${Number(b.discount_vnd).toLocaleString('vi-VN')}đ (${Number(b.stars_deducted).toLocaleString('vi-VN')} sao)\n` +
+          `➔ Thực đóng: ${Number(b.final_amount_vnd).toLocaleString('vi-VN')}đ\n` +
+          `• Tài khoản: ${b.bank_name} • ${b.bank_account} (${b.account_holder})\n` +
+          (dlUrl ? `• Tải ảnh QR nét cao (.PNG): ${dlUrl}` : '')
+        ).trim();
+      });
       blocks.push(lines.join('\n\n'));
     }
 
@@ -1114,7 +1170,7 @@ export async function runCragLangflowPipeline({
       blocks.push(`✅ ${absenceActionNote}`);
     }
 
-    if ((effectiveRole === 'parent' || effectiveRole === 'student') && matchedStudents.length === 0 && blocks.length === 0 && !detectedIntents.includes('pedagogy_knowledge')) {
+    if ((effectiveRole === 'parent' || effectiveRole === 'student' || effectiveRole === 'guest') && matchedStudents.length === 0 && blocks.length === 0 && !detectedIntents.includes('pedagogy_knowledge')) {
       blocks.push(`Để bảo mật thông tin học sinh, bạn vui lòng nhắn kèm Họ tên học sinh (ví dụ: "Lịch học của Bảo Khiêm" hoặc "Học phí của Nguyễn Minh Anh") hoặc số điện thoại đăng ký để mình tra cứu chính xác nhé.`);
     }
 
@@ -1178,7 +1234,7 @@ ${verifiedFactsText}`;
   const qrCaptionsToSend = [];
 
   if (detectedIntents.includes('tuition_finance') || /(qr|vietqr|hoc phi|dong tien|chuyen khoan|hoa don|thanh toan)/i.test(normText)) {
-    const billsForQr = (scopedBills.length > 0 ? scopedBills : matchedBills).filter((b) => b.vietqr_url);
+    const billsForQr = scopedBills.filter((b) => b.vietqr_url);
     // Send 1 focused QR card for the active student (avoid spamming multiple QR cards unless necessary)
     for (const b of billsForQr.slice(0, 1)) {
       qrPhotosToSend.push(b.vietqr_url);

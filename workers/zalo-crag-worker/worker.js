@@ -29,13 +29,59 @@ function cleanNaturalZaloText(raw = '') {
     .trim();
 }
 
-function toZaloCompatiblePhotoUrl(rawUrl = '') {
-  const clean = String(rawUrl || '').trim();
+function toZaloCompatiblePhotoUrl(rawUrl = '', options = {}) {
+  let clean = String(rawUrl || '').trim();
   if (!clean) return '';
-  if (clean.includes('wsrv.nl') || clean.includes('api.qrserver.com') || clean.includes('images.unsplash.com')) {
+
+  if (clean.includes('wsrv.nl')) {
+    try {
+      const u = new URL(clean);
+      const inner = u.searchParams.get('url');
+      if (inner) clean = inner;
+    } catch {}
+  }
+
+  if (clean.includes('vietqr.io') || clean.includes('/vietqr/')) {
+    let bank = '970422';
+    let account = '0901234567';
+    let amount = 0;
+    let addInfo = 'HP_T10';
+
+    const existingCleanMatch = clean.match(/\/vietqr\/(\d{6})-(\d{6,20})-(\d+)-([A-Za-z0-9_-]+)\.png/i);
+    if (existingCleanMatch) {
+      bank = existingCleanMatch[1];
+      account = existingCleanMatch[2];
+      amount = Number(existingCleanMatch[3]) || 0;
+      addInfo = existingCleanMatch[4];
+    } else {
+      const imgMatch = clean.match(/\/image\/(\d{6}|[A-Za-z0-9]+)-(\d{6,20})-/i);
+      if (imgMatch) {
+        bank = /^\d{6}$/.test(imgMatch[1]) ? imgMatch[1] : '970422';
+        account = imgMatch[2];
+      }
+      try {
+        const u = new URL(clean, 'https://timbk.io.vn');
+        if (u.searchParams.get('amount')) amount = Math.max(0, Math.round(Number(u.searchParams.get('amount')) || 0));
+        if (u.searchParams.get('addInfo')) addInfo = u.searchParams.get('addInfo');
+      } catch {}
+    }
+
+    const safeAddInfo = String(addInfo || 'HP_T10')
+      .replace(/[^A-Za-z0-9_-]/g, '_')
+      .replace(/_+/g, '_')
+      .replace(/^_|_$/g, '')
+      .slice(0, 40) || 'HP_T10';
+
+    if (options?.download) {
+      return `${WORKER_SELF_URL}/vietqr/${bank}-${account}-${amount}-${safeAddInfo}.png?download=1`;
+    }
+    return `${WORKER_SELF_URL}/vietqr/${bank}-${account}-${amount}-${safeAddInfo}.png`;
+  }
+
+  if (clean.includes('api.qrserver.com') || clean.includes('images.unsplash.com') || clean.includes('timbk.io.vn') || clean.includes('workers.dev')) {
     return clean;
   }
-  return 'https://wsrv.nl/?url=' + encodeURIComponent(clean) + '&output=png';
+  return clean;
 }
 
 function buildStudentVietQrUrl({ studentName = 'HOC SINH', amountVnd = 1800000, bankAccount = '0901234567', accountHolder = 'NGUYEN MINH VU', period = 'T10' }) {
@@ -45,7 +91,111 @@ function buildStudentVietQrUrl({ studentName = 'HOC SINH', amountVnd = 1800000, 
     .toUpperCase()
     .slice(0, 12) || 'HOCSINH';
   const addInfo = `HP_${shortName}_${period}`;
-  return `https://img.vietqr.io/image/970422-${bankAccount}-compact2.png?amount=${Math.max(0, Number(amountVnd) || 0)}&addInfo=${encodeURIComponent(addInfo)}&accountName=${encodeURIComponent(accountHolder)}`;
+  const cleanAmount = Math.max(0, Math.round(Number(amountVnd) || 0));
+  return `${WORKER_SELF_URL}/vietqr/970422-${bankAccount}-${cleanAmount}-${addInfo}.png`;
+}
+
+function base64ToUint8Array(b64 = '') {
+  const binaryStr = atob(b64);
+  const len = binaryStr.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binaryStr.charCodeAt(i);
+  }
+  return bytes;
+}
+
+async function handleVietQrPngRequest(url, method = 'GET') {
+  const filename = decodeURIComponent(url.pathname.replace(/^\/vietqr\//, '')).replace(/\.(png|jpg|jpeg|webp)$/i, '');
+  const sp = url.searchParams;
+
+  let bank = sp.get('bank') || sp.get('acqId') || '';
+  let account = sp.get('account') || sp.get('accountNo') || '';
+  let amount = sp.get('amount') || '';
+  let addInfo = sp.get('addInfo') || '';
+  const accountName = String(sp.get('accountName') || sp.get('name') || 'NGUYEN MINH VU').trim().toUpperCase();
+
+  const fullMatch = filename.match(/^(\d{6})-(\d{6,20})-(\d+)-([A-Za-z0-9_-]+)$/);
+  if (fullMatch) {
+    if (!bank) bank = fullMatch[1];
+    if (!account) account = fullMatch[2];
+    if (!amount) amount = fullMatch[3];
+    if (!addInfo) addInfo = fullMatch[4];
+  } else {
+    const shortMatch = filename.match(/^([A-Za-z0-9_-]+?)[-_](\d{4,12})$/);
+    if (shortMatch) {
+      if (!addInfo) addInfo = shortMatch[1];
+      if (!amount) amount = shortMatch[2];
+    } else if (filename && filename !== 'qr' && filename !== 'vietqr') {
+      if (!addInfo) addInfo = filename;
+    }
+  }
+
+  bank = /^\d{6}$/.test(String(bank || '').trim()) ? String(bank).trim() : '970422';
+  account = String(account || '0901234567').replace(/[^0-9]/g, '') || '0901234567';
+  const numericAmount = Math.max(0, Math.round(Number(amount) || 0));
+  const cleanAddInfo = String(addInfo || 'HP T10')
+    .replace(/_/g, ' ')
+    .replace(/[^A-Za-z0-9 -]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 50) || 'HP T10';
+  const safeFileSlug = cleanAddInfo.replace(/\s+/g, '_');
+
+  let pngBytes = null;
+  try {
+    const res = await fetch('https://api.vietqr.io/v2/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({
+        accountNo: account,
+        accountName,
+        acqId: bank,
+        amount: numericAmount,
+        addInfo: cleanAddInfo,
+        format: 'text',
+        template: 'compact2'
+      })
+    });
+    if (res.ok) {
+      const json = await res.json().catch(() => null);
+      const dataUrl = json?.data?.qrDataURL || '';
+      const prefix = 'data:image/png;base64,';
+      if (dataUrl.startsWith(prefix)) {
+        const b64 = dataUrl.slice(prefix.length).replace(/\s+/g, '');
+        const bytes = base64ToUint8Array(b64);
+        if (bytes.byteLength > 1000 && bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47) {
+          pngBytes = bytes;
+        }
+      }
+    }
+  } catch {}
+
+  if (!pngBytes) {
+    const qrPayload = `MBBank ${account} (${accountName}) | Amount: ${numericAmount} VND | Content: ${cleanAddInfo}`;
+    const fallbackRes = await fetch(
+      `https://api.qrserver.com/v1/create-qr-code/?size=600x600&format=png&margin=16&data=${encodeURIComponent(qrPayload)}`
+    );
+    const ab = await fallbackRes.arrayBuffer();
+    pngBytes = new Uint8Array(ab);
+  }
+
+  const headers = {
+    'Content-Type': 'image/png',
+    'Content-Length': String(pngBytes.byteLength),
+    'Cache-Control': 'public, max-age=31536000, immutable',
+    'Access-Control-Allow-Origin': '*',
+    'X-Content-Type-Options': 'nosniff'
+  };
+
+  if (sp.get('download') === '1' || sp.get('dl') === '1') {
+    headers['Content-Disposition'] = `attachment; filename="VietQR_${safeFileSlug}_${numericAmount}.png"`;
+  }
+
+  return new Response(method === 'HEAD' ? null : pngBytes, {
+    status: 200,
+    headers
+  });
 }
 
 async function sendZaloRichPayload({ botToken, chatId, text, photoUrls = [], photoCaptions = [], voiceUrl = '', videoUrl = '' }) {
@@ -245,7 +395,7 @@ async function runCragLangflowPipeline({
       FROM crag_execution_traces
       WHERE chat_id = ?
       ORDER BY rowid DESC
-      LIMIT 3
+      LIMIT 10
     `).bind(chatId).all().catch(() => ({ results: [] }));
 
     for (const tr of recentTracesRes?.results || []) {
@@ -380,7 +530,7 @@ async function runCragLangflowPipeline({
     let allowedStudents = studentUsers;
     const linkedUserMeta = safeJsonParse(linkedUser?.metadata, {});
 
-    if (effectiveRole === 'parent') {
+    if (effectiveRole === 'parent' || effectiveRole === 'guest') {
       const parentPhone = extractedPhone || subscriber?.phone || linkedUser?.phone || '';
       const explicitlyLinked = studentUsers.filter((st) => {
         if (linkedUser && (st.id === linkedUser.id || linkedUserMeta?.linked_student_id === st.id || st.meta?.parent_id === linkedUser.id)) return true;
@@ -472,7 +622,7 @@ async function runCragLangflowPipeline({
     `).all().catch(() => ({ results: [] }));
     matchedAttendance = attRes?.results || [];
 
-    if (effectiveRole === 'superadmin' || effectiveRole === 'leader' || effectiveRole === 'parent' || effectiveRole === 'student') {
+    if (effectiveRole === 'superadmin' || effectiveRole === 'leader' || effectiveRole === 'parent' || effectiveRole === 'student' || effectiveRole === 'guest') {
       tablesQueried.push('tuition_bills', 'student_stars');
       const billsRes = await db.prepare(`
         SELECT id, student_id, student_name, grade_level, program_name, billing_period,
@@ -483,6 +633,8 @@ async function runCragLangflowPipeline({
                eval_speaking, eval_grammar, test_score_15m, test_score_45m,
                superadmin_notes, status, parent_name, parent_phone
         FROM tuition_bills
+        WHERE billing_period NOT LIKE '%PROBE%'
+          AND LOWER(student_name) != 'test'
         ORDER BY updated_at DESC
         LIMIT 20
       `).all().catch(() => ({ results: [] }));
@@ -499,6 +651,7 @@ async function runCragLangflowPipeline({
              aptitude_description, strengths, weaknesses, teacher_feedback, action_plan,
              recommended_materials, parent_name, parent_phone
       FROM student_evaluations
+      WHERE LOWER(student_name) != 'test'
       ORDER BY updated_at DESC
       LIMIT 20
     `).all().catch(() => ({ results: [] }));
@@ -631,9 +784,9 @@ async function runCragLangflowPipeline({
   }
 
   let scopedSessions = matchedSessions;
-  let scopedBills = (effectiveRole === 'parent' || effectiveRole === 'student') ? [] : matchedBills;
-  let scopedEvaluations = (effectiveRole === 'parent' || effectiveRole === 'student') ? [] : matchedEvaluations;
-  let scopedAttendance = (effectiveRole === 'parent' || effectiveRole === 'student') ? [] : matchedAttendance;
+  let scopedBills = (effectiveRole === 'parent' || effectiveRole === 'student' || effectiveRole === 'guest') ? [] : matchedBills;
+  let scopedEvaluations = (effectiveRole === 'parent' || effectiveRole === 'student' || effectiveRole === 'guest') ? [] : matchedEvaluations;
+  let scopedAttendance = (effectiveRole === 'parent' || effectiveRole === 'student' || effectiveRole === 'guest') ? [] : matchedAttendance;
   let scopedHomework = matchedHomework;
   let scopedSessionAudits = matchedSessionAudits;
 
@@ -932,13 +1085,17 @@ async function runCragLangflowPipeline({
     }
 
     if (detectedIntents.includes('tuition_finance') && scopedBills.length > 0 && effectiveRole !== 'student') {
-      const lines = scopedBills.slice(0, 2).map((b) =>
-        `💳 ${continuityPrefix ? `${continuityPrefix}Học phí ${b.billing_period}:` : `Học phí ${b.billing_period} của ${b.student_name} (${b.grade_level}):`}\n` +
-        `• Học phí gốc: ${Number(b.base_tuition_vnd).toLocaleString('vi-VN')}đ (${b.attendance_attended_sessions}/${b.attendance_total_sessions} buổi)\n` +
-        `• Trừ sao tích lũy: -${Number(b.discount_vnd).toLocaleString('vi-VN')}đ (${Number(b.stars_deducted).toLocaleString('vi-VN')} sao)\n` +
-        `➔ Thực đóng: ${Number(b.final_amount_vnd).toLocaleString('vi-VN')}đ\n` +
-        `• Tài khoản: ${b.bank_name} • ${b.bank_account} (${b.account_holder})`
-      );
+      const lines = scopedBills.slice(0, 2).map((b) => {
+        const dlUrl = toZaloCompatiblePhotoUrl(b.vietqr_url, { download: true });
+        return (
+          `💳 ${continuityPrefix ? `${continuityPrefix}Học phí ${b.billing_period}:` : `Học phí ${b.billing_period} của ${b.student_name} (${b.grade_level}):`}\n` +
+          `• Học phí gốc: ${Number(b.base_tuition_vnd).toLocaleString('vi-VN')}đ (${b.attendance_attended_sessions}/${b.attendance_total_sessions} buổi)\n` +
+          `• Trừ sao tích lũy: -${Number(b.discount_vnd).toLocaleString('vi-VN')}đ (${Number(b.stars_deducted).toLocaleString('vi-VN')} sao)\n` +
+          `➔ Thực đóng: ${Number(b.final_amount_vnd).toLocaleString('vi-VN')}đ\n` +
+          `• Tài khoản: ${b.bank_name} • ${b.bank_account} (${b.account_holder})\n` +
+          (dlUrl ? `• Tải ảnh QR nét cao (.PNG): ${dlUrl}` : '')
+        ).trim();
+      });
       blocks.push(lines.join('\n\n'));
     }
 
@@ -946,7 +1103,7 @@ async function runCragLangflowPipeline({
       blocks.push(`✅ ${absenceActionNote}`);
     }
 
-    if ((effectiveRole === 'parent' || effectiveRole === 'student') && matchedStudents.length === 0 && blocks.length === 0 && !detectedIntents.includes('pedagogy_knowledge')) {
+    if ((effectiveRole === 'parent' || effectiveRole === 'student' || effectiveRole === 'guest') && matchedStudents.length === 0 && blocks.length === 0 && !detectedIntents.includes('pedagogy_knowledge')) {
       blocks.push(`Để bảo mật thông tin học sinh, bạn vui lòng nhắn kèm Họ tên học sinh (ví dụ: "Lịch học của Bảo Khiêm" hoặc "Học phí của Nguyễn Minh Anh") hoặc số điện thoại đăng ký để mình tra cứu chính xác nhé.`);
     }
 
@@ -1007,7 +1164,7 @@ ${verifiedFactsText}`;
   const qrCaptionsToSend = [];
 
   if (detectedIntents.includes('tuition_finance') || /(qr|vietqr|hoc phi|dong tien|chuyen khoan|hoa don|thanh toan)/i.test(normText)) {
-    const billsForQr = (scopedBills.length > 0 ? scopedBills : matchedBills).filter((b) => b.vietqr_url);
+    const billsForQr = scopedBills.filter((b) => b.vietqr_url);
     for (const b of billsForQr.slice(0, 1)) {
       qrPhotosToSend.push(b.vietqr_url);
       qrCaptionsToSend.push(
@@ -1270,6 +1427,9 @@ export default {
   async fetch(request, env, ctx) {
     const db = env.DB;
     const url = new URL(request.url);
+    if (url.pathname.startsWith('/vietqr/')) {
+      return await handleVietQrPngRequest(url, request.method);
+    }
     if (request.method === 'GET') {
       if (url.searchParams.get('chain') === '1') {
         ctx.waitUntil(pollZaloUpdatesWindow(db, env, 27000));

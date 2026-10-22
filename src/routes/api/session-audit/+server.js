@@ -2,6 +2,7 @@
 import { json } from '@sveltejs/kit';
 import { verifyServerAuth, isStaffUser, isManager } from '../../../lib/server/auth.js';
 import { listQuizDriveFiles } from '../../../lib/server/quizDrive.js';
+import { toZaloCompatiblePhotoUrl } from '$lib/server/cragLangflowEngine.js';
 
 export const prerender = false;
 
@@ -942,16 +943,16 @@ export async function POST({ request, platform }) {
 
             const rawPhotoUrl = String(body.photo_url || body.url_img || body.qr_url || '').trim() ||
               (messageText.match(/https:\/\/img\.vietqr\.io\/[^\s)]+/i)?.[0] || '');
-            const safePhotoUrl = rawPhotoUrl
-              ? (rawPhotoUrl.includes('wsrv.nl') || rawPhotoUrl.includes('api.qrserver.com') || rawPhotoUrl.includes('images.unsplash.com')
-                  ? rawPhotoUrl
-                  : `https://wsrv.nl/?url=${encodeURIComponent(rawPhotoUrl)}&output=png`)
-              : '';
+            const safePhotoUrl = rawPhotoUrl ? toZaloCompatiblePhotoUrl(rawPhotoUrl) : '';
+            const dlPhotoUrl = rawPhotoUrl ? toZaloCompatiblePhotoUrl(rawPhotoUrl, { download: true }) : '';
             const rawVoiceUrl = String(body.voice_url || body.audio_url || '').trim();
             const rawVideoUrl = String(body.video_url || '').trim();
-            const finalMessageText = rawVideoUrl
+            let finalMessageText = rawVideoUrl
               ? `${messageText}\n🎬 Video bài giảng: ${rawVideoUrl}`
               : messageText;
+            if (dlPhotoUrl && !finalMessageText.includes('download=1')) {
+              finalMessageText += `\n• Tải ảnh QR nét cao (.PNG): ${dlPhotoUrl}`;
+            }
 
             for (const cid of targetChatIds) {
               const sendRes = await fetch(`https://bot-api.zaloplatforms.com/bot${effectiveToken}/sendMessage`, {

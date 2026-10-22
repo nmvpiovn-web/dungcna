@@ -228,7 +228,7 @@
   }
 
   let mediaType = $state('qr_photo');
-  let mediaUrl = $state('https://img.vietqr.io/image/970422-0901234567-compact2.png?amount=1550000&addInfo=HP_GIAHUY_T10&accountName=NGUYEN%20MINH%20VU');
+  let mediaUrl = $state('https://timbk-zalo-webhook.tienganh7-sveltekit.workers.dev/vietqr/970422-0901234567-1550000-HP_GIAHUY_T10.png');
   let mediaCaption = $state('💳 Mã QR Học Phí VietQR — HS Trần Gia Huy (Lớp 7) • Thực thu: 1.550.000đ');
   let sendingMedia = $state(false);
   let lastMediaRes = $state(null);
@@ -612,7 +612,7 @@
       <div data-testid="langflow-media-webhook-panel" class="p-5 rounded-3xl bg-white border-2 border-emerald-200 shadow-md space-y-3">
         <div class="border-b border-slate-200 pb-3">
           <h2 class="text-base font-black text-slate-900">📸 Bắn Ảnh QR Trực Tiếp (`sendPhoto` / `url_img`), Voice &amp; Video</h2>
-          <p class="text-xs text-slate-600">Tự động qua proxy PNG chuẩn Zalo (`wsrv.nl`) để khắc phục lỗi chặn `Java/17` (424) của `img.vietqr.io`, gửi thẳng ảnh thẻ QR thật (`CHAT_PHOTO`) vào khung chat Zalo.</p>
+          <p class="text-xs text-slate-600">Tự động kết xuất ảnh Raster PNG chuẩn (`540x640 image/png`) qua VietQR v2 API với đường dẫn tĩnh `.png`, tương thích 100% cả Zalo Desktop lẫn Zalo Mobile (iOS/Android) và hỗ trợ nút tải ảnh trực tiếp.</p>
         </div>
 
         <div class="space-y-2.5 text-xs">
@@ -623,7 +623,7 @@
               bind:value={mediaType}
               onchange={() => {
                 if (mediaType === 'qr_photo') {
-                  mediaUrl = 'https://img.vietqr.io/image/970422-0901234567-compact2.png?amount=1550000&addInfo=HP_GIAHUY_T10&accountName=NGUYEN%20MINH%20VU';
+                  mediaUrl = 'https://timbk-zalo-webhook.tienganh7-sveltekit.workers.dev/vietqr/970422-0901234567-1550000-HP_GIAHUY_T10.png';
                   mediaCaption = '💳 Mã QR Học Phí VietQR — HS Trần Gia Huy (Lớp 7) • Thực thu: 1.550.000đ';
                 } else if (mediaType === 'video_lesson') {
                   mediaUrl = 'https://www.youtube.com/watch?v=jul2urONzOQ';
