@@ -57,8 +57,9 @@
  let parentLinks = $state([]);
  let parentLinksLoading = $state(false);
 
- // New Campus Modal / Card State
+ // New / Edit Campus Modal State
  let showAddCampusModal = $state(false);
+ let editingCampusId = $state('');
  let newCampus = $state({
   name: '',
   address: '',
@@ -313,6 +314,26 @@
   }
  }
 
+ function openCreateCampusModal() {
+  editingCampusId = '';
+  newCampus = { name: '', address: '', contact_phone: '', google_maps_url: '', is_primary: false };
+  campusToast = '';
+  showAddCampusModal = true;
+ }
+
+ function openEditCampusModal(c) {
+  editingCampusId = c.id;
+  newCampus = {
+   name: c.name || '',
+   address: c.address || '',
+   contact_phone: c.contact_phone || '',
+   google_maps_url: c.google_maps_url || '',
+   is_primary: Boolean(c.is_primary)
+  };
+  campusToast = '';
+  showAddCampusModal = true;
+ }
+
  async function handleCreateCampus(e) {
   e.preventDefault();
   if (!newCampus.name.trim() || !newCampus.address.trim()) {
@@ -322,19 +343,31 @@
   isSavingCampus = true;
   campusToast = '';
   try {
+   const isEdit = Boolean(editingCampusId);
    const res = await fetch('/api/campuses', {
     method: 'POST',
     headers: getHeaders(),
     credentials: 'include',
-    body: JSON.stringify({ action: 'create', ...newCampus })
+    body: JSON.stringify({
+     action: isEdit ? 'update' : 'create',
+     ...(isEdit ? { id: editingCampusId } : {}),
+     ...newCampus
+    })
    });
-   const data = await res.json();
-   if (data.success) {
-    campusToast = '✅ Đã thêm điểm học mới thành công!';
+   const data = await res.json().catch(() => ({}));
+   if (res.ok && data.success) {
+    if (Array.isArray(data.campuses)) {
+     campuses = data.campuses;
+    } else {
+     await loadData();
+    }
+    campusToast = isEdit ? '✅ Đã cập nhật điểm học thành công!' : '✅ Đã thêm điểm học mới thành công!';
     newCampus = { name: '', address: '', contact_phone: '', google_maps_url: '', is_primary: false };
+    editingCampusId = '';
     showAddCampusModal = false;
-    showNotice('✅ Đã thêm điểm học mới vào D1!');
-    loadData();
+    showNotice(isEdit ? '✅ Đã cập nhật điểm học trên Cloudflare D1!' : '✅ Đã thêm điểm học mới vào Cloudflare D1!');
+   } else {
+    campusToast = '❌ ' + (data.error || 'Không thể lưu điểm học vào D1');
    }
   } catch (e) {
    campusToast = '❌ Lỗi: ' + e.message;
@@ -344,6 +377,7 @@
  }
 
  async function handleDeleteCampus(id) {
+  if (!id) return;
   try {
    const res = await fetch('/api/campuses', {
     method: 'POST',
@@ -351,12 +385,17 @@
     credentials: 'include',
     body: JSON.stringify({ action: 'delete', id })
    });
-   const data = await res.json();
-   if (data.success) {
-    showNotice('🗑️ Đã xóa điểm học khỏi hệ thống!');
-    loadData();
+   const data = await res.json().catch(() => ({}));
+   if (res.ok && data.success) {
+    if (Array.isArray(data.campuses)) {
+     campuses = data.campuses;
+    } else {
+     campuses = campuses.filter(c => c.id !== id);
+     await loadData();
+    }
+    showNotice('🗑️ Đã xóa điểm học khỏi hệ thống Cloudflare D1!');
    } else {
-    showNotice('⚠️ ' + data.error);
+    showNotice('⚠️ ' + (data.error || 'Không thể xóa cơ sở'));
    }
   } catch (e) {
    showNotice('⚠️ Lỗi xóa cơ sở: ' + e.message);
@@ -836,7 +875,8 @@
      {#if subTabSystem === 'campuses'}
       <button
        type="button"
-       onclick={() => { campusToast = ''; showAddCampusModal = true; }}
+       data-testid="add-campus-btn"
+       onclick={openCreateCampusModal}
        class="px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-700 hover:bg-emerald-800 text-white"
       >
        ➕ Thêm Cơ Sở Học Mới
@@ -846,8 +886,8 @@
 
     {#if subTabSystem === 'campuses'}
      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {#each campuses as c}
-       <div class="p-5 rounded-2xl bg-white border border-stone-200 flex flex-col justify-between gap-4 shadow-xs">
+      {#each campuses as c (c.id)}
+       <div data-testid="campus-card-{c.id}" class="p-5 rounded-2xl bg-white border border-stone-200 flex flex-col justify-between gap-4 shadow-xs">
         <div class="space-y-1.5">
          <div class="flex items-center gap-2">
           <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold {c.is_primary ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-stone-100 text-stone-600 border border-stone-300'}">
@@ -858,19 +898,32 @@
          <h3 class="text-base font-bold text-stone-900">{c.name}</h3>
          <p class="text-xs text-stone-600">📌 Địa chỉ: <strong>{c.address}</strong></p>
          <p class="text-xs text-stone-500">📞 Hotline: {c.contact_phone || 'Chưa cập nhật'}</p>
+         {#if c.google_maps_url}
+          <a href={c.google_maps_url} target="_blank" rel="noopener noreferrer" class="inline-block text-[11px] font-bold text-emerald-700 hover:underline">🗺️ Xem bản đồ Google Maps ↗</a>
+         {/if}
         </div>
-        <div class="mt-auto pt-3 border-t border-stone-100 flex items-center justify-end">
-         {#if !c.is_primary}
+        <div class="mt-auto pt-3 border-t border-stone-100 flex items-center justify-between gap-2">
+         <span class="text-[11px] font-semibold {c.is_primary ? 'text-emerald-700' : 'text-stone-400'}">
+          {c.is_primary ? 'Mặc định hệ thống' : 'Đồng bộ D1'}
+         </span>
+         <div class="flex items-center gap-2">
           <button
            type="button"
+           data-testid="edit-campus-{c.id}"
+           onclick={() => openEditCampusModal(c)}
+           class="px-3 py-1.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 border border-stone-200 text-xs font-bold transition-all"
+          >
+           ✏️ Sửa
+          </button>
+          <button
+           type="button"
+           data-testid="delete-campus-{c.id}"
            onclick={() => handleDeleteCampus(c.id)}
            class="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold transition-all"
           >
            🗑️ Xóa Cơ Sở
           </button>
-         {:else}
-          <span class="text-[11px] font-semibold text-emerald-700">Mặc định hệ thống</span>
-         {/if}
+         </div>
         </div>
        </div>
       {/each}
@@ -982,12 +1035,12 @@
  onSaved={() => { loadTeachersAndWorkflowsD1(); }}
 />
 
-<!-- Add Campus Modal (Sticky Bottom CTA Footer) -->
+<!-- Add / Edit Campus Modal (Sticky Bottom CTA Footer) -->
 {#if showAddCampusModal}
  <div class="fixed inset-0 z-50 flex items-center justify-center bg-stone-500/25 backdrop-blur-sm p-4" role="dialog" aria-modal="true">
   <div class="bg-white rounded-2xl border border-stone-200 shadow-2xl w-full max-w-md flex flex-col max-h-[85vh] overflow-hidden">
    <div class="shrink-0 flex items-center justify-between border-b border-stone-200 px-6 py-4 bg-white">
-    <h3 class="text-base font-black text-stone-900">➕ Thêm Điểm Học Mới</h3>
+    <h3 class="text-base font-black text-stone-900">{editingCampusId ? '✏️ Cập Nhật Điểm Học' : '➕ Thêm Điểm Học Mới'}</h3>
     <button type="button" onclick={() => showAddCampusModal = false} class="w-8 h-8 rounded-full bg-stone-100 text-stone-600 font-bold">✕</button>
    </div>
    <form onsubmit={handleCreateCampus} class="flex-1 flex flex-col min-h-0 overflow-hidden text-xs">
@@ -1009,11 +1062,19 @@
       <label for="campus-phone" class="block font-bold text-stone-700 mb-1">Số Điện Thoại Liên Hệ:</label>
       <input id="campus-phone" type="text" bind:value={newCampus.contact_phone} placeholder="090..." class="w-full bg-stone-50 border border-stone-300 rounded-xl px-3.5 py-2.5 text-stone-900" />
      </div>
+     <div>
+      <label for="campus-maps" class="block font-bold text-stone-700 mb-1">Link Google Maps (Tùy chọn):</label>
+      <input id="campus-maps" type="text" bind:value={newCampus.google_maps_url} placeholder="https://maps.google.com/..." class="w-full bg-stone-50 border border-stone-300 rounded-xl px-3.5 py-2.5 text-stone-900" />
+     </div>
+     <label class="flex items-center gap-2 pt-1 cursor-pointer select-none">
+      <input type="checkbox" bind:checked={newCampus.is_primary} class="rounded border-stone-300 text-emerald-700" />
+      <span class="font-bold text-stone-700">Đặt làm Cơ sở chính (Mặc định khi tạo ca học)</span>
+     </label>
     </div>
     <div data-testid="modal-cta-footer" class="sticky bottom-0 z-20 shrink-0 px-6 py-3.5 border-t border-stone-200 bg-white flex justify-end gap-2">
      <button type="button" onclick={() => showAddCampusModal = false} class="px-4 py-2 rounded-lg bg-stone-100 text-stone-700 font-bold">Hủy</button>
-     <button type="submit" disabled={isSavingCampus} class="px-5 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-bold">
-      {isSavingCampus ? '⏳ Đang lưu...' : '➕ Thêm & Lưu Cơ Sở'}
+     <button type="submit" data-testid="save-campus-btn" disabled={isSavingCampus} class="px-5 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-bold">
+      {isSavingCampus ? '⏳ Đang lưu...' : (editingCampusId ? '💾 Lưu Cập Nhật' : '➕ Thêm & Lưu Cơ Sở')}
      </button>
     </div>
    </form>

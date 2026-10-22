@@ -825,10 +825,9 @@
  id="login-btn"
  data-testid="login-btn"
  onclick={openAuthModal}
- class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-brand-600 hover:bg-brand-700 border border-brand-700 text-white font-extrabold text-xs shadow-xs transition-all"
+ class="flex items-center justify-center px-3.5 py-1.5 rounded-xl bg-brand-600 hover:bg-brand-700 border border-brand-700 text-white font-extrabold text-xs shadow-xs transition-all whitespace-nowrap"
  >
- <span>🔑</span>
- <span class="hidden sm:inline">Đăng Nhập</span>
+ <span>Đăng nhập</span>
  </button>
  {/if}
 

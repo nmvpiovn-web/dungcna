@@ -28,6 +28,7 @@
  let activeModalTab = $state('schedule'); // 'schedule' | 'materials' | 'summary' | 'all'
  let driveCatalog = $state([]);
  let vaultCatalog = $state([]);
+ let campusesList = $state([]);
 
  let auditForm = $state({
    vault_article_id: '',
@@ -241,6 +242,15 @@
        }
      }
    }
+ })
+ .catch(() => {});
+
+ fetch('/api/campuses', { headers: authHeaders, credentials: 'include' })
+ .then(r => r.json())
+ .then(data => {
+  if (data.success && Array.isArray(data.campuses)) {
+   campusesList = data.campuses;
+  }
  })
  .catch(() => {});
 
@@ -730,15 +740,35 @@
         {/if}
       </div>
 
- <div class="sm:col-span-2">
- <label for="session-location" class="block font-bold text-stone-700 mb-1">Địa Điểm Học *</label>
+ <div class="sm:col-span-2 space-y-1.5">
+ <label for="session-location" class="block font-bold text-stone-700 mb-1">Địa Điểm Học * (Đồng bộ Cơ Sở D1)</label>
  <input
  id="session-location"
  type="text"
+ list="d1-campuses-datalist"
  bind:value={form.location}
  placeholder="Ví dụ: Tại nhà Cô Dung (123 Phố Vọng, Hai Bà Trưng, Hà Nội) hoặc Online Zoom VIP"
  class="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-stone-900 focus:outline-none focus:border-emerald-600 font-medium"
  />
+ <datalist id="d1-campuses-datalist">
+  {#each campusesList as c (c.id)}
+   <option value={`${c.name} (${c.address})`}></option>
+  {/each}
+ </datalist>
+ {#if campusesList.length > 0}
+  <div class="flex flex-wrap items-center gap-1.5 pt-0.5">
+   <span class="text-[10px] font-bold text-stone-500">Chọn nhanh Cơ sở D1:</span>
+   {#each campusesList as c (c.id)}
+    <button
+     type="button"
+     onclick={() => form.location = `${c.name} (${c.address})`}
+     class="px-2 py-0.5 rounded-lg text-[10px] font-bold border transition-all {form.location.includes(c.name) ? 'bg-emerald-600 text-white border-emerald-700' : 'bg-white text-stone-700 border-stone-200 hover:border-emerald-400'}"
+    >
+     📍 {c.name}
+    </button>
+   {/each}
+  </div>
+ {/if}
  </div>
 
  <div class="grid grid-cols-2 gap-2">
