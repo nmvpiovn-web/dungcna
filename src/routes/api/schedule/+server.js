@@ -494,6 +494,35 @@ export async function POST({ request, platform }) {
       }
     }
 
+    if (body.action === 'delete_session') {
+      const delId = String(body.id || body.session_id || '').trim();
+      if (!delId) {
+        return json({ success: false, error: 'Thiếu session ID cần xóa' }, { status: 400 });
+      }
+      if (!isMgr && db) {
+        const cols = await getClassSessionsColumns(db);
+        const selCols = ['teacher_id'];
+        if (cols.has('assistant_teacher_id')) selCols.push('assistant_teacher_id');
+        if (cols.has('substitute_teacher_id')) selCols.push('substitute_teacher_id');
+        const existing = await db.prepare(`SELECT ${selCols.join(', ')} FROM class_sessions WHERE id = ? LIMIT 1`).bind(delId).first();
+        if (existing) {
+          const mine = [existing.teacher_id, existing.assistant_teacher_id, existing.substitute_teacher_id].filter(Boolean).includes(auth.user.id);
+          if (!mine) {
+            return json({ success: false, error: 'Forbidden: Bạn chỉ được xóa lịch mình phụ trách' }, { status: 403 });
+          }
+        }
+      }
+      if (db) {
+        try { await db.prepare('DELETE FROM attendance_records WHERE session_id = ?').bind(delId).run(); } catch {}
+        try { await db.prepare('DELETE FROM session_quality_audits WHERE session_id = ?').bind(delId).run(); } catch {}
+        try { await db.prepare('DELETE FROM teacher_leave_requests WHERE session_id = ?').bind(delId).run(); } catch {}
+        try { await db.prepare('DELETE FROM student_absence_requests WHERE session_id = ?').bind(delId).run(); } catch {}
+        await db.prepare('DELETE FROM class_sessions WHERE id = ?').bind(delId).run();
+      }
+      try { deleteClassSession(delId, auth.user); } catch {}
+      return json({ success: true, id: delId, message: 'Đã xóa buổi học khỏi thời khóa biểu' });
+    }
+
     if (!body.class_name || !String(body.class_name).trim()) {
       return json({ success: false, error: 'Thiếu tên lớp học' }, { status: 400 });
     }
@@ -973,13 +1002,19 @@ export async function DELETE({ url, request, platform }) {
       if (!schemaCheck.valid) {
         return json({ success: false, error: schemaCheck.error }, { status: 500 });
       }
+      try { await platform.env.DB.prepare('DELETE FROM attendance_records WHERE session_id = ?').bind(id).run(); } catch {}
+      try { await platform.env.DB.prepare('DELETE FROM session_quality_audits WHERE session_id = ?').bind(id).run(); } catch {}
+      try { await platform.env.DB.prepare('DELETE FROM teacher_leave_requests WHERE session_id = ?').bind(id).run(); } catch {}
+      try { await platform.env.DB.prepare('DELETE FROM student_absence_requests WHERE session_id = ?').bind(id).run(); } catch {}
       const delRes = await platform.env.DB.prepare('DELETE FROM class_sessions WHERE id = ?').bind(id).run();
       const changes = delRes?.meta?.changes ?? delRes?.changes;
-      if (changes !== undefined && changes === 0) {
+      const forceDelete = url.searchParams.get('force') === '1';
+      try { deleteClassSession(id, auth.user); } catch {}
+      if (changes !== undefined && changes === 0 && !forceDelete) {
         return json({ success: false, error: 'Không tìm thấy buổi học để xóa' }, { status: 404 });
       }
     } else {
-      deleteClassSession(id);
+      deleteClassSession(id, auth.user);
     }
     return json({ success: true, message: 'Đã xóa buổi học khỏi thời khóa biểu' });
   } catch (err) {

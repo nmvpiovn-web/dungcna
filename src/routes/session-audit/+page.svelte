@@ -599,7 +599,7 @@ ${editForm.roadmap_recommendation || d.internal_interaction_and_roadmap.roadmap_
     <!-- Master-Detail Layout -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
       <!-- Left Column: Sessions List (5 cols) -->
-      <div class="lg:col-span-5 space-y-3 max-h-[85vh] overflow-y-auto pr-1">
+      <div class="lg:col-span-5 space-y-3 pr-1">
         <div class="flex items-center justify-between text-xs font-bold text-slate-600 px-1">
           <span>DANH SÁCH CA HỌC ĐỐI SOÁT ({filteredReports.length})</span>
           <button
@@ -637,19 +637,19 @@ ${editForm.roadmap_recommendation || d.internal_interaction_and_roadmap.roadmap_
 
               <div>
                 <div class="font-bold text-sm text-slate-900">{s.class_name}</div>
-                <div class="text-xs text-slate-600 line-clamp-1">📖 {s.subject_topic}</div>
+                <div class="text-xs text-slate-600">📖 {s.subject_topic}</div>
                 <div class="text-[11px] text-slate-500 mt-0.5">👩‍🏫 {s.teacher_name} {s.assistant_teacher_name ? `& ${s.assistant_teacher_name}` : ''}</div>
               </div>
 
               <!-- Material Badges -->
               <div class="flex flex-wrap items-center gap-1.5 text-[10px]">
                 {#if mat.vault_article_title}
-                  <span class="px-2 py-0.5 rounded bg-purple-50 text-purple-800 border border-purple-200 font-semibold truncate max-w-[220px]">
+                  <span class="px-2 py-0.5 rounded bg-purple-50 text-purple-800 border border-purple-200 font-semibold break-words">
                     🧠 {mat.vault_article_title}
                   </span>
                 {/if}
                 {#if mat.drive_file_name}
-                  <span class="px-2 py-0.5 rounded bg-sky-50 text-sky-800 border border-sky-200 font-semibold truncate max-w-[220px]">
+                  <span class="px-2 py-0.5 rounded bg-sky-50 text-sky-800 border border-sky-200 font-semibold break-words">
                     📁 {mat.drive_file_name}
                   </span>
                 {/if}

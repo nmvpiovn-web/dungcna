@@ -1,0 +1,15 @@
+name = "timbk-zalo-webhook"
+main = "worker.js"
+compatibility_date = "2026-09-01"
+workers_dev = true
+
+[triggers]
+crons = ["* * * * *"]
+
+[ai]
+binding = "AI"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "tienganh-pro-db"
+database_id = "a0d2d5f7-b4ae-48a3-99d6-ecac7ed87218"

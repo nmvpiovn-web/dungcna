@@ -62,6 +62,7 @@ export async function GET({ platform }) {
   let subscribers = [];
   let traces = [];
   let recentMessages = [];
+  let activeAutoNotifyRules = DEFAULT_AUTO_NOTIFY_RULES;
   let dbOverview = {
     total_tables: 81,
     students_count: 0,
@@ -76,7 +77,7 @@ export async function GET({ platform }) {
   if (db) {
     await ensureCragLangflowTables(db);
     try {
-      const [subsRes, tracesRes, msgsRes, usersRes, sessRes, billsRes, evalsRes, vaultRes] = await Promise.all([
+      const [subsRes, tracesRes, msgsRes, usersRes, sessRes, billsRes, evalsRes, vaultRes, tablesCntRes, cfgRes] = await Promise.all([
         db.prepare(`SELECT * FROM zalo_bot_subscribers ORDER BY updated_at DESC LIMIT 30`).all().catch(() => ({ results: [] })),
         db.prepare(`SELECT * FROM crag_execution_traces ORDER BY rowid DESC LIMIT 25`).all().catch(() => ({ results: [] })),
         db.prepare(`SELECT * FROM zalo_bot_messages ORDER BY id DESC LIMIT 25`).all().catch(() => ({ results: [] })),
@@ -84,8 +85,28 @@ export async function GET({ platform }) {
         db.prepare(`SELECT COUNT(*) as cnt FROM class_sessions`).first().catch(() => ({ cnt: 0 })),
         db.prepare(`SELECT COUNT(*) as cnt FROM tuition_bills`).first().catch(() => ({ cnt: 0 })),
         db.prepare(`SELECT COUNT(*) as cnt FROM student_evaluations`).first().catch(() => ({ cnt: 0 })),
-        db.prepare(`SELECT COUNT(*) as cnt FROM knowledge_vault`).first().catch(() => ({ cnt: 0 }))
+        db.prepare(`SELECT COUNT(*) as cnt FROM knowledge_vault`).first().catch(() => ({ cnt: 0 })),
+        db.prepare(`SELECT COUNT(*) as cnt FROM sqlite_master WHERE type='table'`).first().catch(() => ({ cnt: 81 })),
+        db.prepare(`SELECT auto_notify_rules_json FROM crag_pipeline_configs WHERE id = 'cfg_primary' LIMIT 1`).first().catch(() => null)
       ]);
+
+      if (cfgRes?.auto_notify_rules_json) {
+        try {
+          const parsedRules = JSON.parse(cfgRes.auto_notify_rules_json);
+          if (Array.isArray(parsedRules) && parsedRules.length > 0) {
+            activeAutoNotifyRules = parsedRules;
+          }
+        } catch {}
+      } else {
+        await db.prepare(`
+          INSERT OR IGNORE INTO crag_pipeline_configs (id, name, nodes_json, edges_json, auto_notify_rules_json, updated_at)
+          VALUES ('cfg_primary', '7-Node CRAG Langflow Master Pipeline', ?, ?, ?, CURRENT_TIMESTAMP)
+        `).bind(
+          JSON.stringify(DEFAULT_LANGFLOW_NODES),
+          JSON.stringify(DEFAULT_LANGFLOW_EDGES),
+          JSON.stringify(DEFAULT_AUTO_NOTIFY_RULES)
+        ).run().catch(() => {});
+      }
 
       subscribers = subsRes?.results || [];
       traces = (tracesRes?.results || []).map((t) => {
@@ -123,7 +144,7 @@ export async function GET({ platform }) {
       const teachers = allUsers.filter((u) => u.role === 'teacher' || u.role === 'superadmin');
 
       dbOverview = {
-        total_tables: 81,
+        total_tables: Number(tablesCntRes?.cnt || 81),
         students_count: students.length,
         teachers_count: teachers.length,
         sessions_count: Number(sessRes?.cnt || 0),
@@ -140,7 +161,7 @@ export async function GET({ platform }) {
     superadmin_chat_id: SUPERADMIN_DEFAULT_CHAT_ID,
     nodes: DEFAULT_LANGFLOW_NODES,
     edges: DEFAULT_LANGFLOW_EDGES,
-    auto_notify_rules: DEFAULT_AUTO_NOTIFY_RULES,
+    auto_notify_rules: activeAutoNotifyRules,
     db_overview: dbOverview,
     subscribers,
     traces,
@@ -191,7 +212,10 @@ export async function POST({ request, platform }) {
         if (wData?.ok) {
           return json({
             success: true,
-            result: wData
+            result: {
+              ...wData,
+              verified_facts: wData.verified_facts || wData.retrieved_summary || ''
+            }
           });
         }
       }
@@ -440,6 +464,46 @@ export async function POST({ request, platform }) {
         message: `Đã gửi ảnh bìa + link video bài giảng về Zalo ${targetChatId}`
       });
     }
+  }
+
+  // 5. Toggle Auto-Notify Rule in crag_pipeline_configs (D1 Persistence)
+  if (action === 'toggle_auto_notify_rule') {
+    const ruleId = String(body.rule_id || '').trim();
+    if (!ruleId || !db) {
+      return json({ success: false, error: 'Thiếu rule_id hoặc kết nối D1' }, { status: 400 });
+    }
+    let rules = DEFAULT_AUTO_NOTIFY_RULES.map((r) => ({ ...r }));
+    const cfgRow = await db.prepare(`SELECT auto_notify_rules_json FROM crag_pipeline_configs WHERE id = 'cfg_primary' LIMIT 1`).first().catch(() => null);
+    if (cfgRow?.auto_notify_rules_json) {
+      try {
+        const parsed = JSON.parse(cfgRow.auto_notify_rules_json);
+        if (Array.isArray(parsed) && parsed.length > 0) rules = parsed;
+      } catch {}
+    }
+    const targetRule = rules.find((r) => r.id === ruleId);
+    if (!targetRule) {
+      return json({ success: false, error: `Không tìm thấy rule: ${ruleId}` }, { status: 404 });
+    }
+    targetRule.enabled = body.enabled !== undefined ? Boolean(body.enabled) : !targetRule.enabled;
+    await db.prepare(`
+      INSERT INTO crag_pipeline_configs (id, name, nodes_json, edges_json, auto_notify_rules_json, updated_at)
+      VALUES ('cfg_primary', '7-Node CRAG Langflow Master Pipeline', ?, ?, ?, CURRENT_TIMESTAMP)
+      ON CONFLICT(id) DO UPDATE SET
+        auto_notify_rules_json = excluded.auto_notify_rules_json,
+        updated_at = CURRENT_TIMESTAMP
+    `).bind(
+      JSON.stringify(DEFAULT_LANGFLOW_NODES),
+      JSON.stringify(DEFAULT_LANGFLOW_EDGES),
+      JSON.stringify(rules)
+    ).run().catch(() => {});
+
+    return json({
+      success: true,
+      rule_id: ruleId,
+      enabled: targetRule.enabled,
+      auto_notify_rules: rules,
+      message: `Đã ${targetRule.enabled ? 'BẬT' : 'TẮT'} luồng tự động "${targetRule.title || targetRule.name}" trên D1`
+    });
   }
 
   return json({ success: false, error: `Unknown action: ${action}` }, { status: 400 });

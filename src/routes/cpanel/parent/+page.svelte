@@ -134,24 +134,24 @@
  <span>Cổng Thông Tin Học Vụ Gia Đình</span>
  </div>
  <h1 class="text-xl sm:text-2xl font-semibold text-slate-900 tracking-tight">Báo Cáo Tiến Độ Học Tập &amp; Học Phí</h1>
- <p class="text-slate-300 text-xs sm:text-sm max-w-2xl leading-relaxed">
+ <p class="text-slate-700 text-xs sm:text-sm max-w-2xl leading-relaxed">
  Theo dõi trực tiếp kết quả bài tập về nhà, bài viết tay, file ghi âm giọng nói của con và chi tiết đối trừ sao thưởng vào học phí định kỳ.
  </p>
  </div>
 
  <!-- Quick Metrics (Academic Ledger: Tabular Numbers, Restrained Borders, Non-overflowing 390px) -->
  <div class="grid grid-cols-3 gap-2 sm:gap-3 w-full md:w-auto min-w-0">
- <div class="bg-emerald-800/80 border border-emerald-700/60 rounded-md p-2.5 sm:p-3 text-center min-w-0">
- <div class="text-lg sm:text-xl font-semibold text-amber-700 tabular-nums truncate">{totalStarsEarned}</div>
- <div class="text-[11px] sm:text-xs text-slate-400 mt-0.5 truncate">Sao Tích Lũy</div>
+ <div class="bg-white border border-emerald-200 rounded-md p-2.5 sm:p-3 text-center min-w-0 shadow-xs">
+ <div class="text-lg sm:text-xl font-bold text-amber-600 tabular-nums">{totalStarsEarned}</div>
+ <div class="text-[11px] sm:text-xs text-slate-600 mt-0.5 font-medium">Sao Tích Lũy</div>
  </div>
- <div class="bg-emerald-800/80 border border-emerald-700/60 rounded-md p-2.5 sm:p-3 text-center min-w-0">
- <div class="text-lg sm:text-xl font-semibold text-slate-900 tabular-nums truncate">{totalGraded}/{assignments.length}</div>
- <div class="text-[11px] sm:text-xs text-slate-400 mt-0.5 truncate">Đã Chấm</div>
+ <div class="bg-white border border-emerald-200 rounded-md p-2.5 sm:p-3 text-center min-w-0 shadow-xs">
+ <div class="text-lg sm:text-xl font-bold text-slate-900 tabular-nums">{totalGraded}/{assignments.length}</div>
+ <div class="text-[11px] sm:text-xs text-slate-600 mt-0.5 font-medium">Đã Chấm</div>
  </div>
- <div class="bg-emerald-800/80 border border-emerald-700/60 rounded-md p-2.5 sm:p-3 text-center min-w-0">
- <div class="text-lg sm:text-xl font-semibold text-brand-700 tabular-nums truncate">{avgScore}</div>
- <div class="text-[11px] sm:text-xs text-slate-400 mt-0.5 truncate">Điểm TB</div>
+ <div class="bg-white border border-emerald-200 rounded-md p-2.5 sm:p-3 text-center min-w-0 shadow-xs">
+ <div class="text-lg sm:text-xl font-bold text-emerald-700 tabular-nums">{avgScore}</div>
+ <div class="text-[11px] sm:text-xs text-slate-600 mt-0.5 font-medium">Điểm TB</div>
  </div>
  </div>
  </div>
@@ -173,7 +173,7 @@
  {/if}
 
  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
- <nav class="flex items-center gap-2 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0" aria-label="Các mục sổ phụ huynh">
+ <nav class="flex flex-wrap items-center gap-2 w-full sm:w-auto pb-1 sm:pb-0" aria-label="Các mục sổ phụ huynh">
  <button 
  onclick={() => activeTab = 'homework'}
  class="whitespace-nowrap px-3 sm:px-4 py-2 rounded-md text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cx-500 {activeTab === 'homework' ? 'bg-cx-600 text-white' : 'text-slate-600 hover:bg-slate-100'}"
@@ -195,7 +195,7 @@
  id="child-select"
  bind:value={selectedStudentId}
  onchange={handleChildChange}
- class="flex-1 sm:flex-none text-xs font-medium px-3 py-1.5 rounded-md bg-white border border-slate-300 text-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cx-500 truncate"
+ class="flex-1 sm:flex-none text-xs font-medium px-3 py-1.5 rounded-md bg-white border border-slate-300 text-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cx-500"
  disabled={linkedStudents.length === 0}
  >
  {#if linkedStudents.length === 0}

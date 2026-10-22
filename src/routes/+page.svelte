@@ -407,6 +407,158 @@
     intents={heroIntents}
   />
 
+  <!-- ===== 1A. TRUNG TÂM PHÂN TÁCH 6 NGHIỆP VỤ TRỌNG TÂM (GOM TOÀN BỘ CARD TỪ SLIDE-BAR VỀ TRỰC DIỆN) ===== -->
+  <section data-testid="home-business-domains-hub" class="rounded-3xl bg-surface-0 border border-line p-4 sm:p-6 shadow-sm space-y-4">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-line">
+      <div>
+        <div class="text-xs font-extrabold uppercase tracking-wider text-brand-700 flex items-center gap-1.5">
+          <span>🗂️</span>
+          <span>KIẾN TRÚC PHÂN TÁCH NGHIỆP VỤ CHUẨN 2026 (TRUY CẬP 1 CHẠM)</span>
+        </div>
+        <h2 class="text-lg sm:text-xl font-extrabold text-ink-900 mt-0.5">
+          Chọn Nhanh Phân Hệ Nghiệp Vụ &amp; Sub-Menu Chức Năng
+        </h2>
+      </div>
+      <span class="px-3 py-1 rounded-full bg-brand-50 border border-brand-200 text-brand-700 text-xs font-extrabold">
+        6 Phân Hệ Độc Lập
+      </span>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+      <!-- 1. Nghiệp vụ Quiz Menu -->
+      <div class="rounded-2xl bg-surface-1/70 border border-line hover:border-brand-500 p-4 flex flex-col justify-between gap-3 transition-all">
+        <div class="space-y-1.5">
+          <div class="flex items-center justify-between">
+            <a href="/quiz-menu" class="flex items-center gap-2 font-extrabold text-sm sm:text-base text-ink-900 hover:text-brand-700">
+              <span class="w-9 h-9 rounded-xl bg-rose-500 text-white flex items-center justify-center text-lg shadow-2xs">🧩</span>
+              <span>1. Quiz &amp; Ngân Hàng Đề</span>
+            </a>
+            <span class="px-2 py-0.5 rounded-md bg-rose-100 text-rose-800 text-[10px] font-extrabold">Menu Riêng</span>
+          </div>
+          <p class="text-xs text-ink-500 leading-relaxed">
+            Làm bài Quiz 8 dạng tương tác, tự động sinh đề AI từ File/OCR, Drive, Kho 1,375+ câu D1 &amp; đồng bộ Google Docs.
+          </p>
+        </div>
+        <div class="flex flex-wrap gap-1.5 pt-2 border-t border-line/70 text-[11px] font-bold">
+          <a href="/quiz-menu?tab=take" class="px-2.5 py-1 rounded-lg bg-brand-600 text-white hover:bg-brand-700">▶ Làm Quiz</a>
+          <a href="/quiz-menu?tab=take&grade=thcs" class="px-2.5 py-1 rounded-lg bg-surface-0 border border-line text-ink-900 hover:border-brand-400">📗 Khối 6–9</a>
+          <a href="/quiz-menu?tab=create&mode=auto" class="px-2.5 py-1 rounded-lg bg-surface-0 border border-line text-ink-900 hover:border-brand-400">⚡ Tạo Đề AI</a>
+          <a href="/quiz-menu?tab=create&mode=auto&source=question_bank" class="px-2.5 py-1 rounded-lg bg-surface-0 border border-line text-ink-900 hover:border-brand-400">📚 Kho D1</a>
+        </div>
+      </div>
+
+      <!-- 2. Nghiệp vụ Phòng Thi Số -->
+      <div class="rounded-2xl bg-surface-1/70 border border-line hover:border-brand-500 p-4 flex flex-col justify-between gap-3 transition-all">
+        <div class="space-y-1.5">
+          <div class="flex items-center justify-between">
+            <a href="/exam" class="flex items-center gap-2 font-extrabold text-sm sm:text-base text-ink-900 hover:text-brand-700">
+              <span class="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center text-lg shadow-2xs">⏱️</span>
+              <span>2. Phòng Thi Số K12 &amp; IELTS</span>
+            </a>
+            <span class="px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 text-[10px] font-extrabold">Đề 15p • 45p</span>
+          </div>
+          <p class="text-xs text-ink-500 leading-relaxed">
+            Phòng thi cô lập chống gian lận, kiểm tra 15p, 45p, thi thử IELTS 4 kỹ năng, sinh đề ngẫu nhiên &amp; chấm theo điểm danh.
+          </p>
+        </div>
+        <div class="flex flex-wrap gap-1.5 pt-2 border-t border-line/70 text-[11px] font-bold">
+          <a href="/exam?group=periodic&cat=quick_15m" class="px-2.5 py-1 rounded-lg bg-brand-600 text-white hover:bg-brand-700">⚡ Đề 15 Phút</a>
+          <a href="/exam?group=periodic&cat=standard_45m" class="px-2.5 py-1 rounded-lg bg-surface-0 border border-line text-ink-900 hover:border-brand-400">📝 Đề 45 Phút</a>
+          <a href="/exam?group=intl&cat=ielts" class="px-2.5 py-1 rounded-lg bg-surface-0 border border-line text-ink-900 hover:border-brand-400">🌍 Thi IELTS</a>
+          <a href="/exam?group=random_builder" class="px-2.5 py-1 rounded-lg bg-surface-0 border border-line text-ink-900 hover:border-brand-400">🎲 Sinh Đề D1</a>
+        </div>
+      </div>
+
+      <!-- 3. Nghiệp vụ Điểm Danh & Thời Khóa Biểu -->
+      <div class="rounded-2xl bg-surface-1/70 border border-line hover:border-brand-500 p-4 flex flex-col justify-between gap-3 transition-all">
+        <div class="space-y-1.5">
+          <div class="flex items-center justify-between">
+            <a href="/schedule" class="flex items-center gap-2 font-extrabold text-sm sm:text-base text-ink-900 hover:text-brand-700">
+              <span class="w-9 h-9 rounded-xl bg-teal-600 text-white flex items-center justify-center text-lg shadow-2xs">📋</span>
+              <span>3. Điểm Danh &amp; Lịch Học</span>
+            </a>
+            <span class="px-2 py-0.5 rounded-md bg-teal-100 text-teal-800 text-[10px] font-extrabold">Zalo 10p</span>
+          </div>
+          <p class="text-xs text-ink-500 leading-relaxed">
+            Bảng điểm danh 1 chạm theo ca, lịch tuần 7 ngày × 3 ca, tự động báo Zalo phụ huynh đưa đón &amp; trung tâm cảnh báo Leader.
+          </p>
+        </div>
+        <div class="flex flex-wrap gap-1.5 pt-2 border-t border-line/70 text-[11px] font-bold">
+          <a href="/schedule?view=rollcall" class="px-2.5 py-1 rounded-lg bg-brand-600 text-white hover:bg-brand-700">📋 Điểm Danh Nhanh</a>
+          <a href="/schedule?view=calendar" class="px-2.5 py-1 rounded-lg bg-surface-0 border border-line text-ink-900 hover:border-brand-400">📅 Lịch Tuần</a>
+          <a href="/schedule?view=sessions" class="px-2.5 py-1 rounded-lg bg-surface-0 border border-line text-ink-900 hover:border-brand-400">📚 Sổ Đầu Bài</a>
+          <a href="/schedule?view=alerts" class="px-2.5 py-1 rounded-lg bg-surface-0 border border-line text-ink-900 hover:border-brand-400">🔔 Cảnh Báo</a>
+        </div>
+      </div>
+
+      <!-- 4. Nghiệp vụ Lộ Trình & Khóa Học -->
+      <div class="rounded-2xl bg-surface-1/70 border border-line hover:border-brand-500 p-4 flex flex-col justify-between gap-3 transition-all">
+        <div class="space-y-1.5">
+          <div class="flex items-center justify-between">
+            <a href="/courses" class="flex items-center gap-2 font-extrabold text-sm sm:text-base text-ink-900 hover:text-brand-700">
+              <span class="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-lg shadow-2xs">📚</span>
+              <span>4. Lộ Trình &amp; 19 Khóa Học</span>
+            </a>
+            <span class="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-extrabold">Lớp 1–12</span>
+          </div>
+          <p class="text-xs text-ink-500 leading-relaxed">
+            Lộ trình cá nhân hóa từ Tiểu học, THCS, THPT đến IELTS 6.5+, Bảng vàng học viên CEFR và chính sách học phí đổi Sao.
+          </p>
+        </div>
+        <div class="flex flex-wrap gap-1.5 pt-2 border-t border-line/70 text-[11px] font-bold">
+          <a href="/courses" class="px-2.5 py-1 rounded-lg bg-brand-600 text-white hover:bg-brand-700">📚 19 Khóa Học</a>
+          <a href="/?tab=primary" class="px-2.5 py-1 rounded-lg bg-surface-0 border border-line text-ink-900 hover:border-brand-400">🎒 Tiểu Học</a>
+          <a href="/?tab=secondary" class="px-2.5 py-1 rounded-lg bg-surface-0 border border-line text-ink-900 hover:border-brand-400">🌱 THCS</a>
+          <a href="/hall-of-fame" class="px-2.5 py-1 rounded-lg bg-surface-0 border border-line text-ink-900 hover:border-brand-400">🏆 Bảng Vàng</a>
+        </div>
+      </div>
+
+      <!-- 5. Nghiệp vụ Học Liệu & Công Cụ -->
+      <div class="rounded-2xl bg-surface-1/70 border border-line hover:border-brand-500 p-4 flex flex-col justify-between gap-3 transition-all">
+        <div class="space-y-1.5">
+          <div class="flex items-center justify-between">
+            <a href="/tools" class="flex items-center gap-2 font-extrabold text-sm sm:text-base text-ink-900 hover:text-brand-700">
+              <span class="w-9 h-9 rounded-xl bg-violet-600 text-white flex items-center justify-center text-lg shadow-2xs">🛠️</span>
+              <span>5. Học Liệu &amp; Công Cụ SRS</span>
+            </a>
+            <span class="px-2 py-0.5 rounded-md bg-violet-100 text-violet-800 text-[10px] font-extrabold">Đa Giác Quan</span>
+          </div>
+          <p class="text-xs text-ink-500 leading-relaxed">
+            Từ điển Cambridge IPA, Flashcard 3D ngắt quãng, Đấu trường Game từ vựng, Ngữ pháp 12 thì &amp; Kho Tri Thức Obsidian.
+          </p>
+        </div>
+        <div class="flex flex-wrap gap-1.5 pt-2 border-t border-line/70 text-[11px] font-bold">
+          <a href="/dictionary" class="px-2.5 py-1 rounded-lg bg-brand-600 text-white hover:bg-brand-700">📖 Từ Điển</a>
+          <a href="/flashcards" class="px-2.5 py-1 rounded-lg bg-surface-0 border border-line text-ink-900 hover:border-brand-400">🃏 Flashcards</a>
+          <a href="/games" class="px-2.5 py-1 rounded-lg bg-surface-0 border border-line text-ink-900 hover:border-brand-400">🎮 Game</a>
+          <a href="/grammar" class="px-2.5 py-1 rounded-lg bg-surface-0 border border-line text-ink-900 hover:border-brand-400">📐 Ngữ Pháp</a>
+        </div>
+      </div>
+
+      <!-- 6. Nghiệp vụ Đối Soát AI & Quản Trị -->
+      <div class="rounded-2xl bg-surface-1/70 border border-line hover:border-brand-500 p-4 flex flex-col justify-between gap-3 transition-all">
+        <div class="space-y-1.5">
+          <div class="flex items-center justify-between">
+            <a href={isTeacherOrAdmin(currentUser) ? '/langflow' : '/evaluations'} class="flex items-center gap-2 font-extrabold text-sm sm:text-base text-ink-900 hover:text-brand-700">
+              <span class="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center text-lg shadow-2xs">🤖</span>
+              <span>6. Đối Soát AI &amp; Quản Trị</span>
+            </a>
+            <span class="px-2 py-0.5 rounded-md bg-indigo-100 text-indigo-800 text-[10px] font-extrabold">CRAG &amp; CEFR</span>
+          </div>
+          <p class="text-xs text-ink-500 leading-relaxed">
+            Pipeline AI Langflow CRAG &amp; Zalo Bot @bot.ynKabJAc, Đối soát chất lượng buổi học, Đánh giá năng lực 5 kỹ năng &amp; AdminCP.
+          </p>
+        </div>
+        <div class="flex flex-wrap gap-1.5 pt-2 border-t border-line/70 text-[11px] font-bold">
+          <a href="/langflow" class="px-2.5 py-1 rounded-lg bg-brand-600 text-white hover:bg-brand-700">🔬 Langflow AI</a>
+          <a href="/session-audit" class="px-2.5 py-1 rounded-lg bg-surface-0 border border-line text-ink-900 hover:border-brand-400">📊 Đối Soát Ca</a>
+          <a href="/evaluations" class="px-2.5 py-1 rounded-lg bg-surface-0 border border-line text-ink-900 hover:border-brand-400">📈 Đánh Giá CEFR</a>
+          <a href="/admincp" class="px-2.5 py-1 rounded-lg bg-surface-0 border border-line text-ink-900 hover:border-brand-400">👑 AdminCP</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- ===== 1B. Tải Ứng Dụng Android APK (DOOGEE R10 & Điện thoại) ===== -->
   <section
     data-testid="home-apk-download-card"
@@ -593,7 +745,7 @@
  <div class="text-xs text-ink-500 mt-0.5">{curr.grade_range || curr.subtitle || ''}</div>
  </div>
  {#if curr.description}
- <p class="text-xs text-ink-500 leading-relaxed line-clamp-3 flex-1">{curr.description}</p>
+ <p class="text-xs text-ink-500 leading-relaxed flex-1">{curr.description}</p>
  {/if}
  <div class="flex gap-2 pt-1">
  {#if enrolled}
@@ -651,7 +803,7 @@
  <li class="flex items-center gap-3 py-3">
  <span class="text-2xl">📝</span>
  <div class="flex-1 min-w-0">
- <div class="text-sm font-bold text-ink-900 truncate">{r.title || r.test_name || 'Bài kiểm tra'}</div>
+ <div class="text-sm font-bold text-ink-900">{r.title || r.test_name || 'Bài kiểm tra'}</div>
  <div class="text-xs text-ink-500">{r.created_at ? new Date(r.created_at).toLocaleDateString('vi-VN') : ''}{r.score != null ? ` • Điểm: ${r.score}` : ''}</div>
  </div>
  <button type="button" onclick={() => removeParentRecord(r.id)} class="text-xs font-bold text-danger-600 hover:underline">Xóa</button>

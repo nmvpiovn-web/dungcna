@@ -1,5 +1,6 @@
 <script>
  import { onMount, onDestroy } from 'svelte';
+ import { page } from '$app/state';
  import { playAudioFeedback, speakWord } from '$lib/speech.js';
  import {
  getCurrentUser,
@@ -517,6 +518,25 @@
  let activeExamGroup = $state('k12'); // 'k12' | 'intl' | 'periodic' | 'random_builder' | 'my_grade'
  let activeExamCategory = $state('all'); // Sub-category filter within group
 
+ // Đồng bộ tự động với Sub-Menu Nghiệp Vụ Phòng Thi (?group=, ?cat=, ?panel=)
+ $effect(() => {
+ const sp = page.url.searchParams;
+ const groupParam = sp.get('group');
+ const catParam = sp.get('cat');
+ const panelParam = sp.get('panel');
+
+ if (groupParam && ['k12', 'intl', 'periodic', 'random_builder', 'my_grade'].includes(groupParam)) {
+ activeExamGroup = groupParam;
+ activeExamCategory = catParam || 'all';
+ } else if (catParam) {
+ activeExamCategory = catParam;
+ }
+ if (panelParam === 'attendance_grading' && typeof document !== 'undefined') {
+ const el = document.getElementById('exam-attendance-grading-panel');
+ if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+ }
+ });
+
  let examGroups = $derived(
  currentUser?.role === 'student'
  ? [
@@ -1016,7 +1036,7 @@
 
  {#if currentUser?.role === 'teacher' || currentUser?.role === 'superadmin' || isSuperAdmin(currentUser)}
  <!-- Teacher & Leader Attendance-Linked Exam Panel -->
- <div class="rounded-3xl bg-white border border-emerald-500/30 p-5 md:p-6 shadow-xl space-y-4">
+ <div id="exam-attendance-grading-panel" data-testid="exam-attendance-grading-panel" class="rounded-3xl bg-white border border-emerald-500/30 p-5 md:p-6 shadow-xl space-y-4">
  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
  <div>
  <div class="text-xs font-bold text-emerald-700 uppercase tracking-wider flex items-center gap-2">
@@ -1125,7 +1145,7 @@
 
  <!-- Quick Pill Selector -->
  {#if eligibleStudents.length > 0}
- <div class="flex items-center gap-2 overflow-x-auto pb-1 pt-1 text-xs">
+ <div class="flex flex-wrap items-center gap-2 pb-1 pt-1 text-xs">
  <span class="text-ink-500 whitespace-nowrap text-[11px] font-medium">Chọn nhanh thí sinh:</span>
  {#each eligibleStudents as st}
  {@const isChosen = selectedStudentId === st.id}
@@ -1240,10 +1260,10 @@
  {grp.icon}
  </span>
  <div class="min-w-0">
- <div class="font-heading font-semibold text-xs sm:text-sm text-ink-900 truncate {activeExamGroup === grp.id ? 'text-brand-700' : ''}">
+ <div class="font-heading font-semibold text-xs sm:text-sm text-ink-900 leading-snug {activeExamGroup === grp.id ? 'text-brand-700' : ''}">
  {grp.label}
  </div>
- <div class="text-[11px] text-ink-500 line-clamp-1 mt-0.5">
+ <div class="text-[11px] text-ink-500 leading-relaxed mt-0.5">
  {grp.desc}
  </div>
  </div>
@@ -1251,9 +1271,9 @@
  {/each}
  </div>
 
- <!-- LEVEL 2: Sub-Tree Hierarchy Pills for Active Group -->
+ <!-- LEVEL 2: Sub-Tree Hierarchy Cards for Active Group (Flex-Wrap, Zero Slide-Bar) -->
  {#if activeExamGroup === 'k12'}
- <div class="pt-3 border-t border-line flex items-center gap-2 overflow-x-auto pb-1 text-xs" style="-webkit-overflow-scrolling: touch; touch-action: pan-x pan-y;">
+ <div class="pt-3 border-t border-line flex flex-wrap items-center gap-2 pb-1 text-xs">
  <span class="text-ink-500 font-bold uppercase text-[10px] whitespace-nowrap">Khối lớp con:</span>
  <button
  onclick={() => activeExamCategory = 'all'}
@@ -1299,7 +1319,7 @@
  </button>
  </div>
  {:else if activeExamGroup === 'intl'}
- <div class="pt-3 border-t border-line flex items-center gap-2 overflow-x-auto pb-1 text-xs">
+ <div class="pt-3 border-t border-line flex flex-wrap items-center gap-2 pb-1 text-xs">
  <span class="text-ink-500 font-bold uppercase text-[10px] whitespace-nowrap">Chứng chỉ con:</span>
  <button
  onclick={() => activeExamCategory = 'all'}
@@ -1327,7 +1347,7 @@
  </button>
  </div>
  {:else if activeExamGroup === 'periodic'}
- <div class="pt-3 border-t border-line flex items-center gap-2 overflow-x-auto pb-1 text-xs">
+ <div class="pt-3 border-t border-line flex flex-wrap items-center gap-2 pb-1 text-xs">
  <span class="text-ink-500 font-bold uppercase text-[10px] whitespace-nowrap">Thời lượng con:</span>
  <button
  onclick={() => activeExamCategory = 'all'}
@@ -1539,7 +1559,7 @@
  <span class="opacity-80 font-mono text-[10px] px-1.5 py-0.2 rounded-md bg-surface-1 text-ink-500">{ex.duration_minutes}'</span>
  {/if}
  </div>
- <div class="font-bold text-xs line-clamp-2 leading-snug">{ex.title}</div>
+ <div class="font-bold text-xs leading-snug">{ex.title}</div>
  </div>
  <div class="mt-2.5 pt-2 border-t border-line text-[10px] opacity-75 flex items-center justify-between">
  <span>{ex.total_questions} câu</span>
@@ -2000,7 +2020,7 @@
  <div class="text-[11px] font-bold text-ink-500 uppercase">
  Ma trận câu hỏi (Bấm để nhảy đến):
  </div>
- <div class="grid grid-cols-5 gap-1.5 max-h-56 overflow-y-auto p-1">
+ <div class="grid grid-cols-5 gap-1.5 p-1">
  {#each activeQuestions as _, idx}
  {@const isAns = !!userAnswers[idx]}
  <button
@@ -2058,7 +2078,7 @@
  </div>
  {/if}
 
- <div class="max-h-96 overflow-y-auto space-y-2 pr-1">
+ <div class="space-y-2 pr-1">
  {#each batchScores as item, idx}
  <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
  <div class="flex items-center gap-3">

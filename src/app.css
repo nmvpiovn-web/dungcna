@@ -591,3 +591,77 @@ html.theme-sky {
 .cpanel-dock-item:hover {
   transform: translateY(-2px) scale(1.06);
 }
+
+/* ========================================================================= */
+/* DOCKBAR LAYOUT-PUSHING ARCHITECTURE (ĐẨY CARD, POPUP, MODAL & DIV)        */
+/* Đảm bảo DockBar không bao giờ đè che mất thông tin, nút bấm hay popup     */
+/* ========================================================================= */
+:root {
+  --dockbar-push-height: 104px;
+  --dockbar-popover-shift: 0px;
+}
+
+@media (max-width: 1023px) {
+  :root {
+    --dockbar-push-height: 76px;
+    --dockbar-popover-shift: 0px;
+  }
+}
+
+/* 1. Đẩy phần nội dung chính (<main>) và chân trang (<footer>) lên trên vùng DockBar luôn hiện */
+main {
+  padding-bottom: calc(var(--dockbar-push-height, 108px) + 1.5rem) !important;
+  transition:
+    padding-bottom 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Khi mở bảng chọn nhanh (Popover) trên DockBar, tự động đẩy các Card/Div trong <main> lên trên */
+html.dockbar-popover-open main {
+  transform: translateY(calc(-1 * var(--dockbar-popover-shift, 0px)));
+}
+
+/* Call-To-Action Footer (Xóa / Thêm / Lưu) luôn cố định ở cuối mọi Popup / Card nổi */
+[data-testid="modal-cta-footer"],
+.modal-cta-footer {
+  position: sticky !important;
+  bottom: 0 !important;
+  z-index: 20 !important;
+  margin-top: auto !important;
+}
+
+/* 2. Khi các Popup / Card nổi / Modal đụng vào vùng DockBar (z-[120]) -> Tự động thu gọn chiều cao (max-height) nằm gọn phía trên DockBar */
+[role="dialog"],
+[aria-modal="true"],
+.fc-popup-overlay,
+div.fixed.inset-0.z-50,
+div.fixed.inset-0.z-\[100\],
+div.fixed.inset-0.z-\[110\] {
+  padding-top: 1rem !important;
+  padding-bottom: calc(var(--dockbar-push-height, 108px) + 0.85rem) !important;
+  box-sizing: border-box !important;
+}
+
+[role="dialog"] > div,
+[aria-modal="true"] > div,
+.fc-popup-overlay > div,
+div.fixed.inset-0.z-50 > div,
+div.fixed.inset-0.z-\[100\] > div,
+div.fixed.inset-0.z-\[110\] > div {
+  max-height: calc(100dvh - var(--dockbar-push-height, 108px) - 2rem) !important;
+  overflow-y: auto !important;
+  transition:
+    max-height 180ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 180ms cubic-bezier(0.22, 1, 0.36, 1) !important;
+}
+
+/* 3. Giữ vùng an toàn khi cuộn tới bất kỳ Card, Bảng, hay Nút điều khiển nào */
+section,
+article,
+.card-soft,
+.academic-card,
+.grade-select-card,
+.inline-study-workspace,
+.deck-controls {
+  scroll-margin-bottom: calc(var(--dockbar-push-height, 104px) + 1.5rem);
+}

@@ -41,7 +41,7 @@ export async function GET({ url, request, platform }) {
   const offset = Math.max(Number.isFinite(offsetParam) ? offsetParam : 0, 0);
 
   const groupSql = groupKey && GROUP_SQL_MAP[groupKey] ? GROUP_SQL_MAP[groupKey] : '';
-  const excludeStubsSql = `AND (kv.category IS NULL OR kv.category != 'drive_folder') AND kv.title NOT LIKE '📁%' AND kv.title NOT LIKE '%.mp3' AND kv.title NOT LIKE '%.rar'`;
+  const excludeStubsSql = `AND (kv.category IS NULL OR kv.category != 'drive_folder') AND kv.title NOT LIKE '📁%' AND kv.title NOT LIKE '%.mp3' AND kv.title NOT LIKE '%.rar' AND (kv.content_markdown IS NULL OR kv.content_markdown NOT LIKE '%Không trích xuất được nội dung%')`;
 
   let articles = [];
   let total = 0;

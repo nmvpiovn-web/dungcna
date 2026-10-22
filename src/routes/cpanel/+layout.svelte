@@ -228,9 +228,9 @@
  D
  </div>
  <div class="min-w-0">
- <div class="text-[11px] sm:text-xs uppercase tracking-wider font-bold text-cx-600 truncate">Tiếng Anh Cô Dung</div>
- <div class="text-xs sm:text-sm font-bold text-slate-900 flex items-center gap-1.5">
- <span class="truncate">Hệ Thống Cpanel</span>
+ <div class="text-[11px] sm:text-xs uppercase tracking-wider font-bold text-cx-600">Tiếng Anh Cô Dung</div>
+ <div class="text-xs sm:text-sm font-bold text-slate-900 flex flex-wrap items-center gap-1.5">
+ <span>Hệ Thống Cpanel</span>
  <span class="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 rounded-md font-semibold tracking-wide bg-cx-50 text-cx-700 border border-cx-200 shrink-0">
  {currentRoleKey}
  </span>
@@ -298,7 +298,7 @@
  {currentUser?.name?.[0] || currentUser?.username?.[0] || 'U'}
  </div>
  <div class="hidden sm:block text-left text-xs">
- <div class="font-semibold text-slate-800 line-clamp-1">{currentUser?.name || currentUser?.username || 'Khách'}</div>
+ <div class="font-semibold text-slate-800">{currentUser?.name || currentUser?.username || 'Khách'}</div>
  <div class="text-[11px] text-slate-500 capitalize">{currentUser?.role || 'User'}</div>
  </div>
  {#if currentUser}
@@ -327,12 +327,12 @@
  </div>
 
  <!-- Secondary Nav Tabs (Cpanel Sub-Dockbar) -->
- <div data-testid="cpanel-sub-dockbar" class="max-w-7xl mx-auto flex items-center gap-2 overflow-x-auto pt-2 pb-1 scrollbar-none w-full min-w-0">
+ <div data-testid="cpanel-sub-dockbar" class="max-w-7xl mx-auto flex flex-wrap items-center gap-2 pt-2 pb-1 w-full min-w-0">
  {#each navItems as item}
  {@const isActive = $page.url.pathname === item.path || ($page.url.hash && item.path.includes($page.url.hash))}
  <a
  href={item.path}
- class="cpanel-dock-item flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap shrink-0 border {isActive ? 'bg-cx-600 text-white border-cx-700 shadow-xs' : 'bg-white text-slate-700 border-slate-200 hover:border-cx-400 hover:bg-slate-50'}"
+ class="cpanel-dock-item flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border {isActive ? 'bg-cx-600 text-white border-cx-700 shadow-xs' : 'bg-white text-slate-700 border-slate-200 hover:border-cx-400 hover:bg-slate-50'}"
  >
  <span aria-hidden="true">{item.icon}</span>
  <span>{item.label}</span>

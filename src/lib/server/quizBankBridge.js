@@ -68,7 +68,7 @@ export function formatQuestionPrompt(questionText, readingPassage) {
     .replace(/<u>(.*?)<\/u>/gi, '[$1]')
     .replace(/<\/?[a-z][^>]*>/gi, '')
     .replace(/\s*\(Biến thể\s*\d+\)/gi, '')
-    .replace(/\n\s*A[.)]\s+[^\n]+\n\s*B[.)]\s+[^\n]+\n\s*C[.)]\s+[^\n]+\n\s*D[.)]\s+[^\n]+\s*$/i, '')
+    .replace(/(?:\r?\n|\s{2,})A[.)]\s+[\s\S]*$/i, '')
     .trim();
   const passage = String(readingPassage ?? '').trim();
   if (!passage) return text;
@@ -224,7 +224,7 @@ function cleanStemDisplay(rawText) {
     .replace(/<u>(.*?)<\/u>/gi, '[$1]')
     .replace(/<\/?[a-z][^>]*>/gi, '')
     .replace(/\s*\(Biến thể\s*\d+\)/gi, '')
-    .replace(/\n\s*A[.)]\s+([^\n]+)\n\s*B[.)]\s+([^\n]+)\n\s*C[.)]\s+([^\n]+)\n\s*D[.)]\s+([^\n]+)\s*$/i, ' ($1, $2, $3, $4)')
+    .replace(/(?:\r?\n|\s{2,})A[.)]\s+[\s\S]*$/i, '')
     .replace(/^Mark the letter A,\s*B,\s*C,\s*or D to indicate\s+/i, 'Choose ')
     .replace(/\s*->\s*/g, ' — ')
     .replace(/_{3,}/g, '______')
@@ -409,13 +409,18 @@ export function convertBankRowsToTypeMix(bankRows, quizId, startOrder = 0, typeM
     }
 
     if (targetType === 'ordering') {
-      const cleanSent = item.fullSentence.replace(/[.?!]+$/, '').trim();
+      let baseSent = item.hasBlank ? item.fullSentence : item.qText;
+      if (/^(?:Choose|Mark|Find|Identify|Which|Read|Rewrite)\b/i.test(baseSent)) {
+        const afterColon = baseSent.split(/[:—]/).slice(1).join(' ').trim();
+        baseSent = afterColon.length >= 12 ? afterColon : item.cleanAns;
+      }
+      const cleanSent = baseSent.replace(/[.?!]+$/, '').trim();
       let tokens = cleanSent.split(/\s+/).filter(Boolean);
       if (tokens.length > 9) {
         tokens = tokens.slice(0, 8);
       }
       if (tokens.length < 3) {
-        tokens = ['Answer', 'is', item.cleanAns];
+        tokens = ['The', 'correct', 'answer', 'is', item.cleanAns];
       }
       const scrambled = shuffleTokensDeterministically(tokens, item.row.id);
       results.push({

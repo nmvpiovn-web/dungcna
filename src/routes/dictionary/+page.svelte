@@ -600,7 +600,7 @@
  </div>
 
  <!-- Row 2: View Mode Tabs (Active vs SRS Due vs Mastered) -->
- <div class="flex items-center gap-2 border-b border-slate-100 pb-3 text-xs overflow-x-auto max-w-full">
+ <div class="flex flex-wrap items-center gap-2 border-b border-slate-100 pb-3 text-xs max-w-full">
  <button
  onclick={() => viewMode = 'active'}
  class="px-3 py-1.5 rounded-md font-semibold transition-colors whitespace-nowrap {viewMode === 'active' ? 'bg-cx-600 text-white' : 'text-slate-600 hover:bg-slate-100'}"
@@ -621,13 +621,37 @@
  </button>
  </div>
 
+ <!-- Row 2.5: Thẻ Chọn Khối Lớp Trực Diện (Không Slide-Bar, Không Cắt Chữ) -->
+ <div data-testid="dictionary-grade-cards-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 pt-1 pb-2 border-b border-slate-100">
+ {#each [
+ { id: 'all', icon: '🌟', label: 'Toàn Bộ K12', sub: 'Tất cả khối lớp' },
+ { id: 'Lớp 3', icon: '🎒', label: 'Tiểu Học L3–L5', sub: 'Starters • Flyers' },
+ { id: 'Lớp 6', icon: '📚', label: 'Lớp 6 (THCS)', sub: 'Global Success A2' },
+ { id: 'Lớp 7', icon: '🌱', label: 'Lớp 7 (THCS)', sub: 'Global Success KET' },
+ { id: 'Lớp 8', icon: '📖', label: 'Lớp 8–9 (THCS)', sub: 'PET B1 & Vào 10' },
+ { id: 'Lớp 11', icon: '🎓', label: 'THPT L10–12', sub: 'FCE B2 & CAE C1' }
+ ] as gCard}
+ <button
+ type="button"
+ onclick={() => selectedGrade = gCard.id}
+ class="p-2.5 rounded-xl border text-left transition-all flex items-start gap-2 {selectedGrade === gCard.id ? 'bg-emerald-50 border-emerald-600 text-emerald-900 shadow-2xs font-bold' : 'bg-slate-50/80 border-slate-200 text-slate-700 hover:border-emerald-300'}"
+ >
+ <span class="text-base">{gCard.icon}</span>
+ <div class="min-w-0">
+ <div class="text-xs font-bold leading-snug">{gCard.label}</div>
+ <div class="text-[10px] text-slate-500 leading-tight mt-0.5">{gCard.sub}</div>
+ </div>
+ </button>
+ {/each}
+ </div>
+
  <!-- Row 3: Part of Speech & Grade Selectors -->
  <div class="flex flex-wrap items-center gap-3 text-xs max-w-full">
  <div class="flex items-center gap-1.5">
  <span class="text-slate-500 font-medium">Từ loại:</span>
  <select
  bind:value={selectedPos}
- class="p-1.5 rounded-md bg-slate-50 border border-slate-200 text-slate-800 font-medium max-w-[160px] truncate"
+ class="p-1.5 rounded-md bg-slate-50 border border-slate-200 text-slate-800 font-medium"
  >
  <option value="all">Tất cả từ loại</option>
  <option value="noun">Danh từ (Noun)</option>
@@ -642,7 +666,7 @@
  <span class="text-slate-500 font-medium">Khối lớp (Theo Role):</span>
  <select
  bind:value={selectedGrade}
- class="p-1.5 rounded-md bg-slate-50 border border-slate-200 text-slate-800 font-medium max-w-[160px] truncate"
+ class="p-1.5 rounded-md bg-slate-50 border border-slate-200 text-slate-800 font-medium"
  >
  <option value="all">🌟 Toàn bộ K12</option>
  <optgroup label="🎒 Tiểu Học">
@@ -670,7 +694,7 @@
  <span class="text-slate-500 font-medium">Nhóm từ liên quan:</span>
  <select
  bind:value={selectedTopicGroup}
- class="p-1.5 rounded-md bg-slate-50 border border-slate-200 text-slate-800 font-medium max-w-[160px] truncate"
+ class="p-1.5 rounded-md bg-slate-50 border border-slate-200 text-slate-800 font-medium"
  >
  <option value="all">🌟 Tất cả nhóm từ</option>
  <option value="hobbies">🎨 Sở thích, Thể thao & Giải trí</option>

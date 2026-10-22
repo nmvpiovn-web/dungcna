@@ -479,8 +479,8 @@
 
  <!-- Title & Description -->
  <div>
- <h3 class="text-base font-bold text-slate-900 line-clamp-2">{item.title}</h3>
- <p class="text-xs text-slate-500 mt-1 line-clamp-2">{item.description}</p>
+ <h3 class="text-base font-bold text-slate-900 leading-snug">{item.title}</h3>
+ <p class="text-xs text-slate-500 mt-1 leading-relaxed">{item.description}</p>
  </div>
 
  <!-- Metadata info -->
@@ -496,7 +496,7 @@
  {#if item.obsidian_note_title}
  <div class="flex items-center justify-between pt-1 border-t border-slate-200">
  <span>🧠 Giáo án liên kết:</span>
- <a href="/second-brain?id={item.obsidian_note_id}" class="text-cx-600 hover:underline font-bold truncate max-w-[200px]" target="_blank">
+ <a href="/second-brain?id={item.obsidian_note_id}" class="text-cx-600 hover:underline font-bold break-words" target="_blank">
  {item.obsidian_note_title}
  </a>
  </div>
@@ -504,7 +504,7 @@
  {#if item.source_quiz_id}
  <div class="flex items-center justify-between pt-1 border-t border-slate-200">
  <span>🧩 Đề Quiz đính kèm:</span>
- <a href="/quiz-menu?quiz={encodeURIComponent(item.source_quiz_id)}" class="text-indigo-600 hover:underline font-bold truncate max-w-[200px]">
+ <a href="/quiz-menu?quiz={encodeURIComponent(item.source_quiz_id)}" class="text-indigo-600 hover:underline font-bold break-words">
  Mở đề #{item.source_quiz_id} →
  </a>
  </div>

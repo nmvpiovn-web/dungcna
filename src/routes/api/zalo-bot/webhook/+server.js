@@ -32,7 +32,7 @@ export async function GET({ url, platform }) {
 
   // Only manual ?poll=1 pulls directly; otherwise 24/7 timbk-zalo-webhook Worker holds the continuous getUpdates stream
   const newlyCaptured = url.searchParams.get('poll') === '1'
-    ? await syncZaloBotUpdates(db, token, 1)
+    ? await syncZaloBotUpdates(db, token, 1, platform?.env)
     : [];
 
   let recentMessages = [];
@@ -102,7 +102,7 @@ export async function POST({ request, platform }) {
     }
   } catch {}
 
-  const result = await processIncomingZaloMessage(db, token, payload);
+  const result = await processIncomingZaloMessage(db, token, payload, platform?.env);
   return json({
     ok: true,
     webhook_endpoint: TIMBK_WEBHOOK_ENDPOINT,

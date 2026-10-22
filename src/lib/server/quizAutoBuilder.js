@@ -219,8 +219,23 @@ export function allocateTypeMix(totalCount, requestedMix = {}) {
 
 const IGNORED_META_KEYS = new Set([
   'id', 'title', 'folder', 'category', 'tags', 'updated_at', 'created_at',
-  'source_file', 'source_path', 'source_hash', 'sha256', 'status', 'nguồn', 'source'
+  'source_file', 'source_path', 'source_hash', 'sha256', 'status', 'nguồn', 'source',
+  'loại', 'phân loại', 'định dạng', 'thư mục', 'dung lượng', 'kích thước',
+  'cập nhật', 'ngày tạo', 'mime_type', 'mimetype', 'type', 'class', 'grade'
 ]);
+
+function isBoilerplateLine(raw) {
+  const s = String(raw || '').trim();
+  if (!s) return true;
+  if (/^---+$/.test(s)) return true;
+  if (/^_{4,}$/.test(s)) return true;
+  if (/^\*?\(Không trích xuất được nội dung[^)]*\)\*?$/i.test(s)) return true;
+  if (/^Thư mục tài liệu trên Google Drive\.?$/i.test(s)) return true;
+  if (/^🔗\s*\[Mở trên Drive\]/i.test(s)) return true;
+  if (/^(?:application\/[a-z0-9.+-]+|image\/[a-z0-9.+-]+|text\/[a-z0-9.+-]+)$/i.test(s)) return true;
+  if (/^(?:Loại|Phân loại|Định dạng|Thư mục|Dung lượng|Nguồn)\s*[:=]\s*(?:application\/|document|hsg|exam|listening|audio)/i.test(s.replace(/\*\*/g, ''))) return true;
+  return false;
+}
 
 /**
  * Parses sentences, vocabulary items, and Q&A blocks from grounded source text.
@@ -257,15 +272,16 @@ function parseSourceContent(text) {
     if (/^\[\[.*?\]\]$/.test(rawLine)) continue;
     if (/^(?:Nguồn|Nội dung trích xuất từ tài liệu gốc|Giaoandethitienganh\.info)/i.test(rawLine)) continue;
     if (/^#+\s+/.test(rawLine)) continue;
+    if (isBoilerplateLine(rawLine)) continue;
 
     // Markdown table separator row: |---|---|
     if (/^\|[\s\-:|]+\|$/.test(rawLine)) continue;
 
-    // Check for inline / DOCX-table MCQ options when inside an MCQ block:
-    // e.g. "A. opt1 | | | B. opt2" or "| | C. opt3 | D. opt4"
+    // Check for inline / DOCX-table / tab-separated MCQ options when inside an MCQ block:
+    // e.g. "A. opt1 | | | B. opt2" or "A. hide\tB. pick\tC. shine\tD. like"
     if (currentMcq) {
-      const cleanedCells = rawLine.replace(/\|+/g, '   ').trim();
-      const inlineOpts = [...cleanedCells.matchAll(/(?:^|\s{2,})([A-Da-d])[.)]\s*(.+?)(?=\s{2,}[A-Da-d][.)]\s+|$)/g)];
+      const cleanedCells = rawLine.replace(/\|+/g, '   ').replace(/\t+/g, '   ').trim();
+      const inlineOpts = [...cleanedCells.matchAll(/(?:^|\s{2,})([A-Da-d])[.)]\s*(.+?)(?=\s{2,}[A-Da-d][.)]\s*|$)/g)];
       if (inlineOpts.length >= 1 && /^[A-Da-d][.)]/.test(cleanedCells)) {
         for (const m of inlineOpts) {
           const letter = m[1].toUpperCase();
@@ -315,7 +331,7 @@ function parseSourceContent(text) {
     if (vocabMatch) {
       const word = vocabMatch[1].trim();
       const def = vocabMatch[2].trim();
-      if (!IGNORED_META_KEYS.has(word.toLowerCase()) && word.length >= 2 && def.length >= 4) {
+      if (!IGNORED_META_KEYS.has(word.toLowerCase()) && !isBoilerplateLine(def) && word.length >= 2 && def.length >= 4) {
         flushCurrentMcq();
         vocabulary.push({ word, definition: def });
         continue;
@@ -327,7 +343,7 @@ function parseSourceContent(text) {
     if (bulletKvMatch) {
       const term = bulletKvMatch[1].trim();
       const def = bulletKvMatch[2].trim();
-      if (!IGNORED_META_KEYS.has(term.toLowerCase()) && def.length >= 6) {
+      if (!IGNORED_META_KEYS.has(term.toLowerCase()) && !isBoilerplateLine(def) && def.length >= 6) {
         flushCurrentMcq();
         tableVocab.push({ word: term, definition: def });
         secondarySentences.push(`${term}: ${def.replace(/[.?!]+$/, '')}.`);
@@ -336,21 +352,34 @@ function parseSourceContent(text) {
     }
 
     // MCQ question start: "1. What is..." or "Question 1: ..." or "Question 1. ..."
+    // Also handle inline options on the same line: "Question 1. A. hide   B. pick   C. shine   D. like"
     const qStartMatch = line.match(/^(?:(?:Question|Câu)\s*\d+[:.)]|\d+[.)])\s*(.+)$/i);
     if (qStartMatch) {
       flushCurrentMcq();
-      currentMcq = { prompt: qStartMatch[1].trim(), options: [], answer: null };
+      const rest = qStartMatch[1].replace(/\t+/g, '   ').trim();
+      const inlineOptsInStart = [...rest.matchAll(/(?:^|\s{2,})([A-Da-d])[.)]\s*(.+?)(?=\s{2,}[A-Da-d][.)]\s*|$)/g)];
+      if (inlineOptsInStart.length >= 2) {
+        const firstOptIdx = rest.search(/(?:^|\s{2,})[A-Da-d][.)]\s*/);
+        const stemPart = firstOptIdx > 0 ? rest.slice(0, firstOptIdx).trim() : 'Choose the word that differs from the other three in pronunciation or stress:';
+        currentMcq = {
+          prompt: stemPart,
+          options: inlineOptsInStart.map((m) => `${m[1].toUpperCase()}. ${m[2].replace(/\|/g, '').trim()}`),
+          answer: null
+        };
+      } else {
+        currentMcq = { prompt: rest, options: [], answer: null };
+      }
       continue;
     }
 
     flushCurrentMcq();
 
     // Regular informative sentence for True/False, Blank, Ordering
-    if (line.length >= 15 && /[.?!]$/.test(line) && !line.includes(':')) {
+    if (line.length >= 15 && /[.?!]$/.test(line) && !line.includes(':') && !isBoilerplateLine(line)) {
       sentences.push(line);
     } else {
       const cleanBullet = line.replace(/^[-*•]\s*/, '').trim();
-      if (cleanBullet.length >= 20 && !IGNORED_META_KEYS.has(cleanBullet.split(':')[0]?.trim().toLowerCase())) {
+      if (cleanBullet.length >= 20 && !isBoilerplateLine(cleanBullet) && !IGNORED_META_KEYS.has(cleanBullet.split(':')[0]?.trim().toLowerCase())) {
         secondarySentences.push(/[.?!]$/.test(cleanBullet) ? cleanBullet : `${cleanBullet}.`);
       }
     }
@@ -522,15 +551,33 @@ export function generateDeterministicQuiz(text, options = {}) {
     if (added) mcqAdded++;
   }
   // If not enough parsed MCQs, synthesize from vocabulary or sentences
+  const fallbackVocabDistractors = [
+    'Một khái niệm ngữ pháp / từ vựng khác trong bài',
+    'Nghĩa mở rộng không phù hợp ngữ cảnh câu hỏi',
+    'Từ vựng thuộc nhóm chủ đề khác trong chương trình'
+  ];
   if (mcqAdded < targetMcq && parsed.vocabulary.length > 0) {
     for (let i = 0; i < parsed.vocabulary.length && mcqAdded < targetMcq; i++) {
       const item = parsed.vocabulary[i];
-      const distractors = parsed.vocabulary
-        .filter((_, idx) => idx !== i)
-        .map((v) => v.definition)
-        .slice(0, 3);
-      while (distractors.length < 3) distractors.push(`Không phải nghĩa của từ ${item.word}`);
-      const opts = [item.definition, ...distractors].sort();
+      const distractors = [];
+      for (let j = 0; j < parsed.vocabulary.length && distractors.length < 3; j++) {
+        if (j === i) continue;
+        const cand = parsed.vocabulary[j].definition;
+        if (cand !== item.definition && !distractors.includes(cand)) {
+          distractors.push(cand);
+        }
+      }
+      let fbIdx = 0;
+      while (distractors.length < 3) {
+        const fb = fallbackVocabDistractors[fbIdx % fallbackVocabDistractors.length];
+        fbIdx++;
+        if (!distractors.includes(fb) && fb !== item.definition) {
+          distractors.push(fb);
+        } else {
+          distractors.push(`Phương án nhiễu số ${distractors.length + 1} của "${item.word}"`);
+        }
+      }
+      const opts = [item.definition, ...distractors.slice(0, 3)].sort();
       const mcqPrompt = isEarlyPrimary
         ? `Từ tiếng Anh "${item.word}" nghĩa là gì?`
         : (isHighSchool ? `Chọn phương án giải nghĩa chính xác nhất cho thuật ngữ "${item.word}":` : `Nghĩa chính xác của từ "${item.word}" là gì?`);
@@ -548,15 +595,39 @@ export function generateDeterministicQuiz(text, options = {}) {
     for (let i = 0; i < parsed.sentences.length && mcqAdded < targetMcq; i++) {
       const s = parsed.sentences[i];
       const correct = s;
-      const distractors = [
-        s.replace(/\b(is|are|was|were|can|will|should)\b/i, '$1 not'),
-        s.replace(/\b(protect|major|rare|threat|wildlife|animals)\b/i, 'other'),
-        `Nhận định không có trong bài học [${i + 1}]`
+      const distractors = [];
+      const neg1 = s.replace(/\b(is|are|was|were|can|will|should|must|has|have)\b/i, '$1 not');
+      if (neg1 !== s) distractors.push(neg1);
+      const neg2 = s.replace(/\b(luôn|phải|được|có thể|chính xác|quan trọng|cần thiết)\b/i, 'không $1');
+      if (neg2 !== s && !distractors.includes(neg2)) distractors.push(neg2);
+      for (let j = 0; j < parsed.sentences.length && distractors.length < 3; j++) {
+        if (j === i) continue;
+        const otherS = parsed.sentences[(i + j + 1) % parsed.sentences.length];
+        const mutated = otherS.replace(/\b(is|are|was|were|can|will|should)\b/i, '$1 never');
+        const candidate = mutated !== otherS ? mutated : `Ngược lại với bài học: ${otherS}`;
+        if (candidate !== correct && !distractors.includes(candidate)) {
+          distractors.push(candidate);
+        }
+      }
+      const fallbackSentDistractors = [
+        'Thông tin trái ngược hoàn toàn với nội dung bài học.',
+        'Phương án không được đề cập trong ngữ cảnh tài liệu.',
+        'Nhận định sai lệch về cấu trúc hoặc ngữ nghĩa trong bài.'
       ];
+      let sFbIdx = 0;
+      while (distractors.length < 3) {
+        const cand = fallbackSentDistractors[sFbIdx % fallbackSentDistractors.length];
+        sFbIdx++;
+        if (!distractors.includes(cand) && cand !== correct) {
+          distractors.push(cand);
+        } else {
+          distractors.push(`Phương án gây nhiễu số ${distractors.length + 1}`);
+        }
+      }
       const opts = [correct, ...distractors.slice(0, 3)].sort();
       const added = addQuestionSafely({
         type: 'multiple_choice',
-        prompt: `Theo bài học, nhận định nào sau đây là chính xác? [${i + 1}]`,
+        prompt: `Theo nội dung tài liệu, nhận định nào sau đây là chính xác? (Câu ${i + 1})`,
         options_json: opts,
         correct_answer: correct,
         points: 1
@@ -571,12 +642,34 @@ export function generateDeterministicQuiz(text, options = {}) {
   for (let i = 0; i < parsed.sentences.length && tfAdded < targetTf; i++) {
     const s = parsed.sentences[i];
     const isTrue = i % 2 === 0;
-    const prompt = isTrue ? s : `Theo bài học: "${s.replace(/\b(is|are|was|were|can|will|should)\b/i, '$1 not')}"`;
+    let statement = s;
+    let actualIsTrue = true;
+    if (!isTrue) {
+      const engNeg = s.replace(/\b(is|are|was|were|can|will|should|must|do|does|did)\b/i, '$1 not');
+      if (engNeg !== s) {
+        statement = engNeg;
+        actualIsTrue = false;
+      } else {
+        const viNeg = s.replace(/\b(là|được|có|cần|phải|nên|tương ứng với|bao gồm)\b/i, 'không $1');
+        if (viNeg !== s) {
+          statement = viNeg;
+          actualIsTrue = false;
+        } else if (parsed.vocabulary.length >= 2) {
+          const v1 = parsed.vocabulary[i % parsed.vocabulary.length];
+          const v2 = parsed.vocabulary[(i + 1) % parsed.vocabulary.length];
+          statement = `Từ "${v1.word}" có nghĩa là "${v2.definition}".`;
+          actualIsTrue = false;
+        } else {
+          statement = s;
+          actualIsTrue = true;
+        }
+      }
+    }
     const added = addQuestionSafely({
       type: 'true_false',
-      prompt: `Xác định tính Đúng / Sai của nhận định sau: "${prompt}"`,
+      prompt: `Xác định tính Đúng / Sai của nhận định sau:\n"${statement}"`,
       options_json: ['Đúng', 'Sai'],
-      correct_answer: isTrue ? 'Đúng' : 'Sai',
+      correct_answer: actualIsTrue ? 'Đúng' : 'Sai',
       points: 1
     });
     if (added) tfAdded++;
@@ -587,13 +680,21 @@ export function generateDeterministicQuiz(text, options = {}) {
   let fillAdded = 0;
   for (const s of parsed.sentences) {
     if (fillAdded >= targetFill) break;
-    const words = s.split(/\s+/).filter((w) => w.length >= 4 && !/[.,?!]/.test(w));
-    if (words.length > 0) {
-      const targetWord = words[Math.floor(words.length / 2)];
-      const blanked = s.replace(targetWord, '______');
+    const cleanTokens = s
+      .split(/\s+/)
+      .map((w) => w.replace(/^[.,?!;:"'()[\]{}*]+|[.,?!;:"'()[\]{}*]+$/g, ''))
+      .filter((w) => w.length >= 4 && /^[a-zA-ZÀ-ỹ0-9-]+$/.test(w) && !IGNORED_META_KEYS.has(w.toLowerCase()));
+    // Prefer English vocabulary words first when available
+    const englishWords = cleanTokens.filter((w) => /^[a-zA-Z]{4,}$/.test(w));
+    const pool = englishWords.length > 0 ? englishWords : cleanTokens;
+    if (pool.length > 0) {
+      const targetWord = pool[Math.floor(pool.length / 2)];
+      const escaped = targetWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const blanked = s.replace(new RegExp(`\\b${escaped}\\b`), '______');
+      const finalBlanked = blanked !== s ? blanked : s.replace(targetWord, '______');
       const added = addQuestionSafely({
         type: 'fill_blank',
-        prompt: `Điền từ thích hợp vào chỗ trống:\n"${blanked}"`,
+        prompt: `Điền từ thích hợp vào chỗ trống:\n"${finalBlanked}"`,
         correct_answer: targetWord,
         points: 1
       });

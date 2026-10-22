@@ -74,7 +74,7 @@
   </div>
 
   <!-- Category Filter Pills -->
-  <div class="flex items-center gap-2 overflow-x-auto pb-1">
+  <div class="flex flex-wrap items-center gap-2 pb-1">
     <button
       onclick={() => selectedCategory = 'all'}
       class="px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap {selectedCategory === 'all' ? 'bg-brand-600 text-white shadow-sm' : 'bg-surface-0 text-ink-500 hover:text-ink-900 border border-line'}"
@@ -108,7 +108,7 @@
             <span class="text-brand-700">{res.category === 'native_methodology' ? 'Đồng Giảng Bản Ngữ' : 'Kế Hoạch 5512'}</span>
             <span class="text-ink-500">{res.grade_level === 'all' ? 'K12 Toàn Cấp' : 'THCS / THPT'}</span>
           </div>
-          <h3 class="font-heading font-bold text-sm text-ink-900 line-clamp-2 leading-snug">{res.title}</h3>
+          <h3 class="font-heading font-bold text-sm text-ink-900 leading-snug">{res.title}</h3>
           {#if res.keywords}
             <div class="flex flex-wrap gap-1 mt-2">
               {#each res.keywords.split(',').slice(0, 3) as kw}

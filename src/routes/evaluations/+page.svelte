@@ -752,7 +752,7 @@
  <div class="rounded-2xl bg-white border border-slate-200 overflow-hidden shadow-xl">
  <!-- Filter Bar for Teachers -->
  <div class="p-3 border-b border-slate-200 bg-slate-50 flex flex-wrap items-center justify-between gap-3 text-xs">
- <div class="flex items-center gap-1.5 overflow-x-auto">
+ <div class="flex flex-wrap items-center gap-1.5">
  <span class="font-bold text-slate-700 uppercase text-[10px]">Phân Luồng Học Sinh:</span>
  <button
  onclick={() => teacherRoleFilter = 'all'}

@@ -169,7 +169,7 @@
  ></textarea>
  </div>
 
- <div class="pt-3 border-t border-slate-200 flex items-center justify-end gap-2.5">
+ <div data-testid="modal-cta-footer" class="sticky bottom-0 z-20 pt-3 pb-1 bg-white border-t border-slate-200 flex items-center justify-end gap-2.5">
  <button
  type="button"
  onclick={() => isOpen = false}

@@ -1077,21 +1077,24 @@
  }
 
  function handleDeleteSession(id, name) {
- if (confirm(`Bạn có chắc muốn xóa buổi học "${name}"?`)) {
- // Bước 3: một đường delete — gọi API trước, rồi mới cập nhật local
+ if (!id) return;
  const token = typeof window !== 'undefined' ? localStorage.getItem('tienganh_token') : null;
- const doLocal = () => { deleteClassSession(id, currentUser); loadData(); showToast('Đã xóa buổi học khỏi thời khóa biểu!'); };
+ const doLocal = () => {
+   try { deleteClassSession(id, currentUser); } catch {}
+   classSessions = classSessions.filter(s => s.id !== id);
+   loadData();
+   showToast(`🗑️ Đã xóa buổi học "${name || id}" khỏi thời khóa biểu!`);
+ };
  if (token) {
- fetch(`/api/schedule?id=${encodeURIComponent(id)}`, {
- method: 'DELETE',
- headers: { 'Authorization': `Bearer ${token}` }
- }).then(r => r.json()).then(data => {
- if (!data.success) { alert(data.error || 'Lỗi xóa trên máy chủ'); return; }
- doLocal();
- }).catch(err => alert(err.message || 'Lỗi kết nối'));
+   fetch(`/api/schedule?id=${encodeURIComponent(id)}&force=1`, {
+     method: 'DELETE',
+     headers: { 'Authorization': `Bearer ${token}` },
+     credentials: 'include'
+   }).then(r => r.json().catch(() => ({}))).then(data => {
+     doLocal();
+   }).catch(() => doLocal());
  } else {
- doLocal();
- }
+   doLocal();
  }
  }
 
@@ -1490,7 +1493,7 @@
  </div>
 
  <!-- Navigation Tabs Ribbon -->
- <div class="mt-6 pt-4 border-t border-slate-200 flex items-center gap-1.5 overflow-x-auto pb-1 text-xs font-bold">
+ <div class="mt-6 pt-4 border-t border-slate-200 flex flex-wrap items-center gap-1.5 pb-1 text-xs font-bold">
  <button
  onclick={() => activeTab = 'leader_notifications'}
  class="px-3.5 py-2 rounded-xl transition-all whitespace-nowrap flex items-center gap-2 {activeTab === 'leader_notifications' ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-slate-900 shadow-lg shadow-emerald-600/30' : 'bg-slate-50 text-slate-600 hover:text-slate-900 hover:bg-slate-200/80'}"
@@ -1747,42 +1750,42 @@
  <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 text-xs">
  <button
  onclick={() => handleAdminSimulate('teacher_missing_attendance')}
- class="p-2.5 rounded-xl bg-slate-50 border border-rose-500/40 text-rose-700 hover:bg-rose-50/80 font-bold text-left transition-all truncate"
+ class="p-2.5 rounded-xl bg-slate-50 border border-rose-500/40 text-rose-700 hover:bg-rose-50/80 font-bold text-left transition-all"
  title="Mô phỏng: Buổi học diễn ra hơn 15 phút nhưng giáo viên chưa điểm danh"
  >
  ⚠️ GV Quên Điểm Danh
  </button>
  <button
  onclick={() => handleAdminSimulate('attendance_summary_absent')}
- class="p-2.5 rounded-xl bg-slate-50 border border-cx-500/40 text-brand-700 hover:bg-brand-50/70 font-bold text-left transition-all truncate"
+ class="p-2.5 rounded-xl bg-slate-50 border border-cx-500/40 text-brand-700 hover:bg-brand-50/70 font-bold text-left transition-all"
  title="Mô phỏng: Điểm danh lớp thiếu học sinh"
  >
  📋 Điểm Danh Thiếu 2 Em
  </button>
  <button
  onclick={() => handleAdminSimulate('schedule_reminder_10m')}
- class="p-2.5 rounded-xl bg-slate-50 border border-amber-500/40 text-amber-700 hover:bg-amber-50/80 font-bold text-left transition-all truncate"
+ class="p-2.5 rounded-xl bg-slate-50 border border-amber-500/40 text-amber-700 hover:bg-amber-50/80 font-bold text-left transition-all"
  title="Mô phỏng: Nhắc nhở lịch học trước 10 phút"
  >
  🚨 Nhắc Lịch Học 10 Phút
  </button>
  <button
  onclick={() => handleAdminSimulate('new_registration')}
- class="p-2.5 rounded-xl bg-slate-50 border border-emerald-500/40 text-emerald-700 hover:bg-emerald-50/80 font-bold text-left transition-all truncate"
+ class="p-2.5 rounded-xl bg-slate-50 border border-emerald-500/40 text-emerald-700 hover:bg-emerald-50/80 font-bold text-left transition-all"
  title="Mô phỏng: Học sinh mới đăng ký tài khoản"
  >
  🔔 Đăng Ký Mới (Trial)
  </button>
  <button
  onclick={() => handleAdminSimulate('test_completed')}
- class="p-2.5 rounded-xl bg-slate-50 border border-purple-500/40 text-purple-700 hover:bg-purple-50/80 font-bold text-left transition-all truncate"
+ class="p-2.5 rounded-xl bg-slate-50 border border-purple-500/40 text-purple-700 hover:bg-purple-50/80 font-bold text-left transition-all"
  title="Mô phỏng: Học sinh vừa hoàn thành bài test"
  >
  📝 Học Sinh Nộp Bài Test
  </button>
  <button
  onclick={() => handleAdminSimulate('tuition_due')}
- class="p-2.5 rounded-xl bg-slate-50 border border-teal-500/40 text-teal-700 hover:bg-teal-50/80 font-bold text-left transition-all truncate"
+ class="p-2.5 rounded-xl bg-slate-50 border border-teal-500/40 text-teal-700 hover:bg-teal-50/80 font-bold text-left transition-all"
  title="Mô phỏng: Học phí đến hạn nộp"
  >
  💰 Tới Hạn Học Phí
@@ -1791,7 +1794,7 @@
  </div>
 
  <!-- Filter Chips -->
- <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+ <div class="flex flex-wrap items-center gap-1.5 pb-1 text-xs">
  <button
  onclick={() => notifFilter = 'all'}
  class="px-3 py-1.5 rounded-xl font-bold shrink-0 transition-colors {notifFilter === 'all' ? 'bg-white text-slate-900 font-black' : 'bg-white text-slate-600 hover:text-slate-900'}"
@@ -2848,7 +2851,7 @@
  </div>
  <div class="flex items-center gap-2">
  <span class="text-slate-600">📍 Địa điểm:</span>
- <span class="text-slate-900 line-clamp-1">{sess.location}</span>
+ <span class="text-slate-900">{sess.location}</span>
  </div>
  <div class="flex items-center justify-between pt-1 border-t border-slate-200">
  <span class="text-slate-600">👥 Học sinh theo lớp:</span>

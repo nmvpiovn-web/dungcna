@@ -7,6 +7,7 @@
  getAllClassSessions,
  isTeacherOrAdmin,
  saveClassSession,
+ deleteClassSession,
  upsertClassSessionInStore
  } from '$lib/unifiedStore';
  import { registerBusyState, unregisterBusyState } from '$lib/stores/appUpdate.js';
@@ -16,7 +17,8 @@
    session = null,
    preset = null,
    existingSessions = [],
-   onSaved = () => {}
+   onSaved = () => {},
+   onDeleted = () => {}
  } = $props();
 
  let currentUser = $state(null);
@@ -285,6 +287,7 @@
 
  let errorMessage = $state('');
  let saving = $state(false);
+ let deleting = $state(false);
 
  $effect(() => {
    if (isOpen || saving) {
@@ -389,6 +392,36 @@
  saving = false;
  }
  }
+
+ async function handleDeleteSession() {
+   if (!form.id || deleting || saving) return;
+   errorMessage = '';
+   deleting = true;
+   const targetId = form.id;
+   const token = getAuthToken();
+   try {
+     if (token || currentUser) {
+       const res = await fetch(`/api/schedule?id=${encodeURIComponent(targetId)}&force=1`, {
+         method: 'DELETE',
+         headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+         credentials: 'include'
+       });
+       const data = await res.json().catch(() => ({}));
+       if (!res.ok && res.status !== 404 && !data.success) {
+         errorMessage = data.error || `Không thể xóa buổi học (${res.status})`;
+         return;
+       }
+     }
+     try { deleteClassSession(targetId, currentUser); } catch {}
+     onDeleted(targetId);
+     onSaved({ deleted: true, id: targetId });
+     isOpen = false;
+   } catch (err) {
+     errorMessage = err.message || 'Lỗi kết nối khi xóa buổi học';
+   } finally {
+     deleting = false;
+   }
+ }
 </script>
 
 {#if isOpen}
@@ -398,26 +431,29 @@
  aria-labelledby="session-modal-title"
  class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-500/25 backdrop-blur-sm animate-in fade-in duration-200"
  >
- <div class="w-full max-w-2xl rounded-3xl bg-[#fdfbf7] border border-stone-200 shadow-2xl p-6 md:p-8 space-y-5 max-h-[90vh] overflow-y-auto">
+ <div class="w-full max-w-2xl rounded-2xl bg-[#fdfbf7] border border-stone-200 shadow-2xl flex flex-col max-h-[85vh] overflow-hidden">
 
- <!-- Header -->
- <div class="flex items-start justify-between border-b border-stone-200/70 pb-3">
+ <!-- Sticky Header -->
+ <div class="shrink-0 flex items-start justify-between border-b border-stone-200/80 px-6 py-4 bg-[#fdfbf7]">
  <div>
  <span class="text-xs font-bold text-emerald-700 uppercase tracking-wider">
- {form.id ? 'CẬP NHẬT THỜI KHÓA BIỂU' : 'THÊM BUỔI HỌC MỚI'}
+ {form.id ? 'CẬP NHẬT / XÓA THỜI KHÓA BIỂU' : 'THÊM BUỔI HỌC MỚI'}
  </span>
- <h2 id="session-modal-title" class="text-xl font-black text-stone-900 mt-0.5">
+ <h2 id="session-modal-title" class="text-lg sm:text-xl font-black text-stone-900 mt-0.5">
  Thiết Lập Lịch Học &amp; Danh Sách Học Sinh
  </h2>
  </div>
  <button
  onclick={() => isOpen = false}
  aria-label="Đóng"
- class="min-w-[44px] min-h-[44px] w-11 h-11 rounded-full bg-stone-100 text-stone-600 hover:bg-stone-200 hover:text-stone-900 flex items-center justify-center font-bold transition-colors"
+ class="min-w-[40px] min-h-[40px] w-10 h-10 rounded-full bg-stone-100 text-stone-600 hover:bg-stone-200 hover:text-stone-900 flex items-center justify-center font-bold transition-colors"
  >
  ✕
  </button>
  </div>
+
+ <!-- Scrollable Modal Body -->
+ <div class="flex-1 overflow-y-auto px-6 py-4 space-y-5">
 
  {#if errorMessage}
  <div data-testid="session-modal-error" role="alert" class="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold space-y-2">
@@ -667,9 +703,12 @@
       </div>
     </fieldset>
 
- <!-- Action Buttons -->
+ </div>
+
+ <!-- Sticky Bottom Call-to-Action Footer (Xóa / Thêm / Lưu luôn hiện ở cuối Popup) -->
+ <div data-testid="modal-cta-footer" class="sticky bottom-0 z-20 shrink-0 px-6 py-3.5 border-t border-stone-200 bg-[#fdfbf7] shadow-[0_-4px_12px_rgba(28,25,23,0.06)] space-y-2.5">
     {#if errorMessage}
-      <div role="alert" class="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+      <div role="alert" class="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <span>⚠️ {errorMessage}</span>
         {#if errorMessage.includes('Trùng lịch') || errorMessage.includes('Xung đột')}
           <button
@@ -682,25 +721,42 @@
         {/if}
       </div>
     {/if}
-    <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 pt-3 border-t border-stone-200/70 bg-[#fdfbf7] -mx-6 md:-mx-8 px-6 md:px-8 pb-1">
-      <button
-        type="button"
-        onclick={() => isOpen = false}
-        disabled={saving}
-        class="min-h-[44px] px-5 py-2.5 rounded-xl border border-stone-300 text-stone-700 font-bold text-xs hover:bg-stone-100 disabled:opacity-50 transition-colors"
-      >
-        Hủy
-      </button>
-      <button
-        type="button"
-        data-testid="session-modal-save-btn"
-        onclick={handleSave}
-        disabled={saving}
-        class="min-h-[44px] px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-700/20 transition-all hover:scale-[1.02] disabled:opacity-50 disabled:hover:scale-100 w-full sm:w-auto"
-      >
-        {saving ? '⏳ Đang lưu...' : '💾 Lưu Buổi Học & Thời Khóa Biểu'}
-      </button>
+    <div class="flex flex-wrap items-center justify-between gap-2">
+      <div>
+        {#if form.id}
+          <button
+            type="button"
+            data-testid="session-modal-delete-btn"
+            onclick={handleDeleteSession}
+            disabled={saving || deleting}
+            class="min-h-[42px] px-4 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-300 font-bold text-xs transition-colors disabled:opacity-50 flex items-center gap-1.5"
+          >
+            <span>🗑️</span>
+            <span>{deleting ? 'Đang xóa...' : 'Xóa Buổi Học'}</span>
+          </button>
+        {/if}
+      </div>
+      <div class="flex items-center gap-2.5 ml-auto">
+        <button
+          type="button"
+          onclick={() => isOpen = false}
+          disabled={saving || deleting}
+          class="min-h-[42px] px-4 py-2 rounded-xl border border-stone-300 text-stone-700 font-bold text-xs hover:bg-stone-100 disabled:opacity-50 transition-colors"
+        >
+          Hủy
+        </button>
+        <button
+          type="button"
+          data-testid="session-modal-save-btn"
+          onclick={handleSave}
+          disabled={saving || deleting}
+          class="min-h-[42px] px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-700/20 transition-all hover:scale-[1.01] disabled:opacity-50"
+        >
+          {saving ? '⏳ Đang lưu...' : (form.id ? '💾 Lưu Thay Đổi' : '➕ Thêm & Lưu Buổi Học')}
+        </button>
+      </div>
     </div>
+ </div>
  </div>
  </div>
 {/if}

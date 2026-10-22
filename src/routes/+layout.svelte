@@ -65,8 +65,8 @@
    { title: 'Thời Khóa Biểu & Điểm Danh Ca Học', desc: 'Lịch học tuần, điểm danh đi muộn/đúng giờ, gắn đề BTVN', href: '/schedule', icon: '📅', category: 'Học Vụ', keywords: 'thoi khoa bieu lich hoc diem danh schedule ca hoc', roles: ['all'] },
    { title: 'Langflow CRAG Studio — Bộ Não Bot Zalo 7-Node & Role D1', desc: 'Quản trị luồng CRAG đọc 81 bảng D1, phân quyền Role & bắn thông báo tự động', href: '/langflow', icon: '🕸️', category: 'Quản Trị AI', keywords: 'langflow crag rag bot zalo ai role database d1', roles: ['leader', 'superadmin'] },
     { title: 'Đối Soát Chất Lượng Ca Dạy & Zalo Bot', desc: 'Hồi quy Kho Tri Thức, Drive, BTVN, xuất hồ sơ 5 phần', href: '/session-audit', icon: '📊', category: 'Quản Trị', keywords: 'doi soat ca day session audit zalo bot bao cao', roles: ['teacher', 'leader', 'superadmin'] },
-   { title: 'Phòng Thi Số Hóa (15p • 45p • Học Kỳ)', desc: 'Luyện đề chuẩn Bộ GD&ĐT 2026 & IELTS 4 kỹ năng', href: '/exam', icon: '⏱️', category: 'Khảo Thí', keywords: 'phong thi de thi 15p 45p ielts placement test', roles: ['all'] },
-   { title: 'Quiz Menu — Kho Đề & Làm Bài Trắc Nghiệm', desc: 'Ngân hàng câu hỏi D1 theo khối lớp 1-12', href: '/quiz-menu', icon: '🧩', category: 'Khảo Thí', keywords: 'quiz trac nghiem bai tap kho de', roles: ['all'] },
+   { title: 'Phòng Thi Số Hóa (15p • 45p • Học Kỳ)', desc: 'Luyện đề chuẩn Bộ GD&ĐT 2026 & IELTS 4 kỹ năng', href: '/exam', icon: '⏱️', category: 'Phòng Thi', keywords: 'phong thi de thi 15p 45p ielts placement test', roles: ['all'] },
+   { title: 'Quiz Menu — Kho Đề & Làm Bài Trắc Nghiệm', desc: 'Ngân hàng câu hỏi D1 theo khối lớp 1-12', href: '/quiz-menu', icon: '🧩', category: 'Quiz Menu', keywords: 'quiz trac nghiem bai tap kho de', roles: ['all'] },
    { title: 'Toàn Bộ 19 Khóa Học K12 & Quốc Tế', desc: 'Tiểu học, THCS, THPT, IELTS, TOEIC, VSTEP', href: '/courses', icon: '📚', category: 'Khóa Học', keywords: 'khoa hoc lo trinh k12 ielts toeic vstep lop 1 2 3 4 5 6 7 8 9 10 11 12', roles: ['all'] },
    { title: 'Từ Điển Cambridge & Phát Âm IPA', desc: 'Tra từ vựng, phiên âm chuẩn bản ngữ & Phonics', href: '/dictionary', icon: '📖', category: 'Công Cụ', keywords: 'tu dien dictionary ipa phat am tu vung', roles: ['all'] },
    { title: 'Flashcard Ngữ Âm 3D Đa Giác Quan', desc: 'Ôn tập từ vựng theo Unit SGK Global Success', href: '/flashcards', icon: '🗂️', category: 'Công Cụ', keywords: 'flashcard the tu vung 3d on tap', roles: ['all'] },
@@ -350,6 +350,183 @@
  showUserDropdown = false;
  showSearchDropdown = false;
  }
+
+ // ===== KIẾN TRÚC PHÂN TÁCH NGHIỆP VỤ (BUSINESS DOMAIN MENU + SUB-MENU + HUB CARDS) =====
+ let showBusinessHubCards = $state(false);
+ let selectedHubDomainId = $state(null);
+
+ let businessDomains = $derived([
+ {
+ id: 'curriculum',
+ label: 'Lộ Trình & Lớp Học',
+ shortLabel: 'Lộ Trình',
+ icon: '🏠',
+ href: '/',
+ matchPaths: ['/', '/courses', '/truong-hoc', '/hall-of-fame', '/bang-gia', '/recruitment'],
+ badge: 'K12 & IELTS',
+ desc: 'Chương trình học Tiểu học, THCS, THPT, IELTS & Bảng vàng học viên',
+ subMenus: [
+ { label: '🌟 Tổng Quan Lộ Trình', href: '/', icon: '🌟', desc: 'Trang chủ & Chọn vai trò học tập' },
+ { label: '🎒 Tiểu Học (Lớp 1–5)', href: '/?tab=primary', icon: '🎒', desc: 'Phonics, Starters, Movers, Flyers' },
+ { label: '🌱 THCS (Lớp 6–9)', href: '/?tab=secondary', icon: '🌱', desc: 'Global Success, KET/PET & Vào 10' },
+ { label: '🏢 THPT & Ôn Đại Học', href: '/?tab=high_school', icon: '🏢', desc: 'Lớp 10–12 & Tốt nghiệp THPT QG' },
+ { label: '🌍 IELTS & Quốc Tế', href: '/?tab=certificate', icon: '🌍', desc: 'IELTS Academic 4 Kỹ Năng & TOEIC' },
+ { label: '📚 19 Khóa Học Chi Tiết', href: '/courses', icon: '📚', desc: 'Danh mục toàn bộ giáo trình học' },
+ { label: '🏆 Bảng Vàng Thành Tích', href: '/hall-of-fame', icon: '🏆', desc: 'Vinh danh học viên xuất sắc' },
+ { label: '💰 Bảng Giá & Ưu Đãi Sao', href: '/bang-gia', icon: '💰', desc: 'Học phí minh bạch & Quy đổi Sao' }
+ ]
+ },
+ {
+ id: 'quiz',
+ label: 'Quiz & Ngân Hàng Đề',
+ shortLabel: 'Quiz Menu',
+ icon: '🧩',
+ href: '/quiz-menu',
+ matchPaths: ['/quiz-menu'],
+ badge: '1,375+ Câu',
+ desc: 'Menu chuyên biệt cho làm bài Quiz, tạo đề AI tự động, kho D1 và giao BTVN',
+ subMenus: [
+ { label: '▶ Làm Bài Quiz Công Khai', href: '/quiz-menu?tab=take', icon: '▶', desc: 'Chọn thử thách 8 dạng bài tương tác' },
+ { label: '📘 Quiz Tiểu Học (L1–5)', href: '/quiz-menu?tab=take&grade=tieu_hoc', icon: '📘', desc: 'Bộ bài tập từ vựng & phản xạ cấp 1' },
+ { label: '📗 Quiz THCS (L6–9)', href: '/quiz-menu?tab=take&grade=thcs', icon: '📗', desc: 'Global Success & Ngữ pháp cấp 2' },
+ { label: '📙 Quiz THPT & IELTS', href: '/quiz-menu?tab=take&grade=thpt', icon: '📙', desc: 'Luyện đề nâng cao cấp 3 & IELTS' },
+ ...(isTeacherOrAdmin(currentUser) ? [
+ { label: '⚡ Tạo Đề Quiz Tự Động (AI)', href: '/quiz-menu?tab=create&mode=auto', icon: '⚡', desc: 'Sinh đề từ File/OCR, Drive, D1 & Kho Tri Thức' },
+ { label: '📚 Chọn Từ Kho Câu Hỏi D1', href: '/quiz-menu?tab=create&mode=auto&source=question_bank', icon: '📚', desc: 'Lọc & nhập trực tiếp từ 1,375+ câu hỏi D1' },
+ { label: '✍️ Soạn Câu Hỏi Thủ Công', href: '/quiz-menu?tab=create&mode=manual', icon: '✍️', desc: 'Tự biên tập 8 dạng câu hỏi chi tiết' },
+ { label: '▤ Kho Quiz Của Tôi & Giao BTVN', href: '/quiz-menu?tab=mine', icon: '▤', desc: 'Quản lý đề, đồng bộ DOCX & giao bài theo ca' }
+ ] : []),
+ ...(currentUser?.role === 'parent' ? [
+ { label: '📊 Kết Quả Quiz Của Con', href: '/quiz-menu?tab=results', icon: '📊', desc: 'Theo dõi lịch sử & điểm số bài tập của con' }
+ ] : [])
+ ]
+ },
+ {
+ id: 'exam',
+ label: 'Phòng Thi Số',
+ shortLabel: 'Phòng Thi',
+ icon: '⏱️',
+ href: '/exam',
+ matchPaths: ['/exam'],
+ badge: 'Chuẩn 2026',
+ desc: 'Phòng thi kiểm tra 15p, 45p, IELTS 4 kỹ năng, tạo đề ngẫu nhiên & chấm điểm theo ca',
+ subMenus: [
+ { label: '🎒 Đề Thi Phổ Thông K12', href: '/exam?group=k12', icon: '🎒', desc: 'Đề kiểm tra từ Lớp 1 đến Lớp 12' },
+ { label: '⚡ Kiểm Tra Nhanh 15 Phút', href: '/exam?group=periodic&cat=quick_15m', icon: '⚡', desc: 'Đề kiểm tra thường xuyên 15 phút' },
+ { label: '📝 Kiểm Tra 1 Tiết 45 Phút', href: '/exam?group=periodic&cat=standard_45m', icon: '📝', desc: 'Đề kiểm tra định kỳ 45 phút chuẩn' },
+ { label: '🌍 Thi Thử IELTS / TOEIC', href: '/exam?group=intl&cat=ielts', icon: '🌍', desc: 'Phòng thi chứng chỉ quốc tế 4 kỹ năng' },
+ { label: '🎲 Tạo Đề Ngẫu Nhiên D1', href: '/exam?group=random_builder', icon: '🎲', desc: 'Sinh đề mới 5p • 15p • 45p không trùng lặp' },
+ { label: '🧭 Test Xếp Lớp 3 Phút', href: '/exam#placement', icon: '🧭', desc: 'Đánh giá nhanh trình độ CEFR miễn phí' },
+ ...(isTeacherOrAdmin(currentUser) ? [
+ { label: '👩‍🏫 Điều Phối & Chấm Theo Ca', href: '/exam?panel=attendance_grading', icon: '👩‍🏫', desc: 'Gán thí sinh có mặt & chấm nhanh cả lớp' }
+ ] : [])
+ ]
+ },
+ {
+ id: 'schedule',
+ label: 'Điểm Danh & Lịch Học',
+ shortLabel: 'Điểm Danh',
+ icon: '📋',
+ href: '/schedule',
+ matchPaths: ['/schedule'],
+ badge: 'Zalo 10p',
+ desc: 'Sổ điểm danh trực tiếp, thời khóa biểu 7 ngày × 3 ca, tự động nhắc phụ huynh đưa đón',
+ subMenus: [
+ { label: '📋 Bảng Điểm Danh Nhanh', href: '/schedule?view=rollcall', icon: '📋', desc: 'Điểm danh 1 chạm các ca học & gửi Zalo tức thời' },
+ { label: '📅 Lịch Học Tuần (7 Ngày × 3 Ca)', href: '/schedule?view=calendar', icon: '📅', desc: 'Thời khóa biểu trực quan Sáng / Chiều / Tối' },
+ { label: '📚 Danh Sách Ca & Giao BTVN', href: '/schedule?view=sessions', icon: '📚', desc: 'Chi tiết sĩ số, gắn BTVN & đối soát từng buổi' },
+ ...(isTeacherOrAdmin(currentUser) ? [
+ { label: '🔔 Cảnh Báo Leader & Nhắc Lịch', href: '/schedule?view=alerts', icon: '🔔', desc: 'Gom toàn bộ thẻ cảnh báo lịch học, điểm danh & học phí' },
+ { label: '📊 Đối Soát Chất Lượng Ca Dạy', href: '/session-audit', icon: '📊', desc: 'Kiểm tra giáo án, Drive & tỷ lệ hoàn thành BTVN' }
+ ] : [])
+ ]
+ },
+ {
+ id: 'tools',
+ label: 'Học Liệu & Công Cụ',
+ shortLabel: 'Học Liệu',
+ icon: '🛠️',
+ href: '/tools',
+ matchPaths: ['/tools', '/dictionary', '/flashcards', '/games', '/grammar', '/second-brain', '/drive', '/pedagogy'],
+ badge: 'SRS & AI',
+ desc: 'Từ điển Cambridge, Flashcards 3D, Game từ vựng, Ngữ pháp 12 thì & Kho Tri Thức',
+ subMenus: [
+ { label: '🧰 Trung Tâm Công Cụ Học Tập', href: '/tools', icon: '🧰', desc: 'Tổng hợp toàn bộ công cụ luyện tập đa giác quan' },
+ { label: '📖 Từ Điển Cambridge & IPA', href: '/dictionary', icon: '📖', desc: 'Tra từ vựng, phát âm chuẩn bản ngữ & ví dụ' },
+ { label: '🃏 Flashcards 3D (SRS)', href: '/flashcards', icon: '🃏', desc: 'Ôn tập ngắt quãng nhớ lâu theo chủ đề' },
+ { label: '🎮 Đấu Trường Game Từ Vựng', href: '/games', icon: '🎮', desc: 'Speed Match, Word Scramble & tích Sao đổi quà' },
+ { label: '📐 Ngữ Pháp 12 Thì & Cú Pháp', href: '/grammar', icon: '📐', desc: 'Công thức, dấu hiệu nhận biết & sơ đồ tư duy' },
+ ...(isTeacherOrAdmin(currentUser) ? [
+ { label: '🧠 Kho Tri Thức (Second Brain)', href: '/second-brain', icon: '🧠', desc: 'Học liệu Obsidian & Giáo án chuyên đề' },
+ { label: '📁 Kho Tài Liệu Google Drive', href: '/drive', icon: '📁', desc: 'Đồng bộ tài liệu DOCX/PDF chuẩn hóa Tiếng Việt' },
+ { label: '👨‍🏫 Sư Phạm & Giáo Án 5512', href: '/pedagogy', icon: '👨‍🏫', desc: 'Quy chuẩn sư phạm & phương pháp Co-Teaching' }
+ ] : [])
+ ]
+ },
+ {
+ id: 'admin_ai',
+ label: isTeacherOrAdmin(currentUser) ? 'Đối Soát AI & Quản Trị' : 'Đánh Giá & Hồ Sơ',
+ shortLabel: isTeacherOrAdmin(currentUser) ? 'Quản Trị & AI' : 'Báo Cáo',
+ icon: isTeacherOrAdmin(currentUser) ? '🤖' : '📈',
+ href: isTeacherOrAdmin(currentUser) ? '/langflow' : '/evaluations',
+ matchPaths: ['/langflow', '/session-audit', '/evaluations', '/admincp', '/admin', '/cpanel', '/app', '/install'],
+ badge: isTeacherOrAdmin(currentUser) ? 'CRAG D1' : 'CEFR',
+ desc: isTeacherOrAdmin(currentUser)
+ ? 'Đối soát AI Langflow CRAG, Zalo Bot, Chất lượng buổi dạy, Học phí VietQR & AdminCP'
+ : 'Báo cáo đánh giá năng lực 5 kỹ năng chuẩn CEFR, Sổ liên lạc & Ứng dụng Mobile R10',
+ subMenus: isTeacherOrAdmin(currentUser)
+ ? [
+ { label: '🔬 Langflow CRAG & Zalo Bot', href: '/langflow', icon: '🔬', desc: 'Kiểm thử AI Agent, Auto-Notify & Đối soát D1' },
+ { label: '📊 Đối Soát Chất Lượng Buổi Học', href: '/session-audit', icon: '📊', desc: 'Audit 100% ca dạy, tài liệu & mức độ phù hợp' },
+ { label: '👑 AdminCP Quản Trị Nhân Sự', href: '/admincp', icon: '👑', desc: 'Duyệt tài khoản, phân quyền & cấu hình hệ thống' },
+ { label: '💰 Học Phí VietQR & SePay', href: '/admin', icon: '💰', desc: 'Quản lý hóa đơn học phí, đổi Sao & Webhook Zalo' },
+ { label: '🏫 Bàn Điều Hành CPanel', href: '/cpanel', icon: '🏫', desc: 'Không gian làm việc chuyên biệt theo vai trò' },
+ { label: '📈 Đánh Giá Năng Lực CEFR', href: '/evaluations', icon: '📈', desc: 'Hồ sơ năng lực 5 kỹ năng của toàn bộ học viên' },
+ { label: '📱 App Mobile & APK DOOGEE R10', href: '/app', icon: '📱', desc: 'Giao diện máy tính bảng R10 & bộ cài APK' }
+ ]
+ : [
+ { label: '📈 Đánh Giá Năng Lực CEFR', href: '/evaluations', icon: '📈', desc: 'Biểu đồ tiến bộ 5 kỹ năng & nhận xét của Cô Dung' },
+ { label: '🏫 Bàn Học Tập / Sổ Liên Lạc', href: currentUser?.role === 'parent' ? '/cpanel/parent' : '/cpanel/student', icon: '🏫', desc: 'Theo dõi lịch học, bài tập, điểm thi & học phí' },
+ { label: '📱 Mở Giao Diện App Mobile', href: '/app', icon: '📱', desc: 'Trải nghiệm ứng dụng LingoNest trên điện thoại/tablet' },
+ { label: '⬇️ Cài Đặt APK (DOOGEE R10)', href: '/install', icon: '⬇️', desc: 'Tải file APK chính thức & kiểm tra chữ ký SHA-256' }
+ ]
+ }
+ ]);
+
+ let activeBusinessDomain = $derived.by(() => {
+ const path = $page.url.pathname;
+ for (const dom of businessDomains) {
+ if (dom.id === 'curriculum' && path === '/') return dom;
+ if (dom.id !== 'curriculum' && dom.matchPaths.some((p) => path === p || path.startsWith(p + '/'))) {
+ return dom;
+ }
+ if (dom.id === 'curriculum' && dom.matchPaths.some((p) => p !== '/' && (path === p || path.startsWith(p + '/')))) {
+ return dom;
+ }
+ }
+ return businessDomains[0];
+ });
+
+ let displayedHubDomain = $derived(
+ businessDomains.find((d) => d.id === selectedHubDomainId) || activeBusinessDomain
+ );
+
+ function isSubMenuItemActive(itemHref) {
+ const currentPath = $page.url.pathname;
+ const currentSearch = typeof window !== 'undefined' ? window.location.search : '';
+ const fullCurrent = currentPath + currentSearch;
+ if (itemHref === fullCurrent) return true;
+ const [itemPath, itemQuery] = itemHref.split('?');
+ if (itemPath !== currentPath) return false;
+ if (!itemQuery) return currentSearch === '';
+ if (typeof window === 'undefined') return false;
+ const itemParams = new URLSearchParams(itemQuery);
+ const pageParams = new URLSearchParams(currentSearch);
+ for (const [k, v] of itemParams.entries()) {
+ if (pageParams.get(k) !== v) return false;
+ }
+ return true;
+ }
 </script>
 
 <svelte:head>
@@ -379,7 +556,7 @@
  <meta property="og:image:alt" content="Tiếng Anh Cô Dung — Trung Tâm Tiếng Anh K12 & IELTS" />
  <meta name="twitter:card" content="summary_large_image" />
  <meta name="twitter:image" content="https://timbk.io.vn/og-image.png" />
- {#if $page.url.pathname.startsWith('/cpanel') || $page.url.pathname.startsWith('/admin') || $page.url.pathname.startsWith('/second-brain') || $page.url.pathname.startsWith('/schedule') || $page.url.pathname.startsWith('/evaluations') || $page.url.pathname.startsWith('/quiz-menu') || $page.url.pathname.startsWith('/drive') || $page.url.pathname.startsWith('/offline')}
+ {#if $page.url.pathname.startsWith('/cpanel') || $page.url.pathname.startsWith('/admin') || $page.url.pathname.startsWith('/langflow') || $page.url.pathname.startsWith('/session-audit') || $page.url.pathname.startsWith('/teacher') || $page.url.pathname.startsWith('/second-brain') || $page.url.pathname.startsWith('/schedule') || $page.url.pathname.startsWith('/evaluations') || $page.url.pathname.startsWith('/quiz-menu') || $page.url.pathname.startsWith('/drive') || $page.url.pathname.startsWith('/offline')}
  <meta name="robots" content="noindex, nofollow" />
  {:else}
  <meta name="robots" content="index, follow" />
@@ -801,7 +978,6 @@
  <span class="text-base">{mobileMenuOpen ? '✕' : '☰'}</span>
  </button>
  </div>
-
  </div>
 
  <!-- Mobile Navigation Drawer -->
@@ -1155,15 +1331,8 @@
  {@render children()}
  </main>
 
- <!-- Global Fixed Floating Dockbar (Desktop/Tablet) + Mobile BottomNav + Floating Zalo -->
- <DockBar {currentUser} {currentUserGrade} />
- <BottomNav />
- <ZaloCta />
- <ThemeStudio />
- <PersonalThemeModal bind:isOpen={showPersonalThemeModal} />
-
  <!-- Footer -->
- <footer class="bg-surface-0 border-t border-line pt-8 pb-24 lg:pb-24 mt-auto text-xs text-ink-500 transition-colors duration-200">
+ <footer class="bg-surface-0 border-t border-line pt-8 pb-8 mt-auto text-xs text-ink-500 transition-colors duration-200">
  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
  <div class="flex items-center gap-3">
  <div class="w-8 h-8 rounded-md bg-brand-700 flex items-center justify-center text-white font-semibold text-sm">
@@ -1223,6 +1392,13 @@
  </div>
  </div>
  </footer>
+
+ <!-- Global Layout-Pushing Dockbar (Desktop) + Mobile BottomNav + Floating Zalo -->
+ <DockBar {currentUser} {currentUserGrade} />
+ <BottomNav />
+ <ZaloCta />
+ <ThemeStudio />
+ <PersonalThemeModal bind:isOpen={showPersonalThemeModal} />
 
  <!-- Mandatory Login & Register Gate / Modal -->
  <AuthModal bind:isOpen={showAuthModal} {canDismiss} />

@@ -288,7 +288,7 @@
   </div>
 
   <!-- Vietnamese Category Filter Pills -->
-  <div class="flex items-center gap-2 overflow-x-auto pb-1">
+  <div class="flex flex-wrap items-center gap-2 pb-1">
    {#each DRIVE_GROUPS as g}
     <button
      type="button"
@@ -362,7 +362,7 @@
        class="rounded-2xl border border-line bg-surface-0 p-4 text-left hover:border-brand-600 hover:shadow-md transition-all group"
       >
        <div class="text-3xl mb-2">📁</div>
-       <div class="font-bold text-sm text-ink-900 line-clamp-2 group-hover:text-brand-700">{f.name}</div>
+       <div class="font-bold text-sm text-ink-900 group-hover:text-brand-700 break-words">{f.name}</div>
        <div class="text-xs text-ink-500 mt-1">Thư mục →</div>
       </button>
      {:else}
@@ -376,12 +376,12 @@
         <div class="flex items-start justify-between gap-2 mb-2">
          <span class="text-2xl">{fileIcon(f.mimeType)}</span>
          {#if f.groupLabel}
-          <span class="px-2 py-0.5 rounded-md bg-brand-50 border border-brand-200 text-brand-700 text-[10px] font-bold line-clamp-1">
+          <span class="px-2 py-0.5 rounded-md bg-brand-50 border border-brand-200 text-brand-700 text-[10px] font-bold">
            {f.groupLabel}
           </span>
          {/if}
         </div>
-        <div class="font-bold text-xs sm:text-sm text-ink-900 line-clamp-2 group-hover:text-brand-700 leading-snug" title={f.name}>{f.name}</div>
+        <div class="font-bold text-xs sm:text-sm text-ink-900 group-hover:text-brand-700 leading-snug break-words" title={f.name}>{f.name}</div>
        </div>
        <div class="flex items-center justify-between text-[11px] text-ink-500 pt-2 border-t border-line">
         <span>{formatSize(f.size)}</span>

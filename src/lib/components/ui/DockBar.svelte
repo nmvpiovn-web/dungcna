@@ -1,4 +1,4 @@
-<!-- src/lib/components/ui/DockBar.svelte — Authentic macOS Glass Dockbar with Role-Based CPanel Isolation & Smooth Magnification -->
+<!-- src/lib/components/ui/DockBar.svelte — Layout-Pushing macOS Glass Dockbar with Role-Based CPanel Isolation & Zero-Overlap Physics -->
 <script>
   import { page } from '$app/stores';
   import { isTeacherOrAdmin, isSuperAdmin } from '$lib/unifiedStore';
@@ -13,6 +13,7 @@
   let activeLauncher = $state(null);
   let isCollapsed = $state(false);
   let itemRefs = $state({});
+  let dockHeight = $state(88);
 
   const userRoleType = $derived.by(() => {
     if (!currentUser) return 'guest';
@@ -66,9 +67,11 @@
         hasPopover: true,
         match: (p) => p.startsWith('/exam'),
         children: [
-          { href: '/exam', icon: '⚡', title: 'Test Nhanh 15 Phút', desc: 'Kiểm tra từ vựng & phản xạ đầu giờ' },
-          { href: '/exam', icon: '📝', title: 'Đề Kiểm Tra 1 Tiết (45p)', desc: 'Ma trận chuẩn Bộ GD&ĐT 2026' },
-          { href: '/exam', icon: '🎙️', title: 'Phòng Thi IELTS 4 Kỹ Năng', desc: 'Nghe, Đọc, Viết & Ghi âm Nói' },
+          { href: '/exam?group=k12', icon: '🎒', title: 'Đề Thi Phổ Thông K12', desc: 'Đề kiểm tra từ Lớp 1 đến Lớp 12' },
+          { href: '/exam?group=periodic&cat=quick_15m', icon: '⚡', title: 'Test Nhanh 15 Phút', desc: 'Kiểm tra từ vựng & phản xạ đầu giờ' },
+          { href: '/exam?group=periodic&cat=standard_45m', icon: '📝', title: 'Đề Kiểm Tra 1 Tiết (45p)', desc: 'Ma trận chuẩn Bộ GD&ĐT 2026' },
+          { href: '/exam?group=intl&cat=ielts', icon: '🎙️', title: 'Phòng Thi IELTS 4 Kỹ Năng', desc: 'Nghe, Đọc, Viết & Ghi âm Nói' },
+          { href: '/exam?group=random_builder', icon: '🎲', title: 'Tạo Đề Ngẫu Nhiên D1', desc: 'Sinh đề 5p • 15p • 45p từ 1,375+ câu' },
           { href: '/exam#placement', icon: '🎯', title: 'Test Đầu Vào Xếp Lớp', desc: 'Đánh giá năng lực CEFR miễn phí' }
         ]
       },
@@ -76,10 +79,26 @@
         id: 'quiz',
         href: '/quiz-menu',
         icon: '🧩',
-        label: 'Quiz',
-        sub: 'Làm bài & Kho đề D1',
+        label: 'Quiz Menu',
+        sub: 'Làm bài • Tạo đề AI • Kho D1',
         iconBg: 'bg-gradient-to-b from-rose-400 via-pink-500 to-rose-600 text-white border-white/85',
-        match: (p) => p === '/quiz-menu' || p.startsWith('/quiz-menu/')
+        hasPopover: true,
+        match: (p) => p === '/quiz-menu' || p.startsWith('/quiz-menu/'),
+        children: [
+          { href: '/quiz-menu?tab=take', icon: '▶', title: 'Làm Bài Quiz Công Khai', desc: 'Luyện tập 8 dạng câu hỏi tương tác' },
+          { href: '/quiz-menu?tab=take&grade=tieu_hoc', icon: '📘', title: 'Quiz Tiểu Học (Lớp 1–5)', desc: 'Phonics & từ vựng Cambridge cấp 1' },
+          { href: '/quiz-menu?tab=take&grade=thcs', icon: '📗', title: 'Quiz THCS (Lớp 6–9)', desc: 'Global Success & KET/PET cấp 2' },
+          { href: '/quiz-menu?tab=take&grade=thpt', icon: '📙', title: 'Quiz THPT & IELTS', desc: 'Ngữ pháp nâng cao & Luyện thi ĐH' },
+          ...(staff ? [
+            { href: '/quiz-menu?tab=create&mode=auto', icon: '⚡', title: 'Tạo Đề Quiz Tự Động (AI)', desc: 'Sinh đề từ File/OCR, Drive, D1 & Kho Tri Thức' },
+            { href: '/quiz-menu?tab=create&mode=auto&source=question_bank', icon: '📚', title: 'Kho Câu Hỏi D1 (1,375+ Câu)', desc: 'Lọc & nhập trực tiếp câu hỏi chuẩn D1' },
+            { href: '/quiz-menu?tab=create&mode=manual', icon: '✍️', title: 'Soạn Đề Thủ Công', desc: 'Tự biên tập từng câu hỏi chi tiết' },
+            { href: '/quiz-menu?tab=mine', icon: '▤', title: 'Quản Lý Kho Đề & Giao BTVN', desc: 'Đồng bộ Google Docs & giao bài theo ca' }
+          ] : []),
+          ...(userRoleType === 'parent' ? [
+            { href: '/quiz-menu?tab=results', icon: '📊', title: 'Kết Quả Làm Quiz Của Con', desc: 'Theo dõi điểm số & tiến độ của con' }
+          ] : [])
+        ]
       },
       {
         id: 'tools',
@@ -102,11 +121,21 @@
       {
         id: 'schedule',
         href: '/schedule',
-        icon: '📅',
-        label: 'Lịch Học',
-        sub: 'Thời khóa biểu & Điểm danh',
+        icon: '📋',
+        label: 'Điểm Danh',
+        sub: 'Sổ điểm danh & Lịch học',
         iconBg: 'bg-gradient-to-b from-teal-400 via-cyan-500 to-sky-600 text-white border-white/85',
-        match: (p) => p === '/schedule' || p.startsWith('/schedule/')
+        hasPopover: true,
+        match: (p) => p === '/schedule' || p.startsWith('/schedule/'),
+        children: [
+          { href: '/schedule?view=rollcall', icon: '📋', title: 'Bảng Điểm Danh Nhanh', desc: 'Điểm danh 1 chạm theo ca & gửi Zalo' },
+          { href: '/schedule?view=calendar', icon: '📅', title: 'Thời Khóa Biểu Tuần (7 Ngày)', desc: 'Lịch học Sáng • Chiều • Tối trực quan' },
+          { href: '/schedule?view=sessions', icon: '📚', title: 'Danh Sách Ca Học & BTVN', desc: 'Chi tiết sĩ số, gắn BTVN & đối soát' },
+          ...(staff ? [
+            { href: '/schedule?view=alerts', icon: '🔔', title: 'Trung Tâm Báo Cáo & Nhắc Lịch', desc: 'Quét lịch học, điểm danh & hạn học phí' },
+            { href: '/session-audit', icon: '📊', title: 'Đối Soát Chất Lượng Ca Dạy', desc: 'Kiểm tra học liệu & tỷ lệ làm BTVN' }
+          ] : [])
+        ]
       }
     ];
   });
@@ -271,33 +300,90 @@
 
   const dockItems = $derived([...coreDockItems, ...roleDockItems]);
 
+  let activePopoverItem = $derived(dockItems.find(i => i.id === activeLauncher) || null);
+
+  // Computed push height: dynamically reserves DockBar height and shrinks popups/floating cards when they touch DockBar
+  let computedPushPx = $derived.by(() => {
+    if (activePopoverItem) return Math.max(dockHeight + 28, 330);
+    return Math.max(dockHeight + 24, 108);
+  });
+
+  let popoverShiftPx = $derived.by(() => {
+    if (!activePopoverItem) return 0;
+    return Math.max(0, computedPushPx - 108);
+  });
+
+  function enforcePopupDockClearance() {
+    if (typeof document === 'undefined' || typeof window === 'undefined') return;
+    const dockEl = document.getElementById('floating-dockbar');
+    if (!dockEl) return;
+    const dockRect = dockEl.getBoundingClientRect();
+    if (dockRect.width === 0 || dockRect.height === 0) return;
+    const safeBottomY = Math.max(240, dockRect.top - 14);
+    const maxAllowedHeight = Math.max(220, safeBottomY - 20);
+
+    const popupCards = document.querySelectorAll(
+      '[role="dialog"] > div, [aria-modal="true"] > div, .fc-popup-overlay > div, div.fixed.inset-0 > div'
+    );
+    for (const card of popupCards) {
+      if (!(card instanceof HTMLElement)) continue;
+      if (card.id === 'floating-dockbar' || card.closest('#floating-dockbar')) continue;
+      card.style.maxHeight = `${maxAllowedHeight}px`;
+      card.dataset.dockCompacted = 'true';
+    }
+  }
+
+  // Sync dynamic CSS variables to <html> & auto-compact any popup/floating card touching DockBar
+  $effect(() => {
+    if (typeof document === 'undefined') return;
+    const root = document.documentElement;
+    root.style.setProperty('--dockbar-push-height', `${computedPushPx}px`);
+    root.style.setProperty('--dockbar-popover-shift', `${popoverShiftPx}px`);
+    if (activePopoverItem) {
+      root.classList.add('dockbar-popover-open');
+    } else {
+      root.classList.remove('dockbar-popover-open');
+    }
+    root.classList.remove('dockbar-is-collapsed');
+    enforcePopupDockClearance();
+
+    const obs = new MutationObserver(() => enforcePopupDockClearance());
+    obs.observe(document.body, { childList: true, subtree: true });
+    const onResize = () => enforcePopupDockClearance();
+    window.addEventListener('resize', onResize);
+    return () => {
+      obs.disconnect();
+      window.removeEventListener('resize', onResize);
+    };
+  });
+
   function getItemTransform(id) {
     if (mouseX === null) {
       if (hoveredId === id) {
-        return { scale: 1.48, liftY: -16, padX: 8 };
+        return { scale: 1.38, liftY: -12, padX: 6 };
       }
       return { scale: 1, liftY: 0, padX: 0 };
     }
     const el = itemRefs[id];
     if (!el) {
       return {
-        scale: hoveredId === id ? 1.48 : 1,
-        liftY: hoveredId === id ? -16 : 0,
-        padX: hoveredId === id ? 8 : 0
+        scale: hoveredId === id ? 1.38 : 1,
+        liftY: hoveredId === id ? -12 : 0,
+        padX: hoveredId === id ? 6 : 0
       };
     }
     const rect = el.getBoundingClientRect();
     const centerX = rect.left + rect.width / 2;
     const distance = Math.abs(mouseX - centerX);
-    const maxDistance = 170;
+    const maxDistance = 160;
     if (distance >= maxDistance) {
       return { scale: 1, liftY: 0, padX: 0 };
     }
     const ratio = Math.cos((distance / maxDistance) * (Math.PI / 2));
     const eased = Math.pow(Math.max(0, ratio), 1.4);
-    const scale = Number((1 + 0.50 * eased).toFixed(3));
-    const liftY = Number((-18 * eased).toFixed(2));
-    const padX = Number(((scale - 1) * 15).toFixed(1));
+    const scale = Number((1 + 0.40 * eased).toFixed(3));
+    const liftY = Number((-14 * eased).toFixed(2));
+    const padX = Number(((scale - 1) * 12).toFixed(1));
     return { scale, liftY, padX };
   }
 
@@ -322,31 +408,39 @@
   function closePopover() {
     activeLauncher = null;
   }
-
-  let activePopoverItem = $derived(dockItems.find(i => i.id === activeLauncher) || null);
 </script>
+
+<!-- In-Flow Layout Pusher: Physically reserves DockBar + Popover height in the document flow so cards/divs are pushed up -->
+<div
+  id="dockbar-layout-pusher"
+  data-testid="dockbar-layout-pusher"
+  aria-hidden="true"
+  style="height: {computedPushPx}px;"
+  class="hidden lg:block w-full shrink-0 pointer-events-none transition-[height] duration-200 ease-out"
+></div>
 
 {#if activeLauncher}
   <button
     type="button"
-    class="fixed inset-0 z-40 bg-stone-400/15 backdrop-blur-[1px] cursor-default"
+    class="fixed inset-0 z-[115] bg-stone-400/10 cursor-default"
     aria-label="Đóng bảng chọn nhanh Dockbar"
     onclick={closePopover}
   ></button>
 {/if}
 
-<!-- Authentic macOS Sonoma / Sequoia Glass Floating Dockbar -->
+<!-- Authentic macOS Glass Dockbar: ALWAYS VISIBLE (fixed bottom-2.5 z-[120]), NEVER hidden, NEVER sent to footer; Popups/Cards touching it auto-compact above it -->
 <aside
   id="floating-dockbar"
   data-testid="floating-dockbar"
-  aria-label="Thanh công cụ Dockbar cố định"
-  class="hidden md:flex fixed bottom-3 left-1/2 -translate-x-1/2 z-50 flex-col items-center select-none pointer-events-none"
+  bind:clientHeight={dockHeight}
+  aria-label="Thanh công cụ Dockbar luôn hiện cố định"
+  class="hidden lg:flex fixed bottom-2.5 left-1/2 -translate-x-1/2 z-[120] flex-col items-center select-none pointer-events-none"
 >
-  <!-- macOS Launchpad Popover Above Dockbar -->
+  <!-- macOS Launchpad Popover Above Dockbar (Full Grid, Zero Slide-Bar, Zero Truncate, Pushes Main Content Up) -->
   {#if activePopoverItem && !isCollapsed}
     <div
       data-testid="dockbar-launchpad-popover"
-      class="pointer-events-auto mb-6 w-[38rem] max-w-[94vw] rounded-[28px] bg-white/95 backdrop-blur-2xl border-2 border-brand-500/80 ring-4 ring-brand-500/15 shadow-2xl p-4 animate-in fade-in zoom-in-95 duration-150"
+      class="pointer-events-auto mb-3 w-[54rem] max-w-[96vw] rounded-[24px] bg-white/98 backdrop-blur-2xl border-2 border-brand-500/80 ring-4 ring-brand-500/15 shadow-2xl p-4 animate-in fade-in zoom-in-95 duration-150"
     >
       <div class="flex items-center justify-between pb-3 mb-3 border-b border-line">
         <div class="flex items-center gap-2.5">
@@ -377,19 +471,19 @@
         </div>
       </div>
 
-      <div class="grid grid-cols-2 gap-2.5 max-h-[58vh] overflow-y-auto pr-0.5">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
         {#each activePopoverItem.children as child}
           <a
             href={child.href}
             onclick={closePopover}
-            class="group flex items-start gap-3 p-2.5 rounded-2xl border-2 border-stone-200/90 bg-white hover:bg-brand-50/70 hover:border-brand-600 transition-all duration-150 hover:scale-[1.02] shadow-2xs"
+            class="group flex items-start gap-3 p-3 rounded-2xl border-2 border-stone-200/90 bg-white hover:bg-brand-50/70 hover:border-brand-600 transition-all duration-150 hover:scale-[1.01] shadow-2xs"
           >
             <div class="w-10 h-10 rounded-[12px] bg-surface-1 group-hover:bg-white border border-stone-200 group-hover:border-brand-500 flex items-center justify-center text-lg shrink-0 shadow-2xs group-hover:scale-110 transition-transform">
               {child.icon}
             </div>
             <div class="min-w-0">
-              <div class="text-xs font-extrabold text-ink-900 group-hover:text-brand-700 truncate">{child.title}</div>
-              <div class="text-[11px] text-ink-500 line-clamp-1">{child.desc}</div>
+              <div class="text-xs font-extrabold text-ink-900 group-hover:text-brand-700 leading-snug">{child.title}</div>
+              <div class="text-[11px] text-ink-500 leading-relaxed mt-0.5">{child.desc}</div>
             </div>
           </a>
         {/each}
@@ -403,7 +497,7 @@
       type="button"
       data-testid="dockbar-expand-btn"
       onclick={() => isCollapsed = false}
-      class="dockbar-shell pointer-events-auto flex items-center gap-2 px-4 py-2 rounded-full bg-white/90 backdrop-blur-2xl text-xs font-extrabold text-ink-900 hover:scale-105 transition-all cursor-pointer"
+      class="dockbar-shell pointer-events-auto flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/95 backdrop-blur-2xl text-xs font-extrabold text-ink-900 hover:scale-105 transition-all cursor-pointer"
       title="Mở rộng thanh Dockbar điều hướng"
     >
       <span class="w-5 h-5 rounded-lg bg-brand-600 text-white flex items-center justify-center text-[11px]">🏠</span>
@@ -415,7 +509,7 @@
       aria-label="Dockbar Điều Hướng Trung Tâm"
       onmousemove={handleMouseMove}
       onmouseleave={handleMouseLeave}
-      class="dockbar-shell pointer-events-auto flex items-end gap-2 px-3.5 pt-2.5 pb-1.5 rounded-[26px] bg-white/82 backdrop-blur-2xl"
+      class="dockbar-shell pointer-events-auto flex items-end gap-2 px-3.5 pt-2 pb-1.5 rounded-[24px] bg-white/90 backdrop-blur-2xl"
     >
       <!-- Left Group: 6 Core Learning Apps -->
       {#each coreDockItems as item (item.id)}
@@ -428,7 +522,7 @@
         >
           <!-- macOS Floating Pill Tooltip with Pointer Arrow -->
           <div
-            class="pointer-events-none absolute -top-11 left-1/2 -translate-x-1/2 px-3 py-1 rounded-xl bg-white/98 text-ink-900 text-[11px] font-bold whitespace-nowrap border-2 border-brand-500/90 shadow-xl transition-all duration-150 z-40 {hoveredId === item.id && activeLauncher !== item.id ? 'opacity-100 -translate-y-1.5 scale-100' : 'opacity-0 translate-y-1 scale-95'}"
+            class="pointer-events-none absolute -top-10 left-1/2 -translate-x-1/2 px-3 py-1 rounded-xl bg-white/98 text-ink-900 text-[11px] font-bold whitespace-nowrap border-2 border-brand-500/90 shadow-xl transition-all duration-150 z-40 {hoveredId === item.id && activeLauncher !== item.id ? 'opacity-100 -translate-y-1 scale-100' : 'opacity-0 translate-y-1 scale-95'}"
           >
             <span class="text-brand-700 font-extrabold">{item.label}</span>
             <span class="text-ink-500 font-medium ml-1">• {item.sub}</span>
@@ -449,7 +543,7 @@
           >
             <!-- Authentic 3D macOS Squircle App Icon -->
             <div
-              class="dockbar-tile-icon relative w-11 h-11 rounded-[14px] border-2 flex items-center justify-center text-[21px] select-none overflow-hidden {item.iconBg} {active
+              class="dockbar-tile-icon relative w-10 h-10 rounded-[13px] border-2 flex items-center justify-center text-[19px] select-none overflow-hidden {item.iconBg} {active
                 ? 'ring-2 ring-brand-600 ring-offset-1 ring-offset-white shadow-lg'
                 : activeLauncher === item.id
                   ? 'ring-2 ring-amber-500 ring-offset-1 ring-offset-white shadow-lg'
@@ -485,7 +579,7 @@
       {/each}
 
       <!-- macOS Vertical Glass Separator between Learning Apps & Role CPanel Apps -->
-      <div class="h-10 w-[1.5px] rounded-full bg-stone-400/45 mx-1 self-center mb-2"></div>
+      <div class="h-9 w-[1.5px] rounded-full bg-stone-400/45 mx-1 self-center mb-2"></div>
 
       <!-- Right Group: Role-Specific CPanel & Audit Apps -->
       {#each roleDockItems as item (item.id)}
@@ -497,7 +591,7 @@
           class="dockbar-item relative flex flex-col items-center group"
         >
           <div
-            class="pointer-events-none absolute -top-11 left-1/2 -translate-x-1/2 px-3 py-1 rounded-xl bg-white/98 text-ink-900 text-[11px] font-bold whitespace-nowrap border-2 border-brand-500/90 shadow-xl transition-all duration-150 z-40 {hoveredId === item.id && activeLauncher !== item.id ? 'opacity-100 -translate-y-1.5 scale-100' : 'opacity-0 translate-y-1 scale-95'}"
+            class="pointer-events-none absolute -top-10 left-1/2 -translate-x-1/2 px-3 py-1 rounded-xl bg-white/98 text-ink-900 text-[11px] font-bold whitespace-nowrap border-2 border-brand-500/90 shadow-xl transition-all duration-150 z-40 {hoveredId === item.id && activeLauncher !== item.id ? 'opacity-100 -translate-y-1 scale-100' : 'opacity-0 translate-y-1 scale-95'}"
           >
             <span class="text-brand-700 font-extrabold">{item.label}</span>
             <span class="text-ink-500 font-medium ml-1">• {item.sub}</span>
@@ -517,7 +611,7 @@
             aria-current={active ? 'page' : undefined}
           >
             <div
-              class="dockbar-tile-icon relative w-11 h-11 rounded-[14px] border-2 flex items-center justify-center text-[21px] select-none overflow-hidden {item.iconBg} {active
+              class="dockbar-tile-icon relative w-10 h-10 rounded-[13px] border-2 flex items-center justify-center text-[19px] select-none overflow-hidden {item.iconBg} {active
                 ? 'ring-2 ring-brand-600 ring-offset-1 ring-offset-white shadow-lg'
                 : activeLauncher === item.id
                   ? 'ring-2 ring-amber-500 ring-offset-1 ring-offset-white shadow-lg'
@@ -549,17 +643,7 @@
         </div>
       {/each}
 
-      <!-- Subtle Minimize Dock Pill -->
-      <button
-        type="button"
-        data-testid="dockbar-collapse-btn"
-        onclick={() => { activeLauncher = null; isCollapsed = true; }}
-        class="self-center mb-2 ml-0.5 w-6 h-8 rounded-xl bg-white/70 hover:bg-brand-50 border border-stone-300/80 hover:border-brand-500 text-ink-500 hover:text-brand-700 text-[10px] font-bold flex items-center justify-center transition-all duration-150 hover:scale-110 cursor-pointer"
-        title="Thu gọn thanh Dockbar"
-        aria-label="Thu gọn thanh Dockbar"
-      >
-        ▾
-      </button>
+
     </nav>
   {/if}
 </aside>

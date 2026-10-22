@@ -177,6 +177,34 @@
     }
   }
 
+  let togglingRuleId = $state('');
+
+  async function handleToggleAutoRule(rule) {
+    togglingRuleId = rule.id;
+    try {
+      const res = await fetch('/api/langflow', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'toggle_auto_notify_rule',
+          rule_id: rule.id,
+          enabled: !rule.enabled
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        autoNotifyRules = data.auto_notify_rules || autoNotifyRules;
+        showToast(data.message);
+      } else {
+        showToast(`Lỗi bật/tắt luồng: ${data.error || 'Không xác định'}`);
+      }
+    } catch (e) {
+      showToast(`Lỗi kết nối: ${e.message}`);
+    } finally {
+      togglingRuleId = '';
+    }
+  }
+
   async function handleTriggerAutoRule(rule) {
     triggeringRuleId = rule.id;
     try {
@@ -666,18 +694,35 @@
         <div class="space-y-2.5">
           {#each autoNotifyRules as rule}
             <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-3 text-xs">
-              <div class="space-y-0.5">
-                <div class="font-extrabold text-slate-900">{rule.title}</div>
-                <div class="text-[11px] text-slate-600 leading-snug">{rule.desc}</div>
+              <div class="space-y-0.5 flex-1">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="font-extrabold text-slate-900">{rule.name || rule.title}</span>
+                  <span class="px-2 py-0.5 rounded-md font-mono text-[10px] font-bold {rule.enabled !== false ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-slate-200 text-slate-600'}">
+                    {rule.trigger_type || 'AUTO'} • {rule.enabled !== false ? 'ON' : 'OFF'}
+                  </span>
+                </div>
+                <div class="text-[11px] text-slate-600 leading-snug">{rule.description || rule.desc}</div>
               </div>
-              <button
-                type="button"
-                disabled={triggeringRuleId === rule.id}
-                onclick={() => handleTriggerAutoRule(rule)}
-                class="px-3 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-[11px] whitespace-nowrap shadow-xs cursor-pointer disabled:opacity-50"
-              >
-                {triggeringRuleId === rule.id ? '⏳ Đang gửi...' : '🚀 Bắn Thử Ngay'}
-              </button>
+              <div class="flex items-center gap-1.5 shrink-0">
+                <button
+                  type="button"
+                  disabled={togglingRuleId === rule.id}
+                  onclick={() => handleToggleAutoRule(rule)}
+                  class="px-2.5 py-2 rounded-xl font-bold text-[11px] border cursor-pointer transition-colors {rule.enabled !== false
+                    ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-300'
+                    : 'bg-slate-100 hover:bg-slate-200 text-slate-600 border-slate-300'}"
+                >
+                  {rule.enabled !== false ? '🟢 Đang Bật' : '⚪ Đang Tắt'}
+                </button>
+                <button
+                  type="button"
+                  disabled={triggeringRuleId === rule.id}
+                  onclick={() => handleTriggerAutoRule(rule)}
+                  class="px-3 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-[11px] whitespace-nowrap shadow-xs cursor-pointer disabled:opacity-50"
+                >
+                  {triggeringRuleId === rule.id ? '⏳ Đang gửi...' : '🚀 Bắn Thử Ngay'}
+                </button>
+              </div>
             </div>
           {/each}
         </div>

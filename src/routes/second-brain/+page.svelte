@@ -524,7 +524,7 @@
  </div>
 
  <!-- Folder Pills -->
- <div class="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+ <div class="flex flex-wrap items-center gap-1.5 pb-1">
  {#each folders as f}
  <button
  type="button"
@@ -540,7 +540,7 @@
  </div>
 
  <!-- Notes List -->
- <div class="flex-1 bg-white border border-slate-200 rounded-3xl p-3 shadow-sm flex flex-col max-h-[68vh] overflow-y-auto space-y-2">
+ <div class="flex-1 bg-white border border-slate-200 rounded-3xl p-3 shadow-sm flex flex-col space-y-2">
  <div class="text-[10px] uppercase font-bold text-slate-600 px-2 py-1 flex items-center justify-between">
  <span>Ghi Chú ({filteredNotes.length})</span>
  <span>Vault: second_brain</span>
@@ -558,7 +558,7 @@
  class="w-full text-left p-3 rounded-2xl transition-all border {currentNote?.id === note.id ? 'bg-teal-50 border-teal-500 shadow-sm' : 'bg-slate-50/50 border-slate-200/60 hover:bg-slate-100'}"
  >
  <div class="flex items-center justify-between gap-2 mb-1">
- <span class="font-bold text-xs truncate text-slate-900">
+ <span class="font-bold text-xs text-slate-900 break-words">
  {note.title}
  </span>
  {#if note.folder === 'Root'}
@@ -569,13 +569,13 @@
  </div>
 
  <div class="flex items-center gap-2 text-[10px] text-slate-500">
- <span class="truncate">📁 {note.folder}</span>
+ <span>📁 {note.folder}</span>
  <span>•</span>
  <span>{note.wikilinks ? note.wikilinks.length : 0} liên kết</span>
  </div>
 
  {#if note.snippet}
- <div class="text-[11px] text-slate-600 mt-1.5 line-clamp-2 bg-amber-500/10 p-1.5 rounded-lg border border-amber-500/20 leading-relaxed font-mono">
+ <div class="text-[11px] text-slate-600 mt-1.5 bg-amber-500/10 p-1.5 rounded-lg border border-amber-500/20 leading-relaxed font-mono break-words">
  {@html note.snippet}
  </div>
  {/if}
@@ -597,7 +597,7 @@
  </aside>
 
  <!-- RIGHT MAIN: Markdown Note Reader & Knowledge Connections -->
- <div class="flex-1 bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col min-w-0 max-h-[85vh] overflow-y-auto">
+ <div class="flex-1 bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col min-w-0">
  {#if currentNote}
  <!-- Breadcrumb & History Navigation -->
  <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-6">

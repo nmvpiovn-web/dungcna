@@ -650,15 +650,54 @@
  </div>
  {/if}
 
- <!-- Close Button -->
- <div class="flex justify-end pt-3 border-t border-slate-100">
+ <!-- Sticky Bottom Call-to-Action Footer (Lưu / Thêm / Đóng luôn hiện ở cuối Popup) -->
+ <div data-testid="modal-cta-footer" class="sticky bottom-0 z-20 -mx-6 md:-mx-8 px-6 md:px-8 py-3.5 bg-white border-t border-slate-200 flex flex-wrap items-center justify-end gap-2.5 shadow-[0_-4px_12px_rgba(28,25,23,0.05)]">
  <button
  type="button"
  onclick={() => isOpen = false}
- class="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs"
+ class="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 font-bold text-xs hover:bg-slate-100"
  >
  Đóng
  </button>
+ {#if isLeader}
+  {#if activeTab === 'overview'}
+   <button
+    type="button"
+    disabled={isSaving}
+    onclick={handleSaveRoleSalary}
+    class="px-5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow-sm"
+   >
+    {isSaving ? '⏳ Đang lưu...' : '💾 Lưu Thay Đổi Phân Quyền & Lương'}
+   </button>
+  {:else if activeTab === 'appraisal'}
+   <button
+    type="button"
+    disabled={isSaving}
+    onclick={handleSaveAppraisal}
+    class="px-5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-sm"
+   >
+    {isSaving ? '⏳ Đang lưu...' : '💾 Lưu Đánh Giá Của Leader'}
+   </button>
+  {:else if activeTab === 'bonus'}
+   <button
+    type="button"
+    disabled={isSaving}
+    onclick={handleAddBonus}
+    class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm"
+   >
+    {isSaving ? '⏳ Đang lưu...' : '➕ Thêm & Lưu Khen Thưởng'}
+   </button>
+  {:else if activeTab === 'reminders'}
+   <button
+    type="button"
+    disabled={isSaving}
+    onclick={handleSendReminder}
+    class="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-sm"
+   >
+    {isSaving ? '⏳ Đang gửi...' : '📨 Gửi & Lưu Nhắc Nhở Riêng'}
+   </button>
+  {/if}
+ {/if}
  </div>
  </div>
  </div>

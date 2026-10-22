@@ -20,6 +20,21 @@ function parseSafeMetadata(raw) {
   }
 }
 
+function resolveEffectiveRole(row) {
+  const meta = parseSafeMetadata(row?.metadata);
+  if (meta.app_role && ASSIGNABLE_ROLES.includes(String(meta.app_role).toLowerCase())) {
+    return String(meta.app_role).toLowerCase();
+  }
+  return String(row?.role || 'student').toLowerCase();
+}
+
+function mapRoleForDbCheckConstraint(role) {
+  const r = String(role || 'student').toLowerCase();
+  if (r === 'admin') return 'superadmin';
+  if (r === 'leader') return 'teacher';
+  return r;
+}
+
 async function requireManager(request, platform) {
   const auth = await verifyServerAuth(request, platform);
   if (!auth.authenticated) {
@@ -43,6 +58,7 @@ function canActorManageTarget(actor, targetRole) {
 
 function sanitizeRow(r, starsMap = new Map(), teacherMap = new Map(), parentLinksMap = new Map()) {
   const meta = parseSafeMetadata(r.metadata);
+  const effectiveRole = resolveEffectiveRole(r);
   const grade = meta.grade || r.grade || '';
   const classId = meta.class_id || '';
   const enrolledGrades = Array.isArray(meta.enrolled_grades)
@@ -54,7 +70,7 @@ function sanitizeRow(r, starsMap = new Map(), teacherMap = new Map(), parentLink
     name: r.name || r.username,
     phone: r.phone || '',
     email: r.email || '',
-    role: r.role || 'student',
+    role: effectiveRole,
     status: r.status || 'active',
     approval_status: r.approval_status || 'approved',
     avatar: r.avatar || '',
@@ -77,8 +93,8 @@ async function ensureAuxTables(db) {
   try {
     await db.prepare(`
       CREATE TABLE IF NOT EXISTS teacher_profiles (
-        id TEXT PRIMARY KEY,
-        teacher_id TEXT,
+        teacher_id TEXT PRIMARY KEY,
+        id TEXT,
         user_id TEXT,
         teacher_name TEXT NOT NULL,
         username TEXT NOT NULL,
@@ -96,6 +112,7 @@ async function ensureAuxTables(db) {
       )
     `).run();
     const extraCols = [
+      'ALTER TABLE teacher_profiles ADD COLUMN id TEXT;',
       'ALTER TABLE teacher_profiles ADD COLUMN teacher_id TEXT;',
       'ALTER TABLE teacher_profiles ADD COLUMN user_id TEXT;',
       'ALTER TABLE teacher_profiles ADD COLUMN teacher_name TEXT;',
@@ -131,55 +148,84 @@ async function ensureAuxTables(db) {
 }
 
 async function upsertTeacherProfileForUser(db, userObj, extra = {}) {
-  await ensureAuxTables(db);
-  const existing = await db.prepare('SELECT * FROM teacher_profiles WHERE teacher_id = ? OR user_id = ? LIMIT 1')
-    .bind(userObj.id, userObj.id)
-    .first()
-    .catch(() => null);
+  try {
+    await ensureAuxTables(db);
+    let existing = await db.prepare('SELECT * FROM teacher_profiles WHERE teacher_id = ? LIMIT 1')
+      .bind(userObj.id)
+      .first()
+      .catch(() => null);
 
-  const roleType = extra.role_type || extra.tier || existing?.role_type || 'lead';
-  const roleTitle = extra.role_title || extra.specialization || existing?.role_title || 'Giáo viên Tiếng Anh';
-  const salaryType = extra.salary_type || existing?.salary_type || 'per_session';
-  const baseSalary = extra.base_salary_vnd !== undefined ? Number(extra.base_salary_vnd) : (Number(existing?.base_salary_vnd) || 0);
-  const rateRaw = extra.rate_per_session_vnd !== undefined ? extra.rate_per_session_vnd : extra.hourly_rate_vnd;
-  const ratePerSession = rateRaw !== undefined ? Number(rateRaw) : (Number(existing?.rate_per_session_vnd) || 300000);
+    if (!existing) {
+      existing = await db.prepare('SELECT * FROM teacher_profiles WHERE user_id = ? LIMIT 1')
+        .bind(userObj.id)
+        .first()
+        .catch(() => null);
+    }
 
-  if (existing) {
-    await db.prepare(`
-      UPDATE teacher_profiles
-      SET teacher_name = ?, username = ?, role_type = ?, role_title = ?, salary_type = ?,
-          base_salary_vnd = ?, rate_per_session_vnd = ?, updated_at = CURRENT_TIMESTAMP
-      WHERE teacher_id = ? OR id = ?
-    `).bind(
-      userObj.name || userObj.username,
-      userObj.username,
-      roleType,
-      roleTitle,
-      salaryType,
-      baseSalary,
-      ratePerSession,
-      userObj.id,
-      existing.id
-    ).run();
-  } else {
-    await db.prepare(`
-      INSERT INTO teacher_profiles (
-        id, teacher_id, user_id, teacher_name, username, role_type, role_title,
-        salary_type, base_salary_vnd, rate_per_session_vnd, total_sessions_taught,
-        leader_rating, leader_appraisal, bonuses, private_reminders
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 5.0, '', '[]', '[]')
-    `).bind(
-      userObj.id,
-      userObj.id,
-      userObj.id,
-      userObj.name || userObj.username,
-      userObj.username,
-      roleType,
-      roleTitle,
-      salaryType,
-      baseSalary,
-      ratePerSession
-    ).run();
+    const roleType = extra.role_type || extra.tier || existing?.role_type || 'lead';
+    const roleTitle = extra.role_title || extra.specialization || existing?.role_title || 'Giáo viên Tiếng Anh';
+    const salaryType = extra.salary_type || existing?.salary_type || 'per_session';
+    const baseSalary = extra.base_salary_vnd !== undefined ? Number(extra.base_salary_vnd) : (Number(existing?.base_salary_vnd) || 0);
+    const rateRaw = extra.rate_per_session_vnd !== undefined ? extra.rate_per_session_vnd : extra.hourly_rate_vnd;
+    const ratePerSession = rateRaw !== undefined ? Number(rateRaw) : (Number(existing?.rate_per_session_vnd) || 300000);
+
+    if (existing) {
+      await db.prepare(`
+        UPDATE teacher_profiles
+        SET teacher_name = ?, username = ?, role_type = ?, role_title = ?, salary_type = ?,
+            base_salary_vnd = ?, rate_per_session_vnd = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE teacher_id = ?
+      `).bind(
+        userObj.name || userObj.username,
+        userObj.username,
+        roleType,
+        roleTitle,
+        salaryType,
+        baseSalary,
+        ratePerSession,
+        userObj.id
+      ).run();
+    } else {
+      try {
+        await db.prepare(`
+          INSERT INTO teacher_profiles (
+            teacher_id, teacher_name, username, role_type, role_title,
+            salary_type, base_salary_vnd, rate_per_session_vnd, total_sessions_taught,
+            leader_rating, leader_appraisal, bonuses, private_reminders
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, 5.0, '', '[]', '[]')
+        `).bind(
+          userObj.id,
+          userObj.name || userObj.username,
+          userObj.username,
+          roleType,
+          roleTitle,
+          salaryType,
+          baseSalary,
+          ratePerSession
+        ).run();
+      } catch {
+        await db.prepare(`
+          INSERT INTO teacher_profiles (
+            id, teacher_id, user_id, teacher_name, username, role_type, role_title,
+            salary_type, base_salary_vnd, rate_per_session_vnd, total_sessions_taught,
+            leader_rating, leader_appraisal, bonuses, private_reminders
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 5.0, '', '[]', '[]')
+        `).bind(
+          userObj.id,
+          userObj.id,
+          userObj.id,
+          userObj.name || userObj.username,
+          userObj.username,
+          roleType,
+          roleTitle,
+          salaryType,
+          baseSalary,
+          ratePerSession
+        ).run();
+      }
+    }
+  } catch (err) {
+    console.warn('[upsertTeacherProfileForUser] Non-fatal error:', err?.message);
   }
 }
 
@@ -205,10 +251,6 @@ export async function GET({ request, url, platform }) {
       whereSql += ` AND (LOWER(name) LIKE ? OR LOWER(username) LIKE ? OR LOWER(COALESCE(phone, '')) LIKE ? OR LOWER(COALESCE(email, '')) LIKE ?)`;
       const like = `%${q.toLowerCase()}%`;
       params.push(like, like, like, like);
-    }
-    if (role !== 'all') {
-      whereSql += ` AND LOWER(role) = ?`;
-      params.push(role);
     }
     const orderLimitSql = ` ORDER BY datetime(created_at) DESC LIMIT ? OFFSET ?`;
 
@@ -254,7 +296,11 @@ export async function GET({ request, url, platform }) {
       }
     } catch {}
 
-    const users = rows.map(r => sanitizeRow(r, starsMap, teacherMap, parentLinksMap));
+    let users = rows.map(r => sanitizeRow(r, starsMap, teacherMap, parentLinksMap));
+    if (role !== 'all') {
+      users = users.filter(u => String(u.role || '').toLowerCase() === role);
+    }
+
     return json({
       success: true,
       users,
@@ -294,7 +340,7 @@ export async function POST({ request, platform }) {
       const password = String(body.password || '').trim();
       const newRole = String(body.role || 'student').trim().toLowerCase();
       const phone = String(body.phone || '').trim() || null;
-      const email = String(body.email || '').trim() || null;
+      const rawEmail = String(body.email || '').trim().toLowerCase();
 
       if (!name) {
         return json({ success: false, error: 'ValidationError: Vui lòng nhập họ và tên.' }, { status: 400 });
@@ -317,6 +363,16 @@ export async function POST({ request, platform }) {
         return json({ success: false, error: `ConflictError: Username @${username} đã tồn tại trong hệ thống.` }, { status: 409 });
       }
 
+      // Ensure email is always non-null and unique for D1 NOT NULL UNIQUE constraint
+      let email = rawEmail || `${username}@timbk.io.vn`;
+      const dupEmail = await db.prepare('SELECT id FROM users WHERE LOWER(email) = ? LIMIT 1').bind(email).first().catch(() => null);
+      if (dupEmail) {
+        if (rawEmail) {
+          return json({ success: false, error: `ConflictError: Email ${rawEmail} đã được sử dụng bởi tài khoản khác.` }, { status: 409 });
+        }
+        email = `${username}.${Date.now().toString(36)}@timbk.io.vn`;
+      }
+
       const id = `usr_${newRole}_${crypto.randomUUID()}`;
       const passwordHash = await hashPassword(password);
       const grade = String(body.grade || (newRole === 'student' ? 'Lớp 7' : '')).trim();
@@ -332,6 +388,9 @@ export async function POST({ request, platform }) {
         title: String(body.role_title || body.title || '').trim(),
         certs: String(body.certs || '').trim()
       };
+      if (['leader', 'admin'].includes(newRole)) {
+        metadata.app_role = newRole;
+      }
       if (body.must_change_password === true) {
         metadata.must_change_password = true;
       }
@@ -339,22 +398,35 @@ export async function POST({ request, platform }) {
       const status = body.status === 'trial' ? 'trial' : 'active';
       const approvalStatus = body.status === 'trial' ? 'trial' : (newRole === 'student' ? 'official' : 'approved');
 
-      try {
-        await db.prepare(`
-          INSERT INTO users (id, username, phone, password, email, name, role, avatar, status, approval_status, metadata, profile_version, created_at, updated_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-        `).bind(
-          id, username, phone, passwordHash, email, name, newRole,
-          body.avatar || '', status, approvalStatus, JSON.stringify(metadata)
-        ).run();
-      } catch {
-        await db.prepare(`
-          INSERT INTO users (id, username, phone, password, email, name, role, avatar, status, metadata, created_at, updated_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-        `).bind(
-          id, username, phone, passwordHash, email, name, newRole,
-          body.avatar || '', status, JSON.stringify(metadata)
-        ).run();
+      // Try inserting with newRole first; if D1 has legacy CHECK(role IN ('superadmin','teacher','student','parent')), fallback to mapped DB role
+      let inserted = false;
+      for (const candidateRole of [newRole, mapRoleForDbCheckConstraint(newRole)]) {
+        if (inserted) break;
+        try {
+          await db.prepare(`
+            INSERT INTO users (id, username, phone, password, email, name, role, avatar, status, approval_status, metadata, profile_version, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+          `).bind(
+            id, username, phone, passwordHash, email, name, candidateRole,
+            body.avatar || '', status, approvalStatus, JSON.stringify(metadata)
+          ).run();
+          inserted = true;
+        } catch {
+          try {
+            await db.prepare(`
+              INSERT INTO users (id, username, phone, password, email, name, role, avatar, status, metadata, created_at, updated_at)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            `).bind(
+              id, username, phone, passwordHash, email, name, candidateRole,
+              body.avatar || '', status, JSON.stringify(metadata)
+            ).run();
+            inserted = true;
+          } catch {}
+        }
+      }
+
+      if (!inserted) {
+        return json({ success: false, error: 'DatabaseError: Không thể khởi tạo bản ghi tài khoản vào bảng users D1' }, { status: 500 });
       }
 
       // Cross-table synchronization
@@ -367,10 +439,10 @@ export async function POST({ request, platform }) {
             VALUES (?, ?, ?, 0, 0)
           `).bind(id, initStars, initStars).run();
         } catch {}
-      } else if (newRole === 'teacher') {
+      } else if (newRole === 'teacher' || newRole === 'leader') {
         await upsertTeacherProfileForUser(db, { id, username, name }, {
-          role_type: body.role_type || body.tier || 'lead',
-          role_title: body.role_title || body.specialization || body.title || 'Giáo viên Tiếng Anh',
+          role_type: newRole === 'leader' ? 'lead' : (body.role_type || body.tier || 'lead'),
+          role_title: body.role_title || body.specialization || body.title || (newRole === 'leader' ? 'Quản lý Chuyên môn (Leader)' : 'Giáo viên Tiếng Anh'),
           salary_type: body.salary_type || 'per_session',
           base_salary_vnd: body.base_salary_vnd ?? 0,
           rate_per_session_vnd: body.rate_per_session_vnd ?? body.hourly_rate_vnd ?? 300000
@@ -431,6 +503,7 @@ export async function POST({ request, platform }) {
     }
 
     const targetId = target.id;
+    const targetEffectiveRole = resolveEffectiveRole(target);
 
     // 2. UPDATE ROLE
     if (action === 'update_role') {
@@ -444,21 +517,36 @@ export async function POST({ request, platform }) {
       if (targetId === me.id) {
         return json({ success: false, error: 'SelfRoleChange: Không được tự đổi role của chính mình' }, { status: 403 });
       }
-      if (!canActorManageTarget(me, target.role) || !canActorManageTarget(me, newRole)) {
+      if (!canActorManageTarget(me, targetEffectiveRole) || !canActorManageTarget(me, newRole)) {
         return json({ success: false, error: 'Forbidden: Không đủ thẩm quyền thay đổi vai trò của tài khoản này' }, { status: 403 });
       }
 
       const approvalStatus = newRole === 'student' ? 'official' : 'approved';
-      try {
-        await db.prepare(`UPDATE users SET role = ?, approval_status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?;`)
-          .bind(newRole, approvalStatus, targetId).run();
-      } catch {
-        await db.prepare(`UPDATE users SET role = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?;`)
-          .bind(newRole, targetId).run();
+      const meta = parseSafeMetadata(target.metadata);
+      if (['leader', 'admin'].includes(newRole)) {
+        meta.app_role = newRole;
+      } else {
+        delete meta.app_role;
+      }
+
+      let updated = false;
+      for (const candidateRole of [newRole, mapRoleForDbCheckConstraint(newRole)]) {
+        if (updated) break;
+        try {
+          await db.prepare(`UPDATE users SET role = ?, approval_status = ?, metadata = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?;`)
+            .bind(candidateRole, approvalStatus, JSON.stringify(meta), targetId).run();
+          updated = true;
+        } catch {
+          try {
+            await db.prepare(`UPDATE users SET role = ?, metadata = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?;`)
+              .bind(candidateRole, JSON.stringify(meta), targetId).run();
+            updated = true;
+          } catch {}
+        }
       }
 
       // Cross-table sync when promoted to teacher or student
-      if (newRole === 'teacher') {
+      if (newRole === 'teacher' || newRole === 'leader') {
         await upsertTeacherProfileForUser(db, target, body);
       } else if (newRole === 'student') {
         await ensureAuxTables(db);
@@ -470,7 +558,7 @@ export async function POST({ request, platform }) {
       return json({
         success: true,
         message: `Đã đổi role @${target.username} thành ${newRole} và đồng bộ hồ sơ D1.`,
-        user: { ...sanitizeRow(target), role: newRole, approval_status: approvalStatus }
+        user: { ...sanitizeRow({ ...target, metadata: JSON.stringify(meta) }), role: newRole, approval_status: approvalStatus }
       });
     }
 
@@ -479,7 +567,7 @@ export async function POST({ request, platform }) {
       if (targetId === me.id) {
         return json({ success: false, error: 'SelfLock: Không được tự khóa tài khoản của chính mình' }, { status: 403 });
       }
-      if (!canActorManageTarget(me, target.role)) {
+      if (!canActorManageTarget(me, targetEffectiveRole)) {
         return json({ success: false, error: 'Forbidden: Bạn không có quyền khóa/mở tài khoản cấp cao hơn' }, { status: 403 });
       }
       const requestedStatus = body.status && ['active', 'locked'].includes(body.status)
@@ -503,7 +591,7 @@ export async function POST({ request, platform }) {
 
     // 4. RESET PASSWORD (Admin/Manager sets a new password for any managed user)
     if (action === 'reset_password') {
-      if (targetId !== me.id && !canActorManageTarget(me, target.role)) {
+      if (targetId !== me.id && !canActorManageTarget(me, targetEffectiveRole)) {
         return json({ success: false, error: 'Forbidden: Không đủ quyền đặt lại mật khẩu cho tài khoản này' }, { status: 403 });
       }
       const newPassword = String(body.new_password || body.newPassword || body.password || '').trim();
@@ -533,12 +621,14 @@ export async function POST({ request, platform }) {
 
     // 5. UPDATE USER PROFILE / GRADE / CLASS / TEACHER SALARY
     if (action === 'update_user') {
-      if (targetId !== me.id && !canActorManageTarget(me, target.role)) {
+      if (targetId !== me.id && !canActorManageTarget(me, targetEffectiveRole)) {
         return json({ success: false, error: 'Forbidden: Không đủ quyền chỉnh sửa tài khoản này' }, { status: 403 });
       }
       const nextName = body.name !== undefined ? String(body.name).trim() : target.name;
       const nextPhone = body.phone !== undefined ? (String(body.phone).trim() || null) : target.phone;
-      const nextEmail = body.email !== undefined ? (String(body.email).trim() || null) : target.email;
+      const nextEmail = (body.email !== undefined && String(body.email).trim())
+        ? String(body.email).trim()
+        : (target.email || `${target.username}@timbk.io.vn`);
       const nextStatus = body.status !== undefined ? String(body.status).trim() : (target.status || 'active');
       const nextApproval = body.approval_status !== undefined ? String(body.approval_status).trim() : (target.approval_status || 'approved');
 
@@ -569,7 +659,7 @@ export async function POST({ request, platform }) {
         `).bind(nextName, nextPhone, nextEmail, nextStatus, JSON.stringify(meta), targetId).run();
       }
 
-      if (target.role === 'teacher') {
+      if (targetEffectiveRole === 'teacher' || targetEffectiveRole === 'leader') {
         await upsertTeacherProfileForUser(db, { ...target, name: nextName }, body);
       }
 
@@ -594,7 +684,7 @@ export async function POST({ request, platform }) {
       meta.is_trial = false;
       meta.approved_at = new Date().toISOString();
       meta.approved_by = me.username || me.id;
-      const nextApproval = target.role === 'student' ? 'official' : 'approved';
+      const nextApproval = targetEffectiveRole === 'student' ? 'official' : 'approved';
 
       try {
         await db.prepare(`
@@ -696,19 +786,21 @@ export async function POST({ request, platform }) {
         return json({ success: false, error: 'SelfDelete: Không được tự xóa tài khoản của chính mình' }, { status: 403 });
       }
       if (
-        String(target.role || '').toLowerCase() === 'superadmin' ||
+        String(targetEffectiveRole || '').toLowerCase() === 'superadmin' ||
         SUPERADMIN_USERNAMES.includes(String(target.username || '').toLowerCase()) ||
         SUPERADMIN_EMAILS.includes(String(target.email || '').toLowerCase())
       ) {
         return json({ success: false, error: 'Forbidden: Không thể xóa tài khoản SuperAdmin gốc' }, { status: 403 });
       }
-      if (!canActorManageTarget(me, target.role)) {
+      if (!canActorManageTarget(me, targetEffectiveRole)) {
         return json({ success: false, error: 'Forbidden: Bạn không có quyền xóa tài khoản này' }, { status: 403 });
       }
 
-      await db.prepare('DELETE FROM users WHERE id = ?').bind(targetId).run();
       try { await db.prepare('DELETE FROM teacher_profiles WHERE teacher_id = ? OR user_id = ?').bind(targetId, targetId).run(); } catch {}
+      try { await db.prepare('DELETE FROM student_stars WHERE student_id = ?').bind(targetId).run(); } catch {}
+      try { await db.prepare('DELETE FROM parent_student_links WHERE parent_user_id = ? OR student_user_id = ?').bind(targetId, targetId).run(); } catch {}
       try { await db.prepare('DELETE FROM auth_sessions WHERE user_id = ?').bind(targetId).run(); } catch {}
+      await db.prepare('DELETE FROM users WHERE id = ?').bind(targetId).run();
 
       return json({
         success: true,

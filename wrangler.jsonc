@@ -6,6 +6,9 @@
     "nodejs_compat"
   ],
   "pages_build_output_dir": "build",
+  "ai": {
+    "binding": "AI"
+  },
   "d1_databases": [
     {
       "binding": "DB",

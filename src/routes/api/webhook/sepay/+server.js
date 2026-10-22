@@ -122,20 +122,44 @@ export async function POST({ request, platform }) {
       }
     }
 
-    // C. Third pass: VietQR pattern HP_<student_id>_<period> -> match by student_id and pending status
+    // C. Third pass: VietQR pattern HP_<student_id_or_shortName>_<period> -> match by student_id or normalized student_name
     if (!targetBill) {
       for (const token of candidateTokens) {
         const parts = token.split('_');
         if (parts.length >= 2 && parts[0].toUpperCase() === 'HP') {
           const studentPart = parts[1];
           targetBill = await db.prepare(`
-            SELECT id, student_id, COALESCE(NULLIF(final_amount_vnd, 0), NULLIF(total_amount, 0), NULLIF(amount, 0), 0) as total_amount, status
+            SELECT id, student_id, student_name, COALESCE(NULLIF(final_amount_vnd, 0), NULLIF(total_amount, 0), NULLIF(amount, 0), 0) as total_amount, status
             FROM tuition_bills
-            WHERE (UPPER(student_id) = UPPER(?) OR UPPER(student_id) = UPPER(?))
+            WHERE (UPPER(student_id) = UPPER(?) OR UPPER(student_id) = UPPER(?) OR UPPER(student_id) = UPPER(?))
               AND status = 'pending'
-            ORDER BY created_at DESC
+            ORDER BY updated_at DESC
             LIMIT 1;
-          `).bind(studentPart, `stu_${studentPart.toLowerCase()}`).first();
+          `).bind(studentPart, `stu_${studentPart.toLowerCase()}`, `usr_student_${studentPart.toLowerCase()}`).first();
+
+          if (!targetBill && studentPart.length >= 4) {
+            const pendingBills = await db.prepare(`
+              SELECT id, student_id, student_name, COALESCE(NULLIF(final_amount_vnd, 0), NULLIF(total_amount, 0), NULLIF(amount, 0), 0) as total_amount, status
+              FROM tuition_bills
+              WHERE status = 'pending'
+              ORDER BY updated_at DESC
+              LIMIT 50;
+            `).all().catch(() => ({ results: [] }));
+            for (const pb of pendingBills?.results || []) {
+              const shortName = String(pb.student_name || '')
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .replace(/[đĐ]/g, 'D')
+                .replace(/\(.*?\)/g, '')
+                .replace(/[^a-zA-Z0-9]/g, '')
+                .toUpperCase()
+                .slice(0, 12);
+              if (shortName && (shortName === studentPart.toUpperCase() || shortName.includes(studentPart.toUpperCase()))) {
+                targetBill = pb;
+                break;
+              }
+            }
+          }
 
           if (targetBill) {
             matchedRef = targetBill.id;

@@ -1,5 +1,6 @@
 // src/lib/server/zaloBotGateway.js
 // Unified Zalo Bot Platform Gateway for https://timbk.io.vn (Zero Grokbot Dependency)
+import { runCragLangflowPipeline, SUPERADMIN_DEFAULT_CHAT_ID } from './cragLangflowEngine.js';
 
 export const DEFAULT_ZALO_BOT_TOKEN = '2267052943606876676:BohTEeIARkSRcUEqfZLDnvxEjSwPVyNSujkIEWeAYRXoCCljFJwYXhhkDbGIUVwd';
 export const TIMBK_WEBHOOK_ENDPOINT = 'https://timbk.io.vn/api/zalo-bot/webhook';
@@ -27,7 +28,7 @@ export async function ensureZaloSubscribersSchema(db) {
   await db.prepare(`ALTER TABLE zalo_bot_subscribers ADD COLUMN linked_user_id TEXT DEFAULT ''`).run().catch(() => {});
 }
 
-export async function processIncomingZaloMessage(db, token, payload) {
+export async function processIncomingZaloMessage(db, token, payload, env = null) {
   const effectiveToken = String(token || DEFAULT_ZALO_BOT_TOKEN).trim();
   const msg = payload?.message || payload?.result?.message || payload?.result || payload?.data?.message || payload;
   const innerMsg = msg?.message || msg;
@@ -54,10 +55,12 @@ export async function processIncomingZaloMessage(db, token, payload) {
     msg?.from?.display_name ||
     msg?.from?.name ||
     payload?.sender?.name ||
-    'Phụ huynh / Học viên Zalo'
+    (chatId === SUPERADMIN_DEFAULT_CHAT_ID ? 'Hải' : 'Phụ huynh / Học viên Zalo')
   ).trim();
 
   const text = String(innerMsg?.text || msg?.text || payload?.text || '').trim();
+  const overrideRole = payload?.override_role || null;
+  const sendToZalo = payload?.send_to_zalo !== false;
   const phoneMatch = text.match(/(?:0|\+84)\d{8,10}/);
   const extractedPhone = phoneMatch ? phoneMatch[0].replace(/^\+84/, '0') : '';
 
@@ -95,17 +98,6 @@ export async function processIncomingZaloMessage(db, token, payload) {
       }
 
       await db.prepare(`
-        INSERT INTO zalo_bot_subscribers (chat_id, display_name, phone, linked_user_id, last_message, updated_at)
-        VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-        ON CONFLICT(chat_id) DO UPDATE SET
-          display_name = excluded.display_name,
-          phone = CASE WHEN excluded.phone != '' THEN excluded.phone ELSE zalo_bot_subscribers.phone END,
-          linked_user_id = CASE WHEN excluded.linked_user_id != '' THEN excluded.linked_user_id ELSE zalo_bot_subscribers.linked_user_id END,
-          last_message = excluded.last_message,
-          updated_at = CURRENT_TIMESTAMP;
-      `).bind(chatId, displayName, extractedPhone, linkedUser?.id || '', text).run();
-
-      await db.prepare(`
         UPDATE bot_webhook_configs
         SET chat_id = CASE WHEN chat_id IS NULL OR chat_id = '' THEN ? ELSE chat_id END,
             webhook_url = ?,
@@ -115,25 +107,20 @@ export async function processIncomingZaloMessage(db, token, payload) {
     } catch {}
   }
 
-  // Send instant Vietnamese reply directly from timbk.io.vn
-  if (effectiveToken) {
-    try {
-      const replyText = linkedUser
-        ? `✅ Hệ thống Tiếng Anh Cô Dung (timbk.io.vn) đã liên kết Zalo của ${displayName} với hồ sơ "${linkedUser.name}" (SĐT: ${extractedPhone})!\n• Mã Chat ID: ${chatId}\n• Từ nay thông báo lịch học trước 10 phút, điểm danh và phiếu học phí sẽ được gửi tự động về Zalo này.`
-        : `✅ Hệ thống Tiếng Anh Cô Dung (timbk.io.vn) đã ghi nhận kết nối Zalo của ${displayName}!\n• Mã Chat ID: ${chatId}\n• Gợi ý: Nhắn kèm Số điện thoại đăng ký học (VD: 0912345678) để hệ thống tự động liên kết hồ sơ học sinh & gửi báo cáo ca học.`;
-
-      await fetch(`https://bot-api.zaloplatforms.com/bot${effectiveToken}/sendMessage`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: chatId,
-          text: replyText
-        })
-      });
-    } catch {}
-  }
+  // Execute the full 7-Node CRAG Langflow Pipeline instead of a static greeting
+  const cragRes = await runCragLangflowPipeline({
+    db,
+    env,
+    chatId,
+    displayName,
+    userText: text,
+    overrideRole,
+    sendToZalo,
+    botToken: effectiveToken
+  });
 
   return {
+    ...cragRes,
     ok: true,
     captured_chat_id: chatId,
     display_name: displayName,
@@ -142,7 +129,7 @@ export async function processIncomingZaloMessage(db, token, payload) {
   };
 }
 
-export async function syncZaloBotUpdates(db, token = DEFAULT_ZALO_BOT_TOKEN, maxPolls = 3) {
+export async function syncZaloBotUpdates(db, token = DEFAULT_ZALO_BOT_TOKEN, maxPolls = 3, env = null) {
   const effectiveToken = String(token || DEFAULT_ZALO_BOT_TOKEN).trim();
   if (!isZaloBotPlatformToken(effectiveToken)) return [];
 
@@ -174,7 +161,7 @@ export async function syncZaloBotUpdates(db, token = DEFAULT_ZALO_BOT_TOKEN, max
       if (items.length === 0) break;
 
       for (const item of items) {
-        const processed = await processIncomingZaloMessage(db, effectiveToken, item);
+        const processed = await processIncomingZaloMessage(db, effectiveToken, item, env);
         if (processed?.captured_chat_id) {
           captured.push(processed);
         }

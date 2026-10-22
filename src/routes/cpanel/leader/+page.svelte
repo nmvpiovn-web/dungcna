@@ -493,7 +493,7 @@
  <span>Ban Giám Sát Sư Phạm</span>
  </div>
  <h1 class="text-xl sm:text-2xl font-semibold text-slate-900 tracking-tight">Quản Trị Nghiệp Vụ Sư Phạm &amp; Nhân Sự</h1>
- <p class="text-slate-300 text-xs sm:text-sm max-w-2xl leading-relaxed">
+ <p class="text-slate-700 text-xs sm:text-sm max-w-2xl leading-relaxed">
  Kiểm soát lộ trình giảng dạy theo Obsidian Second-Brain, tỷ lệ hoàn thành BTVN, ngân hàng Bài Test / Kiểm Tra, phê duyệt đơn xin nghỉ &amp; phân công dạy thay, duyệt hạn mức ứng lương và quy trình tuyển dụng giáo viên.
  </p>
  </div>
@@ -517,7 +517,7 @@
  {/if}
 
  <!-- Navigation Tabs -->
- <div class="flex items-center gap-2 border-b border-slate-200 pb-2 overflow-x-auto max-w-full">
+ <div class="flex flex-wrap items-center gap-2 border-b border-slate-200 pb-2 max-w-full">
  <button 
  onclick={() => activeTab = 'overview'}
  class="whitespace-nowrap shrink-0 px-3 sm:px-4 py-2 rounded-md text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cx-500 {activeTab === 'overview' ? 'bg-cx-600 text-white' : 'text-slate-600 hover:bg-slate-100'}"
@@ -677,7 +677,7 @@
  Chưa có sự kiện mới nào được ghi nhận trong phiên hôm nay.
  </div>
  {:else}
- <div class="space-y-2.5 max-h-96 overflow-y-auto pr-1">
+ <div class="space-y-2.5 pr-1">
  {#each streams as stm}
  {@const campusObj = campuses.find(c => c.id === stm.campus_id)}
  <div class="p-3 rounded-md bg-slate-50 border border-slate-200 flex items-start justify-between gap-3 text-xs">

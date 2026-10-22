@@ -172,7 +172,7 @@ export function buildStudentVietQrUrl({ studentName = 'HOC SINH', amountVnd = 18
   return `https://img.vietqr.io/image/970422-${bankAccount}-compact2.png?amount=${Math.max(0, Number(amountVnd) || 0)}&addInfo=${encodeURIComponent(addInfo)}&accountName=${encodeURIComponent(accountHolder)}`;
 }
 
-async function sendZaloRichPayload({ botToken, chatId, text, photoUrls = [], photoCaptions = [], voiceUrl = '', videoUrl = '' }) {
+export async function sendZaloRichPayload({ botToken, chatId, text, photoUrls = [], photoCaptions = [], voiceUrl = '', videoUrl = '' }) {
   const baseUrl = 'https://bot-api.zaloplatforms.com/bot' + botToken;
   const results = { text_sent: false, photos_sent: 0, voice_sent: false, video_sent: false, message_ids: [] };
 
@@ -503,6 +503,8 @@ export async function runCragLangflowPipeline({
   let matchedBills = [];
   let matchedEvaluations = [];
   let matchedStars = [];
+  let matchedHomework = [];
+  let matchedSessionAudits = [];
   let carriedOverStudent = false;
 
   if (db) {
@@ -529,26 +531,49 @@ export async function runCragLangflowPipeline({
 
     const studentUsers = allUsers.filter((u) => u.role === 'student');
     let allowedStudents = studentUsers;
+    const linkedUserMeta = safeJsonParse(linkedUser?.metadata, {});
 
     if (effectiveRole === 'parent') {
       const parentPhone = extractedPhone || subscriber?.phone || linkedUser?.phone || '';
-      allowedStudents = studentUsers.filter((st) => {
-        if (linkedUser && (st.id === linkedUser.id || st.meta?.linked_student_id === st.id)) return true;
+      const explicitlyLinked = studentUsers.filter((st) => {
+        if (linkedUser && (st.id === linkedUser.id || linkedUserMeta?.linked_student_id === st.id || st.meta?.parent_id === linkedUser.id)) return true;
         if (parentPhone && (st.phone === parentPhone || st.parent_phone === parentPhone)) return true;
-        const stNorm = normalizeVi(st.name);
+        const stNorm = normalizeVi(st.name).replace(/\(.*?\)/g, '').trim();
         const words = stNorm.split(/\s+/).filter((w) => w.length >= 3);
-        return words.some((w) => normText.includes(w));
+        const lastWord = words[words.length - 1];
+        return Boolean(lastWord && normText.includes(lastWord));
       });
-      if (allowedStudents.length === 0) allowedStudents = studentUsers.slice(0, 3);
+      // Allow memory carryover for this parent's active conversation thread, but never leak random unlinked students
+      if (explicitlyLinked.length > 0) {
+        allowedStudents = explicitlyLinked;
+      } else if (memoryStudentIds.length > 0) {
+        const memSet = new Set(memoryStudentIds);
+        allowedStudents = studentUsers.filter((st) => memSet.has(st.id));
+      } else {
+        allowedStudents = [];
+      }
     } else if (effectiveRole === 'student') {
       if (linkedUser && linkedUser.role === 'student') {
         allowedStudents = studentUsers.filter((st) => st.id === linkedUser.id);
       } else {
-        allowedStudents = studentUsers.slice(0, 2);
+        const namedByStudent = studentUsers.filter((st) => {
+          const stNorm = normalizeVi(st.name).replace(/\(.*?\)/g, '').trim();
+          const words = stNorm.split(/\s+/).filter((w) => w.length >= 3);
+          const lastWord = words[words.length - 1];
+          return Boolean(lastWord && normText.includes(lastWord));
+        });
+        if (namedByStudent.length > 0) {
+          allowedStudents = namedByStudent;
+        } else if (memoryStudentIds.length > 0) {
+          const memSet = new Set(memoryStudentIds);
+          allowedStudents = studentUsers.filter((st) => memSet.has(st.id));
+        } else {
+          allowedStudents = [];
+        }
       }
     }
 
-    // 1. Check explicit student mention in current message (Score by exact number of name words matched in query)
+    // 1. Check explicit student mention in current message (Score by exact number of name words matched + canonical profile bonus)
     const scoredMatches = [];
     for (const st of allowedStudents) {
       const cleanName = normalizeVi(st.name).replace(/\(.*?\)/g, '').trim();
@@ -557,19 +582,20 @@ export async function runCragLangflowPipeline({
 
       const matchedWords = words.filter((w) => normText.includes(w));
       const lastOne = words[words.length - 1];
-      // Require at least the given name (last word >= 3 chars) to match, and score by how many words of their name matched
       if (lastOne && lastOne.length >= 3 && normText.includes(lastOne)) {
-        scoredMatches.push({ st, score: matchedWords.length });
+        const canonicalBonus = (!/_\d{10,}_/.test(String(st.id || '')) ? 0.5 : 0) + Math.min(0.4, words.length * 0.1);
+        scoredMatches.push({ st, wordScore: matchedWords.length, totalScore: matchedWords.length + canonicalBonus });
       }
     }
     if (scoredMatches.length > 0) {
-      const maxScore = Math.max(...scoredMatches.map((m) => m.score));
-      matchedStudents = scoredMatches.filter((m) => m.score === maxScore).map((m) => m.st);
+      scoredMatches.sort((a, b) => b.totalScore - a.totalScore);
+      const topScore = scoredMatches[0].totalScore;
+      matchedStudents = scoredMatches.filter((m) => Math.abs(m.totalScore - topScore) < 0.05).map((m) => m.st);
     }
 
     // 2. SESSION CONTINUITY: If current message didn't name a student (e.g. "Còn học phí tháng này bao nhiêu?", "Gửi mã QR luôn nhé", "Điểm của cháu thế nào?")
     // and didn't ask for "tất cả / toàn bộ trung tâm", carry over the student from the previous turn!
-    const asksForAll = /(tat ca|toan bo|danh sach|중 tam|trung tam|cac lop|tong quan)/i.test(normText);
+    const asksForAll = /(tat ca|toan bo|danh sach|trung tam|cac lop|tong quan)/i.test(normText);
     if (matchedStudents.length === 0 && !extractedGrade && !asksForAll && memoryStudentIds.length > 0) {
       const memSet = new Set(memoryStudentIds);
       const fromMem = allowedStudents.filter((st) => memSet.has(st.id));
@@ -634,6 +660,40 @@ export async function runCragLangflowPipeline({
       LIMIT 20
     `).all().catch(() => ({ results: [] }));
     matchedEvaluations = evalsRes?.results || [];
+
+    if (detectedIntents.includes('academic_results') || detectedIntents.includes('schedule_attendance') || /(btvn|bai tap|deadline|quiz)/i.test(normText)) {
+      tablesQueried.push('homework_assignments');
+      const hwRes = await db.prepare(`
+        SELECT id, session_id, class_id, class_name, teacher_name, skill_type, title,
+               description, deadline_date, deadline_time, star_reward_on_time, status
+        FROM homework_assignments
+        WHERE status IS NULL OR status = 'published'
+        ORDER BY created_at DESC
+        LIMIT 12
+      `).all().catch(() => ({ results: [] }));
+      matchedHomework = hwRes?.results || [];
+    }
+
+    if (detectedIntents.includes('session_audit') || effectiveRole === 'superadmin' || effectiveRole === 'leader' || effectiveRole === 'teacher') {
+      tablesQueried.push('session_quality_audits');
+      const auditRes = await db.prepare(`
+        SELECT session_id, class_id, vault_article_id, vault_article_title,
+               drive_file_id, drive_file_name, drive_file_url,
+               manual_suitability_pct, effectiveness_rating, effectiveness_notes,
+               parent_interaction_notes, internal_interaction_notes,
+               roadmap_recommendation, audit_status, updated_by_name, updated_at
+        FROM session_quality_audits
+        ORDER BY updated_at DESC
+        LIMIT 10
+      `).all().catch(() => ({ results: [] }));
+      matchedSessionAudits = (auditRes?.results || []).map((row) => {
+        if (effectiveRole === 'parent' || effectiveRole === 'student' || effectiveRole === 'guest') {
+          const { internal_interaction_notes, ...safeRow } = row;
+          return safeRow;
+        }
+        return row;
+      });
+    }
   }
   nodeTimings.node_d1_sql_retriever = Date.now() - t3;
 
@@ -642,16 +702,71 @@ export async function runCragLangflowPipeline({
   // =========================================================================
   const t4 = Date.now();
   let knowledgeSnippets = [];
-  if (db && detectedIntents.includes('pedagogy_knowledge')) {
+  if (db && (detectedIntents.includes('pedagogy_knowledge') || detectedIntents.includes('session_audit'))) {
+    const kwTokens = cleanText
+      .replace(/[?.,!;:()[\]"]/g, ' ')
+      .split(/\s+/)
+      .filter((w) => w.length >= 3 && !/^(cho|xem|cua|nhung|trong|the|nao|giup|minh|vui|long|biet|hoi)$/i.test(normalizeVi(w)))
+      .slice(0, 4);
+    const primaryKw = kwTokens[0] || 'Unit';
+
     tablesQueried.push('knowledge_vault');
     const vaultRes = await db.prepare(`
       SELECT id, title, category, content_markdown
       FROM knowledge_vault
-      LIMIT 5
-    `).all().catch(() => ({ results: [] }));
-    knowledgeSnippets = (vaultRes?.results || []).map(
-      (v) => `• ${v.title}: ${String(v.content_markdown || '').slice(0, 220)}`
-    );
+      WHERE title LIKE ? OR content_markdown LIKE ? OR category LIKE ?
+      LIMIT 4
+    `).bind(`%${primaryKw}%`, `%${primaryKw}%`, `%${primaryKw}%`).all().catch(() => ({ results: [] }));
+    let vaultRows = vaultRes?.results || [];
+    if (vaultRows.length === 0) {
+      const fallbackVault = await db.prepare(`SELECT id, title, category, content_markdown FROM knowledge_vault LIMIT 3`).all().catch(() => ({ results: [] }));
+      vaultRows = fallbackVault?.results || [];
+    }
+    for (const v of vaultRows) {
+      knowledgeSnippets.push(`• [Second Brain] ${v.title}: ${String(v.content_markdown || '').slice(0, 200)}`);
+    }
+
+    tablesQueried.push('grammar_topics');
+    const gramRes = await db.prepare(`
+      SELECT id, topic, grade_level, curriculum_unit, summary, formula, usage
+      FROM grammar_topics
+      WHERE topic LIKE ? OR summary LIKE ? OR curriculum_unit LIKE ?
+      LIMIT 3
+    `).bind(`%${primaryKw}%`, `%${primaryKw}%`, `%${primaryKw}%`).all().catch(() => ({ results: [] }));
+    let gramRows = gramRes?.results || [];
+    if (gramRows.length === 0 && detectedIntents.includes('pedagogy_knowledge')) {
+      const fallbackGram = await db.prepare(`SELECT id, topic, grade_level, curriculum_unit, summary, formula, usage FROM grammar_topics LIMIT 2`).all().catch(() => ({ results: [] }));
+      gramRows = fallbackGram?.results || [];
+    }
+    for (const g of gramRows) {
+      knowledgeSnippets.push(`• [Ngữ pháp ${g.grade_level || 'K12'} - ${g.curriculum_unit || 'Global Success'}] ${g.topic}: ${g.summary || ''} ${g.formula ? `(Công thức: ${g.formula})` : ''}`.trim());
+    }
+
+    if (detectedIntents.includes('pedagogy_knowledge')) {
+      tablesQueried.push('cambridge_vocabulary');
+      const vocabRes = await db.prepare(`
+        SELECT word, ipa, pos, cefr_level, meaning_vi, example_en
+        FROM cambridge_vocabulary
+        WHERE word LIKE ? OR meaning_vi LIKE ?
+        LIMIT 4
+      `).bind(`%${primaryKw}%`, `%${primaryKw}%`).all().catch(() => ({ results: [] }));
+      for (const vc of vocabRes?.results || []) {
+        knowledgeSnippets.push(`• [Từ vựng ${vc.cefr_level}] ${vc.word} (${vc.ipa || vc.pos || ''}): ${vc.meaning_vi} — VD: "${vc.example_en}"`);
+      }
+    }
+
+    if (detectedIntents.includes('session_audit') || /(tai lieu|drive|giao an|de cuong|file)/i.test(normText)) {
+      tablesQueried.push('drive_file_index');
+      const driveRes = await db.prepare(`
+        SELECT drive_id, name, grade, category, web_view_link
+        FROM drive_file_index
+        ORDER BY synced_at DESC
+        LIMIT 4
+      `).all().catch(() => ({ results: [] }));
+      for (const df of driveRes?.results || []) {
+        knowledgeSnippets.push(`• [Google Drive ${df.grade || ''}] ${df.name} (${df.category || 'Tài liệu'}) ${df.web_view_link ? `— ${df.web_view_link}` : ''}`);
+      }
+    }
   }
   nodeTimings.node_knowledge_fts = Date.now() - t4;
 
@@ -677,9 +792,11 @@ export async function runCragLangflowPipeline({
   }
 
   let scopedSessions = matchedSessions;
-  let scopedBills = matchedBills;
-  let scopedEvaluations = matchedEvaluations;
-  let scopedAttendance = matchedAttendance;
+  let scopedBills = (effectiveRole === 'parent' || effectiveRole === 'student') ? [] : matchedBills;
+  let scopedEvaluations = (effectiveRole === 'parent' || effectiveRole === 'student') ? [] : matchedEvaluations;
+  let scopedAttendance = (effectiveRole === 'parent' || effectiveRole === 'student') ? [] : matchedAttendance;
+  let scopedHomework = matchedHomework;
+  let scopedSessionAudits = matchedSessionAudits;
 
   if (matchedStudents.length > 0) {
     const targetIds = new Set(matchedStudents.map((s) => s.id));
@@ -722,7 +839,7 @@ export async function runCragLangflowPipeline({
     });
 
     // If user asks about tuition/QR for a specific student (e.g., Bảo Khiêm) who doesn't have a pre-seeded row in tuition_bills yet,
-    // dynamically synthesize their accurate bill from their profile & student_stars so the conversation never hits a dead end!
+    // dynamically synthesize their accurate bill from their profile & student_stars AND persist it to D1 tuition_bills so SePay webhook reconciles 100%!
     if (scopedBills.length === 0 && detectedIntents.includes('tuition_finance')) {
       const st = matchedStudents[0];
       const starRow = matchedStars.find((s) => s.student_id === st.id);
@@ -738,26 +855,43 @@ export async function runCragLangflowPipeline({
         accountHolder: 'NGUYEN MINH VU',
         period: 'T10'
       });
-      scopedBills = [
-        {
-          id: `bill_dyn_${st.id}`,
-          student_id: st.id,
-          student_name: st.name.replace(/\s*\(.*?\)/g, ''),
-          grade_level: st.grade || 'Lớp 7',
-          billing_period: 'Tháng 10/2026',
-          base_tuition_vnd: baseVnd,
-          attendance_attended_sessions: 8,
-          attendance_total_sessions: 8,
-          stars_deducted: starsDeduct,
-          discount_vnd: discountVnd,
-          final_amount_vnd: finalVnd,
-          bank_name: 'MBBank',
-          bank_account: '0901234567',
-          account_holder: 'NGUYEN MINH VU',
-          vietqr_url: dynQr
-        }
-      ];
-      correctiveActions.push(`Tự động tính phiếu học phí & tạo mã VietQR riêng cho ${st.name}.`);
+      const dynBill = {
+        id: `bill_dyn_${st.id}`,
+        student_id: st.id,
+        student_name: st.name.replace(/\s*\(.*?\)/g, ''),
+        grade_level: st.grade || 'Lớp 7',
+        program_name: 'Global Success & Cambridge',
+        billing_period: 'Tháng 10/2026',
+        base_tuition_vnd: baseVnd,
+        attendance_attended_sessions: 8,
+        attendance_total_sessions: 8,
+        stars_available: starsAvail,
+        stars_deducted: starsDeduct,
+        discount_vnd: discountVnd,
+        final_amount_vnd: finalVnd,
+        bank_name: 'MBBank',
+        bank_account: '0901234567',
+        account_holder: 'NGUYEN MINH VU',
+        vietqr_url: dynQr,
+        status: 'pending'
+      };
+      scopedBills = [dynBill];
+      if (db) {
+        await db.prepare(`
+          INSERT OR IGNORE INTO tuition_bills (
+            id, student_id, student_name, grade_level, program_name, billing_period,
+            base_tuition_vnd, attendance_total_sessions, attendance_attended_sessions,
+            stars_available, stars_deducted, discount_vnd, final_amount_vnd,
+            bank_name, bank_account, account_holder, vietqr_url, status, updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', CURRENT_TIMESTAMP)
+        `).bind(
+          dynBill.id, dynBill.student_id, dynBill.student_name, dynBill.grade_level, dynBill.program_name, dynBill.billing_period,
+          dynBill.base_tuition_vnd, dynBill.attendance_total_sessions, dynBill.attendance_attended_sessions,
+          dynBill.stars_available, dynBill.stars_deducted, dynBill.discount_vnd, dynBill.final_amount_vnd,
+          dynBill.bank_name, dynBill.bank_account, dynBill.account_holder, dynBill.vietqr_url
+        ).run().catch(() => {});
+      }
+      correctiveActions.push(`Tự động tính phiếu học phí, lưu D1 & tạo mã VietQR riêng cho ${st.name}.`);
     }
 
     scopedEvaluations = matchedEvaluations.filter((e) => {
@@ -771,6 +905,11 @@ export async function runCragLangflowPipeline({
       const aNorm = normalizeVi(a.student_name).replace(/\(.*?\)/g, '').trim();
       return targetNamesNorm.some((n) => n.includes(aNorm) || aNorm.includes(n));
     });
+
+    if (matchedHomework.length > 0 && targetClassIds.size > 0) {
+      const classHw = matchedHomework.filter((h) => targetClassIds.has(h.class_id));
+      if (classHw.length > 0) scopedHomework = classHw;
+    }
   } else if (extractedGrade) {
     const gradeSessions = matchedSessions.filter((s) => normalizeVi(s.grade_level) === normalizeVi(extractedGrade));
     if (gradeSessions.length > 0) {
@@ -830,6 +969,24 @@ export async function runCragLangflowPipeline({
     );
   }
 
+  if (scopedHomework.length > 0 && (detectedIntents.includes('academic_results') || /(btvn|bai tap|deadline|quiz)/i.test(normText))) {
+    focusedFacts.push(
+      `Bài tập về nhà (Homework):\n` +
+      scopedHomework.slice(0, 3).map((h) =>
+        `- [${h.class_name}] ${h.title} (${h.skill_type}) — Hạn nộp: ${h.deadline_date} ${h.deadline_time} (+${h.star_reward_on_time || 50} sao)`
+      ).join('\n')
+    );
+  }
+
+  if (scopedSessionAudits.length > 0 && detectedIntents.includes('session_audit')) {
+    focusedFacts.push(
+      `Đối soát chất lượng buổi học (5 Phần):\n` +
+      scopedSessionAudits.slice(0, 3).map((sa) =>
+        `- Ca ${sa.session_id} (${sa.class_id || 'Lớp 7'}): Giáo án "${sa.vault_article_title || sa.drive_file_name || 'Chuẩn K12'}" • Độ khớp: ${sa.manual_suitability_pct || 96}% • Đánh giá: ${sa.effectiveness_rating || 'good'} • Lộ trình tiếp theo: ${sa.roadmap_recommendation || 'Ôn tập chuyên đề'}`
+      ).join('\n')
+    );
+  }
+
   if (detectedIntents.includes('tuition_finance') && scopedBills.length > 0 && effectiveRole !== 'student') {
     focusedFacts.push(
       `Học phí:\n` +
@@ -856,7 +1013,7 @@ export async function runCragLangflowPipeline({
   let finalReply = '';
   let usedModel = 'natural-continuity-composer';
 
-  const studentDisplayName = matchedStudents.length === 1
+  const studentDisplayName = matchedStudents.length > 0
     ? matchedStudents[0].name.replace(/\s*\(.*?\)/g, '')
     : '';
 
@@ -924,6 +1081,24 @@ export async function runCragLangflowPipeline({
       blocks.push(lines.join('\n\n'));
     }
 
+    if (scopedHomework.length > 0 && /(btvn|bai tap|deadline|quiz)/i.test(normText)) {
+      const hwLines = scopedHomework.slice(0, 3).map((h) =>
+        `• [${h.class_name}] ${h.title} (${h.skill_type}) — Hạn: ${h.deadline_date} ${h.deadline_time} (+${h.star_reward_on_time || 50} sao)`
+      );
+      blocks.push(`📝 Bài tập về nhà hiện tại:\n${hwLines.join('\n')}`);
+    }
+
+    if (detectedIntents.includes('session_audit') && scopedSessionAudits.length > 0) {
+      const auditLines = scopedSessionAudits.slice(0, 2).map((sa) =>
+        `🔬 Đối soát chất lượng ca học (${sa.session_id}):\n` +
+        `• Giáo án & Tài liệu: ${sa.vault_article_title || sa.drive_file_name || 'Giáo án chuẩn K12'}${sa.drive_file_url ? ` (${sa.drive_file_url})` : ''}\n` +
+        `• Độ khớp nội dung: ${sa.manual_suitability_pct || 96}% (${sa.effectiveness_rating || 'Tốt'})\n` +
+        `• Ghi chú hiệu quả: ${sa.effectiveness_notes || 'Đạt mục tiêu bài giảng'}\n` +
+        `• Lộ trình buổi tới: ${sa.roadmap_recommendation || 'Luyện tập nâng cao'}`
+      );
+      blocks.push(auditLines.join('\n\n'));
+    }
+
     if (detectedIntents.includes('tuition_finance') && scopedBills.length > 0 && effectiveRole !== 'student') {
       const lines = scopedBills.slice(0, 2).map((b) =>
         `💳 ${continuityPrefix ? `${continuityPrefix}Học phí ${b.billing_period}:` : `Học phí ${b.billing_period} của ${b.student_name} (${b.grade_level}):`}\n` +
@@ -939,7 +1114,11 @@ export async function runCragLangflowPipeline({
       blocks.push(`✅ ${absenceActionNote}`);
     }
 
-    // 2. Only call LLM if user asked a pedagogy/English question or if blocks is empty
+    if ((effectiveRole === 'parent' || effectiveRole === 'student') && matchedStudents.length === 0 && blocks.length === 0 && !detectedIntents.includes('pedagogy_knowledge')) {
+      blocks.push(`Để bảo mật thông tin học sinh, bạn vui lòng nhắn kèm Họ tên học sinh (ví dụ: "Lịch học của Bảo Khiêm" hoặc "Học phí của Nguyễn Minh Anh") hoặc số điện thoại đăng ký để mình tra cứu chính xác nhé.`);
+    }
+
+    // 2. Call LLM (DeepSeek-R1 primary -> Llama-3.1 fallback) if user asked a pedagogy/English question or if blocks is empty
     if ((detectedIntents.includes('pedagogy_knowledge') || blocks.length === 0) && env?.AI) {
       const systemPrompt = `Bạn là giáo viên tại Lớp Tiếng Anh Cô Dung (123 Phố Vọng, Hà Nội), đang trả lời tin nhắn Zalo cho ${displayName}.
 Trả lời ngắn gọn, tự nhiên, đi thẳng vào trọng tâm câu hỏi, không dùng ký tự ** hay ###, không xưng là AI hay Bot, không viết câu xã giao sáo rỗng ở đầu hoặc cuối tin.
@@ -950,18 +1129,35 @@ ${verifiedFactsText}`;
         ...recentConversationTurns.slice(-4),
         { role: 'user', content: cleanText || 'Xem thông tin học tập' }
       ];
+      let aiAnswered = false;
       try {
-        const llamaRes = await env.AI.run('@cf/meta/llama-3.1-8b-instruct', {
+        const dsRes = await env.AI.run('@cf/deepseek-ai/deepseek-r1-distill-qwen-32b', {
           messages: chatMessages,
-          max_tokens: 600,
+          max_tokens: 700,
           temperature: 0.2
         });
-        const cleaned = cleanNaturalZaloText(llamaRes?.response || '');
-        if (cleaned && cleaned.length > 15) {
-          blocks.push(cleaned);
-          usedModel = 'natural-continuity + llama-3.1';
+        const cleanedDs = cleanNaturalZaloText(dsRes?.response || '');
+        if (cleanedDs && cleanedDs.length > 15) {
+          blocks.push(cleanedDs);
+          usedModel = '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b';
+          aiAnswered = true;
         }
       } catch {}
+
+      if (!aiAnswered) {
+        try {
+          const llamaRes = await env.AI.run('@cf/meta/llama-3.1-8b-instruct', {
+            messages: chatMessages,
+            max_tokens: 600,
+            temperature: 0.2
+          });
+          const cleaned = cleanNaturalZaloText(llamaRes?.response || '');
+          if (cleaned && cleaned.length > 15) {
+            blocks.push(cleaned);
+            usedModel = '@cf/meta/llama-3.1-8b-instruct';
+          }
+        } catch {}
+      }
     }
 
     if (nextStepSuggestion && blocks.length > 0) {

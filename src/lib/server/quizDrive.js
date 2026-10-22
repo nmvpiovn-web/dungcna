@@ -330,7 +330,17 @@ function decodePdfString(s) {
 }
 
 function assertExtractedText(text) {
-  if (!text || text.trim().length < 50) {
+  const cleaned = String(text || '')
+    .replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/m, '')
+    .replace(/^#+\s+.*$/gm, '')
+    .replace(/^\s*[-*•]?\s*\*\*(?:Loại|Phân loại|Nguồn|Thư mục|Định dạng|Dung lượng|Cập nhật)[:\s]*\*\*.*$/gim, '')
+    .replace(/^\s*[-*•]?\s*(?:Loại|Phân loại|Nguồn|Thư mục|Định dạng|Dung lượng|Cập nhật)\s*[:=].*$/gim, '')
+    .replace(/\*?\(Không trích xuất được nội dung[^)]*\)\*?/gi, '')
+    .replace(/Thư mục tài liệu trên Google Drive\.?/gi, '')
+    .replace(/🔗\s*\[Mở trên Drive\]\([^)]*\)/gi, '')
+    .replace(/^---+\s*$/gm, '')
+    .trim();
+  if (!cleaned || cleaned.length < 50) {
     throw new QuizDriveError('Không đọc được nội dung tệp (tệp rỗng hoặc định dạng không đọc được)', 400, 'EmptyExtraction');
   }
   return text;
@@ -635,6 +645,7 @@ export async function listQuizDriveFiles(platform) {
            AND title NOT LIKE '%.mp3'
            AND title NOT LIKE '%.rar'
            AND (category IS NULL OR category NOT IN ('drive_folder', 'listening'))
+           AND content_markdown NOT LIKE '%Không trích xuất được nội dung%'
            AND LENGTH(content_markdown) >= 100
          ORDER BY updated_at DESC LIMIT 60`
       ).all();

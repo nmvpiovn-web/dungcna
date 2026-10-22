@@ -2,13 +2,14 @@
  Trung tâm Quản lý User, Phân quyền Role (Học sinh, Giáo viên, Phụ huynh, Leader, Admin) & Cấp lại Mật khẩu đồng bộ trực tiếp Cloudflare D1 -->
 <script>
  import { onMount } from 'svelte';
- import { getAuthToken, getCurrentUser } from '$lib/unifiedStore';
+ import { getAuthToken } from '$lib/unifiedStore';
 
  let users = $state([]);
  let loading = $state(true);
  let error = $state('');
  let toast = $state('');
  let toastType = $state('ok'); // 'ok' | 'err'
+ let modalError = $state('');
  let q = $state('');
  let roleFilter = $state('all');
  let busyId = $state('');
@@ -99,7 +100,10 @@
  function notify(msg, type = 'ok') {
   toast = msg;
   toastType = type;
-  setTimeout(() => { if (toast === msg) toast = ''; }, 4000);
+  if (type === 'err') {
+   modalError = msg;
+  }
+  setTimeout(() => { if (toast === msg) toast = ''; }, 5000);
  }
 
  function authHeaders() {
@@ -127,7 +131,10 @@
    const params = new URLSearchParams();
    if (q.trim()) params.set('q', q.trim());
    if (roleFilter !== 'all') params.set('role', roleFilter);
-   const res = await fetch(`/api/admincp/users?${params.toString()}`, { headers: authHeaders() });
+   const res = await fetch(`/api/admincp/users?${params.toString()}`, {
+    headers: authHeaders(),
+    credentials: 'include'
+   });
    const data = await res.json().catch(() => ({}));
    if (!res.ok || !data.success) {
     error = data.error || `Lỗi tải danh sách (${res.status})`;
@@ -142,8 +149,14 @@
   }
  }
 
+ function openCreateUserModal() {
+  modalError = '';
+  showCreateModal = true;
+ }
+
  async function handleCreateUser(e) {
-  e.preventDefault();
+  if (e && e.preventDefault) e.preventDefault();
+  modalError = '';
   if (!createForm.name.trim() || !createForm.username.trim() || createForm.password.length < 6) {
    notify('Vui lòng điền Họ tên, Username và Mật khẩu (>= 6 ký tự).', 'err');
    return;
@@ -153,6 +166,7 @@
    const res = await fetch('/api/admincp/users', {
     method: 'POST',
     headers: authHeaders(),
+    credentials: 'include',
     body: JSON.stringify({
      action: 'create_user',
      ...createForm
@@ -188,6 +202,7 @@
    const res = await fetch('/api/admincp/users', {
     method: 'POST',
     headers: authHeaders(),
+    credentials: 'include',
     body: JSON.stringify({ action: 'update_role', user_id: u.id, role: newRole })
    });
    const data = await res.json().catch(() => ({}));
@@ -205,14 +220,12 @@
  }
 
  async function toggleLock(u) {
-  const willLock = (u.status || 'active') !== 'locked';
-  const label = willLock ? `Khóa tài khoản @${u.username}?` : `Mở khóa tài khoản @${u.username}?`;
-  if (!confirm(label)) return;
   busyId = u.id;
   try {
    const res = await fetch('/api/admincp/users', {
     method: 'POST',
     headers: authHeaders(),
+    credentials: 'include',
     body: JSON.stringify({ action: 'toggle_status', user_id: u.id })
    });
    const data = await res.json().catch(() => ({}));
@@ -235,6 +248,7 @@
    const res = await fetch('/api/admincp/users', {
     method: 'POST',
     headers: authHeaders(),
+    credentials: 'include',
     body: JSON.stringify({ action: 'approve_user', user_id: u.id })
    });
    const data = await res.json().catch(() => ({}));
@@ -252,6 +266,7 @@
  }
 
  function openResetPasswordModal(u) {
+  modalError = '';
   targetUserForPw = u;
   newPasswordVal = '';
   forceChangeNextLogin = false;
@@ -259,7 +274,8 @@
  }
 
  async function submitResetPassword(e) {
-  e.preventDefault();
+  if (e && e.preventDefault) e.preventDefault();
+  modalError = '';
   if (!targetUserForPw || newPasswordVal.trim().length < 6) {
    notify('Mật khẩu mới phải có ít nhất 6 ký tự.', 'err');
    return;
@@ -269,6 +285,7 @@
    const res = await fetch('/api/admincp/users', {
     method: 'POST',
     headers: authHeaders(),
+    credentials: 'include',
     body: JSON.stringify({
      action: 'reset_password',
      user_id: targetUserForPw.id,
@@ -293,6 +310,7 @@
  }
 
  function openEditUserModal(u) {
+  modalError = '';
   editForm = {
    user_id: u.id,
    username: u.username,
@@ -313,12 +331,14 @@
  }
 
  async function submitEditUser(e) {
-  e.preventDefault();
+  if (e && e.preventDefault) e.preventDefault();
+  modalError = '';
   savingEdit = true;
   try {
    const res = await fetch('/api/admincp/users', {
     method: 'POST',
     headers: authHeaders(),
+    credentials: 'include',
     body: JSON.stringify({
      action: 'update_user',
      ...editForm
@@ -340,6 +360,7 @@
  }
 
  function openStarAdjustModal(u) {
+  modalError = '';
   targetStudentForStar = u;
   starDelta = 50;
   starReason = 'Thưởng chuyên cần & hoàn thành bài tập xuất sắc';
@@ -347,13 +368,15 @@
  }
 
  async function submitStarAdjust(e) {
-  e.preventDefault();
+  if (e && e.preventDefault) e.preventDefault();
+  modalError = '';
   if (!targetStudentForStar) return;
   savingStars = true;
   try {
    const res = await fetch('/api/admincp/users', {
     method: 'POST',
     headers: authHeaders(),
+    credentials: 'include',
     body: JSON.stringify({
      action: 'adjust_stars',
      user_id: targetStudentForStar.id,
@@ -377,19 +400,22 @@
  }
 
  function openLinkParentModal(u) {
+  modalError = '';
   targetParentForLink = u;
   childUsernameOrId = '';
   showLinkChildModal = true;
  }
 
  async function submitLinkParent(e) {
-  e.preventDefault();
+  if (e && e.preventDefault) e.preventDefault();
+  modalError = '';
   if (!targetParentForLink || !childUsernameOrId.trim()) return;
   linkingChild = true;
   try {
    const res = await fetch('/api/admincp/users', {
     method: 'POST',
     headers: authHeaders(),
+    credentials: 'include',
     body: JSON.stringify({
      action: 'link_parent_student',
      user_id: targetParentForLink.id,
@@ -412,20 +438,24 @@
  }
 
  async function deleteUserAccount(u) {
-  if (!confirm(`Xác nhận xóa vĩnh viễn tài khoản @${u.username} (${u.name}) khỏi cơ sở dữ liệu D1?`)) return;
-  busyId = u.id;
+  if (!u || (!u.id && !u.user_id)) return;
+  const uid = u.id || u.user_id;
+  busyId = uid;
   try {
    const res = await fetch('/api/admincp/users', {
     method: 'POST',
     headers: authHeaders(),
-    body: JSON.stringify({ action: 'delete_user', user_id: u.id })
+    credentials: 'include',
+    body: JSON.stringify({ action: 'delete_user', user_id: uid })
    });
    const data = await res.json().catch(() => ({}));
    if (!res.ok || !data.success) {
     notify(data.error || 'Xóa tài khoản thất bại', 'err');
     return;
    }
-   notify(data.message || 'Đã xóa tài khoản');
+   users = users.filter(row => row.id !== uid);
+   showEditModal = false;
+   notify(data.message || `🗑️ Đã xóa tài khoản @${u.username || uid} khỏi D1!`);
    await loadUsers();
   } catch (err) {
    notify(err.message || 'Lỗi mạng', 'err');
@@ -440,52 +470,23 @@
 </script>
 
 <div class="space-y-4">
- <!-- Summary KPI Cards -->
- <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
-  <div class="p-3 rounded-xl bg-white border border-stone-200 shadow-xs">
-   <div class="text-[11px] font-bold text-stone-500 uppercase">Tổng User D1</div>
-   <div class="text-xl font-black text-stone-900 mt-0.5 tabular-nums">{stats.total}</div>
-  </div>
-  <div class="p-3 rounded-xl bg-emerald-50/70 border border-emerald-200 shadow-xs">
-   <div class="text-[11px] font-bold text-emerald-700 uppercase">🎓 Học Sinh</div>
-   <div class="text-xl font-black text-emerald-900 mt-0.5 tabular-nums">
-    {stats.students}
-    {#if stats.trialStudents > 0}
-     <span class="text-xs font-bold text-amber-700">({stats.trialStudents} thử)</span>
-    {/if}
-   </div>
-  </div>
-  <div class="p-3 rounded-xl bg-teal-50/70 border border-teal-200 shadow-xs">
-   <div class="text-[11px] font-bold text-teal-700 uppercase">👩‍🏫 Giáo Viên</div>
-   <div class="text-xl font-black text-teal-900 mt-0.5 tabular-nums">{stats.teachers}</div>
-  </div>
-  <div class="p-3 rounded-xl bg-sky-50/70 border border-sky-200 shadow-xs">
-   <div class="text-[11px] font-bold text-sky-700 uppercase">👨‍👩‍👧 Phụ Huynh</div>
-   <div class="text-xl font-black text-sky-900 mt-0.5 tabular-nums">{stats.parents}</div>
-  </div>
-  <div class="p-3 rounded-xl bg-amber-50/70 border border-amber-200 shadow-xs">
-   <div class="text-[11px] font-bold text-amber-800 uppercase">🛡️ Quản Trị / Leader</div>
-   <div class="text-xl font-black text-amber-900 mt-0.5 tabular-nums">{stats.managers}</div>
-  </div>
- </div>
-
- <!-- Header & Filter Bar -->
+ <!-- Unified Control Bar & Quick Role Filter Pills -->
  <div class="p-4 rounded-xl bg-white border border-stone-200 shadow-xs space-y-3">
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
    <div>
     <h2 class="text-base font-bold text-stone-900">👥 Quản Lý Người Dùng, Phân Quyền Role &amp; Cấp Mật Khẩu (D1)</h2>
     <p class="text-xs text-stone-500 mt-0.5">
-     Đồng bộ trực tiếp bảng <code class="font-mono text-stone-700">users</code>, <code class="font-mono text-stone-700">teacher_profiles</code>, <code class="font-mono text-stone-700">student_stars</code> và <code class="font-mono text-stone-700">parent_student_links</code>.
+     Tổng số: <strong>{stats.total}</strong> tài khoản ({stats.students} Học sinh • {stats.teachers} Giáo viên • {stats.parents} Phụ huynh • {stats.managers} Quản lý)
     </p>
    </div>
    <div class="flex items-center gap-2 flex-wrap">
     <button
      type="button"
      data-testid="admincp-create-user-btn"
-     onclick={() => { showCreateModal = true; }}
+     onclick={openCreateUserModal}
      class="px-3.5 py-2 rounded-lg text-xs font-bold bg-emerald-700 hover:bg-emerald-800 text-white shadow-xs transition-colors"
     >
-     + Tạo Tài Khoản Mới
+     ➕ Tạo Tài Khoản Mới
     </button>
     <button
      type="button"
@@ -497,7 +498,7 @@
    </div>
   </div>
 
-  <!-- Search & Role Filter Pills -->
+  <!-- Search & Role Filter Bar -->
   <div class="flex flex-col md:flex-row gap-2.5">
    <form onsubmit={(e) => { e.preventDefault(); loadUsers(); }} class="flex gap-2 flex-1">
     <input
@@ -513,12 +514,12 @@
      Tìm
     </button>
    </form>
-   <div class="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0">
+   <div class="flex flex-wrap items-center gap-1.5">
     {#each [
-     ['all', 'Tất cả'],
-     ['student', '🎓 Học sinh'],
-     ['teacher', '👩‍🏫 Giáo viên'],
-     ['parent', '👨‍👩‍👧 Phụ huynh'],
+     ['all', `Tất cả (${stats.total})`],
+     ['student', `🎓 Học sinh (${stats.students})`],
+     ['teacher', `👩‍🏫 Giáo viên (${stats.teachers})`],
+     ['parent', `👨‍👩‍👧 Phụ huynh (${stats.parents})`],
      ['leader', '⭐ Leader'],
      ['admin', '🛡️ Admin'],
      ['superadmin', '👑 SuperAdmin']
@@ -536,7 +537,7 @@
  </div>
 
  {#if toast}
-  <div class="p-3 rounded-xl text-xs font-bold border {toastType === 'err' ? 'bg-rose-50 text-rose-800 border-rose-300' : 'bg-emerald-50 text-emerald-800 border-emerald-300'}">
+  <div role="status" class="p-3 rounded-xl text-xs font-bold border {toastType === 'err' ? 'bg-rose-50 text-rose-800 border-rose-300' : 'bg-emerald-50 text-emerald-800 border-emerald-300'}">
    {toast}
   </div>
  {/if}
@@ -738,12 +739,13 @@
           </button>
           <button
            type="button"
+           data-testid="admincp-delete-user-{u.username}"
            disabled={busyId === u.id}
            onclick={() => deleteUserAccount(u)}
-           class="px-2 py-1.5 rounded-lg text-[11px] font-bold bg-stone-100 hover:bg-rose-100 text-stone-500 hover:text-rose-700 border border-stone-200 transition-colors"
+           class="px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition-colors"
            title="Xóa tài khoản"
           >
-           🗑️
+           🗑️ Xóa
           </button>
          {/if}
         </div>
@@ -756,260 +758,302 @@
  {/if}
 </div>
 
-<!-- MODAL 1: CREATE USER -->
+<!-- MODAL 1: CREATE USER (Sticky CTA Footer at bottom) -->
 {#if showCreateModal}
- <div class="fixed inset-0 z-50 flex items-center justify-center bg-stone-500/25 backdrop-blur-sm p-4 overflow-y-auto" role="dialog" aria-modal="true">
-  <div class="bg-white rounded-2xl border border-stone-200 shadow-2xl w-full max-w-lg p-6 space-y-4 my-auto max-h-[90vh] overflow-y-auto">
-   <div class="flex items-center justify-between border-b border-stone-200 pb-3">
+ <div class="fixed inset-0 z-50 flex items-center justify-center bg-stone-500/25 backdrop-blur-sm p-4" role="dialog" aria-modal="true">
+  <div class="bg-white rounded-2xl border border-stone-200 shadow-2xl w-full max-w-lg flex flex-col max-h-[85vh] overflow-hidden">
+   <div class="shrink-0 flex items-center justify-between border-b border-stone-200 px-6 py-4 bg-white">
     <h3 class="text-base font-black text-stone-900">➕ Tạo Tài Khoản Mới Trên Cloudflare D1</h3>
     <button type="button" onclick={() => showCreateModal = false} class="w-8 h-8 rounded-full bg-stone-100 text-stone-600 font-bold">✕</button>
    </div>
-   <form onsubmit={handleCreateUser} class="space-y-3 text-xs">
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-     <div>
-      <label for="cu-role" class="block font-bold text-stone-700 mb-1">Vai trò (Role):</label>
-      <select id="cu-role" bind:value={createForm.role} class="w-full px-3 py-2 rounded-lg border border-stone-300 bg-white font-bold text-stone-900">
-       <option value="student">🎓 Học sinh (Student)</option>
-       <option value="teacher">👩‍🏫 Giáo viên (Teacher)</option>
-       <option value="parent">👨‍👩‍👧 Phụ huynh (Parent)</option>
-       <option value="leader">⭐ Quản lý (Leader)</option>
-       <option value="admin">🛡️ Quản trị viên (Admin)</option>
-      </select>
-     </div>
-     <div>
-      <label for="cu-name" class="block font-bold text-stone-700 mb-1">Họ và tên (*):</label>
-      <input id="cu-name" type="text" required bind:value={createForm.name} placeholder="VD: Nguyễn Minh Quân" class="w-full px-3 py-2 rounded-lg border border-stone-300" />
-     </div>
-    </div>
-
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-     <div>
-      <label for="cu-username" class="block font-bold text-stone-700 mb-1">Username đăng nhập (*):</label>
-      <input id="cu-username" type="text" required bind:value={createForm.username} placeholder="VD: minhquan7a" class="w-full px-3 py-2 rounded-lg border border-stone-300 font-mono" />
-     </div>
-     <div>
-      <label for="cu-password" class="block font-bold text-stone-700 mb-1">Mật khẩu khởi tạo (&ge; 6 ký tự):</label>
-      <input id="cu-password" type="text" required minlength="6" bind:value={createForm.password} placeholder="VD: MatKhau123!" class="w-full px-3 py-2 rounded-lg border border-stone-300 font-mono" />
-     </div>
-    </div>
-
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-     <div>
-      <label for="cu-phone" class="block font-bold text-stone-700 mb-1">Số điện thoại:</label>
-      <input id="cu-phone" type="text" bind:value={createForm.phone} placeholder="09..." class="w-full px-3 py-2 rounded-lg border border-stone-300" />
-     </div>
-     <div>
-      <label for="cu-email" class="block font-bold text-stone-700 mb-1">Email:</label>
-      <input id="cu-email" type="email" bind:value={createForm.email} placeholder="email@example.com" class="w-full px-3 py-2 rounded-lg border border-stone-300" />
-     </div>
-    </div>
-
-    {#if createForm.role === 'student'}
-     <div class="p-3 rounded-xl bg-emerald-50/70 border border-emerald-200 space-y-3">
-      <div class="font-bold text-emerald-900">🎓 Cấu hình Học Vụ Học Sinh</div>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-       <div>
-        <label for="cu-grade" class="block font-semibold text-stone-700 mb-1">Khối lớp:</label>
-        <select id="cu-grade" bind:value={createForm.grade} class="w-full px-3 py-2 rounded-lg border border-stone-300 bg-white">
-         {#each GRADE_OPTIONS as g}
-          <option value={g}>{g}</option>
-         {/each}
-        </select>
-       </div>
-       <div>
-        <label for="cu-class" class="block font-semibold text-stone-700 mb-1">Mã lớp (Class ID):</label>
-        <input id="cu-class" type="text" bind:value={createForm.class_id} placeholder="L7_GLOBAL_SUCCESS_A1" class="w-full px-3 py-2 rounded-lg border border-stone-300 font-mono" />
-       </div>
+   <form onsubmit={handleCreateUser} class="flex-1 flex flex-col min-h-0 overflow-hidden text-xs">
+    <div class="flex-1 overflow-y-auto px-6 py-4 space-y-3">
+     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div>
+       <label for="cu-role" class="block font-bold text-stone-700 mb-1">Vai trò (Role):</label>
+       <select id="cu-role" bind:value={createForm.role} class="w-full px-3 py-2 rounded-lg border border-stone-300 bg-white font-bold text-stone-900">
+        <option value="student">🎓 Học sinh (Student)</option>
+        <option value="teacher">👩‍🏫 Giáo viên (Teacher)</option>
+        <option value="parent">👨‍👩‍👧 Phụ huynh (Parent)</option>
+        <option value="leader">⭐ Quản lý (Leader)</option>
+        <option value="admin">🛡️ Quản trị viên (Admin)</option>
+       </select>
+      </div>
+      <div>
+       <label for="cu-name" class="block font-bold text-stone-700 mb-1">Họ và tên (*):</label>
+       <input id="cu-name" type="text" required bind:value={createForm.name} placeholder="VD: Nguyễn Minh Quân" class="w-full px-3 py-2 rounded-lg border border-stone-300" />
       </div>
      </div>
-    {:else if createForm.role === 'teacher'}
-     <div class="p-3 rounded-xl bg-teal-50/70 border border-teal-200 space-y-3">
-      <div class="font-bold text-teal-900">👩‍🏫 Cấu hình Hồ Sơ Giáo Viên &amp; Định Mức Lương</div>
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-       <div>
-        <label for="cu-ttitle" class="block font-semibold text-stone-700 mb-1">Chức danh:</label>
-        <input id="cu-ttitle" type="text" bind:value={createForm.role_title} class="w-full px-2.5 py-1.5 rounded-lg border border-stone-300 bg-white" />
-       </div>
-       <div>
-        <label for="cu-trate" class="block font-semibold text-stone-700 mb-1">Đơn giá / ca (VNĐ):</label>
-        <input id="cu-trate" type="number" bind:value={createForm.rate_per_session_vnd} class="w-full px-2.5 py-1.5 rounded-lg border border-stone-300 bg-white" />
-       </div>
-       <div>
-        <label for="cu-tbase" class="block font-semibold text-stone-700 mb-1">Lương cứng (VNĐ):</label>
-        <input id="cu-tbase" type="number" bind:value={createForm.base_salary_vnd} class="w-full px-2.5 py-1.5 rounded-lg border border-stone-300 bg-white" />
-       </div>
+
+     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div>
+       <label for="cu-username" class="block font-bold text-stone-700 mb-1">Username đăng nhập (*):</label>
+       <input id="cu-username" type="text" required bind:value={createForm.username} placeholder="VD: minhquan7a" class="w-full px-3 py-2 rounded-lg border border-stone-300 font-mono" />
+      </div>
+      <div>
+       <label for="cu-password" class="block font-bold text-stone-700 mb-1">Mật khẩu khởi tạo (&ge; 6 ký tự):</label>
+       <input id="cu-password" type="text" required minlength="6" bind:value={createForm.password} placeholder="VD: MatKhau123!" class="w-full px-3 py-2 rounded-lg border border-stone-300 font-mono" />
       </div>
      </div>
-    {:else if createForm.role === 'parent'}
-     <div class="p-3 rounded-xl bg-sky-50/70 border border-sky-200 space-y-2">
-      <label for="cu-stuid" class="block font-bold text-sky-900">🔗 Username hoặc ID Học sinh con (Tự động xác minh liên kết):</label>
-      <input id="cu-stuid" type="text" bind:value={createForm.student_id} placeholder="VD: minhquan7a hoặc baokhiem" class="w-full px-3 py-2 rounded-lg border border-sky-300 bg-white font-mono" />
-     </div>
-    {/if}
 
-    <div class="flex justify-end gap-2 pt-2">
-     <button type="button" onclick={() => showCreateModal = false} class="px-4 py-2 rounded-lg bg-stone-100 text-stone-700 font-bold">Hủy</button>
-     <button type="submit" disabled={creating} class="px-5 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-bold disabled:opacity-50">
-      {creating ? '⏳ Đang tạo...' : '💾 Tạo Tài Khoản D1'}
-     </button>
+     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div>
+       <label for="cu-phone" class="block font-bold text-stone-700 mb-1">Số điện thoại:</label>
+       <input id="cu-phone" type="text" bind:value={createForm.phone} placeholder="09..." class="w-full px-3 py-2 rounded-lg border border-stone-300" />
+      </div>
+      <div>
+       <label for="cu-email" class="block font-bold text-stone-700 mb-1">Email (Tùy chọn):</label>
+       <input id="cu-email" type="email" bind:value={createForm.email} placeholder="Tự tạo nếu để trống" class="w-full px-3 py-2 rounded-lg border border-stone-300" />
+      </div>
+     </div>
+
+     {#if createForm.role === 'student'}
+      <div class="p-3 rounded-xl bg-emerald-50/70 border border-emerald-200 space-y-3">
+       <div class="font-bold text-emerald-900">🎓 Cấu hình Học Vụ Học Sinh</div>
+       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+         <label for="cu-grade" class="block font-semibold text-stone-700 mb-1">Khối lớp:</label>
+         <select id="cu-grade" bind:value={createForm.grade} class="w-full px-3 py-2 rounded-lg border border-stone-300 bg-white">
+          {#each GRADE_OPTIONS as g}
+           <option value={g}>{g}</option>
+          {/each}
+         </select>
+        </div>
+        <div>
+         <label for="cu-class" class="block font-semibold text-stone-700 mb-1">Mã lớp (Class ID):</label>
+         <input id="cu-class" type="text" bind:value={createForm.class_id} placeholder="L7_GLOBAL_SUCCESS_A1" class="w-full px-3 py-2 rounded-lg border border-stone-300 font-mono" />
+        </div>
+       </div>
+      </div>
+     {:else if createForm.role === 'teacher'}
+      <div class="p-3 rounded-xl bg-teal-50/70 border border-teal-200 space-y-3">
+       <div class="font-bold text-teal-900">👩‍🏫 Cấu hình Hồ Sơ Giáo Viên &amp; Định Mức Lương</div>
+       <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+        <div>
+         <label for="cu-ttitle" class="block font-semibold text-stone-700 mb-1">Chức danh:</label>
+         <input id="cu-ttitle" type="text" bind:value={createForm.role_title} class="w-full px-2.5 py-1.5 rounded-lg border border-stone-300 bg-white" />
+        </div>
+        <div>
+         <label for="cu-trate" class="block font-semibold text-stone-700 mb-1">Đơn giá / ca (VNĐ):</label>
+         <input id="cu-trate" type="number" bind:value={createForm.rate_per_session_vnd} class="w-full px-2.5 py-1.5 rounded-lg border border-stone-300 bg-white" />
+        </div>
+        <div>
+         <label for="cu-tbase" class="block font-semibold text-stone-700 mb-1">Lương cứng (VNĐ):</label>
+         <input id="cu-tbase" type="number" bind:value={createForm.base_salary_vnd} class="w-full px-2.5 py-1.5 rounded-lg border border-stone-300 bg-white" />
+        </div>
+       </div>
+      </div>
+     {:else if createForm.role === 'parent'}
+      <div class="p-3 rounded-xl bg-sky-50/70 border border-sky-200 space-y-2">
+       <label for="cu-stuid" class="block font-bold text-sky-900">🔗 Username hoặc ID Học sinh con (Tự động xác minh liên kết):</label>
+       <input id="cu-stuid" type="text" bind:value={createForm.student_id} placeholder="VD: minhquan7a hoặc baokhiem" class="w-full px-3 py-2 rounded-lg border border-sky-300 bg-white font-mono" />
+      </div>
+     {/if}
+    </div>
+
+    <div data-testid="modal-cta-footer" class="sticky bottom-0 z-20 shrink-0 px-6 py-3.5 border-t border-stone-200 bg-white space-y-2">
+     {#if modalError}
+      <div role="alert" class="p-2.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 font-bold text-xs">
+       ⚠️ {modalError}
+      </div>
+     {/if}
+     <div class="flex justify-end gap-2">
+      <button type="button" onclick={() => showCreateModal = false} class="px-4 py-2 rounded-lg bg-stone-100 text-stone-700 font-bold">Hủy</button>
+      <button type="submit" data-testid="admincp-submit-create-user-btn" disabled={creating} class="px-5 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-bold disabled:opacity-50">
+       {creating ? '⏳ Đang tạo...' : '➕ Thêm & Lưu Tài Khoản D1'}
+      </button>
+     </div>
     </div>
    </form>
   </div>
  </div>
 {/if}
 
-<!-- MODAL 2: RESET PASSWORD -->
+<!-- MODAL 2: RESET PASSWORD (Sticky CTA Footer at bottom) -->
 {#if showResetPwModal && targetUserForPw}
  <div class="fixed inset-0 z-50 flex items-center justify-center bg-stone-500/25 backdrop-blur-sm p-4" role="dialog" aria-modal="true">
-  <div class="bg-white rounded-2xl border border-stone-200 shadow-2xl w-full max-w-md p-6 space-y-4">
-   <div class="flex items-center justify-between border-b border-stone-200 pb-3">
+  <div class="bg-white rounded-2xl border border-stone-200 shadow-2xl w-full max-w-md flex flex-col max-h-[85vh] overflow-hidden">
+   <div class="shrink-0 flex items-center justify-between border-b border-stone-200 px-6 py-4 bg-white">
     <div>
      <h3 class="text-base font-black text-stone-900">🔑 Cấp / Đổi Mật Khẩu Mới</h3>
      <p class="text-xs text-stone-500">Tài khoản: <strong>{targetUserForPw.name}</strong> (@{targetUserForPw.username})</p>
     </div>
     <button type="button" onclick={() => showResetPwModal = false} class="w-8 h-8 rounded-full bg-stone-100 text-stone-600 font-bold">✕</button>
    </div>
-   <form onsubmit={submitResetPassword} class="space-y-3 text-xs">
-    <div>
-     <label for="adm-new-pw" class="block font-bold text-stone-700 mb-1">Mật khẩu mới (&ge; 6 ký tự):</label>
-     <input
-      id="adm-new-pw"
-      data-testid="admincp-new-password-input"
-      type="text"
-      required
-      minlength="6"
-      bind:value={newPasswordVal}
-      placeholder="Nhập mật khẩu mới cho người dùng..."
-      class="w-full px-3 py-2.5 rounded-lg border border-stone-300 font-mono text-sm text-stone-900 focus:outline-none focus:border-emerald-600"
-     />
+   <form onsubmit={submitResetPassword} class="flex-1 flex flex-col min-h-0 overflow-hidden text-xs">
+    <div class="flex-1 overflow-y-auto px-6 py-4 space-y-3">
+     <div>
+      <label for="adm-new-pw" class="block font-bold text-stone-700 mb-1">Mật khẩu mới (&ge; 6 ký tự):</label>
+      <input
+       id="adm-new-pw"
+       data-testid="admincp-new-password-input"
+       type="text"
+       required
+       minlength="6"
+       bind:value={newPasswordVal}
+       placeholder="Nhập mật khẩu mới cho người dùng..."
+       class="w-full px-3 py-2.5 rounded-lg border border-stone-300 font-mono text-sm text-stone-900 focus:outline-none focus:border-emerald-600"
+      />
+     </div>
+     <label class="flex items-center gap-2 text-xs text-stone-700 cursor-pointer">
+      <input type="checkbox" bind:checked={forceChangeNextLogin} class="rounded border-stone-300" />
+      <span>Yêu cầu người dùng đổi lại mật khẩu ở lần đăng nhập kế tiếp</span>
+     </label>
     </div>
-    <label class="flex items-center gap-2 text-xs text-stone-700 cursor-pointer">
-     <input type="checkbox" bind:checked={forceChangeNextLogin} class="rounded border-stone-300" />
-     <span>Yêu cầu người dùng đổi lại mật khẩu ở lần đăng nhập kế tiếp</span>
-    </label>
-    <div class="flex justify-end gap-2 pt-2">
-     <button type="button" onclick={() => showResetPwModal = false} class="px-4 py-2 rounded-lg bg-stone-100 text-stone-700 font-bold">Hủy</button>
-     <button
-      type="submit"
-      data-testid="admincp-confirm-reset-pw-btn"
-      disabled={resettingPw}
-      class="px-5 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold disabled:opacity-50"
-     >
-      {resettingPw ? '⏳ Đang lưu D1...' : '🔑 Lưu Mật Khẩu Mới'}
-     </button>
+    <div data-testid="modal-cta-footer" class="sticky bottom-0 z-20 shrink-0 px-6 py-3.5 border-t border-stone-200 bg-white space-y-2">
+     {#if modalError}
+      <div role="alert" class="p-2.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 font-bold text-xs">
+       ⚠️ {modalError}
+      </div>
+     {/if}
+     <div class="flex justify-end gap-2">
+      <button type="button" onclick={() => showResetPwModal = false} class="px-4 py-2 rounded-lg bg-stone-100 text-stone-700 font-bold">Hủy</button>
+      <button
+       type="submit"
+       data-testid="admincp-confirm-reset-pw-btn"
+       disabled={resettingPw}
+       class="px-5 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold disabled:opacity-50"
+      >
+       {resettingPw ? '⏳ Đang lưu D1...' : '💾 Lưu Mật Khẩu Mới'}
+      </button>
+     </div>
     </div>
    </form>
   </div>
  </div>
 {/if}
 
-<!-- MODAL 3: EDIT USER / GRADE / SALARY -->
+<!-- MODAL 3: EDIT USER / GRADE / SALARY (Sticky CTA Footer at bottom with Delete + Save) -->
 {#if showEditModal}
- <div class="fixed inset-0 z-50 flex items-center justify-center bg-stone-500/25 backdrop-blur-sm p-4 overflow-y-auto" role="dialog" aria-modal="true">
-  <div class="bg-white rounded-2xl border border-stone-200 shadow-2xl w-full max-w-lg p-6 space-y-4 my-auto">
-   <div class="flex items-center justify-between border-b border-stone-200 pb-3">
+ <div class="fixed inset-0 z-50 flex items-center justify-center bg-stone-500/25 backdrop-blur-sm p-4" role="dialog" aria-modal="true">
+  <div class="bg-white rounded-2xl border border-stone-200 shadow-2xl w-full max-w-lg flex flex-col max-h-[85vh] overflow-hidden">
+   <div class="shrink-0 flex items-center justify-between border-b border-stone-200 px-6 py-4 bg-white">
     <h3 class="text-base font-black text-stone-900">✏️ Chỉnh Sửa Hồ Sơ &amp; Nghiệp Vụ (@{editForm.username})</h3>
     <button type="button" onclick={() => showEditModal = false} class="w-8 h-8 rounded-full bg-stone-100 text-stone-600 font-bold">✕</button>
    </div>
-   <form onsubmit={submitEditUser} class="space-y-3 text-xs">
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-     <div>
-      <label for="ed-name" class="block font-bold text-stone-700 mb-1">Họ và tên:</label>
-      <input id="ed-name" type="text" required bind:value={editForm.name} class="w-full px-3 py-2 rounded-lg border border-stone-300" />
+   <form onsubmit={submitEditUser} class="flex-1 flex flex-col min-h-0 overflow-hidden text-xs">
+    <div class="flex-1 overflow-y-auto px-6 py-4 space-y-3">
+     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div>
+       <label for="ed-name" class="block font-bold text-stone-700 mb-1">Họ và tên:</label>
+       <input id="ed-name" type="text" required bind:value={editForm.name} class="w-full px-3 py-2 rounded-lg border border-stone-300" />
+      </div>
+      <div>
+       <label for="ed-phone" class="block font-bold text-stone-700 mb-1">Số điện thoại:</label>
+       <input id="ed-phone" type="text" bind:value={editForm.phone} class="w-full px-3 py-2 rounded-lg border border-stone-300" />
+      </div>
      </div>
      <div>
-      <label for="ed-phone" class="block font-bold text-stone-700 mb-1">Số điện thoại:</label>
-      <input id="ed-phone" type="text" bind:value={editForm.phone} class="w-full px-3 py-2 rounded-lg border border-stone-300" />
+      <label for="ed-email" class="block font-bold text-stone-700 mb-1">Email:</label>
+      <input id="ed-email" type="email" bind:value={editForm.email} class="w-full px-3 py-2 rounded-lg border border-stone-300" />
      </div>
-    </div>
-    <div>
-     <label for="ed-email" class="block font-bold text-stone-700 mb-1">Email:</label>
-     <input id="ed-email" type="email" bind:value={editForm.email} class="w-full px-3 py-2 rounded-lg border border-stone-300" />
+
+     {#if editForm.role === 'student'}
+      <div class="p-3 rounded-xl bg-emerald-50 border border-emerald-200 space-y-3">
+       <div class="font-bold text-emerald-900">🎓 Phân Khối Lớp &amp; Thông Tin Phụ Huynh</div>
+       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+         <label for="ed-grade" class="block font-semibold text-stone-700 mb-1">Khối lớp chính:</label>
+         <select id="ed-grade" bind:value={editForm.grade} class="w-full px-3 py-2 rounded-lg border border-stone-300 bg-white">
+          {#each GRADE_OPTIONS as g}
+           <option value={g}>{g}</option>
+          {/each}
+         </select>
+        </div>
+        <div>
+         <label for="ed-class" class="block font-semibold text-stone-700 mb-1">Mã lớp (Class ID):</label>
+         <input id="ed-class" type="text" bind:value={editForm.class_id} class="w-full px-3 py-2 rounded-lg border border-stone-300 font-mono bg-white" />
+        </div>
+       </div>
+       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+         <label for="ed-school" class="block font-semibold text-stone-700 mb-1">Trường theo học:</label>
+         <input id="ed-school" type="text" bind:value={editForm.school} class="w-full px-3 py-2 rounded-lg border border-stone-300 bg-white" />
+        </div>
+        <div>
+         <label for="ed-pphone" class="block font-semibold text-stone-700 mb-1">SĐT Phụ huynh:</label>
+         <input id="ed-pphone" type="text" bind:value={editForm.parent_phone} class="w-full px-3 py-2 rounded-lg border border-stone-300 bg-white" />
+        </div>
+       </div>
+      </div>
+     {:else if editForm.role === 'teacher'}
+      <div class="p-3 rounded-xl bg-teal-50 border border-teal-200 space-y-3">
+       <div class="font-bold text-teal-900">👩‍🏫 Hồ Sơ Chuyên Môn &amp; Định Mức Lương Giáo Viên</div>
+       <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+        <div>
+         <label for="ed-ttitle" class="block font-semibold text-stone-700 mb-1">Chức danh:</label>
+         <input id="ed-ttitle" type="text" bind:value={editForm.role_title} class="w-full px-2.5 py-1.5 rounded-lg border border-stone-300 bg-white" />
+        </div>
+        <div>
+         <label for="ed-trate" class="block font-semibold text-stone-700 mb-1">Đơn giá / ca (VNĐ):</label>
+         <input id="ed-trate" type="number" bind:value={editForm.rate_per_session_vnd} class="w-full px-2.5 py-1.5 rounded-lg border border-stone-300 bg-white" />
+        </div>
+        <div>
+         <label for="ed-tbase" class="block font-semibold text-stone-700 mb-1">Lương cứng (VNĐ):</label>
+         <input id="ed-tbase" type="number" bind:value={editForm.base_salary_vnd} class="w-full px-2.5 py-1.5 rounded-lg border border-stone-300 bg-white" />
+        </div>
+       </div>
+      </div>
+     {/if}
     </div>
 
-    {#if editForm.role === 'student'}
-     <div class="p-3 rounded-xl bg-emerald-50 border border-emerald-200 space-y-3">
-      <div class="font-bold text-emerald-900">🎓 Phân Khối Lớp &amp; Thông Tin Phụ Huynh</div>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-       <div>
-        <label for="ed-grade" class="block font-semibold text-stone-700 mb-1">Khối lớp chính:</label>
-        <select id="ed-grade" bind:value={editForm.grade} class="w-full px-3 py-2 rounded-lg border border-stone-300 bg-white">
-         {#each GRADE_OPTIONS as g}
-          <option value={g}>{g}</option>
-         {/each}
-        </select>
-       </div>
-       <div>
-        <label for="ed-class" class="block font-semibold text-stone-700 mb-1">Mã lớp (Class ID):</label>
-        <input id="ed-class" type="text" bind:value={editForm.class_id} class="w-full px-3 py-2 rounded-lg border border-stone-300 font-mono bg-white" />
-       </div>
+    <div data-testid="modal-cta-footer" class="sticky bottom-0 z-20 shrink-0 px-6 py-3.5 border-t border-stone-200 bg-white space-y-2">
+     {#if modalError}
+      <div role="alert" class="p-2.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 font-bold text-xs">
+       ⚠️ {modalError}
       </div>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-       <div>
-        <label for="ed-school" class="block font-semibold text-stone-700 mb-1">Trường theo học:</label>
-        <input id="ed-school" type="text" bind:value={editForm.school} class="w-full px-3 py-2 rounded-lg border border-stone-300 bg-white" />
-       </div>
-       <div>
-        <label for="ed-pphone" class="block font-semibold text-stone-700 mb-1">SĐT Phụ huynh:</label>
-        <input id="ed-pphone" type="text" bind:value={editForm.parent_phone} class="w-full px-3 py-2 rounded-lg border border-stone-300 bg-white" />
-       </div>
+     {/if}
+     <div class="flex items-center justify-between gap-2">
+      <div>
+       {#if editForm.role !== 'superadmin'}
+        <button
+         type="button"
+         onclick={() => deleteUserAccount({ id: editForm.user_id, username: editForm.username, name: editForm.name })}
+         class="px-3.5 py-2 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold"
+        >
+         🗑️ Xóa Tài Khoản
+        </button>
+       {/if}
+      </div>
+      <div class="flex items-center gap-2 ml-auto">
+       <button type="button" onclick={() => showEditModal = false} class="px-4 py-2 rounded-lg bg-stone-100 text-stone-700 font-bold">Hủy</button>
+       <button type="submit" disabled={savingEdit} class="px-5 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-bold disabled:opacity-50">
+        {savingEdit ? '⏳ Đang lưu...' : '💾 Lưu Thay Đổi D1'}
+       </button>
       </div>
      </div>
-    {:else if editForm.role === 'teacher'}
-     <div class="p-3 rounded-xl bg-teal-50 border border-teal-200 space-y-3">
-      <div class="font-bold text-teal-900">👩‍🏫 Hồ Sơ Chuyên Môn &amp; Định Mức Lương Giáo Viên</div>
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-       <div>
-        <label for="ed-ttitle" class="block font-semibold text-stone-700 mb-1">Chức danh:</label>
-        <input id="ed-ttitle" type="text" bind:value={editForm.role_title} class="w-full px-2.5 py-1.5 rounded-lg border border-stone-300 bg-white" />
-       </div>
-       <div>
-        <label for="ed-trate" class="block font-semibold text-stone-700 mb-1">Đơn giá / ca (VNĐ):</label>
-        <input id="ed-trate" type="number" bind:value={editForm.rate_per_session_vnd} class="w-full px-2.5 py-1.5 rounded-lg border border-stone-300 bg-white" />
-       </div>
-       <div>
-        <label for="ed-tbase" class="block font-semibold text-stone-700 mb-1">Lương cứng (VNĐ):</label>
-        <input id="ed-tbase" type="number" bind:value={editForm.base_salary_vnd} class="w-full px-2.5 py-1.5 rounded-lg border border-stone-300 bg-white" />
-       </div>
-      </div>
-     </div>
-    {/if}
-
-    <div class="flex justify-end gap-2 pt-2">
-     <button type="button" onclick={() => showEditModal = false} class="px-4 py-2 rounded-lg bg-stone-100 text-stone-700 font-bold">Hủy</button>
-     <button type="submit" disabled={savingEdit} class="px-5 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-bold disabled:opacity-50">
-      {savingEdit ? '⏳ Đang lưu...' : '💾 Lưu Thay Đổi D1'}
-     </button>
     </div>
    </form>
   </div>
  </div>
 {/if}
 
-<!-- MODAL 4: STAR ADJUSTMENT -->
+<!-- MODAL 4: STAR ADJUSTMENT (Sticky CTA Footer at bottom) -->
 {#if showStarModal && targetStudentForStar}
  <div class="fixed inset-0 z-50 flex items-center justify-center bg-stone-500/25 backdrop-blur-sm p-4" role="dialog" aria-modal="true">
-  <div class="bg-white rounded-2xl border border-stone-200 shadow-2xl w-full max-w-md p-6 space-y-4">
-   <div class="flex items-center justify-between border-b border-stone-200 pb-3">
+  <div class="bg-white rounded-2xl border border-stone-200 shadow-2xl w-full max-w-md flex flex-col max-h-[85vh] overflow-hidden">
+   <div class="shrink-0 flex items-center justify-between border-b border-stone-200 px-6 py-4 bg-white">
     <h3 class="text-base font-black text-stone-900">⭐ Thưởng / Phạt Sao Học Sinh (D1)</h3>
     <button type="button" onclick={() => showStarModal = false} class="w-8 h-8 rounded-full bg-stone-100 text-stone-600 font-bold">✕</button>
    </div>
-   <form onsubmit={submitStarAdjust} class="space-y-3 text-xs">
-    <div class="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900">
-     Học sinh: <strong>{targetStudentForStar.name}</strong> (@{targetStudentForStar.username}) — Số dư hiện tại: <strong>{targetStudentForStar.stars_balance ?? 0} ⭐</strong>
+   <form onsubmit={submitStarAdjust} class="flex-1 flex flex-col min-h-0 overflow-hidden text-xs">
+    <div class="flex-1 overflow-y-auto px-6 py-4 space-y-3">
+     <div class="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900">
+      Học sinh: <strong>{targetStudentForStar.name}</strong> (@{targetStudentForStar.username}) — Số dư hiện tại: <strong>{targetStudentForStar.stars_balance ?? 0} ⭐</strong>
+     </div>
+     <div>
+      <label for="st-delta" class="block font-bold text-stone-700 mb-1">Số sao cộng/trừ (VD: 50 hoặc -20):</label>
+      <input id="st-delta" type="number" required bind:value={starDelta} class="w-full px-3 py-2 rounded-lg border border-stone-300 font-mono text-sm" />
+     </div>
+     <div>
+      <label for="st-reason" class="block font-bold text-stone-700 mb-1">Lý do ghi sổ cái:</label>
+      <input id="st-reason" type="text" required bind:value={starReason} class="w-full px-3 py-2 rounded-lg border border-stone-300" />
+     </div>
     </div>
-    <div>
-     <label for="st-delta" class="block font-bold text-stone-700 mb-1">Số sao cộng/trừ (VD: 50 hoặc -20):</label>
-     <input id="st-delta" type="number" required bind:value={starDelta} class="w-full px-3 py-2 rounded-lg border border-stone-300 font-mono text-sm" />
-    </div>
-    <div>
-     <label for="st-reason" class="block font-bold text-stone-700 mb-1">Lý do ghi sổ cái:</label>
-     <input id="st-reason" type="text" required bind:value={starReason} class="w-full px-3 py-2 rounded-lg border border-stone-300" />
-    </div>
-    <div class="flex justify-end gap-2 pt-2">
+    <div data-testid="modal-cta-footer" class="sticky bottom-0 z-20 shrink-0 px-6 py-3.5 border-t border-stone-200 bg-white flex justify-end gap-2">
      <button type="button" onclick={() => showStarModal = false} class="px-4 py-2 rounded-lg bg-stone-100 text-stone-700 font-bold">Hủy</button>
      <button type="submit" disabled={savingStars} class="px-5 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold">
-      {savingStars ? '⏳ Đang lưu...' : '⭐ Cập Nhật Sao'}
+      {savingStars ? '⏳ Đang lưu...' : '💾 Lưu Cập Nhật Sao'}
      </button>
     </div>
    </form>
@@ -1017,26 +1061,28 @@
  </div>
 {/if}
 
-<!-- MODAL 5: LINK PARENT TO STUDENT -->
+<!-- MODAL 5: LINK PARENT TO STUDENT (Sticky CTA Footer at bottom) -->
 {#if showLinkChildModal && targetParentForLink}
  <div class="fixed inset-0 z-50 flex items-center justify-center bg-stone-500/25 backdrop-blur-sm p-4" role="dialog" aria-modal="true">
-  <div class="bg-white rounded-2xl border border-stone-200 shadow-2xl w-full max-w-md p-6 space-y-4">
-   <div class="flex items-center justify-between border-b border-stone-200 pb-3">
+  <div class="bg-white rounded-2xl border border-stone-200 shadow-2xl w-full max-w-md flex flex-col max-h-[85vh] overflow-hidden">
+   <div class="shrink-0 flex items-center justify-between border-b border-stone-200 px-6 py-4 bg-white">
     <h3 class="text-base font-black text-stone-900">🔗 Gán &amp; Xác Minh Học Sinh Cho Phụ Huynh</h3>
     <button type="button" onclick={() => showLinkChildModal = false} class="w-8 h-8 rounded-full bg-stone-100 text-stone-600 font-bold">✕</button>
    </div>
-   <form onsubmit={submitLinkParent} class="space-y-3 text-xs">
-    <div class="p-3 rounded-xl bg-sky-50 border border-sky-200 text-sky-900">
-     Phụ huynh: <strong>{targetParentForLink.name}</strong> (@{targetParentForLink.username})
+   <form onsubmit={submitLinkParent} class="flex-1 flex flex-col min-h-0 overflow-hidden text-xs">
+    <div class="flex-1 overflow-y-auto px-6 py-4 space-y-3">
+     <div class="p-3 rounded-xl bg-sky-50 border border-sky-200 text-sky-900">
+      Phụ huynh: <strong>{targetParentForLink.name}</strong> (@{targetParentForLink.username})
+     </div>
+     <div>
+      <label for="lk-stu" class="block font-bold text-stone-700 mb-1">Nhập Username hoặc Mã ID của Học sinh:</label>
+      <input id="lk-stu" type="text" required bind:value={childUsernameOrId} placeholder="VD: minhquan7a hoặc baokhiem" class="w-full px-3 py-2 rounded-lg border border-stone-300 font-mono" />
+     </div>
     </div>
-    <div>
-     <label for="lk-stu" class="block font-bold text-stone-700 mb-1">Nhập Username hoặc Mã ID của Học sinh:</label>
-     <input id="lk-stu" type="text" required bind:value={childUsernameOrId} placeholder="VD: minhquan7a hoặc baokhiem" class="w-full px-3 py-2 rounded-lg border border-stone-300 font-mono" />
-    </div>
-    <div class="flex justify-end gap-2 pt-2">
+    <div data-testid="modal-cta-footer" class="sticky bottom-0 z-20 shrink-0 px-6 py-3.5 border-t border-stone-200 bg-white flex justify-end gap-2">
      <button type="button" onclick={() => showLinkChildModal = false} class="px-4 py-2 rounded-lg bg-stone-100 text-stone-700 font-bold">Hủy</button>
      <button type="submit" disabled={linkingChild} class="px-5 py-2 rounded-lg bg-sky-600 hover:bg-sky-700 text-white font-bold">
-      {linkingChild ? '⏳ Đang liên kết...' : '🔗 Xác Minh Liên Kết'}
+      {linkingChild ? '⏳ Đang liên kết...' : '➕ Thêm & Lưu Liên Kết'}
      </button>
     </div>
    </form>

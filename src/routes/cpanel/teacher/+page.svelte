@@ -339,26 +339,26 @@
  <!-- Quick Actions & Metrics -->
  <div class="grid grid-cols-3 gap-2 sm:gap-3 w-full md:w-auto min-w-0">
  <div class="bg-slate-100 border border-slate-200 rounded-md p-2.5 sm:p-3 text-center min-w-0">
- <div class="text-lg sm:text-xl font-semibold text-amber-700 tabular-nums truncate">{pendingSubmissions.length}</div>
- <div class="text-[11px] sm:text-xs text-slate-600 mt-0.5 truncate">Chờ Chấm</div>
+ <div class="text-lg sm:text-xl font-semibold text-amber-700 tabular-nums">{pendingSubmissions.length}</div>
+ <div class="text-[11px] sm:text-xs text-slate-600 mt-0.5">Chờ Chấm</div>
  </div>
  <div class="bg-slate-100 border border-slate-200 rounded-md p-2.5 sm:p-3 text-center min-w-0">
- <div class="text-lg sm:text-xl font-semibold text-brand-700 tabular-nums truncate">{assignments.length}</div>
- <div class="text-[11px] sm:text-xs text-slate-600 mt-0.5 truncate">Đã Giao</div>
+ <div class="text-lg sm:text-xl font-semibold text-brand-700 tabular-nums">{assignments.length}</div>
+ <div class="text-[11px] sm:text-xs text-slate-600 mt-0.5">Đã Giao</div>
  </div>
  <button 
  onclick={() => showAdvanceModal = true}
  class="p-2.5 sm:p-3 rounded-md text-xs font-semibold bg-slate-100 hover:bg-slate-200/80 text-brand-700 border border-slate-200 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cx-500 flex flex-col items-center justify-center min-w-0"
  >
  <span class="text-lg sm:text-xl font-semibold text-emerald-700">⚡</span>
- <span class="text-[11px] sm:text-xs mt-0.5 truncate">Ứng Lương</span>
+ <span class="text-[11px] sm:text-xs mt-0.5">Ứng Lương</span>
  </button>
  </div>
  </div>
  </header>
 
  <!-- Main Navigation Tabs -->
- <div class="flex items-center gap-2 border-b border-slate-200 pb-2 overflow-x-auto max-w-full">
+ <div class="flex flex-wrap items-center gap-2 border-b border-slate-200 pb-2 max-w-full">
  <button 
  onclick={() => activeTab = 'grading'}
  class="whitespace-nowrap shrink-0 flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-md text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cx-500 {activeTab === 'grading' ? 'bg-cx-600 text-white' : 'text-slate-600 hover:bg-slate-100'}"
@@ -496,7 +496,7 @@
  </div>
 
  {#if sub.content_text}
- <div class="bg-white p-2.5 rounded border border-slate-200 text-slate-700 font-mono text-[11px] line-clamp-3">
+ <div class="bg-white p-2.5 rounded border border-slate-200 text-slate-700 font-mono text-[11px] break-words">
  "{sub.content_text}"
  </div>
  {/if}
@@ -985,7 +985,7 @@
  </div>
 
  <!-- Submission Artifacts Preview -->
- <div class="bg-slate-50 rounded-md p-4 border border-slate-200 space-y-3 max-h-72 overflow-y-auto text-xs">
+ <div class="bg-slate-50 rounded-md p-4 border border-slate-200 space-y-3 text-xs">
  {#if selectedSubmission.handwritten_image_url}
  <div class="space-y-1.5">
  <div class="flex items-center justify-between">

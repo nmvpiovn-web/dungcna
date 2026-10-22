@@ -204,11 +204,16 @@ export function sanitizeUser(user) {
   const clone = { ...user };
   delete clone.password;
   delete clone.secret;
-  if (!clone.grade && clone.metadata) {
+  if (clone.metadata) {
     try {
       const meta = typeof clone.metadata === 'string' ? JSON.parse(clone.metadata) : clone.metadata;
-      if (meta && meta.grade) {
-        clone.grade = meta.grade;
+      if (meta && typeof meta === 'object') {
+        if (!clone.grade && meta.grade) {
+          clone.grade = meta.grade;
+        }
+        if (meta.app_role && ['superadmin', 'admin', 'leader', 'teacher', 'student', 'parent'].includes(String(meta.app_role).toLowerCase())) {
+          clone.role = String(meta.app_role).toLowerCase();
+        }
       }
     } catch {}
   }

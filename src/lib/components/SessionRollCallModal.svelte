@@ -243,8 +243,8 @@
  {/each}
  </div>
 
- <!-- Footer Buttons -->
- <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-slate-100">
+ <!-- Sticky Bottom Call-to-Action Footer -->
+ <div data-testid="modal-cta-footer" class="sticky bottom-0 z-20 -mx-6 md:-mx-8 px-6 md:px-8 py-3.5 bg-white border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-[0_-4px_12px_rgba(28,25,23,0.05)]">
  <a
  href="/exam"
  class="text-xs font-bold text-indigo-600 hover:underline flex items-center gap-1.5"
@@ -252,7 +252,7 @@
  <span>📝 Tạo bài kiểm tra trực tiếp cho học sinh có mặt ➔</span>
  </a>
 
- <div class="flex items-center gap-3">
+ <div class="flex items-center gap-3 ml-auto">
  <button
  type="button"
  onclick={close}
