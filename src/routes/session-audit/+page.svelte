@@ -62,13 +62,13 @@
   let showExportModal = $state(false);
   let exportedMarkdown = $state('');
 
-  // Bot Webhook Config Modal
+  // Bot Webhook Config Modal (Single Source of Truth: D1 bot_webhook_configs id='bot_primary')
   let showBotConfigModal = $state(false);
   let botForm = $state({
     id: 'bot_primary',
     provider: 'zalo_bot_platform',
-    name: 'Zalo Bot Platform (Bot giá cả • @bot.ynKabJAc)',
-    webhook_url: 'https://timbk.io.vn/api/zalo-bot/webhook',
+    name: 'Zalo Bot Platform (@bot.KTncTtfA • Lớp Tiếng Anh Cô Dung)',
+    webhook_url: 'https://timbk-zalo-webhook.tienganh7-sveltekit.workers.dev',
     bot_token: '',
     chat_id: 'b3845beb38a2d1fc88b3',
     deepseek_api_key: '',

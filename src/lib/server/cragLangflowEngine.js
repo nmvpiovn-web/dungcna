@@ -8,23 +8,30 @@ export const DEFAULT_LANGFLOW_NODES = [
   {
     id: 'node_identity_rbac',
     step: 1,
+    enabled: true,
     title: 'Node 1: Định Danh & Quyền Truy Cập',
-    subtitle: 'Nhận diện người chat & phân quyền dữ liệu',
+    subtitle: 'Nhận diện người chat, GroupUser & phân quyền dữ liệu',
     icon: '🔐',
     category: 'RBAC & Context',
     color: 'emerald',
     x: 40,
     y: 70,
-    description: 'Nhận diện người nhắn qua chat_id / SĐT và nạp lịch sử hội thoại gần nhất để giữ mạch câu chuyện. Mặc định tài khoản Hải (b3845beb38a2d1fc88b3) có quyền SuperAdmin.',
+    description: 'Nhận diện người nhắn qua chat_id / SĐT / GroupUser (rbac_user_groups) và nạp lịch sử hội thoại gần nhất để giữ mạch câu chuyện. Mặc định tài khoản Hải (b3845beb38a2d1fc88b3) thuộc grp_superadmin.',
+    input_schema: '{ chat_id: string, sender_phone?: string, override_role?: string }',
+    output_schema: '{ effective_role: string, group_id: string, allowed_tables: string[], session_memory: Message[] }',
+    system_prompt: 'Xác thực chat_id trong zalo_bot_subscribers & users. Ánh xạ vào rbac_user_groups để giới hạn phạm vi bảng D1 được phép truy vấn. Giữ tối đa 6 lượt hội thoại gần nhất.',
     config: {
       default_superadmin_chat_id: SUPERADMIN_DEFAULT_CHAT_ID,
       session_memory_turns: 6,
-      roles_supported: ['superadmin', 'leader', 'teacher', 'parent', 'student']
+      roles_supported: ['superadmin', 'leader', 'teacher', 'parent', 'student', 'guest'],
+      tables: ['zalo_bot_subscribers', 'users', 'rbac_user_groups', 'zalo_bot_messages'],
+      score_threshold: 100
     }
   },
   {
     id: 'node_intent_router',
     step: 2,
+    enabled: true,
     title: 'Node 2: Phân Tích Ý Định & Nối Mạch Hội Thoại',
     subtitle: 'Nhận diện học sinh, khối lớp & câu hỏi nối tiếp',
     icon: '🧭',
@@ -33,15 +40,21 @@ export const DEFAULT_LANGFLOW_NODES = [
     x: 330,
     y: 70,
     description: 'Bóc tách tên học sinh, khối lớp và mục đích hỏi. Nếu người dùng hỏi ngắn gọn kiểu "Còn học phí thì sao?" hoặc "Còn Gia Huy?", hệ thống tự nối tiếp học sinh hoặc chủ đề từ tin nhắn liền trước.',
+    input_schema: '{ user_text: string, session_memory: Message[], effective_role: string }',
+    output_schema: '{ detected_intents: string[], student_entity: string, grade_entity: string, carried_over: boolean }',
+    system_prompt: 'Phân loại câu hỏi vào 6 nhóm Intent học vụ. Nếu câu hỏi tỉnh lược chủ ngữ ("Còn học phí?", "Thế còn bạn ấy?"), kế thừa thực thể học sinh từ lượt hội thoại liền trước.',
     config: {
       intents: ['schedule_attendance', 'tuition_finance', 'academic_results', 'session_audit', 'pedagogy_knowledge', 'absence_request'],
       carry_over_previous_entity: true,
-      carry_over_previous_intent: true
+      carry_over_previous_intent: true,
+      tables: ['users', 'zalo_bot_messages'],
+      score_threshold: 90
     }
   },
   {
     id: 'node_d1_sql_retriever',
     step: 3,
+    enabled: true,
     title: 'Node 3: Truy Xuất Dữ Liệu Học Vụ D1',
     subtitle: 'Lọc đúng hồ sơ, lịch học, điểm số & học phí',
     icon: '🗄️',
@@ -49,45 +62,61 @@ export const DEFAULT_LANGFLOW_NODES = [
     color: 'indigo',
     x: 620,
     y: 30,
-    description: 'Truy vấn trực tiếp các bảng users, class_sessions, attendance_records, tuition_bills, student_evaluations, student_stars theo đúng quyền của người hỏi.',
+    description: 'Truy vấn trực tiếp các bảng users, class_sessions, attendance_records, tuition_bills, student_evaluations, student_stars theo đúng quyền GroupUser của người hỏi.',
+    input_schema: '{ detected_intents: string[], student_entity: string, effective_role: string }',
+    output_schema: '{ sql_rows: Record<string, any[]>, tables_queried: string[] }',
+    system_prompt: 'Thực thi truy vấn SQL có kiểm soát RBAC trên Cloudflare D1: Phụ huynh chỉ đọc dữ liệu của con mình; Giáo viên đọc lớp phụ trách; SuperAdmin/Leader đọc toàn bộ 81 bảng.',
     config: {
-      tables: ['users', 'class_sessions', 'attendance_records', 'tuition_bills', 'student_evaluations', 'student_stars', 'homework_assignments', 'session_quality_audits']
+      tables: ['users', 'class_sessions', 'attendance_records', 'tuition_bills', 'student_evaluations', 'student_stars', 'homework_assignments', 'session_quality_audits'],
+      score_threshold: 95
     }
   },
   {
     id: 'node_knowledge_fts',
     step: 4,
+    enabled: true,
     title: 'Node 4: Tra Cứu Giáo Án & Tài Liệu',
-    subtitle: 'Kho bài giảng, ngữ pháp & Google Drive',
+    subtitle: 'Kho bài giảng, từ vựng Cambridge & Google Drive',
     icon: '📚',
     category: 'Knowledge FTS5',
     color: 'purple',
     x: 620,
     y: 170,
-    description: 'Chỉ kích hoạt khi câu hỏi liên quan tới bài học, từ vựng, ngữ pháp hoặc tài liệu giảng dạy trong knowledge_vault và drive_file_index.',
+    description: 'Kích hoạt khi câu hỏi liên quan tới bài học, từ vựng, ngữ pháp hoặc tài liệu giảng dạy trong knowledge_vault, cambridge_vocabulary và drive_file_index.',
+    input_schema: '{ keywords: string[], grade_entity: string, intent: string }',
+    output_schema: '{ vault_articles: any[], vocabulary_matches: any[], drive_files: any[] }',
+    system_prompt: 'Tìm kiếm toàn văn FTS5 trên knowledge_vault, cambridge_vocabulary và drive_file_index theo khối lớp (Lớp 1-12, KET/PET/IELTS) để lấy giáo án & từ vựng chuẩn.',
     config: {
-      tables: ['knowledge_vault', 'grammar_topics', 'cambridge_vocabulary', 'drive_file_index']
+      tables: ['knowledge_vault', 'grammar_topics', 'cambridge_vocabulary', 'drive_file_index'],
+      score_threshold: 85
     }
   },
   {
     id: 'node_crag_grader',
     step: 5,
+    enabled: true,
     title: 'Node 5: Đối Chiếu & Khớp Lịch Học Tự Động',
-    subtitle: 'Suy luận lớp theo khối & tạo QR đúng học sinh',
+    subtitle: 'Chấm điểm độ khớp CRAG & tạo QR đúng học sinh',
     icon: '⚖️',
     category: 'Smart Matcher',
     color: 'amber',
     x: 910,
     y: 95,
-    description: 'Tự động khớp lịch học theo khối lớp của học sinh (ví dụ Bảo Khiêm thuộc Lớp 7 sẽ lấy lịch Lớp 7) và chuẩn bị đúng mã VietQR cá nhân hóa cho từng học sinh.',
+    description: 'Chấm điểm độ khớp dữ liệu (CRAG Relevance Grader), tự động suy luận lịch học theo khối lớp của học sinh và tạo URL ảnh PNG VietQR cá nhân hóa cho từng học sinh.',
+    input_schema: '{ sql_rows: object, vault_articles: any[], student_entity: string }',
+    output_schema: '{ crag_score: number, crag_status: string, verified_facts: string, vietqr_photo_url?: string }',
+    system_prompt: 'Kiểm định độ chính xác của dữ liệu D1. Nếu thiếu ca học trực tiếp, tự động khớp theo khối lớp của học sinh. Nếu có hóa đơn học phí, sinh mã VietQR PNG riêng cho học sinh đó.',
     config: {
       enable_grade_level_inference: true,
-      dynamic_student_vietqr: true
+      dynamic_student_vietqr: true,
+      tables: ['class_sessions', 'tuition_bills', 'campuses'],
+      score_threshold: 88
     }
   },
   {
     id: 'node_llm_synthesizer',
     step: 6,
+    enabled: true,
     title: 'Node 6: Soạn Phản Hồi Tự Nhiên',
     subtitle: 'Ngắn gọn, đúng trọng tâm, không văn mẫu AI',
     icon: '💬',
@@ -96,16 +125,21 @@ export const DEFAULT_LANGFLOW_NODES = [
     x: 1200,
     y: 95,
     description: 'Trả lời trực tiếp vào câu hỏi như quản lý lớp học nhắn tin trên Zalo: bỏ toàn bộ ký tự Markdown (**), không lặp lại tiêu đề máy móc, giữ luồng trao đổi tự nhiên.',
+    input_schema: '{ verified_facts: string, user_text: string, session_memory: Message[] }',
+    output_schema: '{ clean_reply_text: string, model_used: string }',
+    system_prompt: 'Bạn là trợ lý học vụ Lớp Tiếng Anh Cô Dung. Chỉ sử dụng số liệu có trong Verified Facts từ D1. Trả lời tự nhiên, ấm áp, ngắn gọn, tuyệt đối không bịa số liệu và không dùng ký tự **.',
     config: {
       primary_model: '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b',
       fallback_model: '@cf/meta/llama-3.1-8b-instruct',
       strip_markdown: true,
-      natural_vietnamese_tone: true
+      natural_vietnamese_tone: true,
+      score_threshold: 92
     }
   },
   {
     id: 'node_zalo_dispatcher',
     step: 7,
+    enabled: true,
     title: 'Node 7: Gửi Tin Nhắn & Ảnh QR Zalo',
     subtitle: 'Gửi text sạch + thẻ ảnh QR (CHAT_PHOTO)',
     icon: '📤',
@@ -113,10 +147,78 @@ export const DEFAULT_LANGFLOW_NODES = [
     color: 'rose',
     x: 1490,
     y: 95,
-    description: 'Gửi phản hồi văn bản gọn gàng qua /sendMessage và bắn trực tiếp ảnh mã QR ngân hàng qua /sendPhoto khi trao đổi về học phí.',
+    description: 'Gửi phản hồi văn bản gọn gàng qua /sendMessage và bắn trực tiếp ảnh mã QR ngân hàng qua /sendPhoto (Raster PNG) khi trao đổi về học phí.',
+    input_schema: '{ chat_id: string, clean_reply_text: string, vietqr_photo_url?: string }',
+    output_schema: '{ text_sent: boolean, photos_sent: number, message_ids: string[] }',
+    system_prompt: 'Gửi văn bản qua /sendMessage và ảnh PNG qua /sendPhoto tới Zalo Bot Platform (@bot.KTncTtfA). Ghi log toàn bộ trace vào crag_execution_traces và zalo_bot_messages.',
     config: {
-      auto_push_events: ['schedule_10m', 'attendance_instant', 'tuition_vietqr', 'evaluation_report', 'session_audit_5part']
+      auto_push_events: ['schedule_10m', 'attendance_instant', 'tuition_vietqr', 'evaluation_report', 'session_audit_5part'],
+      tables: ['zalo_bot_messages', 'crag_execution_traces', 'bot_webhook_configs'],
+      score_threshold: 100
     }
+  }
+];
+
+export const DEFAULT_RBAC_USER_GROUPS = [
+  {
+    id: 'grp_superadmin',
+    role_key: 'superadmin',
+    name: '👑 Nhóm SuperAdmin Tối Cao',
+    description: 'Toàn quyền đọc/ghi 81 bảng D1, điều phối 7 Node Langflow, cấu hình Zalo Bot Token và duyệt tài chính.',
+    permissions: ['d1.full_access', 'langflow.edit_nodes', 'rbac.manage_groups', 'zalo.broadcast', 'tuition.approve', 'campuses.manage'],
+    allowed_tables: ['* (Toàn bộ 81 bảng D1)'],
+    max_memory_turns: 10,
+    color: 'emerald'
+  },
+  {
+    id: 'grp_leader',
+    role_key: 'leader',
+    name: '🛡️ Nhóm Quản Lý Học Vụ (Leader)',
+    description: 'Quản lý lịch dạy, cơ sở học, đối soát chất lượng ca dạy 5 phần, duyệt đơn nghỉ phép và báo cáo học phí.',
+    permissions: ['schedule.manage', 'session_audit.manage', 'tuition.view_all', 'teachers.manage', 'zalo.notify_class'],
+    allowed_tables: ['users', 'class_sessions', 'campuses', 'attendance_records', 'tuition_bills', 'session_quality_audits', 'teacher_profiles'],
+    max_memory_turns: 8,
+    color: 'teal'
+  },
+  {
+    id: 'grp_teacher',
+    role_key: 'teacher',
+    name: '👩‍🏫 Nhóm Giáo Viên & Trợ Giảng',
+    description: 'Điểm danh ca dạy, tạo đề Quiz 4 nguồn, gắn giáo án Kho Tri Thức / Google Drive và chấm nhận xét 5 kỹ năng.',
+    permissions: ['attendance.mark', 'quiz.create', 'vault.read_write', 'evaluation.write', 'schedule.view_assigned'],
+    allowed_tables: ['class_sessions', 'attendance_records', 'student_evaluations', 'quizzes', 'knowledge_vault', 'drive_file_index', 'homework_assignments'],
+    max_memory_turns: 6,
+    color: 'sky'
+  },
+  {
+    id: 'grp_parent',
+    role_key: 'parent',
+    name: '👨‍👩‍👧 Nhóm Phụ Huynh Học Sinh',
+    description: 'Chỉ tra cứu lịch học, điểm danh, phiếu nhận xét 5 kỹ năng, xin nghỉ phép và nhận mã QR học phí của đúng con mình.',
+    permissions: ['child.schedule_view', 'child.tuition_qr', 'child.evaluation_view', 'child.absence_request'],
+    allowed_tables: ['class_sessions (của con)', 'attendance_records (của con)', 'tuition_bills (của con)', 'student_evaluations (của con)', 'parent_student_links'],
+    max_memory_turns: 6,
+    color: 'purple'
+  },
+  {
+    id: 'grp_student',
+    role_key: 'student',
+    name: '🎒 Nhóm Học Sinh K12 & IELTS',
+    description: 'Xem lịch học cá nhân, làm bài Quiz được giao, học Flashcard & Từ điển D1, tích lũy Sao đổi thưởng.',
+    permissions: ['student.take_quiz', 'student.flashcards', 'student.stars_view', 'student.schedule_view'],
+    allowed_tables: ['class_sessions (lớp đang học)', 'quizzes (được giao)', 'cambridge_vocabulary', 'student_stars'],
+    max_memory_turns: 5,
+    color: 'amber'
+  },
+  {
+    id: 'grp_guest',
+    role_key: 'guest',
+    name: '🌐 Nhóm Khách / Học Thử (Trial)',
+    description: 'Tham khảo lộ trình học, làm đề Quiz công khai, tra từ vựng Cambridge và nhận tư vấn tuyển sinh tự động.',
+    permissions: ['public.quiz_trial', 'public.dictionary', 'public.course_consult'],
+    allowed_tables: ['quizzes (public)', 'cambridge_vocabulary', 'campuses'],
+    max_memory_turns: 3,
+    color: 'slate'
   }
 ];
 
@@ -358,6 +460,59 @@ export async function ensureCragLangflowTables(db) {
     `).run().catch(() => {});
 
     await db.prepare(`
+      CREATE TABLE IF NOT EXISTS rbac_user_groups (
+        id TEXT PRIMARY KEY,
+        role_key TEXT NOT NULL,
+        name TEXT NOT NULL,
+        description TEXT DEFAULT '',
+        permissions_json TEXT DEFAULT '[]',
+        allowed_tables_json TEXT DEFAULT '[]',
+        max_memory_turns INTEGER DEFAULT 6,
+        color TEXT DEFAULT 'emerald',
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+      );
+    `).run().catch(() => {});
+
+    for (const grp of DEFAULT_RBAC_USER_GROUPS) {
+      await db.prepare(`
+        INSERT OR IGNORE INTO rbac_user_groups (id, role_key, name, description, permissions_json, allowed_tables_json, max_memory_turns, color, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+      `).bind(
+        grp.id,
+        grp.role_key,
+        grp.name,
+        grp.description,
+        JSON.stringify(grp.permissions || []),
+        JSON.stringify(grp.allowed_tables || []),
+        grp.max_memory_turns || 6,
+        grp.color || 'emerald'
+      ).run().catch(() => {});
+    }
+
+    await db.prepare(`
+      CREATE TABLE IF NOT EXISTS bot_webhook_configs (
+        id TEXT PRIMARY KEY,
+        provider TEXT DEFAULT 'zalo_bot_platform',
+        name TEXT,
+        webhook_url TEXT,
+        bot_token TEXT,
+        chat_id TEXT,
+        is_active INTEGER DEFAULT 1,
+        last_status INTEGER,
+        last_dispatched_at TEXT,
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+      );
+    `).run().catch(() => {});
+
+    await db.prepare(`
+      INSERT INTO bot_webhook_configs (id, provider, name, webhook_url, bot_token, chat_id, is_active, last_status, updated_at)
+      VALUES ('bot_primary', 'zalo_bot_platform', 'Zalo Bot Platform (@bot.KTncTtfA • Lớp Tiếng Anh Cô Dung)', 'https://timbk-zalo-webhook.tienganh7-sveltekit.workers.dev', ?, ?, 1, 200, CURRENT_TIMESTAMP)
+      ON CONFLICT(id) DO UPDATE SET
+        bot_token = CASE WHEN bot_webhook_configs.bot_token IS NULL OR bot_webhook_configs.bot_token = '' THEN excluded.bot_token ELSE bot_webhook_configs.bot_token END,
+        chat_id = CASE WHEN bot_webhook_configs.chat_id IS NULL OR bot_webhook_configs.chat_id = '' THEN excluded.chat_id ELSE bot_webhook_configs.chat_id END;
+    `).bind(DEFAULT_ZALO_BOT_TOKEN, SUPERADMIN_DEFAULT_CHAT_ID).run().catch(() => {});
+
+    await db.prepare(`
       INSERT INTO zalo_bot_subscribers (chat_id, display_name, phone, linked_user_id, role_hint, last_message, updated_at)
       VALUES (?, 'Hải', '0905960437', 'usr_super_1', 'superadmin', 'Khởi tạo SuperAdmin', CURRENT_TIMESTAMP)
       ON CONFLICT(chat_id) DO UPDATE SET
@@ -365,6 +520,61 @@ export async function ensureCragLangflowTables(db) {
         linked_user_id = CASE WHEN zalo_bot_subscribers.linked_user_id IS NULL OR zalo_bot_subscribers.linked_user_id = '' THEN 'usr_super_1' ELSE zalo_bot_subscribers.linked_user_id END;
     `).bind(SUPERADMIN_DEFAULT_CHAT_ID).run().catch(() => {});
   } catch {}
+}
+
+export async function getCanonicalBotConfig(db) {
+  const fallback = {
+    id: 'bot_primary',
+    provider: 'zalo_bot_platform',
+    name: 'Zalo Bot Platform (@bot.KTncTtfA • Lớp Tiếng Anh Cô Dung)',
+    webhook_url: 'https://timbk-zalo-webhook.tienganh7-sveltekit.workers.dev',
+    bot_token: DEFAULT_ZALO_BOT_TOKEN,
+    chat_id: SUPERADMIN_DEFAULT_CHAT_ID,
+    is_active: 1
+  };
+  if (!db) return fallback;
+  try {
+    const row = await db.prepare(`SELECT * FROM bot_webhook_configs WHERE id = 'bot_primary' LIMIT 1`).first();
+    if (!row) return fallback;
+    return {
+      ...fallback,
+      ...row,
+      bot_token: String(row.bot_token || DEFAULT_ZALO_BOT_TOKEN).trim(),
+      chat_id: String(row.chat_id || SUPERADMIN_DEFAULT_CHAT_ID).trim(),
+      webhook_url: String(row.webhook_url || fallback.webhook_url).trim(),
+      name: String(row.name || fallback.name).trim()
+    };
+  } catch {
+    return fallback;
+  }
+}
+
+export async function saveCanonicalBotConfig(db, payload = {}) {
+  const current = await getCanonicalBotConfig(db);
+  const next = {
+    id: 'bot_primary',
+    provider: 'zalo_bot_platform',
+    name: String(payload.name || current.name).trim(),
+    webhook_url: String(payload.webhook_url || current.webhook_url).trim(),
+    bot_token: String(payload.bot_token || current.bot_token || DEFAULT_ZALO_BOT_TOKEN).trim(),
+    chat_id: String(payload.chat_id || current.chat_id || SUPERADMIN_DEFAULT_CHAT_ID).trim(),
+    is_active: payload.is_active !== undefined ? (payload.is_active ? 1 : 0) : 1
+  };
+  if (db) {
+    await ensureCragLangflowTables(db);
+    await db.prepare(`
+      INSERT INTO bot_webhook_configs (id, provider, name, webhook_url, bot_token, chat_id, is_active, last_status, updated_at)
+      VALUES ('bot_primary', ?, ?, ?, ?, ?, ?, 200, CURRENT_TIMESTAMP)
+      ON CONFLICT(id) DO UPDATE SET
+        name = excluded.name,
+        webhook_url = excluded.webhook_url,
+        bot_token = excluded.bot_token,
+        chat_id = excluded.chat_id,
+        is_active = excluded.is_active,
+        updated_at = CURRENT_TIMESTAMP
+    `).bind(next.provider, next.name, next.webhook_url, next.bot_token, next.chat_id, next.is_active).run();
+  }
+  return next;
 }
 
 /**

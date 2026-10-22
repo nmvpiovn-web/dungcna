@@ -1,12 +1,15 @@
 // src/routes/api/langflow/+server.js
-// Dedicated API for /langflow — 7-Node CRAG + Langflow Visual Pipeline, RBAC Manager & Auto-Notification Dispatcher
+// Dedicated API for /langflow — 7-Node CRAG + Langflow Visual Pipeline, Direct Node Editor, User/Group RBAC Manager & Single-Source Bot Config
 import { json } from '@sveltejs/kit';
 import {
   DEFAULT_ZALO_BOT_TOKEN,
   SUPERADMIN_DEFAULT_CHAT_ID,
   DEFAULT_LANGFLOW_NODES,
   DEFAULT_LANGFLOW_EDGES,
+  DEFAULT_RBAC_USER_GROUPS,
   ensureCragLangflowTables,
+  getCanonicalBotConfig,
+  saveCanonicalBotConfig,
   runCragLangflowPipeline,
   toZaloCompatiblePhotoUrl
 } from '$lib/server/cragLangflowEngine.js';
@@ -58,12 +61,64 @@ const DEFAULT_AUTO_NOTIFY_RULES = [
   }
 ];
 
+function roleToGroupId(role = 'student') {
+  const r = String(role || '').toLowerCase();
+  if (r === 'superadmin' || r === 'admin') return 'grp_superadmin';
+  if (r === 'leader') return 'grp_leader';
+  if (r === 'teacher') return 'grp_teacher';
+  if (r === 'parent') return 'grp_parent';
+  if (r === 'guest') return 'grp_guest';
+  return 'grp_student';
+}
+
+function groupIdToRole(groupId = 'grp_student') {
+  const g = String(groupId || '').toLowerCase();
+  if (g === 'grp_superadmin') return 'superadmin';
+  if (g === 'grp_leader') return 'leader';
+  if (g === 'grp_teacher') return 'teacher';
+  if (g === 'grp_parent') return 'parent';
+  if (g === 'grp_guest') return 'guest';
+  return 'student';
+}
+
+function mergeSavedNodes(savedNodesJson) {
+  if (!savedNodesJson) return DEFAULT_LANGFLOW_NODES.map((n) => ({ ...n, config: { ...n.config } }));
+  try {
+    const parsed = typeof savedNodesJson === 'string' ? JSON.parse(savedNodesJson) : savedNodesJson;
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+      return DEFAULT_LANGFLOW_NODES.map((n) => ({ ...n, config: { ...n.config } }));
+    }
+    return DEFAULT_LANGFLOW_NODES.map((defNode) => {
+      const saved = parsed.find((item) => item && item.id === defNode.id);
+      if (!saved) return { ...defNode, config: { ...defNode.config } };
+      return {
+        ...defNode,
+        ...saved,
+        enabled: saved.enabled !== undefined ? Boolean(saved.enabled) : true,
+        system_prompt: saved.system_prompt || defNode.system_prompt,
+        input_schema: saved.input_schema || defNode.input_schema,
+        output_schema: saved.output_schema || defNode.output_schema,
+        config: {
+          ...defNode.config,
+          ...(saved.config || {})
+        }
+      };
+    });
+  } catch {
+    return DEFAULT_LANGFLOW_NODES.map((n) => ({ ...n, config: { ...n.config } }));
+  }
+}
+
 export async function GET({ platform }) {
   const db = platform?.env?.DB;
   let subscribers = [];
   let traces = [];
   let recentMessages = [];
+  let activeNodes = DEFAULT_LANGFLOW_NODES.map((n) => ({ ...n, config: { ...n.config } }));
   let activeAutoNotifyRules = DEFAULT_AUTO_NOTIFY_RULES;
+  let userGroups = DEFAULT_RBAC_USER_GROUPS.map((g) => ({ ...g }));
+  let managedUsers = [];
+  let botConfig = await getCanonicalBotConfig(db);
   let dbOverview = {
     total_tables: 81,
     students_count: 0,
@@ -77,27 +132,32 @@ export async function GET({ platform }) {
 
   if (db) {
     await ensureCragLangflowTables(db);
+    botConfig = await getCanonicalBotConfig(db);
     try {
-      const [subsRes, tracesRes, msgsRes, usersRes, sessRes, billsRes, evalsRes, vaultRes, tablesCntRes, cfgRes] = await Promise.all([
+      const [subsRes, tracesRes, msgsRes, usersRes, groupsRes, sessRes, billsRes, evalsRes, vaultRes, tablesCntRes, cfgRes] = await Promise.all([
         db.prepare(`SELECT * FROM zalo_bot_subscribers ORDER BY updated_at DESC LIMIT 30`).all().catch(() => ({ results: [] })),
         db.prepare(`SELECT * FROM crag_execution_traces ORDER BY rowid DESC LIMIT 25`).all().catch(() => ({ results: [] })),
         db.prepare(`SELECT * FROM zalo_bot_messages ORDER BY id DESC LIMIT 25`).all().catch(() => ({ results: [] })),
-        db.prepare(`SELECT id, username, name, role, phone, status, metadata FROM users ORDER BY created_at ASC LIMIT 50`).all().catch(() => ({ results: [] })),
+        db.prepare(`SELECT id, username, name, role, phone, status, metadata FROM users ORDER BY created_at ASC LIMIT 80`).all().catch(() => ({ results: [] })),
+        db.prepare(`SELECT * FROM rbac_user_groups ORDER BY rowid ASC`).all().catch(() => ({ results: [] })),
         db.prepare(`SELECT COUNT(*) as cnt FROM class_sessions`).first().catch(() => ({ cnt: 0 })),
         db.prepare(`SELECT COUNT(*) as cnt FROM tuition_bills`).first().catch(() => ({ cnt: 0 })),
         db.prepare(`SELECT COUNT(*) as cnt FROM student_evaluations`).first().catch(() => ({ cnt: 0 })),
         db.prepare(`SELECT COUNT(*) as cnt FROM knowledge_vault`).first().catch(() => ({ cnt: 0 })),
         db.prepare(`SELECT COUNT(*) as cnt FROM sqlite_master WHERE type='table'`).first().catch(() => ({ cnt: 81 })),
-        db.prepare(`SELECT auto_notify_rules_json FROM crag_pipeline_configs WHERE id = 'cfg_primary' LIMIT 1`).first().catch(() => null)
+        db.prepare(`SELECT nodes_json, edges_json, auto_notify_rules_json FROM crag_pipeline_configs WHERE id = 'cfg_primary' LIMIT 1`).first().catch(() => null)
       ]);
 
-      if (cfgRes?.auto_notify_rules_json) {
-        try {
-          const parsedRules = JSON.parse(cfgRes.auto_notify_rules_json);
-          if (Array.isArray(parsedRules) && parsedRules.length > 0) {
-            activeAutoNotifyRules = parsedRules;
-          }
-        } catch {}
+      if (cfgRes) {
+        activeNodes = mergeSavedNodes(cfgRes.nodes_json);
+        if (cfgRes.auto_notify_rules_json) {
+          try {
+            const parsedRules = JSON.parse(cfgRes.auto_notify_rules_json);
+            if (Array.isArray(parsedRules) && parsedRules.length > 0) {
+              activeAutoNotifyRules = parsedRules;
+            }
+          } catch {}
+        }
       } else {
         await db.prepare(`
           INSERT OR IGNORE INTO crag_pipeline_configs (id, name, nodes_json, edges_json, auto_notify_rules_json, updated_at)
@@ -107,6 +167,26 @@ export async function GET({ platform }) {
           JSON.stringify(DEFAULT_LANGFLOW_EDGES),
           JSON.stringify(DEFAULT_AUTO_NOTIFY_RULES)
         ).run().catch(() => {});
+      }
+
+      if (Array.isArray(groupsRes?.results) && groupsRes.results.length > 0) {
+        userGroups = groupsRes.results.map((r) => {
+          let perms = [];
+          let tbls = [];
+          try { perms = JSON.parse(r.permissions_json || '[]'); } catch {}
+          try { tbls = JSON.parse(r.allowed_tables_json || '[]'); } catch {}
+          return {
+            id: r.id,
+            role_key: r.role_key,
+            name: r.name,
+            description: r.description || '',
+            permissions: perms,
+            allowed_tables: tbls,
+            max_memory_turns: Number(r.max_memory_turns || 6),
+            color: r.color || 'emerald',
+            updated_at: r.updated_at
+          };
+        });
       }
 
       subscribers = subsRes?.results || [];
@@ -130,19 +210,25 @@ export async function GET({ platform }) {
       recentMessages = msgsRes?.results || [];
 
       const allUsers = usersRes?.results || [];
-      const students = allUsers.filter((u) => u.role === 'student').map((u) => {
+      managedUsers = allUsers.map((u) => {
         let meta = {};
         try { meta = JSON.parse(u.metadata || '{}'); } catch {}
+        const effectiveRole = String(meta.app_role || u.role || 'student').toLowerCase();
+        const groupId = meta.group_id || roleToGroupId(effectiveRole);
         return {
           id: u.id,
           username: u.username,
           name: u.name,
-          grade: meta.grade ? (String(meta.grade).startsWith('Lớp') ? String(meta.grade) : `Lớp ${meta.grade}`) : 'Lớp 7',
-          school: meta.school || '',
-          phone: u.phone || meta.phone || meta.parent_phone || ''
+          role: effectiveRole,
+          group_id: groupId,
+          phone: u.phone || meta.phone || meta.parent_phone || '',
+          grade: meta.grade ? (String(meta.grade).startsWith('Lớp') ? String(meta.grade) : `Lớp ${meta.grade}`) : '',
+          status: u.status || 'official'
         };
       });
-      const teachers = allUsers.filter((u) => u.role === 'teacher' || u.role === 'superadmin');
+
+      const students = managedUsers.filter((u) => u.role === 'student');
+      const teachers = managedUsers.filter((u) => ['teacher', 'superadmin', 'leader', 'admin'].includes(u.role));
 
       dbOverview = {
         total_tables: Number(tablesCntRes?.cnt || 81),
@@ -159,9 +245,20 @@ export async function GET({ platform }) {
 
   return json({
     success: true,
-    superadmin_chat_id: SUPERADMIN_DEFAULT_CHAT_ID,
-    nodes: DEFAULT_LANGFLOW_NODES,
+    superadmin_chat_id: botConfig.chat_id || SUPERADMIN_DEFAULT_CHAT_ID,
+    bot_config: {
+      id: botConfig.id,
+      name: botConfig.name,
+      webhook_url: botConfig.webhook_url,
+      chat_id: botConfig.chat_id,
+      bot_token_masked: botConfig.bot_token ? `${botConfig.bot_token.slice(0, 19)}...${botConfig.bot_token.slice(-6)}` : '',
+      bot_token: botConfig.bot_token,
+      is_active: Boolean(botConfig.is_active)
+    },
+    nodes: activeNodes,
     edges: DEFAULT_LANGFLOW_EDGES,
+    user_groups: userGroups,
+    managed_users: managedUsers,
     auto_notify_rules: activeAutoNotifyRules,
     db_overview: dbOverview,
     subscribers,
@@ -184,6 +281,8 @@ export async function POST({ request, platform }) {
   }
 
   const action = body.action || 'run_crag_test';
+  const botConfig = await getCanonicalBotConfig(db);
+  const activeBotToken = botConfig.bot_token || DEFAULT_ZALO_BOT_TOKEN;
 
   // 1. Run 7-Node CRAG Pipeline (via Edge Worker with AI binding + D1 fallback)
   if (action === 'run_crag_test') {
@@ -191,11 +290,10 @@ export async function POST({ request, platform }) {
     if (!query) {
       return json({ success: false, error: 'Vui lòng nhập câu hỏi cần kiểm thử qua CRAG Pipeline' }, { status: 400 });
     }
-    const chatId = String(body.chat_id || SUPERADMIN_DEFAULT_CHAT_ID).trim();
+    const chatId = String(body.chat_id || botConfig.chat_id || SUPERADMIN_DEFAULT_CHAT_ID).trim();
     const role = body.role || 'superadmin';
     const sendToZalo = Boolean(body.send_to_zalo);
 
-    // First try calling our dedicated Edge AI Worker (which has both env.DB and env.AI bound)
     try {
       const wRes = await fetch(WORKER_CRAG_URL, {
         method: 'POST',
@@ -222,7 +320,6 @@ export async function POST({ request, platform }) {
       }
     } catch {}
 
-    // Fallback to direct execution on Pages D1
     const result = await runCragLangflowPipeline({
       db,
       env: platform?.env,
@@ -231,7 +328,7 @@ export async function POST({ request, platform }) {
       userText: query,
       overrideRole: role,
       sendToZalo,
-      botToken: DEFAULT_ZALO_BOT_TOKEN
+      botToken: activeBotToken
     });
 
     return json({
@@ -240,11 +337,116 @@ export async function POST({ request, platform }) {
     });
   }
 
-  // 2. Update Subscriber Role / Linked User
+  // 2. Direct Node Config Editor (Save Node Edits to D1 crag_pipeline_configs.nodes_json)
+  if (action === 'save_node_config') {
+    if (!db) return json({ success: false, error: 'D1 unavailable' }, { status: 503 });
+    const nodeId = String(body.node_id || body.node?.id || '').trim();
+    if (!nodeId) {
+      return json({ success: false, error: 'Thiếu node_id cần lưu' }, { status: 400 });
+    }
+
+    const cfgRow = await db.prepare(`SELECT nodes_json, edges_json, auto_notify_rules_json FROM crag_pipeline_configs WHERE id = 'cfg_primary' LIMIT 1`).first().catch(() => null);
+    const currentNodes = mergeSavedNodes(cfgRow?.nodes_json);
+    const targetIdx = currentNodes.findIndex((n) => n.id === nodeId);
+    if (targetIdx === -1) {
+      return json({ success: false, error: `Không tìm thấy Node "${nodeId}"` }, { status: 404 });
+    }
+
+    const incoming = body.node || body;
+    const prevNode = currentNodes[targetIdx];
+    const updatedConfig = {
+      ...prevNode.config,
+      ...(incoming.config && typeof incoming.config === 'object' ? incoming.config : {})
+    };
+    if (Array.isArray(incoming.tables)) {
+      updatedConfig.tables = incoming.tables;
+    } else if (typeof incoming.tables_csv === 'string') {
+      updatedConfig.tables = incoming.tables_csv.split(',').map((s) => s.trim()).filter(Boolean);
+    }
+    if (incoming.primary_model !== undefined) {
+      updatedConfig.primary_model = String(incoming.primary_model).trim();
+    }
+    if (incoming.score_threshold !== undefined) {
+      updatedConfig.score_threshold = Number(incoming.score_threshold) || 85;
+    }
+
+    currentNodes[targetIdx] = {
+      ...prevNode,
+      title: String(incoming.title ?? prevNode.title).trim() || prevNode.title,
+      subtitle: String(incoming.subtitle ?? prevNode.subtitle).trim() || prevNode.subtitle,
+      description: String(incoming.description ?? prevNode.description).trim() || prevNode.description,
+      system_prompt: String(incoming.system_prompt ?? prevNode.system_prompt ?? '').trim(),
+      input_schema: String(incoming.input_schema ?? prevNode.input_schema ?? '').trim(),
+      output_schema: String(incoming.output_schema ?? prevNode.output_schema ?? '').trim(),
+      enabled: incoming.enabled !== undefined ? Boolean(incoming.enabled) : Boolean(prevNode.enabled ?? true),
+      config: updatedConfig
+    };
+
+    await db.prepare(`
+      INSERT INTO crag_pipeline_configs (id, name, nodes_json, edges_json, auto_notify_rules_json, updated_at)
+      VALUES ('cfg_primary', '7-Node CRAG Langflow Master Pipeline', ?, ?, ?, CURRENT_TIMESTAMP)
+      ON CONFLICT(id) DO UPDATE SET
+        nodes_json = excluded.nodes_json,
+        updated_at = CURRENT_TIMESTAMP
+    `).bind(
+      JSON.stringify(currentNodes),
+      cfgRow?.edges_json || JSON.stringify(DEFAULT_LANGFLOW_EDGES),
+      cfgRow?.auto_notify_rules_json || JSON.stringify(DEFAULT_AUTO_NOTIFY_RULES)
+    ).run();
+
+    return json({
+      success: true,
+      node: currentNodes[targetIdx],
+      nodes: currentNodes,
+      message: `✅ Đã lưu cấu hình trực tiếp cho "${currentNodes[targetIdx].title}" vào Cloudflare D1!`
+    });
+  }
+
+  if (action === 'reset_node_configs') {
+    if (!db) return json({ success: false, error: 'D1 unavailable' }, { status: 503 });
+    const resetNodes = DEFAULT_LANGFLOW_NODES.map((n) => ({ ...n, config: { ...n.config } }));
+    await db.prepare(`
+      UPDATE crag_pipeline_configs
+      SET nodes_json = ?, updated_at = CURRENT_TIMESTAMP
+      WHERE id = 'cfg_primary'
+    `).bind(JSON.stringify(resetNodes)).run().catch(() => {});
+    return json({
+      success: true,
+      nodes: resetNodes,
+      message: '🔄 Đã khôi phục cấu hình mặc định cho 7 Node CRAG trên D1!'
+    });
+  }
+
+  // 3. Single-Source Bot Config Save (Eliminates Double Config across /admin, /session-audit, /langflow)
+  if (action === 'save_bot_config') {
+    if (!db) return json({ success: false, error: 'D1 unavailable' }, { status: 503 });
+    const saved = await saveCanonicalBotConfig(db, {
+      name: body.name,
+      webhook_url: body.webhook_url,
+      bot_token: body.bot_token,
+      chat_id: body.chat_id,
+      is_active: body.is_active
+    });
+    return json({
+      success: true,
+      bot_config: {
+        id: saved.id,
+        name: saved.name,
+        webhook_url: saved.webhook_url,
+        chat_id: saved.chat_id,
+        bot_token: saved.bot_token,
+        bot_token_masked: saved.bot_token ? `${saved.bot_token.slice(0, 19)}...${saved.bot_token.slice(-6)}` : '',
+        is_active: Boolean(saved.is_active)
+      },
+      message: '✅ Đã đồng bộ cấu hình Zalo Bot duy nhất (Single Source of Truth) trên bảng D1 bot_webhook_configs!'
+    });
+  }
+
+  // 4. Update Subscriber Role / Linked User
   if (action === 'update_subscriber_role') {
     if (!db) return json({ success: false, error: 'D1 unavailable' }, { status: 503 });
     const chatId = String(body.chat_id || SUPERADMIN_DEFAULT_CHAT_ID).trim();
-    const newRole = String(body.role_hint || 'superadmin').trim();
+    const newRole = String(body.role_hint || 'superadmin').trim().toLowerCase();
     const phone = String(body.phone || '').trim();
     const linkedUserId = String(body.linked_user_id || '').trim();
 
@@ -263,10 +465,97 @@ export async function POST({ request, platform }) {
     });
   }
 
-  // 3. Trigger Automated Notification Rule Immediately from Real D1 Data
+  // 5. Update User Role & RBAC UserGroup (users + rbac_user_groups + zalo_bot_subscribers)
+  if (action === 'update_user_group_role') {
+    if (!db) return json({ success: false, error: 'D1 unavailable' }, { status: 503 });
+    const userId = String(body.user_id || '').trim();
+    if (!userId) return json({ success: false, error: 'Thiếu user_id' }, { status: 400 });
+
+    const requestedGroupId = String(body.group_id || '').trim();
+    const requestedRole = String(body.role || (requestedGroupId ? groupIdToRole(requestedGroupId) : 'student')).trim().toLowerCase();
+    const finalGroupId = requestedGroupId || roleToGroupId(requestedRole);
+    const dbRole = ['superadmin', 'teacher', 'parent', 'student'].includes(requestedRole)
+      ? requestedRole
+      : (requestedRole === 'leader' || requestedRole === 'admin' ? 'superadmin' : 'student');
+
+    const userRow = await db.prepare(`SELECT id, metadata FROM users WHERE id = ? LIMIT 1`).bind(userId).first().catch(() => null);
+    if (!userRow) {
+      return json({ success: false, error: `Không tìm thấy người dùng ID "${userId}"` }, { status: 404 });
+    }
+    let meta = {};
+    try { meta = JSON.parse(userRow.metadata || '{}'); } catch {}
+    meta.app_role = requestedRole;
+    meta.group_id = finalGroupId;
+
+    await db.prepare(`
+      UPDATE users
+      SET role = ?, metadata = ?, updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `).bind(dbRole, JSON.stringify(meta), userId).run();
+
+    await db.prepare(`
+      UPDATE zalo_bot_subscribers
+      SET role_hint = ?, updated_at = CURRENT_TIMESTAMP
+      WHERE linked_user_id = ?
+    `).bind(requestedRole, userId).run().catch(() => {});
+
+    return json({
+      success: true,
+      user_id: userId,
+      role: requestedRole,
+      group_id: finalGroupId,
+      message: `✅ Đã gán User "${userId}" vào nhóm "${finalGroupId}" (Role: ${requestedRole.toUpperCase()}) trên D1!`
+    });
+  }
+
+  // 6. Save RBAC User Group Permissions / Allowed Tables
+  if (action === 'save_rbac_group') {
+    if (!db) return json({ success: false, error: 'D1 unavailable' }, { status: 503 });
+    const groupId = String(body.id || body.group_id || '').trim();
+    if (!groupId) return json({ success: false, error: 'Thiếu group_id' }, { status: 400 });
+
+    const name = String(body.name || '').trim();
+    const description = String(body.description || '').trim();
+    const roleKey = String(body.role_key || groupIdToRole(groupId)).trim();
+    const maxTurns = Number(body.max_memory_turns || 6);
+    const permissions = Array.isArray(body.permissions)
+      ? body.permissions
+      : String(body.permissions_csv || '').split(',').map((s) => s.trim()).filter(Boolean);
+    const allowedTables = Array.isArray(body.allowed_tables)
+      ? body.allowed_tables
+      : String(body.allowed_tables_csv || '').split(',').map((s) => s.trim()).filter(Boolean);
+
+    await db.prepare(`
+      INSERT INTO rbac_user_groups (id, role_key, name, description, permissions_json, allowed_tables_json, max_memory_turns, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+      ON CONFLICT(id) DO UPDATE SET
+        name = CASE WHEN excluded.name != '' THEN excluded.name ELSE rbac_user_groups.name END,
+        description = excluded.description,
+        permissions_json = excluded.permissions_json,
+        allowed_tables_json = excluded.allowed_tables_json,
+        max_memory_turns = excluded.max_memory_turns,
+        updated_at = CURRENT_TIMESTAMP
+    `).bind(
+      groupId,
+      roleKey,
+      name || groupId,
+      description,
+      JSON.stringify(permissions),
+      JSON.stringify(allowedTables),
+      maxTurns
+    ).run();
+
+    return json({
+      success: true,
+      group_id: groupId,
+      message: `✅ Đã lưu cấu hình Nhóm Quyền "${name || groupId}" vào bảng D1 rbac_user_groups!`
+    });
+  }
+
+  // 7. Trigger Automated Notification Rule Immediately from Real D1 Data
   if (action === 'trigger_auto_notification') {
     const ruleId = String(body.rule_id || 'schedule_10m').trim();
-    const targetChatId = String(body.chat_id || SUPERADMIN_DEFAULT_CHAT_ID).trim();
+    const targetChatId = String(body.chat_id || botConfig.chat_id || SUPERADMIN_DEFAULT_CHAT_ID).trim();
 
     let messageText = '';
     if (db) {
@@ -300,7 +589,7 @@ export async function POST({ request, platform }) {
           `• Tải ảnh QR nét cao (.PNG): ${dlQrLink}\n\n` +
           `Lớp gửi kèm mã QR ngay bên dưới để phụ huynh tiện quét nhanh ạ:`;
 
-        await fetch(`https://bot-api.zaloplatforms.com/bot${DEFAULT_ZALO_BOT_TOKEN}/sendMessage`, {
+        await fetch(`https://bot-api.zaloplatforms.com/bot${activeBotToken}/sendMessage`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -309,7 +598,7 @@ export async function POST({ request, platform }) {
           })
         }).catch(() => {});
 
-        const pRes = await fetch(`https://bot-api.zaloplatforms.com/bot${DEFAULT_ZALO_BOT_TOKEN}/sendPhoto`, {
+        const pRes = await fetch(`https://bot-api.zaloplatforms.com/bot${activeBotToken}/sendPhoto`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -352,7 +641,7 @@ export async function POST({ request, platform }) {
       }
     }
 
-    const zRes = await fetch(`https://bot-api.zaloplatforms.com/bot${DEFAULT_ZALO_BOT_TOKEN}/sendMessage`, {
+    const zRes = await fetch(`https://bot-api.zaloplatforms.com/bot${activeBotToken}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -380,16 +669,16 @@ export async function POST({ request, platform }) {
     });
   }
 
-  // 4. Test & Dispatch Rich Media Webhook (sendPhoto / url_img, sendVoice, Video Lesson)
+  // 8. Test & Dispatch Rich Media Webhook
   if (action === 'dispatch_media_webhook') {
     const mediaType = String(body.media_type || 'qr_photo').trim();
-    const targetChatId = String(body.chat_id || SUPERADMIN_DEFAULT_CHAT_ID).trim();
+    const targetChatId = String(body.chat_id || botConfig.chat_id || SUPERADMIN_DEFAULT_CHAT_ID).trim();
     const rawUrl = String(body.media_url || '').trim();
     const caption = String(body.caption || '').trim();
-    const baseUrl = `https://bot-api.zaloplatforms.com/bot${DEFAULT_ZALO_BOT_TOKEN}`;
+    const baseUrl = `https://bot-api.zaloplatforms.com/bot${activeBotToken}`;
 
     if (mediaType === 'qr_photo' || mediaType === 'custom_photo') {
-      const defaultQr = 'https://timbk-zalo-webhook.tienganh7-sveltekit.workers.dev/vietqr/970422-0901234567-1550000-HP_GIAHUY_T10.png';
+      const defaultQr = 'https://timbk.io.vn/api/vietqr/970422-0901234567-1550000-HP_GIAHUY_T10.png';
       const photoToUse = rawUrl || defaultQr;
       const safePhotoUrl = toZaloCompatiblePhotoUrl(photoToUse);
 
@@ -467,14 +756,14 @@ export async function POST({ request, platform }) {
     }
   }
 
-  // 5. Toggle Auto-Notify Rule in crag_pipeline_configs (D1 Persistence)
+  // 9. Toggle Auto-Notify Rule in crag_pipeline_configs (D1 Persistence)
   if (action === 'toggle_auto_notify_rule') {
     const ruleId = String(body.rule_id || '').trim();
     if (!ruleId || !db) {
       return json({ success: false, error: 'Thiếu rule_id hoặc kết nối D1' }, { status: 400 });
     }
     let rules = DEFAULT_AUTO_NOTIFY_RULES.map((r) => ({ ...r }));
-    const cfgRow = await db.prepare(`SELECT auto_notify_rules_json FROM crag_pipeline_configs WHERE id = 'cfg_primary' LIMIT 1`).first().catch(() => null);
+    const cfgRow = await db.prepare(`SELECT nodes_json, edges_json, auto_notify_rules_json FROM crag_pipeline_configs WHERE id = 'cfg_primary' LIMIT 1`).first().catch(() => null);
     if (cfgRow?.auto_notify_rules_json) {
       try {
         const parsed = JSON.parse(cfgRow.auto_notify_rules_json);
@@ -493,8 +782,8 @@ export async function POST({ request, platform }) {
         auto_notify_rules_json = excluded.auto_notify_rules_json,
         updated_at = CURRENT_TIMESTAMP
     `).bind(
-      JSON.stringify(DEFAULT_LANGFLOW_NODES),
-      JSON.stringify(DEFAULT_LANGFLOW_EDGES),
+      cfgRow?.nodes_json || JSON.stringify(DEFAULT_LANGFLOW_NODES),
+      cfgRow?.edges_json || JSON.stringify(DEFAULT_LANGFLOW_EDGES),
       JSON.stringify(rules)
     ).run().catch(() => {});
 

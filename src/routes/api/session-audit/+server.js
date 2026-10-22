@@ -95,10 +95,10 @@ async function ensureSessionAuditSchema(db) {
     );
   `).run();
 
-  // Ensure primary Zalo Bot Platform config is seeded and active
+  // Ensure primary Zalo Bot Platform config is seeded and active (Single Source of Truth with /langflow)
   await db.prepare(`
     INSERT INTO bot_webhook_configs (id, provider, name, webhook_url, bot_token, chat_id, is_active, last_status, updated_at)
-    VALUES ('bot_primary', 'zalo_bot_platform', 'Zalo Bot Platform (Bot giá cả • bot.ynKabJAc)', 'https://bot-api.zaloplatforms.com', ?, '', 1, 200, CURRENT_TIMESTAMP)
+    VALUES ('bot_primary', 'zalo_bot_platform', 'Zalo Bot Platform (@bot.KTncTtfA • Lớp Tiếng Anh Cô Dung)', 'https://timbk-zalo-webhook.tienganh7-sveltekit.workers.dev', ?, 'b3845beb38a2d1fc88b3', 1, 200, CURRENT_TIMESTAMP)
     ON CONFLICT(id) DO UPDATE SET
       provider = CASE WHEN bot_webhook_configs.bot_token IS NULL OR bot_webhook_configs.bot_token = '' THEN 'zalo_bot_platform' ELSE bot_webhook_configs.provider END,
       bot_token = CASE WHEN bot_webhook_configs.bot_token IS NULL OR bot_webhook_configs.bot_token = '' THEN excluded.bot_token ELSE bot_webhook_configs.bot_token END;
