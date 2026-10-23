@@ -2,7 +2,7 @@
 // Architecture: Strict Network-Only for dynamic data/APIs; Cache-First for static immutable assets;
 // Network-First (with offline fallback) for navigations.
 
-const CACHE_NAME = 'tienganh-academic-v7';
+const CACHE_NAME = 'tienganh-academic-v9-20261023';
 const QUIZ_CACHE_NAME = 'tienganh-quiz-public-v1';
 const QUIZ_QUEUE_DB = 'tienganh-quiz-offline-v1';
 
@@ -17,6 +17,7 @@ const PRECACHE_URLS = [
 ];
 
 self.addEventListener('install', (event) => {
+  self.skipWaiting();
   // Updated Service Workers must remain in 'waiting' state until the user
   // explicitly triggers 'SKIP_WAITING' when no exam/form is dirty.
   event.waitUntil(

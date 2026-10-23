@@ -175,12 +175,36 @@
  }
 
  onMount(() => {
+ // Global resilient fetch wrapper: auto-retry /api/* calls on transient ISP TCP resets ("Failed to fetch")
+ if (typeof window !== 'undefined' && typeof window.fetch === 'function' && !window.__tienganhResilientFetchInstalled) {
+   const origFetch = window.fetch.bind(window);
+   window.__tienganhResilientFetchInstalled = true;
+   window.fetch = async (input, init) => {
+     const urlStr = typeof input === 'string' ? input : (input instanceof URL ? input.toString() : (input?.url || ''));
+     const isApiCall = urlStr.startsWith('/api/') || urlStr.includes('/api/');
+     if (!isApiCall) return origFetch(input, init);
+     let lastErr = null;
+     for (let attempt = 1; attempt <= 3; attempt++) {
+       try {
+         return await origFetch(input, init);
+       } catch (err) {
+         lastErr = err;
+         if (attempt < 3) {
+           await new Promise((r) => setTimeout(r, attempt * 250));
+         }
+       }
+     }
+     throw lastErr;
+   };
+ }
+
  const requestedLogin = new URLSearchParams(window.location.search).get('login') === '1';
  // PWA: Register Service Worker for app-like experience (offline, installable)
  if ('serviceWorker' in navigator) {
  navigator.serviceWorker.register('/sw.js').then((reg) => {
  console.log('[PWA] SW registered:', reg.scope);
- // Notify SW of auth token for authenticated caching if needed
+ reg.update().catch(() => {});
+ if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
  }).catch((err) => {
  console.warn('[PWA] SW registration failed:', err);
  });
