@@ -70,12 +70,12 @@ html.theme-sky {
 }
 
 html.theme-sky body {
-  background-color: #ecfeff !important;
+  background-color: var(--bg-page, #ecfeff);
 }
 
 html.theme-sky .academic-card,
 html.theme-sky .card-soft {
-  border-color: #a5f3fc;
+  border-color: var(--border-color, #a5f3fc);
 }
 
 * {

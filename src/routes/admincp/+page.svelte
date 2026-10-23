@@ -778,6 +778,11 @@
  }
 
  function switchTab(tabId) {
+  if (tabId === 'theme') {
+   activeTab = 'system';
+   subTabSystem = 'theme';
+   return;
+  }
   activeTab = tabId;
   if (tabId === 'schedule') loadScheduleD1();
   if (tabId === 'teachers') loadTeachersAndWorkflowsD1();
@@ -796,6 +801,13 @@
  });
 
  onMount(() => {
+  try {
+   const qTab = new URLSearchParams(window.location.search).get('tab');
+   if (qTab === 'theme') {
+    activeTab = 'system';
+    subTabSystem = 'theme';
+   }
+  } catch {}
   loadData();
   loadScheduleD1();
   loadTeachersAndWorkflowsD1();
@@ -823,6 +835,14 @@
    </div>
 
    <div class="flex items-center gap-2 flex-wrap">
+    <button
+     type="button"
+     data-testid="admincp-header-theme-btn"
+     onclick={() => switchTab('theme')}
+     class="px-3.5 py-2 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-900 text-xs font-extrabold border border-orange-300 transition-colors cursor-pointer"
+    >
+     🎃🏕️ Chọn Theme Sự Kiện (Halloween / Dã Ngoại / Workshop)
+    </button>
     <a
      href="/quiz-menu?tab=create"
      class="px-3.5 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-900 text-xs font-bold border border-emerald-300 transition-colors"
@@ -850,20 +870,21 @@
    </div>
   {/if}
 
-  <!-- 5 Focused Domain Workflow Tabs -->
+  <!-- 6 Focused Domain Workflow Tabs (including Event Themes) -->
   <div class="flex flex-wrap items-center gap-2 pb-3 border-b border-stone-200">
    {#each [
     { id: 'users', label: '👥 Tài Khoản & Phân Quyền' },
     { id: 'schedule', label: `📅 Thời Khóa Biểu (${scheduleSessions.length})` },
     { id: 'teachers', label: `👩‍🏫 Giáo Viên & Nhân Sự (${teacherProfiles.length})` },
     { id: 'tuition', label: '💰 Học Phí & Phụ Huynh' },
-    { id: 'system', label: '⚙️ Cấu Hình Cơ Sở & Hệ Thống' }
+    { id: 'system', label: '⚙️ Cấu Hình Cơ Sở & Hệ Thống' },
+    { id: 'theme', label: '🎨 Chủ Đề Sự Kiện (Halloween • Dã Ngoại • Workshop)' }
    ] as tab}
     <button
      type="button"
      data-testid="admincp-tab-{tab.id}"
      onclick={() => switchTab(tab.id)}
-     class="px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all {activeTab === tab.id ? 'bg-emerald-700 text-white shadow-xs' : 'bg-white text-stone-600 hover:bg-stone-100 border border-stone-200'}"
+     class="px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all {(activeTab === tab.id || (tab.id === 'theme' && activeTab === 'system' && subTabSystem === 'theme')) ? 'bg-emerald-700 text-white shadow-xs' : 'bg-white text-stone-600 hover:bg-stone-100 border border-stone-200'}"
     >
      {tab.label}
     </button>
