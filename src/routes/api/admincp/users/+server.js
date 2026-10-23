@@ -481,8 +481,31 @@ export async function POST({ request, platform }) {
       }, { status: 201 });
     }
 
+    // 1B. DIRECT UNLINK BY link_id OR (parent_user_id + student_user_id)
+    if (action === 'unlink_parent_student' && (body.link_id || (!body.user_id && body.parent_user_id))) {
+      await ensureAuxTables(db);
+      const linkId = String(body.link_id || '').trim();
+      const parentId = String(body.parent_user_id || body.user_id || '').trim();
+      const studentId = String(body.student_user_id || body.student_id || '').trim();
+      if (linkId) {
+        await db.prepare('DELETE FROM parent_student_links WHERE id = ?').bind(linkId).run();
+        return json({
+          success: true,
+          message: `Đã xóa/gỡ liên kết phụ huynh - học sinh (${linkId}) thành công!`
+        });
+      }
+      if (parentId && studentId) {
+        await db.prepare('DELETE FROM parent_student_links WHERE parent_user_id = ? AND student_user_id = ?').bind(parentId, studentId).run();
+        return json({
+          success: true,
+          message: 'Đã gỡ liên kết phụ huynh - học sinh thành công!'
+        });
+      }
+      return json({ success: false, error: 'Thiếu link_id hoặc cặp (parent_user_id, student_id) để xóa liên kết.' }, { status: 400 });
+    }
+
     // All remaining actions require user_id
-    const userId = String(body.user_id || body.userId || body.target_user_id || body.id || '').trim();
+    const userId = String(body.user_id || body.userId || body.target_user_id || body.parent_user_id || body.id || '').trim();
     if (!userId) {
       return json({ success: false, error: 'MissingUserId: Thiếu mã tài khoản (user_id)' }, { status: 400 });
     }
@@ -777,6 +800,38 @@ export async function POST({ request, platform }) {
       return json({
         success: true,
         message: `Đã liên kết và xác minh phụ huynh @${target.username} với học sinh ${stu.name} (@${stu.username}).`
+      });
+    }
+
+    // 8B. UNLINK PARENT FROM STUDENT (Xóa con / Gỡ liên kết)
+    if (action === 'unlink_parent_student') {
+      await ensureAuxTables(db);
+      const linkId = String(body.link_id || '').trim();
+      const studentIdOrUsername = String(body.student_id || body.student_user_id || '').trim();
+
+      if (linkId) {
+        await db.prepare('DELETE FROM parent_student_links WHERE id = ? AND parent_user_id = ?')
+          .bind(linkId, targetId).run();
+        return json({
+          success: true,
+          message: `Đã gỡ liên kết học sinh khỏi phụ huynh @${target.username}.`
+        });
+      }
+
+      if (!studentIdOrUsername) {
+        return json({ success: false, error: 'Thiếu mã học sinh (student_id) hoặc link_id cần gỡ liên kết.' }, { status: 400 });
+      }
+
+      const stu = await db.prepare("SELECT id, name, username FROM users WHERE (id = ? OR LOWER(username) = LOWER(?)) LIMIT 1")
+        .bind(studentIdOrUsername, studentIdOrUsername).first();
+      const resolvedStudentId = stu ? stu.id : studentIdOrUsername;
+
+      await db.prepare('DELETE FROM parent_student_links WHERE parent_user_id = ? AND (student_user_id = ? OR id = ?)')
+        .bind(targetId, resolvedStudentId, studentIdOrUsername).run();
+
+      return json({
+        success: true,
+        message: `Đã gỡ liên kết học sinh ${stu ? `${stu.name} (@${stu.username})` : resolvedStudentId} khỏi phụ huynh @${target.username}.`
       });
     }
 

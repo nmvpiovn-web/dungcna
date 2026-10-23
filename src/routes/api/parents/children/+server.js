@@ -174,6 +174,26 @@ export async function POST({ request, platform }) {
     return json({ success: false, error: 'InvalidJSON: Payload yêu cầu định dạng JSON hợp lệ' }, { status: 400 });
   }
 
+  const db = platform?.env?.DB;
+  if (db && (body.action === 'delete' || body.action === 'unlink')) {
+    const linkId = String(body.link_id || '').trim();
+    const pId = String(body.parent_id || body.parent_user_id || '').trim();
+    const sId = String(body.student_id || body.student_user_id || '').trim();
+    if (linkId) {
+      if (!isLinkManager(user)) {
+        await db.prepare('DELETE FROM parent_student_links WHERE id = ? AND parent_user_id = ?').bind(linkId, user.id).run();
+      } else {
+        await db.prepare('DELETE FROM parent_student_links WHERE id = ?').bind(linkId).run();
+      }
+      return json({ success: true, link_id: linkId, message: 'Đã xóa liên kết phụ huynh - học sinh thành công.' });
+    }
+    if (pId && sId && isLinkManager(user)) {
+      await db.prepare('DELETE FROM parent_student_links WHERE parent_user_id = ? AND student_user_id = ?').bind(pId, sId).run();
+      return json({ success: true, message: 'Đã xóa liên kết phụ huynh - học sinh thành công.' });
+    }
+    return json({ success: false, error: 'Thiếu link_id hoặc thông tin liên kết cần xóa' }, { status: 400 });
+  }
+
   const { student_id, student_code } = body;
   if (!student_id && !student_code) {
     return json({ success: false, error: 'Thiếu mã học sinh hoặc ID học sinh để liên kết' }, { status: 400 });
@@ -181,11 +201,10 @@ export async function POST({ request, platform }) {
 
   const targetId = student_id || student_code;
 
-  const db = platform?.env?.DB;
   if (db) {
     try {
       // Verify target student exists AND has role = 'student' (P1-REG-02)
-      const targetUser = await db.prepare('SELECT id, name, role FROM users WHERE id = ? OR username = ?').bind(targetId, targetId).first();
+      const targetUser = await db.prepare('SELECT id, name, username, role FROM users WHERE id = ? OR LOWER(username) = LOWER(?)').bind(targetId, targetId).first();
       if (!targetUser) {
         return json({ success: false, error: 'Không tìm thấy hồ sơ học sinh với mã này' }, { status: 404 });
       }
@@ -195,16 +214,29 @@ export async function POST({ request, platform }) {
       }
 
       // Check if already linked
-      const parentId = isLinkManager(user) && body.parent_id ? body.parent_id : user.id;
-      if (isLinkManager(user) && body.parent_id) {
-        const parent = await db.prepare("SELECT id FROM users WHERE id = ? AND role = 'parent'").bind(parentId).first();
+      const rawParentId = isLinkManager(user) && (body.parent_id || body.parent_user_id) ? String(body.parent_id || body.parent_user_id).trim() : user.id;
+      let parentId = rawParentId;
+      if (isLinkManager(user) && (body.parent_id || body.parent_user_id)) {
+        const parent = await db.prepare("SELECT id FROM users WHERE (id = ? OR LOWER(username) = LOWER(?)) AND role = 'parent'").bind(rawParentId, rawParentId).first();
         if (!parent) return json({ success: false, error: 'Không tìm thấy tài khoản phụ huynh hợp lệ' }, { status: 404 });
+        parentId = parent.id;
       }
       const existing = await db.prepare('SELECT id, verification_status FROM parent_student_links WHERE parent_user_id = ? AND student_user_id = ?')
         .bind(parentId, targetUser.id).first();
       if (existing) {
+        if (isLinkManager(user) && body.auto_verify === true && existing.verification_status !== 'verified') {
+          await db.prepare("UPDATE parent_student_links SET verification_status = 'verified', verified_at = CURRENT_TIMESTAMP WHERE id = ?").bind(existing.id).run();
+          return json({
+            success: true,
+            link_id: existing.id,
+            verification_status: 'verified',
+            message: `Đã xác minh liên kết học sinh ${targetUser.name} thành công`,
+            student_id: targetUser.id
+          });
+        }
         return json({ 
           success: true, 
+          link_id: existing.id,
           verification_status: existing.verification_status || 'pending',
           message: existing.verification_status === 'verified' 
             ? 'Học sinh đã được xác minh liên kết từ trước' 
@@ -213,17 +245,21 @@ export async function POST({ request, platform }) {
         });
       }
 
-      // Insert link with default PENDING status (P1-REG-02)
+      // Insert link with default PENDING status (P1-REG-02) unless auto_verify is explicitly passed by manager
+      const defaultStatus = (isLinkManager(user) && body.auto_verify === true) ? 'verified' : 'pending';
       const linkId = `link_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
       await db.prepare(`
-        INSERT INTO parent_student_links (id, parent_user_id, student_user_id, verification_status, created_at) 
-        VALUES (?, ?, ?, 'pending', CURRENT_TIMESTAMP)
-      `).bind(linkId, parentId, targetUser.id).run();
+        INSERT INTO parent_student_links (id, parent_user_id, student_user_id, verification_status, verified_at, created_at) 
+        VALUES (?, ?, ?, ?, CASE WHEN ? = 'verified' THEN CURRENT_TIMESTAMP ELSE NULL END, CURRENT_TIMESTAMP)
+      `).bind(linkId, parentId, targetUser.id, defaultStatus, defaultStatus).run();
 
       return json({
         success: true,
-        verification_status: 'pending',
-        message: `Yêu cầu liên kết học sinh ${targetUser.name} đã được ghi nhận. Đang chờ nhà trường xác minh (pending).`,
+        link_id: linkId,
+        verification_status: defaultStatus,
+        message: defaultStatus === 'verified'
+          ? `Đã liên kết và xác minh học sinh ${targetUser.name} thành công!`
+          : `Yêu cầu liên kết học sinh ${targetUser.name} đã được ghi nhận. Đang chờ nhà trường xác minh (pending).`,
         student_id: targetUser.id
       });
     } catch (e) {
@@ -255,17 +291,66 @@ export async function PATCH({ request, platform }) {
     return json({ success: false, error: 'InvalidJSON' }, { status: 400 });
   }
   const status = body.verification_status;
+  if (body.action === 'delete' || status === 'deleted') {
+    if (!body.link_id) return json({ success: false, error: 'Thiếu link_id cần xóa' }, { status: 400 });
+    await db.prepare('DELETE FROM parent_student_links WHERE id = ?').bind(body.link_id).run();
+    return json({ success: true, link_id: body.link_id, deleted: true, message: 'Đã xóa liên kết phụ huynh - học sinh' });
+  }
   if (!body.link_id || !['verified', 'rejected', 'pending'].includes(status)) {
     return json({ success: false, error: 'Cần link_id và verification_status hợp lệ' }, { status: 400 });
   }
   const verifiedAt = status === 'verified' ? new Date().toISOString() : null;
-  const result = await db.prepare(`
-    UPDATE parent_student_links
-    SET verification_status = ?, verified_at = ?, updated_at = CURRENT_TIMESTAMP
-    WHERE id = ?
-  `).bind(status, verifiedAt, body.link_id).run();
+  let result;
+  try {
+    result = await db.prepare(`
+      UPDATE parent_student_links
+      SET verification_status = ?, verified_at = ?, updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `).bind(status, verifiedAt, body.link_id).run();
+  } catch {
+    result = await db.prepare(`
+      UPDATE parent_student_links
+      SET verification_status = ?, verified_at = ?
+      WHERE id = ?
+    `).bind(status, verifiedAt, body.link_id).run();
+  }
   if (!result.meta?.changes) {
     return json({ success: false, error: 'Không tìm thấy yêu cầu liên kết' }, { status: 404 });
   }
   return json({ success: true, link_id: body.link_id, verification_status: status });
+}
+
+export async function DELETE({ url, request, platform }) {
+  const auth = await verifyServerAuth(request, platform);
+  if (!auth.authenticated) {
+    return json({ success: false, error: auth.error || 'Vui lòng đăng nhập' }, { status: auth.status || 401 });
+  }
+  const user = auth.user;
+  const db = platform?.env?.DB;
+  if (!db) return json({ success: false, error: 'DatabaseUnavailable' }, { status: 503 });
+
+  let body = {};
+  try { body = await request.json(); } catch {}
+
+  const linkId = String(url.searchParams.get('link_id') || url.searchParams.get('id') || body.link_id || body.id || '').trim();
+  const parentId = String(url.searchParams.get('parent_user_id') || body.parent_user_id || body.parent_id || '').trim();
+  const studentId = String(url.searchParams.get('student_user_id') || body.student_user_id || body.student_id || '').trim();
+
+  if (linkId) {
+    if (isLinkManager(user)) {
+      await db.prepare('DELETE FROM parent_student_links WHERE id = ?').bind(linkId).run();
+    } else if (user.role === 'parent') {
+      await db.prepare('DELETE FROM parent_student_links WHERE id = ? AND parent_user_id = ?').bind(linkId, user.id).run();
+    } else {
+      return json({ success: false, error: 'Forbidden' }, { status: 403 });
+    }
+    return json({ success: true, link_id: linkId, message: 'Đã xóa liên kết phụ huynh - học sinh thành công!' });
+  }
+
+  if (parentId && studentId && isLinkManager(user)) {
+    await db.prepare('DELETE FROM parent_student_links WHERE parent_user_id = ? AND student_user_id = ?').bind(parentId, studentId).run();
+    return json({ success: true, message: 'Đã xóa liên kết phụ huynh - học sinh thành công!' });
+  }
+
+  return json({ success: false, error: 'Thiếu link_id hoặc cặp (parent_user_id, student_user_id) cần xóa' }, { status: 400 });
 }

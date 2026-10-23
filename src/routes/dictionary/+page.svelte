@@ -551,6 +551,18 @@
  console.error(err);
  }
  }
+
+ async function handleDeleteWord(word) {
+  if (!word || !word.term) return;
+  words = words.filter(w => w.term.toLowerCase() !== word.term.toLowerCase());
+  try {
+   await fetch('/api/vocabulary', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'delete_word', id: word.id, term: word.term })
+   });
+  } catch {}
+ }
 </script>
 
 <div class="space-y-6 min-w-0 max-w-full overflow-x-hidden">
@@ -768,14 +780,27 @@
  </div>
  </div>
 
- <button
- onclick={() => speakWord(word.term, 0.9)}
- class="w-9 h-9 rounded-md bg-slate-100 hover:bg-cx-50 text-slate-600 hover:text-cx-600 flex items-center justify-center text-sm border border-slate-200 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cx-500"
- title="Nghe phát âm chuẩn Cambridge"
- aria-label="Phát âm từ {word.term}"
- >
- 🔊
- </button>
+ <div class="flex items-center gap-1.5">
+  <button
+  onclick={() => speakWord(word.term, 0.9)}
+  class="w-9 h-9 rounded-md bg-slate-100 hover:bg-cx-50 text-slate-600 hover:text-cx-600 flex items-center justify-center text-sm border border-slate-200 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cx-500"
+  title="Nghe phát âm chuẩn Cambridge"
+  aria-label="Phát âm từ {word.term}"
+  >
+  🔊
+  </button>
+  {#if currentUser && ['superadmin', 'admin', 'leader', 'teacher'].includes(String(currentUser.role || '').toLowerCase()) || String(word.id || '').startsWith('voc_custom_') || String(word.id || '').startsWith('custom_')}
+  <button
+   type="button"
+   data-testid="btn-delete-word"
+   onclick={() => handleDeleteWord(word)}
+   class="w-9 h-9 rounded-md bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white flex items-center justify-center text-xs border border-rose-200 transition-colors"
+   title="Xóa từ vựng này khỏi danh sách / D1"
+  >
+   🗑️
+  </button>
+  {/if}
+ </div>
  </div>
 
  <!-- Meaning -->

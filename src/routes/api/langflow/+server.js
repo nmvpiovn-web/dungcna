@@ -508,18 +508,20 @@ export async function POST({ request, platform }) {
     });
   }
 
-  // 6. Save RBAC User Group Permissions / Allowed Tables
-  if (action === 'save_rbac_group') {
+  // 6. Save / Delete RBAC User Group Permissions / Allowed Tables
+  if (action === 'save_rbac_group' || action === 'save_group_permission') {
     if (!db) return json({ success: false, error: 'D1 unavailable' }, { status: 503 });
     const groupId = String(body.id || body.group_id || '').trim();
     if (!groupId) return json({ success: false, error: 'Thiếu group_id' }, { status: 400 });
 
-    const name = String(body.name || '').trim();
+    const name = String(body.name || body.group_name || '').trim();
     const description = String(body.description || '').trim();
     const roleKey = String(body.role_key || groupIdToRole(groupId)).trim();
     const maxTurns = Number(body.max_memory_turns || 6);
     const permissions = Array.isArray(body.permissions)
       ? body.permissions
+      : Array.isArray(body.allowed_flows)
+      ? body.allowed_flows
       : String(body.permissions_csv || '').split(',').map((s) => s.trim()).filter(Boolean);
     const allowedTables = Array.isArray(body.allowed_tables)
       ? body.allowed_tables
@@ -549,6 +551,30 @@ export async function POST({ request, platform }) {
       success: true,
       group_id: groupId,
       message: `✅ Đã lưu cấu hình Nhóm Quyền "${name || groupId}" vào bảng D1 rbac_user_groups!`
+    });
+  }
+
+  if (action === 'delete_rbac_group' || action === 'delete_group_permission') {
+    if (!db) return json({ success: false, error: 'D1 unavailable' }, { status: 503 });
+    const groupId = String(body.id || body.group_id || '').trim();
+    if (!groupId) return json({ success: false, error: 'Thiếu group_id cần xóa' }, { status: 400 });
+    await db.prepare('DELETE FROM rbac_user_groups WHERE id = ?').bind(groupId).run();
+    return json({
+      success: true,
+      group_id: groupId,
+      message: `🗑️ Đã xóa Nhóm Quyền "${groupId}" khỏi bảng D1 rbac_user_groups!`
+    });
+  }
+
+  if (action === 'delete_subscriber') {
+    if (!db) return json({ success: false, error: 'D1 unavailable' }, { status: 503 });
+    const chatId = String(body.chat_id || body.id || '').trim();
+    if (!chatId) return json({ success: false, error: 'Thiếu chat_id cần xóa' }, { status: 400 });
+    await db.prepare('DELETE FROM zalo_bot_subscribers WHERE chat_id = ?').bind(chatId).run();
+    return json({
+      success: true,
+      chat_id: chatId,
+      message: `🗑️ Đã xóa Subscriber Zalo "${chatId}" khỏi D1!`
     });
   }
 

@@ -109,6 +109,15 @@ export async function POST({ request, platform }) {
   if (!isStaffUser(auth.user)) return json({ success: false, error: 'Forbidden' }, { status: 403 });
   let body;
   try { body = await request.json(); } catch { return json({ success: false, error: 'Invalid JSON' }, { status: 400 }); }
+
+  if (body.action === 'delete') {
+    const qid = String(body.id || body.quiz_id || '').trim();
+    if (!qid) return json({ success: false, error: 'Thiếu id quiz cần xóa' }, { status: 400 });
+    await platform.env.DB.prepare('DELETE FROM quiz_questions WHERE quiz_id = ?').bind(qid).run().catch(() => {});
+    await platform.env.DB.prepare('DELETE FROM quizzes WHERE id = ?').bind(qid).run();
+    return json({ success: true, id: qid, message: `🗑️ Đã xóa bộ đề Quiz (${qid}) khỏi Cloudflare D1!` });
+  }
+
   const title = String(body.title || '').trim();
   const description = String(body.description || '').trim();
   const timeLimit = Number(body.time_limit_minutes ?? 30);
@@ -125,4 +134,17 @@ export async function POST({ request, platform }) {
   } catch (err) {
     return json({ success: false, error: err.message }, { status: 500 });
   }
+}
+
+export async function DELETE({ url, request, platform }) {
+  const auth = await verifyServerAuth(request, platform);
+  if (!auth.authenticated) return json({ success: false, error: auth.error || 'Unauthorized' }, { status: auth.status || 401 });
+  if (!isStaffUser(auth.user)) return json({ success: false, error: 'Forbidden' }, { status: 403 });
+  let body = {};
+  try { body = await request.json(); } catch {}
+  const qid = String(url.searchParams.get('id') || body.id || body.quiz_id || '').trim();
+  if (!qid) return json({ success: false, error: 'Thiếu id quiz cần xóa' }, { status: 400 });
+  await platform.env.DB.prepare('DELETE FROM quiz_questions WHERE quiz_id = ?').bind(qid).run().catch(() => {});
+  await platform.env.DB.prepare('DELETE FROM quizzes WHERE id = ?').bind(qid).run();
+  return json({ success: true, id: qid, message: `🗑️ Đã xóa bộ đề Quiz (${qid}) khỏi Cloudflare D1!` });
 }

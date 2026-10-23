@@ -151,6 +151,29 @@ export async function POST({ request, platform }) {
 
   const action = body.action || 'add_word';
 
+  if (action === 'delete_word') {
+    if (!db) return json({ success: false, error: 'D1 unavailable' }, { status: 503 });
+    await ensureVocabularyTableAndSeed(db);
+    const id = String(body.id || '').trim();
+    const term = String(body.term || body.word || '').trim();
+    if (!id && !term) {
+      return json({ success: false, error: 'Thiếu id hoặc từ vựng (term) cần xóa!' }, { status: 400 });
+    }
+    if (id && term) {
+      await db.prepare('DELETE FROM cambridge_vocabulary WHERE id = ? OR LOWER(word) = LOWER(?)').bind(id, term).run();
+    } else if (id) {
+      await db.prepare('DELETE FROM cambridge_vocabulary WHERE id = ?').bind(id).run();
+    } else {
+      await db.prepare('DELETE FROM cambridge_vocabulary WHERE LOWER(word) = LOWER(?)').bind(term).run();
+    }
+    return json({
+      success: true,
+      id,
+      term,
+      message: `🗑️ Đã xóa từ vựng "${term || id}" khỏi bảng D1 cambridge_vocabulary!`
+    });
+  }
+
   if (action === 'sync_github_repos') {
     if (!db) return json({ success: false, error: 'D1 unavailable' }, { status: 503 });
     await ensureVocabularyTableAndSeed(db);
@@ -248,5 +271,30 @@ export async function POST({ request, platform }) {
     success: true,
     word: normalized,
     message: `✅ Đã lưu từ "${term}" vào Cloudflare D1 (cambridge_vocabulary) & đồng bộ sang Flashcard!`
+  });
+}
+
+export async function DELETE({ url, request, platform }) {
+  const db = platform?.env?.DB;
+  if (!db) return json({ success: false, error: 'D1 unavailable' }, { status: 503 });
+  await ensureVocabularyTableAndSeed(db);
+  let body = {};
+  try { body = await request.json(); } catch {}
+  const id = String(url.searchParams.get('id') || body.id || '').trim();
+  const term = String(url.searchParams.get('term') || url.searchParams.get('word') || body.term || body.word || '').trim();
+  if (!id && !term) {
+    return json({ success: false, error: 'Thiếu id hoặc term cần xóa' }, { status: 400 });
+  }
+  if (id) {
+    await db.prepare('DELETE FROM cambridge_vocabulary WHERE id = ?').bind(id).run();
+  }
+  if (term) {
+    await db.prepare('DELETE FROM cambridge_vocabulary WHERE LOWER(word) = LOWER(?)').bind(term).run();
+  }
+  return json({
+    success: true,
+    id,
+    term,
+    message: `🗑️ Đã xóa từ vựng "${term || id}" khỏi Cloudflare D1!`
   });
 }

@@ -428,10 +428,50 @@
     return;
    }
    notify(data.message || 'Đã liên kết phụ huynh - học sinh thành công!');
-   showLinkChildModal = false;
+   childUsernameOrId = '';
    await loadUsers();
+   if (targetParentForLink) {
+    const refreshed = users.find(x => x.id === targetParentForLink.id);
+    if (refreshed) targetParentForLink = refreshed;
+   }
   } catch (err) {
    notify(err.message || 'Lỗi mạng', 'err');
+  } finally {
+   linkingChild = false;
+  }
+ }
+
+ async function unlinkChildFromParent(parentUser, childLink) {
+  if (!parentUser || !childLink) return;
+  const pid = parentUser.id || parentUser.user_id;
+  const sid = childLink.student_user_id || childLink.student_id || childLink.student_username;
+  const lid = childLink.link_id || childLink.id || '';
+  linkingChild = true;
+  try {
+   const res = await fetch('/api/admincp/users', {
+    method: 'POST',
+    headers: authHeaders(),
+    credentials: 'include',
+    body: JSON.stringify({
+     action: 'unlink_parent_student',
+     user_id: pid,
+     student_id: sid,
+     link_id: lid
+    })
+   });
+   const data = await res.json().catch(() => ({}));
+   if (!res.ok || !data.success) {
+    notify(data.error || 'Gỡ liên kết học sinh thất bại', 'err');
+    return;
+   }
+   notify(data.message || '🗑️ Đã gỡ liên kết học sinh khỏi phụ huynh thành công!');
+   await loadUsers();
+   if (targetParentForLink && targetParentForLink.id === pid) {
+    const refreshed = users.find(x => x.id === pid);
+    if (refreshed) targetParentForLink = refreshed;
+   }
+  } catch (err) {
+   notify(err.message || 'Lỗi mạng khi gỡ liên kết', 'err');
   } finally {
    linkingChild = false;
   }
@@ -638,14 +678,26 @@
           </div>
          </div>
         {:else if u.role === 'parent'}
-         <div class="space-y-1">
+         <div class="space-y-1.5">
           {#if u.linked_children && u.linked_children.length > 0}
            {#each u.linked_children as ch}
-            <div class="text-[11px] font-semibold text-sky-800">
-             👶 {ch.student_name || ch.student_user_id} (@{ch.student_username || ''})
-             <span class="px-1.5 py-0.5 rounded text-[10px] {ch.verification_status === 'verified' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
-              {ch.verification_status}
-             </span>
+            <div class="flex items-center justify-between gap-1.5 px-2 py-1 rounded-lg bg-sky-50/80 border border-sky-200 text-[11px] font-semibold text-sky-900">
+             <div class="truncate">
+              👶 {ch.student_name || ch.student_user_id} (@{ch.student_username || ''})
+              <span class="ml-1 px-1.5 py-0.5 rounded text-[10px] {ch.verification_status === 'verified' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
+               {ch.verification_status}
+              </span>
+             </div>
+             <button
+              type="button"
+              data-testid="btn-unlink-child-inline"
+              onclick={() => unlinkChildFromParent(u, ch)}
+              disabled={linkingChild}
+              title="Xóa / Gỡ liên kết học sinh này khỏi phụ huynh"
+              class="shrink-0 px-1.5 py-0.5 rounded bg-rose-100 hover:bg-rose-600 text-rose-700 hover:text-white font-bold text-[10px] transition"
+             >
+              ✕ Xóa con
+             </button>
             </div>
            {/each}
           {:else}
@@ -1061,28 +1113,73 @@
  </div>
 {/if}
 
-<!-- MODAL 5: LINK PARENT TO STUDENT (Sticky CTA Footer at bottom) -->
+<!-- MODAL 5: LINK / UNLINK PARENT TO STUDENT (Sticky CTA Footer at bottom) -->
 {#if showLinkChildModal && targetParentForLink}
  <div class="fixed inset-0 z-50 flex items-center justify-center bg-stone-500/25 backdrop-blur-sm p-4" role="dialog" aria-modal="true">
-  <div class="bg-white rounded-2xl border border-stone-200 shadow-2xl w-full max-w-md flex flex-col max-h-[85vh] overflow-hidden">
+  <div class="bg-white rounded-2xl border border-stone-200 shadow-2xl w-full max-w-lg flex flex-col max-h-[85vh] overflow-hidden">
    <div class="shrink-0 flex items-center justify-between border-b border-stone-200 px-6 py-4 bg-white">
-    <h3 class="text-base font-black text-stone-900">🔗 Gán &amp; Xác Minh Học Sinh Cho Phụ Huynh</h3>
+    <h3 class="text-base font-black text-stone-900">🔗 Gán Con &amp; Xóa Liên Kết Học Sinh Cho Phụ Huynh</h3>
     <button type="button" onclick={() => showLinkChildModal = false} class="w-8 h-8 rounded-full bg-stone-100 text-stone-600 font-bold">✕</button>
    </div>
    <form onsubmit={submitLinkParent} class="flex-1 flex flex-col min-h-0 overflow-hidden text-xs">
-    <div class="flex-1 overflow-y-auto px-6 py-4 space-y-3">
+    <div class="flex-1 overflow-y-auto px-6 py-4 space-y-4">
      <div class="p-3 rounded-xl bg-sky-50 border border-sky-200 text-sky-900">
       Phụ huynh: <strong>{targetParentForLink.name}</strong> (@{targetParentForLink.username})
      </div>
-     <div>
-      <label for="lk-stu" class="block font-bold text-stone-700 mb-1">Nhập Username hoặc Mã ID của Học sinh:</label>
+
+     <!-- Current Linked Children List with Delete/Unlink Button -->
+     <div class="space-y-2">
+      <div class="font-bold text-stone-700 flex items-center justify-between">
+       <span>👶 Danh sách con đang liên kết ({targetParentForLink.linked_children?.length || 0}):</span>
+      </div>
+      {#if targetParentForLink.linked_children && targetParentForLink.linked_children.length > 0}
+       <div class="space-y-1.5">
+        {#each targetParentForLink.linked_children as ch}
+         <div class="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-stone-50 border border-stone-200">
+          <div>
+           <div class="font-bold text-stone-900">👶 {ch.student_name || ch.student_user_id} <span class="font-mono text-stone-500">(@{ch.student_username || ch.student_user_id})</span></div>
+           <div class="text-[10px] text-emerald-700 font-semibold mt-0.5">Trạng thái: {ch.verification_status}</div>
+          </div>
+          <button
+           type="button"
+           data-testid="btn-unlink-child-modal"
+           onclick={() => unlinkChildFromParent(targetParentForLink, ch)}
+           disabled={linkingChild}
+           class="px-2.5 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-600 text-rose-700 hover:text-white border border-rose-200 font-bold text-[11px] transition"
+          >
+           🗑️ Xóa con / Gỡ liên kết
+          </button>
+         </div>
+        {/each}
+       </div>
+      {:else}
+       <div class="p-3 rounded-xl bg-stone-50 border border-dashed border-stone-300 text-stone-400 text-center italic">
+        Chưa có học sinh nào được gán cho phụ huynh này.
+       </div>
+      {/if}
+     </div>
+
+     <div class="border-t border-stone-200 pt-3 space-y-2">
+      <label for="lk-stu-select" class="block font-bold text-stone-700">➕ Chọn nhanh học sinh từ danh sách hệ thống:</label>
+      <select
+       id="lk-stu-select"
+       onchange={(e) => { if (e.currentTarget.value) childUsernameOrId = e.currentTarget.value; }}
+       class="w-full px-3 py-2 rounded-lg border border-stone-300 bg-white font-semibold"
+      >
+       <option value="">-- Chọn học sinh để gán cho phụ huynh --</option>
+       {#each users.filter(x => x.role === 'student') as stu (stu.id)}
+        <option value={stu.username || stu.id}>{stu.name} (@{stu.username}) — {stu.grade || 'Lớp 7'}</option>
+       {/each}
+      </select>
+
+      <label for="lk-stu" class="block font-bold text-stone-700 mt-2">Hoặc nhập trực tiếp Username / Mã ID Học sinh:</label>
       <input id="lk-stu" type="text" required bind:value={childUsernameOrId} placeholder="VD: minhquan7a hoặc baokhiem" class="w-full px-3 py-2 rounded-lg border border-stone-300 font-mono" />
      </div>
     </div>
     <div data-testid="modal-cta-footer" class="sticky bottom-0 z-20 shrink-0 px-6 py-3.5 border-t border-stone-200 bg-white flex justify-end gap-2">
-     <button type="button" onclick={() => showLinkChildModal = false} class="px-4 py-2 rounded-lg bg-stone-100 text-stone-700 font-bold">Hủy</button>
+     <button type="button" onclick={() => showLinkChildModal = false} class="px-4 py-2 rounded-lg bg-stone-100 text-stone-700 font-bold">Đóng</button>
      <button type="submit" disabled={linkingChild} class="px-5 py-2 rounded-lg bg-sky-600 hover:bg-sky-700 text-white font-bold">
-      {linkingChild ? '⏳ Đang liên kết...' : '➕ Thêm & Lưu Liên Kết'}
+      {linkingChild ? '⏳ Đang xử lý...' : '➕ Thêm & Lưu Liên Kết Con'}
      </button>
     </div>
    </form>

@@ -1,5 +1,5 @@
 import { json } from '@sveltejs/kit';
-import { verifyServerAuth } from '../../../lib/server/auth.js';
+import { verifyServerAuth, isManager } from '../../../lib/server/auth.js';
 import { buildNotificationAuthFilter } from '../../../lib/server/notificationPolicy.js';
 
 export const prerender = false;
@@ -138,7 +138,6 @@ export async function POST({ request, platform }) {
       const filter = buildNotificationAuthFilter({ role: auth.user.role, userId: auth.user.id });
 
       if (mark_all) {
-        // Mark all AUTHORIZED notifications read using identical filter as GET
         await db.prepare(`
           INSERT INTO system_notification_reads (notification_id, user_id, read_at)
           SELECT n.id, ?, CURRENT_TIMESTAMP
@@ -147,7 +146,6 @@ export async function POST({ request, platform }) {
           ON CONFLICT(notification_id, user_id) DO UPDATE SET read_at = CURRENT_TIMESTAMP;
         `).bind(auth.user.id, ...filter.params).run();
 
-        // Update personal is_read flag ONLY for authorized notifications
         await db.prepare(`
           UPDATE system_notifications SET is_read = 1
           WHERE id IN (
@@ -158,7 +156,6 @@ export async function POST({ request, platform }) {
 
         return json({ success: true, message: 'Đã đánh dấu tất cả thông báo là đã đọc' });
       } else if (notification_id) {
-        // Verify notification exists AND user has permission under identical auth filter
         const authorized = await db.prepare(`
           SELECT n.id, n.target_user_id FROM system_notifications n
           WHERE n.id = ? AND (${filter.whereSql})
@@ -172,14 +169,12 @@ export async function POST({ request, platform }) {
           return json({ success: false, error: 'Forbidden: Bạn không có quyền truy cập hoặc đánh dấu thông báo này' }, { status: 403 });
         }
 
-        // Record per-user read state
         await db.prepare(`
           INSERT INTO system_notification_reads (notification_id, user_id, read_at)
           VALUES (?, ?, CURRENT_TIMESTAMP)
           ON CONFLICT(notification_id, user_id) DO UPDATE SET read_at = CURRENT_TIMESTAMP;
         `).bind(notification_id, auth.user.id).run();
 
-        // If it's a personal notification, update the main record
         if (authorized.target_user_id === auth.user.id) {
           await db.prepare(`
             UPDATE system_notifications 
@@ -199,8 +194,6 @@ export async function POST({ request, platform }) {
   }
 
   if (action === 'create') {
-    // Chỉ leader/admin/superadmin được gửi thông báo hệ thống
-    const { isManager } = await import('../../../lib/server/auth.js');
     if (!isManager(auth.user)) {
       return json({ success: false, error: 'Forbidden: Chỉ quản lý mới được gửi thông báo hệ thống' }, { status: 403 });
     }
@@ -221,5 +214,47 @@ export async function POST({ request, platform }) {
     }
   }
 
+  if (action === 'delete' || action === 'delete_notification') {
+    if (!isManager(auth.user)) {
+      return json({ success: false, error: 'Forbidden: Chỉ Quản lý / Admin mới được xóa thông báo hệ thống' }, { status: 403 });
+    }
+    const notifId = String(body.notification_id || body.id || '').trim();
+    if (!notifId) {
+      return json({ success: false, error: 'Thiếu notification_id cần xóa' }, { status: 400 });
+    }
+    try {
+      await ensureNotificationSchema(db);
+      await db.prepare('DELETE FROM system_notification_reads WHERE notification_id = ?').bind(notifId).run().catch(() => {});
+      await db.prepare('DELETE FROM system_notifications WHERE id = ?').bind(notifId).run();
+      return json({ success: true, id: notifId, message: '🗑️ Đã xóa thông báo hệ thống khỏi Cloudflare D1!' });
+    } catch (e) {
+      return json({ success: false, error: `DatabaseError: ${e.message}` }, { status: 503 });
+    }
+  }
+
   return json({ success: false, error: `Hành động không hợp lệ: '${action}'` }, { status: 400 });
+}
+
+export async function DELETE({ url, request, platform }) {
+  const auth = await verifyServerAuth(request, platform);
+  if (!auth.authenticated) {
+    return json({ success: false, error: auth.error || 'Unauthorized' }, { status: 401 });
+  }
+  if (!isManager(auth.user)) {
+    return json({ success: false, error: 'Forbidden: Chỉ Quản lý / Admin mới được xóa thông báo hệ thống' }, { status: 403 });
+  }
+  if (!platform?.env?.DB) {
+    return json({ success: false, error: 'DatabaseUnavailable' }, { status: 503 });
+  }
+  const db = platform.env.DB;
+  let body = {};
+  try { body = await request.json(); } catch {}
+  const notifId = String(url.searchParams.get('id') || url.searchParams.get('notification_id') || body.id || body.notification_id || '').trim();
+  if (!notifId) {
+    return json({ success: false, error: 'Thiếu id thông báo cần xóa' }, { status: 400 });
+  }
+  await ensureNotificationSchema(db);
+  await db.prepare('DELETE FROM system_notification_reads WHERE notification_id = ?').bind(notifId).run().catch(() => {});
+  await db.prepare('DELETE FROM system_notifications WHERE id = ?').bind(notifId).run();
+  return json({ success: true, id: notifId, message: '🗑️ Đã xóa thông báo hệ thống khỏi Cloudflare D1!' });
 }

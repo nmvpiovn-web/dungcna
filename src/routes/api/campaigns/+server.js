@@ -265,5 +265,46 @@ export async function POST({ request, platform }) {
     });
   }
 
+  if (action === 'delete_campaign') {
+    if (!db) return json({ success: false, error: 'D1 unavailable' }, { status: 503 });
+    const id = String(body.id || '').trim();
+    if (!id) return json({ success: false, error: 'Thiếu mã chiến dịch (id) cần xóa' }, { status: 400 });
+    await db.prepare('DELETE FROM marketing_campaigns WHERE id = ?').bind(id).run();
+    return json({
+      success: true,
+      id,
+      message: `🗑️ Đã xóa chiến dịch Marketing "${id}" khỏi Cloudflare D1!`
+    });
+  }
+
+  if (action === 'delete_lead') {
+    if (!db) return json({ success: false, error: 'D1 unavailable' }, { status: 503 });
+    const id = String(body.id || body.lead_id || '').trim();
+    if (!id) return json({ success: false, error: 'Thiếu mã lead (id) cần xóa' }, { status: 400 });
+    await db.prepare('DELETE FROM campaign_leads WHERE id = ?').bind(id).run();
+    return json({
+      success: true,
+      id,
+      message: `🗑️ Đã xóa thông tin đăng ký ưu đãi (${id}) khỏi Cloudflare D1!`
+    });
+  }
+
   return json({ success: false, error: `Unknown action: ${action}` }, { status: 400 });
+}
+
+export async function DELETE({ url, request, platform }) {
+  const db = platform?.env?.DB;
+  if (!db) return json({ success: false, error: 'D1 unavailable' }, { status: 503 });
+  await ensureCampaignTables(db);
+  let body = {};
+  try { body = await request.json(); } catch {}
+  const id = String(url.searchParams.get('id') || body.id || '').trim();
+  const type = String(url.searchParams.get('type') || body.type || 'campaign').trim();
+  if (!id) return json({ success: false, error: 'Thiếu id cần xóa' }, { status: 400 });
+  if (type === 'lead') {
+    await db.prepare('DELETE FROM campaign_leads WHERE id = ?').bind(id).run();
+    return json({ success: true, id, message: `🗑️ Đã xóa lead ${id}` });
+  }
+  await db.prepare('DELETE FROM marketing_campaigns WHERE id = ?').bind(id).run();
+  return json({ success: true, id, message: `🗑️ Đã xóa chiến dịch ${id}` });
 }

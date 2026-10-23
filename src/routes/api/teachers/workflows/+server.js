@@ -323,9 +323,35 @@ export async function POST({ request, platform }) {
 
   const manager = isManager(auth.user);
 
-  // ACTION 1: REQUEST LEAVE (Single Session Bound & Time Overlap Check)
-  if (action === 'request_leave') {
+  // ACTION 1: REQUEST LEAVE (Single Session Bound & Time Overlap Check, or Manager Direct Entry)
+  if (action === 'request_leave' || action === 'create_leave') {
     const { session_id, reason, substitute_teacher_id, substitute_teacher_name } = body;
+    if (!reason || !String(reason).trim()) {
+      return json({ success: false, error: 'Vui lòng nêu rõ lý do xin nghỉ phép' }, { status: 400 });
+    }
+    if (!session_id && manager) {
+      const leaveId = `leave_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+      const tId = String(body.teacher_id || auth.user.id).trim();
+      const tName = String(body.teacher_name || auth.user.name || 'Giáo viên').trim();
+      const sDate = String(body.session_date || new Date().toISOString().slice(0, 10)).trim();
+      const subStatus = substitute_teacher_id ? 'pending' : 'not_requested';
+      await db.prepare(`
+        INSERT INTO teacher_leave_requests
+        (id, teacher_id, teacher_name, session_id, session_date, reason, substitute_teacher_id, substitute_teacher_name, substitute_status, admin_status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending');
+      `).bind(
+        leaveId,
+        tId,
+        tName,
+        body.session_id || `manual_${Date.now()}`,
+        sDate,
+        String(reason).trim(),
+        substitute_teacher_id || null,
+        substitute_teacher_name || null,
+        subStatus
+      ).run();
+      return json({ success: true, message: 'Đã tạo đơn xin nghỉ phép thành công', leave_id: leaveId });
+    }
     if (!session_id || !reason) {
       return json({ success: false, error: 'Vui lòng chọn ca học cụ thể (session_id) và nêu rõ lý do' }, { status: 400 });
     }
@@ -1074,6 +1100,39 @@ export async function POST({ request, platform }) {
       }
       return json({ success: false, error: `Lỗi cấp tài khoản: ${e.message}` }, { status: 500 });
     }
+  }
+
+  // ACTION 10: DELETE LEAVE / ADVANCE / RECRUITMENT (Xóa đơn nghỉ phép, ứng lương, tuyển dụng)
+  if (action === 'delete_leave') {
+    const leaveId = String(body.leave_id || body.id || '').trim();
+    if (!leaveId) return json({ success: false, error: 'Thiếu leave_id cần xóa' }, { status: 400 });
+    const row = await db.prepare('SELECT id, teacher_id, admin_status FROM teacher_leave_requests WHERE id = ?').bind(leaveId).first();
+    if (!row) return json({ success: false, error: 'Không tìm thấy đơn xin nghỉ cần xóa' }, { status: 404 });
+    if (!manager && (row.teacher_id !== auth.user.id || row.admin_status !== 'pending')) {
+      return json({ success: false, error: 'Forbidden: Chỉ Quản lý hoặc giáo viên tạo đơn (khi đang chờ duyệt) mới được xóa' }, { status: 403 });
+    }
+    await db.prepare('DELETE FROM teacher_leave_requests WHERE id = ?').bind(leaveId).run();
+    return json({ success: true, id: leaveId, message: '🗑️ Đã xóa đơn xin nghỉ phép khỏi hệ thống D1!' });
+  }
+
+  if (action === 'delete_advance') {
+    const advId = String(body.advance_id || body.id || '').trim();
+    if (!advId) return json({ success: false, error: 'Thiếu advance_id cần xóa' }, { status: 400 });
+    const row = await db.prepare('SELECT id, teacher_id, status FROM teacher_salary_advances WHERE id = ?').bind(advId).first();
+    if (!row) return json({ success: false, error: 'Không tìm thấy đơn ứng lương cần xóa' }, { status: 404 });
+    if (!manager && (row.teacher_id !== auth.user.id || row.status !== 'pending')) {
+      return json({ success: false, error: 'Forbidden: Chỉ Quản lý hoặc giáo viên tạo đơn (khi đang chờ duyệt) mới được xóa' }, { status: 403 });
+    }
+    await db.prepare('DELETE FROM teacher_salary_advances WHERE id = ?').bind(advId).run();
+    return json({ success: true, id: advId, message: '🗑️ Đã xóa đơn ứng lương khỏi hệ thống D1!' });
+  }
+
+  if (action === 'delete_recruitment') {
+    if (!manager) return json({ success: false, error: 'Forbidden: Chỉ Quản lý mới được xóa hồ sơ tuyển dụng' }, { status: 403 });
+    const recId = String(body.recruitment_id || body.id || '').trim();
+    if (!recId) return json({ success: false, error: 'Thiếu recruitment_id cần xóa' }, { status: 400 });
+    await db.prepare('DELETE FROM teacher_recruitment WHERE id = ?').bind(recId).run();
+    return json({ success: true, id: recId, message: '🗑️ Đã xóa hồ sơ ứng viên khỏi hệ thống D1!' });
   }
 
   return json({ success: false, error: `Hành động không hợp lệ: '${action}'` }, { status: 400 });

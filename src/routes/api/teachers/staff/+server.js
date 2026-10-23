@@ -105,12 +105,8 @@ async function ensureTeacherProfilesTable(db) {
   tableEnsured = true;
 }
 
-// salary.manage contract: superadmin, admin, and leader can manage staff profiles
-// (isManager is now the shared helper in lib/server/auth.js — EP-M2)
-
 export async function GET({ url, request, platform }) {
   try {
-    // 1. Authenticate request
     const auth = await verifyServerAuth(request, platform);
     if (!auth.authenticated) {
       return json({ success: false, error: 'Unauthorized: Yêu cầu đăng nhập tài khoản hợp lệ' }, { status: 401 });
@@ -122,7 +118,6 @@ export async function GET({ url, request, platform }) {
     const hasManagerPrivileges = isManager(auth.user);
     const requestedTeacherId = url.searchParams.get('teacher_id');
 
-    // Teachers can ONLY inspect their own profile
     if (!hasManagerPrivileges) {
       if (requestedTeacherId && requestedTeacherId !== auth.user.id) {
         return json({
@@ -134,7 +129,6 @@ export async function GET({ url, request, platform }) {
 
     const targetTeacherId = hasManagerPrivileges ? requestedTeacherId : auth.user.id;
 
-    // 2. Query from Cloudflare D1 if available (Fail-Closed)
     if (platform?.env?.DB) {
       await ensureTeacherProfilesTable(platform.env.DB);
       try {
@@ -158,7 +152,6 @@ export async function GET({ url, request, platform }) {
       }
     }
 
-    // 3. Fallback only in local mock mode
     const isMock = Boolean(import.meta.env?.DEV || platform?.env?.ENABLE_LOCAL_MOCK === 'true' || process.env.ENABLE_LOCAL_MOCK === 'true');
     if (!isMock) {
       return json({
@@ -182,7 +175,6 @@ export async function GET({ url, request, platform }) {
 
 export async function POST({ request, platform }) {
   try {
-    // 1. Authenticate request
     const auth = await verifyServerAuth(request, platform);
     if (!auth.authenticated) {
       return json({ success: false, error: 'Unauthorized: Yêu cầu đăng nhập tài khoản hợp lệ' }, { status: 401 });
@@ -193,14 +185,21 @@ export async function POST({ request, platform }) {
 
     const body = await request.json();
     const action = body.action;
-    const teacherId = body.teacher_id;
-
-    if (!teacherId) return json({ success: false, error: 'Thiếu teacher_id' }, { status: 400 });
+    const teacherId = String(body.teacher_id || body.id || '').trim();
 
     const hasManagerPrivileges = isManager(auth.user);
 
-    // RESTRICT: Only SuperAdmin and Leader can modify role, salary, appraisal or bonuses
-    const MANAGER_ONLY_ACTIONS = ['update_role_salary', 'add_appraisal', 'add_bonus', 'send_private_reminder'];
+    // Manager-only actions
+    const MANAGER_ONLY_ACTIONS = [
+      'create_profile',
+      'delete_profile',
+      'update_role_salary',
+      'add_appraisal',
+      'add_bonus',
+      'delete_bonus',
+      'send_private_reminder',
+      'delete_reminder'
+    ];
     if (MANAGER_ONLY_ACTIONS.includes(action) && !hasManagerPrivileges) {
       return json({
         success: false,
@@ -208,7 +207,6 @@ export async function POST({ request, platform }) {
       }, { status: 403 });
     }
 
-    // Teachers can only acknowledge their own reminders
     if (action === 'acknowledge_reminder' && !hasManagerPrivileges && teacherId !== auth.user.id) {
       return json({
         success: false,
@@ -216,9 +214,56 @@ export async function POST({ request, platform }) {
       }, { status: 403 });
     }
 
-    // PRODUCTION: Must write to Cloudflare D1 with strict Fail-Closed error propagation
+    if (action !== 'create_profile' && !teacherId) {
+      return json({ success: false, error: 'Thiếu teacher_id' }, { status: 400 });
+    }
+
     if (platform?.env?.DB) {
       await ensureTeacherProfilesTable(platform.env.DB);
+
+      if (action === 'create_profile') {
+        const tName = String(body.teacher_name || body.name || '').trim();
+        const tUsername = String(body.username || '').trim().toLowerCase().replace(/[^a-z0-9_.-]/g, '') || `gv_${Date.now().toString(36)}`;
+        if (!tName) {
+          return json({ success: false, error: 'Vui lòng nhập họ tên giáo viên (teacher_name)' }, { status: 400 });
+        }
+        const newTeacherId = teacherId || `usr_teacher_${tUsername}_${Date.now().toString(36).slice(-4)}`;
+        const roleType = String(body.role_type || 'lead').trim();
+        const roleTitle = String(body.role_title || 'Giáo viên Tiếng Anh').trim();
+        const salaryType = String(body.salary_type || 'per_session').trim();
+        const baseSalary = Math.max(0, Math.trunc(Number(body.base_salary_vnd) || 0));
+        const ratePerSession = Math.max(0, Math.trunc(Number(body.rate_per_session_vnd) || 300000));
+
+        await platform.env.DB.prepare(`
+          INSERT OR REPLACE INTO teacher_profiles (
+            id, teacher_id, user_id, teacher_name, username, role_type, role_title,
+            salary_type, base_salary_vnd, rate_per_session_vnd, total_sessions_taught,
+            leader_rating, leader_appraisal, bonuses, private_reminders, updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 5.0, '', '[]', '[]', CURRENT_TIMESTAMP)
+        `).bind(
+          newTeacherId, newTeacherId, newTeacherId, tName, tUsername, roleType, roleTitle,
+          salaryType, baseSalary, ratePerSession
+        ).run();
+
+        const row = await platform.env.DB.prepare('SELECT * FROM teacher_profiles WHERE teacher_id = ?').bind(newTeacherId).first();
+        return json({
+          success: true,
+          persisted: true,
+          profile: parseD1Profile(row),
+          message: `✅ Đã thêm hồ sơ giáo viên ${tName} (@${tUsername}) vào Cloudflare D1!`
+        });
+      }
+
+      if (action === 'delete_profile') {
+        await platform.env.DB.prepare('DELETE FROM teacher_profiles WHERE teacher_id = ? OR id = ?').bind(teacherId, teacherId).run();
+        return json({
+          success: true,
+          persisted: true,
+          teacher_id: teacherId,
+          message: `🗑️ Đã xóa hồ sơ giáo viên (${teacherId}) khỏi Cloudflare D1!`
+        });
+      }
+
       if (action === 'update_role_salary') {
         const baseSalary = Number(body.base_salary_vnd);
         const ratePerSession = Number(body.rate_per_session_vnd);
@@ -231,7 +276,6 @@ export async function POST({ request, platform }) {
         const leaderRating = Number(body.leader_rating) || 5.0;
 
         try {
-          // Chụp giá trị cũ trước khi ghi để audit có đủ before/after.
           const before = await platform.env.DB.prepare('SELECT base_salary_vnd, rate_per_session_vnd, role_type, role_title, salary_type FROM teacher_profiles WHERE teacher_id = ?').bind(teacherId).first().catch(() => null);
           if (!before) {
             return json({ success: false, persisted: false, error: 'Không tìm thấy hồ sơ giáo viên thật để cập nhật' }, { status: 404 });
@@ -252,7 +296,6 @@ export async function POST({ request, platform }) {
                 before: before || null,
                 after: { base_salary_vnd: baseSalary, rate_per_session_vnd: ratePerSession, role_type: roleType, role_title: roleTitle, salary_type: salaryType }
               }));
-          // D1 batch là giao dịch: không thể đổi lương thành công mà mất audit log.
           await runAtomicBatch(platform.env.DB, [updateStatement, auditStatement]);
 
           const row = await platform.env.DB.prepare('SELECT * FROM teacher_profiles WHERE teacher_id = ?').bind(teacherId).first();
@@ -294,7 +337,6 @@ export async function POST({ request, platform }) {
       }
 
       if (action === 'add_bonus') {
-        // P1: chặn số âm / 0 / số lẻ / vượt trần — trước đây Number(-5) lọt qua
         const amountVnd = Number(body.amount_vnd);
         if (!Number.isSafeInteger(amountVnd) || amountVnd <= 0 || amountVnd > 1000000000) {
           return json({ success: false, persisted: false, error: 'Tiền thưởng phải là số nguyên dương, tối đa 1.000.000.000đ' }, { status: 400 });
@@ -324,6 +366,17 @@ export async function POST({ request, platform }) {
         }
       }
 
+      if (action === 'delete_bonus') {
+        const bonusId = String(body.bonus_id || '').trim();
+        const row = await platform.env.DB.prepare('SELECT bonuses FROM teacher_profiles WHERE teacher_id = ?').bind(teacherId).first();
+        if (row && row.bonuses) {
+          const list = JSON.parse(row.bonuses || '[]').filter(b => b.id !== bonusId);
+          await platform.env.DB.prepare('UPDATE teacher_profiles SET bonuses = ?, updated_at = CURRENT_TIMESTAMP WHERE teacher_id = ?')
+            .bind(JSON.stringify(list), teacherId).run();
+        }
+        return json({ success: true, persisted: true, message: '🗑️ Đã xóa khoản thưởng khỏi hồ sơ giáo viên!' });
+      }
+
       if (action === 'send_private_reminder') {
         const newReminder = {
           id: `rem_${Date.now()}`,
@@ -345,6 +398,17 @@ export async function POST({ request, platform }) {
         }
       }
 
+      if (action === 'delete_reminder') {
+        const remId = String(body.reminder_id || '').trim();
+        const row = await platform.env.DB.prepare('SELECT private_reminders FROM teacher_profiles WHERE teacher_id = ?').bind(teacherId).first();
+        if (row && row.private_reminders) {
+          const list = JSON.parse(row.private_reminders || '[]').filter(r => r.id !== remId);
+          await platform.env.DB.prepare('UPDATE teacher_profiles SET private_reminders = ?, updated_at = CURRENT_TIMESTAMP WHERE teacher_id = ?')
+            .bind(JSON.stringify(list), teacherId).run();
+        }
+        return json({ success: true, persisted: true, message: '🗑️ Đã xóa nhắc nhở riêng khỏi hồ sơ giáo viên!' });
+      }
+
       if (action === 'acknowledge_reminder') {
         try {
           const row = await platform.env.DB.prepare('SELECT private_reminders FROM teacher_profiles WHERE teacher_id = ?').bind(teacherId).first();
@@ -362,7 +426,6 @@ export async function POST({ request, platform }) {
       }
     }
 
-    // NON-D1 FALLBACK: Fail-Closed on production, allow isolated mock in dev
     const isMock = Boolean(import.meta.env?.DEV || platform?.env?.ENABLE_LOCAL_MOCK === 'true' || process.env.ENABLE_LOCAL_MOCK === 'true');
     if (!isMock) {
       return json({
@@ -372,7 +435,6 @@ export async function POST({ request, platform }) {
       }, { status: 500 });
     }
 
-    // In isolated local dev mock mode:
     if (action === 'update_role_salary') {
       const mockProfiles = getLocalMockCache();
       const idx = mockProfiles.findIndex(p => p.teacher_id === teacherId);

@@ -82,6 +82,39 @@
  let isSendingReminder = $state(false);
  let reminderToast = $state('');
 
+ // Parent-Student Link Add Form (Tab 4 -> links)
+ let newLinkParentInput = $state('');
+ let newLinkStudentInput = $state('');
+ let isAddingParentLink = $state(false);
+
+ // Teacher Profile Add Form (Tab 3 -> profiles)
+ let showAddTeacherProfileModal = $state(false);
+ let newTeacherProfile = $state({
+  teacher_name: '',
+  username: '',
+  role_title: 'Giáo viên Tiếng Anh',
+  role_type: 'lead',
+  rate_per_session_vnd: 300000,
+  base_salary_vnd: 0
+ });
+ let isSavingTeacherProfile = $state(false);
+
+ // HR Workflow Add Forms (Tab 3 -> workflows)
+ let showAddLeaveForm = $state(false);
+ let newLeaveForm = $state({ teacher_name: 'Ms. Nguyễn Thị Dung', session_date: new Date().toISOString().slice(0, 10), reason: '' });
+ let showAddAdvanceForm = $state(false);
+ let newAdvanceForm = $state({ amount_vnd: 1000000, reason: '', billing_cycle: '2026-10' });
+
+ // Marketing Campaign Add Form (Tab 5 -> campaigns)
+ let showAddCampaignForm = $state(false);
+ let newCampaignForm = $state({
+  title: '',
+  badge_text: '🎃 CHIẾN DỊCH ƯU ĐÃI MỚI',
+  offer_highlight: '🎁 Tặng +500 Sao thưởng & 02 buổi học thử miễn phí',
+  discount_code: 'HALLOWEEN2026',
+  bonus_stars: 500
+ });
+
  function showNotice(msg) {
   adminToast = msg;
   setTimeout(() => { if (adminToast === msg) adminToast = ''; }, 4500);
@@ -266,6 +299,306 @@
    }
   } catch (e) {
    showNotice('⚠️ Lỗi mạng: ' + e.message);
+  }
+ }
+
+ async function handleCreateParentLink(e) {
+  e.preventDefault();
+  if (!newLinkParentInput.trim() || !newLinkStudentInput.trim()) {
+   showNotice('⚠️ Vui lòng nhập username/ID Phụ huynh và Học sinh!');
+   return;
+  }
+  isAddingParentLink = true;
+  try {
+   const res = await fetch('/api/admincp/users', {
+    method: 'POST',
+    headers: getHeaders(),
+    credentials: 'include',
+    body: JSON.stringify({
+     action: 'link_parent_student',
+     user_id: newLinkParentInput.trim(),
+     student_id: newLinkStudentInput.trim()
+    })
+   });
+   const data = await res.json().catch(() => ({}));
+   if (res.ok && data.success) {
+    showNotice('✅ ' + (data.message || 'Đã gán và xác minh con cho phụ huynh trên D1!'));
+    newLinkParentInput = '';
+    newLinkStudentInput = '';
+    await loadParentLinksD1();
+   } else {
+    showNotice('⚠️ ' + (data.error || 'Không thể liên kết phụ huynh - học sinh'));
+   }
+  } catch (err) {
+   showNotice('⚠️ Lỗi mạng: ' + err.message);
+  } finally {
+   isAddingParentLink = false;
+  }
+ }
+
+ async function handleDeleteParentLink(lk) {
+  if (!lk) return;
+  try {
+   const res = await fetch('/api/parents/children', {
+    method: 'DELETE',
+    headers: getHeaders(),
+    credentials: 'include',
+    body: JSON.stringify({
+     link_id: lk.link_id,
+     parent_user_id: lk.parent_user_id,
+     student_user_id: lk.student_user_id
+    })
+   });
+   const data = await res.json().catch(() => ({}));
+   if (res.ok && data.success) {
+    parentLinks = parentLinks.filter(row => row.link_id !== lk.link_id);
+    showNotice('🗑️ ' + (data.message || 'Đã xóa liên kết phụ huynh - học sinh khỏi D1!'));
+    await loadParentLinksD1();
+   } else {
+    showNotice('⚠️ ' + (data.error || 'Không thể xóa liên kết'));
+   }
+  } catch (err) {
+   showNotice('⚠️ Lỗi mạng: ' + err.message);
+  }
+ }
+
+ async function handleCreateTeacherProfile(e) {
+  e.preventDefault();
+  if (!newTeacherProfile.teacher_name.trim()) return;
+  isSavingTeacherProfile = true;
+  try {
+   const res = await fetch('/api/teachers/staff', {
+    method: 'POST',
+    headers: getHeaders(),
+    credentials: 'include',
+    body: JSON.stringify({
+     action: 'create_profile',
+     ...newTeacherProfile
+    })
+   });
+   const data = await res.json().catch(() => ({}));
+   if (res.ok && data.success) {
+    showNotice(data.message || '✅ Đã thêm hồ sơ giáo viên mới vào D1!');
+    showAddTeacherProfileModal = false;
+    newTeacherProfile = { teacher_name: '', username: '', role_title: 'Giáo viên Tiếng Anh', role_type: 'lead', rate_per_session_vnd: 300000, base_salary_vnd: 0 };
+    await loadTeachersAndWorkflowsD1();
+   } else {
+    showNotice('⚠️ ' + (data.error || 'Không thể tạo hồ sơ giáo viên'));
+   }
+  } catch (err) {
+   showNotice('⚠️ Lỗi mạng: ' + err.message);
+  } finally {
+   isSavingTeacherProfile = false;
+  }
+ }
+
+ async function handleDeleteTeacherProfile(prof) {
+  if (!prof) return;
+  const tid = prof.teacher_id || prof.id;
+  try {
+   const res = await fetch('/api/teachers/staff', {
+    method: 'POST',
+    headers: getHeaders(),
+    credentials: 'include',
+    body: JSON.stringify({ action: 'delete_profile', teacher_id: tid })
+   });
+   const data = await res.json().catch(() => ({}));
+   if (res.ok && data.success) {
+    teacherProfiles = teacherProfiles.filter(p => (p.teacher_id || p.id) !== tid);
+    showNotice(data.message || `🗑️ Đã xóa hồ sơ giáo viên ${prof.teacher_name} khỏi D1!`);
+   } else {
+    showNotice('⚠️ ' + (data.error || 'Không thể xóa hồ sơ giáo viên'));
+   }
+  } catch (err) {
+   showNotice('⚠️ Lỗi mạng: ' + err.message);
+  }
+ }
+
+ async function handleCreateLeaveRequest(e) {
+  e.preventDefault();
+  if (!newLeaveForm.reason.trim()) return;
+  try {
+   const res = await fetch('/api/teachers/workflows', {
+    method: 'POST',
+    headers: getHeaders(),
+    credentials: 'include',
+    body: JSON.stringify({
+     action: 'create_leave',
+     teacher_name: newLeaveForm.teacher_name,
+     session_date: newLeaveForm.session_date,
+     reason: newLeaveForm.reason.trim()
+    })
+   });
+   const data = await res.json().catch(() => ({}));
+   if (res.ok && data.success) {
+    showNotice('✅ Đã tạo đơn xin nghỉ phép mới trên D1!');
+    newLeaveForm.reason = '';
+    showAddLeaveForm = false;
+    await loadTeachersAndWorkflowsD1();
+   } else {
+    showNotice('⚠️ ' + (data.error || 'Không thể tạo đơn xin nghỉ'));
+   }
+  } catch (err) {
+   showNotice('⚠️ Lỗi mạng: ' + err.message);
+  }
+ }
+
+ async function handleDeleteLeave(lv) {
+  if (!lv || !lv.id) return;
+  try {
+   const res = await fetch('/api/teachers/workflows', {
+    method: 'POST',
+    headers: getHeaders(),
+    credentials: 'include',
+    body: JSON.stringify({ action: 'delete_leave', leave_id: lv.id })
+   });
+   const data = await res.json().catch(() => ({}));
+   if (res.ok && data.success) {
+    teacherLeaves = teacherLeaves.filter(x => x.id !== lv.id);
+    showNotice(data.message || '🗑️ Đã xóa đơn xin nghỉ phép khỏi D1!');
+   } else {
+    showNotice('⚠️ ' + (data.error || 'Không thể xóa đơn xin nghỉ'));
+   }
+  } catch (err) {
+   showNotice('⚠️ Lỗi mạng: ' + err.message);
+  }
+ }
+
+ async function handleCreateAdvanceRequest(e) {
+  e.preventDefault();
+  if (!newAdvanceForm.reason.trim()) return;
+  try {
+   const res = await fetch('/api/teachers/workflows', {
+    method: 'POST',
+    headers: getHeaders(),
+    credentials: 'include',
+    body: JSON.stringify({
+     action: 'request_salary_advance',
+     amount_vnd: Number(newAdvanceForm.amount_vnd) || 1000000,
+     reason: newAdvanceForm.reason.trim(),
+     billing_cycle: newAdvanceForm.billing_cycle
+    })
+   });
+   const data = await res.json().catch(() => ({}));
+   if (res.ok && data.success) {
+    showNotice('✅ Đã tạo đơn ứng lương mới trên D1!');
+    newAdvanceForm.reason = '';
+    showAddAdvanceForm = false;
+    await loadTeachersAndWorkflowsD1();
+   } else {
+    showNotice('⚠️ ' + (data.error || 'Không thể tạo đơn ứng lương'));
+   }
+  } catch (err) {
+   showNotice('⚠️ Lỗi mạng: ' + err.message);
+  }
+ }
+
+ async function handleDeleteAdvance(adv) {
+  if (!adv || !adv.id) return;
+  try {
+   const res = await fetch('/api/teachers/workflows', {
+    method: 'POST',
+    headers: getHeaders(),
+    credentials: 'include',
+    body: JSON.stringify({ action: 'delete_advance', advance_id: adv.id })
+   });
+   const data = await res.json().catch(() => ({}));
+   if (res.ok && data.success) {
+    teacherAdvances = teacherAdvances.filter(x => x.id !== adv.id);
+    showNotice(data.message || '🗑️ Đã xóa đơn ứng lương khỏi D1!');
+   } else {
+    showNotice('⚠️ ' + (data.error || 'Không thể xóa đơn ứng lương'));
+   }
+  } catch (err) {
+   showNotice('⚠️ Lỗi mạng: ' + err.message);
+  }
+ }
+
+ async function handleCreateCampaign(e) {
+  e.preventDefault();
+  if (!newCampaignForm.title.trim()) return;
+  try {
+   const res = await fetch('/api/campaigns', {
+    method: 'POST',
+    headers: getHeaders(),
+    credentials: 'include',
+    body: JSON.stringify({
+     action: 'save_campaign',
+     ...newCampaignForm
+    })
+   });
+   const data = await res.json().catch(() => ({}));
+   if (res.ok && data.success) {
+    showNotice(data.message || '✅ Đã lưu chiến dịch Marketing mới vào D1!');
+    newCampaignForm.title = '';
+    showAddCampaignForm = false;
+    await loadData();
+   } else {
+    showNotice('⚠️ ' + (data.error || 'Không thể tạo chiến dịch'));
+   }
+  } catch (err) {
+   showNotice('⚠️ Lỗi mạng: ' + err.message);
+  }
+ }
+
+ async function handleDeleteCampaign(campId) {
+  if (!campId) return;
+  try {
+   const res = await fetch('/api/campaigns', {
+    method: 'POST',
+    headers: getHeaders(),
+    credentials: 'include',
+    body: JSON.stringify({ action: 'delete_campaign', id: campId })
+   });
+   const data = await res.json().catch(() => ({}));
+   if (res.ok && data.success) {
+    marketingCampaigns = marketingCampaigns.filter(c => c.id !== campId);
+    showNotice(data.message || '🗑️ Đã xóa chiến dịch Marketing khỏi D1!');
+   } else {
+    showNotice('⚠️ ' + (data.error || 'Không thể xóa chiến dịch'));
+   }
+  } catch (err) {
+   showNotice('⚠️ Lỗi mạng: ' + err.message);
+  }
+ }
+
+ async function handleDeleteLead(leadId) {
+  if (!leadId) return;
+  try {
+   const res = await fetch('/api/campaigns', {
+    method: 'POST',
+    headers: getHeaders(),
+    credentials: 'include',
+    body: JSON.stringify({ action: 'delete_lead', id: leadId })
+   });
+   const data = await res.json().catch(() => ({}));
+   if (res.ok && data.success) {
+    campaignLeads = campaignLeads.filter(l => l.id !== leadId);
+    showNotice(data.message || '🗑️ Đã xóa thông tin đăng ký ưu đãi khỏi D1!');
+   }
+  } catch (err) {
+   showNotice('⚠️ Lỗi mạng: ' + err.message);
+  }
+ }
+
+ async function handleDeleteNotification(notifId) {
+  if (!notifId) return;
+  try {
+   const res = await fetch('/api/notifications', {
+    method: 'POST',
+    headers: getHeaders(),
+    credentials: 'include',
+    body: JSON.stringify({ action: 'delete_notification', notification_id: notifId })
+   });
+   const data = await res.json().catch(() => ({}));
+   if (res.ok && data.success) {
+    events = events.filter(ev => ev.id !== notifId);
+    showNotice(data.message || '🗑️ Đã xóa thông báo hệ thống khỏi D1!');
+   } else {
+    showNotice('⚠️ ' + (data.error || 'Không thể xóa thông báo'));
+   }
+  } catch (err) {
+   showNotice('⚠️ Lỗi mạng: ' + err.message);
   }
  }
 
@@ -668,14 +1001,45 @@
        📝 Duyệt Đơn Nghỉ &amp; Ứng Lương ({teacherLeaves.length + teacherAdvances.length})
       </button>
      </div>
-     <button
-      type="button"
-      onclick={loadTeachersAndWorkflowsD1}
-      class="px-3 py-2 rounded-xl text-xs font-bold bg-stone-100 hover:bg-stone-200 text-stone-700 border border-stone-300"
-     >
-      🔄 Đồng bộ dữ liệu Giáo viên
-     </button>
+     <div class="flex flex-wrap items-center gap-2">
+      <button
+       type="button"
+       data-testid="btn-add-teacher-profile"
+       onclick={() => showAddTeacherProfileModal = !showAddTeacherProfileModal}
+       class="px-3.5 py-2 rounded-xl text-xs font-black bg-emerald-700 hover:bg-emerald-800 text-white"
+      >
+       ➕ Thêm Hồ Sơ Giáo Viên
+      </button>
+      <button
+       type="button"
+       onclick={loadTeachersAndWorkflowsD1}
+       class="px-3 py-2 rounded-xl text-xs font-bold bg-stone-100 hover:bg-stone-200 text-stone-700 border border-stone-300"
+      >
+       🔄 Đồng bộ dữ liệu Giáo viên
+      </button>
+     </div>
     </div>
+
+    {#if showAddTeacherProfileModal}
+     <form onsubmit={handleCreateTeacherProfile} class="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200 space-y-3 text-xs">
+      <div class="flex items-center justify-between">
+       <h3 class="font-black text-emerald-900 text-sm">➕ Thêm Hồ Sơ Giáo Viên Mới (D1)</h3>
+       <button type="button" onclick={() => showAddTeacherProfileModal = false} class="px-2 py-0.5 rounded bg-white text-stone-600 font-bold">✕</button>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+       <input type="text" required bind:value={newTeacherProfile.teacher_name} placeholder="Họ tên giáo viên *" class="px-3 py-2 rounded-lg border border-stone-300 bg-white font-semibold" />
+       <input type="text" bind:value={newTeacherProfile.username} placeholder="Username (VD: gv_huong)" class="px-3 py-2 rounded-lg border border-stone-300 bg-white font-mono" />
+       <input type="text" bind:value={newTeacherProfile.role_title} placeholder="Chức danh (VD: Giáo viên IELTS)" class="px-3 py-2 rounded-lg border border-stone-300 bg-white" />
+       <input type="number" min="0" step="10000" bind:value={newTeacherProfile.rate_per_session_vnd} placeholder="Đơn giá / ca (VNĐ)" class="px-3 py-2 rounded-lg border border-stone-300 bg-white font-bold" />
+      </div>
+      <div class="flex justify-end gap-2">
+       <button type="button" onclick={() => showAddTeacherProfileModal = false} class="px-3 py-1.5 rounded-lg bg-white border border-stone-300 font-bold">Hủy</button>
+       <button type="submit" disabled={isSavingTeacherProfile} class="px-4 py-1.5 rounded-lg bg-emerald-700 text-white font-black">
+        {isSavingTeacherProfile ? '⏳ Đang lưu...' : '💾 Lưu Hồ Sơ Giáo Viên'}
+       </button>
+      </div>
+     </form>
+    {/if}
 
     {#if teachersLoading}
      <div class="p-8 text-center text-xs text-stone-500 bg-white rounded-2xl border border-stone-200">
@@ -705,13 +1069,22 @@
           </div>
          </div>
         </div>
-        <div class="mt-auto pt-2 border-t border-stone-100">
+        <div class="mt-auto pt-2 border-t border-stone-100 flex items-center gap-2">
          <button
           type="button"
           onclick={() => { selectedStaffProfile = prof; showStaffModal = true; }}
-          class="w-full py-2 rounded-xl text-xs font-bold bg-emerald-700 hover:bg-emerald-800 text-white transition-colors"
+          class="flex-1 py-2 rounded-xl text-xs font-bold bg-emerald-700 hover:bg-emerald-800 text-white transition-colors"
          >
-          ⚙️ Điều Chỉnh Lương &amp; Lưu Hồ Sơ
+          ⚙️ Điều Chỉnh Lương
+         </button>
+         <button
+          type="button"
+          data-testid="btn-delete-teacher-profile"
+          onclick={() => handleDeleteTeacherProfile(prof)}
+          class="px-3 py-2 rounded-xl text-xs font-bold bg-rose-50 hover:bg-rose-600 text-rose-700 hover:text-white border border-rose-200 transition-colors"
+          title="Xóa hồ sơ giáo viên"
+         >
+          🗑️ Xóa
          </button>
         </div>
        </div>
@@ -720,7 +1093,25 @@
     {:else}
      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
       <div class="p-4 rounded-2xl bg-white border border-stone-200 shadow-xs space-y-3">
-       <h3 class="text-sm font-bold text-stone-900">📝 Đơn Xin Nghỉ Phép &amp; Dạy Thay ({teacherLeaves.length})</h3>
+       <div class="flex items-center justify-between">
+        <h3 class="text-sm font-bold text-stone-900">📝 Đơn Xin Nghỉ Phép &amp; Dạy Thay ({teacherLeaves.length})</h3>
+        <button type="button" onclick={() => showAddLeaveForm = !showAddLeaveForm} class="px-2.5 py-1 rounded-lg bg-emerald-700 text-white text-xs font-bold">
+         ➕ Tạo Đơn Nghỉ
+        </button>
+       </div>
+       {#if showAddLeaveForm}
+        <form onsubmit={handleCreateLeaveRequest} class="p-3 rounded-xl bg-emerald-50 border border-emerald-200 space-y-2 text-xs">
+         <div class="grid grid-cols-2 gap-2">
+          <input type="text" required bind:value={newLeaveForm.teacher_name} placeholder="Tên giáo viên *" class="px-2.5 py-1.5 rounded border border-stone-300 bg-white" />
+          <input type="date" required bind:value={newLeaveForm.session_date} class="px-2.5 py-1.5 rounded border border-stone-300 bg-white" />
+         </div>
+         <input type="text" required bind:value={newLeaveForm.reason} placeholder="Lý do xin nghỉ ca *" class="w-full px-2.5 py-1.5 rounded border border-stone-300 bg-white" />
+         <div class="flex justify-end gap-1.5">
+          <button type="button" onclick={() => showAddLeaveForm = false} class="px-2.5 py-1 rounded bg-white border border-stone-300 font-bold">Hủy</button>
+          <button type="submit" class="px-3 py-1 rounded bg-emerald-700 text-white font-bold">💾 Lưu Đơn Nghỉ</button>
+         </div>
+        </form>
+       {/if}
        {#if teacherLeaves.length === 0}
         <p class="text-xs text-stone-400">Chưa có đơn xin nghỉ phép nào.</p>
        {:else}
@@ -728,18 +1119,21 @@
          {#each teacherLeaves as lv}
           <div class="p-3 rounded-xl bg-stone-50 border border-stone-200 text-xs space-y-1.5">
            <div class="flex items-center justify-between font-bold">
-            <span>{lv.teacher_name} • {lv.class_name || lv.session_id}</span>
-            <span class="px-2 py-0.5 rounded text-[10px] {lv.status === 'approved' ? 'bg-emerald-100 text-emerald-800' : lv.status === 'rejected' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800'}">
-             {lv.status}
+            <span>{lv.teacher_name} • {lv.class_name || lv.session_date || lv.session_id}</span>
+            <span class="px-2 py-0.5 rounded text-[10px] {(lv.admin_status || lv.status) === 'approved' ? 'bg-emerald-100 text-emerald-800' : (lv.admin_status || lv.status) === 'rejected' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800'}">
+             {lv.admin_status || lv.status || 'pending'}
             </span>
            </div>
            <div class="text-stone-600">Lý do: {lv.reason}</div>
-           {#if lv.status === 'pending'}
-            <div class="flex justify-end gap-2 pt-2 border-t border-stone-200/70">
+           <div class="flex justify-end gap-2 pt-2 border-t border-stone-200/70">
+            {#if (lv.admin_status || lv.status || 'pending') === 'pending'}
              <button type="button" onclick={() => handleLeaveDecision(lv, 'reject')} class="px-2.5 py-1 rounded bg-rose-600 text-white font-bold text-[11px]">✕ Từ chối</button>
              <button type="button" onclick={() => handleLeaveDecision(lv, 'approve')} class="px-2.5 py-1 rounded bg-emerald-600 text-white font-bold text-[11px]">✓ Duyệt &amp; Lưu</button>
-            </div>
-           {/if}
+            {/if}
+            <button type="button" data-testid="btn-delete-leave" onclick={() => handleDeleteLeave(lv)} class="px-2.5 py-1 rounded bg-rose-50 hover:bg-rose-600 text-rose-700 hover:text-white border border-rose-200 font-bold text-[11px]">
+             🗑️ Xóa đơn
+            </button>
+           </div>
           </div>
          {/each}
         </div>
@@ -747,7 +1141,25 @@
       </div>
 
       <div class="p-4 rounded-2xl bg-white border border-stone-200 shadow-xs space-y-3">
-       <h3 class="text-sm font-bold text-stone-900">💸 Đơn Ứng Lương Giáo Viên ({teacherAdvances.length})</h3>
+       <div class="flex items-center justify-between">
+        <h3 class="text-sm font-bold text-stone-900">💸 Đơn Ứng Lương Giáo Viên ({teacherAdvances.length})</h3>
+        <button type="button" onclick={() => showAddAdvanceForm = !showAddAdvanceForm} class="px-2.5 py-1 rounded-lg bg-emerald-700 text-white text-xs font-bold">
+         ➕ Tạo Đơn Ứng Lương
+        </button>
+       </div>
+       {#if showAddAdvanceForm}
+        <form onsubmit={handleCreateAdvanceRequest} class="p-3 rounded-xl bg-emerald-50 border border-emerald-200 space-y-2 text-xs">
+         <div class="grid grid-cols-2 gap-2">
+          <input type="number" min="100000" max="20000000" step="100000" required bind:value={newAdvanceForm.amount_vnd} placeholder="Số tiền ứng (VNĐ) *" class="px-2.5 py-1.5 rounded border border-stone-300 bg-white font-bold" />
+          <input type="text" required bind:value={newAdvanceForm.billing_cycle} placeholder="Kỳ lương (VD: 2026-10)" class="px-2.5 py-1.5 rounded border border-stone-300 bg-white" />
+         </div>
+         <input type="text" required bind:value={newAdvanceForm.reason} placeholder="Lý do ứng lương *" class="w-full px-2.5 py-1.5 rounded border border-stone-300 bg-white" />
+         <div class="flex justify-end gap-1.5">
+          <button type="button" onclick={() => showAddAdvanceForm = false} class="px-2.5 py-1 rounded bg-white border border-stone-300 font-bold">Hủy</button>
+          <button type="submit" class="px-3 py-1 rounded bg-emerald-700 text-white font-bold">💾 Lưu Đơn Ứng Lương</button>
+         </div>
+        </form>
+       {/if}
        {#if teacherAdvances.length === 0}
         <p class="text-xs text-stone-400">Chưa có yêu cầu ứng lương nào.</p>
        {:else}
@@ -761,12 +1173,15 @@
             </span>
            </div>
            <div class="text-stone-600">Lý do: {adv.reason}</div>
-           {#if adv.status === 'pending'}
-            <div class="flex justify-end gap-2 pt-2 border-t border-stone-200/70">
+           <div class="flex justify-end gap-2 pt-2 border-t border-stone-200/70">
+            {#if adv.status === 'pending'}
              <button type="button" onclick={() => handleAdvanceDecision(adv, 'reject')} class="px-2.5 py-1 rounded bg-rose-600 text-white font-bold text-[11px]">✕ Từ chối</button>
              <button type="button" onclick={() => handleAdvanceDecision(adv, 'approve')} class="px-2.5 py-1 rounded bg-emerald-600 text-white font-bold text-[11px]">✓ Duyệt &amp; Lưu</button>
-            </div>
-           {/if}
+            {/if}
+            <button type="button" data-testid="btn-delete-advance" onclick={() => handleDeleteAdvance(adv)} class="px-2.5 py-1 rounded bg-rose-50 hover:bg-rose-600 text-rose-700 hover:text-white border border-rose-200 font-bold text-[11px]">
+             🗑️ Xóa đơn
+            </button>
+           </div>
           </div>
          {/each}
         </div>
@@ -806,48 +1221,71 @@
      <div class="p-5 rounded-2xl bg-white border border-stone-200 shadow-xs space-y-3">
       <div class="flex items-center justify-between">
        <div>
-        <h2 class="text-base font-bold text-stone-900">👨‍👩‍👧 Duyệt Liên Kết Phụ Huynh – Học Sinh (D1)</h2>
-        <p class="text-xs text-stone-500">Khi xác minh (verified), phụ huynh xem được bài tập, lịch học và hóa đơn học phí của con.</p>
+        <h2 class="text-base font-bold text-stone-900">👨‍👩‍👧 Quản Lý Gán Con &amp; Xóa Liên Kết Phụ Huynh – Học Sinh (D1)</h2>
+        <p class="text-xs text-stone-500">Thêm liên kết mới, xác minh (verified) hoặc xóa/gỡ liên kết con khỏi phụ huynh trực tiếp trên Cloudflare D1.</p>
        </div>
        <button type="button" onclick={loadParentLinksD1} class="px-3 py-1.5 rounded-lg bg-stone-100 text-stone-700 text-xs font-bold border border-stone-300">
         🔄 Tải lại
        </button>
       </div>
 
+      <!-- Form Thêm Liên Kết Phụ Huynh - Học Sinh Trực Tiếp -->
+      <form onsubmit={handleCreateParentLink} class="p-3.5 rounded-xl bg-sky-50/70 border border-sky-200 flex flex-col sm:flex-row sm:items-end gap-3 text-xs">
+       <div class="flex-1">
+        <label for="pl-parent" class="block font-bold text-sky-900 mb-1">Username hoặc ID Phụ huynh *</label>
+        <input id="pl-parent" type="text" required bind:value={newLinkParentInput} placeholder="VD: phuhuynh_quan hoặc user_parent_1" class="w-full px-3 py-2 rounded-lg border border-sky-300 bg-white font-mono" />
+       </div>
+       <div class="flex-1">
+        <label for="pl-student" class="block font-bold text-sky-900 mb-1">Username hoặc ID Học sinh (Con) *</label>
+        <input id="pl-student" type="text" required bind:value={newLinkStudentInput} placeholder="VD: minhquan7a hoặc baokhiem" class="w-full px-3 py-2 rounded-lg border border-sky-300 bg-white font-mono" />
+       </div>
+       <button type="submit" data-testid="btn-add-parent-link" disabled={isAddingParentLink} class="px-4 py-2 rounded-lg bg-sky-600 hover:bg-sky-700 text-white font-black shrink-0">
+        {isAddingParentLink ? '⏳ Đang gán...' : '➕ Gán Con & Xác Minh'}
+       </button>
+      </form>
+
       {#if parentLinksLoading}
        <div class="text-xs text-stone-500 py-4">⏳ Đang tải danh sách liên kết...</div>
       {:else if parentLinks.length === 0}
-       <div class="text-xs text-stone-400 py-4">Chưa có yêu cầu liên kết phụ huynh - học sinh nào. Bạn có thể gán trực tiếp ở tab "Tài Khoản &amp; Phân Quyền".</div>
+       <div class="text-xs text-stone-400 py-4">Chưa có liên kết phụ huynh - học sinh nào. Hãy nhập thông tin bên trên để gán con cho phụ huynh.</div>
       {:else}
        <div class="overflow-x-auto">
         <table class="min-w-full text-xs">
          <thead class="bg-stone-100 text-stone-600 uppercase text-[11px]">
           <tr>
            <th class="px-3 py-2 text-left">Phụ huynh</th>
-           <th class="px-3 py-2 text-left">Học sinh liên kết</th>
+           <th class="px-3 py-2 text-left">Học sinh liên kết (Con)</th>
            <th class="px-3 py-2 text-left">Khối</th>
            <th class="px-3 py-2 text-left">Trạng thái</th>
-           <th class="px-3 py-2 text-right">Xét duyệt</th>
+           <th class="px-3 py-2 text-right">Xét duyệt / Xóa con</th>
           </tr>
          </thead>
          <tbody class="divide-y divide-stone-200">
           {#each parentLinks as lk (lk.link_id)}
            <tr>
             <td class="px-3 py-2 font-semibold">{lk.parent_name || lk.parent_user_id} (@{lk.parent_username || ''})</td>
-            <td class="px-3 py-2 font-semibold text-emerald-800">{lk.student_name || lk.student_user_id} (@{lk.student_username || ''})</td>
+            <td class="px-3 py-2 font-semibold text-emerald-800">👶 {lk.student_name || lk.student_user_id} (@{lk.student_username || ''})</td>
             <td class="px-3 py-2">{lk.student_grade || '—'}</td>
             <td class="px-3 py-2">
              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold {lk.verification_status === 'verified' ? 'bg-emerald-100 text-emerald-800' : lk.verification_status === 'rejected' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800'}">
               {lk.verification_status}
              </span>
             </td>
-            <td class="px-3 py-2 text-right space-x-1">
+            <td class="px-3 py-2 text-right space-x-1 whitespace-nowrap">
              {#if lk.verification_status !== 'verified'}
               <button type="button" onclick={() => handleVerifyParentLink(lk.link_id, 'verified')} class="px-2.5 py-1 rounded bg-emerald-600 text-white font-bold text-[11px]">✓ Xác minh</button>
              {/if}
              {#if lk.verification_status !== 'rejected'}
-              <button type="button" onclick={() => handleVerifyParentLink(lk.link_id, 'rejected')} class="px-2.5 py-1 rounded bg-rose-600 text-white font-bold text-[11px]">✕ Từ chối</button>
+              <button type="button" onclick={() => handleVerifyParentLink(lk.link_id, 'rejected')} class="px-2.5 py-1 rounded bg-amber-600 text-white font-bold text-[11px]">✕ Từ chối</button>
              {/if}
+             <button
+              type="button"
+              data-testid="btn-delete-parent-link"
+              onclick={() => handleDeleteParentLink(lk)}
+              class="px-2.5 py-1 rounded bg-rose-50 hover:bg-rose-600 text-rose-700 hover:text-white border border-rose-200 font-bold text-[11px] transition"
+             >
+              🗑️ Xóa con
+             </button>
             </td>
            </tr>
           {/each}
@@ -942,12 +1380,39 @@
       <div class="flex flex-wrap items-center justify-between gap-2 border-b border-stone-200 pb-3">
        <div>
         <h2 class="text-base font-black text-stone-900">🎃 Quản Trị Chiến Dịch Popup Marketing &amp; Lễ Hội Halloween (D1)</h2>
-        <p class="text-xs text-stone-500">Điều khiển các Popup chào mời, học bổng Sao thưởng theo mùa lễ hội (Halloween 31/10, Tuyển sinh KET/PET/IELTS) và danh sách Phụ huynh đăng ký.</p>
+        <p class="text-xs text-stone-500">Điều khiển Thêm / Xóa các Popup chào mời, học bổng Sao thưởng theo mùa lễ hội và danh sách Phụ huynh đăng ký.</p>
        </div>
-       <span class="px-3 py-1 rounded-full bg-orange-100 text-orange-800 border border-orange-300 font-bold">
-        🎁 {campaignLeads.length} lượt nhận học bổng
-       </span>
+       <div class="flex items-center gap-2">
+        <span class="px-3 py-1 rounded-full bg-orange-100 text-orange-800 border border-orange-300 font-bold">
+         🎁 {campaignLeads.length} lượt nhận học bổng
+        </span>
+        <button
+         type="button"
+         data-testid="btn-open-add-campaign"
+         onclick={() => showAddCampaignForm = !showAddCampaignForm}
+         class="px-3.5 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-black"
+        >
+         ➕ Thêm Chiến Dịch Mới
+        </button>
+       </div>
       </div>
+
+      {#if showAddCampaignForm}
+       <form onsubmit={handleCreateCampaign} class="p-4 rounded-xl bg-orange-50/70 border border-orange-200 space-y-3">
+        <div class="font-black text-orange-950 text-sm">➕ Tạo Chiến Dịch Popup Marketing Mới (D1)</div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+         <input type="text" required bind:value={newCampaignForm.title} placeholder="Tiêu đề chiến dịch *" class="px-3 py-2 rounded-lg border border-stone-300 bg-white font-bold" />
+         <input type="text" bind:value={newCampaignForm.badge_text} placeholder="Nhãn sự kiện (VD: 🎃 HALLOWEEN)" class="px-3 py-2 rounded-lg border border-stone-300 bg-white" />
+         <input type="text" bind:value={newCampaignForm.discount_code} placeholder="Mã ưu đãi (VD: HALLOWEEN2026)" class="px-3 py-2 rounded-lg border border-stone-300 bg-white font-mono" />
+        </div>
+        <input type="text" bind:value={newCampaignForm.offer_highlight} placeholder="Mô tả quà tặng / học bổng *" class="w-full px-3 py-2 rounded-lg border border-stone-300 bg-white" />
+        <div class="flex justify-end gap-2">
+         <button type="button" onclick={() => showAddCampaignForm = false} class="px-3 py-1.5 rounded-lg bg-white border border-stone-300 font-bold">Hủy</button>
+         <button type="submit" class="px-4 py-1.5 rounded-lg bg-orange-600 hover:bg-orange-700 text-white font-black">💾 Lưu Chiến Dịch</button>
+        </div>
+       </form>
+      {/if}
+
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
        {#each marketingCampaigns as mc (mc.id)}
         <div class="p-4 rounded-2xl bg-stone-50 border border-stone-200 space-y-2 flex flex-col justify-between">
@@ -959,29 +1424,58 @@
           <h3 class="text-sm font-black text-stone-900">{mc.title}</h3>
           <p class="text-stone-600">{mc.offer_highlight}</p>
          </div>
-         <div class="pt-3 border-t border-stone-200 flex items-center justify-between">
+         <div class="pt-3 border-t border-stone-200 flex items-center justify-between gap-2">
           <span class="font-bold {mc.is_active ? 'text-emerald-700' : 'text-stone-400'}">
            {mc.is_active ? '🟢 Đang kích hoạt Popup' : '⚪ Đang tạm ẩn'}
           </span>
-          <button
-           type="button"
-           onclick={async () => {
-            await fetch('/api/campaigns', {
-             method: 'POST',
-             headers: getHeaders(),
-             body: JSON.stringify({ action: 'toggle_campaign', id: mc.id, is_active: !mc.is_active })
-            });
-            showNotice(`🎃 Đã cập nhật trạng thái chiến dịch "${mc.id}" trên D1!`);
-            await loadData();
-           }}
-           class="px-3 py-1.5 rounded-xl bg-white hover:bg-stone-100 border border-stone-300 font-bold text-stone-800"
-          >
-           {mc.is_active ? 'Tạm ẩn Popup' : 'Kích hoạt Popup'}
-          </button>
+          <div class="flex items-center gap-1.5">
+           <button
+            type="button"
+            onclick={async () => {
+             await fetch('/api/campaigns', {
+              method: 'POST',
+              headers: getHeaders(),
+              body: JSON.stringify({ action: 'toggle_campaign', id: mc.id, is_active: !mc.is_active })
+             });
+             showNotice(`🎃 Đã cập nhật trạng thái chiến dịch "${mc.id}" trên D1!`);
+             await loadData();
+            }}
+            class="px-3 py-1.5 rounded-xl bg-white hover:bg-stone-100 border border-stone-300 font-bold text-stone-800"
+           >
+            {mc.is_active ? 'Tạm ẩn Popup' : 'Kích hoạt Popup'}
+           </button>
+           <button
+            type="button"
+            data-testid="btn-delete-campaign"
+            onclick={() => handleDeleteCampaign(mc.id)}
+            class="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-600 text-rose-700 hover:text-white border border-rose-200 font-bold transition"
+           >
+            🗑️ Xóa
+           </button>
+          </div>
          </div>
         </div>
        {/each}
       </div>
+
+      {#if campaignLeads.length > 0}
+       <div class="pt-3 border-t border-stone-200 space-y-2">
+        <div class="font-bold text-stone-800">📋 Danh sách Học sinh / Phụ huynh đăng ký nhận học bổng ({campaignLeads.length}):</div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+         {#each campaignLeads as ld (ld.id)}
+          <div class="p-2.5 rounded-xl bg-stone-50 border border-stone-200 flex items-center justify-between gap-2">
+           <div>
+            <div class="font-bold text-stone-900">{ld.visitor_name} — <span class="font-mono text-emerald-700">{ld.phone}</span></div>
+            <div class="text-[11px] text-stone-500">{ld.grade_interest} • {ld.note}</div>
+           </div>
+           <button type="button" onclick={() => handleDeleteLead(ld.id)} class="px-2 py-1 rounded bg-rose-50 hover:bg-rose-600 text-rose-700 hover:text-white border border-rose-200 font-bold text-[10px]">
+            🗑️ Xóa
+           </button>
+          </div>
+         {/each}
+        </div>
+       </div>
+      {/if}
      </div>
     {:else if subTabSystem === 'reminders'}
      <div class="max-w-2xl mx-auto p-6 rounded-2xl bg-white border border-stone-200 space-y-4 shadow-xs">
@@ -1034,10 +1528,13 @@
      <div class="p-5 rounded-2xl bg-white border border-stone-200 space-y-4 shadow-xs">
       <div class="flex items-center justify-between">
        <h2 class="text-base font-bold text-stone-900">📡 Nhật Ký Sự Kiện Tương Tác Chéo Giữa Các Role (D1)</h2>
-       <button onclick={loadData} class="px-3 py-1.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-xs font-bold text-stone-700">🔄 Làm mới</button>
+       <div class="flex items-center gap-2">
+        <button type="button" onclick={() => subTabSystem = 'reminders'} class="px-3 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-xs font-bold text-white">➕ Thêm Thông Báo Mới</button>
+        <button type="button" onclick={loadData} class="px-3 py-1.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-xs font-bold text-stone-700">🔄 Làm mới</button>
+       </div>
       </div>
       <div class="space-y-2.5">
-       {#each events as ev}
+       {#each events as ev (ev.id)}
         <div class="p-3.5 rounded-xl bg-stone-50 border border-stone-200 flex items-start justify-between gap-4">
          <div class="space-y-1">
           <div class="flex items-center gap-2">
@@ -1048,9 +1545,17 @@
           </div>
           <p class="text-xs text-stone-600">{ev.body}</p>
           <div class="text-[11px] text-stone-500">
-           Người gửi: <strong>{ev.sender_name}</strong> • Thời gian: {new Date(ev.created_at).toLocaleString('vi-VN')}
+           Người gửi: <strong>{ev.sender_name || 'Ban Quản Lý'}</strong> • Thời gian: {new Date(ev.created_at).toLocaleString('vi-VN')}
           </div>
          </div>
+         <button
+          type="button"
+          data-testid="btn-delete-notification"
+          onclick={() => handleDeleteNotification(ev.id)}
+          class="shrink-0 px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-600 text-rose-700 hover:text-white border border-rose-200 font-bold text-xs transition"
+         >
+          🗑️ Xóa
+         </button>
         </div>
        {/each}
       </div>
