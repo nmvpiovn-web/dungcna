@@ -88,6 +88,10 @@
  // Load persistence and auto-scope vocabulary to student enrolled grade
  onMount(() => {
  currentUser = getCurrentUser();
+ try {
+  const urlQ = new URLSearchParams(window.location.search).get('q');
+  if (urlQ) searchQuery = urlQ.trim();
+ } catch {}
  syncVocabularyFromD1();
  if (currentUser?.role === 'student') {
  let g = currentUser.grade;
@@ -204,9 +208,16 @@
  matchTopic = u.includes('world') || u.includes('travel') || m.includes('thế giới') || m.includes('du lịch') || m.includes('môi trường');
  }
  }
- // Search query
+ // Search query (matches term, meaning_vi, category, unit_id, collocations, example_en)
  const q = searchQuery.toLowerCase().trim();
- const matchSearch = !q || w.term.toLowerCase().includes(q) || (w.meaning_vi && w.meaning_vi.toLowerCase().includes(q));
+ const matchSearch =
+  !q ||
+  w.term.toLowerCase().includes(q) ||
+  (w.meaning_vi && w.meaning_vi.toLowerCase().includes(q)) ||
+  (w.category && w.category.toLowerCase().includes(q)) ||
+  (w.unit_id && w.unit_id.toLowerCase().includes(q)) ||
+  (w.collocations && String(w.collocations).toLowerCase().includes(q)) ||
+  (w.example_en && w.example_en.toLowerCase().includes(q));
 
  return matchUnit && matchGrade && matchPos && matchTopic && matchSearch;
  });

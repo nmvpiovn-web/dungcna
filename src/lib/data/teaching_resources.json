@@ -394,5 +394,38 @@
     "keywords": "đề hsg anh 8 số 24, hsg anh 8 s  24, exams, secondary_8, hoc lieu co dung",
     "downloads_url": "https://tienganh7-pro.pages.dev/data/gdrive_downloads/ĐỀ HSG ANH 8 SỐ 24.docx",
     "created_at": "2026-09-25 14:35:00"
+  },
+  {
+    "id": "res_halloween_event_guide",
+    "category": "Event & Festival Lesson Plan",
+    "grade_level": "Lớp 6 • Lớp 7 • Lớp 8",
+    "title": "🎃 Kịch Bản Tổ Chức Sự Kiện Halloween: 'Spooky Vocabulary Hunt & Costume Showcase'",
+    "content_markdown": "## 1. Mục tiêu sự kiện (90 phút)\n- Học sinh nắm vững 25 từ vựng chủ đề Halloween & Lễ hội thế giới.\n- Thực hành thuyết trình 60 giây giới thiệu nhân vật hóa trang bằng tiếng Anh (Costume Showcase).\n\n## 2. Tiến trình 4 Trạm (4 Stations)\n1. **Station 1 - Mystery Cauldron (15p)**: Bốc thẻ từ vựng trong chiếc vạc phép thuật, phát âm chuẩn IPA để nhận 20 Sao.\n2. **Station 2 - Haunted House Riddle Hunt (25p)**: Giải 10 câu đố tiếng Anh theo nhóm 4 học sinh.\n3. **Station 3 - Costume Runway & Impromptu Speaking (30p)**: Mỗi học sinh bước lên sân khấu trả lời câu hỏi *'Who are you dressed as today and what is your superpower?'*\n4. **Station 4 - Trick-or-Treat Star Exchange (20p)**: Đổi Sao nhận quà và tổng kết.",
+    "native_teacher_tips": "Encourage expressive intonation during the Costume Showcase and reward every student who uses at least three Halloween adjectives (spooky, enchanted, spellbinding).",
+    "keywords": "halloween, costume party, trick or treat, event lesson plan, spooky quiz",
+    "downloads_url": "/dictionary?q=halloween",
+    "created_at": "2026-10-23"
+  },
+  {
+    "id": "res_outdoor_picnic_guide",
+    "category": "Outdoor Field Trip & Picnic SOP",
+    "grade_level": "Lớp 6 • Lớp 7 • Lớp 8 • Lớp 9",
+    "title": "🏕️ Cẩm Nang Tổ Chức Đi Dã Ngoại Tiếng Anh: 'Eco-Picnic & Park Scavenger Hunt'",
+    "content_markdown": "## 1. Chuẩn bị trước chuyến đi (Pre-Trip Checklist)\n- Chia học sinh thành các đội 5-6 thành viên (mỗi đội bầu 1 Team Captain, 1 Navigator cầm la bàn/bản đồ, 1 Eco-Guardian kiểm soát rác thải sinh học, 1 Reporter).\n- Phát thẻ nhiệm vụ **English Scavenger Hunt Card**.\n\n## 2. Hoạt động thực địa (On-Site Activities)\n1. **Ice-Breaker Circle (15p)**: Trò chơi phản xạ từ vựng thiên nhiên (*campsite, binoculars, flora and fauna*).\n2. **Compass & Nature Clue Hunt (45p)**: Các đội tìm 8 trạm mật thư tiếng Anh quanh công viên và quay video 1 phút thuyết trình tại mỗi trạm.\n3. **Eco-Picnic Sharing (30p)**: Giới thiệu món ăn trong *picnic hamper* bằng tiếng Anh.",
+    "native_teacher_tips": "Have the Reporter of each team record a 90-second vlog summary at the end of the picnic using signposting phrases.",
+    "keywords": "picnic, outdoor trip, scavenger hunt, camping, eco-tourism, field trip",
+    "downloads_url": "/dictionary?q=picnic",
+    "created_at": "2026-10-23"
+  },
+  {
+    "id": "res_speaking_workshop_sop",
+    "category": "Speaking & Debate Workshop",
+    "grade_level": "Lớp 7 • Lớp 8 • Lớp 9",
+    "title": "🎙️ Giáo Án Workshop Kỹ Năng Thuyết Trình, Brainstorming & Tranh Biện (Cambridge PET/IELTS)",
+    "content_markdown": "## 1. Cấu trúc buổi Workshop (120 phút)\n- **Phần 1 (20p): Ice-breaker & Voice Warm-up** — Luyện ngữ điệu (intonation), giao tiếp ánh mắt (*eye contact*) và ngôn ngữ cơ thể (*body language*).\n- **Phần 2 (30p): Mind-Mapping & Brainstorming** — Các nhóm dùng sơ đồ tư duy giải quyết chủ đề thực tế (VD: *How to make our city greener*).\n- **Phần 3 (45p): Mini-Debate & Rebuttal Showcase** — Tranh biện 3v3 có sử dụng mẫu câu phản biện lịch sự (*I see your point, however...*).\n- **Phần 4 (25p): Constructive Peer Review** — Chấm chéo và trao huy hiệu *Best Orator*.",
+    "native_teacher_tips": "Focus on fluency over perfection during the brainstorming phase, then give targeted pronunciation and lexical feedback during the wrap-up.",
+    "keywords": "workshop, public speaking, debate, brainstorming, teamwork, presentation",
+    "downloads_url": "/dictionary?q=workshop",
+    "created_at": "2026-10-23"
   }
 ]

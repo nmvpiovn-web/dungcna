@@ -871,54 +871,19 @@
   },
   {
     "id": "gram_phrasal_verbs_mastery",
-    "topic": "Cụm Động Từ Chuyên Sâu (Phrasal Verbs Mastery)",
-    "grade_level": "Lớp 7 đến Lớp 12, KET, PET, IELTS",
-    "curriculum_unit": "Chuyên Đề Cụm Động Từ Thi Vào 10 & THPT",
-    "category": "lexico_grammar",
-    "cefr_level": "A2 - C1",
-    "summary": "Sự kết hợp giữa động từ và tiểu từ (giới từ/phó từ) tạo thành một nghĩa hoàn toàn mới.",
-    "formula": {
-      "affirmative": "S + Verb + Particle + Object (hoặc S + Verb + Object + Particle nếu tách rời)",
-      "negative": "S + Auxiliary not + Verb + Particle",
-      "interrogative": "Auxiliary + S + Verb + Particle?"
-    },
-    "usage": [
-      "Cụm động từ không thể tách rời (Inseparable): look after, run into, cope with, hold up.",
-      "Cụm động từ có thể tách rời (Separable): turn off/turn on, call off, put away.",
-      "Cụm động từ có 2 tiểu từ (Three-part): look forward to, catch up with, put up with."
-    ],
-    "signal_words": [
-      "look after",
-      "give up",
-      "call off",
-      "put off",
-      "bring about",
-      "hold up",
-      "look forward to",
-      "run out of"
-    ],
-    "phonics_rules": "Nối âm liền mạch giữa phụ âm cuối của động từ với nguyên âm đầu của tiểu từ (turn off -> /tɜː.nɒf/).",
-    "common_mistakes": "Nhầm lẫn giữa put off (hoãn) và call off (hủy); turn off (tắt) và take off (cất cánh/cởi áo).",
-    "examples": [
-      {
-        "en": "We had to put off the camping trip until the stormy weather cleared.",
-        "vi": "Chúng tôi đã phải hoãn chuyến cắm trại cho đến khi thời tiết bão tan."
-      }
-    ],
-    "practice_questions": [
-      {
-        "id": "gq_pv_1",
-        "prompt": "Because of sudden heavy snowfall, the flight authorities decided to ______ all departures.",
-        "options": [
-          "A. call off",
-          "B. hold on",
-          "C. give in",
-          "D. take over"
-        ],
-        "correct": "A",
-        "explanation": "'call off' = hủy bỏ chuyến bay do bão tuyết."
-      }
-    ]
+    "topic": "Separable & Inseparable Phrasal Verbs (Cụm động từ tách được & không tách được — Trọng tâm HSG & PET)",
+    "grade_level": "Lớp 7 • Lớp 8 • Lớp 9",
+    "curriculum_unit": "Chuyên đề Phrasal Verbs",
+    "category": "Lexical Grammar",
+    "cefr_level": "B1-B2",
+    "summary": "Phân biệt cụm động từ có thể đặt tân ngữ ở giữa (turn it down, put it off) và cụm động từ 3 thành phần không thể tách rời (look forward to, come up with, keep up with).",
+    "formula_json": "[\"Separable: Verb + Object (Pronoun) + Particle (e.g., turn it down, pick her up).\", \"Inseparable: Verb + Particle (+ Preposition) + Object (e.g., look after the puppy, come up with an idea).\"]",
+    "usage_json": "[\"Khi tân ngữ là đại từ nhân xưng (it, them, him, her) của ngoại cụm động từ tách được, BẮT BUỘC đặt đại từ vào giữa (Turn it off, KHÔNG nói Turn off it).\", \"Sau các cụm 3 từ kết thúc bằng giới từ (look forward to, put up with), động từ theo sau luôn ở dạng V-ing.\"]",
+    "signal_words_json": "[\"look forward to + V-ing\", \"come up with\", \"carry out\", \"set off\", \"turn down\"]",
+    "phonics_rules": "Trong Phrasal Verbs, trọng âm thường rơi vào tiểu từ (particle): turn ˈDOWN, set ˈOFF.",
+    "common_mistakes": "Nhầm 'to' trong 'look forward to' là to-infinitive; thực chất 'to' là giới từ nên theo sau là V-ing.",
+    "examples_json": "[{\"en\": \"We are looking forward to attending the Halloween costume gala.\", \"vi\": \"Chúng tôi đang rất háo hức được tham dự đêm hội hóa trang Halloween.\"}]",
+    "practice_questions_json": "[{\"q\": \"The music is too loud. Could you please _______?\", \"options\": [\"turn it down\", \"turn down it\", \"it turn down\", \"turning down it\"], \"ans\": \"turn it down\"}]"
   },
   {
     "id": "gram_sentence_transformation",
@@ -1710,5 +1675,69 @@
         "exp": "Get injured = bị thương (bị động với GET)."
       }
     ]
+  },
+  {
+    "id": "gram_workshop_signposting",
+    "topic": "Signposting Language in English Presentations & Workshops (Ngôn ngữ dẫn dắt thuyết trình)",
+    "grade_level": "Lớp 7 • Lớp 8 • Lớp 9",
+    "curriculum_unit": "Unit Workshop & Public Speaking",
+    "category": "Speaking & Communication",
+    "cefr_level": "B1",
+    "summary": "Hệ thống mẫu câu mở bài, chuyển ý, nhấn mạnh số liệu và kết luận chuẩn học thuật khi thuyết trình hoặc điều phối buổi Workshop tiếng Anh.",
+    "formula_json": "[\"Opening: Good morning everyone. Today, I'd like to share our findings on + [Topic].\", \"Structuring: I've divided my presentation into three main parts: First..., Second..., Finally...\", \"Transitioning: Let's move on to the next point, which is + [Noun Phrase].\", \"Concluding: To sum up / In conclusion, our key takeaway is that + [Clause].\"]",
+    "usage_json": "[\"Dùng để mở đầu bài nói thu hút sự chú ý (Hook) trong buổi Workshop / CLB Tiếng Anh.\", \"Giúp người nghe theo dõi mạch lập luận rõ ràng khi chuyển giữa các phần.\", \"Dùng khi mời khán giả đặt câu hỏi phần Q&A (Feel free to ask any questions).\"]",
+    "signal_words_json": "[\"To begin with\", \"Moving on to\", \"Let's take a closer look at\", \"To wrap up\"]",
+    "phonics_rules": "Nhấn giọng (sentence stress) vào từ khóa chuyển ý và nghỉ nhịp 0.5 giây sau dấu phẩy.",
+    "common_mistakes": "Tránh đọc thuộc lòng văn viết; hãy dùng các cụm từ nối ngắn gọn kèm giao tiếp ánh mắt (eye contact).",
+    "examples_json": "[{\"en\": \"Let's move on to our second solution: reducing single-use plastic during school picnics.\", \"vi\": \"Hãy chuyển sang giải pháp thứ hai của chúng tôi: giảm nhựa dùng một lần trong các buổi dã ngoại trường.\"}, {\"en\": \"To wrap up, teamwork and active listening are the keys to a successful workshop.\", \"vi\": \"Tóm lại, làm việc nhóm và lắng nghe tích cực là chìa khóa cho một buổi workshop thành công.\"}]",
+    "practice_questions_json": "[{\"q\": \"Which phrase is best for moving to a new section in a workshop presentation?\", \"options\": [\"Let's move on to the next point.\", \"Wait a minute.\", \"Never mind that.\", \"By the way, goodbye.\"], \"ans\": \"Let's move on to the next point.\"}]"
+  },
+  {
+    "id": "gram_debate_opinion",
+    "topic": "Expressing Agreement, Polite Disagreement & Rebuttal in Debates (Phản biện lịch sự)",
+    "grade_level": "Lớp 7 • Lớp 8 • Lớp 9",
+    "curriculum_unit": "Unit Workshop & Debate",
+    "category": "Speaking & Communication",
+    "cefr_level": "B1-B2",
+    "summary": "Cấu trúc nêu quan điểm cá nhân, đồng tình một phần và phản biện lịch sự nhưng sắc bén trong thảo luận nhóm (Teamwork) và tranh biện (Debate).",
+    "formula_json": "[\"Stating Opinion: From my perspective / As far as I'm concerned, + S + V.\", \"Partial Agreement: I see your point, but have you considered + [N / V-ing]?\", \"Polite Rebuttal: While it is true that [Clause 1], the evidence shows that [Clause 2].\"]",
+    "usage_json": "[\"Sử dụng trong phần tranh biện (Debate) hoặc thảo luận nhóm tại Workshop.\", \"Giúp bác bỏ lập luận đối phương một cách văn minh, tôn trọng và thuyết phục.\"]",
+    "signal_words_json": "[\"I see your point, However\", \"On the contrary\", \"From my perspective\", \"The evidence suggests\"]",
+    "phonics_rules": "Hạ giọng ấm và điềm tĩnh ở vế công nhận ('I see your point'), nhấn rõ trọng âm ở vế phản biện.",
+    "common_mistakes": "Không nói thẳng 'You are wrong!' trong tranh biện học thuật; hãy dùng 'I beg to differ' hoặc 'I see your point, however...'.",
+    "examples_json": "[{\"en\": \"I see your point about convenience, but biodegradable plates are much better for our campsite.\", \"vi\": \"Tôi hiểu ý bạn về sự tiện lợi, nhưng đĩa tự phân hủy sinh học tốt hơn nhiều cho khu cắm trại của chúng ta.\"}]",
+    "practice_questions_json": "[{\"q\": \"Choose the most polite way to disagree during an English workshop:\", \"options\": [\"I see your point, but I think we should consider another angle.\", \"You are completely wrong.\", \"That makes no sense.\", \"Stop talking.\"], \"ans\": \"I see your point, but I think we should consider another angle.\"}]"
+  },
+  {
+    "id": "gram_outdoor_suggestions",
+    "topic": "Making Suggestions, Invitations & Safety Rules for Outdoor Trips (Đề xuất & Nội quy Dã ngoại)",
+    "grade_level": "Lớp 6 • Lớp 7 • Lớp 8",
+    "curriculum_unit": "Unit Outdoor Picnic & Eco-Trip",
+    "category": "Modal Verbs & Functional English",
+    "cefr_level": "A2-B1",
+    "summary": "Các cấu trúc rủ bạn bè, đề xuất hoạt động dã ngoại (How about, Let's, Why don't we, Shall we) và động từ khuyết thiếu chỉ quy tắc an toàn (must, mustn't, should, ought to).",
+    "formula_json": "[\"Suggestion 1: How about / What about + V-ing + ...?\", \"Suggestion 2: Why don't we / Shall we + V (bare infinitive) + ...?\", \"Safety Rule: Campers must + V / mustn't + V (e.g., mustn't litter or leave campfires unattended).\"]",
+    "usage_json": "[\"Dùng khi lên kế hoạch chuyến đi dã ngoại (Picnic Itinerary) cùng cả lớp.\", \"Dùng để phổ biến quy tắc an toàn và bảo vệ môi trường tại khu cắm trại.\"]",
+    "signal_words_json": "[\"How about\", \"Shall we\", \"Let's\", \"mustn't\", \"ought to\"]",
+    "phonics_rules": "Lên giọng nhẹ ở cuối câu hỏi đề xuất (Shall we pitch the tent near the lake? ↗).",
+    "common_mistakes": "Sau 'How about / What about' phải dùng V-ing (How about going kayaking?), không dùng V nguyên thể.",
+    "examples_json": "[{\"en\": \"How about organizing an English scavenger hunt in the botanical garden?\", \"vi\": \"Hay là chúng mình tổ chức trò truy tìm mật thư tiếng Anh trong vườn bách thảo nhé?\"}, {\"en\": \"All students must bring a reusable water bottle and mustn't litter on the trail.\", \"vi\": \"Tất cả học sinh phải mang bình nước tái sử dụng và không được xả rác trên đường mòn.\"}]",
+    "practice_questions_json": "[{\"q\": \"How about _______ a tent near the lake before sunset?\", \"options\": [\"pitching\", \"pitch\", \"to pitch\", \"pitched\"], \"ans\": \"pitching\"}]"
+  },
+  {
+    "id": "gram_word_formation_affixes",
+    "topic": "Word Formation: Prefixes & Suffixes (Cấu tạo từ: Tiền tố & Hậu tố trong đề thi HSG)",
+    "grade_level": "Lớp 7 • Lớp 8 • Lớp 9",
+    "curriculum_unit": "Chuyên đề Word Formation",
+    "category": "Lexical Grammar",
+    "cefr_level": "B1-B2",
+    "summary": "Quy tắc biến đổi từ loại bằng hậu tố danh từ (-tion, -ment, -ness, -ity), tính từ (-ful, -less, -able, -ive, -ous), trạng từ (-ly) và tiền tố phủ định (un-, in-, im-, il-, ir-, dis-, mis-).",
+    "formula_json": "[\"Verb -> Noun: educate -> education, manage -> management, persevere -> perseverance\", \"Noun -> Adj: nature -> natural, danger -> dangerous, eco -> ecological\", \"Negative Prefixes: possible -> impossible, regular -> irregular, biodegradable <-> non-biodegradable\"]",
+    "usage_json": "[\"Xác định từ loại cần điền vào chỗ trống dựa vào vị trí ngữ pháp (sau mạo từ a/an/the + Adj + Noun; sau động từ thường + Adv).\"]",
+    "signal_words_json": "[\"-tion / -sion\", \"-ment\", \"-able / -ible\", \"un- / im- / ir-\"]",
+    "phonics_rules": "Các từ có hậu tố -tion, -sion, -ic luôn nhận trọng âm ở âm tiết ngay trước hậu tố đó (e.g., eduˈcation, паnoˈramic).",
+    "common_mistakes": "Quên đổi tính từ sang dạng phủ định khi câu mang nghĩa trái ngược (unforgettable, impatient).",
+    "examples_json": "[{\"en\": \"The outdoor workshop was an unforgettable experience for all participants.\", \"vi\": \"Buổi workshop ngoài trời là một trải nghiệm không thể nào quên đối với mọi người tham gia.\"}]",
+    "practice_questions_json": "[{\"q\": \"Using _______ (BIODEGRADE) bags helps protect our national parks during picnics.\", \"options\": [\"biodegradable\", \"biodegrade\", \"biodegradably\", \"degradation\"], \"ans\": \"biodegradable\"}]"
   }
 ]

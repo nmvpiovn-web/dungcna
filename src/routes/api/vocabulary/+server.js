@@ -9,11 +9,15 @@ export const prerender = false;
 const GITHUB_VOCAB_SOURCES = [
   { repo: 'samuraitruong/oxford-3000', desc: 'Oxford 3000 Core English Vocabulary (CEFR A1–B2)' },
   { repo: 'tyypgzl/Oxford-5000-words', desc: 'Oxford 5000 Academic & IELTS Vocabulary (CEFR B2–C1)' },
-  { repo: 'global-success-k12', desc: 'Bộ SGK Tiếng Anh Global Success Lớp 1–12 (NXB Giáo Dục)' },
-  { repo: 'halloween-cambridge-special', desc: 'Bộ Từ Vựng Lễ Hội Halloween & Văn Hóa Thế Giới (Unit 9)' }
+  { repo: 'global-success-k12', desc: 'Bộ SGK Tiếng Anh Global Success Lớp 1–12 (12 Units Đầy Đủ)' },
+  { repo: 'halloween-cambridge-special', desc: '🎃 Bộ Từ Vựng Chủ Đề Lễ Hội Halloween & Văn Hóa Thế Giới' },
+  { repo: 'outdoor-picnic-ecotrip', desc: '🏕️ Bộ Từ Vựng Chủ Đề Đi Dã Ngoại, Cắm Trại & Khám Phá Thiên Nhiên' },
+  { repo: 'english-speaking-workshop', desc: '🎙️ Bộ Từ Vựng Workshop Thuyết Trình, Phản Biện (Debate) & Teamwork' },
+  { repo: 'gdrive-harold-levine-22000', desc: '📚 Kho Từ Vựng Học Thuật Harold Levine 22,000 Words (TOEFL/IELTS)' },
+  { repo: 'gdrive-phrasal-verbs-heritage', desc: '🏆 Kho Cụm Động Từ (Phrasal Verbs), Di Sản & Đô Thị Hóa (Đề HSG)' }
 ];
 
-async function ensureVocabularyTableAndSeed(db) {
+async function ensureVocabularyTableAndSeed(db, forceSync = false) {
   if (!db) return 0;
   try {
     await db.prepare(`
@@ -32,34 +36,47 @@ async function ensureVocabularyTableAndSeed(db) {
       );
     `).run().catch(() => {});
 
-    for (const item of cambridgeVocabularyData) {
-      await db.prepare(`
-        INSERT INTO cambridge_vocabulary (id, word, ipa, pos, cefr_level, cambridge_tier, meaning_vi, example_en, example_vi, collocations, grade_suitability)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ON CONFLICT(id) DO UPDATE SET
-          word = excluded.word,
-          ipa = excluded.ipa,
-          pos = excluded.pos,
-          cefr_level = excluded.cefr_level,
-          cambridge_tier = excluded.cambridge_tier,
-          meaning_vi = excluded.meaning_vi,
-          example_en = excluded.example_en,
-          example_vi = excluded.example_vi,
-          collocations = excluded.collocations,
-          grade_suitability = excluded.grade_suitability
-      `).bind(
-        item.id,
-        item.word,
-        item.ipa || '',
-        item.pos || 'noun',
-        item.cefr_level || 'B1',
-        item.cambridge_tier || 'PET',
-        item.meaning_vi || '',
-        item.example_en || '',
-        item.example_vi || '',
-        item.collocations || '',
-        item.grade_suitability || 'Lớp 7'
-      ).run().catch(() => {});
+    if (!forceSync) {
+      const cntRow = await db.prepare(`SELECT COUNT(*) as cnt FROM cambridge_vocabulary`).first().catch(() => null);
+      if (Number(cntRow?.cnt || 0) >= cambridgeVocabularyData.length) {
+        return Number(cntRow.cnt);
+      }
+    }
+
+    const stmt = db.prepare(`
+      INSERT INTO cambridge_vocabulary (id, word, ipa, pos, cefr_level, cambridge_tier, meaning_vi, example_en, example_vi, collocations, grade_suitability)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(id) DO UPDATE SET
+        word = excluded.word,
+        ipa = excluded.ipa,
+        pos = excluded.pos,
+        cefr_level = excluded.cefr_level,
+        cambridge_tier = excluded.cambridge_tier,
+        meaning_vi = excluded.meaning_vi,
+        example_en = excluded.example_en,
+        example_vi = excluded.example_vi,
+        collocations = excluded.collocations,
+        grade_suitability = excluded.grade_suitability
+    `);
+
+    const CHUNK = 50;
+    for (let i = 0; i < cambridgeVocabularyData.length; i += CHUNK) {
+      const slice = cambridgeVocabularyData.slice(i, i + CHUNK).map((item) =>
+        stmt.bind(
+          item.id,
+          item.word,
+          item.ipa || '',
+          item.pos || 'noun',
+          item.cefr_level || 'B1',
+          item.cambridge_tier || 'PET',
+          item.meaning_vi || '',
+          item.example_en || '',
+          item.example_vi || '',
+          item.collocations || '',
+          item.grade_suitability || 'Lớp 7'
+        )
+      );
+      await db.batch(slice).catch(() => {});
     }
   } catch {}
 }
@@ -74,7 +91,7 @@ export async function GET({ url, platform }) {
   if (db) {
     await ensureVocabularyTableAndSeed(db);
     try {
-      const res = await db.prepare(`SELECT * FROM cambridge_vocabulary ORDER BY rowid DESC LIMIT 1000`).all();
+      const res = await db.prepare(`SELECT * FROM cambridge_vocabulary ORDER BY rowid DESC LIMIT 2000`).all();
       d1Rows = res?.results || [];
     } catch {}
   }
@@ -105,7 +122,7 @@ export async function GET({ url, platform }) {
       collocations: row.collocations || existing.collocations || '',
       grade: existing.grade || row.grade_suitability || 'Lớp 7',
       grade_suitability: row.grade_suitability || existing.grade_suitability || 'Lớp 7',
-      unit_id: existing.unit_id || (String(row.id || '').startsWith('voc_hw_') ? 'unit9' : 'unit1'),
+      unit_id: existing.unit_id || (String(row.id || '').startsWith('voc_hw_') ? 'unit_halloween' : 'unit1'),
       source_repo: existing.source_repo || 'd1-cambridge-vocabulary'
     });
     if (norm) byTerm.set(termKey, norm);
@@ -117,7 +134,11 @@ export async function GET({ url, platform }) {
       (w) =>
         w.term.toLowerCase().includes(search) ||
         w.meaning_vi.toLowerCase().includes(search) ||
-        String(w.collocations || '').toLowerCase().includes(search)
+        String(w.collocations || '').toLowerCase().includes(search) ||
+        String(w.category || '').toLowerCase().includes(search) ||
+        String(w.unit_id || '').toLowerCase().includes(search) ||
+        String(w.example_en || '').toLowerCase().includes(search) ||
+        String(w.source_repo || '').toLowerCase().includes(search)
     );
   }
   if (grade && grade !== 'all') {

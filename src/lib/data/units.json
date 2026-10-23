@@ -1,32 +1,110 @@
 [
   {
-    "id": "grammar",
-    "name": "Ngữ pháp & Giao tiếp",
-    "description": "Thì HTĐ, QKĐ, Câu ghép and/or/but/so",
-    "icon": "📚"
-  },
-  {
-    "id": "phonics",
-    "name": "Ngữ âm & Trọng âm",
-    "description": "Phát âm -ed, trọng âm 2 âm tiết",
-    "icon": "🔊"
-  },
-  {
     "id": "unit1",
-    "name": "Unit 1: Hobbies",
-    "description": "Sở thích & Thời gian rảnh",
+    "name": "Unit 1: Hobbies & Leisure Activities",
+    "description": "Sở thích, thói quen lúc rảnh rỗi, động từ chỉ sự yêu thích (love, like, enjoy, hate + V-ing) & Hiện tại đơn.",
     "icon": "🎨"
   },
   {
     "id": "unit2",
-    "name": "Unit 2: Healthy Living",
-    "description": "Sống khỏe & Thói quen lành mạnh",
+    "name": "Unit 2: Healthy Living & Nutrition",
+    "description": "Lối sống lành mạnh, dinh dưỡng, phòng tránh bệnh tật, câu đơn (Simple Sentences) & lời khuyên sức khỏe.",
     "icon": "🥗"
   },
   {
     "id": "unit3",
-    "name": "Unit 3: Community Service",
-    "description": "Hoạt động vì cộng đồng & Tình nguyện",
+    "name": "Unit 3: Community Service & Volunteering",
+    "description": "Hoạt động thiện nguyện, phục vụ cộng đồng, bảo vệ môi trường & Thì Quá khứ đơn (Past Simple).",
     "icon": "🤝"
+  },
+  {
+    "id": "unit4",
+    "name": "Unit 4: Music and Arts",
+    "description": "Âm nhạc, hội họa, nhạc cụ truyền thống, nghệ thuật biểu diễn & Cấu trúc so sánh (as...as, the same as, different from).",
+    "icon": "🎵"
+  },
+  {
+    "id": "unit5",
+    "name": "Unit 5: Food and Drink (Vietnamese Cuisine)",
+    "description": "Ẩm thực Việt Nam & thế giới, nguyên liệu nấu ăn, danh từ đếm được/không đếm được (some, any, much, many, a lot of).",
+    "icon": "🍜"
+  },
+  {
+    "id": "unit6",
+    "name": "Unit 6: A Visit to a School & Education",
+    "description": "Trường học quốc tế, phòng chức năng, hoạt động học thuật & Giới từ chỉ thời gian, nơi chốn (at, in, on).",
+    "icon": "🏫"
+  },
+  {
+    "id": "unit7",
+    "name": "Unit 7: Traffic & Road Safety",
+    "description": "Phương tiện giao thông, biển báo đường bộ, an toàn giao thông & Cấu trúc It indicating distance, should/shouldn't.",
+    "icon": "🚦"
+  },
+  {
+    "id": "unit8",
+    "name": "Unit 8: Films & Cinema Reviews",
+    "description": "Thể loại phim điện ảnh, đánh giá bộ phim, tính từ đuôi -ed/-ing & Liên từ chỉ sự nhượng bộ (Although, Despite, However).",
+    "icon": "🎬"
+  },
+  {
+    "id": "unit9",
+    "name": "Unit 9: Festivals Around the World",
+    "description": "Lễ hội văn hóa khắp thế giới, phong tục truyền thống & Câu hỏi Yes/No, Wh-questions.",
+    "icon": "🎭"
+  },
+  {
+    "id": "unit10",
+    "name": "Unit 10: Energy Sources & Green Power",
+    "description": "Nguồn năng lượng tái tạo (mặt trời, gió, thủy điện), tiết kiệm điện năng & Thì Hiện tại tiếp diễn mở rộng.",
+    "icon": "⚡"
+  },
+  {
+    "id": "unit11",
+    "name": "Unit 11: Travelling in the Future",
+    "description": "Phương tiện giao thông tương lai (flying car, hyperloop, teleporter), Thì Tương lai đơn & Đại từ sở hữu.",
+    "icon": "🚀"
+  },
+  {
+    "id": "unit12",
+    "name": "Unit 12: English-Speaking Countries",
+    "description": "Khám phá văn hóa, địa danh, con người tại Anh, Mỹ, Úc, Canada, New Zealand & Mạo từ a, an, the.",
+    "icon": "🌏"
+  },
+  {
+    "id": "unit_halloween",
+    "name": "🎃 Chủ đề Sự kiện: Lễ Hội Halloween (Spooky Festival)",
+    "description": "Từ vựng, mẫu câu, trò chơi hóa trang Trick-or-Treat, kể chuyện ma thuật & văn hóa lễ hội mùa thu phương Tây.",
+    "icon": "🎃"
+  },
+  {
+    "id": "unit_picnic",
+    "name": "🏕️ Chủ đề Ngoại khóa: Đi Dã Ngoại & Eco-Trip (Outdoor Picnic)",
+    "description": "Từ vựng cắm trại, định hướng la bàn, bảo vệ thiên nhiên, trò chơi Scavenger Hunt & giao tiếp dã ngoại thực tế.",
+    "icon": "🏕️"
+  },
+  {
+    "id": "unit_workshop",
+    "name": "🎙️ Chủ đề Kỹ năng: Workshop Thuyết Trình & Phản Biện (Speaking Workshop)",
+    "description": "Thuật ngữ Public Speaking, Brainstorming, Debate, làm việc nhóm (Teamwork) & điều phối thảo luận tiếng Anh.",
+    "icon": "🎙️"
+  },
+  {
+    "id": "unit_summer_camp",
+    "name": "🏖️ Chủ đề Mùa hè: Trại Hè Quốc Tế & Du Lịch (Summer Camp)",
+    "description": "Từ vựng trại hè quốc tế, giao lưu văn hóa, sân bay, homestay, hoạt động biển & kỹ năng tự lập.",
+    "icon": "🏖️"
+  },
+  {
+    "id": "unit_tet_festivals",
+    "name": "🌸 Chủ đề Văn hóa: Lễ Hội Tết Nguyên Đán & Trung Thu",
+    "description": "Từ vựng thuyết trình về Tết cổ truyền Việt Nam, Tết Trung Thu, ẩm thực lễ hội & di sản văn hóa dân tộc.",
+    "icon": "🌸"
+  },
+  {
+    "id": "unit_phrasal_wordform",
+    "name": "🏆 Chuyên đề HSG & Cambridge: Phrasal Verbs, Idioms & Word Formation",
+    "description": "Cụm động từ (Phrasal Verbs), thành ngữ (Idioms), cấu tạo từ (Prefixes/Suffixes) trích xuất từ kho đề HSG & Cambridge PET/FCE.",
+    "icon": "🏆"
   }
 ]
