@@ -6,12 +6,12 @@ export const prerender = false;
 const FALLBACK_CAMPUSES = [
   {
     id: 'loc_codung',
-    name: 'Tại nhà Cô Dung (123 Phố Vọng, Hai Bà Trưng, Hà Nội)',
+    name: 'Nhà Cô Dung (42 Hiệp Bình)',
     short_code: 'CODUNG',
-    address: '123 Phố Vọng, Quận Hai Bà Trưng, Hà Nội',
+    address: '42 Hiệp Bình, TP. Thủ Đức, TP.HCM',
     hotline: '0905960437',
     contact_phone: '0905960437',
-    google_maps_url: 'https://maps.google.com/?q=123+Pho+Vong+Ha+Noi',
+    google_maps_url: 'https://maps.google.com/?q=42+Hiep+Binh+Thu+Duc',
     manager_user_id: 'user_msdung',
     is_primary: 1,
     is_active: 1,
@@ -19,12 +19,12 @@ const FALLBACK_CAMPUSES = [
   },
   {
     id: 'loc_sunshine',
-    name: 'Trung Tâm Tiếng Anh Sunshine Academy',
+    name: 'Trung Tâm Tiếng Anh Sunshine (KDC Thanh Niên)',
     short_code: 'SUNSHINE',
-    address: 'Tòa Sunshine Riverside, Phú Thượng, Tây Hồ, Hà Nội',
-    hotline: '0987654321',
-    contact_phone: '0987654321',
-    google_maps_url: '',
+    address: 'KDC Thanh Niên, TP. Thủ Đức, TP.HCM',
+    hotline: '0905960437',
+    contact_phone: '0905960437',
+    google_maps_url: 'https://maps.google.com/?q=KDC+Thanh+Nien+Thu+Duc',
     manager_user_id: 'user_teacher_quynh',
     is_primary: 0,
     is_active: 1,
@@ -32,12 +32,12 @@ const FALLBACK_CAMPUSES = [
   },
   {
     id: 'loc_thayvu',
-    name: 'Trung Tâm Học Liệu & Luyện Thi Thầy Vũ',
+    name: 'Nhà Thầy Vũ (KDC Hồng Long)',
     short_code: 'THAYVU',
-    address: 'Số 105, Đường Cầu Giấy, Quan Hoa, Cầu Giấy, Hà Nội',
+    address: 'KDC Hồng Long, Hiệp Bình Phước, TP. Thủ Đức, TP.HCM',
     hotline: '0905960437',
     contact_phone: '0905960437',
-    google_maps_url: '',
+    google_maps_url: 'https://maps.google.com/?q=KDC+Hong+Long+Thu+Duc',
     manager_user_id: 'user_thayvu',
     is_primary: 0,
     is_active: 1,
@@ -113,10 +113,14 @@ async function ensureTables(db) {
     if (Number(cntRow?.cnt || 0) === 0) {
       await db.prepare(`
         INSERT OR IGNORE INTO campuses (id, name, short_code, address, hotline, contact_phone, is_primary, manager_user_id, is_active) VALUES
-          ('loc_codung', 'Tại nhà Cô Dung (123 Phố Vọng, Hai Bà Trưng, Hà Nội)', 'CODUNG', '123 Phố Vọng, Quận Hai Bà Trưng, Hà Nội', '0905960437', '0905960437', 1, 'user_msdung', 1),
-          ('loc_sunshine', 'Trung Tâm Tiếng Anh Sunshine Academy', 'SUNSHINE', 'Tòa Sunshine Riverside, Phú Thượng, Tây Hồ, Hà Nội', '0987654321', '0987654321', 0, 'user_teacher_quynh', 1),
-          ('loc_thayvu', 'Trung Tâm Học Liệu & Luyện Thi Thầy Vũ', 'THAYVU', 'Số 105, Đường Cầu Giấy, Quan Hoa, Cầu Giấy, Hà Nội', '0905960437', '0905960437', 0, 'user_thayvu', 1);
+          ('loc_codung', 'Nhà Cô Dung (42 Hiệp Bình)', 'CODUNG', '42 Hiệp Bình, TP. Thủ Đức, TP.HCM', '0905960437', '0905960437', 1, 'user_msdung', 1),
+          ('loc_sunshine', 'Trung Tâm Tiếng Anh Sunshine (KDC Thanh Niên)', 'SUNSHINE', 'KDC Thanh Niên, TP. Thủ Đức, TP.HCM', '0905960437', '0905960437', 0, 'user_teacher_quynh', 1),
+          ('loc_thayvu', 'Nhà Thầy Vũ (KDC Hồng Long)', 'THAYVU', 'KDC Hồng Long, Hiệp Bình Phước, TP. Thủ Đức, TP.HCM', '0905960437', '0905960437', 0, 'user_thayvu', 1);
       `).run().catch(() => {});
+    } else {
+      await db.prepare(`UPDATE campuses SET name = 'Nhà Cô Dung (42 Hiệp Bình)', address = '42 Hiệp Bình, TP. Thủ Đức, TP.HCM', is_primary = 1 WHERE id = 'loc_codung'`).run().catch(() => {});
+      await db.prepare(`UPDATE campuses SET name = 'Trung Tâm Tiếng Anh Sunshine (KDC Thanh Niên)', address = 'KDC Thanh Niên, TP. Thủ Đức, TP.HCM' WHERE id = 'loc_sunshine'`).run().catch(() => {});
+      await db.prepare(`UPDATE campuses SET name = 'Nhà Thầy Vũ (KDC Hồng Long)', address = 'KDC Hồng Long, Hiệp Bình Phước, TP. Thủ Đức, TP.HCM' WHERE id = 'loc_thayvu'`).run().catch(() => {});
     }
   } catch (e) {
     console.warn('ensureTables campuses warning:', e);

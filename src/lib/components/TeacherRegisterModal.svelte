@@ -282,7 +282,7 @@
 
  <div class="sm:col-span-2">
  <label class="block text-xs font-bold text-slate-700 mb-1" for="treg-address">Địa chỉ</label>
- <input id="treg-address" type="text" bind:value={form.address} onblur={() => blur('address')} placeholder="VD: 123 Phố Vọng, Hai Bà Trưng, Hà Nội" class={inputCls('address')} />
+ <input id="treg-address" type="text" bind:value={form.address} onblur={() => blur('address')} placeholder="VD: 42 Hiệp Bình, TP. Thủ Đức" class={inputCls('address')} />
  {#if fieldError('address')}<p class="mt-1 text-[11px] text-rose-600 font-semibold">⚠ {fieldError('address')}</p>{/if}
  </div>
 

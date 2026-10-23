@@ -554,66 +554,25 @@
 
  <!-- Compact Duolingo-Style Tactile Command Header -->
  <div class="rounded-2xl bg-white border-2 border-b-[3px] border-stone-200 p-4 sm:p-5 shadow-xs relative overflow-hidden">
- <div class="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+ <div class="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
  <div class="space-y-1">
  <div class="flex flex-wrap items-center gap-1.5">
  <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/20 text-emerald-700 border border-emerald-500/30">
- STUDIO THỜI KHÓA BIỂU • BÀI GIẢNG &amp; ĐIỂM DANH
+ THỜI KHÓA BIỂU &amp; ĐIỂM DANH LỚP HỌC
  </span>
- <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
- ⏰ Báo Zalo Phụ Huynh Trước 10 Phút
- </span>
- <a href="/admin?tab=webhooks" data-testid="schedule-zalo-bot-status-pill" class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/25 text-emerald-700 border border-emerald-400/50 hover:bg-emerald-500/35 transition-colors flex items-center gap-1">
- <span>🤖</span>
- <span>Zalo Bot: Bot giá cả (@bot.ynKabJAc) • Đã nối Token</span>
- </a>
  </div>
  <h1 class="text-xl sm:text-2xl font-heading font-extrabold text-slate-900">
- Lịch Học, Gắn Bài Giảng (Link/Drive) &amp; Tổng Kết Ca Dạy 📅
+ Lịch Học Tuần &amp; Sổ Điểm Danh 📅
  </h1>
  </div>
 
  <!-- Quick Action Buttons -->
  <div class="flex flex-wrap items-center gap-2">
  {#if currentUser && isTeacherOrAdmin(currentUser)}
- <a
- href="/session-audit"
- class="px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white border-2 border-b-[3px] border-indigo-800 font-extrabold text-xs shadow-xs transition-all flex items-center gap-1.5"
- title="Đối soát tài liệu Kho Tri Thức, Drive, Tỷ lệ đáp ứng BTVN & Quiz theo từng ca học"
- >
- <span>📊</span> <span>Đối Soát &amp; Tổng Kết Ca</span>
- </a>
-
- <button
- type="button"
- onclick={() => showLeaveModal = true}
- class="px-3 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 border-2 border-b-[3px] border-amber-700 font-extrabold text-xs shadow-xs transition-all flex items-center gap-1.5"
- title="Đăng ký xin nghỉ và đề nghị đồng nghiệp dạy thay 2 bước"
- >
- <span>📝</span> <span>Xin Nghỉ / Dạy Thay</span>
- </button>
-
- <button
- type="button"
- onclick={() => showAdvanceModal = true}
- class="px-3 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white border-2 border-b-[3px] border-teal-800 font-extrabold text-xs shadow-xs transition-all flex items-center gap-1.5"
- title="Đề nghị ứng lương cho kỳ hiện tại"
- >
- <span>💰</span> <span>Ứng Lương</span>
- </button>
-
- <button
- type="button"
- onclick={() => openStaffManagement()}
- class="px-3 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white border-2 border-b-[3px] border-purple-800 font-extrabold text-xs shadow-xs transition-all flex items-center gap-1.5"
- >
- <span>👨‍🏫 Phân Quyền &amp; Lương</span>
- </button>
-
  <button
  type="button"
  onclick={() => { sessionPreset = null; handleOpenEdit(null); }}
- class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white border-2 border-b-[3px] border-emerald-800 font-extrabold text-xs shadow-xs transition-all flex items-center gap-1.5"
+ class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white border-2 border-b-[3px] border-emerald-800 font-extrabold text-xs shadow-xs transition-all flex items-center gap-1.5"
  >
  <span>➕ Thêm Buổi Học Mới</span>
  </button>
@@ -621,195 +580,6 @@
  </div>
  </div>
  </div>
-
- <!-- Substitute Requests Alert Deck (If Teacher has pending substitute requests) -->
- {#if mySubstituteRequests.length > 0}
- <div class="p-4 sm:p-5 rounded-lg bg-amber-500/10 border-2 border-amber-500/40 space-y-3 shadow-sm animate-in slide-in-from-top-2">
- <div class="flex items-center gap-2 text-amber-800 font-semibold text-sm">
- <span class="text-xl">⚠️</span>
- <span>BẠN CÓ {mySubstituteRequests.length} ĐỀ NGHỊ DẠY THAY CẦN PHẢN HỒI (QUY TRÌNH 2 BƯỚC)</span>
- </div>
- <div class="space-y-2">
- {#each mySubstituteRequests as req}
- <div class="p-3 rounded-md bg-white border border-amber-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
- <div class="space-y-1">
- <div class="font-bold text-slate-900 flex items-center gap-2">
- <span>Giáo viên: <strong class="text-emerald-600">{req.teacher_name}</strong></span>
- <span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold">Chờ bạn xác nhận</span>
- </div>
- <div class="text-slate-600">
- Ca học: <strong>{req.session_date} ({req.start_time} - {req.end_time})</strong> • Lớp: <strong>{req.class_id}</strong>
- </div>
- <div class="text-slate-500 text-[11px] italic">
- Lý do nghỉ: "{req.reason}"
- </div>
- </div>
- <div class="flex items-center gap-2 flex-shrink-0">
- <button
- type="button"
- onclick={() => handleRespondSubstitute(req.id, 'accept')}
- class="px-3 py-1.5 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-sm transition-all"
- >
- ✓ Đồng Ý Dạy Thay
- </button>
- <button
- type="button"
- onclick={() => handleRespondSubstitute(req.id, 'reject')}
- class="px-3 py-1.5 rounded-md bg-slate-200 hover:bg-rose-600 hover:text-slate-900 text-slate-700 font-bold text-xs transition-all"
- >
- ✕ Từ Chối
- </button>
- </div>
- </div>
- {/each}
- </div>
- </div>
- {/if}
-
- <!-- ===== THANH SUB-MENU NGHIỆP VỤ ĐIỂM DANH - LỊCH HỌC (DUOLINGO TACTILE SEGMENTED BAR) ===== -->
- <section data-testid="schedule-business-hub-cards" aria-label="Phân hệ nghiệp vụ Điểm danh & Thời khóa biểu" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
- <button
- type="button"
- onclick={() => scheduleViewMode = 'all'}
- class="px-3 py-2.5 rounded-xl border-2 border-b-[3px] text-left transition-all flex items-center gap-2 {scheduleViewMode === 'all' ? 'bg-emerald-50 border-emerald-600 shadow-xs' : 'bg-white border-stone-200 hover:border-emerald-300'}"
- >
- <span class="text-base">🌟</span>
- <div class="min-w-0">
- <div class="text-xs font-extrabold text-slate-900 truncate">Tổng Quan ({sessions.length} Ca)</div>
- <div class="text-[10px] text-slate-500 truncate">Lịch tuần &amp; Thẻ ca học</div>
- </div>
- </button>
-
- <button
- type="button"
- onclick={() => scheduleViewMode = 'rollcall'}
- class="px-3 py-2.5 rounded-xl border-2 border-b-[3px] text-left transition-all flex items-center gap-2 {scheduleViewMode === 'rollcall' ? 'bg-emerald-50 border-emerald-600 shadow-xs' : 'bg-white border-stone-200 hover:border-emerald-300'}"
- >
- <span class="text-base">📋</span>
- <div class="min-w-0">
- <div class="text-xs font-extrabold text-slate-900 truncate">Bảng Điểm Danh Nhanh</div>
- <div class="text-[10px] text-slate-500 truncate">Điểm danh 1 chạm &amp; Zalo</div>
- </div>
- </button>
-
- <button
- type="button"
- onclick={() => scheduleViewMode = 'calendar'}
- class="px-3 py-2.5 rounded-xl border-2 border-b-[3px] text-left transition-all flex items-center gap-2 {scheduleViewMode === 'calendar' ? 'bg-emerald-50 border-emerald-600 shadow-xs' : 'bg-white border-stone-200 hover:border-emerald-300'}"
- >
- <span class="text-base">📅</span>
- <div class="min-w-0">
- <div class="text-xs font-extrabold text-slate-900 truncate">Lịch Học Tuần (7 Ngày)</div>
- <div class="text-[10px] text-slate-500 truncate">Sáng • Chiều • Tối</div>
- </div>
- </button>
-
- <button
- type="button"
- onclick={() => scheduleViewMode = 'sessions'}
- class="px-3 py-2.5 rounded-xl border-2 border-b-[3px] text-left transition-all flex items-center gap-2 {scheduleViewMode === 'sessions' ? 'bg-emerald-50 border-emerald-600 shadow-xs' : 'bg-white border-stone-200 hover:border-emerald-300'}"
- >
- <span class="text-base">📚</span>
- <div class="min-w-0">
- <div class="text-xs font-extrabold text-slate-900 truncate">Sổ Đầu Bài &amp; Bài Giảng</div>
- <div class="text-[10px] text-slate-500 truncate">Link, Drive &amp; Tổng kết ca</div>
- </div>
- </button>
-
- <button
- type="button"
- onclick={() => { scheduleViewMode = 'alerts'; inlineLeaderNotifs = getAllLeaderNotifications(); }}
- class="px-3 py-2.5 rounded-xl border-2 border-b-[3px] text-left transition-all flex items-center gap-2 {scheduleViewMode === 'alerts' ? 'bg-emerald-50 border-emerald-600 shadow-xs' : 'bg-white border-stone-200 hover:border-emerald-300'}"
- >
- <span class="text-base">🔔</span>
- <div class="min-w-0">
- <div class="text-xs font-extrabold text-slate-900 truncate">Báo Cáo &amp; Cảnh Báo</div>
- <div class="text-[10px] text-slate-500 truncate">Cảnh báo lịch &amp; học phí</div>
- </div>
- </button>
- </section>
-
- <!-- ===== CHẾ ĐỘ 1: BẢNG ĐIỂM DANH NHANH TỨC THỜI (QUICK ROLL-CALL HUB) ===== -->
- {#if scheduleViewMode === 'rollcall'}
- <section data-testid="schedule-quick-rollcall-hub" class="rounded-xl bg-white border-2 border-emerald-600/80 p-5 shadow-md space-y-4">
- <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
- <div>
- <div class="text-xs font-extrabold uppercase tracking-wider text-emerald-700">📋 NGHIỆP VỤ ĐIỂM DANH TRỰC TIẾP THEO CA HỌC</div>
- <h2 class="text-lg font-bold text-slate-900 mt-0.5">Bảng Điều Khiển Điểm Danh &amp; Báo Cáo Chuyên Cần Tức Thời</h2>
- <p class="text-xs text-slate-600">Chọn trạng thái điểm danh hoặc bấm trực tiếp vào nút <strong>📋 Mở Điểm Danh</strong> trên từng ca học bên dưới.</p>
- </div>
- <div class="flex flex-wrap items-center gap-1.5 text-xs font-bold">
- <button type="button" onclick={() => attendanceFilter = 'all'} class="px-3 py-1.5 rounded-lg border {attendanceFilter === 'all' ? 'bg-slate-900 text-white border-slate-900' : 'bg-slate-50 text-slate-700 border-slate-200'}">Tất cả ({sessions.length})</button>
- <button type="button" onclick={() => attendanceFilter = 'unmarked'} class="px-3 py-1.5 rounded-lg border {attendanceFilter === 'unmarked' ? 'bg-amber-600 text-white border-amber-600' : 'bg-amber-50 text-amber-800 border-amber-200'}">⏳ Chưa điểm danh</button>
- <button type="button" onclick={() => attendanceFilter = 'incomplete'} class="px-3 py-1.5 rounded-lg border {attendanceFilter === 'incomplete' ? 'bg-orange-600 text-white border-orange-600' : 'bg-orange-50 text-orange-800 border-orange-200'}">⚠️ Điểm danh thiếu</button>
- <button type="button" onclick={() => attendanceFilter = 'complete'} class="px-3 py-1.5 rounded-lg border {attendanceFilter === 'complete' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-emerald-50 text-emerald-800 border-emerald-200'}">✅ Đã điểm danh đủ</button>
- </div>
- </div>
- </section>
- {/if}
-
- <!-- ===== CHẾ ĐỘ 2: TRUNG TÂM BÁO CÁO & CẢNH BÁO LEADER (GOM TỪ SLIDE-BAR DRAWER VỀ TRANG NGHIỆP VỤ) ===== -->
- {#if scheduleViewMode === 'alerts'}
- <section data-testid="schedule-inline-alerts-hub" class="rounded-xl bg-white border-2 border-emerald-600/80 p-5 shadow-md space-y-4">
- <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
- <div>
- <div class="text-xs font-extrabold uppercase tracking-wider text-emerald-700">🔔 TRUNG TÂM BÁO CÁO LEADER &amp; NHẮC LỊCH TỰ ĐỘNG</div>
- <h2 class="text-lg font-bold text-slate-900 mt-0.5">Toàn Bộ Thẻ Cảnh Báo Lịch Học, Điểm Danh &amp; Học Phí (Đã Gom Khỏi Slide-Bar)</h2>
- </div>
- <div class="flex flex-wrap items-center gap-2">
- <button
- type="button"
- onclick={handleInlineLeaderScan}
- disabled={isScanningInline}
- class="px-3.5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-xs"
- >
- ⚡ {isScanningInline ? 'Đang quét...' : 'Quét Lịch Học & Học Phí Ngay'}
- </button>
- <button
- type="button"
- onclick={() => { markAllNotificationsAsRead(); inlineLeaderNotifs = getAllLeaderNotifications(); }}
- class="px-3.5 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs"
- >
- ✓ Đánh dấu đã đọc tất cả
- </button>
- </div>
- </div>
-
- {#if inlineLeaderNotifs.length === 0}
- <div class="p-6 text-center rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600">
- 🔔 Chưa có cảnh báo tồn đọng. Bấm <strong>"⚡ Quét Lịch Học &amp; Học Phí Ngay"</strong> để rà soát toàn bộ ca dạy hôm nay!
- </div>
- {:else}
- <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
- {#each inlineLeaderNotifs as notif (notif.id)}
- <div class="p-3.5 rounded-xl border {notif.is_read ? 'bg-slate-50 border-slate-200' : 'bg-emerald-50/50 border-emerald-400 shadow-2xs'} flex flex-col justify-between gap-2 text-xs">
- <div class="space-y-1">
- <div class="flex items-center justify-between gap-2">
- <span class="font-extrabold text-slate-900">{notif.title}</span>
- {#if !notif.is_read}
- <span class="px-2 py-0.5 rounded-full bg-rose-600 text-white text-[10px] font-bold">Mới</span>
- {/if}
- </div>
- <p class="text-slate-600 leading-relaxed">{notif.message}</p>
- </div>
- <div class="flex items-center justify-between pt-2 border-t border-slate-200/70 text-[11px]">
- <span class="text-slate-500">{notif.created_at ? new Date(notif.created_at).toLocaleString('vi-VN') : 'Vừa xong'}</span>
- {#if !notif.is_read}
- <button
- type="button"
- onclick={() => { markNotificationAsRead(notif.id); inlineLeaderNotifs = getAllLeaderNotifications(); }}
- class="text-emerald-700 font-bold hover:underline"
- >
- ✓ Đã xem
- </button>
- {/if}
- </div>
- </div>
- {/each}
- </div>
- {/if}
- </section>
- {/if}
 
  <!-- Filter Ribbon -->
  {#if scheduleViewMode === 'all' || scheduleViewMode === 'calendar'}
@@ -1126,33 +896,8 @@
  </div>
  </div>
 
- <!-- Notification Banner & Detailed Attendance Roster -->
- <div class="space-y-2 pt-2 border-t border-slate-100 text-xs">
- <!-- Notification Pill -->
- <div class="p-2.5 rounded-md bg-slate-50 border border-slate-200 flex items-center justify-between gap-2">
- <div>
- <div class="text-[10px] font-bold text-amber-600 uppercase tracking-wider flex items-center gap-1">
- <span>⏰</span> <span>Nhắc phụ huynh đưa đón:</span>
- </div>
- <div class="text-[11px] font-bold text-slate-800">
- {notifyTimeStr} ({notifyMin}p trước giờ học)
- </div>
- </div>
-
- {#if currentUser && isTeacherOrAdmin(currentUser)}
- <button
- type="button"
- onclick={() => handleSendReminderNotification(s)}
- class="px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-bold text-[10px] shadow-sm transition-all"
- title="Gửi tin nhắn thử nghiệm tới Zalo phụ huynh"
- >
- 🔔 Test Bot
- </button>
- {/if}
- </div>
-
- <!-- Attendance indicator & Student Count -->
- <div class="space-y-1.5">
+ <!-- Detailed Attendance Roster -->
+ <div class="space-y-1.5 pt-2 border-t border-slate-100 text-xs">
  <div class="flex items-center justify-between text-[11px] text-slate-500">
  <span class="flex items-center gap-1 font-medium text-slate-700">
  <span>👥</span>
@@ -1188,7 +933,6 @@
  </div>
  {/if}
  </div>
- </div>
 
  <!-- Action Buttons -->
  <div class="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-1.5">
@@ -1201,26 +945,10 @@
  <span>📋 Điểm Danh</span>
  </button>
 
- <a
- href="/cpanel/teacher?session_id={encodeURIComponent(s.id)}&amp;class_id={encodeURIComponent(s.class_id || '')}"
- class="py-2 px-2.5 rounded-md bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 font-bold text-xs transition-all"
- title="Giao Bài Tập Về Nhà & Đề Quiz cho buổi học này"
- >
- 📚 Giao BTVN
- </a>
-
- <a
- href="/session-audit?session_id={encodeURIComponent(s.id)}"
- class="py-2 px-2.5 rounded-md bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 font-bold text-xs transition-all"
- title="Đối soát tài liệu, tỷ lệ đáp ứng BTVN/Quiz & xuất báo cáo ca học"
- >
- 📊 Đối Soát
- </a>
-
  <button
  type="button"
  onclick={() => handleOpenEdit(s)}
- class="py-2 px-2.5 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-all"
+ class="py-2 px-3 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-all"
  title="Điều chỉnh ca học & gán học sinh"
  >
  ✏️ Sửa
@@ -1235,8 +963,6 @@
  >
  <span>🗑️</span> <span>Xóa</span>
  </button>
- {:else}
- <!-- Bước 5: ẩn nút nhắc lịch với học sinh/phụ huynh (thông báo do cron server gửi) -->
  {/if}
  </div>
  </div>

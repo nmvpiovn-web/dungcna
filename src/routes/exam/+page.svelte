@@ -1035,25 +1035,22 @@
  {/if}
 
  {#if currentUser?.role === 'teacher' || currentUser?.role === 'superadmin' || isSuperAdmin(currentUser)}
- <!-- Teacher & Leader Attendance-Linked Exam Panel -->
- <div id="exam-attendance-grading-panel" data-testid="exam-attendance-grading-panel" class="rounded-3xl bg-white border border-emerald-500/30 p-5 md:p-6 shadow-xl space-y-4">
- <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
- <div>
- <div class="text-xs font-bold text-emerald-700 uppercase tracking-wider flex items-center gap-2">
- <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
- <span>👩‍🏫 ĐIỀU PHỐI PHÒNG THI THEO LỚP &amp; ĐIỂM DANH (Teacher &amp; Leader Cô Dung)</span>
+ <!-- Teacher & Leader Attendance-Linked Exam Panel (Collapsible for clean UI) -->
+ <details id="exam-attendance-grading-panel" data-testid="exam-attendance-grading-panel" class="rounded-2xl bg-white border border-emerald-500/30 p-4 shadow-sm group">
+ <summary class="cursor-pointer list-none flex flex-wrap items-center justify-between gap-3">
+ <div class="flex items-center gap-2 text-xs font-extrabold text-emerald-800">
+ <span>👩‍🏫 Chấm Nhanh Theo Điểm Danh Lớp Học ({eligibleStudents.length} học sinh)</span>
  </div>
- <div class="text-sm font-black text-slate-900 mt-1">
- Khởi Tạo Đề Thi &amp; Gán Học Sinh Trực Tiếp Theo Buổi Học
- </div>
- </div>
-
- <!-- Quick Action Buttons -->
+ <span class="px-3 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-bold">Mở điều phối ▼</span>
+ </summary>
+ <div class="pt-4 mt-3 border-t border-slate-100 space-y-4">
+ <div class="flex flex-wrap items-center justify-between gap-2">
+ <div class="text-xs font-bold text-slate-700">Gán thí sinh làm bài hoặc chấm nhanh cả lớp theo buổi học:</div>
  <div class="flex items-center gap-2">
  <button
  type="button"
  onclick={openBatchGradingModal}
- class="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-md shadow-emerald-600/30 flex items-center gap-1.5 transition-all hover:scale-105"
+ class="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-md shadow-emerald-600/30 flex items-center gap-1.5 transition-all"
  >
  <span>⚡ Chấm Nhanh Cả Lớp Có Mặt</span>
  <span class="px-1.5 py-0.5 rounded-full bg-white/20 text-[10px]">{eligibleStudents.length} em</span>
@@ -1161,6 +1158,7 @@
  </div>
  {/if}
  </div>
+ </details>
  {:else if currentUser?.role === 'student'}
  {@const isTrialUser = Boolean(currentUser.is_trial) || (typeof currentUser.metadata === 'string' ? currentUser.metadata.includes('"is_trial":true') : Boolean(currentUser.metadata?.is_trial))}
  {@const isOfficial = currentUser.approval_status === 'official' || (currentUser.status === 'active' && !isTrialUser)}

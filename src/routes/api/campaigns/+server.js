@@ -16,7 +16,7 @@ const DEFAULT_CAMPAIGNS = [
     highlights_json: JSON.stringify([
       '🎃 Học bộ từ vựng chủ đề Halloween (Jack-o\'-lantern, Costume, Trick-or-treat, Spooky, Enchanted) có phát âm IPA chuẩn',
       '🧩 Đấu trường Quiz & Mini-game Săn Kẹo Phù Thủy tích lũy Sao đổi chiết khấu học phí thật',
-      '👩‍🏫 Đăng ký học thử 02 buổi miễn phí cùng Cô Nguyễn Thị Dung (123 Phố Vọng & Online Zoom VIP)'
+      '👩‍🏫 Đăng ký học thử 02 buổi miễn phí cùng Cô Nguyễn Thị Dung (42 Hiệp Bình & Online Zoom VIP)'
     ]),
     cta_primary_text: '🎃 Học Ngay Từ Vựng & Flashcard Halloween',
     cta_primary_url: '/flashcards',

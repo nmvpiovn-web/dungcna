@@ -1320,7 +1320,7 @@ export async function runCragLangflowPipeline({
       const listToUse = cleanSessions.length > 0 ? cleanSessions : scopedSessions;
       const header = studentDisplayName
         ? (continuityPrefix ? `📅 ${continuityPrefix}Lịch học tuần này:` : `📅 Lịch học tuần này của ${studentDisplayName} (${matchedStudents[0]?.grade || 'Lớp 7'}${matchedStudents[0]?.school ? ` - ${matchedStudents[0].school}` : ''}):`)
-        : `📅 Lịch học tại lớp Cô Dung (123 Phố Vọng):`;
+        : `📅 Lịch học tại lớp Cô Dung (42 Hiệp Bình):`;
       const lines = listToUse.slice(0, 4).map((s) =>
         `• ${s.day_name} (${s.start_time} – ${s.end_time}): ${s.class_name}\n  - Giáo viên: ${s.teacher_name}${s.assistant_teacher_name ? ` (Trợ giảng: ${s.assistant_teacher_name})` : ''}\n  - Phòng: ${s.room_notes || 'Phòng VIP 201'} — ${s.location}\n  - Bài học: ${s.subject_topic}`
       );
@@ -1386,7 +1386,7 @@ export async function runCragLangflowPipeline({
 
     // 2. Call LLM (DeepSeek-R1 primary -> Llama-3.1 fallback) if user asked a pedagogy/English question or if blocks is empty
     if ((detectedIntents.includes('pedagogy_knowledge') || blocks.length === 0) && env?.AI) {
-      const systemPrompt = `Bạn là giáo viên tại Lớp Tiếng Anh Cô Dung (123 Phố Vọng, Hà Nội), đang trả lời tin nhắn Zalo cho ${displayName}.
+      const systemPrompt = `Bạn là giáo viên tại Lớp Tiếng Anh Cô Dung (42 Hiệp Bình, TP. Thủ Đức), đang trả lời tin nhắn Zalo cho ${displayName}.
 Trả lời ngắn gọn, tự nhiên, đi thẳng vào trọng tâm câu hỏi, không dùng ký tự ** hay ###, không xưng là AI hay Bot, không viết câu xã giao sáo rỗng ở đầu hoặc cuối tin.
 Thông tin tham khảo:
 ${verifiedFactsText}`;

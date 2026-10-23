@@ -288,6 +288,9 @@ export async function GET({ url, request, platform }) {
 
     if (platform?.env?.DB) {
       const cols = await getClassSessionsColumns(platform.env.DB);
+      if (cols.has('location')) {
+        await platform.env.DB.prepare(`UPDATE class_sessions SET location = 'Nhà Cô Dung (42 Hiệp Bình)' WHERE location LIKE '%Phố Vọng%'`).run().catch(() => {});
+      }
       const hasAssistant = cols.has('assistant_teacher_id');
       const hasSubstitute = cols.has('substitute_teacher_id');
       const hasStudentIds = cols.has('student_ids');
@@ -751,7 +754,7 @@ export async function POST({ request, platform }) {
       substitute_teacher_id: activeSubstituteId,
       substitute_teacher_name: activeSubstituteName,
       substitute_notes: body.substitute_notes || '',
-      location: body.location || 'Tại nhà Cô Dung (123 Phố Vọng, Hai Bà Trưng, Hà Nội)',
+      location: body.location || 'Nhà Cô Dung (42 Hiệp Bình)',
       day_of_week: dayOfWeek,
       day_name: dayName,
       session_date: body.session_date,
@@ -811,7 +814,7 @@ export async function POST({ request, platform }) {
         if (cols.has('substitute_teacher_id')) { insertCols.push('substitute_teacher_id'); insertVals.push(activeSubstituteId); }
         if (cols.has('substitute_teacher_name')) { insertCols.push('substitute_teacher_name'); insertVals.push(activeSubstituteName); }
         if (cols.has('substitute_notes')) { insertCols.push('substitute_notes'); insertVals.push(body.substitute_notes || ''); }
-        if (cols.has('location')) { insertCols.push('location'); insertVals.push(body.location || 'Tại nhà Cô Dung (123 Phố Vọng, Hai Bà Trưng, Hà Nội)'); }
+        if (cols.has('location')) { insertCols.push('location'); insertVals.push(body.location || 'Nhà Cô Dung (42 Hiệp Bình)'); }
         if (cols.has('notify_minutes_before')) { insertCols.push('notify_minutes_before'); insertVals.push(Number(body.notify_minutes_before ?? 10)); }
         if (cols.has('teacher_role')) { insertCols.push('teacher_role'); insertVals.push(body.teacher_role || 'lead'); }
         if (cols.has('status')) { insertCols.push('status'); insertVals.push('scheduled'); }
@@ -885,7 +888,7 @@ export async function POST({ request, platform }) {
         if (cols.has('substitute_teacher_id')) { updateSets.push('substitute_teacher_id = ?'); updateVals.push(activeSubstituteId); }
         if (cols.has('substitute_teacher_name')) { updateSets.push('substitute_teacher_name = ?'); updateVals.push(activeSubstituteName); }
         if (cols.has('substitute_notes')) { updateSets.push('substitute_notes = ?'); updateVals.push(body.substitute_notes || ''); }
-        if (cols.has('location')) { updateSets.push('location = ?'); updateVals.push(body.location || 'Tại nhà Cô Dung (123 Phố Vọng, Hai Bà Trưng, Hà Nội)'); }
+        if (cols.has('location')) { updateSets.push('location = ?'); updateVals.push(body.location || 'Nhà Cô Dung (42 Hiệp Bình)'); }
         if (cols.has('notify_minutes_before')) { updateSets.push('notify_minutes_before = ?'); updateVals.push(Number(body.notify_minutes_before ?? 10)); }
         if (cols.has('teacher_role')) { updateSets.push('teacher_role = ?'); updateVals.push(body.teacher_role || 'lead'); }
         if (cols.has('updated_at')) { updateSets.push('updated_at = CURRENT_TIMESTAMP'); }

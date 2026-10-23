@@ -712,33 +712,8 @@
 
  <!-- 3. Right: Group Trạng Thái & Hồ Sơ (Status Group) -->
  <div data-testid="topbar-status-group" class="flex items-center gap-1.5 sm:gap-2 shrink-0 relative z-40">
- {#if isTeacherOrAdmin(currentUser)}
- <a
- href="/admin?tab=webhooks"
- title="Zalo Bot @bot.ynKabJAc đang kết nối trực tiếp với timbk.io.vn"
- class="hidden xl:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-800 text-[11px] font-extrabold transition-all"
- >
- <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
- <span>🤖 @bot.ynKabJAc</span>
- </a>
- {/if}
-
  <!-- Theme Switcher -->
  <ThemeSwitcher />
-
- <!-- Personal Color Studio Button -->
- <button
- type="button"
- onclick={() => showPersonalThemeModal = true}
- title={hasPersonalTheme ? 'Màu sắc của tôi (đang dùng màu cá nhân)' : 'Màu sắc của tôi'}
- aria-label="Chọn màu sắc cá nhân"
- class="relative w-8 h-8 sm:w-9 sm:h-9 rounded-xl border border-line bg-surface-1 text-sm flex items-center justify-center hover:border-brand-600 transition-all shrink-0"
- >
- <span>🎨</span>
- {#if hasPersonalTheme}
- <span class="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-brand-600 ring-2 ring-surface-0"></span>
- {/if}
- </button>
 
  <!-- Universal Notification Bell -->
  {#if currentUser}
@@ -753,25 +728,6 @@
  {#if userUnreadCount > 0}
  <span class="absolute -top-1 -right-1 px-1.5 py-0.2 rounded-full bg-rose-600 text-[10px] font-extrabold text-white shadow-xs ring-1 ring-white">
  {userUnreadCount > 9 ? '9+' : userUnreadCount}
- </span>
- {/if}
- </button>
- {/if}
-
- <!-- Leader Notification Bell -->
- {#if isTeacherOrAdmin(currentUser)}
- <button
- type="button"
- data-testid="dock-leader-bell-btn"
- onclick={() => showLeaderDrawer = true}
- class="relative w-8 h-8 sm:w-9 sm:h-9 rounded-xl border border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 flex items-center justify-center text-sm transition-all"
- title="Trung Tâm Báo Cáo Leader (Cô Dung)"
- aria-label="Thông Báo Leader"
- >
- <span>🛡️</span>
- {#if leaderUnreadCount > 0}
- <span class="absolute -top-1 -right-1 px-1.5 py-0.2 rounded-full bg-emerald-700 text-[10px] font-extrabold text-white shadow-xs ring-1 ring-white">
- {leaderUnreadCount > 9 ? '9+' : leaderUnreadCount}
  </span>
  {/if}
  </button>

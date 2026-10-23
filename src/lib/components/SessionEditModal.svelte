@@ -28,7 +28,30 @@
  let activeModalTab = $state('schedule'); // 'schedule' | 'materials' | 'summary' | 'all'
  let driveCatalog = $state([]);
  let vaultCatalog = $state([]);
- let campusesList = $state([]);
+ const DEFAULT_CAMPUSES = [
+   { id: 'loc_codung', name: 'Nhà Cô Dung (42 Hiệp Bình)', address: '42 Hiệp Bình' },
+   { id: 'loc_sunshine', name: 'Trung Tâm Tiếng Anh Sunshine (KDC Thanh Niên)', address: 'KDC Thanh Niên' },
+   { id: 'loc_thayvu', name: 'Nhà Thầy Vũ (KDC Hồng Long)', address: 'KDC Hồng Long' }
+ ];
+ let campusesList = $state([...DEFAULT_CAMPUSES]);
+
+ function formatCampusLabel(c) {
+   if (!c) return 'Nhà Cô Dung (42 Hiệp Bình)';
+   const name = String(c.name || '').trim();
+   const addr = String(c.address || '').trim();
+   if (!addr || name.includes('(') || name.toLowerCase().includes(addr.toLowerCase())) {
+     return name;
+   }
+   return `${name} (${addr})`;
+ }
+
+ function normalizeLocationName(loc) {
+   const raw = String(loc || '').trim();
+   if (!raw || raw.includes('123 Phố Vọng')) return 'Nhà Cô Dung (42 Hiệp Bình)';
+   if (raw.includes('Sunshine Academy') || raw.includes('Tây Hồ')) return 'Trung Tâm Tiếng Anh Sunshine (KDC Thanh Niên)';
+   if (raw.includes('Học Liệu & Luyện Thi Thầy Vũ') || raw.includes('Cầu Giấy')) return 'Nhà Thầy Vũ (KDC Hồng Long)';
+   return raw;
+ }
 
  let auditForm = $state({
    vault_article_id: '',
@@ -59,7 +82,7 @@
  assistant_teacher_name: '',
  substitute_teacher_id: '',
  substitute_teacher_name: '',
- location: 'Tại nhà Cô Dung (123 Phố Vọng, Hai Bà Trưng, Hà Nội)',
+ location: 'Nhà Cô Dung (42 Hiệp Bình)',
  day_of_week: 1,
  day_name: 'Thứ Hai',
  session_date: '',
@@ -248,8 +271,11 @@
  fetch('/api/campuses', { headers: authHeaders, credentials: 'include' })
  .then(r => r.json())
  .then(data => {
-  if (data.success && Array.isArray(data.campuses)) {
-   campusesList = data.campuses;
+  if (data.success && Array.isArray(data.campuses) && data.campuses.length > 0) {
+   campusesList = data.campuses.map(c => ({
+    ...c,
+    name: normalizeLocationName(c.name)
+   }));
   }
  })
  .catch(() => {});
@@ -291,6 +317,7 @@
  const endT = session.end_time || defaultEndForStart(startT);
  form = {
  ...session,
+ location: normalizeLocationName(session.location),
  class_id: deriveClassId(session.grade_level, session.class_name, session.class_id),
  start_time: startT,
  end_time: endT,
@@ -329,7 +356,7 @@
  assistant_teacher_name: defaultAssistantName,
  substitute_teacher_id: defaultSubstituteId,
  substitute_teacher_name: defaultSubstituteName,
- location: 'Tại nhà Cô Dung (123 Phố Vọng, Hai Bà Trưng, Hà Nội)',
+ location: 'Nhà Cô Dung (42 Hiệp Bình)',
  day_of_week: 1,
  day_name: 'Thứ Hai',
  session_date: '',
@@ -455,19 +482,39 @@
  saving = true;
  try {
  if (token || currentUser) {
- const res = await fetch('/api/schedule', {
- method: 'POST',
- headers: {
- 'Content-Type': 'application/json',
- ...(token ? { 'Authorization': `Bearer ${token}` } : {})
- },
- credentials: 'include',
- body: JSON.stringify({
- action: 'save_session',
- allow_upsert: true,
- ...form
- })
- });
+ let res = null;
+ let lastNetErr = null;
+ for (let attempt = 0; attempt < 2; attempt++) {
+   try {
+     res = await fetch('/api/schedule', {
+       method: 'POST',
+       headers: {
+         'Content-Type': 'application/json',
+         ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+       },
+       credentials: 'include',
+       body: JSON.stringify({
+         action: 'save_session',
+         allow_upsert: true,
+         ...form
+       })
+     });
+     lastNetErr = null;
+     break;
+   } catch (netErr) {
+     lastNetErr = netErr;
+     if (attempt === 0) {
+       await new Promise(r => setTimeout(r, 350));
+     }
+   }
+ }
+ if (lastNetErr || !res) {
+   const savedFallback = saveClassSession(savedData, currentUser);
+   try { upsertClassSessionInStore(savedFallback || savedData); } catch {}
+   onSaved(savedFallback || savedData);
+   isOpen = false;
+   return;
+ }
  const data = await res.json().catch(() => ({}));
  if (!res.ok || !data.success) {
  errorMessage = data.error || `Lỗi máy chủ (${res.status})`;
@@ -740,31 +787,53 @@
         {/if}
       </div>
 
- <div class="sm:col-span-2 space-y-1.5">
- <label for="session-location" class="block font-bold text-stone-700 mb-1">Địa Điểm Học * (Đồng bộ Cơ Sở D1)</label>
- <input
- id="session-location"
- type="text"
- list="d1-campuses-datalist"
- bind:value={form.location}
- placeholder="Ví dụ: Tại nhà Cô Dung (123 Phố Vọng, Hai Bà Trưng, Hà Nội) hoặc Online Zoom VIP"
- class="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-stone-900 focus:outline-none focus:border-emerald-600 font-medium"
- />
+ <div class="sm:col-span-2 space-y-2">
+ <label for="session-location" class="block font-bold text-stone-700 mb-1">Cơ Sở / Địa Điểm Học * (Đồng bộ D1)</label>
+ <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+  <select
+   id="session-location-select"
+   data-testid="session-location-select"
+   value={campusesList.some(c => formatCampusLabel(c) === form.location) ? form.location : '__custom__'}
+   onchange={(e) => {
+    if (e.currentTarget.value !== '__custom__') {
+     form.location = e.currentTarget.value;
+    }
+   }}
+   class="w-full bg-emerald-50/70 border border-emerald-300 rounded-xl px-3 py-2 text-stone-900 focus:outline-none focus:border-emerald-600 font-bold"
+  >
+   {#each campusesList as c (c.id)}
+    {@const label = formatCampusLabel(c)}
+    <option value={label}>📍 {label}</option>
+   {/each}
+   <option value="Online Zoom VIP">💻 Online Zoom VIP</option>
+   <option value="__custom__">✏️ Nhập địa điểm tùy chỉnh...</option>
+  </select>
+  <input
+   id="session-location"
+   type="text"
+   list="d1-campuses-datalist"
+   bind:value={form.location}
+   placeholder="Nhà Cô Dung (42 Hiệp Bình)..."
+   class="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-stone-900 focus:outline-none focus:border-emerald-600 font-medium"
+  />
+ </div>
  <datalist id="d1-campuses-datalist">
   {#each campusesList as c (c.id)}
-   <option value={`${c.name} (${c.address})`}></option>
+   <option value={formatCampusLabel(c)}></option>
   {/each}
  </datalist>
  {#if campusesList.length > 0}
   <div class="flex flex-wrap items-center gap-1.5 pt-0.5">
-   <span class="text-[10px] font-bold text-stone-500">Chọn nhanh Cơ sở D1:</span>
+   <span class="text-[10px] font-bold text-stone-500">Chọn nhanh Cơ sở:</span>
    {#each campusesList as c (c.id)}
+    {@const label = formatCampusLabel(c)}
     <button
      type="button"
-     onclick={() => form.location = `${c.name} (${c.address})`}
-     class="px-2 py-0.5 rounded-lg text-[10px] font-bold border transition-all {form.location.includes(c.name) ? 'bg-emerald-600 text-white border-emerald-700' : 'bg-white text-stone-700 border-stone-200 hover:border-emerald-400'}"
+     data-testid="quick-campus-{c.id}"
+     onclick={() => form.location = label}
+     class="px-2.5 py-1 rounded-lg text-[10px] font-bold border transition-all {form.location === label || form.location.includes(c.name) ? 'bg-emerald-600 text-white border-emerald-700' : 'bg-white text-stone-700 border-stone-200 hover:border-emerald-400'}"
     >
-     📍 {c.name}
+     📍 {label}
     </button>
    {/each}
   </div>

@@ -591,7 +591,7 @@ export async function POST({ request, platform }) {
           `⏰ Nhắc lịch học hôm nay (${s?.day_name || 'Thứ Hai'}, ${s?.start_time || '18:00'} – ${s?.end_time || '19:30'}):\n` +
           `• Lớp: ${s?.class_name || 'Lớp 7 - Global Success & KET A2'}\n` +
           `• Giáo viên: ${s?.teacher_name || 'Ms. Dung'}${s?.assistant_teacher_name ? ` (Trợ giảng: ${s.assistant_teacher_name})` : ''}\n` +
-          `• Phòng học: ${s?.room_notes || 'Phòng VIP 201'} — ${s?.location || '123 Phố Vọng, Hai Bà Trưng'}\n` +
+          `• Phòng học: ${s?.room_notes || 'Phòng VIP 201'} — ${s?.location || '42 Hiệp Bình'}\n` +
           `• Bài học: ${s?.subject_topic || 'Unit 7: Traffic & Phonics'}\n\n` +
           `Chỉ còn 10 phút nữa vào lớp, phụ huynh nhắc con chuẩn bị sách vở nhé. Nếu hôm nay con bận hoặc đến muộn, anh/chị nhắn lại tin này để lớp ghi nhận ạ.`;
       } else if (ruleId === 'attendance_instant') {

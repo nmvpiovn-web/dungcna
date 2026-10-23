@@ -14,7 +14,7 @@
  },
  {
  id: 'loc_codung',
- name: 'Nhà Cô Dung (Trụ Sở Chính - Điểm Dạy Linh Xuân)',
+ name: 'Nhà Cô Dung (42 Hiệp Bình)',
  type: 'Trụ Sở Giảng Dạy Chính',
  address: 'Khu phố 3, Phường Linh Xuân, TP. Thủ Đức, TP. Hồ Chí Minh',
  lat: 10.8735,
@@ -24,7 +24,7 @@
  },
  {
  id: 'loc_sunshine',
- name: 'Cơ Sở Sunshine Academy (Điểm Dạy Phụ)',
+ name: 'Trung Tâm Tiếng Anh Sunshine (KDC Thanh Niên)',
  type: 'Cơ Sở Vệ Tinh',
  address: 'Khu dân cư Sunshine, Phường Linh Trung, TP. Thủ Đức, TP. Hồ Chí Minh',
  lat: 10.8780,
@@ -34,7 +34,7 @@
  },
  {
  id: 'loc_thayvu',
- name: 'Cơ Sở Luyện Thi Thầy Vũ (Điểm Dạy Liên Kết)',
+ name: 'Nhà Thầy Vũ (KDC Hồng Long)',
  type: 'Cơ Sở Liên Kết',
  address: 'Đường Kha Vạn Cân, Phường Linh Chiểu, TP. Thủ Đức, TP. Hồ Chí Minh',
  lat: 10.8690,

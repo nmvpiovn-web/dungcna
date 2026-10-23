@@ -1326,8 +1326,6 @@
       {#each [
        ['campuses', `🏢 Cơ Sở Học (${campuses.length})`],
        ['campaigns', `🎃 Chiến Dịch Marketing (${marketingCampaigns.length || 2})`],
-       ['reminders', '⚡ Nhắc Nhở Chéo'],
-       ['streams', `📡 Nhật Ký Thông Báo (${events.length})`],
        ['theme', '🎨 Giao Diện (Theme)']
       ] as [sKey, sLabel]}
        <button
