@@ -853,7 +853,7 @@
  class="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-extrabold bg-amber-50 text-amber-800 hover:bg-amber-100 transition-all border border-amber-200"
  >
  <span>⚡</span>
- <span>Admin CP Quản Trị User &amp; Role (/admincp)</span>
+ <span>Quản Trị Hệ Thống (AdminCP)</span>
  </a>
  <a
  href="/cpanel/leader"
@@ -862,14 +862,6 @@
  >
  <span>👑</span>
  <span>Bàn Điều Hành Leader (/cpanel/leader)</span>
- </a>
- <a
- href="/admin"
- onclick={() => showUserDropdown = false}
- class="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-extrabold bg-cyan-50 text-cyan-800 hover:bg-cyan-100 transition-all border border-cyan-200"
- >
- <span>💰</span>
- <span>Báo Học Phí, Đổi Sao &amp; Zalo Bot (/admin)</span>
  </a>
  {:else if currentUser.role === 'teacher'}
  <a
@@ -1173,7 +1165,7 @@
 
  <div class="grid grid-cols-2 gap-2">
  <a
- href="/admin"
+ href="/admincp"
  onclick={() => mobileMenuOpen = false}
  class="flex items-center gap-2 p-2.5 rounded-md bg-amber-500/15 text-amber-800 text-xs font-semibold border border-amber-500/30"
  >

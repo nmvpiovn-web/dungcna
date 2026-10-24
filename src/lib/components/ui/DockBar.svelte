@@ -159,30 +159,19 @@
     if (userRoleType === 'student') {
       return [
         {
-          id: 'evaluations',
-          href: '/evaluations',
-          icon: '📈',
-          label: 'Đánh Giá',
-          sub: 'Hồ sơ năng lực 5 kỹ năng',
-          iconBg: 'bg-gradient-to-b from-emerald-400 via-teal-500 to-cyan-600 text-white border-white/85',
-          match: (p) => p === '/evaluations' || p.startsWith('/evaluations/')
-        },
-        {
           id: 'workspace',
           href: '/cpanel/student',
           icon: '🎒',
-          label: 'CP Học Sinh',
+          label: 'Sổ Học Sinh',
           sub: `Bàn học tập & BTVN ${currentUserGrade ? `(${currentUserGrade})` : ''}`,
           iconBg: 'bg-gradient-to-b from-cyan-500 via-sky-500 to-blue-600 text-white border-white/85',
           hasPopover: true,
-          match: (p) => p.startsWith('/cpanel/student'),
+          match: (p) => p.startsWith('/cpanel/student') || p.startsWith('/evaluations'),
           children: [
             { href: '/cpanel/student', icon: '🎒', title: 'Bàn Học Tập & BTVN Của Em', desc: 'Xem bài tập giáo viên giao & lời phê' },
-            { href: '/cpanel/student#homework', icon: '📝', title: 'Làm & Nộp Bài Tập Về Nhà', desc: 'Hoàn thành BTVN nhận sao thưởng' },
             { href: '/quiz-menu', icon: '🧩', title: 'Làm Quiz Trắc Nghiệm Lớp Em', desc: 'Luyện phản xạ từ vựng & ngữ pháp' },
             { href: '/evaluations', icon: '📈', title: 'Hồ Sơ Năng Lực 5 Kỹ Năng', desc: 'Biểu đồ Nghe • Nói • Đọc • Viết • Ngữ pháp' },
-            { href: '/schedule', icon: '📅', title: 'Lịch Học Của Lớp Em', desc: 'Xem giờ học & phòng học tuần này' },
-            { href: '/exam', icon: '⏱️', title: 'Vào Phòng Thi 15p • 45p', desc: 'Làm bài kiểm tra định kỳ' }
+            { href: '/schedule', icon: '📅', title: 'Lịch Học Của Lớp Em', desc: 'Xem giờ học & phòng học tuần này' }
           ]
         }
       ];
@@ -191,28 +180,17 @@
     if (userRoleType === 'parent') {
       return [
         {
-          id: 'evaluations',
-          href: '/evaluations',
-          icon: '📈',
-          label: 'Đánh Giá Con',
-          sub: 'Phiếu nhận xét 5 kỹ năng',
-          iconBg: 'bg-gradient-to-b from-emerald-400 via-teal-500 to-cyan-600 text-white border-white/85',
-          match: (p) => p === '/evaluations' || p.startsWith('/evaluations/')
-        },
-        {
           id: 'workspace',
           href: '/cpanel/parent',
           icon: '👨‍👩‍👧',
-          label: 'CP Phụ Huynh',
+          label: 'Sổ Phụ Huynh',
           sub: 'Sổ liên lạc & Học phí của con',
           iconBg: 'bg-gradient-to-b from-purple-500 via-violet-500 to-indigo-600 text-white border-white/85',
           hasPopover: true,
-          match: (p) => p.startsWith('/cpanel/parent'),
+          match: (p) => p.startsWith('/cpanel/parent') || p.startsWith('/evaluations'),
           children: [
-            { href: '/cpanel/parent', icon: '👨‍👩‍👧', title: 'Sổ Liên Lạc Phụ Huynh', desc: 'Tổng quan chuyên cần & kết quả học tập của con' },
-            { href: '/cpanel/parent#homework', icon: '📊', title: 'Tiến Độ BTVN & Nhận Xét GV', desc: 'Theo dõi bài tập về nhà & điểm chấm của cô' },
-            { href: '/cpanel/parent#tuition', icon: '💳', title: 'Học Phí, Trừ Sao & Mã VietQR', desc: 'Xem phiếu báo học phí khấu trừ sao thưởng' },
-            { href: '/schedule', icon: '🗓️', title: 'Lịch Học & Giờ Đưa Đón Con', desc: 'Nhận thông báo Zalo trước giờ tan học 10 phút' },
+            { href: '/cpanel/parent', icon: '👨‍👩‍👧', title: 'Sổ Liên Lạc & Học Phí Của Con', desc: 'Theo dõi BTVN, chuyên cần & mã VietQR' },
+            { href: '/schedule', icon: '🗓️', title: 'Lịch Học & Giờ Đưa Đón Con', desc: 'Xem lịch học tại 3 cơ sở của con' },
             { href: '/evaluations', icon: '📈', title: 'Biểu Đồ Năng Lực 5 Kỹ Năng', desc: 'Đánh giá chi tiết sự tiến bộ của con' },
             { href: '/quiz-menu?tab=results', icon: '🧩', title: 'Kết Quả Làm Quiz Của Con', desc: 'Lịch sử điểm số các bài trắc nghiệm' }
           ]
@@ -223,76 +201,43 @@
     if (userRoleType === 'teacher') {
       return [
         {
-          id: 'session-audit',
-          href: '/session-audit',
-          icon: '📊',
-          label: 'Đối Soát Ca',
-          sub: 'Hồi quy học liệu & Bot Zalo',
-          iconBg: 'bg-gradient-to-b from-emerald-500 via-teal-500 to-cyan-600 text-white border-white/85',
-          match: (p) => p === '/session-audit' || p.startsWith('/session-audit/')
-        },
-        {
           id: 'workspace',
           href: '/cpanel/teacher',
           icon: '👩‍🏫',
-          label: 'CP Giáo Viên',
+          label: 'Sổ Giáo Viên',
           sub: 'Sổ giảng dạy, BTVN & Học liệu',
           iconBg: 'bg-gradient-to-b from-teal-500 via-emerald-600 to-green-600 text-white border-white/85',
           hasPopover: true,
-          match: (p) => p.startsWith('/cpanel/teacher') || p.startsWith('/second-brain') || p.startsWith('/drive'),
+          match: (p) => p.startsWith('/cpanel/teacher') || p.startsWith('/second-brain') || p.startsWith('/drive') || p.startsWith('/session-audit'),
           children: [
-            { href: '/cpanel/teacher', icon: '👩‍🏫', title: 'Sổ Giáo Viên & Giao BTVN', desc: 'Giao bài tập về nhà, gắn đề Quiz cho lớp' },
-            { href: '/cpanel/teacher#grading', icon: '✍️', title: 'Chấm Bài Tập & Phê Nhận Xét', desc: 'Chấm điểm BTVN & tặng sao thưởng học sinh' },
-            { href: '/session-audit', icon: '📊', title: 'Đối Soát Chất Lượng Ca Dạy', desc: 'Gắn giáo án, tài liệu Drive & xuất hồ sơ 5 phần' },
-            { href: '/second-brain', icon: '🧠', title: 'Kho Tri Thức Second Brain', desc: '220+ chuyên đề sư phạm & giáo án chuẩn' },
-            { href: '/drive', icon: '📁', title: 'Kho Tài Liệu Google Drive', desc: 'Truy cập đề cương, PDF & Audio giảng dạy' },
-            { href: '/evaluations', icon: '📈', title: 'Đánh Giá Năng Lực Học Viên', desc: 'Cập nhật phiếu đánh giá 5 kỹ năng định kỳ' }
+            { href: '/cpanel/teacher', icon: '👩‍🏫', title: 'Sổ Giáo Viên & Chấm BTVN', desc: 'Giao bài tập về nhà & chấm bài học sinh' },
+            { href: '/session-audit', icon: '📊', title: 'Đối Soát Chất Lượng Ca Dạy', desc: 'Gắn giáo án, tài liệu Drive & BTVN' },
+            { href: '/second-brain', icon: '🧠', title: 'Kho Tri Thức Second Brain', desc: 'Chuyên đề sư phạm & giáo án chuẩn' },
+            { href: '/drive', icon: '📁', title: 'Kho Tài Liệu Google Drive', desc: 'Truy cập đề cương, PDF & Audio giảng dạy' }
           ]
         }
       ];
     }
 
-    // Leader & SuperAdmin Executive Dock Items
+    // Leader & SuperAdmin Executive Dock Item (1 unified button instead of 3)
     return [
       {
-        id: 'session-audit',
-        href: '/session-audit',
-        icon: '📊',
-        label: 'Đối Soát Ca',
-        sub: 'Hồi quy học liệu & Bot Zalo',
-        iconBg: 'bg-gradient-to-b from-emerald-500 via-teal-500 to-cyan-600 text-white border-white/85',
-        match: (p) => p === '/session-audit' || p.startsWith('/session-audit/')
-      },
-      {
-        id: 'langflow',
-        href: '/langflow',
-        icon: '🕸️',
-        label: 'Langflow',
-        sub: 'CRAG 7-Node & Role Bot D1',
-        iconBg: 'bg-gradient-to-b from-indigo-500 via-purple-500 to-pink-600 text-white border-white/85',
-        match: (p) => p === '/langflow' || p.startsWith('/langflow/')
-      },
-      {
         id: 'workspace',
-        href: userRoleType === 'superadmin' ? '/admincp' : '/cpanel/leader',
+        href: '/admincp',
         icon: '👑',
-        label: 'Admin & CP',
-        sub: 'Điều hành toàn hệ thống & CPanel',
+        label: 'AdminCP',
+        sub: 'Điều hành toàn hệ thống D1',
         iconBg: 'bg-gradient-to-b from-amber-400 via-amber-500 to-orange-600 text-white border-white/85',
         hasPopover: true,
-        match: (p) => p.startsWith('/cpanel') || p.startsWith('/admin') || p.startsWith('/second-brain') || p.startsWith('/drive'),
+        match: (p) => p.startsWith('/admincp') || p.startsWith('/cpanel') || p.startsWith('/admin') || p.startsWith('/session-audit') || p.startsWith('/langflow') || p.startsWith('/second-brain') || p.startsWith('/drive'),
         children: [
-          { href: '/langflow', icon: '🕸️', title: 'Langflow CRAG Studio (7-Node AI)', desc: 'Điều khiển Bot Zalo đọc 81 bảng D1 & phân quyền Role' },
-          { href: '/admincp', icon: '⚡', title: 'Admin CP Quản Trị User & Role', desc: 'Phân quyền HS, PH, GV & đổi mật khẩu D1' },
-          { href: '/cpanel/leader', icon: '👑', title: 'Bàn Điều Hành Leader (Cô Dung)', desc: 'Kiểm soát chất lượng, duyệt đơn & lương GV' },
-          { href: '/admin', icon: '💰', title: 'Báo Học Phí, Đổi Sao & VietQR', desc: 'Lập hóa đơn học phí khấu trừ sao thưởng' },
-          { href: '/admin?tab=webhooks', icon: '🤖', title: 'Cấu Hình Zalo Bot (@bot.ynKabJAc)', desc: 'Quản lý Token Bot & Webhook timbk.io.vn' },
-          { href: '/session-audit', icon: '📊', title: 'Đối Soát Chất Lượng Ca Dạy', desc: 'Hồi quy Kho Tri Thức - Drive - Quiz - BTVN' },
-          { href: '/cpanel/teacher', icon: '👩‍🏫', title: 'CPanel Giáo Viên (Giao & Chấm BTVN)', desc: 'Kiểm tra sổ giảng dạy của giáo viên' },
-          { href: '/cpanel/parent', icon: '👨‍👩‍👧', title: 'CPanel Phụ Huynh (Kiểm Tra Chéo)', desc: 'Xem giao diện sổ liên lạc phụ huynh' },
-          { href: '/cpanel/student', icon: '🎒', title: 'CPanel Học Sinh (Kiểm Tra Chéo)', desc: 'Xem giao diện bàn học tập học sinh' },
-          { href: '/second-brain', icon: '🧠', title: 'Kho Tri Thức Obsidian Second Brain', desc: '220+ chuyên đề & giáo án chuẩn 5512' },
-          { href: '/drive', icon: '📁', title: 'Kho Tài Liệu Google Drive', desc: 'Đồng bộ đề cương & học liệu số' }
+          { href: '/admincp', icon: '⚡', title: 'Quản Trị Hệ Thống (AdminCP)', desc: 'Tài khoản, Gán con, Học phí, 3 Cơ sở & Theme Sự kiện' },
+          { href: '/cpanel/leader', icon: '👑', title: 'Bàn Điều Hành Leader (Cô Dung)', desc: 'Kiểm soát chất lượng & duyệt lương GV' },
+          { href: '/session-audit', icon: '📊', title: 'Đối Soát Chất Lượng Ca Dạy', desc: 'Hồi quy Kho Tri Thức • Drive • Quiz • BTVN' },
+          { href: '/langflow', icon: '🕸️', title: 'Langflow CRAG & Zalo Bot', desc: 'Điều khiển luồng AI CRAG & thông báo Zalo' },
+          { href: '/cpanel/teacher', icon: '👩‍🏫', title: 'Sổ Giáo Viên', desc: 'Giao & chấm BTVN' },
+          { href: '/cpanel/parent', icon: '👨‍👩‍👧', title: 'Sổ Phụ Huynh', desc: 'Xem giao diện phụ huynh' },
+          { href: '/cpanel/student', icon: '🎒', title: 'Sổ Học Sinh', desc: 'Xem giao diện học sinh' }
         ]
       }
     ];

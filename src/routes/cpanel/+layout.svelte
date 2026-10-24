@@ -4,149 +4,124 @@
  import { goto } from '$app/navigation';
  import { getCurrentUser, isSuperAdmin, getStudentStars, getAuthToken } from '$lib/unifiedStore';
  import { shouldForcePasswordChange } from '$lib/userMetadata';
- import { currentLang, toggleLanguage, t } from '$lib/i18n';
+ import { currentLang, t } from '$lib/i18n';
 
  let { children } = $props();
 
  let currentUser = $state(typeof window !== 'undefined' ? getCurrentUser() : null);
  let studentStars = $state(null);
- let unreadNotifs = $state(0);
  let selectedCampus = $state('all');
  let campuses = $state([]);
  let lang = $state('vi');
 
  currentLang.subscribe(val => {
- lang = val;
+  lang = val;
  });
 
  let roleNavItems = $derived({
- student: [
- { path: '/cpanel/student', label: t('studentDesk', lang), icon: '🎒' },
- { path: '/cpanel/student#homework', label: t('homeworkTab', lang), icon: '📝' },
- { path: '/exam', label: t('examTab', lang), icon: '🎯' },
- { path: '/quiz-menu', label: 'Làm Quiz', icon: '▶' },
- { path: '/schedule', label: t('scheduleTab', lang), icon: '📅' }
- ],
- parent: [
- { path: '/cpanel/parent', label: t('parentPortal', lang), icon: '👨‍👩‍👧' },
- { path: '/cpanel/parent#homework', label: t('homeworkTab', lang), icon: '📊' },
- { path: '/quiz-menu?tab=results', label: 'Kết quả Quiz của con', icon: '📈' },
- { path: '/cpanel/parent#tuition', label: t('tuitionTab', lang), icon: '💳' },
- { path: '/schedule', label: t('scheduleTab', lang), icon: '🗓️' }
- ],
- teacher: [
- { path: '/cpanel/teacher', label: t('teacherWorkplace', lang), icon: '👩‍🏫' },
- { path: '/cpanel/teacher#grading', label: t('gradingTab', lang), icon: '✍️' },
- { path: '/cpanel/teacher#assign', label: t('assignTab', lang), icon: '➕' },
- { path: '/session-audit', label: 'Đối Soát Ca Dạy', icon: '📊' },
- { path: '/quiz-menu', label: t('quizMenuTab', lang), icon: '🧩' },
- { path: '/second-brain', label: t('secondBrainTab', lang), icon: '🧠' }
- ],
- leader: [
- { path: '/cpanel/leader', label: t('academicTesting', lang), icon: '👑' },
- { path: '/session-audit', label: 'Đối Soát Ca Dạy', icon: '📊' },
- { path: '/cpanel/leader#quality', label: t('homeworkTab', lang), icon: '📈' },
- { path: '/cpanel/leader#curriculum', label: t('secondBrainTab', lang), icon: '🗺️' },
- { path: '/quiz-menu', label: t('quizMenuTab', lang), icon: '🧩' },
- { path: '/admincp', label: t('adminCP', lang), icon: '⚡' }
- ],
- superadmin: [
- { path: '/admin?tab=hiring', label: 'Duyệt giáo viên', icon: '✅' },
- { path: '/session-audit', label: 'Đối Soát Ca Dạy', icon: '📊' },
- { path: '/cpanel/student', label: t('studentDesk', lang), icon: '🎒' },
- { path: '/cpanel/parent', label: t('parentPortal', lang), icon: '👨‍👩‍👧' },
- { path: '/cpanel/teacher', label: t('teacherWorkplace', lang), icon: '👩‍🏫' },
- { path: '/quiz-menu', label: t('quizMenuTab', lang), icon: '🧩' },
- { path: '/cpanel/leader', label: t('academicTesting', lang), icon: '👑' },
- { path: '/admincp', label: t('adminCP', lang), icon: '⚡' }
- ]
+  student: [
+   { path: '/cpanel/student', label: t('studentDesk', lang), icon: '🎒' },
+   { path: '/cpanel/student#homework', label: t('homeworkTab', lang), icon: '📝' },
+   { path: '/exam', label: t('examTab', lang), icon: '🎯' },
+   { path: '/quiz-menu', label: 'Làm Quiz', icon: '▶' },
+   { path: '/schedule', label: t('scheduleTab', lang), icon: '📅' }
+  ],
+  parent: [
+   { path: '/cpanel/parent', label: t('parentPortal', lang), icon: '👨‍👩‍👧' },
+   { path: '/cpanel/parent#homework', label: t('homeworkTab', lang), icon: '📊' },
+   { path: '/cpanel/parent#tuition', label: t('tuitionTab', lang), icon: '💳' },
+   { path: '/schedule', label: t('scheduleTab', lang), icon: '🗓️' }
+  ],
+  teacher: [
+   { path: '/cpanel/teacher', label: t('teacherWorkplace', lang), icon: '👩‍🏫' },
+   { path: '/cpanel/teacher#grading', label: t('gradingTab', lang), icon: '✍️' },
+   { path: '/cpanel/teacher#assign', label: t('assignTab', lang), icon: '➕' },
+   { path: '/session-audit', label: 'Đối Soát Ca Dạy', icon: '📊' },
+   { path: '/quiz-menu', label: t('quizMenuTab', lang), icon: '🧩' }
+  ],
+  leader: [
+   { path: '/cpanel/leader', label: t('academicTesting', lang), icon: '👑' },
+   { path: '/session-audit', label: 'Đối Soát Ca Dạy', icon: '📊' },
+   { path: '/quiz-menu', label: t('quizMenuTab', lang), icon: '🧩' },
+   { path: '/admincp', label: t('adminCP', lang), icon: '⚡' }
+  ],
+  superadmin: [
+   { path: '/admincp', label: t('adminCP', lang), icon: '⚡' },
+   { path: '/cpanel/leader', label: t('academicTesting', lang), icon: '👑' },
+   { path: '/cpanel/teacher', label: t('teacherWorkplace', lang), icon: '👩‍🏫' },
+   { path: '/cpanel/parent', label: t('parentPortal', lang), icon: '👨‍👩‍👧' },
+   { path: '/cpanel/student', label: t('studentDesk', lang), icon: '🎒' },
+   { path: '/session-audit', label: 'Đối Soát Ca Dạy', icon: '📊' }
+  ]
  });
 
  async function loadCampuses() {
- if (typeof window === 'undefined') return;
- const token = getAuthToken() || localStorage.getItem('tienganh_token');
- if (!token) return;
- try {
- const res = await fetch('/api/campuses?view=summary', {
- headers: { 'Authorization': `Bearer ${token}` }
- });
- if (!res.ok) return;
- const data = await res.json();
- if (data.success) {
- campuses = data.campuses || [];
- }
- } catch {}
- }
-
- async function loadUnreadCount() {
- if (typeof window === 'undefined') return;
- const token = localStorage.getItem('tienganh_token');
- if (!token) return;
- try {
- const res = await fetch('/api/notifications', {
- headers: { 'Authorization': `Bearer ${token}` }
- });
- const data = await res.json();
- if (data.success) {
- unreadNotifs = data.unread_count || 0;
- }
- } catch {}
+  if (typeof window === 'undefined') return;
+  const token = getAuthToken() || localStorage.getItem('tienganh_token');
+  if (!token) return;
+  try {
+   const res = await fetch('/api/campuses?view=summary', {
+    headers: { 'Authorization': `Bearer ${token}` }
+   });
+   if (!res.ok) return;
+   const data = await res.json();
+   if (data.success) {
+    campuses = data.campuses || [];
+   }
+  } catch {}
  }
 
  onMount(() => {
- currentUser = getCurrentUser();
- loadCampuses();
- loadUnreadCount();
+  currentUser = getCurrentUser();
+  loadCampuses();
 
- const handleAuth = (e) => {
- currentUser = e.detail;
- if (currentUser?.role === 'student') {
- studentStars = getStudentStars(currentUser.id);
- }
- };
- window.addEventListener('tienganh:auth-change', handleAuth);
+  const handleAuth = (e) => {
+   currentUser = e.detail;
+   if (currentUser?.role === 'student') {
+    studentStars = getStudentStars(currentUser.id);
+   }
+  };
+  window.addEventListener('tienganh:auth-change', handleAuth);
 
- if (currentUser?.role === 'student') {
- studentStars = getStudentStars(currentUser.id);
- }
+  if (currentUser?.role === 'student') {
+   studentStars = getStudentStars(currentUser.id);
+  }
 
- // Strict Role-Based Routing & Book Isolation
- const pathname = $page.url.pathname;
- if (pathname === '/cpanel' || pathname === '/cpanel/') {
- if (!currentUser) {
- goto('/courses');
- } else if (currentUser.role === 'student') {
- goto('/cpanel/student');
- } else if (currentUser.role === 'parent') {
- goto('/cpanel/parent');
- } else if (currentUser.role === 'teacher') {
- goto('/cpanel/teacher');
- } else if (currentUser.role === 'leader') {
- goto('/cpanel/leader');
- } else if (isSuperAdmin(currentUser)) {
- goto('/admincp');
- }
- } else if (pathname.startsWith('/cpanel/parent')) {
- // Sổ Phụ Huynh: Visible only to Parent (Leader/Admin manage)
- if (currentUser && currentUser.role !== 'parent' && !isSuperAdmin(currentUser) && currentUser.role !== 'leader') {
- goto(currentUser.role === 'teacher' ? '/cpanel/teacher' : '/cpanel/student');
- }
- } else if (pathname.startsWith('/cpanel/teacher')) {
- // Sổ Giáo Viên: Visible only to Teacher (Leader/Admin manage)
- if (currentUser && currentUser.role !== 'teacher' && !isSuperAdmin(currentUser) && currentUser.role !== 'leader') {
- goto(currentUser.role === 'parent' ? '/cpanel/parent' : '/cpanel/student');
- }
- } else if (pathname.startsWith('/cpanel/leader')) {
- if (currentUser && currentUser.role !== 'leader' && !isSuperAdmin(currentUser)) {
- goto(currentUser.role === 'teacher' ? '/cpanel/teacher' : (currentUser.role === 'parent' ? '/cpanel/parent' : '/cpanel/student'));
- }
- }
+  // Strict Role-Based Routing & Book Isolation
+  const pathname = $page.url.pathname;
+  if (pathname === '/cpanel' || pathname === '/cpanel/') {
+   if (!currentUser) {
+    goto('/courses');
+   } else if (currentUser.role === 'student') {
+    goto('/cpanel/student');
+   } else if (currentUser.role === 'parent') {
+    goto('/cpanel/parent');
+   } else if (currentUser.role === 'teacher') {
+    goto('/cpanel/teacher');
+   } else if (currentUser.role === 'leader') {
+    goto('/cpanel/leader');
+   } else if (isSuperAdmin(currentUser)) {
+    goto('/admincp');
+   }
+  } else if (pathname.startsWith('/cpanel/parent')) {
+   if (currentUser && currentUser.role !== 'parent' && !isSuperAdmin(currentUser) && currentUser.role !== 'leader') {
+    goto(currentUser.role === 'teacher' ? '/cpanel/teacher' : '/cpanel/student');
+   }
+  } else if (pathname.startsWith('/cpanel/teacher')) {
+   if (currentUser && currentUser.role !== 'teacher' && !isSuperAdmin(currentUser) && currentUser.role !== 'leader') {
+    goto(currentUser.role === 'parent' ? '/cpanel/parent' : '/cpanel/student');
+   }
+  } else if (pathname.startsWith('/cpanel/leader')) {
+   if (currentUser && currentUser.role !== 'leader' && !isSuperAdmin(currentUser)) {
+    goto(currentUser.role === 'teacher' ? '/cpanel/teacher' : (currentUser.role === 'parent' ? '/cpanel/parent' : '/cpanel/student'));
+   }
+  }
  });
 
  let currentRoleKey = $derived.by(() => {
- if (!currentUser) return 'student';
- if (isSuperAdmin(currentUser)) return 'superadmin';
- return currentUser.role || 'student';
+  if (!currentUser) return 'student';
+  if (isSuperAdmin(currentUser)) return 'superadmin';
+  return currentUser.role || 'student';
  });
 
  let navItems = $derived(roleNavItems[currentRoleKey] || roleNavItems.student);
@@ -162,283 +137,200 @@
  let isChangingPassword = $state(false);
 
  function openVoluntaryPasswordModal() {
-   cpError = '';
-   cpSuccess = '';
-   cpOldPassword = '';
-   cpNewPassword = '';
-   cpConfirmPassword = '';
-   manualPasswordModalOpen = true;
+  cpError = '';
+  cpSuccess = '';
+  cpOldPassword = '';
+  cpNewPassword = '';
+  cpConfirmPassword = '';
+  manualPasswordModalOpen = true;
  }
 
  async function handleChangePassword() {
-   cpError = '';
-   if (cpNewPassword !== cpConfirmPassword) {
-     cpError = 'Mật khẩu mới không khớp.';
-     return;
+  cpError = '';
+  if (cpNewPassword !== cpConfirmPassword) {
+   cpError = 'Mật khẩu mới không khớp.';
+   return;
+  }
+  if (cpNewPassword.length < 6) {
+   cpError = 'Mật khẩu mới phải có ít nhất 6 ký tự.';
+   return;
+  }
+  isChangingPassword = true;
+  try {
+   const token = getAuthToken();
+   const headers = { 'Content-Type': 'application/json' };
+   if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
    }
-   if (cpNewPassword.length < 6) {
-     cpError = 'Mật khẩu mới phải có ít nhất 6 ký tự.';
-     return;
-   }
-   isChangingPassword = true;
-   try {
-     const token = getAuthToken();
-     const headers = { 'Content-Type': 'application/json' };
-     if (token) {
-       headers['Authorization'] = `Bearer ${token}`;
-     }
-     const res = await fetch('/api/auth/change-password', {
-       method: 'POST',
-       headers,
-       body: JSON.stringify({ old_password: cpOldPassword, new_password: cpNewPassword })
-     });
-     const data = await res.json();
-     if (data.success) {
-       cpSuccess = '✅ Đổi mật khẩu thành công trên hệ thống Cloudflare D1!';
-       cpOldPassword = '';
-       cpNewPassword = '';
-       cpConfirmPassword = '';
-       setTimeout(() => {
-         if (forcePasswordChange) {
-           window.location.reload();
-         } else {
-           manualPasswordModalOpen = false;
-           cpSuccess = '';
-         }
-       }, 1200);
+   const res = await fetch('/api/auth/change-password', {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ old_password: cpOldPassword, new_password: cpNewPassword })
+   });
+   const data = await res.json();
+   if (data.success) {
+    cpSuccess = '✅ Đổi mật khẩu thành công trên hệ thống Cloudflare D1!';
+    cpOldPassword = '';
+    cpNewPassword = '';
+    cpConfirmPassword = '';
+    setTimeout(() => {
+     if (forcePasswordChange) {
+      window.location.reload();
      } else {
-       cpError = data.error || 'Đổi mật khẩu thất bại.';
+      manualPasswordModalOpen = false;
+      cpSuccess = '';
      }
-   } catch (e) {
-     cpError = 'Lỗi kết nối.';
-   } finally {
-     isChangingPassword = false;
+    }, 1200);
+   } else {
+    cpError = data.error || 'Đổi mật khẩu thất bại.';
    }
+  } catch (e) {
+   cpError = 'Lỗi kết nối.';
+  } finally {
+   isChangingPassword = false;
+  }
  }
 </script>
 
-<div class="min-h-screen bg-slate-50 text-slate-800 flex flex-col font-sans max-w-full overflow-x-hidden">
- <!-- Cpanel Top Bar -->
- <header class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200 shadow-sm px-3 sm:px-4 py-2 sm:py-2.5 max-w-full overflow-hidden">
- <div class="max-w-7xl mx-auto flex items-center justify-between gap-2 sm:gap-3 min-w-0">
- <!-- Left: Logo & Portal Badge -->
- <div class="flex items-center gap-2 sm:gap-3 shrink min-w-0">
- <a href="/" class="flex items-center gap-2 group shrink min-w-0">
- <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-cx-700 flex items-center justify-center text-white font-bold text-base shadow-sm group-hover:bg-brand-700 transition-colors shrink-0">
- D
- </div>
- <div class="min-w-0">
- <div class="text-[11px] sm:text-xs uppercase tracking-wider font-bold text-cx-600">Tiếng Anh Cô Dung</div>
- <div class="text-xs sm:text-sm font-bold text-slate-900 flex flex-wrap items-center gap-1.5">
- <span>Hệ Thống Cpanel</span>
- <span class="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 rounded-md font-semibold tracking-wide bg-cx-50 text-cx-700 border border-cx-200 shrink-0">
- {currentRoleKey}
- </span>
- </div>
- </div>
- </a>
+<div class="min-h-screen text-slate-800 flex flex-col font-sans max-w-full overflow-x-hidden">
+ <!-- Compact Single-Row CPanel Sub-Nav Bar (Zero Duplicate Header) -->
+ <div data-testid="cpanel-sub-dockbar" class="max-w-7xl w-full mx-auto px-3 sm:px-6 pt-1 pb-3 flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/80">
+  <div class="flex flex-wrap items-center gap-1.5 min-w-0">
+   {#each navItems as item}
+    {@const isActive = $page.url.pathname === item.path || ($page.url.hash && item.path.includes($page.url.hash))}
+    <a
+     href={item.path}
+     class="cpanel-dock-item flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all {isActive ? 'bg-cx-600 text-white border-cx-700 shadow-xs' : 'bg-white text-slate-700 border-slate-200 hover:border-cx-400 hover:bg-slate-50'}"
+    >
+     <span aria-hidden="true">{item.icon}</span>
+     <span>{item.label}</span>
+    </a>
+   {/each}
+  </div>
 
- <!-- Location Filter Dropdown -->
- <div class="hidden md:flex items-center gap-1.5 ml-4 pl-4 border-l border-slate-200">
- <svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
- <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
- <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
- </svg>
- <span class="text-xs text-slate-400 font-medium">Điểm học:</span>
- <select
- bind:value={selectedCampus}
- class="text-xs font-semibold bg-slate-100 text-slate-700 px-2.5 py-1 rounded-md border border-slate-300 focus:outline-none focus:ring-1 focus:ring-cx-500"
- >
- <option value="all">Tất cả cơ sở</option>
- {#each campuses as c}
- <option value={c.id}>{c.name}</option>
- {/each}
- </select>
+  <div class="flex items-center gap-2 shrink-0">
+   <select
+    bind:value={selectedCampus}
+    class="text-xs font-semibold bg-white text-slate-700 px-2.5 py-1.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-1 focus:ring-cx-500"
+   >
+    <option value="all">📍 Tất cả 3 cơ sở</option>
+    {#each campuses as c}
+     <option value={c.id}>{c.name}</option>
+    {/each}
+   </select>
+   {#if currentUser}
+    <button
+     type="button"
+     data-testid="cpanel-change-password-btn"
+     onclick={openVoluntaryPasswordModal}
+     class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 text-xs font-bold transition-colors shrink-0"
+     title="Đổi mật khẩu tài khoản"
+    >
+     <span>🔑</span>
+     <span class="hidden sm:inline">Đổi mật khẩu</span>
+    </button>
+   {/if}
+  </div>
  </div>
- </div>
-
- <!-- Right: User Quick Info, Stars, Notifications -->
- <div class="flex items-center gap-1.5 sm:gap-3 shrink-0">
- {#if currentUser?.role === 'student' && studentStars}
- <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-50 border border-amber-200 text-amber-700 font-semibold text-xs shadow-xs">
- <svg class="w-3.5 h-3.5 text-amber-500 fill-current" viewBox="0 0 20 20">
- <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
- </svg>
- <span>{studentStars.stars_balance || 0}</span>
- <span class="text-[11px] opacity-80 hidden sm:inline">sao</span>
- </div>
- {/if}
-
- <!-- Language Toggle Button -->
- <button
- onclick={toggleLanguage}
- class="flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors border border-slate-200"
- title="Chuyển đổi ngôn ngữ / Switch Language"
- >
- <span>{lang === 'vi' ? 'VI' : 'EN'}</span>
- </button>
-
- <!-- Notification Bell -->
- <a
- href="/cpanel/notifications"
- class="relative p-1.5 sm:p-2 rounded-md text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
- title="Thông báo"
- >
- <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
- <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
- </svg>
- {#if unreadNotifs > 0}
- <span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-white"></span>
- {/if}
- </a>
-
- <!-- User Chip, Password Change & Role Switch for Superadmin -->
- <div class="flex items-center gap-1.5 sm:gap-2 pl-1.5 sm:pl-2 border-l border-slate-200">
- <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-md bg-brand-600 text-white flex items-center justify-center font-semibold text-xs shadow-xs shrink-0">
- {currentUser?.name?.[0] || currentUser?.username?.[0] || 'U'}
- </div>
- <div class="hidden sm:block text-left text-xs">
- <div class="font-semibold text-slate-800">{currentUser?.name || currentUser?.username || 'Khách'}</div>
- <div class="text-[11px] text-slate-500 capitalize">{currentUser?.role || 'User'}</div>
- </div>
- {#if currentUser}
- <button
-  type="button"
-  data-testid="cpanel-change-password-btn"
-  onclick={openVoluntaryPasswordModal}
-  class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 text-xs font-semibold transition-colors shrink-0"
-  title="Đổi mật khẩu tài khoản"
- >
-  <span>🔑</span>
-  <span class="hidden md:inline">Đổi mật khẩu</span>
- </button>
- {/if}
- </div>
-
- {#if isSuperAdmin(currentUser)}
- <a href="/admincp" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-rose-700 hover:bg-rose-800 text-white text-xs font-semibold shadow-xs transition-all">
- <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 20 20">
- <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd" />
- </svg>
- <span>AdminCP Tổng</span>
- </a>
- {/if}
- </div>
- </div>
-
- <!-- Secondary Nav Tabs (Cpanel Sub-Dockbar) -->
- <div data-testid="cpanel-sub-dockbar" class="max-w-7xl mx-auto flex flex-wrap items-center gap-2 pt-2 pb-1 w-full min-w-0">
- {#each navItems as item}
- {@const isActive = $page.url.pathname === item.path || ($page.url.hash && item.path.includes($page.url.hash))}
- <a
- href={item.path}
- class="cpanel-dock-item flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border {isActive ? 'bg-cx-600 text-white border-cx-700 shadow-xs' : 'bg-white text-slate-700 border-slate-200 hover:border-cx-400 hover:bg-slate-50'}"
- >
- <span aria-hidden="true">{item.icon}</span>
- <span>{item.label}</span>
- </a>
- {/each}
- </div>
- </header>
 
  <!-- Main Cpanel Body -->
- <div class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 lg:p-8 min-w-0 overflow-x-hidden">
- {@render children()}
+ <div class="flex-1 max-w-7xl w-full mx-auto py-4 sm:py-6 min-w-0 overflow-x-hidden">
+  {@render children()}
  </div>
 </div>
 
 {#if showChangePasswordModal}
-  <div
-    class="fixed inset-0 z-50 flex items-center justify-center bg-stone-500/25 backdrop-blur-sm p-3 sm:p-4 overflow-y-auto"
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="change-password-modal-title"
-  >
-    <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden flex flex-col my-auto max-h-[90vh]">
-      <div class="px-4 py-3 sm:px-5 sm:py-4 border-b border-slate-100 flex justify-between items-center {forcePasswordChange ? 'bg-rose-50' : 'bg-emerald-50'}">
-        <h3 id="change-password-modal-title" class="font-bold {forcePasswordChange ? 'text-rose-800' : 'text-emerald-900'} text-sm sm:text-base">
-          {forcePasswordChange ? 'Bắt Buộc Đổi Mật Khẩu Lần Đầu' : '🔑 Đổi Mật Khẩu Bảo Mật (Cloudflare D1)'}
-        </h3>
-        {#if !forcePasswordChange}
-          <button
-            type="button"
-            onclick={() => { manualPasswordModalOpen = false; }}
-            class="w-7 h-7 rounded-full bg-white text-slate-500 hover:text-slate-800 flex items-center justify-center text-xs font-bold border border-slate-200"
-            aria-label="Đóng"
-          >✕</button>
-        {/if}
+ <div
+  class="fixed inset-0 z-50 flex items-center justify-center bg-stone-500/25 backdrop-blur-sm p-3 sm:p-4 overflow-y-auto"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="change-password-modal-title"
+ >
+  <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden flex flex-col my-auto max-h-[90vh]">
+   <div class="px-4 py-3 sm:px-5 sm:py-4 border-b border-slate-100 flex justify-between items-center {forcePasswordChange ? 'bg-rose-50' : 'bg-emerald-50'}">
+    <h3 id="change-password-modal-title" class="font-bold {forcePasswordChange ? 'text-rose-800' : 'text-emerald-900'} text-sm sm:text-base">
+     {forcePasswordChange ? 'Bắt Buộc Đổi Mật Khẩu Lần Đầu' : '🔑 Đổi Mật Khẩu Bảo Mật (Cloudflare D1)'}
+    </h3>
+    {#if !forcePasswordChange}
+     <button
+      type="button"
+      onclick={() => { manualPasswordModalOpen = false; }}
+      class="w-7 h-7 rounded-full bg-white text-slate-500 hover:text-slate-800 flex items-center justify-center text-xs font-bold border border-slate-200"
+      aria-label="Đóng"
+     >✕</button>
+    {/if}
+   </div>
+   <div class="p-4 sm:p-5 space-y-3 sm:space-y-4 overflow-y-auto">
+    <p class="text-xs sm:text-sm text-slate-600 font-medium">
+     {#if forcePasswordChange}
+      Chào mừng bạn đến với hệ thống Tiếng Anh Cô Dung. Vì lý do bảo mật, bạn bắt buộc phải đổi mật khẩu ngay trong lần đăng nhập đầu tiên.
+     {:else}
+      Nhập mật khẩu hiện tại và mật khẩu mới (&ge; 6 ký tự) để cập nhật trực tiếp lên cơ sở dữ liệu Cloudflare D1.
+     {/if}
+    </p>
+    {#if cpError}
+     <div class="p-2.5 rounded bg-rose-50 text-rose-700 text-xs font-semibold border border-rose-200" role="alert">{cpError}</div>
+    {/if}
+    {#if cpSuccess}
+     <div class="p-2.5 rounded bg-emerald-50 text-emerald-700 text-xs font-semibold border border-emerald-200" role="status">{cpSuccess}</div>
+    {:else}
+     <form onsubmit={(e) => { e.preventDefault(); handleChangePassword(); }} class="space-y-3">
+      <div>
+       <label for="cp-old-password" class="block text-xs font-bold text-slate-700 mb-1">Mật khẩu hiện tại (cũ)</label>
+       <input
+        id="cp-old-password"
+        type="password"
+        autocomplete="current-password"
+        required
+        bind:value={cpOldPassword}
+        class="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-sm"
+       />
       </div>
-      <div class="p-4 sm:p-5 space-y-3 sm:space-y-4 overflow-y-auto">
-        <p class="text-xs sm:text-sm text-slate-600 font-medium">
-          {#if forcePasswordChange}
-            Chào mừng bạn đến với hệ thống Tiếng Anh Cô Dung. Vì lý do bảo mật, bạn bắt buộc phải đổi mật khẩu ngay trong lần đăng nhập đầu tiên.
-          {:else}
-            Nhập mật khẩu hiện tại và mật khẩu mới (&ge; 6 ký tự) để cập nhật trực tiếp lên cơ sở dữ liệu Cloudflare D1.
-          {/if}
-        </p>
-        {#if cpError}
-          <div class="p-2.5 rounded bg-rose-50 text-rose-700 text-xs font-semibold border border-rose-200" role="alert">{cpError}</div>
-        {/if}
-        {#if cpSuccess}
-          <div class="p-2.5 rounded bg-emerald-50 text-emerald-700 text-xs font-semibold border border-emerald-200" role="status">{cpSuccess}</div>
-        {:else}
-          <form onsubmit={(e) => { e.preventDefault(); handleChangePassword(); }} class="space-y-3">
-            <div>
-              <label for="cp-old-password" class="block text-xs font-bold text-slate-700 mb-1">Mật khẩu hiện tại (cũ)</label>
-              <input
-                id="cp-old-password"
-                type="password"
-                autocomplete="current-password"
-                required
-                bind:value={cpOldPassword}
-                class="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-sm"
-              />
-            </div>
-            <div>
-              <label for="cp-new-password" class="block text-xs font-bold text-slate-700 mb-1">Mật khẩu mới (&ge; 6 ký tự)</label>
-              <input
-                id="cp-new-password"
-                type="password"
-                autocomplete="new-password"
-                required
-                minlength="6"
-                bind:value={cpNewPassword}
-                class="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-sm"
-              />
-            </div>
-            <div>
-              <label for="cp-confirm-password" class="block text-xs font-bold text-slate-700 mb-1">Xác nhận mật khẩu mới</label>
-              <input
-                id="cp-confirm-password"
-                type="password"
-                autocomplete="new-password"
-                required
-                minlength="6"
-                bind:value={cpConfirmPassword}
-                class="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-sm"
-              />
-            </div>
-            <div class="pt-2 flex justify-end gap-2">
-              {#if !forcePasswordChange}
-                <button
-                  type="button"
-                  onclick={() => { manualPasswordModalOpen = false; }}
-                  class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold rounded-md transition-colors"
-                >
-                  Hủy
-                </button>
-              {/if}
-              <button
-                type="submit"
-                disabled={isChangingPassword}
-                class="w-full sm:w-auto px-5 py-2 {forcePasswordChange ? 'bg-rose-600 hover:bg-rose-700' : 'bg-emerald-600 hover:bg-emerald-700'} text-white text-sm font-semibold rounded-md shadow-sm transition-colors disabled:opacity-50"
-              >
-                {isChangingPassword ? 'Đang xử lý...' : '🔑 Đổi Mật Khẩu'}
-              </button>
-            </div>
-          </form>
-        {/if}
+      <div>
+       <label for="cp-new-password" class="block text-xs font-bold text-slate-700 mb-1">Mật khẩu mới (&ge; 6 ký tự)</label>
+       <input
+        id="cp-new-password"
+        type="password"
+        autocomplete="new-password"
+        required
+        minlength="6"
+        bind:value={cpNewPassword}
+        class="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-sm"
+       />
       </div>
-    </div>
+      <div>
+       <label for="cp-confirm-password" class="block text-xs font-bold text-slate-700 mb-1">Xác nhận mật khẩu mới</label>
+       <input
+        id="cp-confirm-password"
+        type="password"
+        autocomplete="new-password"
+        required
+        minlength="6"
+        bind:value={cpConfirmPassword}
+        class="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-sm"
+       />
+      </div>
+      <div class="pt-2 flex justify-end gap-2">
+       {#if !forcePasswordChange}
+        <button
+         type="button"
+         onclick={() => { manualPasswordModalOpen = false; }}
+         class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold rounded-md transition-colors"
+        >
+         Hủy
+        </button>
+       {/if}
+       <button
+        type="submit"
+        disabled={isChangingPassword}
+        class="w-full sm:w-auto px-5 py-2 {forcePasswordChange ? 'bg-rose-600 hover:bg-rose-700' : 'bg-emerald-600 hover:bg-emerald-700'} text-white text-sm font-semibold rounded-md shadow-sm transition-colors disabled:opacity-50"
+       >
+        {isChangingPassword ? 'Đang xử lý...' : '🔑 Đổi Mật Khẩu'}
+       </button>
+      </div>
+     </form>
+    {/if}
+   </div>
   </div>
+ </div>
 {/if}
