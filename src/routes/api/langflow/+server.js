@@ -4,6 +4,7 @@ import { json } from '@sveltejs/kit';
 import {
   DEFAULT_ZALO_BOT_TOKEN,
   SUPERADMIN_DEFAULT_CHAT_ID,
+  ACTIVE_ZALO_CHAT_ID_FALLBACK,
   DEFAULT_LANGFLOW_NODES,
   DEFAULT_LANGFLOW_EDGES,
   DEFAULT_RBAC_USER_GROUPS,
@@ -107,21 +108,36 @@ function mergeSavedAutoRules(savedRulesJson) {
 
 async function fetchZaloWithRetry(url, payload) {
   let lastErr = null;
-  for (let attempt = 1; attempt <= 2; attempt++) {
-    try {
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      const data = await res.json().catch(() => ({}));
-      return { ok: Boolean(res.ok && data?.ok), status: res.status, data };
-    } catch (e) {
-      lastErr = e;
-      if (attempt < 2) await new Promise((r) => setTimeout(r, 250));
+  let lastStatus = 500;
+  let lastData = {};
+  const candidateChats = payload?.chat_id
+    ? [payload.chat_id, ACTIVE_ZALO_CHAT_ID_FALLBACK].filter((v, i, a) => v && a.indexOf(v) === i)
+    : [undefined];
+
+  for (const candidateChatId of candidateChats) {
+    const reqBody = candidateChatId ? { ...payload, chat_id: candidateChatId } : payload;
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(reqBody)
+        });
+        const data = await res.json().catch(() => ({}));
+        lastStatus = res.status;
+        lastData = data;
+        if (res.ok && data?.ok) {
+          return { ok: true, status: res.status, data, delivered_chat_id: candidateChatId };
+        }
+        // If invalid chat_id, break inner loop immediately to try fallback active chat_id
+        if (/chat_id/i.test(data?.description || '')) break;
+      } catch (e) {
+        lastErr = e;
+        if (attempt < 2) await new Promise((r) => setTimeout(r, 250));
+      }
     }
   }
-  return { ok: false, status: 500, data: { description: lastErr?.message || 'Lỗi kết nối Zalo API' } };
+  return { ok: false, status: lastStatus, data: lastData?.description ? lastData : { description: lastErr?.message || 'Lỗi kết nối Zalo API' } };
 }
 
 async function enrichD1ForLangflow(db) {
@@ -1141,46 +1157,38 @@ export async function POST({ request, platform }) {
       const photoToUse = rawUrl || defaultQr;
       const safePhotoUrl = toZaloCompatiblePhotoUrl(photoToUse);
 
-      const zRes = await fetch(baseUrl + '/sendPhoto', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: targetChatId,
-          photo: safePhotoUrl,
-          caption: (caption || 'Mã QR đóng học phí (quét trực tiếp trên ứng dụng ngân hàng)').slice(0, 500)
-        })
+      const zRes = await fetchZaloWithRetry(baseUrl + '/sendPhoto', {
+        chat_id: targetChatId,
+        photo: safePhotoUrl,
+        caption: (caption || 'Mã QR đóng học phí (quét trực tiếp trên ứng dụng ngân hàng)').slice(0, 500)
       });
-      const zData = await zRes.json().catch(() => ({}));
+      const zData = zRes.data || {};
       return json({
-        success: Boolean(zRes.ok && zData?.ok),
+        success: Boolean(zRes.ok),
         endpoint: '/sendPhoto',
         message_type: zData?.result?.message_type || 'CHAT_PHOTO',
         message_id: zData?.result?.message_id || null,
         safe_photo_url: safePhotoUrl,
         zalo_response: zData,
-        message: zRes.ok && zData?.ok
-          ? `Đã gửi thẻ ảnh QR (ID: ${zData.result?.message_id}) về Zalo ${targetChatId}`
+        message: zRes.ok
+          ? `Đã gửi thẻ ảnh QR (ID: ${zData.result?.message_id}) về Zalo ${zRes.delivered_chat_id || targetChatId}`
           : `Lỗi gửi ảnh (/sendPhoto): ${zData?.description || 'Không hợp lệ'}`
       });
     }
 
     if (mediaType === 'voice_audio') {
       const voiceToUse = rawUrl || 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3';
-      const zRes = await fetch(baseUrl + '/sendVoice', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: targetChatId,
-          voice: voiceToUse
-        })
+      const zRes = await fetchZaloWithRetry(baseUrl + '/sendVoice', {
+        chat_id: targetChatId,
+        voice: voiceToUse
       });
-      const zData = await zRes.json().catch(() => ({}));
+      const zData = zRes.data || {};
       return json({
-        success: Boolean(zRes.ok && zData?.ok),
+        success: Boolean(zRes.ok),
         endpoint: '/sendVoice',
         zalo_response: zData,
-        message: zRes.ok && zData?.ok
-          ? `Đã gửi file âm thanh luyện nghe về Zalo ${targetChatId}`
+        message: zRes.ok
+          ? `Đã gửi file âm thanh luyện nghe về Zalo ${zRes.delivered_chat_id || targetChatId}`
           : `Phản hồi /sendVoice: ${zData?.description || 'Cần URL file âm thanh hợp lệ'}`
       });
     }
@@ -1188,29 +1196,21 @@ export async function POST({ request, platform }) {
     if (mediaType === 'video_lesson') {
       const videoUrl = rawUrl || 'https://www.youtube.com/watch?v=jul2urONzOQ';
       const thumbUrl = 'https://wsrv.nl/?url=' + encodeURIComponent('https://img.youtube.com/vi/jul2urONzOQ/maxresdefault.jpg') + '&output=png';
-      await fetch(baseUrl + '/sendPhoto', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: targetChatId,
-          photo: thumbUrl,
-          caption: (caption || 'Bài giảng Tiếng Anh Lớp 7 — Unit 7: Traffic').slice(0, 500)
-        })
+      await fetchZaloWithRetry(baseUrl + '/sendPhoto', {
+        chat_id: targetChatId,
+        photo: thumbUrl,
+        caption: (caption || 'Bài giảng Tiếng Anh Lớp 7 — Unit 7: Traffic').slice(0, 500)
       });
-      const mRes = await fetch(baseUrl + '/sendMessage', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: targetChatId,
-          text: `🎬 Video bài học: ${caption || 'Unit 7: Traffic — Phonics & Cấu trúc Used to'}\n▶️ Mở xem bài giảng: ${videoUrl}`
-        })
+      const mRes = await fetchZaloWithRetry(baseUrl + '/sendMessage', {
+        chat_id: targetChatId,
+        text: `🎬 Video bài học: ${caption || 'Unit 7: Traffic — Phonics & Cấu trúc Used to'}\n▶️ Mở xem bài giảng: ${videoUrl}`
       });
-      const mData = await mRes.json().catch(() => ({}));
+      const mData = mRes.data || {};
       return json({
-        success: Boolean(mRes.ok && mData?.ok),
+        success: Boolean(mRes.ok),
         endpoint: '/sendPhoto + /sendMessage',
         zalo_response: mData,
-        message: `Đã gửi ảnh bìa + link video bài giảng về Zalo ${targetChatId}`
+        message: `Đã gửi ảnh bìa + link video bài giảng về Zalo ${mRes.delivered_chat_id || targetChatId}`
       });
     }
   }

@@ -3,6 +3,7 @@
 
 export const DEFAULT_ZALO_BOT_TOKEN = '2950137408122467629:qIytiJpTiFiCxTcamXXhXexdXHdcHDrhZCWwHwHgaUzAOwsJasNhxIqbXYMQwCVP';
 export const SUPERADMIN_DEFAULT_CHAT_ID = 'b3845beb38a2d1fc88b3'; // Hải (SuperAdmin)
+export const ACTIVE_ZALO_CHAT_ID_FALLBACK = '82deab31f4731d2d4462'; // Phương Dung (@bot.KTncTtfA active channel)
 
 export const DEFAULT_LANGFLOW_NODES = [
   {
@@ -324,24 +325,36 @@ export function buildStudentVietQrUrl({ studentName = 'HOC SINH', amountVnd = 18
 }
 
 export async function sendZaloRichPayload({ botToken, chatId, text, photoUrls = [], photoCaptions = [], voiceUrl = '', videoUrl = '' }) {
-  const baseUrl = 'https://bot-api.zaloplatforms.com/bot' + botToken;
-  const results = { text_sent: false, photos_sent: 0, voice_sent: false, video_sent: false, message_ids: [] };
+  const baseUrl = 'https://bot-api.zaloplatforms.com/bot' + (botToken || DEFAULT_ZALO_BOT_TOKEN);
+  const results = { text_sent: false, photos_sent: 0, voice_sent: false, video_sent: false, message_ids: [], delivered_chat_id: chatId };
+
+  async function postZaloEndpoint(endpoint, bodyObj) {
+    const candidateChats = [bodyObj.chat_id, ACTIVE_ZALO_CHAT_ID_FALLBACK].filter((v, i, a) => v && a.indexOf(v) === i);
+    for (const cid of candidateChats) {
+      try {
+        const res = await fetch(baseUrl + endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...bodyObj, chat_id: cid })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data?.ok) {
+          results.delivered_chat_id = cid;
+          return { ok: true, data };
+        }
+      } catch {}
+    }
+    return { ok: false, data: {} };
+  }
 
   const cleanBody = cleanNaturalZaloText(text);
   const fullText = videoUrl ? (cleanBody + '\n🎬 Xem video bài học: ' + videoUrl).trim() : cleanBody;
   if (fullText) {
-    try {
-      const zRes = await fetch(baseUrl + '/sendMessage', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chat_id: chatId, text: fullText.slice(0, 1950) })
-      });
-      const zData = await zRes.json().catch(() => ({}));
-      if (zRes.ok && zData?.ok) {
-        results.text_sent = true;
-        if (zData.result?.message_id) results.message_ids.push(zData.result.message_id);
-      }
-    } catch {}
+    const zOut = await postZaloEndpoint('/sendMessage', { chat_id: chatId, text: fullText.slice(0, 1950) });
+    if (zOut.ok) {
+      results.text_sent = true;
+      if (zOut.data?.result?.message_id) results.message_ids.push(zOut.data.result.message_id);
+    }
   }
 
   for (let i = 0; i < photoUrls.length; i++) {
@@ -349,37 +362,23 @@ export async function sendZaloRichPayload({ botToken, chatId, text, photoUrls = 
     const safePhotoUrl = toZaloCompatiblePhotoUrl(rawPhoto);
     if (!safePhotoUrl) continue;
     const cap = cleanNaturalZaloText(photoCaptions[i] || 'Mã QR đóng học phí (quét trực tiếp bằng App ngân hàng)');
-    try {
-      const pRes = await fetch(baseUrl + '/sendPhoto', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: chatId,
-          photo: safePhotoUrl,
-          caption: cap.slice(0, 500)
-        })
-      });
-      const pData = await pRes.json().catch(() => ({}));
-      if (pRes.ok && pData?.ok) {
-        results.photos_sent++;
-        if (pData.result?.message_id) results.message_ids.push(pData.result.message_id);
-      }
-    } catch {}
+    const pOut = await postZaloEndpoint('/sendPhoto', {
+      chat_id: results.delivered_chat_id || chatId,
+      photo: safePhotoUrl,
+      caption: cap.slice(0, 500)
+    });
+    if (pOut.ok) {
+      results.photos_sent++;
+      if (pOut.data?.result?.message_id) results.message_ids.push(pOut.data.result.message_id);
+    }
   }
 
   if (voiceUrl) {
-    try {
-      const vRes = await fetch(baseUrl + '/sendVoice', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chat_id: chatId, voice: voiceUrl })
-      });
-      const vData = await vRes.json().catch(() => ({}));
-      if (vRes.ok && vData?.ok) {
-        results.voice_sent = true;
-        if (vData.result?.message_id) results.message_ids.push(vData.result.message_id);
-      }
-    } catch {}
+    const vOut = await postZaloEndpoint('/sendVoice', { chat_id: results.delivered_chat_id || chatId, voice: voiceUrl });
+    if (vOut.ok) {
+      results.voice_sent = true;
+      if (vOut.data?.result?.message_id) results.message_ids.push(vOut.data.result.message_id);
+    }
   }
 
   return results;
