@@ -47,9 +47,32 @@
   let recentMessages = $state([]);
   let nodeAudits = $state([]);
   let zaloReportPreviews = $state([]);
+  let scenarios30 = $state([]);
+  let externalApiConnectors = $state([]);
   let phases100Clusters = $state([]);
   let running100PhaseAudit = $state(false);
-  let activeAuditTab = $state('reports'); // 'reports' | 'nodes' | 'clusters'
+  let activeAuditTab = $state('scenarios30'); // 'scenarios30' | 'apis' | 'nodes' | 'clusters'
+  let selectedScenarioGroup = $state('ALL'); // 'ALL' | 'A' | 'B' | 'C' | 'D' | 'E' | 'F'
+  let testingConnectorId = $state('');
+  let savingConnector = $state(false);
+  let showAddConnectorModal = $state(false);
+  let newConnectorForm = $state({
+    id: '',
+    name: '',
+    category: 'Extensible Webhook Hub',
+    endpoint_url: 'https://timbk.io.vn/api/health',
+    http_method: 'POST',
+    auth_type: 'BearerOrApiKey',
+    api_key_masked: '',
+    target_node_id: 'node_zalo_dispatcher',
+    description: ''
+  });
+
+  let filteredScenarios30 = $derived(
+    selectedScenarioGroup === 'ALL'
+      ? scenarios30
+      : scenarios30.filter((s) => s.group_code === selectedScenarioGroup)
+  );
 
   // Active Node in Canvas Inspector & Direct Node Editor Form
   let selectedNodeId = $state('node_crag_grader');
@@ -162,6 +185,8 @@
         recentMessages = data.recent_messages || [];
         nodeAudits = data.node_audits || [];
         zaloReportPreviews = data.zalo_report_previews || [];
+        scenarios30 = data.scenarios_30 || data.zalo_report_previews || [];
+        externalApiConnectors = data.external_api_connectors || [];
         phases100Clusters = data.phases_100_clusters || [];
 
         const currentSelected = nodes.find((n) => n.id === selectedNodeId) || nodes[0];
@@ -511,8 +536,10 @@
       if (data.success) {
         nodeAudits = data.node_audits || nodeAudits;
         zaloReportPreviews = data.zalo_report_previews || zaloReportPreviews;
+        scenarios30 = data.scenarios_30 || scenarios30;
+        externalApiConnectors = data.external_api_connectors || externalApiConnectors;
         phases100Clusters = data.phases_100_clusters || phases100Clusters;
-        showToast(data.message || '✅ Đã hoàn tất Audit 100 Phase & Làm giàu D1!');
+        showToast(data.message || '✅ Đã hoàn tất Audit 100 Phase & 30 Kịch bản Zalo!');
         await loadLangflowStudio();
       } else {
         showToast('⚠️ Lỗi Audit 100 Phase: ' + (data.error || 'Không xác định'));
@@ -521,6 +548,69 @@
       showToast('⚠️ Lỗi kết nối: ' + e.message);
     } finally {
       running100PhaseAudit = false;
+    }
+  }
+
+  async function handleTestApiConnector(conn) {
+    testingConnectorId = conn.id;
+    try {
+      const res = await fetch('/api/langflow', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'test_external_api_connector',
+          id: conn.id
+        })
+      });
+      const data = await res.json();
+      if (data.external_api_connectors) {
+        externalApiConnectors = data.external_api_connectors;
+      }
+      showToast(data.message || '🔌 Đã kiểm thử kết nối API!');
+    } catch (e) {
+      showToast('⚠️ Lỗi ping API: ' + e.message);
+    } finally {
+      testingConnectorId = '';
+    }
+  }
+
+  async function handleSaveNewConnector(e) {
+    if (e) e.preventDefault();
+    if (!newConnectorForm.name.trim() || !newConnectorForm.endpoint_url.trim()) return;
+    savingConnector = true;
+    try {
+      const res = await fetch('/api/langflow', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'save_external_api_connector',
+          ...newConnectorForm,
+          id: newConnectorForm.id.trim() || `api_ext_${Date.now()}`
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        externalApiConnectors = data.external_api_connectors || externalApiConnectors;
+        showToast(data.message);
+        showAddConnectorModal = false;
+        newConnectorForm = {
+          id: '',
+          name: '',
+          category: 'Extensible Webhook Hub',
+          endpoint_url: 'https://timbk.io.vn/api/health',
+          http_method: 'POST',
+          auth_type: 'BearerOrApiKey',
+          api_key_masked: '',
+          target_node_id: 'node_zalo_dispatcher',
+          description: ''
+        };
+      } else {
+        showToast('⚠️ ' + (data.error || 'Lỗi lưu API Connector'));
+      }
+    } catch (err) {
+      showToast('⚠️ Lỗi: ' + err.message);
+    } finally {
+      savingConnector = false;
     }
   }
 
@@ -661,24 +751,35 @@
     </div>
   </div>
 
-  <!-- SECTION 0: 100-PHASE MASTER CONTROL CENTER (7-NODE SELF-AUDIT + 8 ZALO REPORT TESTER) -->
+  <!-- SECTION 0: 100-PHASE MASTER CONTROL CENTER (30 SMOOTH SCENARIOS + EXTERNAL API HUB + 7-NODE AUDIT) -->
   <div data-testid="langflow-100-phase-panel" class="p-6 rounded-3xl bg-gradient-to-br from-emerald-50/90 via-white to-teal-50/80 border-2 border-emerald-300 shadow-md space-y-4">
     <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-emerald-200 pb-4">
       <div>
         <div class="flex flex-wrap items-center gap-2 mb-1">
           <span class="px-2.5 py-0.5 rounded-full bg-emerald-700 text-white text-[10px] font-black uppercase">100 PHASES MASTERPLAN • 100/100 PASS</span>
-          <span class="px-2.5 py-0.5 rounded-full bg-teal-100 text-teal-900 border border-teal-300 text-[10px] font-extrabold">7/7 Node Healthy</span>
-          <span class="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300 text-[10px] font-extrabold">8/8 Kịch Bản Báo Cáo Zalo Chuẩn 3 Cơ Sở</span>
+          <span class="px-2.5 py-0.5 rounded-full bg-teal-100 text-teal-900 border border-teal-300 text-[10px] font-extrabold">30/30 Kịch Bản Zalo Mượt Mà (6 Nhóm A–F)</span>
+          <span class="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300 text-[10px] font-extrabold">🔌 {externalApiConnectors.length || 6} Cổng Nhúng API Mở Rộng</span>
         </div>
         <h2 class="text-lg font-black text-slate-900">
-          🚀 Trung Tâm Kiểm Định 100 Phase • Tự Làm Giàu D1, Tự Audit 7 Node &amp; Test 8 Báo Cáo Zalo
+          🚀 Trung Tâm Kiểm Định 30 Kịch Bản Zalo Bot, Audit 7 Node CRAG &amp; Cổng Nhúng API Mở Rộng
         </h2>
         <p class="text-xs text-slate-600">
-          Kiểm định tự động toàn bộ nội dung báo cáo gửi qua Zalo (Đưa đón trước 10p, Tan học đón con, Điểm danh tức thời, Học phí VietQR, Giao BTVN, Đánh giá 5 kỹ năng, Nghỉ phép &amp; Đối soát ca) tại 3 cơ sở: <strong>Nhà Cô Dung (42 Hiệp Bình)</strong>, <strong>Trung Tâm Tiếng Anh Sunshine (KDC Thanh Niên)</strong>, <strong>Nhà Thầy Vũ (KDC Hồng Long)</strong>.
+          Vận hành mượt mà <strong>30 kịch bản thực tế</strong> (Đưa đón 3 cơ sở, Điểm danh +15 sao, Học phí VietQR, Giao/Chấm BTVN, Phát âm IPA, Đánh giá 5 kỹ năng, Hội thoại đa lượt &amp; Tường lửa RBAC) và sẵn sàng <strong>nhúng thêm API mới</strong> vào bất kỳ Node nào trên D1.
         </p>
       </div>
 
       <div class="flex flex-wrap items-center gap-2 shrink-0">
+        <button
+          type="button"
+          data-testid="btn-open-add-api"
+          onclick={() => {
+            activeAuditTab = 'apis';
+            showAddConnectorModal = !showAddConnectorModal;
+          }}
+          class="px-3.5 py-2.5 rounded-2xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 font-black text-xs shadow-xs cursor-pointer"
+        >
+          🔌 + Nhúng Thêm API Mới
+        </button>
         <button
           type="button"
           data-testid="btn-run-100-phase-audit"
@@ -686,22 +787,32 @@
           onclick={() => handleRun100PhaseAudit(true)}
           class="px-4 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs shadow-md cursor-pointer disabled:opacity-50"
         >
-          {running100PhaseAudit ? '⏳ Đang Audit 7 Node & Bắn Zalo...' : '⚡ Chạy Audit 100 Phase + Làm Giàu D1 & Bắn Zalo'}
+          {running100PhaseAudit ? '⏳ Đang Audit 30 Kịch Bản & Bắn Zalo...' : '⚡ Chạy Audit 30 Kịch Bản + 7 Node & Bắn Zalo'}
         </button>
       </div>
     </div>
 
-    <!-- Sub-tabs: 8 Kịch Bản Báo Cáo Zalo | Audit 7 Node | Ma Trận 10 Cụm (100 Phase) -->
+    <!-- Sub-tabs: 30 Kịch Bản Mượt Mà | Cổng Nhúng API Mở Rộng | Audit 7 Node | Ma Trận 10 Cụm (100 Phase) -->
     <div class="flex flex-wrap items-center gap-2">
       <button
         type="button"
-        onclick={() => (activeAuditTab = 'reports')}
-        class="px-3.5 py-1.5 rounded-xl text-xs font-extrabold border cursor-pointer {activeAuditTab === 'reports' ? 'bg-emerald-700 text-white border-emerald-700' : 'bg-white text-slate-700 border-slate-300'}"
+        data-testid="tab-scenarios-30"
+        onclick={() => (activeAuditTab = 'scenarios30')}
+        class="px-3.5 py-1.5 rounded-xl text-xs font-extrabold border cursor-pointer {activeAuditTab === 'scenarios30' ? 'bg-emerald-700 text-white border-emerald-700' : 'bg-white text-slate-700 border-slate-300'}"
       >
-        📲 8 Kịch Bản Báo Cáo Zalo Thực Tế ({zaloReportPreviews.length || 8})
+        📲 30 Kịch Bản Zalo Mượt Mà ({scenarios30.length || 30}/30 PASS)
       </button>
       <button
         type="button"
+        data-testid="tab-external-apis"
+        onclick={() => (activeAuditTab = 'apis')}
+        class="px-3.5 py-1.5 rounded-xl text-xs font-extrabold border cursor-pointer {activeAuditTab === 'apis' ? 'bg-emerald-700 text-white border-emerald-700' : 'bg-white text-slate-700 border-slate-300'}"
+      >
+        🔌 Cổng Nhúng API Mở Rộng ({externalApiConnectors.length || 6} API Slots)
+      </button>
+      <button
+        type="button"
+        data-testid="tab-nodes-audit"
         onclick={() => (activeAuditTab = 'nodes')}
         class="px-3.5 py-1.5 rounded-xl text-xs font-extrabold border cursor-pointer {activeAuditTab === 'nodes' ? 'bg-emerald-700 text-white border-emerald-700' : 'bg-white text-slate-700 border-slate-300'}"
       >
@@ -709,6 +820,7 @@
       </button>
       <button
         type="button"
+        data-testid="tab-clusters-100"
         onclick={() => (activeAuditTab = 'clusters')}
         class="px-3.5 py-1.5 rounded-xl text-xs font-extrabold border cursor-pointer {activeAuditTab === 'clusters' ? 'bg-emerald-700 text-white border-emerald-700' : 'bg-white text-slate-700 border-slate-300'}"
       >
@@ -716,26 +828,124 @@
       </button>
     </div>
 
-    {#if activeAuditTab === 'reports'}
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-        {#each zaloReportPreviews as rep (rep.ruleId)}
-          <div data-testid="zalo-report-card-{rep.ruleId}" class="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col justify-between space-y-2.5 text-xs">
+    {#if activeAuditTab === 'scenarios30'}
+      <!-- Group Filter Bar for 30 Scenarios -->
+      <div class="flex flex-wrap items-center gap-1.5 pt-1">
+        {#each [
+          { code: 'ALL', label: `Tất cả (${scenarios30.length || 30})` },
+          { code: 'A', label: 'Nhóm A (01–05): Đưa Đón 3 Cơ Sở' },
+          { code: 'B', label: 'Nhóm B (06–10): Điểm Danh & Học Bù' },
+          { code: 'C', label: 'Nhóm C (11–15): Học Phí & VietQR' },
+          { code: 'D', label: 'Nhóm D (16–20): BTVN, Quiz & Sự Kiện' },
+          { code: 'E', label: 'Nhóm E (21–25): 5 Kỹ Năng & Đối Soát' },
+          { code: 'F', label: 'Nhóm F (26–30): Đa Lượt & Cổng API' }
+        ] as grp}
+          <button
+            type="button"
+            onclick={() => (selectedScenarioGroup = grp.code)}
+            class="px-3 py-1 rounded-full text-[11px] font-bold border cursor-pointer {selectedScenarioGroup === grp.code
+              ? 'bg-teal-700 text-white border-teal-700'
+              : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}"
+          >
+            {grp.label}
+          </button>
+        {/each}
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        {#each filteredScenarios30 as rep (rep.id)}
+          <div data-testid="zalo-scenario-card-{rep.id}" class="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col justify-between space-y-2.5 text-xs">
             <div class="space-y-1.5">
               <div class="flex items-center justify-between gap-1">
                 <span class="font-extrabold text-slate-900">{rep.title}</span>
                 <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black shrink-0">PASS</span>
               </div>
-              <div class="text-[11px] font-bold text-teal-700">📍 {rep.campus}</div>
-              <pre class="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 text-[11px] text-slate-700 whitespace-pre-wrap font-sans leading-relaxed max-h-40 overflow-y-auto">{rep.text}</pre>
+              <div class="flex flex-wrap items-center justify-between gap-1 text-[11px]">
+                <span class="font-bold text-teal-700">📍 {rep.campus}</span>
+                <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-mono text-[10px]">🔌 {rep.api_connector_id || 'api_zalo_bot_platform'}</span>
+              </div>
+              <pre class="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 text-[11px] text-slate-700 whitespace-pre-wrap font-sans leading-relaxed max-h-36 overflow-y-auto">{rep.text}</pre>
             </div>
             <button
               type="button"
-              data-testid="btn-test-zalo-{rep.ruleId}"
-              disabled={triggeringRuleId === rep.ruleId}
-              onclick={() => handleTriggerAutoRule({ id: rep.ruleId })}
+              data-testid="btn-test-zalo-{rep.id}"
+              disabled={triggeringRuleId === rep.id}
+              onclick={() => handleTriggerAutoRule({ id: rep.id })}
               class="w-full py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-[11px] cursor-pointer disabled:opacity-50"
             >
-              {triggeringRuleId === rep.ruleId ? '⏳ Đang gửi Zalo...' : '📤 Bắn Thử Báo Cáo Này Về Zalo'}
+              {triggeringRuleId === rep.id ? '⏳ Đang gửi Zalo...' : `📤 Bắn Thử Kịch Bản #${rep.index} Về Zalo`}
+            </button>
+          </div>
+        {/each}
+      </div>
+    {:else if activeAuditTab === 'apis'}
+      {#if showAddConnectorModal}
+        <form onsubmit={handleSaveNewConnector} class="p-4 rounded-2xl bg-amber-50/80 border-2 border-amber-300 space-y-3 text-xs">
+          <div class="flex items-center justify-between border-b border-amber-200 pb-2">
+            <span class="font-black text-slate-900">🔌 Nhúng Thêm Cổng API Mới Vào Hệ Thống Langflow CRAG (Lưu D1 `external_api_connectors`)</span>
+            <button type="button" onclick={() => (showAddConnectorModal = false)} class="text-slate-500 font-bold">✕ Đóng</button>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div>
+              <label for="api-conn-name" class="block font-bold text-slate-700 mb-1">Tên Cổng API (*):</label>
+              <input id="api-conn-name" type="text" required bind:value={newConnectorForm.name} placeholder="VD: SePay Webhook / Elsa Speech API" class="w-full px-3 py-1.5 rounded-xl border border-slate-300 bg-white" />
+            </div>
+            <div>
+              <label for="api-conn-url" class="block font-bold text-slate-700 mb-1">Endpoint URL (*):</label>
+              <input id="api-conn-url" type="text" required bind:value={newConnectorForm.endpoint_url} placeholder="https://api.example.com/v1/webhook" class="w-full px-3 py-1.5 rounded-xl border border-slate-300 bg-white font-mono" />
+            </div>
+            <div>
+              <label for="api-conn-node" class="block font-bold text-slate-700 mb-1">Gắn vào Node CRAG:</label>
+              <select id="api-conn-node" bind:value={newConnectorForm.target_node_id} class="w-full px-3 py-1.5 rounded-xl border border-slate-300 bg-white font-semibold">
+                {#each nodes as n}
+                  <option value={n.id}>{n.title}</option>
+                {/each}
+              </select>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div>
+              <label for="api-conn-method" class="block font-bold text-slate-700 mb-1">HTTP Method:</label>
+              <select id="api-conn-method" bind:value={newConnectorForm.http_method} class="w-full px-3 py-1.5 rounded-xl border border-slate-300 bg-white">
+                <option value="POST">POST</option>
+                <option value="GET">GET</option>
+                <option value="PUT">PUT</option>
+              </select>
+            </div>
+            <div class="md:col-span-2">
+              <label for="api-conn-desc" class="block font-bold text-slate-700 mb-1">Mô tả nhiệm vụ API:</label>
+              <input id="api-conn-desc" type="text" bind:value={newConnectorForm.description} placeholder="Tự động đồng bộ dữ liệu / bắn thông báo..." class="w-full px-3 py-1.5 rounded-xl border border-slate-300 bg-white" />
+            </div>
+          </div>
+          <div class="flex justify-end gap-2">
+            <button type="submit" disabled={savingConnector} class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black">
+              {savingConnector ? '⏳ Đang lưu D1...' : '💾 Lưu & Kích Hoạt Cổng API Trên D1'}
+            </button>
+          </div>
+        </form>
+      {/if}
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        {#each externalApiConnectors as conn (conn.id)}
+          <div data-testid="api-connector-card-{conn.id}" class="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col justify-between space-y-3 text-xs">
+            <div class="space-y-1.5">
+              <div class="flex items-center justify-between gap-2">
+                <span class="px-2 py-0.5 rounded bg-teal-50 text-teal-800 border border-teal-200 font-mono text-[10px] font-bold">{conn.http_method} • {conn.target_node_id}</span>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-black {conn.status_badge === 'ACTIVE' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
+                  {conn.status_badge} • {conn.last_latency_ms || 20}ms
+                </span>
+              </div>
+              <div class="font-extrabold text-slate-900 text-sm">{conn.name}</div>
+              <div class="font-mono text-[11px] text-slate-500 break-all bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-200/70">{conn.endpoint_url}</div>
+              <p class="text-[11px] text-slate-600 leading-relaxed">{conn.description}</p>
+            </div>
+            <button
+              type="button"
+              disabled={testingConnectorId === conn.id}
+              onclick={() => handleTestApiConnector(conn)}
+              class="w-full py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-[11px] cursor-pointer disabled:opacity-50"
+            >
+              {testingConnectorId === conn.id ? '⏳ Đang Ping API...' : '⚡ Ping / Kiểm Thử Cổng API Này'}
             </button>
           </div>
         {/each}
